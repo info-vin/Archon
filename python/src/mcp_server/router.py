@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from typing import Any
 
+import aiofiles
 from mcp.server.fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
@@ -67,8 +68,8 @@ def register_custom_routes(mcp: FastMCP) -> None:
                 tools_cache = "/tmp/mcp_tools.json"
                 if os.path.exists(tools_cache):
                     try:
-                        with open(tools_cache) as f:
-                            cached = json.load(f)
+                        async with aiofiles.open(tools_cache) as f:
+                            cached = json.loads(await f.read())
                             if cached:
                                 tools_to_return = cached
                                 logger.info(
@@ -97,6 +98,7 @@ def register_custom_routes(mcp: FastMCP) -> None:
 
                 # Apply RBAC Filtering (Dynamic Tool Exposing) via RBACService
                 from src.server.services.rbac_service import RBACService
+
                 rbac = RBACService()
                 restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
 
@@ -108,7 +110,9 @@ def register_custom_routes(mcp: FastMCP) -> None:
                             if isinstance(func, dict) and func.get("name") not in restricted_tools:
                                 filtered_tools.append(t)
                     tools_to_return = filtered_tools
-                    logger.info(f"🔒 [PID {os.getpid()}] RBAC applied for {agent_type}. Returning {len(tools_to_return)} tools.")
+                    logger.info(
+                        f"🔒 [PID {os.getpid()}] RBAC applied for {agent_type}. Returning {len(tools_to_return)} tools."
+                    )
 
                 return JSONResponse({"jsonrpc": "2.0", "result": tools_to_return, "id": body.get("id")})
 
@@ -118,13 +122,20 @@ def register_custom_routes(mcp: FastMCP) -> None:
             # Apply RBAC Enforcement on Execution via RBACService
             agent_type = request.headers.get("X-Agent-Type", "anonymous")
             from src.server.services.rbac_service import RBACService
+
             rbac = RBACService()
             restricted_tools = await rbac.get_restricted_mcp_tools(agent_type)
 
             if method_name in restricted_tools:
                 logger.warning(f"🚫 [PID {os.getpid()}] RBAC Violation: {agent_type} attempted to call {method_name}")
                 return JSONResponse(
-                    {"error": {"code": -32003, "message": f"RBAC Violation: Tool '{method_name}' is restricted for agent '{agent_type}'"}}, status_code=403
+                    {
+                        "error": {
+                            "code": -32003,
+                            "message": f"RBAC Violation: Tool '{method_name}' is restricted for agent '{agent_type}'",
+                        }
+                    },
+                    status_code=403,
                 )
 
             try:

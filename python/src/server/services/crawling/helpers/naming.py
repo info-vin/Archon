@@ -1,10 +1,10 @@
-
 import re
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from ....config.logfire_config import get_logger
 
 logger = get_logger(__name__)
+
 
 class URLNamingUtil:
     """
@@ -42,12 +42,18 @@ class URLNamingUtil:
 
             # Remove common tracking parameters and sort remaining
             tracking_params = {
-                "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-                "gclid", "fbclid", "ref", "source"
+                "utm_source",
+                "utm_medium",
+                "utm_campaign",
+                "utm_term",
+                "utm_content",
+                "gclid",
+                "fbclid",
+                "ref",
+                "source",
             }
             query_items = [
-                (k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True)
-                if k not in tracking_params
+                (k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True) if k not in tracking_params
             ]
             query = urlencode(sorted(query_items))
 
@@ -173,7 +179,7 @@ class URLNamingUtil:
                     display = domain
                     for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]:
                         if display.endswith(tld):
-                            display = display[:-len(tld)]
+                            display = display[: -len(tld)]
                             break
                     display_parts = display.replace("-", " ").replace("_", " ").split(".")
                     formatted = " ".join(part.title() for part in display_parts)
@@ -183,7 +189,7 @@ class URLNamingUtil:
                     display = domain
                     for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]:
                         if display.endswith(tld):
-                            display = display[:-len(tld)]
+                            display = display[: -len(tld)]
                             break
                     display_parts = display.replace("-", " ").replace("_", " ").split(".")
                     formatted = " ".join(part.title() for part in display_parts)

@@ -10,7 +10,9 @@ class DocumentRepository:
     def __init__(self, supabase_client):
         self.client = supabase_client
 
-    async def delete_existing_urls_in_batches(self, urls: list[str], delete_batch_size: int = 50, cancellation_check=None):
+    async def delete_existing_urls_in_batches(
+        self, urls: list[str], delete_batch_size: int = 50, cancellation_check=None
+    ):
         unique_urls = list(set(urls))
         if not unique_urls:
             return
@@ -40,6 +42,7 @@ class DocumentRepository:
             try:
                 self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute()
                 import time
+
                 time.sleep(0.05)
             except Exception as inner_e:
                 search_logger.error(f"Error deleting batch of {len(batch_urls)} URLs: {inner_e}")

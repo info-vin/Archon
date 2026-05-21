@@ -62,6 +62,7 @@ AVAILABLE_AGENTS = {
 # Global credentials storage
 AGENT_CREDENTIALS = {}
 
+
 async def fetch_credentials_from_server():
     """Fetch credentials from the server's internal API."""
     max_retries = 30  # Try for up to 5 minutes (30 * 10 seconds)
@@ -157,6 +158,7 @@ class WorkflowRequest(BaseModel):
     prompt: str
     context: dict[str, Any] | None = None
 
+
 @app.post("/agents/workflow/run", response_model=AgentResponse)
 async def run_workflow(request: WorkflowRequest):
     """
@@ -176,16 +178,13 @@ async def run_workflow(request: WorkflowRequest):
             return AgentResponse(
                 success=True,
                 result=result["final_result"],
-                metadata={
-                    "step_count": result["step_count"],
-                    "messages": result["messages"]
-                }
+                metadata={"step_count": result["step_count"], "messages": result["messages"]},
             )
         else:
             return AgentResponse(
                 success=False,
                 error=result.get("error", "Unknown error in workflow"),
-                metadata={"step_count": result["step_count"]}
+                metadata={"step_count": result["step_count"]},
             )
     except Exception as e:
         logger.error(f"Error in workflow endpoint: {e}")

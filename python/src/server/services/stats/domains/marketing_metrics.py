@@ -4,6 +4,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class MarketingMetrics:
     """Handles deep lead analysis and marketing ROI."""
 
@@ -20,9 +21,7 @@ class MarketingMetrics:
             leads = res.data or []
 
             # 1. Conversion Funnel (Physical Data)
-            funnel = {
-                "new": 0, "contacted": 0, "shortlisted": 0, "converted": 0, "archived": 0
-            }
+            funnel = {"new": 0, "contacted": 0, "shortlisted": 0, "converted": 0, "archived": 0}
             for lead in leads:
                 s = lead.get("status", "new")
                 if s in funnel:
@@ -34,7 +33,7 @@ class MarketingMetrics:
                 "Data/Analytics": ["Data", "Analyst", "Statistics"],
                 "Engineering": ["Engineer", "Developer", "Backend", "Frontend", "Python"],
                 "Marketing/Sales": ["Marketing", "Sales", "Business", "Brand"],
-                "Management": ["Manager", "Director", "VP", "Lead"]
+                "Management": ["Manager", "Director", "VP", "Lead"],
             }
 
             distribution: dict[str, int] = dict.fromkeys(categories, 0)
@@ -73,9 +72,13 @@ class MarketingMetrics:
                 "distribution": distribution,
                 "metrics": {
                     "avg_conversion_hours": avg_velocity,
-                    "high_value_percentage": round((distribution["AI/ML"] + distribution["Management"]) / len(leads) * 100, 1) if leads else 0.0
+                    "high_value_percentage": round(
+                        (distribution["AI/ML"] + distribution["Management"]) / len(leads) * 100, 1
+                    )
+                    if leads
+                    else 0.0,
                 },
-                "timestamp": datetime.now(UTC).isoformat()
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         except Exception as e:
             logger.error(f"MarketingMetrics: Marketing intelligence failed: {e}")

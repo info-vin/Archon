@@ -31,7 +31,6 @@ __all__ = [
     "CrawlingService",
     "CrawlOrchestrationService",
     "CodeExtractionService",
-
     "ProgressMapper",
     "BatchCrawlStrategy",
     "RecursiveCrawlStrategy",

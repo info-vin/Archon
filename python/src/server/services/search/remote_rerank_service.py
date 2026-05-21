@@ -6,13 +6,9 @@ from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 async def execute_remote_rerank(
-    agents_url: str,
-    query: str,
-    results: list[dict],
-    content_key: str,
-    top_k: int,
-    fallback_strategy: Any = None
+    agents_url: str, query: str, results: list[dict], content_key: str, top_k: int, fallback_strategy: Any = None
 ) -> list[dict]:
     """Performs reranking via remote agents service (Phase 4.6.28)."""
     try:
@@ -38,8 +34,6 @@ async def execute_remote_rerank(
 
     # Fallback to local if available, else return original
     if fallback_strategy:
-        fallback_results = await fallback_strategy.rerank_results(
-            query, results, top_k=top_k, content_key=content_key
-        )
+        fallback_results = await fallback_strategy.rerank_results(query, results, top_k=top_k, content_key=content_key)
         return cast(list[dict], fallback_results)
     return results[:top_k]

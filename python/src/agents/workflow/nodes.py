@@ -13,9 +13,12 @@ from .utils import PAI_V1, _accumulate_usage, _build_pruned_history, _get_output
 
 logger = logging.getLogger(__name__)
 
+
 # --- 2. Supervisor Node (The Brain) ---
 class SupervisorNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
+    async def run(
+        self, ctx: GraphRunContext[SharedState]
+    ) -> MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         ctx.state.step_count += 1
         logger.info(f"🕸️ [Supervisor] Step {ctx.state.step_count}/{ctx.state.max_steps}")
 
@@ -50,10 +53,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         system_prompt = prompt_service.get_prompt(prompt_key, default_supervisor_prompt)
 
         # Build agent config dynamically to avoid version mismatch errors
-        agent_args: dict[str, Any] = {
-            "model": model_name,
-            "system_prompt": system_prompt
-        }
+        agent_args: dict[str, Any] = {"model": model_name, "system_prompt": system_prompt}
         if PAI_V1:
             agent_args["output_type"] = SupervisorDecision
         else:
@@ -111,14 +111,13 @@ async def _run_generic_worker(
         raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
 
     from src.server.services.prompt_service import prompt_service
+
     system_prompt = prompt_service.get_prompt(prompt_key, default_prompt)
     agent = Agent(model=model_name, system_prompt=system_prompt)
     history_text = _build_pruned_history(ctx.state.messages)
 
     try:
-        res = await _run_agent_with_retry(
-            agent, f"{task_instruction}\n{history_text}", ctx.state, model_name
-        )
+        res = await _run_agent_with_retry(agent, f"{task_instruction}\n{history_text}", ctx.state, model_name)
         _accumulate_usage(ctx.state, res, model_name)
         ctx.state.messages.append({"role": role_name.lower(), "content": str(_get_output(res))})
     except Exception as e:
@@ -131,9 +130,15 @@ async def _run_generic_worker(
 class MarketBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
         task_type = ctx.state.task_type
-        prompt_key = "WORKFLOW_STRATEGIST_BOB" if task_type == "Marketing Data Deep Dive" else "WORKFLOW_WORKER_MARKETBOT"
+        prompt_key = (
+            "WORKFLOW_STRATEGIST_BOB" if task_type == "Marketing Data Deep Dive" else "WORKFLOW_WORKER_MARKETBOT"
+        )
         return await _run_generic_worker(
-            ctx, "MarketBot", prompt_key, "You are a marketing copywriter. Be concise.", "Based on history, provide the marketing copy."
+            ctx,
+            "MarketBot",
+            prompt_key,
+            "You are a marketing copywriter. Be concise.",
+            "Based on history, provide the marketing copy.",
         )
 
 
@@ -163,17 +168,13 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
                 "If the internal knowledge base does not contain the required information, "
                 "or if the user provides a specific URL, use the web_crawl_tool to get the latest data."
             )
-            res = await _run_agent_with_retry(
-                agent, f"{instruction}\n{history_text}", ctx.state, model_name, deps=deps
-            )
+            res = await _run_agent_with_retry(agent, f"{instruction}\n{history_text}", ctx.state, model_name, deps=deps)
             _accumulate_usage(ctx.state, res, model_name)
 
             # Phase 5.1.4: Citation Transparency - Pass collected citations to state
-            ctx.state.messages.append({
-                "role": "librarian",
-                "content": str(_get_output(res)),
-                "citations": deps.collected_citations
-            })
+            ctx.state.messages.append(
+                {"role": "librarian", "content": str(_get_output(res)), "citations": deps.collected_citations}
+            )
         except Exception as e:
             logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})
@@ -184,7 +185,11 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
 class SummaryNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
         return await _run_generic_worker(
-            ctx, "Summary", "WORKFLOW_WORKER_SUMMARY", "You summarize text into bullet points.", "Summarize the conversation:"
+            ctx,
+            "Summary",
+            "WORKFLOW_WORKER_SUMMARY",
+            "You summarize text into bullet points.",
+            "Summarize the conversation:",
         )
 
 
@@ -204,16 +209,13 @@ class DavidNode(BaseNode[SharedState, None, str]):
             raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
 
         from src.server.services.prompt_service import prompt_service
+
         system_prompt = prompt_service.get_prompt(
             "WORKFLOW_DATA_DAVID",
-            "You are David, the Senior Developer. You can read code and propose fixes using tools."
+            "You are David, the Senior Developer. You can read code and propose fixes using tools.",
         )
 
-        agent = Agent(
-            model=model_name,
-            system_prompt=system_prompt,
-            tools=[propose_code_fix, read_code_file]
-        )
+        agent = Agent(model=model_name, system_prompt=system_prompt, tools=[propose_code_fix, read_code_file])
 
         history_text = _build_pruned_history(ctx.state.messages)
 
@@ -222,7 +224,7 @@ class DavidNode(BaseNode[SharedState, None, str]):
                 agent,
                 f"Review the history and use tools if needed to fix code or extract data.\n{history_text}",
                 ctx.state,
-                model_name
+                model_name,
             )
             _accumulate_usage(ctx.state, res, model_name)
             ctx.state.messages.append({"role": "david", "content": str(_get_output(res))})

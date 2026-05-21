@@ -106,6 +106,7 @@ async def run_log_patrol():
             # Phase 4.6.42: Trigger Cognitive Self-Tuning (Prompt Evolution)
             try:
                 from ...system.self_tuning_service import self_tuning_service
+
                 # Pick the first error to tune
                 if errors:
                     res = await self_tuning_service.tune_prompt_from_error(str(errors[0]["id"]))
@@ -176,6 +177,7 @@ async def cleanup_system_probes():
     except Exception as e:
         logger.error(f"💥 Clockwork: System Probe Cleanup Failed: {e}")
 
+
 async def run_model_verification():
     """Verifies that the system is using the safe Lite model to prevent 429 errors."""
     logger.info("🤖 Clockwork: Running Model Verification...")
@@ -190,20 +192,30 @@ async def run_model_verification():
 
         # Check if the models are set to lite versions to bypass 20 RPD limit
         is_safe = "lite" in default_pro and "lite" in default_text
-        msg = "Model Verification Passed (Using Lite models)" if is_safe else "Model Verification WARNING: Potentially using high-quota models"
+        msg = (
+            "Model Verification Passed (Using Lite models)"
+            if is_safe
+            else "Model Verification WARNING: Potentially using high-quota models"
+        )
         log_level = "INFO" if is_safe else "WARNING"
 
         logger.info(f"{'✅' if is_safe else '⚠️'} Clockwork: {msg}")
 
         try:
             supabase.table("archon_logs").insert(
-                {"source": "clockwork-scheduler", "level": log_level, "message": msg, "details": {"DEFAULT_PRO": default_pro, "DEFAULT_TEXT": default_text}}
+                {
+                    "source": "clockwork-scheduler",
+                    "level": log_level,
+                    "message": msg,
+                    "details": {"DEFAULT_PRO": default_pro, "DEFAULT_TEXT": default_text},
+                }
             ).execute()
         except Exception as db_err:
             logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")
 
     except Exception as e:
         logger.error(f"💥 Clockwork: Model Verification Crashed: {e}")
+
 
 async def run_tech_debt_audit():
     """Scans PRPs and scripts for technical debt, and dispatches DevBot if needed."""
@@ -223,7 +235,9 @@ async def run_tech_debt_audit():
         # 1. Check unarchived PRPs
         prp_files = glob.glob("/app/PRPs/Phase_*.md")
         if len(prp_files) >= 5:
-            warnings.append(f"PRPs directory is cluttered ({len(prp_files)} unarchived files). Please archive completed phases.")
+            warnings.append(
+                f"PRPs directory is cluttered ({len(prp_files)} unarchived files). Please archive completed phases."
+            )
 
         # 2. Check stale scripts (older than 14 days)
         fourteen_days_ago = time.time() - (14 * 24 * 3600)
@@ -251,7 +265,11 @@ async def run_tech_debt_audit():
         logger.info("⚠️ Clockwork: Detected Tech Debt. Creating task for DevBot...")
 
         task_title = f"Auto-Cleanup: Technical Debt Audit ({datetime.now(UTC).strftime('%Y-%m-%d')})"
-        task_desc = "Clockwork detected the following technical debt that needs archiving or cleanup:\n\n" + "\n\n".join(warnings) + "\n\nPlease review and clean up the workspace."
+        task_desc = (
+            "Clockwork detected the following technical debt that needs archiving or cleanup:\n\n"
+            + "\n\n".join(warnings)
+            + "\n\nPlease review and clean up the workspace."
+        )
 
         supabase = get_supabase_client()
         p_res = supabase.table("archon_projects").select("id").limit(1).execute()

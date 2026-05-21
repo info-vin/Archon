@@ -1,4 +1,3 @@
-
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any, cast
@@ -6,6 +5,7 @@ from typing import Any, cast
 from ...utils import get_supabase_client
 
 logger = logging.getLogger(__name__)
+
 
 class PerformanceManager:
     """
@@ -41,7 +41,15 @@ class PerformanceManager:
             score -= 50
         return max(0, score)
 
-    async def add_agent_action_log(self, agent_name: str, xp_change: int, message: str, details: dict | None = None, content: str | None = None, agent_id: str | None = None) -> None:
+    async def add_agent_action_log(
+        self,
+        agent_name: str,
+        xp_change: int,
+        message: str,
+        details: dict | None = None,
+        content: str | None = None,
+        agent_id: str | None = None,
+    ) -> None:
         """Logs an agent action and updates XP (Grounded Rewards)."""
         try:
             final_xp = xp_change
@@ -58,7 +66,7 @@ class PerformanceManager:
                     "agent_name": agent_name,
                     "agent_id": agent_id,
                     "xp_change": final_xp,
-                    "timestamp_v": "v4.6.23", # Updated for identity alignment
+                    "timestamp_v": "v4.6.23",  # Updated for identity alignment
                 },
             }
             self.supabase.table("archon_logs").insert(payload).execute()
@@ -76,9 +84,25 @@ class PerformanceManager:
         profile_map = {str(p["id"]): p["name"] for p in (profiles_res.data or [])}
         email_to_name = {str(p["email"]).split("@")[0].lower(): p["name"] for p in (profiles_res.data or [])}
 
-        tasks_res = self.supabase.table("archon_tasks").select("assignee_id, created_at, sources").gt("created_at", thirty_days_ago).execute()
-        blogs_res = self.supabase.table("blog_posts").select("author_name, lead_id, created_at, status").gt("created_at", thirty_days_ago).execute()
-        logs_res = self.supabase.table("archon_logs").select("source").eq("level", "ALERT").gt("created_at", thirty_days_ago).execute()
+        tasks_res = (
+            self.supabase.table("archon_tasks")
+            .select("assignee_id, created_at, sources")
+            .gt("created_at", thirty_days_ago)
+            .execute()
+        )
+        blogs_res = (
+            self.supabase.table("blog_posts")
+            .select("author_name, lead_id, created_at, status")
+            .gt("created_at", thirty_days_ago)
+            .execute()
+        )
+        logs_res = (
+            self.supabase.table("archon_logs")
+            .select("source")
+            .eq("level", "ALERT")
+            .gt("created_at", thirty_days_ago)
+            .execute()
+        )
 
         active_participants = set()
         matrix: dict[str, dict[str, dict[str, int]]] = {}
@@ -95,7 +119,7 @@ class PerformanceManager:
             if date_str >= seven_days_ago:
                 matrix[f][t]["seven"] += 1
 
-        for t in (tasks_res.data or []):
+        for t in tasks_res.data or []:
             to_id = str(t.get("assignee_id", "unknown"))
             sources_list = cast(list[dict[str, Any]], t.get("sources") or [])
             for s in sources_list:
@@ -103,7 +127,7 @@ class PerformanceManager:
                 if fr_id and to_id:
                     add_interact(fr_id, to_id, t["created_at"])
 
-        for b in (blogs_res.data or []):
+        for b in blogs_res.data or []:
             author = str(b.get("author_name") or "bob").lower()
             if b.get("lead_id"):
                 add_interact("alice", author, b["created_at"])
@@ -112,9 +136,9 @@ class PerformanceManager:
             elif b.get("status") == "published":
                 add_interact(author, "charlie", b["created_at"])
 
-        for log_entry in (logs_res.data or []):
+        for log_entry in logs_res.data or []:
             if log_entry.get("source") == "twin_scout":
-                add_interact("twin_scout", "charlie", thirty_days_ago) # Alert Charlie
+                add_interact("twin_scout", "charlie", thirty_days_ago)  # Alert Charlie
 
         # Build dynamic nodes list from discovered participants
         # Sort to ensure UI stability
@@ -140,11 +164,9 @@ class PerformanceManager:
                     hot_bridge_name = f"{fr_node['name']} -> {to_node['name']}"
 
                 actual_avg_30d = round(stats["thirty"] / 4.28, 1)
-                row["interactions"].append({
-                    "to": to_node["name"],
-                    "actual_7d": stats["seven"],
-                    "avg_30d": actual_avg_30d
-                })
+                row["interactions"].append(
+                    {"to": to_node["name"], "actual_7d": stats["seven"], "avg_30d": actual_avg_30d}
+                )
             formatted_matrix.append(row)
 
         avg_weekly_30d = total_30d / 4.28
@@ -165,7 +187,7 @@ class PerformanceManager:
                 "total_7d": total_7d,
                 "momentum_pct": momentum,
                 "hot_bridge": hot_bridge_name,
-                "active_paths": active_paths_count
+                "active_paths": active_paths_count,
             },
             "timestamp": now.isoformat(),
         }
@@ -190,7 +212,12 @@ class PerformanceManager:
                     success_map[name] = success_map.get(name, 0) + 1
 
             # Fetch overrides for Level 7 check
-            overrides_res = self.supabase.table("profiles").select("id, name, role, permission_overrides").eq("role", "ai_agent").execute()
+            overrides_res = (
+                self.supabase.table("profiles")
+                .select("id, name, role, permission_overrides")
+                .eq("role", "ai_agent")
+                .execute()
+            )
             overrides_map = {r.get("id"): r.get("permission_overrides", {}) for r in overrides_res.data or []}
             name_to_overrides = {r.get("name"): r.get("permission_overrides", {}) for r in overrides_res.data or []}
 
@@ -224,15 +251,17 @@ class PerformanceManager:
                 # Get overrides for this specific agent
                 agent_overrides = overrides_map.get(u_id) or name_to_overrides.get(name) or {}
 
-                result.append({
-                    "name": name,
-                    "agent_id": slug,
-                    "total_xp": total_xp,
-                    "success_count": success_count,
-                    "total_cost": round(total_cost, 4),
-                    "roi_ratio": roi,
-                    "level": self._get_agent_level(success_count, agent_overrides)
-                })
+                result.append(
+                    {
+                        "name": name,
+                        "agent_id": slug,
+                        "total_xp": total_xp,
+                        "success_count": success_count,
+                        "total_cost": round(total_cost, 4),
+                        "roi_ratio": roi,
+                        "level": self._get_agent_level(success_count, agent_overrides),
+                    }
+                )
             result.sort(key=lambda x: cast(int, x["success_count"]), reverse=True)
             return result
         except Exception as e:
@@ -257,7 +286,15 @@ class PerformanceManager:
     async def get_business_risks(self) -> list[dict[str, Any]]:
         """Drives the Sentinel Risk Radar HUD."""
         try:
-            res = self.supabase.table("archon_logs").select("*").eq("level", "ALERT").filter("details->>category", "eq", "business").order("created_at", desc=True).limit(10).execute()
+            res = (
+                self.supabase.table("archon_logs")
+                .select("*")
+                .eq("level", "ALERT")
+                .filter("details->>category", "eq", "business")
+                .order("created_at", desc=True)
+                .limit(10)
+                .execute()
+            )
             return res.data or []
         except Exception as e:
             logger.error(f"PerformanceManager: Risks failed: {e}")

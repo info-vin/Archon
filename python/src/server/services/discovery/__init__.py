@@ -1,8 +1,8 @@
-
 """
 Provider Discovery Package (Facade Pattern)
 Standardized L2 Modularization for Phase 4.6.24.
 """
+
 import logging
 import time
 from typing import Any, cast
@@ -14,6 +14,7 @@ from .engine import DiscoveryEngine
 from .models import ModelSpec, ProviderStatus
 
 logger = logging.getLogger(__name__)
+
 
 class ProviderDiscoveryService:
     """Facade for multi-provider AI model discovery and health checking."""
@@ -33,6 +34,7 @@ class ProviderDiscoveryService:
 
     async def discover_openai_models(self, api_key: str) -> list[ModelSpec]:
         from .providers.openai_handler import discover_openai_models
+
         cache_key = f"openai_{hash(api_key)}"
         cached = DiscoveryEngine.get_cached_result(cache_key)
         if cached:
@@ -44,6 +46,7 @@ class ProviderDiscoveryService:
 
     async def discover_google_models(self, api_key: str) -> list[ModelSpec]:
         from .providers.google_handler import discover_google_models
+
         cache_key = f"google_{hash(api_key)}"
         cached = DiscoveryEngine.get_cached_result(cache_key)
         if cached:
@@ -56,6 +59,7 @@ class ProviderDiscoveryService:
 
     async def discover_ollama_models(self, base_urls: list[str]) -> list[ModelSpec]:
         from .providers.ollama_handler import discover_ollama_models
+
         session = await self._get_session()
         return await discover_ollama_models(base_urls, session, DiscoveryEngine.test_tool_support)
 
@@ -71,9 +75,11 @@ class ProviderDiscoveryService:
                 models = await self.discover_google_models(api_key)
 
             return ProviderStatus(
-                provider=provider, is_available=len(models) > 0,
+                provider=provider,
+                is_available=len(models) > 0,
                 response_time_ms=(time.time() - start_time) * 1000,
-                models_available=len(models), last_checked=time.time()
+                models_available=len(models),
+                last_checked=time.time(),
             )
         except Exception as e:
             return ProviderStatus(provider=provider, is_available=False, error_message=str(e), last_checked=time.time())
@@ -85,6 +91,7 @@ class ProviderDiscoveryService:
         if isinstance(openai_key, str):
             results["openai"] = await self.discover_openai_models(openai_key)
         return results
+
 
 # Global singleton instance for the application
 provider_discovery_service = ProviderDiscoveryService()

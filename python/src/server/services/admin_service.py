@@ -73,8 +73,8 @@ class AdminService:
                         "target_user_id": user_id,
                         "new_role": new_role,
                         "updated_by": current_admin_email,
-                        "version": "v4.6.31"
-                    }
+                        "version": "v4.6.31",
+                    },
                 }
                 supabase.table("archon_logs").insert(audit_log).execute()
             except Exception as log_err:
@@ -98,9 +98,7 @@ class AdminService:
             raise
 
     @staticmethod
-    async def update_rbac_role(
-        role: str, permissions: list[str], description: str | None = None
-    ) -> dict[str, Any]:
+    async def update_rbac_role(role: str, permissions: list[str], description: str | None = None) -> dict[str, Any]:
         """Update or create a role's permissions in the dynamic matrix."""
         try:
             supabase = get_supabase_client()
@@ -128,11 +126,7 @@ class AdminService:
                     "level": "INFO",
                     "message": f"RBAC Matrix updated for role: {role}",
                     "type": "audit",
-                    "details": {
-                        "role": role,
-                        "permissions": permissions,
-                        "version": "v4.6.31"
-                    }
+                    "details": {"role": role, "permissions": permissions, "version": "v4.6.31"},
                 }
                 supabase.table("archon_logs").insert(audit_log).execute()
             except Exception as log_err:

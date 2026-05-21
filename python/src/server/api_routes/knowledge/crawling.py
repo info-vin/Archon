@@ -35,9 +35,7 @@ async def get_crawl_progress(progress_id: str):
 
 
 @router.post("/knowledge-items/stop/{progress_id}")
-async def stop_crawl_operation(
-    progress_id: str, current_user: dict = Depends(requires_permission(TASK_CREATE))
-):
+async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(requires_permission(TASK_CREATE))):
     """Stop an active crawl or refresh operation. Requires TASK_CREATE."""
     from src.server.services.crawling import unregister_orchestration
 

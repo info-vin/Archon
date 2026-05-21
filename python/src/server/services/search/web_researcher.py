@@ -11,6 +11,7 @@ logger = get_logger("web_researcher")
 # EXPORT FOR TEST PATCHING
 Client = genai.Client
 
+
 class WebResearcher:
     """Independent Web Research Module (Decoupled Phase 4.6.47)."""
 

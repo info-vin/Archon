@@ -7,6 +7,7 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 class OllamaNetworkScanner:
     """Handles network communication with Ollama instances."""
 

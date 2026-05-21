@@ -31,6 +31,7 @@ class AgentService:
             )
 
         from .shared_constants import AgentUUIDs
+
         system_bots = [AgentUUIDs.PO_BOT, AgentUUIDs.CLOCKWORK]
 
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
@@ -150,7 +151,7 @@ class AgentService:
                     save_payload = {
                         "content": final_result,
                         "messages": messages,
-                        "step_count": data.get("metadata", {}).get("step_count", 0)
+                        "step_count": data.get("metadata", {}).get("step_count", 0),
                     }
                     await task_service.save_agent_output(task_id, save_payload, agent_id)
                     await self._award_agent_xp(agent_id, task_data, str(final_result))
@@ -182,5 +183,6 @@ class AgentService:
         logger.info(f"🚀 Dispatching task '{task_id}' for agent '{agent_id}' using {strategy.__class__.__name__}")
 
         await strategy.execute(task_id, task_data, agent_id, self)
+
 
 agent_service = AgentService()

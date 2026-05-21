@@ -13,6 +13,7 @@ def get_setting(key: str, default: str = "false") -> str:
                 if encrypted_value:
                     try:
                         from src.server.services.credentials.crypto_utils import CryptoUtils
+
                         return CryptoUtils.decrypt_value(encrypted_value)
                     except Exception:
                         pass
@@ -22,6 +23,7 @@ def get_setting(key: str, default: str = "false") -> str:
         return os.getenv(key, default)
     except Exception:
         return os.getenv(key, default)
+
 
 def get_bool_setting(key: str, default: bool = False) -> bool:
     """Get a boolean setting from credential service."""

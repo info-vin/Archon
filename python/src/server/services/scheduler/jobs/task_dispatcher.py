@@ -36,15 +36,18 @@ async def run_task_dispatcher():
             logger.warning(
                 f"🚨 Task Sentinel: Reclaimed {len(reclaim_res.data)} stuck tasks (Timeout > {timeout_mins}m)"
             )
+            log_payloads = []
             for t in reclaim_res.data:
-                supabase.table("archon_logs").insert(
+                log_payloads.append(
                     {
                         "source": "task-sentinel",
                         "level": "WARNING",
                         "message": f"Auto-reclaimed stuck task: {t['title']}",
                         "details": {"task_id": t["id"], "type": "timeout_reclamation"},
                     }
-                ).execute()
+                )
+            if log_payloads:
+                supabase.table("archon_logs").insert(log_payloads).execute()
 
         # 2. Dispatch recurring tasks
         res = (
@@ -60,13 +63,14 @@ async def run_task_dispatcher():
             return
 
         logger.info(f"📡 Clockwork: Found {len(tasks)} tasks ready for automated execution.")
+        log_payloads = []
         for task in tasks:
             task_id = task["id"]
             logger.info(f"📡 Clockwork: Dispatching task '{task['title']}' (ID: {task_id})")
             await agent_service.run_agent_task(task_id=task_id, agent_id=task.get("assignee_id", AgentUUIDs.LIBRARIAN))
 
             # Record in Audit Log
-            supabase.table("archon_logs").insert(
+            log_payloads.append(
                 {
                     "source": "clockwork-scheduler",
                     "level": "INFO",
@@ -77,6 +81,8 @@ async def run_task_dispatcher():
                         "target_id": task.get("crawler_target_id"),
                     },
                 }
-            ).execute()
+            )
+        if log_payloads:
+            supabase.table("archon_logs").insert(log_payloads).execute()
     except Exception as e:
         logger.error(f"💥 Clockwork: Task Dispatcher Failed: {e}")

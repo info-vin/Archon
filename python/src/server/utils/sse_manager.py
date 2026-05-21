@@ -24,6 +24,7 @@ class SSEManager:
     async def subscribe(self) -> tuple[str, asyncio.Queue]:
         """Subscribe a new client and return a unique ID and its queue"""
         import uuid
+
         subscriber_id = str(uuid.uuid4())
         queue: asyncio.Queue[str] = asyncio.Queue()
         self.subscribers[subscriber_id] = queue

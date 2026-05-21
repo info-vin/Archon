@@ -15,11 +15,13 @@ from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class VisitLogService(BaseRepository):
     """
     Visit Log Service - Business logic for tracking customer interactions.
     Restored with Voice-to-Task (GAP-009) and aligned with 0413 SDK patterns.
     """
+
     def __init__(self, supabase_client=None):
         super().__init__(supabase_client or get_supabase_client())
 
@@ -29,6 +31,7 @@ class VisitLogService(BaseRepository):
             if lead_id:
                 q = q.eq("lead_id", lead_id)
             return q.order("created_at", desc=True).execute()
+
         return self.execute_query(_query, "Failed to list logs")
 
     async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str]]:
@@ -56,27 +59,26 @@ class VisitLogService(BaseRepository):
             try:
                 uploaded_file = client.files.upload(file=tmp_path)
 
-                sys_prompt = prompt_service.get_prompt("VOICE_TRANSCRIPTION", (
-                    "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
-                    "總結關鍵對話內容，並提取跟進任務。回傳格式為 JSON: "
-                    "{'transcript': '...', 'summary': '...', 'tasks': ['...']}"
-                ))
+                sys_prompt = prompt_service.get_prompt(
+                    "VOICE_TRANSCRIPTION",
+                    (
+                        "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
+                        "總結關鍵對話內容，並提取跟進任務。回傳格式為 JSON: "
+                        "{'transcript': '...', 'summary': '...', 'tasks': ['...']}"
+                    ),
+                )
 
                 response = await client.aio.models.generate_content(
                     model=model_name,
                     contents=cast(Any, [uploaded_file, sys_prompt]),
-                    config=types.GenerateContentConfig(response_mime_type="application/json")
+                    config=types.GenerateContentConfig(response_mime_type="application/json"),
                 )
             finally:
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
             result = json.loads(cast(str, response.text))
-            return (
-                result.get("transcript", ""),
-                result.get("summary", "音訊處理完成。"),
-                result.get("tasks", [])
-            )
+            return (result.get("transcript", ""), result.get("summary", "音訊處理完成。"), result.get("tasks", []))
         except Exception as e:
             logger.error(f"VisitLogService: AI processing crashed: {e}")
             return f"[AI Error: {e}]", "System error during transcription.", []
@@ -127,7 +129,9 @@ class VisitLogService(BaseRepository):
             project_id = None
 
             # Try fuzzy match 'Ops' first to avoid hard 'Field Ops' constraint
-            proj_res = self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
+            proj_res = (
+                self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
+            )
             if proj_res.data:
                 project_id = proj_res.data[0]["id"]
 
@@ -151,7 +155,7 @@ class VisitLogService(BaseRepository):
                     title=task_title,
                     description=task_desc,
                     assignee_id=data.get("user_id"),
-                    sources=[{"type": "visit_log", "id": str(visit_id)}]
+                    sources=[{"type": "visit_log", "id": str(visit_id)}],
                 )
                 logger.info(f"VisitLogService: Successfully dispatched auto-task for log {visit_id}")
         except Exception as task_err:
@@ -161,6 +165,7 @@ class VisitLogService(BaseRepository):
 
     async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
         """Fetches the current attendance status for a user."""
+
         def _query():
             return (
                 self.supabase_client.table("attendance_logs")
@@ -177,6 +182,7 @@ class VisitLogService(BaseRepository):
 
         data: list[Any] = res if isinstance(res, list) else []
         return True, data[0] if len(data) > 0 else {"status": "OFF_WORK", "clock_in_time": None}
+
 
 # Singleton export
 visit_log_service = VisitLogService()

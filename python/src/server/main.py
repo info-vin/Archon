@@ -133,7 +133,7 @@ app.include_router(prompts_router)
 # Group 2: Routers that NEED an "/api" prefix (defined without prefix internally)
 app.include_router(auth_router, prefix="/api")
 app.include_router(settings_router, prefix="/api")
-app.include_router(internal_router) # Already defines /internal
+app.include_router(internal_router)  # Already defines /internal
 
 app.include_router(test_api_router)
 

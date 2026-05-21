@@ -12,9 +12,8 @@ from src.agents.rag_agent import RagDependencies
 
 logger = logging.getLogger(__name__)
 
-async def search_documents_tool(
-    ctx: RunContext[RagDependencies], query: str, source_filter: str | None = None
-) -> str:
+
+async def search_documents_tool(ctx: RunContext[RagDependencies], query: str, source_filter: str | None = None) -> str:
     """Search through documents using RAG query."""
     try:
         # Use source filter from context if not provided
@@ -47,22 +46,21 @@ async def search_documents_tool(
             content = res.get("content", "")
 
             # Capture physical citation
-            ctx.deps.collected_citations.append({
-                "index": i,
-                "source": source,
-                "url": url,
-                "similarity": similarity,
-                "snippet": content[:200] + "..." if len(content) > 200 else content
-            })
+            ctx.deps.collected_citations.append(
+                {
+                    "index": i,
+                    "source": source,
+                    "url": url,
+                    "similarity": similarity,
+                    "snippet": content[:200] + "..." if len(content) > 200 else content,
+                }
+            )
 
             # Truncate content for LLM if too long
             llm_content = content[:500] + "..." if len(content) > 500 else content
 
             formatted_results.append(
-                f"**Result {i}** (Relevance: {similarity:.2%})\n"
-                f"Source: {source}\n"
-                f"URL: {url}\n"
-                f"Content: {llm_content}\n"
+                f"**Result {i}** (Relevance: {similarity:.2%})\nSource: {source}\nURL: {url}\nContent: {llm_content}\n"
             )
 
         return f"Found {len(results)} relevant results:\n\n" + "\n---\n".join(formatted_results)
@@ -70,6 +68,7 @@ async def search_documents_tool(
     except Exception as e:
         logger.error(f"Error searching documents: {e}")
         return f"Error performing search: {str(e)}"
+
 
 async def list_available_sources_tool(ctx: RunContext[RagDependencies]) -> str:
     """List all available sources that can be searched."""
@@ -105,6 +104,7 @@ async def list_available_sources_tool(ctx: RunContext[RagDependencies]) -> str:
     except Exception as e:
         logger.error(f"Error listing sources: {e}")
         return f"Error retrieving sources: {str(e)}"
+
 
 async def search_code_examples_tool(
     ctx: RunContext[RagDependencies], query: str, source_filter: str | None = None
@@ -158,6 +158,7 @@ async def search_code_examples_tool(
         logger.error(f"Error searching code examples: {e}")
         return f"Error searching code: {str(e)}"
 
+
 async def refine_search_query_tool(ctx: RunContext[RagDependencies], original_query: str, context: str) -> str:
     """Refine a search query based on context to get better results."""
     try:
@@ -184,6 +185,7 @@ async def refine_search_query_tool(ctx: RunContext[RagDependencies], original_qu
     except Exception as e:
         return f"Could not refine query: {str(e)}"
 
+
 async def add_search_context_prompt(ctx: RunContext[RagDependencies]) -> str:
     source_info = f"Source Filter: {ctx.deps.source_filter}" if ctx.deps.source_filter else "No source filter"
     return f"""
@@ -193,4 +195,3 @@ async def add_search_context_prompt(ctx: RunContext[RagDependencies]) -> str:
 - Max Results: {ctx.deps.match_count}
 - Timestamp: {datetime.now().isoformat()}
 """
-

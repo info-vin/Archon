@@ -18,6 +18,7 @@ _FASTAPI_PARAM_RE = re.compile(r":\s*Annotated\[[^\]]+\]\s*=")
 _TRAILING_COMMA_PAREN_RE = re.compile(r",\s*\)")
 _TRAILING_COMMA_BRACKET_RE = re.compile(r",\s*]")
 
+
 def normalize_code_for_comparison(code: str) -> str:
     """Normalizes code string to improve similarity matching."""
     normalized = _WHITESPACE_RE.sub(" ", code.strip())
@@ -29,6 +30,7 @@ def normalize_code_for_comparison(code: str) -> str:
     normalized = _TRAILING_COMMA_PAREN_RE.sub(")", normalized)
     normalized = _TRAILING_COMMA_BRACKET_RE.sub("]", normalized)
     return normalized
+
 
 def select_best_code_variant(similar_blocks: list[dict[str, Any]]) -> dict[str, Any]:
     """Selects the highest quality code block from a group of similar variants."""
@@ -47,7 +49,10 @@ def select_best_code_variant(similar_blocks: list[dict[str, Any]]) -> dict[str, 
 
     return best_block
 
-def deduplicate_code_blocks(code_blocks: list[dict[str, Any]], similarity_threshold: float = 0.85) -> list[dict[str, Any]]:
+
+def deduplicate_code_blocks(
+    code_blocks: list[dict[str, Any]], similarity_threshold: float = 0.85
+) -> list[dict[str, Any]]:
     """Deduplicates a list of code blocks based on semantic similarity."""
     if not code_blocks:
         return []

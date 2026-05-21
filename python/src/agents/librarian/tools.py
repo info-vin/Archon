@@ -7,6 +7,7 @@ from src.server.services.crawling.crawling_service import CrawlingService
 
 logger = logging.getLogger(__name__)
 
+
 async def web_crawl_tool(ctx: RunContext[RagDependencies], url: str) -> str:
     """
     Crawls a specific URL to get the latest information from the web.
@@ -17,6 +18,7 @@ async def web_crawl_tool(ctx: RunContext[RagDependencies], url: str) -> str:
 
         # Phase 5.1.4: Hardening - Use the global crawler instance
         from src.server.services.crawler_manager import get_crawler
+
         crawler = await get_crawler()
 
         if not crawler:

@@ -14,14 +14,12 @@ logger = logging.getLogger(__name__)
 # --- 4. The Graph Orchestrator ---
 workflow_graph = Graph(nodes=[SupervisorNode, MarketBotNode, LibrarianNode, SummaryNode, DevBotNode, DavidNode])
 
+
 class WorkflowEngine:
     """Wrapper to run the graph and manage the state."""
 
     async def run_workflow(self, initial_prompt: str, task_type: str = "General") -> dict[str, Any]:
-        state = SharedState(
-            messages=[{"role": "user", "content": initial_prompt}],
-            task_type=task_type
-        )
+        state = SharedState(messages=[{"role": "user", "content": initial_prompt}], task_type=task_type)
         try:
             run_result = await workflow_graph.run(SupervisorNode(), state=state)
             final_state = run_result.state
@@ -70,10 +68,14 @@ class WorkflowEngine:
                 final_res_str = str(final_state.final_result or _get_output(run_result))
 
             is_success = "Supervisor Error:" not in final_res_str and "Circuit Breaker Tripped:" not in final_res_str
+            error_msg = None
+            if not is_success:
+                error_msg = final_res_str
 
             return {
                 "success": is_success,
-                "final_result": final_res_str,
+                "final_result": final_res_str if is_success else None,
+                "error": error_msg,
                 "step_count": final_state.step_count,
                 "messages": final_state.messages,
             }

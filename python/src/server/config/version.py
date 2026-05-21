@@ -7,6 +7,7 @@ import os
 
 logger = logging.getLogger(__name__)
 
+
 def get_latest_version() -> str:
     """
     Dynamically detects the latest version from the migration directory.
@@ -21,7 +22,7 @@ def get_latest_version() -> str:
             "/app/migration",
             os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "migration")),
             os.path.abspath(os.path.join(os.getcwd(), "migration")),
-            "migration"
+            "migration",
         ]
 
         base_path = None
@@ -38,11 +39,12 @@ def get_latest_version() -> str:
             return os.getenv("ARCHON_VERSION", "0.2.1")
 
         # Sort by version components to handle 0.10.0 > 0.2.0 correctly
-        latest = sorted(subdirs, key=lambda x: [int(c) for d in [x.split('.')] for c in d])[-1]
+        latest = sorted(subdirs, key=lambda x: [int(c) for d in [x.split(".")] for c in d])[-1]
         return latest
     except Exception as e:
         logger.warning(f"Failed to detect dynamic version: {e}")
         return os.getenv("ARCHON_VERSION", "0.2.1")
+
 
 # Current version of Archon - Dynamically detected
 ARCHON_VERSION = get_latest_version()
@@ -50,4 +52,3 @@ ARCHON_VERSION = get_latest_version()
 # Repository information for GitHub API
 GITHUB_REPO_OWNER = "coleam00"
 GITHUB_REPO_NAME = "Archon"
-

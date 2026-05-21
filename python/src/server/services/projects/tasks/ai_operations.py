@@ -65,6 +65,7 @@ async def refine_task_description_logic(supabase_client, title: str, description
 
         # 3. Generate Content using official SDK
         from src.server.config.model_ssot import SYSTEM_MODELS
+
         model_name = SYSTEM_MODELS["DEFAULT_TEXT"]
 
         # Key Decoupling: Prefer GEMINI_API_KEY
@@ -77,6 +78,7 @@ async def refine_task_description_logic(supabase_client, title: str, description
 
         client = genai.Client(api_key=charlie_api_key)
         from src.server.services.system.rate_limiter import GlobalThrottler
+
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
         response = client.models.generate_content(
@@ -196,6 +198,7 @@ async def generate_task_from_alert_logic(
 
         # 4. Call AI using Official SDK
         from src.server.config.model_ssot import SYSTEM_MODELS
+
         model_name = SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1]
         charlie_api_key = await credential_service.get_credential(
             "GEMINI_API_KEY"
@@ -222,6 +225,7 @@ async def generate_task_from_alert_logic(
 
         client = genai.Client(api_key=charlie_api_key)
         from src.server.services.system.rate_limiter import GlobalThrottler
+
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
         @retry_with_backoff(max_retries=2)

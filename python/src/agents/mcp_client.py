@@ -44,9 +44,9 @@ class MCPClient:
                 mcp_port = os.getenv("ARCHON_MCP_PORT", "8051")
                 # Check for multiple Docker indicators
                 is_docker = (
-                    os.getenv("DOCKER_CONTAINER") == "true" or
-                    os.getenv("DOCKER_ENV") == "true" or
-                    Path("/.dockerenv").exists()
+                    os.getenv("DOCKER_CONTAINER") == "true"
+                    or os.getenv("DOCKER_ENV") == "true"
+                    or Path("/.dockerenv").exists()
                 )
 
                 if is_docker:

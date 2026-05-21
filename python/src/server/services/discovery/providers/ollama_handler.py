@@ -1,4 +1,3 @@
-
 from urllib.parse import urlparse
 
 import aiohttp
@@ -13,6 +12,7 @@ from ..models import (
 )
 
 logger = get_logger(__name__)
+
 
 async def discover_ollama_models(base_urls: list[str], session: aiohttp.ClientSession, test_tool_fn) -> list[ModelSpec]:
     """1:1 Physical Parity Implementation from ProviderDiscoveryService."""
@@ -40,15 +40,24 @@ async def discover_ollama_models(base_urls: list[str], session: aiohttp.ClientSe
                                 context_window = window_size
                                 break
 
-                        embedding_dims = next((dims for pattern, dims in EMBEDDING_DIMENSIONS.items() if pattern in model_name.lower()), None)
+                        embedding_dims = next(
+                            (dims for pattern, dims in EMBEDDING_DIMENSIONS.items() if pattern in model_name.lower()),
+                            None,
+                        )
 
-                        models.append(ModelSpec(
-                            name=full_name, provider="ollama", context_window=context_window,
-                            supports_tools=supports_tools, supports_vision=supports_vision,
-                            supports_embeddings=supports_embeddings, embedding_dimensions=embedding_dims,
-                            description=f"Ollama model on {base_url}",
-                            aliases=[model_name] if ":" in full_name else []
-                        ))
+                        models.append(
+                            ModelSpec(
+                                name=full_name,
+                                provider="ollama",
+                                context_window=context_window,
+                                supports_tools=supports_tools,
+                                supports_vision=supports_vision,
+                                supports_embeddings=supports_embeddings,
+                                embedding_dimensions=embedding_dims,
+                                description=f"Ollama model on {base_url}",
+                                aliases=[model_name] if ":" in full_name else [],
+                            )
+                        )
                     all_models.extend(models)
                     logger.info(f"Discovered {len(models)} Ollama models from {base_url}")
         except Exception as e:

@@ -50,7 +50,7 @@ async def get_mcp_config(current_user: dict = Depends(requires_permission(MCP_MA
         "transport": mcp_transport,
         "port": int(mcp_port),
         "api_endpoint": api_url,
-        "host": "localhost" if "localhost" in api_url else "archon-server"
+        "host": "localhost" if "localhost" in api_url else "archon-server",
     }
 
 

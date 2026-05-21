@@ -1,3 +1,4 @@
+import aiofiles
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
@@ -55,11 +56,11 @@ async def david_read_file(path: str, current_user: dict = Depends(get_current_us
     # Basic security check: ensure the path is within the app directory
     # (The container itself is already limited by Docker mounts)
     if ".." in path or path.startswith("/"):
-         raise HTTPException(status_code=400, detail="Invalid path or traversal attempt")
+        raise HTTPException(status_code=400, detail="Invalid path or traversal attempt")
 
     try:
-        with open(path, encoding="utf-8") as f:
-            return f.read()
+        async with aiofiles.open(path, encoding="utf-8") as f:
+            return await f.read()
     except Exception as e:
         logger.error(f"David Read: Failed to read {path}: {e}")
         raise HTTPException(status_code=404, detail=f"File not found or unreadable: {str(e)}") from e
@@ -72,12 +73,16 @@ async def get_document_versions(limit: int = 100, current_user: dict = Depends(v
     """
     try:
         from ..utils import get_supabase_client
+
         supabase = get_supabase_client()
-        res = supabase.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit).execute()
+        res = (
+            supabase.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit).execute()
+        )
         return {"versions": res.data if res and res.data else []}
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch document versions: {e}")
         return {"versions": []}
+
 
 @router.get("/users")
 async def get_users(limit: int = 100, role: str | None = None, current_user: dict = Depends(get_current_user)):
@@ -156,11 +161,10 @@ class CrawlerTargetCreate(BaseModel):
 
 
 @router.get("/crawler-targets", dependencies=[Depends(verify_manager_role)])
-async def list_crawler_targets(
-    current_user: dict = Depends(get_current_user)
-):
+async def list_crawler_targets(current_user: dict = Depends(get_current_user)):
     """List specialized crawler targets (Respects Department Isolation)."""
     from ..utils import get_supabase_client
+
     query = get_supabase_client().table("archon_crawler_targets").select("*")
 
     # Physical Isolation logic: If not Admin, filter by department
@@ -171,13 +175,12 @@ async def list_crawler_targets(
     res = query.order("created_at").execute()
     return res.data or []
 
+
 @router.post("/crawler-targets", dependencies=[Depends(verify_manager_role)])
-async def create_crawler_target(
-    request: CrawlerTargetCreate,
-    current_user: dict = Depends(get_current_user)
-):
+async def create_crawler_target(request: CrawlerTargetCreate, current_user: dict = Depends(get_current_user)):
     """Add a new target associated with the manager's department."""
     from ..utils import get_supabase_client
+
     data = request.model_dump()
     data["department"] = current_user.get("department", "General")
 
@@ -186,8 +189,8 @@ async def create_crawler_target(
         raise HTTPException(status_code=500, detail="Failed to create target")
     return res.data[0]
 
-@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)])
 
+@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)])
 async def delete_crawler_target(target_id: str, current_user: dict = Depends(get_current_user)):
     """Remove a target (Protected by DB RLS for Managers)."""
     from ..utils import get_supabase_client
@@ -196,11 +199,10 @@ async def delete_crawler_target(target_id: str, current_user: dict = Depends(get
     get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()
     return {"success": True}
 
+
 @router.get("/logs", dependencies=[Depends(verify_manager_role)])
 async def get_admin_logs(
-    type: str | None = None,
-    time_range: str | None = "7d",
-    current_user: dict = Depends(get_current_user)
+    type: str | None = None, time_range: str | None = "7d", current_user: dict = Depends(get_current_user)
 ):
     """Fetch system logs (e.g., AI_CORRECTION)."""
     from datetime import datetime, timedelta

@@ -3,6 +3,7 @@ from src.server.services.embeddings.multi_dimensional_embedding_service import m
 
 logger = get_logger(__name__)
 
+
 class FallbackStrategy:
     """Handles fallback routing strategies for embeddings."""
 

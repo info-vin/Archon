@@ -1,6 +1,7 @@
 """
 Threading Metrics Submodule
 """
+
 import threading
 import time
 from dataclasses import dataclass, field
@@ -11,11 +12,13 @@ import psutil
 @dataclass
 class SystemMetrics:
     """Current system performance metrics"""
+
     memory_percent: float
     cpu_percent: float
     available_memory_gb: float
     active_threads: int
     timestamp: float = field(default_factory=time.time)
+
 
 def get_system_metrics() -> SystemMetrics:
     """Get current system performance metrics"""

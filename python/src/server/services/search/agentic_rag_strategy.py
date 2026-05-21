@@ -41,6 +41,7 @@ class AgenticRAGStrategy(BaseRepository):
     def is_enabled(self) -> bool:
         """Check if agentic RAG is enabled via configuration."""
         from src.server.services.search.rag_config import get_bool_setting
+
         return get_bool_setting("USE_AGENTIC_RAG", False)
 
     async def search_code_examples(
@@ -161,6 +162,7 @@ class AgenticRAGStrategy(BaseRepository):
                     # Add additional context if requested
                     if include_context:
                         from src.server.services.search.result_formatters import extract_code_context
+
                         formatted_result["chunk_number"] = result.get("chunk_number")
                         formatted_result["context"] = extract_code_context(result)
 
@@ -195,6 +197,7 @@ class AgenticRAGStrategy(BaseRepository):
                     "source_filter": source_id,
                     "search_mode": "agentic_rag",
                 }
+
 
 # Utility functions for standalone usage
 def create_agentic_rag_strategy(supabase_client: Client) -> AgenticRAGStrategy:
@@ -240,4 +243,5 @@ def analyze_query_for_code_search(query: str) -> dict[str, Any]:
         Analysis results
     """
     from src.server.services.search.query_analyzer import analyze_code_query
+
     return analyze_code_query(query)

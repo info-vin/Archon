@@ -61,159 +61,111 @@
 
 # 第二章：關鍵學習與偵錯模式 (Key Lessons & Debugging Patterns)
 
-> 本章節提煉了從大量歷史日誌中反覆出現的、最有價值的經驗教訓，並將其歸納為六個可複用的偵錯模式。
+> 本章節將專案開發的歷史血淚與系統工程原則精煉為 **12 條核心黃金律**。這 12 條原則是 AI 助理與人類協作時不可逾越的行動邊界與自癒模式。
 
-*   **1. 證據至上：日誌是真相，歷史是脈絡 (Evidence is King: Logs are Truth, History is Context)**
-    *   **核心**: 停止猜測。當行為與預期不符時，立即注入日誌 (`console.log`, `print`) 查看原始輸出。當 Bug 反覆出現時，使用 `git log` 追溯程式碼的歷史意圖。日誌揭示「當下發生了什麼」，歷史解釋「為什麼會這樣」。
+* **1. 證據至上與日誌真理 (Evidence First & Log Truth)**
+    * **核心**: 拒絕主觀盲猜，日誌揭示當下事實，`git log` 交代歷史意圖。當行為不符預期時，立即在第一線注入實體日誌 (`console.log`, `print`)。當 Bug 反覆出現時，用歷史脈絡解讀代碼設計初衷，絕不在資訊真空下盲目修補。
 
-*   **2. 信任但驗證：流程與直覺的雙重檢查 (Trust but Verify: Double-Check Processes and Intuition)**
-    *   **核心**: 將 SOP (`Makefile`, `CONTRIBUTING.md`) 和使用者的直覺都視為強烈的訊號，但兩者都必須被驗證。優先查閱 SOP，因為答案可能已存在。當使用者表示懷疑時，應立即暫停，並用證據去驗證或排除他們的疑慮。
+* **2. 流程與直覺的雙重對帳 (Trust but Verify Everything)**
+    * **核心**: 將 SOP (`Makefile`, `CONTRIBUTING.md`) 與使用者的直覺視為核心訊號，但兩者皆須經過雙重驗證。優先查閱既有規範以防重複犯錯；當使用者提出質疑時，立即暫停「快樂路徑」，用硬數據或程式碼實體去證實或排除疑慮。
 
-*   **3. 隔離戰場：區分環境、程式碼與元件 (Isolate the Battlefield: Separate Environment, Code, and Components)**
-    *   **核心**: 複雜的 Bug 往往是多個問題的疊加。必須系統性地隔離變因。`make test` 失敗，是根目錄 `Makefile` 的問題，還是子專案 `pnpm test` 的問題？本地正常但 Docker 異常，優先清理快取和殘留容器，並詳讀 `Dockerfile`。
+* **3. 戰場隔離與變因控制 (Isolate the Battlefield)**
+    * **核心**: 複雜的 Bug 往往是多層環境污染的疊加。必須系統性隔離變因：區分是宿主機環境、Docker 容器、還是前端元件問題。`make test` 失敗時，應釐清是根目錄工具鏈衝突還是子專案配置污染，本地異常優先清理快取與容器。
 
-*   **4. 精通工具：從 Linter 配置到 Mock 類型 (Master Your Tools: From Linter Config to Mock Types)**
-    *   **核心**: 工具的行為由其配置決定。看似 Bug 的行為，往往是配置不當。Linter 規範的根源可能在 `.eslintrc`；測試失敗的根源可能在於混淆了 `Mock` 與 `AsyncMock`；在發明輪子前，先讀懂工具手冊。
+* **4. 配置驅動與工具手冊意識 (Master Your Tool Configuration)**
+    * **核心**: 工具的怪異行為 90% 源於配置，而非底層 Bug。Linter 規範根源在 `.eslintrc`，測試工具的 Hoisting 特性（如 `vi.mock`）要求依賴變數必須提升至 `vi.hoisted`。在發明新輪子或暴力破解前，必須徹底讀懂工具鏈的配置規格。
 
-*   **5. 精準測試：填補盲區，應對非同步 (Test with Precision: Fill Blind Spots, Handle Async)**
-    *   **核心**: `lint` 發現但 `test` 沒發現的問題，是測試覆蓋率不足的信號。應編寫一個能精準復現問題的最小化單元測試。對於非同步或單例服務，必須使用特殊的 `patch` 模式（如 `setup_module`）才能正確隔離和測試。
+* **5. 網路與環境隔離防護 (Internal/External Network Isolation)**
+    * **核心**: 嚴防 Docker 內部 DNS（如 `supabase_kong`）洩漏至外部瀏覽器。前端代碼必須具備「主動防禦」特徵檢測，在請求發出前攔截無效的內部 URL 並切換至狀態化模擬 (Stateful Mock) 模式，杜絕瀏覽器因解析失敗陷入無限靜默 Loading。
 
-*   **6. 全生命週期視角：從願景到部署後驗證 (Full Lifecycle View: From Vision to Post-Deployment Validation)**
-    *   **核心**: 開發不僅僅是寫程式碼。它始於透過分析假資料 (`MOCK_DATA`) 或文件來理解真實的專案願景，並終結於 `push`、部署、以及最重要的——由終端使用者在瀏覽器（注意快取）驗證無誤。一個修復只有在被使用者確認後才算完成。
+* **6. 物理穿透驗證與三向連動 (Physical Penetration Verification)**
+    * **核心**: 徹底終結「幽靈開發」，警惕日誌與文件的偽證。修改功能時，必須落實三向連動檢查：入口掛載 (main.py)、依賴映射 (index.html) 與實體測試斷言 (pytest/vitest)。只有當磁碟檔案 (`read_file`) 與測試物理性通過，方可標記為🟢已修復。
 
-*   **7. 內外網隔離原則：主動防禦環境變數污染 (Internal/External Isolation: Proactive Guard against Env Pollution)**
-    *   **核心**: 在 Docker 化環境中，後端傳遞給前端的環境變數（如 `SUPABASE_URL`）可能包含內部 Docker DNS（如 `supabase_kong`）。這對瀏覽器是無效的。前端代碼必須具備「主動防禦」邏輯，透過靜態特徵檢測（如檢查 URL 是否包含 `_kong`），在請求發出前攔截並切換至 Mock模式，避免瀏覽器因 DNS 解析失敗而陷入無限 Loading。
+* **7. 雲原生意識與邊界防禦 (Absolute Cloud-Native Awareness)**
+    * **核心**: 認清基礎設施事實，專案連接的是雲端 Supabase，而非本地 Docker。遇資料庫權限錯誤時，**絕對禁止**嘗試用 `docker exec` 強行修正。必須產出正確 SQL 修正檔存於 `migration/` 下，並請求人類管理員於雲端後台授權執行，遵循 Fail-Fast 原則。
 
-*   **8. 測試邊界與狀態化模擬 (Test Boundaries & Stateful Mocks)**
-    *   **核心**: 
-        1.  **配置互斥**: Unit Test (`vite.config.ts`) 與 E2E Test (`vitest.e2e.config.ts`) 的包含路徑必須互斥 (`exclude`)，避免同一測試在錯誤環境下重複執行。
-        2.  **狀態連動**: E2E 測試若涉及 CRUD 流程，Mock 必須具備狀態 (Stateful)，不能只回傳靜態空值，否則無法驗證「新增後顯示」的邏輯。
-        3.  **變數提升**: 謹記 `vi.mock` 的 Hoisting 特性，依賴的變數必須使用 `vi.hoisted` 定義。
+* **8. 物理介面與資料模型審查 (UI vs Data Model Disconnect)**
+    * **核心**: 後端 API 與 Schema 存在，不代表 UI 介面就存在。當選單無資料時，除了審查 API Response，必須使用 `search_file_content` 逆向追蹤 `[POST]` 請求是否被 React 元件呼叫，嚴防指引使用者點擊看似相似卻無關的按鈕而陷入除錯迷航。
 
-*   **9. 巢狀捲動死鎖防禦 (Nested Scroll Lockup Defense)**
-    *   **核心**: 在巢狀 Flex 佈局中，子層若使用 `min-h-screen` 會鎖死父層的 `overflow-y-auto` 捲動軸。解決方案是「釋放子層高度」，讓內容自然撐開父層，並輔以底部物理緩衝 (`div.h-32`) 避開手機導覽列。
+* **9. 實體設定持久化與路徑自適應 (Profile Persistence & Path Resilience)**
+    * **核心**: 在 `browser-use` 自動化導航中，必須在 `BrowserConfig` 中使用 `user_data_dir` 參數加載已登入的 Profile，嚴禁透過引數傳遞以免被 Playwright 忽略。尋找系統源頭時，必須採用「多路徑陣列探測法」相容 Host 與 Docker 相對路徑。
 
-*   **10. 物理穿透驗證：終結「幽靈開發」 (Physical Penetration Verification)**
-    *   **核心**: 警惕「日誌領跑代碼」。Git Log 與 GEMINI.md 說「已實作」可能是虛假的偽證（例如漏掉 git add）。
-    *   **SOP**: 
-        1.  **實體掃描**: 必須讀取磁碟檔案內容 (`read_file`) 確認邏輯存在。
-        2.  **三向連動**: 檢查入口掛載 (main.py)、依賴映射 (index.html) 與測試斷言 (pytest/vitest)。
-        3.  **拒絕樂觀**: 只有當 `curl` 或 `test` 物理性通過時，方可標記為「🟢 已修復」。
+* **10. 設定硬化、防禦性路由與【絕對鐵律】 (Settings Hardening & Route Defenses)**
+    * **核心**: 透過 `is_system_protected` 欄位與 API 物理過濾，在 UI 隱藏系統級工具參數。FastAPI 模組化掛載時，子路由若已定義 `prefix`，主入口絕對禁止重複添加前綴（嚴防 `/api/api` 嵌套 404）。
+    * **【絕對鐵律 (Absolute Iron Law)】**: **Admin UI 的 Port 永遠是 5173 (enduser-ui-fe)，絕對不是 3737！** 若 Gemini 在任何對話或文件中將其錯說成 3737，必須立即主動中斷任務，向使用者承認「我犯了不可繞恕的上下文遺忘罪」，並罰寫此鐵律 3 次後方可繼續工作。
 
-*   **11. 絕對雲原生意識：禁止本地容器暴力破解 (Absolute Cloud-Native Awareness)**
-    *   **核心**: 專案連接的是**雲端 Supabase** (`SUPABASE_URL`)，並非本地 Docker (`supabase-db`)。當遇到資料庫錯誤 (如 `"permission denied for sequence"`)，**絕對禁止**嘗試用 `docker exec psql` 或 `npx supabase` 強行修正。
-    *   **SOP**: 
-        1.  **寫入腳本**: 產生正確的 SQL 修正檔 (存在 `migration/` 下)。
-        2.  **人類授權**: 停止自動化腳本，向使用者說明原因，並請求使用者親自在 Supabase Cloud 執行該段 SQL。
-        3.  這也已被編入 `.agents/skills/supabase_cloud_environment.md` 作為安全預設值。
+* **11. 權限遮蔽陷阱與佈局死鎖防禦 (Permission Masking & Scroll Lockup Defense)**
+    * **核心**: 
+        1. **權限自癒**：後端 Service 絕對禁止手寫 `profile["permissions"] = []`，避免前端跳過 Role Fallback 導致 Bob 的側邊欄靜默消失，應由 `RBACService` 動態注入。
+        2. **佈局解鎖**：在巢狀 Flex 佈局中，子層若使用 `min-h-screen` 會鎖死父層捲動，必須「釋放子層高度」，並輔以底部物理緩衝 (`div.h-32`) 避開手機導覽列。
 
-*   **12. 物理介面與資料模型的斷層審查 (UI vs Data Model Disconnect)**
-    *   **核心**: 後端 API 存在 (`POST /api/admin/crawler-targets`)，Schema 存在，且相依功能存在 (Task Modal 下拉選單)，**不代表**用來創造資料的 UI 介面就存在。
-    *   **教訓**: 在 Phase 4.6.4 中，5173 任務的 Crawler Target 下拉選單為空，原因是 Admin UI 原本「忘記實作」新增 Target 的頁面。
-    *   **SOP**: 當發現前端選單無資料時，除了檢查 API responses，更該使用 `search_file_content` 逆向追蹤建立該資料的 `[POST]` Request 是否有被任何 React Component 呼叫。不要輕易指引使用者去點擊看似相似的按鈕（例如 `+ Knowledge` 建立的是單次的 `archon_sources`，而非定期的 `archon_crawler_targets`，導致了長達數小時的除錯迷航）。
-
-*   **13. Browser-Use 實體設定與 Profile 持久化 (Browser-Use Profile Persistence)**
-    *   **核心**: 在 `browser-use` 中，若要加載已存在的 Playwright Browser Profile (例如已登入的 `.browser_data`)，必須直接在 `BrowserConfig` 中使用 `user_data_dir` 參數，而非透過 `extra_chromium_args` 傳遞 `--user-data-dir` 旗標。
-    *   **教訓**: 若使用 `extra_chromium_args` 傳遞路徑，`browser-use` 底層的 Playwright 管理器可能會忽略該旗標，導致啟動一個全新的、未登入的匿名工作階段。使用 `user_data_dir` 參數則能確保正確載入現有的 Cookie 與 Session。
-
-*   **14. 跨環境動態路徑偵測 (Cross-Env Path Resilience)**
-    *   **核心**: 在 Docker 容器化環境中，絕對路徑與相對路徑（如 `../../../../migration`）的行為與宿主機不同。
-    *   **教訓**: 尋找系統事實來源（如 `migration/` 或 `frontend_public`）時，必須採用「多路徑陣列探測法（Multi-Path Array Probing）」，同時定義 Host 相對路徑、Docker 絕對路徑與根目錄相對路徑，確保代碼具備環境自適應能力。
-    *   **範例**: `POSSIBLE_DIRS = ["../enduser-ui-fe/public", "/app/frontend_public", "enduser-ui-fe/public"]`。
-
-*   **15. 設定的可見性與系統保護 (Settings Visibility & Hardening)**
-    *   **核心**: 資料庫中的 `archon_settings` 表承載了從 AI 金鑰到內部營運參數的所有配置。
-    *   **教訓**: 透過引入 `is_system_protected` 欄位與 API 層級的物理過濾，確保 Admin UI 僅顯示「人類可管理的設定」，而隱藏內部的工具參數。
-    *   **【絕對鐵律 (Absolute Iron Law)】**: **Admin UI 的 Port 永遠是 5173 (enduser-ui-fe)，絕對不是 3737！** 如果 Gemini 未來在任何對話或文件中將 Admin UI 的 Port 說錯成 3737，必須立即主動中斷當前任務，向使用者承認「我犯了不可饒恕的上下文遺忘罪」，並罰寫此鐵律 3 次後才能繼續工作。
-
-*   **16. 路由嵌套與前綴衝突 (Route Nesting & Prefix Conflict)**
-    *   **核心**: 在 FastAPI 模組化掛載中，若子路由 (`APIRouter`) 已定義 `prefix="/api/..."`，主入口 `main.py` **絕對禁止** 再次添加重複前綴。
-    - **物理罪證**: 4.6.34 期間出現了 `/api/api/admin` 導致 404 與 ReadTimeout。
-    - **SOP**: 每次修改路由，必須執行 `make persona-audit` 物理公證 5 人通路。
-
-*   **17. 靜默權限遮蔽陷阱 (Silent Permission Masking)**
-    *   **核心**: 後端 Service **絕對禁止** 手寫 `profile["permissions"] = []`。
-    - **物理罪證**: 這會導致前端引擎認為使用者「確定無權限」而跳過 Role Fallback，造成 Bob 的側邊欄物理消失。
-    - **SOP**: 權限應由專屬的 `RBACService` 動態注入，或留空交由前端靜態規則自癒。
-
-*   **18. 環境物理對齊原則 (Environment Physical Alignment)**
-    *   **核心**: 嚴禁幻想 Host 機器與 Docker 容器具有完全相同的依賴狀態。
-    - **教訓**: 在 4.6.42 中，本地執行 `make lint` 導致 `uv` 因群組未對齊而物理卸載 130 個套件。`google` 等命名空間包（Namespace Packages）極易因安裝順序或快取而發生 Import 衝突。
-
-*   **19. 環境相依性與幻想基礎設施 (Hallucinated Infrastructure)**
-    *   **核心**: 絕對禁止在未讀取 `docker-compose.yml` 的情況下，向使用者提議或設定依賴本地端伺服器的服務（如 `http://localhost:8000`）。
-    *   **教訓**: 在 Phase 4.6.55 中，因未檢查 Compose 檔案便提出 PostHog 本地部署方案，導致使用者浪費時間並產生不信任。必須落實「實體驗證基礎設施」的前置風險評估鐵律。
-
-*   **21. E2E 網路隔離與 TypeScript/Mock 資料對齊 (E2E Network Isolation & TypeScript/Mock Alignment)**
-    *   **核心**: E2E 測試穩定性的基石在於「100% 網絡/環境隔離」以及「Mock 數據與 TypeScript 接口的物理對齊」。
-    *   **教訓**: 在 `AdminPanelExhaustive` 測試中，雖然 mock 了舊版 AI 健康端點，但因遺漏了系統健康看板（`SystemHealthDashboard.tsx`）掛載時用 `Promise.all` 請求的 5 大核心指標 APIs（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細），在測試冷啟動時，真實 API 返空/超時引發前端「System Probe Failed」紅色卡片。補齊 Mock 後，又因 recent token usage 的 Mock 數據缺少 `role`、`user_name` 和 `tokens` 屬性，引發 React 的 `<TokenUsageTable>` 存取 `toUpperCase()` 時發生 `TypeError` 渲染崩潰。
-    *   **SOP**:
-        1. **完整隔離**：Dashboard 的所有非同步 API 必須 100% Mock 覆蓋，絕不可依賴真實後端查詢。
-        2. **物理對齊**：Mock 數據必須精確適配前端 TypeScript 介面規格（如 `TokenUsageDetail`），缺少任何非 nullable 欄位都可能在 React 渲染時引發不可預知的 TypeError，並在 Headless 測試中被無聲掩蓋。
-        3. **Warning/Error 日誌穿透**：調優 Playwright 監聽器以捕獲瀏覽器的 `warning` 與 `error`，使 React 組件崩潰與警告能夠在終端清晰浮現，杜絕盲人摸象式偵錯。
+* **12. E2E 品質門禁與 React 崩潰阻斷 (E2E Quality Gate & React Crash Hardening)**
+    * **核心**: 
+        1. **全域 Mock 隔離**：Dashboard 的所有非同步 API 必須 100% Mock 覆蓋（包含系統概覽、AI 用量等 5 大指標），決不耦合真實後端延遲，關閉 Recharts 圖表動畫防範 Headless 環境 TickItem 報錯。
+        2. **資料模型對齊**：Mock 數據結構必須與前端 TypeScript 介面（如 `TokenUsageDetail`）100% 物理對齊，缺少 non-nullable 欄位將引發 React 渲染時 `TypeError` (如 `toUpperCase()` 崩潰)。
+        3. **空值與日誌穿透**：後端嚴禁使用 `.single()` 獲取單筆可能為空之資料，改用安全的陣列查詢防禦 HTTP 500。Playwright 必須監聽並穿透瀏覽器的 `warning` 與 `error`，杜絕盲人摸象式除錯。
 
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 ### 2026-05-20: 封存 Phase 5.0.x 歷史文件
-*   **1. 歷史文件歸檔**:
-    - **行動**: 將 `PRPs/Phase_5.0.0_Multi_Agent_Implementation.md`, `PRPs/Phase_5.0.1_API_Error_Handling.md`, `PRPs/Phase_5.0.2_Native_Group_Chat_Feasibility.md` 三份過期歷史計畫文件，依循命名慣例封存至 `PRPs/archive/Phases_5.0.0_to_5.0.2/`。
-    - **結果**: 保持 `PRPs` 根目錄的精簡與聚焦。
+* **1. 歷史文件歸檔與目錄精簡**:
+    * **行動**: 將 `PRPs/Phase_5.0.0_Multi_Agent_Implementation.md`, `PRPs/Phase_5.0.1_API_Error_Handling.md`, `PRPs/Phase_5.0.2_Native_Group_Chat_Feasibility.md` 三份過期計畫文件移至 `PRPs/archive/Phases_5.0.0_to_5.0.2/`。
+    * **結果**: 100% 清除根目錄冗餘，保持 `PRPs` 核心路徑的聚焦與精簡。
 
-### 2026-05-19: Phase 5.1.8 實體貫通驗證與 Makefile 自動化測試文件升級
-*   **1. Phase 5.1.8 (Centralized LLM Gateway) 落地公證**:
-    - **驗證**: 審查了 `internal_llm_api.py`, `resilience.py` 與 `docker-compose.yml`。
-    - **結果**: 確證無虛假開發與系統斷層。`archon-server` 確實升格為網關並實作了 `ThreadingService` 的 `rate_limited_operation` (max_concurrent=1)。代理 URL 已正確注入 `archon-mcp` 與 `archon-agents`，所有底層架構對齊計畫。
-*   **2. Makefile 品質門禁 (Quality Gates) 文件擴充**:
-    - **行動**: 微調並擴充 `CONTRIBUTING_tw.md` 的測試指南章節，新增「進階驗證與自動化品質門禁」。
-    - **成果**: 完整記錄了 `make audit-qa`, `make persona-audit`, `make tech-debt-audit`, `make twin-scout` 等進階指令的使用時機與防禦層級，為未來 AI 與人類協作者提供了更清晰的系統驗收標準。
-
-### 2026-05-12: Model SSOT 確立與 Phase 5 星型群聊架構規劃
-*   **1. 基礎設施幻覺根除 (Model SSOT 100%)**:
-    - **行動**: 全域盤點並移除了 `agents/`, `server/`, `mcp_server/` 中 13 處關於 `openai:gpt-4o`, `gpt-4.1-nano` 與 `gemini-embedding-001` 的硬編碼回退機制。
-    - **機制**: 導入「Fail Fast」原則。系統現在完全依賴 `archon_settings` (資料庫) 與 `.env` 作為唯一的模型事實來源。若未設定則直接拋出 `ValueError`，徹底解決了隱性 429 崩潰問題。
-*   **2. Phase 5 架構藍圖 (LangGraph Evolution)**:
-    - **行動**: 將 Phase 4.6 收尾文件歸檔，並建立 `Phase_5.0.0_Multi_Agent_Implementation.md` 實作計畫與驗收報告。
-    - **決策**: 
-        - **Reject LangGraph**: 為了避免 Pydantic v1 依賴衝突，決定採用原生的 `pydantic-graph` 來構建狀態機。
-        - **星型群聊 (Star-Topology)**: 捨棄 AutoGen 的自由對話，改由 Supervisor 動態路由，並加上 `MAX_RECURSION = 3` 熔斷器以保護 API 成本。
-*   **3. Free Tier 經濟學與模型分級**:
-    - **驗證**: 透過實體腳本測試與聯網查證，修正了 AI 對新模型可用性的幻覺。
-    - **定案**: Supervisor 綁定 `gemini-3-flash-preview` (兼具免費層級與高智商)；Worker 綁定 `gemini-3.1-flash-lite-preview` (價格減半，吞吐量極高)；Embedding 暫不升級至 v2，以避開每日 1000 次的嚴苛免費限制。
-
-### 2026-05-06: 系統大掃除與技術債自動化巡邏上線
-*   **1. 歷史文檔與腳本大掃除**:
-    - **行動**: 刪除 `scripts/` 目錄下 5 個超過 14 天未使用的過期探針與假資料腳本，並將 `PRPs/archive/` 中的古老歷史文件依據「時代分類」（如 `Phase_3_Grafting_and_UI`）進行資料夾歸檔。
-    - **結果**: 專案根目錄與腳本庫大幅度瘦身，且歷史文件具備了更清晰的考古脈絡。
-*   **2. 技術債自動化巡邏 (Clockwork Tech-Debt Patrol)**:
-    - **行動**: 於 `Makefile` 加入 `tech-debt-audit` 指令，並將其實作轉換為 Clockwork 的原生 Python 背景任務 (`run_tech_debt_audit`)。
-    - **機制**: 透過 `scheduler_service.py` 設定每 336 小時（14天）自動檢查一次未歸檔的 PRPs 與過期腳本。若發現髒亂，Clockwork 會自動開立 Task 並指派給 `DevBot`。達成從「偵測」到「派單」的全自動化閉環。
-*   **3. 系統品質與落體驗證**:
-    - **稽核**: 透過 `phase-audit` 技能深度驗證 Phase 4.6.51~53 皆已物理落地（包含 `client.aio` 非同步化、Librarian 拆分、TTS `AudioPlayer` 元件與提示詞等）。
-    - **公證**: 執行 `make lint-be`, `make test-be`, `make persona-audit` 與 `make twin-scout`，所有品質門禁皆 100% 綠燈通過。
-
-### 2026-05-17: AdminPanelExhaustive E2E 物理加固與 React TypeError 阻斷
-*   **1. 系統健康標籤頁 (System Health Tab) 網絡 100% 隔離**:
-    - **行動**: 在 `AdminPanelExhaustive.spec.ts` 中補齊對系統健康看板 5 大核心 API 端點（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細）的 Playwright 路由攔截。
-    - **結果**: 徹底切斷 E2E 測試與真實 backend/資料庫冷啟動延遲 of 物理耦合，消除 「System Probe Failed」 錯誤畫面。
-*   **2. Mock 與 TypeScript 數據對齊 (React Crash 阻斷)**:
-    - **行動**: 修正 recent token usage mock 數據結構，補齊 `role`, `user_name`, `tokens`, `context` 等關鍵欄位，使其與 `TokenUsageDetail` 介面 100% 物理對齊。
-    - **結果**: 根治了 `<TokenUsageTable>` 存取 `row.role.toUpperCase()` 時的 React TypeError 渲染崩潰。
-*   **3. 嚴苛測試綠燈公證**:
-    - **行動**: 修改控制台日誌過濾以只顯示 Warning/Error，並在 `CI=1` 且停用自動重試 (`--retries=0`) 的模式下執行驗收。
-    - **結果**: 9 大標籤頁一次性 100% 物理綠燈通過，執行時間縮短至 43.2 秒，徹底消滅 flaky 抖動。
+### 2026-05-19: Phase 5.1.8 實體貫通驗證與 Makefile 品質門禁升級
+* **1. Centralized LLM Gateway 落地公證**:
+    * **行動**: 審查 `internal_llm_api.py`, `resilience.py` 與 `docker-compose.yml` 架構實體。
+    * **結果**: 確證無虛假開發。`archon-server` 已成功升格為網關，實作 `ThreadingService.rate_limited_operation` (max_concurrent=1) 限制，並將代理 URL 正確注入 `archon-mcp` 與 `archon-agents`。
+* **2. Makefile 進階品質門禁文件擴充**:
+    * **行動**: 重構 `CONTRIBUTING_tw.md` 測試指南，納入進階品質門禁自動化指令。
+    * **結果**: 完整標準化 `make audit-qa`, `make persona-audit`, `make tech-debt-audit`, `make twin-scout` 的使用時機與防禦層級，確立人機協作的驗收指標。
 
 ### 2026-05-18: Phase 5.1.7 雙生參數 CLI 雙軌與星型群聊動態自癒巡航落地
-*   **1. 雙向對帳引導規格化 (CLI --mode Integration)**:
-    - **行動**: 在 `scripts/twin_scout.py` 中完美實作 `--mode` CLI 參數選取（支援 `audit` 與 `action` 模式）。
-    - **機制**: 當 `--mode action` 時，啟動 Headed 模式並加載本地免密碼 `.browser_data/scout_action` 目錄，無縫繼承宿主機 OS Keychain 的 Cookie，完全根除了 Docker 與 Host 之間的 Chromium 加密憑證讀取障礙。
-*   **2. 星型群聊 (Multi-Agent) 動態 UI 自癒核查**:
-    - **行動**: 在雙生對帳巡航中，實現 `verify_multi_agent_chat` 核查函式。
-    - **流程**: 自動點擊 `New Task`，輸入標題 `Marketing Data Deep Dive`，指派給 Supervisor (UUID: `f0f00000-0000-0000-0000-000000000000`)。在 45s 非同步處理完畢後，切換至 `AI Report` 標籤，捕獲 headed 瀏覽器截圖並傳送至 Gemini Vision 進行真實協作對話氣泡的 physical parity 公證斷言。
-*   **3. Makefile 自動化與 SOP 全面對帳**:
-    - **行動**: 重構 `Makefile` 保留 `make twin-scout` (容器化 audit 模式)，並新增 `make twin-scout-action`。同步在 `CONTRIBUTING_tw.md` 修正 SOP 命令字眼，100% 根除「文檔與代碼不對稱」之技術債。
-    - **驗證**: 執行 `make lint-be` (329 個檔案全數綠燈通過) 與 `make test-be` (569 個核心單元測試全數綠燈通過)，已安全合併並 push 到開發主幹 `feat/twins`！
+* **1. 雙向對帳引導規格化 (CLI --mode)**:
+    * **行動**: 於 `scripts/twin_scout.py` 中實作 `--mode`（`audit` 與 `action`）選取機制。
+    * **機制**: 在 `action` 模式下啟動 Headed 模式並加載免密碼 `.browser_data/scout_action` 目錄，無縫繼承宿主機 OS Keychain Cookie，根除 Docker 內的 Chromium 加密憑證讀取障礙。
+* **2. 星型群聊 UI 動態自癒核查**:
+    * **行動**: 實作 `verify_multi_agent_chat` 核查函式。自動建立標題為 `Marketing Data Deep Dive` 的任務並指派給 Supervisor (UUID: `f0f00000-0000-0000-0000-000000000000`)，非同步處理 45 秒後切換至 `AI Report` 標籤，利用 Headed 瀏覽器截圖傳送至 Gemini Vision 進行真實對話氣泡的 physical parity 公證。
+* **3. Makefile 自動化與 SOP 全面對帳**:
+    * **行動**: 重構 `Makefile` 納入 `make twin-scout`（容器化 audit）與 `make twin-scout-action`；同步修正 `CONTRIBUTING_tw.md` 指令字眼。
+    * **驗證**: 執行 `make lint-be` (329 檔案) 與 `make test-be` (569 核心單元測試) 100% 綠燈，安全合併並 push 至 `feat/twins` 主幹。
+
+### 2026-05-17: AdminPanelExhaustive E2E 物理加固與 React TypeError 阻斷
+* **1. 系統健康標籤頁 (System Health Tab) 網絡 100% 隔離**:
+    * **行動**: 在 `AdminPanelExhaustive.spec.ts` 中補齊對系統健康看板 5 大核心 API 端點（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細）的 Playwright 路由攔截。
+    * **結果**: 切斷 E2E 測試與真實 backend/資料庫冷啟動的物理耦合，徹底消除 「System Probe Failed」 紅色錯誤卡片。
+* **2. Mock 與 TypeScript 數據對齊 (React Crash 阻斷)**:
+    * **行動**: 修正 recent token usage mock 數據結構，補齊 `role`, `user_name`, `tokens`, `context` 等關鍵欄位。
+    * **結果**: 100% 對齊 `TokenUsageDetail` 介面規格，根治 `<TokenUsageTable>` 存取 `row.role.toUpperCase()` 時的 React TypeError 渲染崩潰。
+* **3. 嚴苛測試綠燈公證**:
+    * **行動**: 調優日誌過濾僅顯示 Warning/Error，並在 `CI=1` 且停用自動重試 (`--retries=0`) 的極端模式下驗收。
+    * **結果**: 9 大標籤頁一次性 100% 物理綠燈通過，執行時間收斂至 43.2 秒，消滅 flaky 抖動。
+
+### 2026-05-12: Model SSOT 確立與 Phase 5 星型群聊架構規劃
+* **1. 基礎設施幻覺根除 (Model SSOT 100%)**:
+    * **行動**: 全域盤點並移除了 `agents/`, `server/`, `mcp_server/` 中 13 處關於 `openai:gpt-4o`, `gpt-4.1-nano` 與 `gemini-embedding-001` 的硬編碼回退機制。
+    * **結果**: 導入「Fail Fast」原則，完全依賴 `archon_settings` (資料庫) 與 `.env` 作為唯的模型事實來源。未設定則直接拋出 `ValueError`，根治隱性 429 崩潰。
+* **2. Phase 5 架構藍圖 (LangGraph Evolution)**:
+    * **行動**: 歸檔 Phase 4.6 收尾文件，建立 `Phase_5.0.0_Multi_Agent_Implementation.md` 實作計畫。
+    * **決策**: 
+        * **Reject LangGraph**: 避開 Pydantic v1 依賴衝突，改用原生 `pydantic-graph` 構建狀態機。
+        * **星型群聊 (Star-Topology)**: 捨棄 AutoGen 自由對話，由 Supervisor 動態路由，並加設 `MAX_RECURSION = 3` 熔斷器保護 API 成本。
+* **3. Free Tier 經濟學與模型分級**:
+    * **行動**: 透過實體腳本測試與聯網查證，清空對新模型可用性的幻覺。
+    * **結果**: Supervisor 綁定 `gemini-3-flash-preview`；Worker 綁定 `gemini-3.1-flash-lite-preview`；Embedding 暫不升級至 v2，成功避開每日 1000 次的嚴苛免費限制。
+
+### 2026-05-06: 系統大掃除與技術債自動化巡邏上線
+* **1. 歷史文檔與腳本大掃除**:
+    * **行動**: 刪除 `scripts/` 目錄下 5 個超過 14 天未使用的過期探針與假資料腳本，並將 `PRPs/archive/` 中的古老歷史文件依據「時代分類」進行資料夾歸檔。
+    * **結果**: 專案根目錄與腳本庫大幅度瘦身，歷史文件具備清晰的考古脈絡。
+* **2. 技術債自動化巡邏 (Clockwork Tech-Debt Patrol)**:
+    * **行動**: 於 `Makefile` 加入 `tech-debt-audit` 指令，並將其實作轉換為 Clockwork 的原生 Python 背景任務 (`run_tech_debt_audit`)。
+    * **機制**: 透過 `scheduler_service.py` 設定每 336 小時（14天）自動執行。若發現髒亂，Clockwork 會自動開立 Task 並指派給 `DevBot`，達成從「偵測」到「派單」的全自動化閉環。
+* **3. 系統品質與落體驗證**:
+    * **稽核**: 透過 `phase-audit` 技能深度驗證 Phase 4.6.51~53 皆已物理落地（包含 `client.aio` 非同步化、Librarian 拆分、TTS `AudioPlayer` 元件與提示詞等）。
+    * **公證**: 執行 `make lint-be`, `make test-be`, `make persona-audit` 與 `make twin-scout`，所有品質門禁皆 100% 綠燈通過。
 
 > 目前近期日誌已全數歸檔至歷史檔案。當有新的開發活動時，請記錄於此。
 

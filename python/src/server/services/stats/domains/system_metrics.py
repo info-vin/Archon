@@ -4,6 +4,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class SystemMetrics:
     """Handles SLA reliability and token usage tracking."""
 
@@ -15,7 +16,13 @@ class SystemMetrics:
         now = datetime.now(UTC)
         cutoff = (now - timedelta(days=180)).isoformat()
         try:
-            res = self.supabase.table("archon_tasks").select("id, completed_at, due_date").eq("status", "done").gt("completed_at", cutoff).execute()
+            res = (
+                self.supabase.table("archon_tasks")
+                .select("id, completed_at, due_date")
+                .eq("status", "done")
+                .gt("completed_at", cutoff)
+                .execute()
+            )
             all_tasks = res.data or []
             parsed_tasks = []
             for t in all_tasks:
@@ -44,8 +51,18 @@ class SystemMetrics:
                                 met += 1
                         except Exception:
                             pass
-                trend.append({"date": w_start.strftime("%m-%d"), "rate": round((met / len(window_tasks)) * 100, 1), "count": len(window_tasks)})
-            return {"current_sla": trend[-1]["rate"] if trend else 100.0, "trend": trend, "total_analyzed": len(all_tasks)}
+                trend.append(
+                    {
+                        "date": w_start.strftime("%m-%d"),
+                        "rate": round((met / len(window_tasks)) * 100, 1),
+                        "count": len(window_tasks),
+                    }
+                )
+            return {
+                "current_sla": trend[-1]["rate"] if trend else 100.0,
+                "trend": trend,
+                "total_analyzed": len(all_tasks),
+            }
         except Exception as e:
             logger.error(f"SystemMetrics: SLA failed: {e}")
             return {"current_sla": 0.0, "trend": []}
@@ -53,6 +70,7 @@ class SystemMetrics:
     async def get_detailed_ai_usage(self, days: int = 30) -> dict[str, Any]:
         """Provides AI usage stats with daily breakdown and real data flag."""
         from ...token_usage_service import TokenUsageService
+
         daily_costs = await TokenUsageService.get_daily_cost(days=days)
         # PERFORMANCE: Replaced sum(x for ...) generators with a single standard for-loop pass
         total_monthly_usd = 0.0
@@ -70,7 +88,7 @@ class SystemMetrics:
             "burn_trend": [{"date": d["date"], "cost": d["cost"]} for d in daily_costs],
             "is_real_data": True,
             "budget_limit": 100.0,
-            "team": []
+            "team": [],
         }
 
     async def get_recent_token_usage(self, limit: int = 20) -> list[dict[str, Any]]:
@@ -79,18 +97,20 @@ class SystemMetrics:
             # Physical Fix: Remove JOIN query (PGRST200) as FK relationship may not exist
             res = self.supabase.table("token_usage").select("*").order("created_at", desc=True).limit(limit).execute()
             formatted = []
-            for row in (res.data or []):
+            for row in res.data or []:
                 # Fallback for entities without profile mapping (e.g. Agents)
-                formatted.append({
-                    "id": row["id"],
-                    "timestamp": row["created_at"],
-                    "user_name": row.get("entity_name", "Archon Agent"), # Use entity_name if recorded
-                    "role": row.get("entity_role", "ai_agent"),
-                    "model": row["model"],
-                    "tokens": row.get("total_tokens", 0),
-                    "cost": float(row.get("estimated_cost_usd", 0.0) or 0.0),
-                    "context": row.get("context_type", "General")
-                })
+                formatted.append(
+                    {
+                        "id": row["id"],
+                        "timestamp": row["created_at"],
+                        "user_name": row.get("entity_name", "Archon Agent"),  # Use entity_name if recorded
+                        "role": row.get("entity_role", "ai_agent"),
+                        "model": row["model"],
+                        "tokens": row.get("total_tokens", 0),
+                        "cost": float(row.get("estimated_cost_usd", 0.0) or 0.0),
+                        "context": row.get("context_type", "General"),
+                    }
+                )
             return formatted
         except Exception as e:
             logger.error(f"SystemMetrics: Recent token usage fetch failed: {e}")

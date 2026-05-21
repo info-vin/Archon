@@ -16,6 +16,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 stats_service = StatsService()
 
+
 @router.get("/commander-trends", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_commander_trends():
     try:
@@ -23,6 +24,7 @@ async def get_commander_trends():
     except Exception as e:
         logger.error(f"Commander trends failed: {e}")
         return []
+
 
 @router.get("/collab-synergy", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_collab_synergy():
@@ -32,6 +34,7 @@ async def get_collab_synergy():
         logger.error(f"API: Collab synergy fetch failed: {e}")
         return {"nodes": [], "matrix": [], "error": str(e)}
 
+
 @router.get("/sla-reliability", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_sla_reliability():
     try:
@@ -39,6 +42,7 @@ async def get_sla_reliability():
     except Exception as e:
         logger.error(f"API: SLA Reliability failed: {e}")
         return {"current_sla": 0, "trend": [], "error": str(e)}
+
 
 @router.get("/force-readiness", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_force_readiness():
@@ -48,6 +52,7 @@ async def get_force_readiness():
         logger.error(f"API: Force readiness failed: {e}")
         return {"baseline": 0, "trend": [], "error": str(e)}
 
+
 @router.get("/business-risks", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_business_risks():
     try:
@@ -56,14 +61,17 @@ async def get_business_risks():
         logger.error(f"API: Business risks fetch failed: {e}")
         return []
 
+
 @router.get("/health-trend", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_health_trend():
     try:
         from ..services.health_service import HealthService
+
         return await HealthService().get_health_history(days=30)
     except Exception as e:
         logger.error(f"API: Health trend fetch failed: {e}")
         return {"trend": [], "audit": [], "error": str(e)}
+
 
 @router.get("/system-overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_system_overview():
@@ -72,6 +80,7 @@ async def get_system_overview():
     except Exception as e:
         logger.error(f"Failed system overview: {e}")
         return {"status": "unknown", "error": str(e)}
+
 
 @router.get("/overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 @router.get("/ai-usage", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
@@ -82,6 +91,7 @@ async def get_ai_usage():
         logger.error(f"Failed to get AI usage: {e}")
         return {"total_monthly_tokens": 0, "total_cost_usd": 0, "usage_percentage": 0}
 
+
 @router.get("/token-usage/details", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_token_usage_details(days: int = 7):
     try:
@@ -89,12 +99,14 @@ async def get_token_usage_details(days: int = 7):
     except Exception:
         return []
 
+
 @router.get("/token-usage/recent", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_recent_token_usage(limit: int = 20):
     try:
         return await stats_service.get_recent_token_usage(limit=limit)
     except Exception:
         return []
+
 
 @router.get("/knowledge-roi", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_knowledge_roi():
@@ -104,12 +116,14 @@ async def get_knowledge_roi():
     except Exception:
         return {"roi": 0, "active_nodes": 0}
 
+
 @router.get("/ethics-audit-queue", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_ethics_audit_queue():
     try:
         return {"violations": [], "status": "clear"}
     except Exception:
         return {"violations": [], "status": "error"}
+
 
 @router.get("/tasks-by-status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_tasks_by_status():
@@ -126,6 +140,7 @@ async def get_tasks_by_status():
         logger.error(f"Failed to get task stats: {e}")
         return []
 
+
 @router.get("/member-performance", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_member_performance():
     """Get the count of COMPLETED tasks grouped by assignee."""
@@ -134,6 +149,7 @@ async def get_member_performance():
     except Exception as e:
         logger.error(f"Failed to get performance stats: {e}")
         return []
+
 
 @router.get("/agent-xp", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_agent_xp():

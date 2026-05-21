@@ -81,9 +81,11 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
 
         # Physical Hardening: Ensure final output is clean UTF-8 NFC and free of control chars
         import unicodedata
+
         # Keep newlines, tabs and printable chars, strip other control categories
         clean_text = "".join(
-            ch for ch in unicodedata.normalize("NFC", extracted_text)
+            ch
+            for ch in unicodedata.normalize("NFC", extracted_text)
             if unicodedata.category(ch)[0] != "C" or ch in "\n\r\t"
         )
         return clean_text.strip()

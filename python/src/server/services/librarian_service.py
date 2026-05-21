@@ -9,10 +9,12 @@ from .librarian.web_archiver import WebArchiver
 
 logger = get_logger(__name__)
 
+
 class LibrarianService:
     """
     Facade for Librarian operations, delegating to specialized archivers.
     """
+
     def __init__(self):
         self.supabase = get_supabase_client()
         self.source_service = SourceManagementService(self.supabase)

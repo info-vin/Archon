@@ -6,6 +6,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class GoogleStorageHandler:
     """
     Physical Handler for Google Files API (Phase 4.6.46 Hardened).
@@ -32,7 +33,7 @@ class GoogleStorageHandler:
                 state = file_info.state.name
 
                 if state == "ACTIVE":
-                    logger.info(f"GoogleStorage: File {uploaded_file.name} is ACTIVE after {i*poll_interval}s.")
+                    logger.info(f"GoogleStorage: File {uploaded_file.name} is ACTIVE after {i * poll_interval}s.")
                     return file_info
                 elif state == "FAILED":
                     raise Exception(f"Google Files API reported FAILURE for {uploaded_file.name}")

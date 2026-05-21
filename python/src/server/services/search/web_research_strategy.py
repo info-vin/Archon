@@ -5,6 +5,7 @@ from ...utils.retry_utils import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
+
 async def perform_web_research_impl(query: str, genai_module: Any, types_module: Any) -> tuple[str, str]:
     """
     Executes Google Search Grounding via Gemini.
@@ -33,6 +34,7 @@ async def perform_web_research_impl(query: str, genai_module: Any, types_module:
         """
 
         from ...config.model_ssot import SYSTEM_MODELS
+
         model_id = SYSTEM_MODELS["DEFAULT_TEXT"]
 
         @retry_with_backoff(max_retries=2)

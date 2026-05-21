@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+import aiofiles
+
 from ..config.logfire_config import get_logger
 from .librarian_service import LibrarianService
 
@@ -36,8 +38,8 @@ class ScoutIngestionService:
         for report_file in reports:
             file_path = os.path.join(self.diagnostics_dir, report_file)
             try:
-                with open(file_path, encoding="utf-8") as f:
-                    content = f.read()
+                async with aiofiles.open(file_path, encoding="utf-8") as f:
+                    content = await f.read()
 
                 # Triage: Filter out reports that are just connection errors
                 noise_keywords = ["Connection refused", "ECONNREFUSED", "TimeoutError", "net::ERR_CONNECTION_REFUSED"]
@@ -60,8 +62,8 @@ class ScoutIngestionService:
                 if existing.data:
                     continue
 
-                with open(file_path, encoding="utf-8") as f:
-                    content = f.read()
+                async with aiofiles.open(file_path, encoding="utf-8") as f:
+                    content = await f.read()
 
                 # Check if content is substantial
                 if len(content.strip()) < 50:

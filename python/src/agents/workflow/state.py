@@ -16,6 +16,7 @@ class SharedState(BaseModel):
     model_used: str | None = None
     task_type: str = "General"  # Phase 5.0.2: Dynamic Prompt Governance
 
+
 class SupervisorDecision(BaseModel):
     next_node: Literal["marketbot", "librarian", "summary", "devbot", "david", "end", "human"] = Field(
         description="The next agent to route to, or 'end' if task is completed, or 'human' if stuck."

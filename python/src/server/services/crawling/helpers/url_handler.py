@@ -1,4 +1,3 @@
-
 import hashlib
 import logging
 import re
@@ -8,6 +7,7 @@ from .constants import BINARY_EXTENSIONS
 from .naming import URLNamingUtil
 
 logger = logging.getLogger(__name__)
+
 
 class URLHandler:
     """
@@ -28,7 +28,7 @@ class URLHandler:
     def is_sitemap(url: str) -> bool:
         try:
             parsed = urlparse(url)
-            return parsed.path.lower().endswith('.xml') and 'sitemap' in parsed.path.lower()
+            return parsed.path.lower().endswith(".xml") and "sitemap" in parsed.path.lower()
         except Exception:
             return False
 
@@ -36,7 +36,7 @@ class URLHandler:
     def is_markdown(url: str) -> bool:
         try:
             parsed = urlparse(url)
-            return parsed.path.lower().endswith(('.md', '.mdx', '.markdown'))
+            return parsed.path.lower().endswith((".md", ".mdx", ".markdown"))
         except Exception:
             return False
 
@@ -45,7 +45,7 @@ class URLHandler:
         """Check if a URL points to a standard text file."""
         try:
             parsed = urlparse(url)
-            return parsed.path.lower().endswith('.txt')
+            return parsed.path.lower().endswith(".txt")
         except Exception:
             return False
 
@@ -71,9 +71,9 @@ class URLHandler:
         """Physical link extraction from markdown content with absolute resolution."""
         links = []
         # Logic parity with Phase 4.6: [text](url)
-        inline_links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
+        inline_links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
         for _, link in inline_links:
-            if not link or link.startswith('#'):
+            if not link or link.startswith("#"):
                 continue
             if base_url:
                 try:
@@ -87,8 +87,8 @@ class URLHandler:
     def is_link_collection_file(url: str, content: str | None = None) -> bool:
         """Detects if a file is primarily a list of links (density analysis)."""
         parsed = urlparse(url)
-        filename = parsed.path.split('/')[-1].lower()
-        if filename in ['llms.txt', 'sitemap.xml']:
+        filename = parsed.path.split("/")[-1].lower()
+        if filename in ["llms.txt", "sitemap.xml"]:
             return True
 
         if content:

@@ -12,12 +12,14 @@ class AgentNames:
     PO_BOT = "POBot (Product)"
     CLOCKWORK = "Clockwork (Ops)"
 
+
 @dataclass(frozen=True)
 class AgentUUIDs:
     """
     Physical Source of Truth for AI Agent Identities (Phase 4.6.47 Grounded).
     Eliminates hardcoded strings while maintaining test stability.
     """
+
     SUPERVISOR = "f0f00000-0000-0000-0000-000000000000"
     MARKET_BOT = "a11ce000-0000-0000-0000-000000000000"
     LIBRARIAN = "b0b00000-0000-0000-0000-000000000000"

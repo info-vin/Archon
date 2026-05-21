@@ -33,7 +33,9 @@ class WorkerService:
 
         self._running = True
         self._task = asyncio.create_task(self._run_loop())
-        logger.info(f"🚀 Worker Service started (poll interval: {self.poll_interval}s, max concurrency: {self._semaphore._value})")
+        logger.info(
+            f"🚀 Worker Service started (poll interval: {self.poll_interval}s, max concurrency: {self._semaphore._value})"
+        )
 
     async def stop(self):
         """Stop the background worker loop"""
@@ -95,5 +97,6 @@ class WorkerService:
 
             # Fire and forget concurrent execution bounded by the Semaphore
             asyncio.create_task(_execute_with_semaphore(task_id, agent_id))
+
 
 worker_service = WorkerService()

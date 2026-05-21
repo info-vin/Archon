@@ -171,7 +171,7 @@ async def save_agent_output_logic(
                 agent_id=agent_id,
                 timestamp=datetime.now(),
                 output_type=cast(Literal["text", "structured", "group_chat"], output_type),
-                output=output
+                output=output,
             )
             # Convert to dict for JSONB storage
             agent_output_data = validated_output.model_dump(mode="json")

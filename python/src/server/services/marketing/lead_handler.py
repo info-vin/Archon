@@ -3,6 +3,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class LeadHandler:
     """
     Handles all Leads CRUD and scoring logic for MarketingService.
@@ -38,8 +39,10 @@ class LeadHandler:
 
         source_url = lead_data.get("source_job_url")
         if source_url:
+
             def _check_existing():
                 return self.supabase_client.table("leads").select("id").eq("source_job_url", source_url).execute()
+
             _, existing = self.execute_query(_check_existing, "Check existing lead")
             if hasattr(existing, "data") and existing.data:
                 if lead_data.get("pitch_content"):
@@ -59,18 +62,21 @@ class LeadHandler:
     async def update_lead(self, lead_id: str, update_data: dict) -> tuple[bool, dict]:
         def _query():
             return self.supabase_client.table("leads").update(update_data).eq("id", lead_id).execute()
+
         success, res = self.execute_query(_query, f"Failed to update lead {lead_id}")
         if success and hasattr(res, "data") and res.data:
             lead_data = res.data[0]
             if lead_data.get("status") == "LOST":
                 try:
                     from ..librarian_service import LibrarianService
+
                     librarian = LibrarianService()
                     # The lead data will contain company_name and job_title. We extract lost_reason.
                     reason = update_data.get("lost_reason", "No reason provided")
                     company = lead_data.get("company_name", "Unknown Company")
                     job = lead_data.get("job_title", "Unknown Job")
                     import asyncio
+
                     # Run archiving as a background task to prevent blocking the UI
                     asyncio.create_task(
                         librarian.archive_failure_case(
@@ -78,7 +84,7 @@ class LeadHandler:
                             reason=reason,
                             company=company,
                             job_title=job,
-                            metadata={"lead_id": lead_id}
+                            metadata={"lead_id": lead_id},
                         )
                     )
                 except Exception as e:
@@ -110,6 +116,7 @@ class LeadHandler:
     async def calculate_lead_score(self, job_title: str | None) -> int:
         try:
             from ..settings_service import SettingsService
+
             settings = SettingsService(self.supabase_client)
             w_strat = int(settings.get_setting("SCORE_STRATEGIC") or "95")
             w_tech = int(settings.get_setting("SCORE_TECHNICAL") or "85")

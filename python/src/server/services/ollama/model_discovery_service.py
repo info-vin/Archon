@@ -86,9 +86,7 @@ class ModelDiscoveryService:
             logger.info(f"Discovered {len(models)} models from {instance_url}")
 
             # Enrich models with capability information
-            enriched_models = await self._enrich_model_capabilities(
-                models, instance_url, fetch_details=fetch_details
-            )
+            enriched_models = await self._enrich_model_capabilities(models, instance_url, fetch_details=fetch_details)
 
             # Cache the results
             self._cache_models(instance_url, enriched_models)
@@ -245,9 +243,7 @@ class ModelDiscoveryService:
             status.response_time_ms = response_time_ms
             status.models_available = models_count
             status.last_checked = str(time.time())
-            logger.debug(
-                f"Instance {instance_url} is healthy: {models_count} models, {status.response_time_ms:.0f}ms"
-            )
+            logger.debug(f"Instance {instance_url} is healthy: {models_count} models, {status.response_time_ms:.0f}ms")
         else:
             status.error_message = error_message
             logger.warning(f"Health check failed for {instance_url}: {error_message}")
@@ -294,6 +290,7 @@ class ModelDiscoveryService:
         )
 
         return discovery_result
+
 
 # Global service instance
 model_discovery_service = ModelDiscoveryService()

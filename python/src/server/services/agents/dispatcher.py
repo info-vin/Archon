@@ -3,6 +3,7 @@ Phase 5.1.0: Agent Dispatcher & Strategy Pattern
 Resolves the 'God Method' coupling in agent_service.py by encapsulating
 different agent execution behaviors into independent strategies.
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, cast
 
@@ -19,6 +20,7 @@ from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
 class BaseAgentStrategy(ABC):
     @abstractmethod
     async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
@@ -28,6 +30,7 @@ class BaseAgentStrategy(ABC):
 
 class SupervisorStrategy(BaseAgentStrategy):
     """Routes the task to the isolated archon-agents WorkflowEngine container."""
+
     async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
         logger.info(f"🌉 Strategy: Routing task '{task_id}' to WorkflowEngine (Supervisor).")
         # Leverage the existing HTTP bridge method in AgentService for now
@@ -36,6 +39,7 @@ class SupervisorStrategy(BaseAgentStrategy):
 
 class LibrarianDirectStrategy(BaseAgentStrategy):
     """Bypasses LLM and directly triggers the crawling pipeline if the description is empty."""
+
     async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
         logger.info(f"[{agent_id}] Strategy: Direct crawler pipeline triggered for empty description")
         try:
@@ -64,12 +68,13 @@ class LibrarianDirectStrategy(BaseAgentStrategy):
 
 class DefaultLLMStrategy(BaseAgentStrategy):
     """The traditional single-turn LLM execution via Google GenAI."""
+
     async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
         config = get_agent_config(agent_id)
         if not config:
-             logger.error(f"Agent '{agent_id}' not found.")
-             await task_service.update_task(task_id, {"status": "failed"})
-             return
+            logger.error(f"Agent '{agent_id}' not found.")
+            await task_service.update_task(task_id, {"status": "failed"})
+            return
 
         task_desc = task_data.get("description", "No description provided.")
         messages = [
@@ -100,7 +105,9 @@ class DefaultLLMStrategy(BaseAgentStrategy):
             await GlobalThrottler.wait_for_capacity(tier=tier)
 
             async with get_llm_client(api_key=admin_api_key) as client:
-                logger.info(f"Generating content using SDK for model {active_model} with {len(agent_tools_list)} tools.")
+                logger.info(
+                    f"Generating content using SDK for model {active_model} with {len(agent_tools_list)} tools."
+                )
 
                 response = await client.chat.completions.create(
                     model=active_model, messages=messages, tools=tools_param
@@ -108,7 +115,9 @@ class DefaultLLMStrategy(BaseAgentStrategy):
                 res_msg = response.choices[0].message
                 if res_msg.tool_calls and agent_service.mcp_client:
                     messages.append(res_msg)
-                    tool_results = await agent_service.tool_executor.handle_tool_calls(res_msg.tool_calls, agent_id=agent_id)
+                    tool_results = await agent_service.tool_executor.handle_tool_calls(
+                        res_msg.tool_calls, agent_id=agent_id
+                    )
                     messages.extend(tool_results)
                     final_response = await client.chat.completions.create(
                         model=active_model, messages=messages, tools=tools_param
@@ -133,6 +142,7 @@ class DefaultLLMStrategy(BaseAgentStrategy):
 
 class DraftFromLeadsStrategy(BaseAgentStrategy):
     """Phase 5.1.1: Executes the blog drafting pipeline from lead parameters."""
+
     async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
         logger.info(f"[{agent_id}] Strategy: Blog drafting pipeline triggered for task {task_id}")
         try:
@@ -150,6 +160,7 @@ class DraftFromLeadsStrategy(BaseAgentStrategy):
 
             # 2. Call the physical handler
             from src.server.services.marketing.content_handler import ContentHandler
+
             handler = ContentHandler(get_supabase_client())
 
             output_msg = await handler.draft_from_leads_physical(task_id, lead_ids)
@@ -171,21 +182,29 @@ class AgentDispatcher:
         self._default_strategy = DefaultLLMStrategy()
 
         # Register strategies (Condition function, Strategy instance)
+        self.register_strategy(lambda a_id, t_data: a_id == AgentUUIDs.SUPERVISOR, SupervisorStrategy())
         self.register_strategy(
-            lambda a_id, t_data: a_id == AgentUUIDs.SUPERVISOR,
-            SupervisorStrategy()
+            lambda a_id, t_data: (
+                a_id == AgentUUIDs.LIBRARIAN
+                and t_data.get("crawler_target_id")
+                and not t_data.get("description", "").strip()
+            ),
+            LibrarianDirectStrategy(),
         )
         self.register_strategy(
-            lambda a_id, t_data: a_id == AgentUUIDs.LIBRARIAN and t_data.get("crawler_target_id") and not t_data.get("description", "").strip(),
-            LibrarianDirectStrategy()
+            lambda a_id, t_data: (
+                a_id == AgentUUIDs.LIBRARIAN
+                and t_data.get("crawler_target_id")
+                and t_data.get("description", "").strip().lower() in ["periodic sync", "knowledge sync"]
+            ),
+            LibrarianDirectStrategy(),
         )
         self.register_strategy(
-            lambda a_id, t_data: a_id == AgentUUIDs.LIBRARIAN and t_data.get("crawler_target_id") and t_data.get("description", "").strip().lower() in ["periodic sync", "knowledge sync"],
-            LibrarianDirectStrategy()
-        )
-        self.register_strategy(
-            lambda a_id, t_data: a_id == AgentUUIDs.MARKET_BOT and (t_data.get("feature") == "blog_drafting" or "AI Draft from Leads" in t_data.get("title", "")),
-            DraftFromLeadsStrategy()
+            lambda a_id, t_data: (
+                a_id == AgentUUIDs.MARKET_BOT
+                and (t_data.get("feature") == "blog_drafting" or "AI Draft from Leads" in t_data.get("title", ""))
+            ),
+            DraftFromLeadsStrategy(),
         )
 
     def register_strategy(self, condition_func: Any, strategy: BaseAgentStrategy):
@@ -196,5 +215,6 @@ class AgentDispatcher:
             if condition_func(agent_id, task_data):
                 return strategy
         return self._default_strategy
+
 
 agent_dispatcher = AgentDispatcher()

@@ -10,6 +10,7 @@ from .file_archiver import FileArchiver
 
 logger = get_logger(__name__)
 
+
 class WebArchiver:
     def __init__(self, supabase=None, repo=None, file_archiver=None):
         self.supabase = supabase or get_supabase_client()

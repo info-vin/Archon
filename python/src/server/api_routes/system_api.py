@@ -46,8 +46,16 @@ async def get_ai_model_health() -> dict[str, Any]:
     TARGET_MODELS = [
         {"id": get_model_path("DEFAULT_TEXT").replace("models/", ""), "agent": "General Text", "provider": "google"},
         {"id": get_model_path("IMAGE_GEN").replace("models/", ""), "agent": "Marketing (Imagen)", "provider": "google"},
-        {"id": get_model_path("DEFAULT_PRO").replace("models/", ""), "agent": "Reasoning & Coding", "provider": "google"},
-        {"id": get_model_path("EMBEDDING").replace("models/", ""), "agent": "Knowledge (Embedding)", "provider": "google"},
+        {
+            "id": get_model_path("DEFAULT_PRO").replace("models/", ""),
+            "agent": "Reasoning & Coding",
+            "provider": "google",
+        },
+        {
+            "id": get_model_path("EMBEDDING").replace("models/", ""),
+            "agent": "Knowledge (Embedding)",
+            "provider": "google",
+        },
     ]
 
     try:

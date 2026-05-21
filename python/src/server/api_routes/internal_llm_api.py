@@ -10,6 +10,7 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/internal/llm", tags=["internal_llm"])
 
+
 @router.post("/gemini/v1beta/{path:path}")
 async def proxy_gemini_v1beta(path: str, request: Request):
     """
@@ -37,22 +38,13 @@ async def proxy_gemini_v1beta(path: str, request: Request):
 
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.post(
-                    target_url,
-                    content=body,
-                    headers=headers,
-                    timeout=120.0
-                )
+                resp = await client.post(target_url, content=body, headers=headers, timeout=120.0)
 
                 # We need to filter out hop-by-hop headers from the response to avoid HTTP protocol errors
                 excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
                 resp_headers = {k: v for k, v in resp.headers.items() if k.lower() not in excluded_headers}
 
-                return Response(
-                    content=resp.content,
-                    status_code=resp.status_code,
-                    headers=resp_headers
-                )
+                return Response(content=resp.content, status_code=resp.status_code, headers=resp_headers)
             except httpx.RequestError as exc:
                 logger.error(f"LLM Gateway Network Error: {exc}")
                 raise HTTPException(status_code=502, detail=f"Bad Gateway: {str(exc)}") from exc

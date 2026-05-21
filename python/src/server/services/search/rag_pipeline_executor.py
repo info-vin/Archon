@@ -4,6 +4,7 @@ from ...config.logfire_config import get_logger, safe_span
 
 logger = get_logger(__name__)
 
+
 async def execute_rag_pipeline(
     rag_service: Any,
     query: str,
@@ -112,13 +113,14 @@ async def execute_rag_pipeline(
                 if use_reranking:
                     if rag_service.agents_enabled:
                         from src.server.services.search.remote_rerank_service import execute_remote_rerank
+
                         formatted_results = await execute_remote_rerank(
                             agents_url=rag_service.agents_url,
                             query=query,
                             results=formatted_results,
                             content_key="content",
                             top_k=match_count,
-                            fallback_strategy=rag_service.reranking_strategy
+                            fallback_strategy=rag_service.reranking_strategy,
                         )
                         reranking_applied = True
                     elif rag_service.reranking_strategy:

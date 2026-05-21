@@ -5,21 +5,18 @@ from ..embeddings.embedding_service import create_embedding
 
 logger = get_logger(__name__)
 
+
 class KnowledgeChunkingService:
     """
     Decoupled utility service for handling document chunking, embedding generation,
     and formatting into valid Vector DB page data.
     """
+
     def __init__(self, chunk_size: int = 4000):
         self.chunk_size = chunk_size
 
     async def process_document_into_pages(
-        self,
-        source_id: str,
-        content: str,
-        base_url: str,
-        metadata: dict[str, Any],
-        title_prefix: str
+        self, source_id: str, content: str, base_url: str, metadata: dict[str, Any], title_prefix: str
     ) -> list[dict]:
         """
         Splits content into chunks, generates embeddings for each,

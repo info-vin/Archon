@@ -9,6 +9,7 @@ from .domains.system_metrics import SystemMetrics
 
 logger = logging.getLogger(__name__)
 
+
 class MetricsManager:
     """
     Handles technical metrics, trends, and ROI calculations for Archon.

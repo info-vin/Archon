@@ -11,6 +11,7 @@ from src.server.utils.sse_manager import sse_manager
 
 logger = get_logger(__name__)
 
+
 async def update_task_logic(
     task_service_instance, task_id: str, update_fields: dict[str, Any]
 ) -> tuple[bool, dict[str, Any]]:
@@ -98,7 +99,12 @@ async def update_task_logic(
 
         # Update task
         def _update_query():
-            return task_service_instance.supabase_client.table("archon_tasks").update(update_data).eq("id", task_id).execute()
+            return (
+                task_service_instance.supabase_client.table("archon_tasks")
+                .update(update_data)
+                .eq("id", task_id)
+                .execute()
+            )
 
         success_update, update_result = task_service_instance.execute_query(
             query_func=_update_query, error_context=f"Task with ID {task_id} not found"
@@ -109,10 +115,14 @@ async def update_task_logic(
 
             # If the assignee was updated to an AI agent, notify the MCP
             if "assignee" in update_fields and update_fields["assignee"] in AI_AGENT_ROLES:
-                task_service_instance._notify_ai_agent_of_assignment(task_id=task_id, agent_id=update_fields["assignee"])
+                task_service_instance._notify_ai_agent_of_assignment(
+                    task_id=task_id, agent_id=update_fields["assignee"]
+                )
 
             # Phase 5.1.0: Broadcast update via SSE
-            await sse_manager.broadcast("task_updated", {"task_id": task_id, "status": task.get("status"), "task": task})
+            await sse_manager.broadcast(
+                "task_updated", {"task_id": task_id, "status": task.get("status"), "task": task}
+            )
 
             return True, {"task": task, "message": "Task updated successfully"}
         return False, update_result

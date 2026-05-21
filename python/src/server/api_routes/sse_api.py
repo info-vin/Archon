@@ -24,6 +24,6 @@ async def task_stream():
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"  # Disable Nginx buffering
-        }
+            "X-Accel-Buffering": "no",  # Disable Nginx buffering
+        },
     )

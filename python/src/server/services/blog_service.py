@@ -47,6 +47,7 @@ class BlogService(BaseRepository):
         if not post_data.get("cover_image"):
             try:
                 from src.server.services.marketing_service import MarketingService
+
                 marketing_svc = MarketingService(self.supabase_client)
                 title = post_data.get("title", "Modern Tech")
                 # Request a visual asset matching the blog title style
@@ -79,6 +80,7 @@ class BlogService(BaseRepository):
                 # Calculate diff if content changed
                 if old_content and old_content != new_content:
                     import difflib
+
                     s = difflib.SequenceMatcher(None, old_content, new_content)
                     correction_rate = round((1.0 - s.ratio()) * 100, 2)
 
@@ -92,8 +94,8 @@ class BlogService(BaseRepository):
                             "post_id": post_id,
                             "correction_rate": correction_rate,
                             "old_length": len(old_content),
-                            "new_length": len(new_content)
-                        }
+                            "new_length": len(new_content),
+                        },
                     }
                     try:
                         self.supabase_client.table("archon_logs").insert(log_data).execute()

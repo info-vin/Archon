@@ -1,4 +1,3 @@
-
 import logging
 from typing import Any
 
@@ -11,11 +10,13 @@ from src.server.services.search.reranking_strategy import reranking_strategy
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
 class RerankRequest(BaseModel):
     query: str
     results: list[dict[str, Any]]
     content_key: str = "content"
     top_k: int = 5
+
 
 @router.post("/rerank")
 async def rerank_documents(request: RerankRequest):

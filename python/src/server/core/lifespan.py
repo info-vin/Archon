@@ -44,6 +44,7 @@ async def lifespan(app: FastAPI):
 
         # Set up logfire now that credentials are loaded
         from src.server.config.logfire_config import setup_logfire
+
         setup_logfire(service_name="archon-backend")
         api_logger.info("🔥 Logfire initialized for backend")
 
@@ -68,11 +69,13 @@ async def lifespan(app: FastAPI):
         # Initialize tool list to verify connection
         tools = await mcp_client.list_tools()
         if not tools:
-            log_service.create_log_entry({
-                "project_name": "mcp-neural-wiring",
-                "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client connected but returned 0 tools. Check volumes/permissions.",
-                "user_input": f"mcp_url: {mcp_client.mcp_url}"
-            })
+            log_service.create_log_entry(
+                {
+                    "project_name": "mcp-neural-wiring",
+                    "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client connected but returned 0 tools. Check volumes/permissions.",
+                    "user_input": f"mcp_url: {mcp_client.mcp_url}",
+                }
+            )
         else:
             # Dependency Injection (Architectural Bridge)
             agent_service.mcp_client = mcp_client

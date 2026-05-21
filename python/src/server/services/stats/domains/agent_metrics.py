@@ -4,6 +4,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class AgentMetrics:
     """Handles agent execution trends and readiness."""
 
@@ -84,7 +85,8 @@ class AgentMetrics:
                 "date": date[5:],
                 "bob_tokens": token_map.get(date, 0),
                 "decision_hours": round(sum(velocity_raw[date]) / len(velocity_raw[date]), 1)
-                if date in velocity_raw else 0.0,
+                if date in velocity_raw
+                else 0.0,
             }
             for date in all_dates
         ]
@@ -114,11 +116,9 @@ class AgentMetrics:
             trend_data = []
             for i in range(90, -1, -1):
                 date_str = (now - timedelta(days=i)).strftime("%Y-%m-%d")
-                trend_data.append({
-                    "date": date_str[5:],
-                    "actual": daily_actual.get(date_str, 0),
-                    "baseline": baseline_daily
-                })
+                trend_data.append(
+                    {"date": date_str[5:], "actual": daily_actual.get(date_str, 0), "baseline": baseline_daily}
+                )
 
             ai_names = ["DevBot", "MarketBot", "Librarian", "POBot", "Clockwork"]
             ai_done = 0

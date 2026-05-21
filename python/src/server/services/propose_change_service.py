@@ -31,6 +31,7 @@ class ActionExecutor:
             raise ValueError("Invalid payload")
 
         from ..utils.code_modifier import CodeModifier
+
         modifier = CodeModifier()
 
         # 1. Create a sandbox branch for safety
@@ -151,8 +152,7 @@ class ProposeChangeService:
             proposal = res.data[0]
             try:
                 await self.executor.execute_file_change(
-                    proposal.get("request_payload", {}),
-                    task_id=str(proposal_id)[:8]
+                    proposal.get("request_payload", {}), task_id=str(proposal_id)[:8]
                 )
             except Exception as e:
                 self.logger.error(f"Failed to execute approved change: {e}")
@@ -164,12 +164,15 @@ class ProposeChangeService:
             user_name = u_res.data[0].get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
 
             from .log_service import log_service
-            log_service.create_log_entry({
-                "project_name": "admin-audit",
-                "user_name": user_name,
-                "gemini_response": f"Proposal {proposal_id} approved by {user_name}",
-                "user_input": f"Approve {proposal_id}"
-            })
+
+            log_service.create_log_entry(
+                {
+                    "project_name": "admin-audit",
+                    "user_name": user_name,
+                    "gemini_response": f"Proposal {proposal_id} approved by {user_name}",
+                    "user_input": f"Approve {proposal_id}",
+                }
+            )
         except Exception as e:
             self.logger.warning(f"Audit log failed: {e}")
 
@@ -190,12 +193,15 @@ class ProposeChangeService:
             user_name = u_res.data[0].get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
 
             from .log_service import log_service
-            log_service.create_log_entry({
-                "project_name": "admin-audit",
-                "user_name": user_name,
-                "gemini_response": f"Proposal {proposal_id} rejected by {user_name}",
-                "user_input": f"Reject {proposal_id}"
-            })
+
+            log_service.create_log_entry(
+                {
+                    "project_name": "admin-audit",
+                    "user_name": user_name,
+                    "gemini_response": f"Proposal {proposal_id} rejected by {user_name}",
+                    "user_input": f"Reject {proposal_id}",
+                }
+            )
         except Exception as e:
             self.logger.warning(f"Audit log failed: {e}")
 

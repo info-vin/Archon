@@ -38,6 +38,7 @@ __all__ = [
     "test_structured_output_capability_fast_logic",
 ]
 
+
 async def detect_model_capabilities_logic(
     service_instance, model_name: str, instance_url: str, optimized: bool = False
 ) -> ModelCapabilities:

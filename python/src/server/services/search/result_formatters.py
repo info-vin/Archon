@@ -1,6 +1,7 @@
 """
 Result formatters and context extractors for search results.
 """
+
 from typing import Any
 
 

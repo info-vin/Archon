@@ -1,6 +1,7 @@
 """
 Memory Adaptive Dispatcher Submodule
 """
+
 import asyncio
 from collections.abc import Callable
 from typing import Any
@@ -10,6 +11,7 @@ from ..shared_constants import ProcessingMode
 from .metrics import SystemMetrics, get_system_metrics
 
 logfire_logger = get_logger("threading")
+
 
 class MemoryAdaptiveDispatcher:
     """Dynamically adjust concurrency based on memory usage"""
@@ -39,10 +41,16 @@ class MemoryAdaptiveDispatcher:
         # Adjust based on system load
         if metrics.memory_percent > self.config.memory_threshold * 100:
             workers = max(1, base // 2)
-            logfire_logger.warning("High memory usage detected, reducing workers", extra={"memory_percent": metrics.memory_percent, "workers": workers})
+            logfire_logger.warning(
+                "High memory usage detected, reducing workers",
+                extra={"memory_percent": metrics.memory_percent, "workers": workers},
+            )
         elif metrics.cpu_percent > self.config.cpu_threshold * 100:
             workers = max(1, base // 2)
-            logfire_logger.warning("High CPU usage detected, reducing workers", extra={"cpu_percent": metrics.cpu_percent, "workers": workers})
+            logfire_logger.warning(
+                "High CPU usage detected, reducing workers",
+                extra={"cpu_percent": metrics.cpu_percent, "workers": workers},
+            )
         elif metrics.memory_percent < 50 and metrics.cpu_percent < 50:
             workers = min(self.config.max_workers, base * 2)
         else:
@@ -67,7 +75,16 @@ class MemoryAdaptiveDispatcher:
         semaphore = asyncio.Semaphore(optimal_workers)
 
         if self.last_metrics:
-            logfire_logger.info("Starting adaptive processing", extra={"items_count": len(items), "workers": optimal_workers, "mode": mode, "memory_percent": self.last_metrics.memory_percent, "cpu_percent": self.last_metrics.cpu_percent})
+            logfire_logger.info(
+                "Starting adaptive processing",
+                extra={
+                    "items_count": len(items),
+                    "workers": optimal_workers,
+                    "mode": mode,
+                    "memory_percent": self.last_metrics.memory_percent,
+                    "cpu_percent": self.last_metrics.cpu_percent,
+                },
+            )
 
         active_workers: dict[int, int] = {}
         completed_count = 0
@@ -86,7 +103,15 @@ class MemoryAdaptiveDispatcher:
             async with semaphore:
                 try:
                     if progress_callback and worker_id:
-                        await progress_callback({"type": "worker_started", "worker_id": worker_id, "item_index": index, "total_items": len(items), "message": f"Worker {worker_id} processing item {index + 1}"})
+                        await progress_callback(
+                            {
+                                "type": "worker_started",
+                                "worker_id": worker_id,
+                                "item_index": index,
+                                "total_items": len(items),
+                                "message": f"Worker {worker_id} processing item {index + 1}",
+                            }
+                        )
 
                     if mode == ProcessingMode.CPU_INTENSIVE:
                         loop = asyncio.get_event_loop()
@@ -103,7 +128,16 @@ class MemoryAdaptiveDispatcher:
                             del active_workers[worker_id]
 
                     if progress_callback:
-                        await progress_callback({"type": "worker_completed", "worker_id": worker_id, "item_index": index, "completed_count": completed_count, "total_items": len(items), "message": f"Worker {worker_id} completed item {index + 1}"})
+                        await progress_callback(
+                            {
+                                "type": "worker_completed",
+                                "worker_id": worker_id,
+                                "item_index": index,
+                                "completed_count": completed_count,
+                                "total_items": len(items),
+                                "message": f"Worker {worker_id} completed item {index + 1}",
+                            }
+                        )
 
                     return result
 
@@ -111,7 +145,9 @@ class MemoryAdaptiveDispatcher:
                     async with lock:
                         if worker_id and worker_id in active_workers:
                             del active_workers[worker_id]
-                    logfire_logger.error(f"Processing failed for item {index}", extra={"error": str(e), "item_index": index})
+                    logfire_logger.error(
+                        f"Processing failed for item {index}", extra={"error": str(e), "item_index": index}
+                    )
                     return None
 
         tasks = [process_single(item, idx) for idx, item in enumerate(items)]
@@ -129,7 +165,13 @@ class MemoryAdaptiveDispatcher:
                 successful_results.append(result)
 
         success_rate = len(successful_results) / len(items) * 100
-        log_extra = {"total_items": len(items), "successful": len(successful_results), "failed": len(failed_items), "success_rate": f"{success_rate:.1f}%", "workers_used": optimal_workers}
+        log_extra = {
+            "total_items": len(items),
+            "successful": len(successful_results),
+            "failed": len(failed_items),
+            "success_rate": f"{success_rate:.1f}%",
+            "workers_used": optimal_workers,
+        }
 
         if failed_items:
             log_extra["failed_items"] = failed_items

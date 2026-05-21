@@ -39,6 +39,7 @@ class AuthService(BaseRepository):
         Creates a user via admin privileges.
         """
         from gotrue.types import AdminUserAttributes
+
         try:
             # 1. Create Auth User via Admin API
             attributes: AdminUserAttributes = {

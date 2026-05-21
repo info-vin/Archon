@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 
 # Constants extracted from ProviderDiscoveryService
@@ -24,6 +23,7 @@ EMBEDDING_DIMENSIONS = {
     "all-minilm": 384,
 }
 
+
 @dataclass
 class ModelSpec:
     name: str
@@ -41,6 +41,7 @@ class ModelSpec:
     def __post_init__(self):
         if self.aliases is None:
             self.aliases = []
+
 
 @dataclass
 class ProviderStatus:

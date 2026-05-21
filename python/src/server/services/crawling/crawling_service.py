@@ -69,6 +69,7 @@ class CrawlingService(BaseRepository):
 
         # Initialize operations
         from ..storage.document_storage import DocumentStorageFacade
+
         self.doc_storage_ops = DocumentStorageFacade(self.supabase_client)
 
         # Track progress state across all stages to prevent UI resets

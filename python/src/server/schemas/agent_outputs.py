@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 class LogDetailsSchema(BaseModel):
     """Schema for archon_logs.details JSONB field"""
+
     request_id: str | None = None
     task_id: str | None = None
     agent_id: str | None = None
@@ -20,6 +21,7 @@ class LogDetailsSchema(BaseModel):
 
 class GroupChatOutputSchema(BaseModel):
     """Schema for Supervisor / Group Chat structured output"""
+
     summary: str
     decisions: list[str] = Field(default_factory=list)
     next_steps: list[str] = Field(default_factory=list)
@@ -31,6 +33,7 @@ class AgentOutputSchema(BaseModel):
     """
     Schema for individual entries in archon_tasks.attachments (JSONB list)
     """
+
     agent_id: str
     timestamp: datetime = Field(default_factory=datetime.now)
     output_type: Literal["text", "structured", "group_chat"] = "text"
@@ -39,6 +42,5 @@ class AgentOutputSchema(BaseModel):
 
     class Config:
         """Pydantic config for serialization"""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}

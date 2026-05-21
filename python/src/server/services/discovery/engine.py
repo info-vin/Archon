@@ -1,4 +1,3 @@
-
 import time
 from typing import Any
 
@@ -9,6 +8,7 @@ from .models import _CACHE_TTL_SECONDS
 
 logger = get_logger(__name__)
 _provider_cache: dict[str, tuple[Any, float]] = {}
+
 
 class DiscoveryEngine:
     """Core logic for model caching and tool testing."""
@@ -36,9 +36,9 @@ class DiscoveryEngine:
                     "model": model_name,
                     "messages": [{"role": "user", "content": "test"}],
                     "tools": [{"type": "function", "function": {"name": "test", "parameters": {}}}],
-                    "max_tokens": 1
+                    "max_tokens": 1,
                 },
-                timeout=aiohttp.ClientTimeout(total=5)
+                timeout=aiohttp.ClientTimeout(total=5),
             ) as response:
                 return bool(response.status == 200)
         except Exception:

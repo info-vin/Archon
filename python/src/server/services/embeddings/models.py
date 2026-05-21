@@ -1,6 +1,7 @@
 """
 Data models for embedding services.
 """
+
 from dataclasses import dataclass, field
 from typing import Any
 

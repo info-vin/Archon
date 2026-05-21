@@ -65,8 +65,8 @@ async def test_identify_leads_and_save(mock_supabase):
 
     # Verify insert payload
     inserted_data = mock_table.insert.call_args[0][0]
-    assert inserted_data["company_name"] == "Test Corp"
-    assert inserted_data["identified_need"] == "Need AI"
+    assert inserted_data[0]["company_name"] == "Test Corp"
+    assert inserted_data[0]["identified_need"] == "Need AI"
 
 
 @pytest.mark.asyncio

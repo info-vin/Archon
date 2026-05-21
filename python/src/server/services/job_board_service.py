@@ -44,6 +44,7 @@ class JobBoardService:
     async def _get_base_url(self) -> str:
         try:
             from ..services.settings_service import SettingsService
+
             settings = SettingsService(self.supabase)
             return settings.get_setting("CRAWLER_104_SEARCH_API", self.DEFAULT_BASE_URL) or self.DEFAULT_BASE_URL
         except Exception:
@@ -52,6 +53,7 @@ class JobBoardService:
     async def _get_detail_url(self) -> str:
         try:
             from ..services.settings_service import SettingsService
+
             settings = SettingsService(self.supabase)
             return (
                 settings.get_setting("CRAWLER_104_DETAIL_API", self.DEFAULT_DETAIL_BASE_URL)
@@ -71,7 +73,7 @@ class JobBoardService:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1"
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
     ]
 
     # REAL DATA ONLY: MOCK_JOBS remains empty
@@ -94,6 +96,7 @@ class JobBoardService:
                         headers["User-Agent"] = random.choice(self.USER_AGENTS)
                         client.headers.update(headers)
                         import time
+
                         time.sleep(5)
                 except Exception as e:
                     logger.warning(f"Warm-up failed: {e}")
@@ -108,7 +111,8 @@ class JobBoardService:
                     if job.real_id:
                         if i > 0:
                             import time
-                            time.sleep(random.uniform(2.0, 5.0)) # Increased delay for safety
+
+                            time.sleep(random.uniform(2.0, 5.0))  # Increased delay for safety
 
                         detail = self._fetch_job_detail_sync(client, job.real_id, job.url)
                         job.description_full = detail or f"[Snippet Only] {job.description}"
@@ -147,11 +151,20 @@ class JobBoardService:
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         new_leads_count = 0
         from .stats import StatsService
+
         stats_service = StatsService()
 
+        leads_to_insert = []
+        jobs_to_insert = []
         for job in jobs:
             try:
-                existing = self.supabase.table("leads").select("id").eq("company_name", job.company).eq("source_job_url", job.url).execute()
+                existing = (
+                    self.supabase.table("leads")
+                    .select("id")
+                    .eq("company_name", job.company)
+                    .eq("source_job_url", job.url)
+                    .execute()
+                )
                 if existing.data:
                     continue
 
@@ -163,21 +176,34 @@ class JobBoardService:
                     "status": "new",
                     "identified_need": job.identified_need or await self._infer_need(job),
                 }
-                res = self.supabase.table("leads").insert(lead_data).execute()
-                if res.data:
-                    new_leads_count += 1
-                    await stats_service.add_agent_action_log(
-                        agent_name="Alice", xp_change=10,
-                        message=f"Identified new lead: {job.company}",
-                        details={"company": job.company}, content=lead_data["identified_need"]
-                    )
+                leads_to_insert.append(lead_data)
+                jobs_to_insert.append(job)
             except Exception as e:
-                logger.error(f"Failed to save lead: {e}")
+                logger.error(f"Failed to process lead data: {e}")
+
+        if leads_to_insert:
+            try:
+                res = self.supabase.table("leads").insert(leads_to_insert).execute()
+                if res.data:
+                    new_leads_count += len(res.data)
+                    for idx, inserted_lead in enumerate(res.data):
+                        job = jobs_to_insert[idx]
+                        await stats_service.add_agent_action_log(
+                            agent_name="Alice",
+                            xp_change=10,
+                            message=f"Identified new lead: {job.company}",
+                            details={"company": job.company},
+                            content=inserted_lead.get("identified_need", job.identified_need),
+                        )
+            except Exception as e:
+                logger.error(f"Failed to bulk insert leads: {e}")
+
         return new_leads_count
 
     async def _infer_need(self, job: JobData) -> str:
         try:
             from ..services.credential_service import credential_service
+
             api_key = await credential_service.get_credential(
                 "GEMINI_API_KEY"
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
@@ -200,14 +226,13 @@ class JobBoardService:
             )
 
             prompt_template = prompt_service.get_prompt("ALICE_INFER_NEED", default=default_prompt)
-            prompt = prompt_template.format(title=job.title, company=job.company, desc=(job.description_full or job.description))
+            prompt = prompt_template.format(
+                title=job.title, company=job.company, desc=(job.description_full or job.description)
+            )
 
             @retry_with_backoff(max_retries=2)
             async def _call_gemini():
-                return await client.aio.models.generate_content(
-                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
-                    contents=prompt
-                )
+                return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
 
             response = await _call_gemini()
             return str(response.text).strip() if response.text else f"Hiring for {job.title}"
@@ -216,7 +241,16 @@ class JobBoardService:
             return f"Hiring for {job.title}"
 
     def _fetch_from_104_sync(self, client: httpx.Client, keyword: str, limit: int) -> list[JobData]:
-        params = {"ro": "0", "kwop": "7", "keyword": keyword, "order": "1", "asc": "0", "page": "1", "mode": "s", "jobsource": "2018indexpoc"}
+        params = {
+            "ro": "0",
+            "kwop": "7",
+            "keyword": keyword,
+            "order": "1",
+            "asc": "0",
+            "page": "1",
+            "mode": "s",
+            "jobsource": "2018indexpoc",
+        }
         try:
             # Manually get path to avoid await in sync method
             base_url = self.DEFAULT_BASE_URL
@@ -231,10 +265,16 @@ class JobBoardService:
                 raw_link = item.get("link", {}).get("job", "")
                 url = f"https:{raw_link}" if raw_link.startswith("//") else raw_link
                 real_id = url.split("?")[0].split("/job/")[1] if "/job/" in url else None
-                parsed_jobs.append(JobData(
-                    title=item.get("jobName", "Unknown"), company=item.get("custName", "Unknown"),
-                    url=url, description=item.get("jobDesc", ""), source="104", real_id=real_id
-                ))
+                parsed_jobs.append(
+                    JobData(
+                        title=item.get("jobName", "Unknown"),
+                        company=item.get("custName", "Unknown"),
+                        url=url,
+                        description=item.get("jobDesc", ""),
+                        source="104",
+                        real_id=real_id,
+                    )
+                )
             return parsed_jobs
         except Exception:
             return []
@@ -247,6 +287,10 @@ class JobBoardService:
                 headers["Referer"] = job_url
                 client.get(job_url, headers=headers)
             response = client.get(url, headers=headers)
-            return response.json().get("data", {}).get("jobDetail", {}).get("jobDescription") if response.status_code == 200 else None
+            return (
+                response.json().get("data", {}).get("jobDetail", {}).get("jobDescription")
+                if response.status_code == 200
+                else None
+            )
         except Exception:
             return None

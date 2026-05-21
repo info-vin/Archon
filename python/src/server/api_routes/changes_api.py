@@ -36,10 +36,7 @@ async def create_proposal(payload: dict[str, Any], current_user: dict = Depends(
         raise HTTPException(status_code=400, detail="Missing file_path or new_content")
 
     res = await service.create_file_proposal(
-        file_path=file_path,
-        new_content=new_content,
-        summary=summary,
-        user_id=str(current_user.get("id"))
+        file_path=file_path, new_content=new_content, summary=summary, user_id=str(current_user.get("id"))
     )
     return res
 

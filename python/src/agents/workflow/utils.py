@@ -13,8 +13,11 @@ logger = logging.getLogger(__name__)
 
 PAI_V1 = not pydantic_ai.__version__.startswith("0.")
 
+
 # --- Resilience Helpers (Phase 5.4.4) ---
-async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: SharedState, model_name: str, deps: Any = None) -> Any:
+async def _run_agent_with_retry(
+    agent: Agent[Any, Any], prompt: str, ctx_state: SharedState, model_name: str, deps: Any = None
+) -> Any:
     """
     Executes an agent run with exponential backoff for 503/429 errors.
     Supports Google API Key rotation (GEMINI_API_KEY -> GOOGLE_API_KEY).
@@ -36,6 +39,7 @@ async def _run_agent_with_retry(agent: Agent[Any, Any], prompt: str, ctx_state: 
             backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore
             return await agent.run(prompt, model=backup_model, deps=deps)
         return await agent.run(prompt, deps=deps)
+
     try:
         return await _execute()
     except Exception as e:
@@ -83,5 +87,5 @@ def _build_pruned_history(messages: list[dict[str, Any]], max_messages: int = 6)
         pruned = messages
     else:
         # Keep the user's initial prompt [0] + the last (max_messages - 1) messages
-        pruned = [messages[0]] + messages[-(max_messages - 1):]
+        pruned = [messages[0]] + messages[-(max_messages - 1) :]
     return "\n".join([f"{m['role']}: {m['content']}" for m in pruned])

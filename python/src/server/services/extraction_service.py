@@ -33,6 +33,7 @@ class ExtractionService:
                 url = f"https://{url}"
 
             from crawl4ai import AsyncWebCrawler, BrowserConfig
+
             browser_config = BrowserConfig(
                 headless=True,
                 verbose=False,
@@ -50,7 +51,9 @@ class ExtractionService:
 
                 if not content:
                     error_msg = getattr(result, "error_message", "No error message")
-                    raise Exception(f"URL returned empty content. Status: {getattr(result, 'status_code', 'unknown')}. Error: {error_msg}")
+                    raise Exception(
+                        f"URL returned empty content. Status: {getattr(result, 'status_code', 'unknown')}. Error: {error_msg}"
+                    )
 
             # Truncate content to avoid context limit issues
             if len(content) > 15000:

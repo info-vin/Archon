@@ -16,6 +16,7 @@ from ..shared_constants import AgentUUIDs
 
 logger = logging.getLogger(__name__)
 
+
 class SelfTuningService:
     def __init__(self, supabase_client=None):
         self.supabase = supabase_client or get_supabase_client()
@@ -41,14 +42,13 @@ class SelfTuningService:
                 "Alice": "python/src/server/prompts/sales_prompts.py",
                 "Bob": "python/src/server/prompts/marketing_prompts.py",
                 "Charlie": "python/src/server/prompts/pm_prompts.py",
-                "DevBot": "python/src/server/prompts/dev_ops_prompts.py"
+                "DevBot": "python/src/server/prompts/dev_ops_prompts.py",
             }
 
             file_path = prompt_map.get(agent_name, prompt_map["DevBot"])
 
             # 3. Read current prompt
             try:
-
                 async with aiofiles.open(file_path) as f:
                     current_code = await f.read()
             except FileNotFoundError:
@@ -68,10 +68,11 @@ Propose a surgical modification to the prompt string within this code to prevent
 Return ONLY the full corrected file content.
 """
                 from ...config.model_ssot import SYSTEM_MODELS
+
                 response = await client.chat.completions.create(
                     model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     messages=[{"role": "user", "content": tuning_prompt}],
-                    temperature=0.1
+                    temperature=0.1,
                 )
                 new_content = response.choices[0].message.content.strip()
 
@@ -80,7 +81,7 @@ Return ONLY the full corrected file content.
                 file_path=file_path,
                 new_content=new_content,
                 summary=f"Cognitive Self-Tuning: Optimization for {agent_name} based on error {log_id}",
-                user_id=AgentUUIDs.DEV_BOT
+                user_id=AgentUUIDs.DEV_BOT,
             )
 
             return {"success": True, "proposal_id": proposal["id"], "file_path": file_path}
@@ -88,6 +89,7 @@ Return ONLY the full corrected file content.
         except Exception as e:
             logger.error(f"SelfTuning: Failed to tune prompt: {e}")
             return {"success": False, "error": str(e)}
+
 
 # Singleton
 self_tuning_service = SelfTuningService()

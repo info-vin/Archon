@@ -2,11 +2,13 @@ from ..config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 class KnowledgeRepository:
     """
     Repository for handling persistence of knowledge items (Vector DB and Audit Trail).
     Decoupled from LibrarianService during Phase 4.6.50 God Object Refactoring.
     """
+
     def __init__(self, supabase_client):
         self.supabase = supabase_client
 
@@ -26,7 +28,9 @@ class KnowledgeRepository:
             logger.error(f"KnowledgeRepository: Failed to insert crawled page(s): {e}")
             return False
 
-    def insert_document_version(self, document_id: str, field_name: str, change_summary: str, content: dict, created_by: str) -> bool:
+    def insert_document_version(
+        self, document_id: str, field_name: str, change_summary: str, content: dict, created_by: str
+    ) -> bool:
         """
         Records an audit trail / version history for the newly created or updated knowledge.
         """

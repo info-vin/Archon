@@ -39,11 +39,7 @@ async def upload_document(
         # Capturing metadata early to avoid competition in background task
         filename = file.filename or "uploaded_document"
         content_type = file.content_type or "application/octet-stream"
-        file_metadata = {
-            "filename": filename,
-            "content_type": content_type,
-            "size": len(file_content)
-        }
+        file_metadata = {"filename": filename, "content_type": content_type, "size": len(file_content)}
 
         tracker = ProgressTracker(progress_id)
         await tracker.start({"status": "initializing", "progress": 0, "log": f"Starting upload for {filename}"})
@@ -103,12 +99,14 @@ async def background_upload(
         )
 
         await storage.store_documents(
-            documents=[{
-                "source_id": source_id,
-                "content": text,
-                "filename": file_metadata["filename"],  # Physical alignment: must be at top level
-                "metadata": file_metadata
-            }]
+            documents=[
+                {
+                    "source_id": source_id,
+                    "content": text,
+                    "filename": file_metadata["filename"],  # Physical alignment: must be at top level
+                    "metadata": file_metadata,
+                }
+            ]
         )
 
         await tracker.complete({"log": "Upload successful!"})

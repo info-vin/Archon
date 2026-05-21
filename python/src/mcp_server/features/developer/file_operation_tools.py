@@ -1,6 +1,7 @@
 # python/src/mcp_server/features/developer/file_operation_tools.py
 import logging
 
+import aiofiles
 from pydantic import BaseModel, Field
 
 # This is a placeholder for the actual service.
@@ -79,11 +80,12 @@ class ApplyFileModificationTool(BaseModel):
         logger.info(f"Applying physical modification to file: {self.file_path}")
         try:
             import os
+
             # Ensure the directory exists
             os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
 
-            with open(self.file_path, "w", encoding="utf-8") as f:
-                f.write(self.content)
+            async with aiofiles.open(self.file_path, "w", encoding="utf-8") as f:
+                await f.write(self.content)
 
             return f"Successfully modified file '{self.file_path}' physically via direct write."
         except Exception as e:

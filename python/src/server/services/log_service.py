@@ -39,12 +39,9 @@ class LogService(BaseRepository):
             "source": log_data.get("project_name", "system"),
             "level": "ERROR" if "Error" in gemini_resp else "INFO",
             "message": gemini_resp[:500],
-            "details": {
-                "user_input": log_data.get("user_input"),
-                "user_name": log_data.get("user_name")
-            },
+            "details": {"user_input": log_data.get("user_input"), "user_name": log_data.get("user_name")},
             "created_at": datetime.now().isoformat(),
-            "project_name": log_data.get("project_name")
+            "project_name": log_data.get("project_name"),
         }
 
         # Validate required field

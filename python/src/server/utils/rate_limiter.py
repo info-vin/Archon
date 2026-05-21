@@ -14,10 +14,10 @@ class RateLimitConfig:
     """Configuration for rate limiting"""
 
     tokens_per_minute: int = 200_000  # OpenAI embedding limit
-    requests_per_minute: int = 12     # Conservative limit for Gemini Free Tier (Max 15)
-    max_concurrent: int = 1          # Force sequential calls to prevent concurrent 429s
+    requests_per_minute: int = 12  # Conservative limit for Gemini Free Tier (Max 15)
+    max_concurrent: int = 1  # Force sequential calls to prevent concurrent 429s
     backoff_multiplier: float = 2.0  # More aggressive exponential backoff
-    max_backoff: float = 60.0        # Maximum backoff delay in seconds
+    max_backoff: float = 60.0  # Maximum backoff delay in seconds
 
 
 class RateLimiter:

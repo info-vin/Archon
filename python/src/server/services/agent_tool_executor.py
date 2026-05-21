@@ -63,9 +63,7 @@ class AgentToolExecutor:
             logger.info(f"[MCP] Agent {display_name} ({agent_id}) requesting tool execution: {function_name}")
             try:
                 required_level = get_tool_min_level(function_name)
-                is_trusted, curr_level = await self.check_poisson_gate(
-                    agent_id=agent_id, required_level=required_level
-                )
+                is_trusted, curr_level = await self.check_poisson_gate(agent_id=agent_id, required_level=required_level)
 
                 if not is_trusted:
                     logger.warning(

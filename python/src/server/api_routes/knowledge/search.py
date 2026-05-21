@@ -33,9 +33,7 @@ async def search_knowledge_items(
 
 
 @router.post("/rag/query")
-async def perform_rag_query(
-    request: RagQueryRequest, current_user: dict = Depends(requires_permission(TASK_READ_OWN))
-):
+async def perform_rag_query(request: RagQueryRequest, current_user: dict = Depends(requires_permission(TASK_READ_OWN))):
     """Perform a full RAG query combining retrieval and generation. Requires TASK_READ_OWN."""
     try:
         service = RAGService(get_supabase_client())

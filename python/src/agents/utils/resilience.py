@@ -12,9 +12,11 @@ logger = logging.getLogger(__name__)
 # Version helper to handle PydanticAI breaking changes
 PAI_V1 = not pydantic_ai.__version__.startswith("0.")
 
+
 def get_pydantic_ai_output(result: Any) -> Any:
     """Compatibility helper to get result data/output across versions."""
     return getattr(result, "output", getattr(result, "data", None))
+
 
 async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, **run_kwargs) -> Any:
     """
@@ -47,7 +49,7 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
             else:
                 provider = ProviderClass(api_key=api_key)
 
-            model_name = getattr(agent.model, 'model_name', None)
+            model_name = getattr(agent.model, "model_name", None)
             if not model_name:
                 model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite"
 

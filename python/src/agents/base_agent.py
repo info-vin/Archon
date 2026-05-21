@@ -190,7 +190,9 @@ class BaseAgent[DepsT, OutputT](ABC):
         **agent_kwargs,
     ):
         if not model:
-            raise ValueError(f"No model specified for {self.__class__.__name__}. Please set the appropriate environment variable.")
+            raise ValueError(
+                f"No model specified for {self.__class__.__name__}. Please set the appropriate environment variable."
+            )
         self.model = model
         self.name = name or self.__class__.__name__
         self.retries = retries
@@ -261,7 +263,9 @@ class BaseAgent[DepsT, OutputT](ABC):
                     server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
                     async with httpx.AsyncClient() as client:
                         payload = {
-                            "model": self.model if isinstance(self.model, str) else getattr(self.model, 'model_name', "unknown"),
+                            "model": self.model
+                            if isinstance(self.model, str)
+                            else getattr(self.model, "model_name", "unknown"),
                             "provider": "google",
                             "input_tokens": result.usage().request_tokens or 0,
                             "output_tokens": result.usage().response_tokens or 0,

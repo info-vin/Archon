@@ -13,6 +13,7 @@ from ..utils.retry_utils import retry_with_backoff
 
 logger = get_logger(__name__)
 
+
 class TextToSpeechService:
     """
     Dedicated service for generating audio using the gemini-3.1-flash-tts-preview model.
@@ -28,7 +29,9 @@ class TextToSpeechService:
         The audio bytes are packaged into a valid WAV format suitable for browser playback.
         """
         try:
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             if not api_key:
                 logger.warning("TTS failed: No valid API key found.")
                 return False, "API Key missing."
@@ -44,20 +47,18 @@ class TextToSpeechService:
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
-                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name=voice_name
-                        )
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voice_name)
                     )
-                )
+                ),
             )
 
-            response = await client.aio.models.generate_content(
-                model=model_name,
-                contents=text,
-                config=config
-            )
+            response = await client.aio.models.generate_content(model=model_name, contents=text, config=config)
 
-            if not response.candidates or not response.candidates[0].content or not response.candidates[0].content.parts:
+            if (
+                not response.candidates
+                or not response.candidates[0].content
+                or not response.candidates[0].content.parts
+            ):
                 return False, "No audio generated."
 
             # Log token usage for ROI calculation
@@ -69,7 +70,7 @@ class TextToSpeechService:
                     provider="google",
                     input_tokens=int(usage.prompt_token_count or 0),
                     output_tokens=int(usage.candidates_token_count or 0),
-                    context_type="Librarian_TTS"
+                    context_type="Librarian_TTS",
                 )
 
             for part in response.candidates[0].content.parts:
@@ -79,10 +80,10 @@ class TextToSpeechService:
 
                     # Package Raw PCM into WAV format in memory
                     wav_io = io.BytesIO()
-                    with wave.open(wav_io, 'wb') as wf:
-                        wf.setnchannels(1)          # Mono
-                        wf.setsampwidth(2)          # 16-bit
-                        wf.setframerate(24000)      # 24kHz
+                    with wave.open(wav_io, "wb") as wf:
+                        wf.setnchannels(1)  # Mono
+                        wf.setsampwidth(2)  # 16-bit
+                        wf.setframerate(24000)  # 24kHz
                         wf.writeframes(raw_audio)
 
                     wav_bytes = wav_io.getvalue()
@@ -92,6 +93,7 @@ class TextToSpeechService:
         except Exception as e:
             logger.error(f"TTS generation failed: {str(e)}")
             raise e  # Let retry_with_backoff handle it; if it exhausts retries it will propagate
+
 
 # Singleton export
 text_to_speech_service = TextToSpeechService()

@@ -53,9 +53,7 @@ router = APIRouter(prefix="/api/version", tags=["version"])
 
 
 @router.get("/documents", response_model=list[dict[str, Any]])
-async def get_document_versions(
-    limit: int = 50, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
-):
+async def get_document_versions(limit: int = 50, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
     """
     Fetch historical versions of project documents. Requires TASK_READ_TEAM.
     """

@@ -10,6 +10,7 @@ import os
 import uuid
 from typing import Any
 
+import aiofiles
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 
@@ -116,7 +117,9 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
             "RAG_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
         }
 
-        logger.info(f"Provided credentials to agents service from {request.client.host if request.client else 'unknown'}")
+        logger.info(
+            f"Provided credentials to agents service from {request.client.host if request.client else 'unknown'}"
+        )
         return credentials
 
     except Exception as e:
@@ -183,6 +186,7 @@ async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks,
 
 # --- David's Self-Evolution Endpoints (Phase 5.1.3) ---
 
+
 @router.get("/david/read")
 async def david_read_file(request: Request, path: str):
     """
@@ -192,14 +196,15 @@ async def david_read_file(request: Request, path: str):
         raise HTTPException(status_code=403, detail="Access forbidden")
 
     if ".." in path or path.startswith("/"):
-         raise HTTPException(status_code=400, detail="Invalid path")
+        raise HTTPException(status_code=400, detail="Invalid path")
 
     try:
-        with open(path, encoding="utf-8") as f:
-            return f.read()
+        async with aiofiles.open(path, encoding="utf-8") as f:
+            return await f.read()
     except Exception as e:
         logger.error(f"Internal Read: Failed to read {path}: {e}")
         raise HTTPException(status_code=404, detail=str(e)) from e
+
 
 @router.post("/david/propose")
 async def david_create_proposal(request: Request, payload: dict[str, Any]):
@@ -210,6 +215,7 @@ async def david_create_proposal(request: Request, payload: dict[str, Any]):
         raise HTTPException(status_code=403, detail="Access forbidden")
 
     from ..services.propose_change_service import ProposeChangeService
+
     service = ProposeChangeService()
 
     file_path = payload.get("file_path")
@@ -223,6 +229,6 @@ async def david_create_proposal(request: Request, payload: dict[str, Any]):
         file_path=file_path,
         new_content=new_content,
         summary=summary,
-        user_id=None # David is a system agent
+        user_id=None,  # David is a system agent
     )
     return res

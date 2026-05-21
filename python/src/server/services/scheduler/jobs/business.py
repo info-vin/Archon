@@ -110,6 +110,7 @@ async def run_daily_executive_summary():
 
         logger.info("📊 Clockwork: Executing beta_graph...")
         from typing import Any
+
         run_result: Any = await beta_graph.run(deps=None, state=state)
         output = run_result.output if hasattr(run_result, "output") else run_result
 
@@ -128,29 +129,29 @@ async def run_daily_executive_summary():
         assignee_id = charlie_res.data[0]["id"] if charlie_res.data else AgentUUIDs.SUPERVISOR
 
         success, tr = await task_service.create_task(
-            project_id=p_res.data[0]["id"],
-            title=task_title,
-            description=task_desc,
-            assignee_id=assignee_id
+            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=assignee_id
         )
         if success:
             logger.info(f"✅ Clockwork: Created Executive Summary task {tr['task']['id']}. Dispatching Charlie...")
 
             # Record ROI info to logs
-            supabase.table("archon_logs").insert({
-                "source": "clockwork-scheduler",
-                "level": "INFO",
-                "message": f"Daily Executive Summary completed. Task created: {tr['task']['id']}",
-                "details": {
-                    "type": "executive_summary",
-                    "input_tokens": state.shared.input_tokens,
-                    "output_tokens": state.shared.output_tokens,
-                    "model": state.shared.model_used
+            supabase.table("archon_logs").insert(
+                {
+                    "source": "clockwork-scheduler",
+                    "level": "INFO",
+                    "message": f"Daily Executive Summary completed. Task created: {tr['task']['id']}",
+                    "details": {
+                        "type": "executive_summary",
+                        "input_tokens": state.shared.input_tokens,
+                        "output_tokens": state.shared.output_tokens,
+                        "model": state.shared.model_used,
+                    },
                 }
-            }).execute()
+            ).execute()
 
     except Exception as e:
         logger.error(f"💥 Clockwork: Executive Summary generation failed: {e}")
+
 
 async def analyze_token_usage():
     """Token Usage Analysis & Proactive Alerting (Phase 4.6.46: Proactive)"""
@@ -159,7 +160,12 @@ async def analyze_token_usage():
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
         # Physical Fix: table is token_usage
-        res = supabase.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", one_day_ago).execute()
+        res = (
+            supabase.table("token_usage")
+            .select("input_tokens, output_tokens, cost_usd")
+            .gt("created_at", one_day_ago)
+            .execute()
+        )
         data = res.data or []
 
         total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data)
@@ -172,12 +178,14 @@ async def analyze_token_usage():
         # Alert if cost exceeds threshold (Default $1.0)
         cost_threshold = 1.0
         if total_cost > cost_threshold:
-            supabase.table("archon_logs").insert({
-                "source": "sentinel-cost",
-                "level": "ALERT",
-                "message": f"💰 Cost Spike Detected: 24h spend ${total_cost:.2f} > threshold ${cost_threshold:.2f}",
-                "details": {"total_cost": total_cost, "total_tokens": total_tokens, "request_count": len(data)}
-            }).execute()
+            supabase.table("archon_logs").insert(
+                {
+                    "source": "sentinel-cost",
+                    "level": "ALERT",
+                    "message": f"💰 Cost Spike Detected: 24h spend ${total_cost:.2f} > threshold ${cost_threshold:.2f}",
+                    "details": {"total_cost": total_cost, "total_tokens": total_tokens, "request_count": len(data)},
+                }
+            ).execute()
 
         supabase.table("archon_logs").insert(
             {
@@ -228,6 +236,7 @@ async def run_business_sentinel():
         if not stale_leads:
             logger.info("🛡️ Clockwork: No stale leads found.")
         else:
+            log_payloads = []
             for lead in stale_leads:
                 # Proactive Action: Mark as dormant to auto-clean Alice's workbench
                 supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]).execute()
@@ -245,34 +254,37 @@ async def run_business_sentinel():
                 if existing.data:
                     continue
 
-                alert_payload = {
-                    "source": "sentinel",
-                    "level": "ALERT",
-                    "message": f"Stale Lead Auto-Dormant: {lead['company_name']}",
-                    "details": {
-                        "type": "stale_lead",
-                        "category": "business",
-                        "lead_id": lead["id"],
-                        "company": lead["company_name"],
-                        "action": "status_changed_to_dormant"
-                    },
-                }
-                log_res = supabase.table("archon_logs").insert(alert_payload).execute()
-                logger.info(f"🛡️ Sentinel: Created proactive alert for {lead['company_name']}")
+                log_payloads.append(
+                    {
+                        "source": "sentinel",
+                        "level": "ALERT",
+                        "message": f"Stale Lead Auto-Dormant: {lead['company_name']}",
+                        "details": {
+                            "type": "stale_lead",
+                            "category": "business",
+                            "lead_id": lead["id"],
+                            "company": lead["company_name"],
+                            "action": "status_changed_to_dormant",
+                        },
+                    }
+                )
+                logger.info(f"🛡️ Sentinel: Prepared proactive alert for {lead['company_name']}")
 
+            if log_payloads:
+                log_res = supabase.table("archon_logs").insert(log_payloads).execute()
                 if log_res.data:
-                    log_id = log_res.data[0]["id"]
                     try:
                         import asyncio
 
                         from src.server.services.projects.task_service import task_service
-                        # We don't have assignee_id in the basic select above, but task_service can handle fallback or we can add it.
-                        # For now, we trigger the orchestration.
-                        asyncio.create_task(
-                            task_service.generate_task_from_alert(alert_id=str(log_id), assignee_id=None)
-                        )
+
+                        for log_record in log_res.data:
+                            log_id = log_record["id"]
+                            asyncio.create_task(
+                                task_service.generate_task_from_alert(alert_id=str(log_id), assignee_id=None)
+                            )
                     except Exception as task_err:
-                        logger.error(f"🛡️ Sentinel: Failed to auto-generate task from alert {log_id}: {task_err}")
+                        logger.error(f"🛡️ Sentinel: Failed to auto-generate tasks from alerts: {task_err}")
 
         # 2. Content Bottlenecks (GAP-029)
         forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
@@ -284,6 +296,7 @@ async def run_business_sentinel():
             .execute()
         )
         posts = post_res.data or []
+        log_payloads = []
         for post in posts:
             # Anti-spam
             existing_p = (
@@ -298,19 +311,23 @@ async def run_business_sentinel():
             if existing_p.data:
                 continue
 
-            alert_payload = {
-                "source": "sentinel",
-                "level": "ALERT",
-                "message": f"Content Bottleneck: '{post['title']}' stuck in review",
-                "details": {
-                    "type": "content_bottleneck",
-                    "category": "business",
-                    "post_id": post["id"],
-                    "title": post["title"],
-                },
-            }
-            supabase.table("archon_logs").insert(alert_payload).execute()
-            logger.info(f"🛡️ Sentinel: Created bottleneck alert for {post['title']}")
+            log_payloads.append(
+                {
+                    "source": "sentinel",
+                    "level": "ALERT",
+                    "message": f"Content Bottleneck: '{post['title']}' stuck in review",
+                    "details": {
+                        "type": "content_bottleneck",
+                        "category": "business",
+                        "post_id": post["id"],
+                        "title": post["title"],
+                    },
+                }
+            )
+            logger.info(f"🛡️ Sentinel: Prepared bottleneck alert for {post['title']}")
+
+        if log_payloads:
+            supabase.table("archon_logs").insert(log_payloads).execute()
     except Exception as e:
         logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
 
@@ -354,11 +371,13 @@ async def run_api_deprecation_scan():
                 task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
             )
 
-            supabase.table("archon_logs").insert({
-                "source": "clockwork-scheduler",
-                "level": "INFO",
-                "message": "Dispatched Bi-Weekly API Limit & Deprecation Scan to Librarian",
-            }).execute()
+            supabase.table("archon_logs").insert(
+                {
+                    "source": "clockwork-scheduler",
+                    "level": "INFO",
+                    "message": "Dispatched Bi-Weekly API Limit & Deprecation Scan to Librarian",
+                }
+            ).execute()
 
     except Exception as e:
         logger.error(f"💥 Clockwork: API Scan Failed: {e}", exc_info=True)

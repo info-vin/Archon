@@ -86,7 +86,7 @@ class BaseSearchStrategy(BaseRepository):
                         if content and isinstance(content, str):
                             try:
                                 # Fix potential Latin-1/UTF-8 double-encoding/mismatch
-                                result["content"] = content.encode('latin-1').decode('utf-8')
+                                result["content"] = content.encode("latin-1").decode("utf-8")
                             except (UnicodeEncodeError, UnicodeDecodeError):
                                 # Already healthy or unfixable
                                 pass

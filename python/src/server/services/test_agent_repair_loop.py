@@ -56,7 +56,9 @@ async def test_agent_repair_loop_python(clean_env):
 
     # We need to mock _analyze_error_with_structured_output directly
     # to avoid complex mocking of the OpenAI client and config
-    with patch.object(agent_service.dev_ops, "_analyze_error_with_structured_output", new_callable=AsyncMock) as mock_analyze:
+    with patch.object(
+        agent_service.dev_ops, "_analyze_error_with_structured_output", new_callable=AsyncMock
+    ) as mock_analyze:
         mock_analyze.return_value = mock_llm_response
 
         # ACT

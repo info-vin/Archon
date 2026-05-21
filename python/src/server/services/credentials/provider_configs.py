@@ -5,6 +5,7 @@ from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[str, Any]:
     """
     Get the currently active provider configuration.
@@ -47,6 +48,7 @@ async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[s
             "chat_model": "",
             "embedding_model": "",
         }
+
 
 async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
     """
@@ -103,6 +105,7 @@ async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
         logger.error(f"Error getting embedding provider configs: {e}")
         return []
 
+
 async def _get_provider_api_key(manager: Any, provider: str) -> str | None:
     """Get API key for a specific provider."""
     key_mapping = {
@@ -116,6 +119,7 @@ async def _get_provider_api_key(manager: Any, provider: str) -> str | None:
         return cast(str | None, await manager.get_credential(key_name))
     return "ollama" if provider == "ollama" else None
 
+
 def _get_provider_base_url(provider: str, rag_settings: dict) -> str | None:
     """Get base URL for provider."""
     if provider == "ollama":
@@ -123,6 +127,7 @@ def _get_provider_base_url(provider: str, rag_settings: dict) -> str | None:
     elif provider == "google":
         return "https://generativelanguage.googleapis.com/v1beta/openai/"
     return None
+
 
 async def set_active_provider(manager: Any, provider: str, service_type: str = "llm") -> bool:
     """Set the active provider for a service type."""

@@ -3,6 +3,7 @@ Retry Utilities for AI Services
 
 Provides exponential backoff and jitter for resilient API calls using tenacity.
 """
+
 import functools
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -20,6 +21,7 @@ logger = get_logger("retry_utils")
 
 T = TypeVar("T")
 
+
 def _is_rate_limit_or_overloaded(e: Exception) -> bool:
     """Check if the exception is a 429 Rate Limit or 503 Overloaded error."""
     err_msg = str(e).lower()
@@ -28,10 +30,11 @@ def _is_rate_limit_or_overloaded(e: Exception) -> bool:
         logger.warning(f"API Rate Limit/Overloaded encountered. Triggering backoff. Details: {str(e)[:100]}")
     return is_retryable
 
+
 def retry_with_backoff(
     max_retries: int = 3,
     initial_delay: float = 1.0,
-    backoff_factor: float = 2.0, # Not directly used in tenacity's wait_exponential_jitter default kwargs easily without custom classes, but wait_exponential_jitter has its own defaults
+    backoff_factor: float = 2.0,  # Not directly used in tenacity's wait_exponential_jitter default kwargs easily without custom classes, but wait_exponential_jitter has its own defaults
     jitter: bool = True,
     retryable_exceptions: tuple[type[Exception], ...] = (Exception,),
 ):
@@ -48,7 +51,11 @@ def retry_with_backoff(
 
     # Configure tenacity retry conditions
     # Increased max to 65 to handle Gemini's 54s cooldowns for Free Tier RPM limits
-    wait_strategy = wait_exponential_jitter(initial=initial_delay, max=65) if jitter else wait_exponential_jitter(initial=initial_delay, max=65, jitter=0)
+    wait_strategy = (
+        wait_exponential_jitter(initial=initial_delay, max=65)
+        if jitter
+        else wait_exponential_jitter(initial=initial_delay, max=65, jitter=0)
+    )
 
     # Create a custom retry condition combining type and content checks
     def custom_retry_condition(e: BaseException) -> bool:
@@ -60,7 +67,7 @@ def retry_with_backoff(
         wait=wait_strategy,
         stop=stop_after_attempt(max_retries + 1),
         retry=retry_if_exception(custom_retry_condition),
-        reraise=True # Re-raise the last exception instead of RetryError
+        reraise=True,  # Re-raise the last exception instead of RetryError
     )
 
     def decorator(func: Callable[..., Any]):
@@ -69,5 +76,7 @@ def retry_with_backoff(
             # Apply the synchronous/asynchronous tenacity decorator transparently
             wrapped_func = tenacity_decorator(func)
             return await wrapped_func(*args, **kwargs)
+
         return wrapper
+
     return decorator

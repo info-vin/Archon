@@ -6,6 +6,7 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
+import aiofiles
 import logfire
 from supabase import Client
 
@@ -132,8 +133,8 @@ class MigrationService:
         for sql_file in sorted(self._migrations_dir.glob("*.sql")):
             try:
                 # Read SQL content
-                with open(sql_file, encoding="utf-8") as f:
-                    sql_content = f.read()
+                async with aiofiles.open(sql_file, encoding="utf-8") as f:
+                    sql_content = await f.read()
 
                 # Extract migration name (filename without extension)
                 migration_name = sql_file.stem
@@ -167,8 +168,8 @@ class MigrationService:
             for sql_file in sorted(version_dir.glob("*.sql")):
                 try:
                     # Read SQL content
-                    with open(sql_file, encoding="utf-8") as f:
-                        sql_content = f.read()
+                    async with aiofiles.open(sql_file, encoding="utf-8") as f:
+                        sql_content = await f.read()
 
                     # Extract migration name
                     # Physical Alignment: Include version prefix if not in root to match DB records

@@ -9,6 +9,7 @@ from .app_state import app_state
 # Cache schema check result to avoid repeated database queries
 _schema_check_cache: dict[str, Any] = {"valid": None, "checked_at": 0.0}
 
+
 async def _check_database_schema():
     """Check if the projects table exists to determine schema validity."""
     import time
@@ -58,6 +59,7 @@ async def _check_database_schema():
         # but log the error.
         api_logger.warning(f"Inconclusive schema check: {error_msg}")
         return {"valid": True, "message": f"Schema check inconclusive: {str(e)}"}
+
 
 async def check_system_health():
     """Core health check logic shared between /health and /api/health."""

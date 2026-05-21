@@ -22,6 +22,7 @@ from ..token_usage_service import TokenUsageService
 
 logger = get_logger(__name__)
 
+
 class ContentHandler:
     """
     Handles AI Content Generation, Visual Assets, and Approval Workflows.
@@ -56,6 +57,7 @@ class ContentHandler:
             # Token Logging
             try:
                 from ..agent_registry import get_agent_uuid
+
                 agent_uuid = get_agent_uuid("market-bot")
                 asyncio.create_task(
                     TokenUsageService.log_usage(
@@ -76,20 +78,25 @@ class ContentHandler:
         except Exception as e:
             logger.error(f"ContentHandler: Pitch generation failed: {e}")
             try:
-                LogService(self.supabase_client).create_log_entry({
-                    "user_input": f"Pitch Request: {company} / {job_title}",
-                    "gemini_response": f"AI Error: {str(e)[:500]}",
-                    "project_name": "SalesBot",
-                    "user_name": "alice@archon.com"
-                })
+                LogService(self.supabase_client).create_log_entry(
+                    {
+                        "user_input": f"Pitch Request: {company} / {job_title}",
+                        "gemini_response": f"AI Error: {str(e)[:500]}",
+                        "project_name": "SalesBot",
+                        "user_name": "alice@archon.com",
+                    }
+                )
             except Exception:
                 pass
             return {"error_code": 500, "message": str(e)}
 
     async def generate_visual_asset(self, style: str) -> dict:
         from .logo_tool import generate_logo_svg
+
         try:
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
             prompt = f"Professional tech logo, {style}, high resolution"
 
@@ -129,7 +136,9 @@ class ContentHandler:
 
         try:
             context_text = await self._get_expert_style_context(f"{topic} {industry}")
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             if not api_key:
                 return False, {"error_code": 401, "message": "API Key missing"}
 
@@ -143,9 +152,7 @@ class ContentHandler:
                     model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     contents=f"Topic: {topic}\nContext: {context_text}",
                     config=types.GenerateContentConfig(
-                        system_instruction=sys_prompt,
-                        response_mime_type="application/json",
-                        tools=[google_search_tool]
+                        system_instruction=sys_prompt, response_mime_type="application/json", tools=[google_search_tool]
                     ),
                 )
 
@@ -154,6 +161,7 @@ class ContentHandler:
             # Token Usage
             try:
                 from ..agent_registry import get_agent_uuid
+
                 agent_uuid = get_agent_uuid("market-bot")
                 asyncio.create_task(
                     TokenUsageService.log_usage(
@@ -186,7 +194,12 @@ class ContentHandler:
                 "image_url": "https://picsum.photos/seed/market/1024/1024",
             }
             self.supabase_client.table("blog_posts").insert(new_post).execute()
-            return True, {"title": new_post["title"], "content": new_post["content"], "excerpt": new_post["excerpt"], "status": "review"}
+            return True, {
+                "title": new_post["title"],
+                "content": new_post["content"],
+                "excerpt": new_post["excerpt"],
+                "status": "review",
+            }
         except Exception as e:
             logger.error(f"ContentHandler: Blog drafting failed: {e}")
             return False, {"error_code": 500, "message": str(e)}
@@ -206,17 +219,17 @@ class ContentHandler:
             lead_names = [L["company_name"] for L in (leads_res.data or [])]
             title = f"AI Draft from Leads: {', '.join(lead_names[:2])}"
             if len(lead_names) > 2:
-                title += f" (+{len(lead_names)-2})"
+                title += f" (+{len(lead_names) - 2})"
 
             # 2. Create Task assigned to MarketBot
             success, res = await task_service.create_task(
-                project_id="marketing_ops", # Standard marketing project
+                project_id="marketing_ops",  # Standard marketing project
                 title=title,
                 description=f"AI is drafting blog posts for {len(lead_ids)} leads.",
                 assignee=AgentNames.MARKET_BOT,
                 assignee_id=AgentUUIDs.MARKET_BOT,
                 priority="high",
-                feature="blog_drafting"
+                feature="blog_drafting",
             )
 
             if not success:
@@ -227,14 +240,14 @@ class ContentHandler:
             # 3. Store lead_ids in metadata (or fallback to description if column missing)
             # We try to update with metadata=lead_ids
             try:
-                self.supabase_client.table("archon_tasks").update({
-                    "metadata": {"lead_ids": lead_ids}
-                }).eq("id", task_id).execute()
+                self.supabase_client.table("archon_tasks").update({"metadata": {"lead_ids": lead_ids}}).eq(
+                    "id", task_id
+                ).execute()
             except Exception:
                 # Fallback to description suffix if metadata column is not yet migrated
-                self.supabase_client.table("archon_tasks").update({
-                    "description": res["task"]["description"] + f"\n\n[PARAM:LEAD_IDS:{','.join(lead_ids)}]"
-                }).eq("id", task_id).execute()
+                self.supabase_client.table("archon_tasks").update(
+                    {"description": res["task"]["description"] + f"\n\n[PARAM:LEAD_IDS:{','.join(lead_ids)}]"}
+                ).eq("id", task_id).execute()
 
             # 4. Return task info
             return True, {"task_id": task_id, "status": "dispatched"}
@@ -253,20 +266,23 @@ class ContentHandler:
             if not leads:
                 return "No leads found for enrichment."
 
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
             sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
 
             generated_count = 0
+            new_posts = []
             for lead in leads:
+
                 @retry_with_backoff(max_retries=2)
                 async def _call_gemini(current_lead=lead):
                     return await client.aio.models.generate_content(
                         model=SYSTEM_MODELS["DEFAULT_TEXT"],
                         contents=f"Generate a blog post. Target Company: {current_lead.get('company_name')}. Identified Need: {current_lead.get('identified_need')}. Job Title: {current_lead.get('job_title')}",
                         config=types.GenerateContentConfig(
-                            system_instruction=sys_prompt,
-                            response_mime_type="application/json"
+                            system_instruction=sys_prompt, response_mime_type="application/json"
                         ),
                     )
 
@@ -283,8 +299,11 @@ class ContentHandler:
                     "ai_score": self.calculate_ai_score(str(result.get("content", ""))),
                     "lead_id": lead.get("id"),
                 }
-                self.supabase_client.table("blog_posts").insert(new_post).execute()
+                new_posts.append(new_post)
                 generated_count += 1
+
+            if new_posts:
+                self.supabase_client.table("blog_posts").insert(new_posts).execute()
 
             return f"Successfully generated {generated_count} blog drafts from {len(lead_ids)} leads."
 
@@ -298,19 +317,27 @@ class ContentHandler:
             return False, {"error": "Post not found"}
         score = self.calculate_ai_score(post.get("content", ""))
         status = "changes_requested" if score < 50 else "review"
-        self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq("id", post_id).execute()
+        self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq(
+            "id", post_id
+        ).execute()
         return True, {"status": status, "ai_score": score}
 
     async def process_approval(self, item_type: str, item_id: str, action: str, notes: str | None) -> bool:
         if item_type == "blog":
             new_status = "published" if action == "approve" else "changes_requested"
-            res = self.supabase_client.table("blog_posts").update({"status": new_status, "review_notes": notes}).eq("id", item_id).execute()
+            res = (
+                self.supabase_client.table("blog_posts")
+                .update({"status": new_status, "review_notes": notes})
+                .eq("id", item_id)
+                .execute()
+            )
             if action != "approve" and notes and res.data:
                 try:
                     post_data = res.data[0]
                     import asyncio
 
                     from ..librarian_service import LibrarianService
+
                     asyncio.create_task(
                         LibrarianService().archive_style_critique(
                             post_title=post_data.get("title", "Untitled"),
@@ -324,7 +351,13 @@ class ContentHandler:
         return False
 
     async def get_pending_approvals(self) -> dict:
-        res = self.supabase_client.table("blog_posts").select("*").eq("status", "review").order("updated_at", desc=True).execute()
+        res = (
+            self.supabase_client.table("blog_posts")
+            .select("*")
+            .eq("status", "review")
+            .order("updated_at", desc=True)
+            .execute()
+        )
         return {"blogs": res.data or [], "leads": []}
 
     async def generate_reject_suggestion(self, item_type: str, item_id: str) -> dict:
@@ -357,10 +390,7 @@ class ContentHandler:
         prompt = prompt_template.format(content=post.get("content", ""))
 
         try:
-            response = await client.aio.models.generate_content(
-                model=SYSTEM_MODELS["DEFAULT_TEXT"],
-                contents=prompt
-            )
+            response = await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
             return {"notes": response.text.strip() if response.text else "Failed to generate reason."}
         except Exception as e:
             return {"notes": f"AI Generation Failed: {str(e)}"}
@@ -369,7 +399,7 @@ class ContentHandler:
         context_text = ""
         if source_type == "lead":
             logs = self.supabase_client.table("visit_logs").select("*").eq("lead_id", source_id).execute().data
-            for log_item in (logs or []):
+            for log_item in logs or []:
                 context_text += f"\n[Log]: {log_item.get('summary') or 'No summary'}\n"
         success, res = await RAGService().perform_rag_query(query=context_text[:1000] or "General", match_count=3)
         return {

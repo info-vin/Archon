@@ -35,6 +35,7 @@ def get_tool_min_level(tool_name: str) -> int:
     # Physical Realization of Dynamic Feedback Loop
     try:
         from ..services.settings_service import SettingsService
+
         settings = SettingsService()
         overrides = settings.get_setting("AGENT_TOOL_OVERRIDES")
         if overrides and isinstance(overrides, dict):
@@ -113,6 +114,7 @@ def get_agent_config(agent_id: str) -> dict | None:
     Handles mapping from human-friendly roles to registry keys.
     """
     from .shared_constants import AgentUUIDs
+
     mapping = {
         AgentUUIDs.SUPERVISOR: "supervisor",
         AgentUUIDs.MARKET_BOT: "market-bot",

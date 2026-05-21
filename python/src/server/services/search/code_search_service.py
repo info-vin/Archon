@@ -5,6 +5,7 @@ from ...config.logfire_config import safe_span
 
 logger = logging.getLogger(__name__)
 
+
 async def execute_code_search_pipeline(
     rag_service: Any, query: str, source_id: str | None = None, match_count: int = 5
 ) -> tuple[bool, dict[str, Any]]:
@@ -25,6 +26,7 @@ async def execute_code_search_pipeline(
                 }
 
             from src.server.services.search.rag_config import get_bool_setting
+
             use_hybrid_search = get_bool_setting("USE_HYBRID_SEARCH", False)
             use_reranking = get_bool_setting("USE_RERANKING", False)
 

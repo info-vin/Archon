@@ -2,6 +2,7 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+
 class VectorNormalization:
     """Handles logic related to embedding dimensions, padding, and performance scoring."""
 

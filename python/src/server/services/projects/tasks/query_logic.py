@@ -182,10 +182,13 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
     """
     Get a specific task by ID, including AI usage metrics.
     """
+
     def _query():
         return task_service_instance.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
 
-    success, result = task_service_instance.execute_query(query_func=_query, error_context=f"Task with ID {task_id} not found")
+    success, result = task_service_instance.execute_query(
+        query_func=_query, error_context=f"Task with ID {task_id} not found"
+    )
 
     if not success:
         return False, result
@@ -215,7 +218,7 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
 
         total_tokens = 0
         total_cost = 0.0
-        for row in (token_res.data or []):
+        for row in token_res.data or []:
             total_tokens += row.get("total_tokens", 0)
             total_cost += float(row.get("cost_usd", 0))
 
@@ -229,4 +232,3 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
         task_data["ai_metrics"] = {"total_tokens": 0, "total_cost_usd": 0, "is_ai_powered": False}
 
     return True, {"task": task_data}
-

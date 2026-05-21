@@ -13,11 +13,13 @@ from ..services.text_to_speech_service import text_to_speech_service
 
 router = APIRouter(prefix="/api/audio", tags=["audio"])
 
+
 class TTSRequest(BaseModel):
     text: str = ""
     scene: str = "marketing_pitch"  # e.g., "marketing_pitch", "commander_briefing"
     voice: str | None = None
     agent_data: dict | None = None
+
 
 @router.post("/generate")
 async def generate_audio_stream(request: TTSRequest, current_user: dict = Depends(get_current_user)):
@@ -40,7 +42,9 @@ async def generate_audio_stream(request: TTSRequest, current_user: dict = Depend
     if request.agent_data:
         from ..services.credential_service import credential_service
 
-        api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+        api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential(
+            "GOOGLE_API_KEY"
+        )
         if not api_key:
             raise HTTPException(status_code=500, detail="No API key for semantic translation")
 
@@ -62,9 +66,7 @@ async def generate_audio_stream(request: TTSRequest, current_user: dict = Depend
 
         try:
             response = await client.aio.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config={"system_instruction": system_instruction}
+                model=model_name, contents=prompt, config={"system_instruction": system_instruction}
             )
             final_text = response.text if response.text else "Failed to generate briefing."
         except Exception as e:
@@ -92,9 +94,5 @@ async def generate_audio_stream(request: TTSRequest, current_user: dict = Depend
 
     # 6. Return as In-Memory Streaming Response
     return StreamingResponse(
-        io.BytesIO(result),
-        media_type="audio/wav",
-        headers={
-            "Content-Disposition": "inline; filename=\"speech.wav\""
-        }
+        io.BytesIO(result), media_type="audio/wav", headers={"Content-Disposition": 'inline; filename="speech.wav"'}
     )

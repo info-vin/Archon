@@ -1,6 +1,7 @@
 """
 Configuration loader for embedding services.
 """
+
 import os
 
 

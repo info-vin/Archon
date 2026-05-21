@@ -2,9 +2,12 @@ import logging
 import os
 from typing import Any
 
+import aiofiles
+
 from ..librarian_service import LibrarianService
 
 logger = logging.getLogger(__name__)
+
 
 class AnalyticsHandler:
     """
@@ -67,6 +70,7 @@ class AnalyticsHandler:
 
     async def run_sentinel(self) -> dict:
         from ..scheduler_service import scheduler_service
+
         await scheduler_service.run_business_sentinel()
         return {"status": "triggered", "message": "Sentinel scan started in background."}
 
@@ -94,8 +98,8 @@ class AnalyticsHandler:
                     total_count += 1
                     file_path = os.path.join(root, file)
                     try:
-                        with open(file_path, encoding="utf-8") as f:
-                            content = f.read()
+                        async with aiofiles.open(file_path, encoding="utf-8") as f:
+                            content = await f.read()
                         if not content.strip():
                             continue
                         await librarian.archive_file(
@@ -133,31 +137,37 @@ class AnalyticsHandler:
 
         sources = []
         for lead_entry in leads:
-            sources.append({
-                "id": lead_entry["id"],
-                "type": "lead",
-                "title": lead_entry["company_name"],
-                "score": lead_entry.get("enrichment_score", 0),
-                "summary": (lead_entry.get("identified_need") or "")[:100],
-                "date": lead_entry["created_at"],
-            })
+            sources.append(
+                {
+                    "id": lead_entry["id"],
+                    "type": "lead",
+                    "title": lead_entry["company_name"],
+                    "score": lead_entry.get("enrichment_score", 0),
+                    "summary": (lead_entry.get("identified_need") or "")[:100],
+                    "date": lead_entry["created_at"],
+                }
+            )
         for task_entry in tasks:
-            sources.append({
-                "id": task_entry["id"],
-                "type": "task",
-                "title": task_entry["title"],
-                "score": 100,
-                "summary": task_entry.get("description", "")[:100],
-                "date": task_entry["created_at"],
-            })
+            sources.append(
+                {
+                    "id": task_entry["id"],
+                    "type": "task",
+                    "title": task_entry["title"],
+                    "score": 100,
+                    "summary": task_entry.get("description", "")[:100],
+                    "date": task_entry["created_at"],
+                }
+            )
         for blog_entry in blogs:
-            sources.append({
-                "id": blog_entry["id"],
-                "type": "blog",
-                "title": blog_entry["title"],
-                "score": blog_entry.get("ai_score", 0),
-                "summary": blog_entry.get("excerpt", ""),
-                "date": blog_entry["created_at"],
-                "status": blog_entry["status"],
-            })
+            sources.append(
+                {
+                    "id": blog_entry["id"],
+                    "type": "blog",
+                    "title": blog_entry["title"],
+                    "score": blog_entry.get("ai_score", 0),
+                    "summary": blog_entry.get("excerpt", ""),
+                    "date": blog_entry["created_at"],
+                    "status": blog_entry["status"],
+                }
+            )
         return sorted(sources, key=lambda x: x["date"], reverse=True)

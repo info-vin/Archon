@@ -10,6 +10,7 @@ from src.server.services.shared_constants import AI_AGENT_ROLES
 
 logger = get_logger(__name__)
 
+
 async def create_info_request_task_logic(
     task_service_instance, requester_id: str, subject: str, context: str, lead_id: str | None = None
 ) -> tuple[bool, dict[str, Any]]:
@@ -41,7 +42,9 @@ async def create_info_request_task_logic(
             def _get_first_project():
                 return task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute()
 
-            p_success, p_result = task_service_instance.execute_query(_get_first_project, "Get fallback project", require_data=True)
+            p_success, p_result = task_service_instance.execute_query(
+                _get_first_project, "Get fallback project", require_data=True
+            )
             if p_success and p_result["data"]:
                 project_id = p_result["data"][0]["id"]
             else:
@@ -58,12 +61,13 @@ async def create_info_request_task_logic(
                 priority="high",
                 feature="information_request",
                 task_order=0,
-            )
+            ),
         )
 
     except Exception as e:
         logger.error(f"Error creating info request task: {e}")
         return False, {"error": str(e)}
+
 
 async def create_task_logic(
     task_service_instance,
@@ -161,7 +165,9 @@ async def create_task_logic(
             if assignee_id in AI_AGENT_ROLES.values():
                 task_service_instance._notify_ai_agent_of_assignment(task_id=task["id"], agent_id=assignee_id)
             elif assignee in AI_AGENT_ROLES:
-                task_service_instance._notify_ai_agent_of_assignment(task_id=task["id"], agent_id=AI_AGENT_ROLES[assignee])
+                task_service_instance._notify_ai_agent_of_assignment(
+                    task_id=task["id"], agent_id=AI_AGENT_ROLES[assignee]
+                )
 
             return True, {
                 "task": {

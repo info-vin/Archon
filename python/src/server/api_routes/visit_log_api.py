@@ -3,7 +3,6 @@ Visit Log API Hardened - Secure management of physical visit records.
 Lean implementation with full test compatibility and GAP-009 Realization.
 """
 
-
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from src.server.services.visit_log_service import visit_log_service
@@ -16,8 +15,7 @@ router = APIRouter(prefix="/api/visit-logs", tags=["visit-logs"])
 
 @router.get("")
 async def list_visit_logs(
-    lead_id: str | None = None,
-    current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
+    lead_id: str | None = None, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
 ):
     """Lists visit logs, optionally filtered by lead. Restricted to Manager/Admin."""
     success, res = await visit_log_service.list_logs(lead_id=lead_id)
@@ -35,7 +33,7 @@ async def create_visit_log(
     longitude: float | None = Form(None),
     location_address: str | None = Form(None),
     audio_file: UploadFile | None = File(None),
-    current_user: dict = Depends(requires_permission(TASK_CREATE))
+    current_user: dict = Depends(requires_permission(TASK_CREATE)),
 ):
     """
     Creates a new visit log from voice or text (GAP-009).
@@ -49,7 +47,7 @@ async def create_visit_log(
         "lead_id": lead_id,
         "latitude": latitude,
         "longitude": longitude,
-        "location_address": location_address or company_name
+        "location_address": location_address or company_name,
     }
 
     # Pass everything to Service layer for atomic realization

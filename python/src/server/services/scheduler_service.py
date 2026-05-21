@@ -144,7 +144,10 @@ class SchedulerService:
         logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
 
         self._scheduler.add_job(
-            self._run_model_verification, trigger=IntervalTrigger(minutes=60), id="model_verification", replace_existing=True
+            self._run_model_verification,
+            trigger=IntervalTrigger(minutes=60),
+            id="model_verification",
+            replace_existing=True,
         )
         logger.info("✅ Scheduled Job: Model Verification (Every 60 mins)")
 

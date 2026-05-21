@@ -27,7 +27,7 @@ class RagDependencies(ArchonDependencies):
     source_filter: str | None = None
     match_count: int = 5
     progress_callback: Any | None = None  # Callback for progress updates
-    collected_citations: list[dict[str, Any]] = Field(default_factory=list) # Physical audit trail
+    collected_citations: list[dict[str, Any]] = Field(default_factory=list)  # Physical audit trail
 
 
 class RagQueryResult(BaseModel):

@@ -100,7 +100,7 @@ class UsageTrackingCompletions:
 
             # Temporary override of the client's API key for this request if needed
             original_api_key = original_client.api_key
-            original_headers = getattr(original_client, 'default_headers', {})
+            original_headers = getattr(original_client, "default_headers", {})
 
             try:
                 if override_key:
@@ -127,7 +127,9 @@ class UsageTrackingCompletions:
                     primary_key = os.getenv("GEMINI_API_KEY")
                     google_key_backup = os.getenv("GOOGLE_API_KEY")
                     if google_key_backup and google_key_backup != primary_key:
-                        logger.warning("⚠️ Primary GEMINI_API_KEY exhausted in archon-server. Rotating to backup GOOGLE_API_KEY...")
+                        logger.warning(
+                            "⚠️ Primary GEMINI_API_KEY exhausted in archon-server. Rotating to backup GOOGLE_API_KEY..."
+                        )
                         try:
                             response = await _execute(override_key=google_key_backup)
                         except Exception as fallback_e:

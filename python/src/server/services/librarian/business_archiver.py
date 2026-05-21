@@ -11,6 +11,7 @@ from ..shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
 
+
 class BusinessArchiver:
     def __init__(self, supabase=None, repo=None):
         self.supabase = supabase or get_supabase_client()
@@ -100,7 +101,13 @@ class BusinessArchiver:
         """
         try:
             # Query for style lessons and brand voice rules
-            res = self.supabase.table("archon_sources").select("title, content_summary").ilike("source_id", "style-lesson-%").limit(5).execute()
+            res = (
+                self.supabase.table("archon_sources")
+                .select("title, content_summary")
+                .ilike("source_id", "style-lesson-%")
+                .limit(5)
+                .execute()
+            )
 
             rules = []
             if res.data:
@@ -182,7 +189,9 @@ class BusinessArchiver:
             from ...config.model_ssot import SYSTEM_MODELS
             from ...services.credential_service import credential_service
 
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
 
             extraction_prompt = (

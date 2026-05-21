@@ -59,6 +59,7 @@ class RerankingStrategy:
     def _load_model(self) -> Any:
         """Load the CrossEncoder model for reranking."""
         import os
+
         agents_enabled = os.getenv("AGENTS_ENABLED", "false").lower() == "true"
 
         if not CROSSENCODER_AVAILABLE:
@@ -78,6 +79,7 @@ class RerankingStrategy:
     def is_available(self) -> bool:
         """Check if reranking is available (model loaded successfully or remote agents enabled)."""
         import os
+
         agents_enabled = os.getenv("AGENTS_ENABLED", "false").lower() == "true"
         return self.model is not None or agents_enabled
 
@@ -181,6 +183,7 @@ class RerankingStrategy:
                 return results[:top_k] if top_k else results
 
             import asyncio
+
             scores = await asyncio.to_thread(self.model.predict, pairs)
 
             # 3. Apply and sort

@@ -5,6 +5,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+
 # --- David's Developer Tools (Phase 5.1.3) ---
 async def propose_code_fix(file_path: str, new_content: str, summary: str) -> str:
     """
@@ -16,11 +17,7 @@ async def propose_code_fix(file_path: str, new_content: str, summary: str) -> st
     server_host = "archon-server" if is_docker else "localhost"
     url = f"http://{server_host}:{server_port}/internal/david/propose"
 
-    payload = {
-        "file_path": file_path,
-        "new_content": new_content,
-        "summary": summary
-    }
+    payload = {"file_path": file_path, "new_content": new_content, "summary": summary}
 
     try:
         async with httpx.AsyncClient() as client:
@@ -33,6 +30,7 @@ async def propose_code_fix(file_path: str, new_content: str, summary: str) -> st
     except Exception as e:
         logger.error(f"Failed to submit proposal: {e}")
         return f"❌ Failed to submit proposal: {str(e)}"
+
 
 async def read_code_file(file_path: str) -> str:
     """

@@ -52,6 +52,7 @@ async def get_current_user(token: Annotated[str, Depends(get_token)]) -> dict:
             return cast(dict[str, Any], profile)
     except Exception as e:
         import logging
+
         logging.getLogger(__name__).warning(f"⚠️ Profile fetch failed for {user_id}: {e}. Falling back to metadata.")
 
     # Fallback: If profile doesn't exist yet (rare race condition or seed mismatch),
@@ -134,6 +135,7 @@ def requires_permission(permission: str):
         user_permissions = await RBACService().get_role_permissions(role)
 
         import logging
+
         logger = logging.getLogger(__name__)
         logger.info(f"🛡️ [RBAC Check] User: {current_user.get('email')} | Role: {role} | Checking: {permission}")
         logger.info(f"🔑 [RBAC Matrix] Available for {role}: {user_permissions}")

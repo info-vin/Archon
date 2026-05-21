@@ -1,6 +1,7 @@
 """
 Batch processing logic for embedding services.
 """
+
 import asyncio
 import inspect
 import os
@@ -112,7 +113,9 @@ async def create_embeddings_batch(
                                                 # Fallback to config model if not explicit, then to a stable default
                                                 stable_model = config.get("embedding_model")
                                                 if not stable_model:
-                                                    raise ValueError("embedding_model is not configured in provider settings")
+                                                    raise ValueError(
+                                                        "embedding_model is not configured in provider settings"
+                                                    )
                                                 api_key_to_use = (
                                                     (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "")
                                                     .strip()

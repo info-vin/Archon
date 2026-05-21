@@ -47,6 +47,7 @@ Answer only with the succinct context and nothing else. Do not repeat the chunk 
                 # Force Gemini 2.5 Flash if available as it's the project standard for fast/cheap reasoning
                 if "gemini" in model.lower() and "flash" not in model.lower():
                     from ...config.model_ssot import SYSTEM_MODELS
+
                     model = SYSTEM_MODELS["DEFAULT_TEXT"]
 
                 response = await client.chat.completions.create(
@@ -58,7 +59,7 @@ Answer only with the succinct context and nothing else. Do not repeat the chunk 
                         },
                         {"role": "user", "content": prompt},
                     ],
-                    temperature=0.1, # Low temperature for consistency
+                    temperature=0.1,  # Low temperature for consistency
                     max_tokens=300,
                 )
 

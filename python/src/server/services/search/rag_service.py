@@ -72,11 +72,13 @@ class RAGService(BaseRepository):
     def get_setting(self, key: str, default: str = "false") -> str:
         """Get a setting from credential service (deprecated, use rag_config)."""
         from .rag_config import get_setting
+
         return get_setting(key, default)
 
     def get_bool_setting(self, key: str, default: bool = False) -> bool:
         """Get a boolean setting from credential service."""
         from src.server.services.search.rag_config import get_bool_setting
+
         return get_bool_setting(key, default)
 
     async def search_documents(
@@ -175,6 +177,7 @@ class RAGService(BaseRepository):
         Returns (content, source_id).
         """
         from src.server.services.search.web_research_strategy import perform_web_research_impl
+
         return await perform_web_research_impl(query, genai, types)
 
     async def perform_rag_query(
@@ -202,13 +205,14 @@ class RAGService(BaseRepository):
             Tuple of (success, result_dict)
         """
         from src.server.services.search.rag_pipeline_executor import execute_rag_pipeline
+
         return await execute_rag_pipeline(
             rag_service=self,
             query=query,
             source=source,
             match_count=match_count,
             filter_metadata=filter_metadata,
-            min_score=min_score
+            min_score=min_score,
         )
 
     async def search_code_examples_service(
@@ -232,4 +236,5 @@ class RAGService(BaseRepository):
             Tuple of (success, result_dict)
         """
         from src.server.services.search.code_search_service import execute_code_search_pipeline
+
         return await execute_code_search_pipeline(self, query, source_id, match_count)

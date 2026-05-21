@@ -32,6 +32,7 @@ class DocumentStorageFacade(BaseRepository):
         self.repo = DocumentRepository(self.supabase_client)
         self.chunking_utils = ChunkingUtils(self.supabase_client)
         from src.server.services.crawling.code_extraction_service import CodeExtractionService
+
         self.code_extraction_service = CodeExtractionService(self.supabase_client)
 
     async def store_documents(
@@ -56,7 +57,7 @@ class DocumentStorageFacade(BaseRepository):
             all_metadatas,
             source_word_counts,
             url_to_full_document,
-            processed_docs
+            processed_docs,
         ) = await self.chunking_utils.prepare_document_chunks(
             crawl_results, request, crawl_type, original_source_id, cancellation_check
         )
@@ -144,7 +145,9 @@ class DocumentStorageFacade(BaseRepository):
 
             # Check contextual embeddings
             try:
-                use_contextual_embeddings = await credential_service.get_credential("USE_CONTEXTUAL_EMBEDDINGS", "false", decrypt=True)
+                use_contextual_embeddings = await credential_service.get_credential(
+                    "USE_CONTEXTUAL_EMBEDDINGS", "false", decrypt=True
+                )
                 if isinstance(use_contextual_embeddings, str):
                     use_contextual_embeddings = use_contextual_embeddings.lower() == "true"
             except Exception:
@@ -187,8 +190,7 @@ class DocumentStorageFacade(BaseRepository):
                     await tracker.embedding_progress_wrapper(msg, pct, cp, bn)
 
                 result = await create_embeddings_batch(
-                    contextual_contents,
-                    progress_callback=progress_wrap if progress_callback else None
+                    contextual_contents, progress_callback=progress_wrap if progress_callback else None
                 )
 
                 if not result.embeddings:
@@ -206,14 +208,16 @@ class DocumentStorageFacade(BaseRepository):
                         parsed = urlparse(batch_urls[orig_idx])
                         source_id = parsed.netloc or parsed.path
 
-                    batch_data.append({
-                        "url": batch_urls[orig_idx],
-                        "chunk_number": batch_chunk_numbers[orig_idx],
-                        "content": text,
-                        "metadata": {"chunk_size": len(text), **batch_metadatas[orig_idx]},
-                        "source_id": source_id,
-                        "embedding": embedding,
-                    })
+                    batch_data.append(
+                        {
+                            "url": batch_urls[orig_idx],
+                            "chunk_number": batch_chunk_numbers[orig_idx],
+                            "content": text,
+                            "metadata": {"chunk_size": len(text), **batch_metadatas[orig_idx]},
+                            "source_id": source_id,
+                            "embedding": embedding,
+                        }
+                    )
 
                 # DB Insertion Phase using Repository
                 max_retries = 3
@@ -225,12 +229,21 @@ class DocumentStorageFacade(BaseRepository):
                         self.repo.insert_document_batch(batch_data)
                         total_chunks_stored += len(batch_data)
                         completed_batches += 1
-                        new_progress = 100 if completed_batches == total_batches else int((completed_batches / total_batches) * 100)
+                        new_progress = (
+                            100
+                            if completed_batches == total_batches
+                            else int((completed_batches / total_batches) * 100)
+                        )
 
                         await tracker.report_progress(
                             f"Completed batch {batch_num}/{total_batches} ({len(batch_data)} chunks)",
                             new_progress,
-                            {"current_batch": batch_num, "total_batches": total_batches, "completed_batches": completed_batches, "active_workers": max_workers}
+                            {
+                                "current_batch": batch_num,
+                                "total_batches": total_batches,
+                                "completed_batches": completed_batches,
+                                "active_workers": max_workers,
+                            },
                         )
                         break
                     except Exception as e:

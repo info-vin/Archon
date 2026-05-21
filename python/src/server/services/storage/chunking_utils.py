@@ -6,11 +6,13 @@ from src.server.config.logfire_config import get_logger, safe_logfire_info
 
 logger = get_logger(__name__)
 
+
 class ChunkingUtils:
     """Handles logic for splitting markdown documents into chunks without DB interaction."""
 
     def __init__(self, supabase_client):
         from src.server.services.storage.storage_services import DocumentStorageService
+
         self.doc_storage_service = DocumentStorageService(supabase_client)
 
     async def prepare_document_chunks(
@@ -19,7 +21,7 @@ class ChunkingUtils:
         request: dict[str, Any],
         crawl_type: str,
         original_source_id: str,
-        cancellation_check: Callable | None = None
+        cancellation_check: Callable | None = None,
     ) -> tuple[list[str], list[int], list[str], list[dict], dict[str, int], dict[str, str], int]:
         """
         Splits documents into chunks and prepares metadatas.
@@ -86,4 +88,12 @@ class ChunkingUtils:
             if doc_index > 0 and doc_index % 5 == 0:
                 await asyncio.sleep(0)
 
-        return all_urls, all_chunk_numbers, all_contents, all_metadatas, source_word_counts, url_to_full_document, processed_docs
+        return (
+            all_urls,
+            all_chunk_numbers,
+            all_contents,
+            all_metadatas,
+            source_word_counts,
+            url_to_full_document,
+            processed_docs,
+        )

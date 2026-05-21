@@ -9,6 +9,7 @@ from ..shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
 
+
 class FileArchiver:
     def __init__(self, supabase=None, repo=None, chunker=None):
         self.supabase = supabase or get_supabase_client()
@@ -66,7 +67,7 @@ class FileArchiver:
                     "tags": tags,
                     "file_path": file_path,
                 },
-                title_prefix=title
+                title_prefix=title,
             )
 
             if page_data_list:

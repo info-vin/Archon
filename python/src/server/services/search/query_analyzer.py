@@ -1,6 +1,7 @@
 """
 Query analyzer for code search intent.
 """
+
 from typing import Any
 
 from .dictionaries.frameworks import FRAMEWORKS
@@ -23,6 +24,7 @@ CODE_KEYWORDS = [
     "api",
     "library",
 ]
+
 
 def analyze_code_query(query: str) -> dict[str, Any]:
     """
@@ -53,6 +55,7 @@ def analyze_code_query(query: str) -> dict[str, Any]:
         "code_indicators": code_indicators,
         "enhanced_query_recommended": is_code_query,
     }
+
 
 def analyze_query_for_code_search(query: str) -> dict[str, Any]:
     """

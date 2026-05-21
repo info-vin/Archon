@@ -4,6 +4,8 @@ import re
 import uuid
 from typing import Any, cast
 
+import aiofiles
+
 from ..config.logfire_config import get_logger
 from ..prompts.dev_ops_prompts import DEVBOT_TOOLS, get_devbot_analysis_prompt
 from ..utils.code_modifier import CodeModifier
@@ -45,11 +47,13 @@ class DevOpsAgentService:
 
         try:
             from ..config.model_ssot import SYSTEM_MODELS
+
             model = SYSTEM_MODELS["DEFAULT_PRO"]
             admin_api_key = await credential_service.get_credential(
                 "GEMINI_API_KEY"
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
             from .system.rate_limiter import GlobalThrottler
+
             await GlobalThrottler.wait_for_capacity(tier="pro")
 
             async with get_llm_client(api_key=admin_api_key) as client:
@@ -164,8 +168,8 @@ class DevOpsAgentService:
         Assigns L1 (Green), L2 (Yellow), or L3 (Red) severity.
         """
         try:
-            with open(file_path, encoding="utf-8") as f:
-                content = f.read()
+            async with aiofiles.open(file_path, encoding="utf-8") as f:
+                content = await f.read()
 
             lines = content.splitlines()
             line_count = len(lines)

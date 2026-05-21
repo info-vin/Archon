@@ -53,37 +53,41 @@ class OllamaManifestParser:
 
                 for model in models:
                     if "chat" in model.capabilities:
-                        chat_models.append({
-                            "name": model.name,
-                            "instance_url": model.instance_url,
-                            "size": model.size,
-                            "parameters": model.parameters,
-                            "context_window": model.context_window,
-                            "max_context_length": model.max_context_length,
-                            "base_context_length": model.base_context_length,
-                            "custom_context_length": model.custom_context_length,
-                            "architecture": model.architecture,
-                            "format": model.format,
-                            "parent_model": model.parent_model,
-                            "capabilities": model.capabilities,
-                        })
+                        chat_models.append(
+                            {
+                                "name": model.name,
+                                "instance_url": model.instance_url,
+                                "size": model.size,
+                                "parameters": model.parameters,
+                                "context_window": model.context_window,
+                                "max_context_length": model.max_context_length,
+                                "base_context_length": model.base_context_length,
+                                "custom_context_length": model.custom_context_length,
+                                "architecture": model.architecture,
+                                "format": model.format,
+                                "parent_model": model.parent_model,
+                                "capabilities": model.capabilities,
+                            }
+                        )
 
                     if "embedding" in model.capabilities:
-                        embedding_models.append({
-                            "name": model.name,
-                            "instance_url": model.instance_url,
-                            "dimensions": model.embedding_dimensions,
-                            "size": model.size,
-                            "parameters": model.parameters,
-                            "context_window": model.context_window,
-                            "max_context_length": model.max_context_length,
-                            "base_context_length": model.base_context_length,
-                            "custom_context_length": model.custom_context_length,
-                            "architecture": model.architecture,
-                            "format": model.format,
-                            "parent_model": model.parent_model,
-                            "capabilities": model.capabilities,
-                        })
+                        embedding_models.append(
+                            {
+                                "name": model.name,
+                                "instance_url": model.instance_url,
+                                "dimensions": model.embedding_dimensions,
+                                "size": model.size,
+                                "parameters": model.parameters,
+                                "context_window": model.context_window,
+                                "max_context_length": model.max_context_length,
+                                "base_context_length": model.base_context_length,
+                                "custom_context_length": model.custom_context_length,
+                                "architecture": model.architecture,
+                                "format": model.format,
+                                "parent_model": model.parent_model,
+                                "capabilities": model.capabilities,
+                            }
+                        )
 
         # Remove duplicates (same model on multiple instances)
         unique_models = {}

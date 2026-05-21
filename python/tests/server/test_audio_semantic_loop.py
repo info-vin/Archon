@@ -31,40 +31,46 @@ async def test_audio_semantic_loop_live(client):
     input_text = "The operational parameters of the Archon defense system are currently optimal."
 
     # 3. Call the FastAPI TTS generation endpoint
-    response = client.post("/api/audio/generate", json={
-        "text": input_text,
-        "scene": "commander_briefing",
-        "voice": "Charon"
-    })
+    try:
+        response = client.post("/api/audio/generate", json={
+            "text": input_text,
+            "scene": "commander_briefing",
+            "voice": "Charon"
+        })
 
-    # 4. Verify basic HTTP and WAV parameters
-    assert response.status_code == 200
-    assert response.headers.get("content-type") == "audio/wav"
+        # 4. Verify basic HTTP and WAV parameters
+        assert response.status_code == 200
+        assert response.headers.get("content-type") == "audio/wav"
 
-    audio_bytes = response.content
-    assert len(audio_bytes) > 100
-    assert audio_bytes.startswith(b"RIFF")
-    assert b"WAVEfmt" in audio_bytes
+        audio_bytes = response.content
+        assert len(audio_bytes) > 100
+        assert audio_bytes.startswith(b"RIFF")
+        assert b"WAVEfmt" in audio_bytes
 
-    # 5. Connect to live Gemini and transcribe the generated audio
-    genai_client = genai.Client(api_key=api_key)
+        # 5. Connect to live Gemini and transcribe the generated audio
+        genai_client = genai.Client(api_key=api_key)
 
-    # We pack the audio bytes directly into a Part object
-    audio_part = types.Part.from_bytes(
-        data=audio_bytes,
-        mime_type="audio/wav"
-    )
+        # We pack the audio bytes directly into a Part object
+        audio_part = types.Part.from_bytes(
+            data=audio_bytes,
+            mime_type="audio/wav"
+        )
 
-    model_name = SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1]
+        model_name = SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1]
 
-    # Generate content using the audio part to transcribe the text
-    res = genai_client.models.generate_content(
-        model=model_name,
-        contents=[
-            audio_part,
-            "Transcribe this audio precisely. Return ONLY the transcribed text. Do not add comments or explanations."
-        ]
-    )
+        # Generate content using the audio part to transcribe the text
+        res = genai_client.models.generate_content(
+            model=model_name,
+            contents=[
+                audio_part,
+                "Transcribe this audio precisely. Return ONLY the transcribed text. Do not add comments or explanations."
+            ]
+        )
+    except Exception as e:
+        err_msg = str(e)
+        if any(msg in err_msg for msg in ["leaked", "PERMISSION_DENIED", "API key was reported as leaked", "API_KEY_INVALID"]):
+            pytest.skip(f"Skipping live integration test: API key is invalid or leaked ({e})")
+        raise
 
     transcription = res.text
     assert transcription is not None
