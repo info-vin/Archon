@@ -14,6 +14,7 @@ from pydantic_graph.beta import GraphBuilder
 
 from src.agents.workflow.state import SharedState
 from src.agents.workflow.utils import _accumulate_usage, _build_pruned_history, _run_agent_with_retry
+from src.server.services.prompt_service import prompt_service
 
 logger = logging.getLogger(__name__)
 
@@ -34,40 +35,30 @@ sem = asyncio.Semaphore(2)
 # --- Define Specialized Agents ---
 MODEL = "gemini-3.1-flash-lite"
 
-alice_agent = Agent(
-    model=MODEL,
-    system_prompt=(
-        "You are Alice, a senior sales analyst. "
-        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on sales and revenue. "
-        "You MUST write your response in Traditional Chinese (繁體中文)."
-    ),
+
+# Define fallback prompts
+ALICE_FALLBACK = (
+    "You are Alice, a senior sales analyst. "
+    "Analyze the provided context and return a concise, 2-3 sentence insight focusing on sales and revenue. "
+    "You MUST write your response in Traditional Chinese (繁體中文)."
 )
 
-bob_agent = Agent(
-    model=MODEL,
-    system_prompt=(
-        "You are Bob, a marketing expert. "
-        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on engagement and conversion rates. "
-        "You MUST write your response in Traditional Chinese (繁體中文)."
-    ),
+BOB_FALLBACK = (
+    "You are Bob, a marketing expert. "
+    "Analyze the provided context and return a concise, 2-3 sentence insight focusing on engagement and conversion rates. "
+    "You MUST write your response in Traditional Chinese (繁體中文)."
 )
 
-system_agent = Agent(
-    model=MODEL,
-    system_prompt=(
-        "You are the System Health Monitor. "
-        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on system metrics, token usage, or anomalies. "
-        "You MUST write your response in Traditional Chinese (繁體中文)."
-    ),
+SYSTEM_FALLBACK = (
+    "You are the System Health Monitor. "
+    "Analyze the provided context and return a concise, 2-3 sentence insight focusing on system metrics, token usage, or anomalies. "
+    "You MUST write your response in Traditional Chinese (繁體中文)."
 )
 
-supervisor_agent = Agent(
-    model=MODEL,
-    system_prompt=(
-        "You are the Executive Supervisor. Your task is to aggregate the reports from Alice, Bob, and System. "
-        "Combine their insights into a coherent, professional Executive Summary. Do not repeat the same information. "
-        "You MUST write the entire executive summary in Traditional Chinese (繁體中文)."
-    ),
+SUPERVISOR_FALLBACK = (
+    "You are the Executive Supervisor. Your task is to aggregate the reports from Alice, Bob, and System. "
+    "Combine their insights into a coherent, professional Executive Summary. Do not repeat the same information. "
+    "You MUST write the entire executive summary in Traditional Chinese (繁體中文)."
 )
 
 
@@ -91,10 +82,17 @@ async def worker_step(ctx: Any) -> dict[str, str]:
     async with sem:
         logger.info(f"👷 [Worker] Processing target: {target} (Semaphore Acquired)")
 
-        # Determine the agent
-        agent_map = {"sales": alice_agent, "marketing": bob_agent, "system": system_agent}
-        agent = agent_map.get(target)
-        if not agent:
+        # Determine the agent and fetch dynamic prompt
+        if target == "sales":
+            prompt_text = prompt_service.get_prompt("MAP_REDUCE_ALICE_PROMPT", ALICE_FALLBACK)
+            agent = Agent(model=MODEL, system_prompt=prompt_text)
+        elif target == "marketing":
+            prompt_text = prompt_service.get_prompt("MAP_REDUCE_BOB_PROMPT", BOB_FALLBACK)
+            agent = Agent(model=MODEL, system_prompt=prompt_text)
+        elif target == "system":
+            prompt_text = prompt_service.get_prompt("MAP_REDUCE_SYSTEM_PROMPT", SYSTEM_FALLBACK)
+            agent = Agent(model=MODEL, system_prompt=prompt_text)
+        else:
             return {target: f"Unknown target '{target}'."}
 
         # Build prompt using the shared history
@@ -143,6 +141,10 @@ async def final_summary_step(ctx: Any) -> str:
     combined_reports = "Here are the reports from the sub-agents:\n"
     for k, v in ctx.inputs.items():
         combined_reports += f"--- {k.upper()} REPORT ---\n{v}\n\n"
+
+    # Get supervisor agent with dynamic prompt
+    prompt_text = prompt_service.get_prompt("MAP_REDUCE_SUPERVISOR_PROMPT", SUPERVISOR_FALLBACK)
+    supervisor_agent = Agent(model=MODEL, system_prompt=prompt_text)
 
     try:
         res = await _run_agent_with_retry(

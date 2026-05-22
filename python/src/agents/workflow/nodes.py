@@ -36,6 +36,8 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         task_type = ctx.state.task_type
         if task_type == "Marketing Data Deep Dive":
             prompt_key = "WORKFLOW_SUPERVISOR_MARKETING"
+        elif task_type == "Daily Executive Summary":
+            prompt_key = "WORKFLOW_SUPERVISOR_DAILY"
         else:
             prompt_key = "WORKFLOW_SUPERVISOR_GENERAL"
 

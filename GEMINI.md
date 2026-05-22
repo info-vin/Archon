@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.1.13 (Karpathy 式極簡 AI 知識庫與行銷反饋閉環) 已結案並提交。
+*   **當前狀態 (Current Context)**: Phase 5.1.16 (日、週、月報執行摘要星環化與排程器整合) 已結案並提交。
 *   **今日目標 (Today's Goal)**: 啟動下一階段任務（RAG 快取優化與多 Agent 連動架構開發，或依使用者指示開展後續迭代）。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -108,6 +108,15 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-05-22: Phase 5.1.16 日、週、月報執行摘要星環化與排程器整合落地
+* **1. 真實數據接地與收集器**:
+    * **行動**: 於 `business.py` 實作 `gather_report_context`，自 leads, token_usage, logs 與 tasks 表獲取真實上下文。
+* **2. 週期報告星環與 Map-Reduce 整合**:
+    * **行動**: 日報改由星環群聊任務執行；週報/月報則呼叫 Map-Reduce (`beta_graph.run`) 處理 7 天與 30 天數據，成果存為 done 任務並追蹤 Token 成本。
+* **3. 整合排程器與品質門禁驗證**:
+    * **行動**: 將週/月報掛載至 `scheduler_service.py` 的 Clockwork 排程系統；修復 Mypy 型別宣告與 Ruff E402 錯誤。
+    * **結果**: 後端 576 項單元測試全數綠燈通過，Ruff 與 Mypy 100% 綠燈通過。
 
 ### 2026-05-21: Phase 5.1.13 Karpathy 式極簡 AI 知識庫與行銷反饋閉環落地
 * **1. 零 Token 實用主義視覺優化 (local SVG fallback)**:

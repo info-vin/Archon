@@ -81,6 +81,20 @@ class SchedulerService:
             return True
         return last_run.date() < datetime.now(UTC).date()
 
+    async def _should_run_weekly(self, job_id: str) -> bool:
+        """Checks if a job has already run in the last 7 days."""
+        last_run = await self._get_last_run(job_id)
+        if not last_run:
+            return True
+        return (datetime.now(UTC) - last_run) > timedelta(days=7)
+
+    async def _should_run_monthly(self, job_id: str) -> bool:
+        """Checks if a job has already run in the last 30 days."""
+        last_run = await self._get_last_run(job_id)
+        if not last_run:
+            return True
+        return (datetime.now(UTC) - last_run) > timedelta(days=30)
+
     async def _should_run_biweekly(self, job_id: str) -> bool:
         """Checks if a job has already run in the last 14 days."""
         last_run = await self._get_last_run(job_id)
@@ -128,6 +142,46 @@ class SchedulerService:
         else:
             logger.info(f"⏭️  Skipping Daily: {job_id} (Already completed today)")
 
+    async def _schedule_stateful_weekly(self, job_func: Callable, job_id: str, delay_mins: int):
+        """Schedules a weekly job if not already run in the last 7 days."""
+        if not self._scheduler:
+            return
+
+        if await self._should_run_weekly(job_id):
+            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+
+            async def wrapper():
+                logger.info(f"🕒 Clockwork: Executing weekly job '{job_id}'")
+                try:
+                    await job_func()
+                finally:
+                    await self._update_last_run(job_id)
+
+            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
+            logger.info(f"✅ Scheduled Weekly: {job_id} (Target: +{delay_mins}m)")
+        else:
+            logger.info(f"⏭️  Skipping Weekly: {job_id} (Run in last 7 days)")
+
+    async def _schedule_stateful_monthly(self, job_func: Callable, job_id: str, delay_mins: int):
+        """Schedules a monthly job if not already run in the last 30 days."""
+        if not self._scheduler:
+            return
+
+        if await self._should_run_monthly(job_id):
+            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+
+            async def wrapper():
+                logger.info(f"🕒 Clockwork: Executing monthly job '{job_id}'")
+                try:
+                    await job_func()
+                finally:
+                    await self._update_last_run(job_id)
+
+            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
+            logger.info(f"✅ Scheduled Monthly: {job_id} (Target: +{delay_mins}m)")
+        else:
+            logger.info(f"⏭️  Skipping Monthly: {job_id} (Run in last 30 days)")
+
     async def _schedule_stateful_biweekly(self, job_func: Callable, job_id: str, delay_mins: int):
         """Schedules a bi-weekly job if not run in last 14 days."""
         if not self._scheduler:
@@ -149,7 +203,7 @@ class SchedulerService:
             logger.info(f"⏭️  Skipping Bi-weekly: {job_id} (Run in last 14 days)")
 
     async def _schedule_jobs(self):
-        """Phase 5.1.14: Unified 13-Job Lifecycle Strategy."""
+        """Phase 5.1.16: Unified Job Lifecycle Strategy including Weekly/Monthly summaries."""
         if not self._scheduler:
             return
 
@@ -168,12 +222,13 @@ class SchedulerService:
         await self._schedule_stateful_daily(self._run_business_sentinel, "business_sentinel", 25)
         await self._schedule_stateful_daily(self._run_daily_executive_summary, "daily_executive_summary", 35)
 
-        # --- Category 3: Stateful Bi-weekly Maintenance (45-50 mins) ---
-        await self._schedule_stateful_daily(self._run_tech_debt_audit, "tech_debt_audit", 45)  # Re-check daily but only run bi-weekly logic
+        # --- Category 3: Stateful Weekly / Monthly Jobs (38-42 mins) ---
+        await self._schedule_stateful_weekly(self._run_weekly_executive_summary, "weekly_executive_summary", 38)
+        await self._schedule_stateful_monthly(self._run_monthly_executive_summary, "monthly_executive_summary", 42)
+
+        # --- Category 4: Stateful Bi-weekly Maintenance (45-50 mins) ---
         await self._schedule_stateful_biweekly(self._run_api_deprecation_scan, "api_deprecation_scan", 50)
 
-        # Note: tech_debt_audit is technically listed as bi-weekly in PRP, but let's use the helper
-        # I'll update tech_debt_audit to use _schedule_stateful_biweekly for consistency
         self._scheduler.remove_job("tech_debt_audit") if self._scheduler.get_job("tech_debt_audit") else None
         await self._schedule_stateful_biweekly(self._run_tech_debt_audit, "tech_debt_audit", 45)
 
@@ -214,6 +269,12 @@ class SchedulerService:
 
     async def _run_daily_executive_summary(self):
         await business.run_daily_executive_summary()
+
+    async def _run_weekly_executive_summary(self):
+        await business.run_weekly_executive_summary()
+
+    async def _run_monthly_executive_summary(self):
+        await business.run_monthly_executive_summary()
 
     async def _run_api_deprecation_scan(self):
         await business.run_api_deprecation_scan()

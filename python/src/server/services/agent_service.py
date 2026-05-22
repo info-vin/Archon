@@ -126,6 +126,8 @@ class AgentService:
         # Temporary hack: Deduce task_type from title since UI lacks a dropdown
         if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:
             task_type = "Marketing Data Deep Dive"
+        elif "[Daily Report]" in task_title:
+            task_type = "Daily Executive Summary"
 
         prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
 
