@@ -8,6 +8,8 @@ import { RAGPlayground } from './RAGPlayground';
 import { AiResilienceWidget } from './AiResilienceWidget';
 import { StatusCard } from './StatusCard';
 import { AgentRow } from './AgentRow';
+import { ClockworkJobsTable } from './ClockworkJobsTable';
+
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
