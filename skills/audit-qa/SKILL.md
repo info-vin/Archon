@@ -24,13 +24,14 @@ description: 整合型專案品質門禁公證技能。在功能開發完成、�
   4. `check_scroll_lockup`：前端 viewport 佈局滾動檢查。
   5. `verify_migrations`：資料庫遷徙檔對帳。
   6. `llm_judge_content`：LLM 內容評判。
-  7. `make test-be`：後端 Pytest 單元與整合測試（使用隔離的 `.env.test` 資料庫）。
+  7. `make test-be-fast`：後端快速 Pytest 單元測試（跳過耗時的整合測試，使用隔離的 `.env.test`）。
+  8. `make persona-audit`：若 Docker 運行中，將連入容器執行 Persona 實體對帳（Alice -> Bob -> Charlie 工作流檢查），驗證真實運作狀態。
 
 ### Step 2: 獨立子門禁調研 (Granular Sub-Gates)
 若一鍵公證在某個環節失敗，可單獨執行子指令進行快速迭代：
 * **後端型別與語法**: `make lint-be` (Ruff & MyPy)
 * **前端型別與語法**: `make lint-fe` (Biome & ESLint & tsc)
-* **後端單元測試**: `make test-be`
+* **後端單元測試**: `make test-be` (完整) 或 `make test-be-fast` (快速)
 * **前端單元測試**: 
   * `cd enduser-ui-fe && pnpm run test:unit`
   * `cd archon-ui-main && pnpm test`

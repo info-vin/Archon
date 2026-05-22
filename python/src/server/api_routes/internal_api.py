@@ -170,15 +170,27 @@ async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks,
     try:
         from ..services.scheduler_service import scheduler_service
 
-        # Add all jobs to FastAPI BackgroundTasks so they run concurrently after the response
+        # Add all 13 jobs to FastAPI BackgroundTasks for manual concurrent triggering
+        # 1. Stateless Patrols
         background_tasks.add_task(scheduler_service._run_system_probe)
-        background_tasks.add_task(scheduler_service._run_auto_fetch_leads)
-        background_tasks.add_task(scheduler_service._analyze_token_usage)
         background_tasks.add_task(scheduler_service._run_log_patrol)
         background_tasks.add_task(scheduler_service._run_task_dispatcher)
-        background_tasks.add_task(scheduler_service._cleanup_system_probes)
+        background_tasks.add_task(scheduler_service._run_model_verification)
 
-        return {"status": "triggered", "jobs": 6}
+        # 2. Daily Jobs
+        background_tasks.add_task(scheduler_service._cleanup_system_probes)
+        background_tasks.add_task(scheduler_service._run_auto_fetch_leads)
+        background_tasks.add_task(scheduler_service._run_daily_market_report)
+        background_tasks.add_task(scheduler_service._run_prune_stale_leads)
+        background_tasks.add_task(scheduler_service._analyze_token_usage)
+        background_tasks.add_task(scheduler_service._run_business_sentinel)
+        background_tasks.add_task(scheduler_service._run_daily_executive_summary)
+
+        # 3. Bi-weekly Jobs
+        background_tasks.add_task(scheduler_service._run_tech_debt_audit)
+        background_tasks.add_task(scheduler_service._run_api_deprecation_scan)
+
+        return {"status": "triggered", "jobs": 13}
     except Exception as e:
         logger.error(f"Error triggering cron jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

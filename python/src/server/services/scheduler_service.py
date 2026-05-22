@@ -1,13 +1,18 @@
 """
-Scheduler Service (Refactored)
+Scheduler Service (Phase 5.1.14: Clockwork Optimization)
 
 The central Clockwork engine for Archon.
-Logic is delegated to 'jobs/' sub-modules for modularity.
+Implements a consistent Lifecycle & State-Driven architecture:
+1. Stateless Patrols (High frequency)
+2. Stateful Daily Jobs (Run once per UTC day)
+3. Stateful Bi-weekly Maintenance (Run once every 14 days)
 """
 
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from src.server.config.logfire_config import get_logger
@@ -26,24 +31,9 @@ class SchedulerService:
             cls._instance._scheduler = AsyncIOScheduler()
         return cls._instance
 
-    async def _get_setting(self, key: str, default: int) -> int:
-        """Helper to fetch numerical settings from DB with safety bounds."""
-        try:
-            from src.server.utils import get_supabase_client
-
-            supabase = get_supabase_client()
-            res = supabase.table("archon_settings").select("value").eq("key", key).execute()
-            if res.data:
-                val = int(res.data[0]["value"])
-                # Physical Safety Bound: 1 min to 24 hours
-                return max(1, min(val, 1440))
-        except Exception as e:
-            logger.warning(f"Scheduler: Failed to fetch {key}, using default {default}: {e}")
-        return default
-
     async def start(self):
         if self._scheduler and not self._scheduler.running:
-            logger.info("🕒 Clockwork: Starting Scheduler Service...")
+            logger.info("🕒 Clockwork: Starting Lifecycle-Driven Scheduler Service...")
             self._scheduler.start()
             await self._schedule_jobs()
         else:
@@ -54,118 +44,138 @@ class SchedulerService:
             logger.info("🛑 Clockwork: Shutting down Scheduler...")
             self._scheduler.shutdown()
 
-    async def _update_last_run(self, key: str):
-        """Robust last run persistence."""
+    async def _update_last_run(self, job_id: str):
+        """Persists the last run timestamp to the database."""
         try:
             from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
+            db_key = f"LAST_RUN_{job_id.upper()}"
             now_iso = datetime.now(UTC).isoformat()
-            res = supabase.table("archon_settings").select("key").eq("key", key).execute()
+            res = supabase.table("archon_settings").select("key").eq("key", db_key).execute()
             if res.data:
-                supabase.table("archon_settings").update({"value": now_iso}).eq("key", key).execute()
+                supabase.table("archon_settings").update({"value": now_iso}).eq("key", db_key).execute()
             else:
-                supabase.table("archon_settings").insert({"key": key, "value": now_iso}).execute()
+                supabase.table("archon_settings").insert({"key": db_key, "value": now_iso}).execute()
         except Exception as e:
-            logger.error(f"Scheduler: Failed to update last run for {key}: {e}")
+            logger.error(f"Scheduler: Failed to update last run for {job_id}: {e}")
 
-    async def _get_last_run(self, key: str) -> datetime | None:
-        """Robust last run retrieval."""
+    async def _get_last_run(self, job_id: str) -> datetime | None:
+        """Retrieves the last run timestamp from the database."""
         try:
             from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
-            res = supabase.table("archon_settings").select("value").eq("key", key).execute()
+            db_key = f"LAST_RUN_{job_id.upper()}"
+            res = supabase.table("archon_settings").select("value").eq("key", db_key).execute()
             if res.data:
                 return datetime.fromisoformat(res.data[0]["value"].replace("Z", "+00:00"))
         except Exception:
             pass
         return None
 
-    async def _schedule_stateful_job(self, job_func, trigger_hours: int, job_id: str):
-        """Schedules a job while ensuring it doesn't skip cycles based on last run in DB."""
-        db_key = f"LAST_RUN_{job_id.upper()}"
-        last_run = await self._get_last_run(db_key)
+    async def _should_run_daily(self, job_id: str) -> bool:
+        """Checks if a job has already run today (UTC)."""
+        last_run = await self._get_last_run(job_id)
+        if not last_run:
+            return True
+        return last_run.date() < datetime.now(UTC).date()
 
-        now = datetime.now(UTC)
-        # Baseline Restoration: Wait 30s after startup to allow Docker Health Check to pass
-        next_run = now + timedelta(seconds=30)
-        if last_run:
-            expected = last_run + timedelta(hours=trigger_hours)
-            if expected > now:
-                next_run = expected
+    async def _should_run_biweekly(self, job_id: str) -> bool:
+        """Checks if a job has already run in the last 14 days."""
+        last_run = await self._get_last_run(job_id)
+        if not last_run:
+            return True
+        return (datetime.now(UTC) - last_run) > timedelta(days=14)
 
-        async def stateful_wrapper():
-            logger.info(f"🕒 Clockwork: Executing stateful job '{job_id}'")
-            try:
-                await job_func()
-            finally:
-                await self._update_last_run(db_key)
-
-        if self._scheduler:
-            self._scheduler.add_job(
-                stateful_wrapper,
-                trigger=IntervalTrigger(hours=trigger_hours),
-                id=job_id,
-                replace_existing=True,
-                next_run_time=next_run,
-            )
-            logger.info(
-                f"✅ Scheduled Job: {job_id} (Every {trigger_hours}h, Next: {next_run.strftime('%Y-%m-%d %H:%M:%S UTC')})"
-            )
-
-    async def _schedule_jobs(self):
+    def _schedule_stateless(self, job_func: Callable, job_id: str, delay_mins: int, interval_mins: int):
+        """Schedules high-frequency stateless patrols with an initial delay."""
         if not self._scheduler:
             return
 
-        probe_mins = await self._get_setting("SCHEDULER_PROBE_INTERVAL_MINS", 60)
-        patrol_mins = await self._get_setting("SCHEDULER_PATROL_INTERVAL_MINS", 60)
-        sentinel_hours = await self._get_setting("SCHEDULER_SENTINEL_INTERVAL_HOURS", 12)
+        next_run = datetime.now(UTC) + timedelta(minutes=delay_mins)
 
-        # 1. Patrol Jobs
+        # 1. Schedule initial one-time run
+        self._scheduler.add_job(job_func, trigger=DateTrigger(run_date=next_run), id=f"{job_id}_initial")
+
+        # 2. Schedule recurring interval
         self._scheduler.add_job(
-            self._run_system_probe,
-            trigger=IntervalTrigger(minutes=probe_mins),
-            id="system_probe",
+            job_func,
+            trigger=IntervalTrigger(minutes=interval_mins),
+            id=job_id,
             replace_existing=True,
+            next_run_time=next_run + timedelta(minutes=interval_mins),
         )
-        logger.info(f"✅ Scheduled Job: System Probe (Every {probe_mins} mins)")
+        logger.info(f"✅ Scheduled Stateless: {job_id} (Start: +{delay_mins}m, Loop: {interval_mins}m)")
 
-        self._scheduler.add_job(
-            self._cleanup_system_probes,
-            trigger=IntervalTrigger(hours=1),
-            id="system_probe_cleanup",
-            replace_existing=True,
-        )
+    async def _schedule_stateful_daily(self, job_func: Callable, job_id: str, delay_mins: int):
+        """Schedules a daily job if not already run today."""
+        if not self._scheduler:
+            return
 
-        self._scheduler.add_job(
-            self._run_log_patrol, trigger=IntervalTrigger(minutes=patrol_mins), id="log_patrol", replace_existing=True
-        )
-        logger.info(f"✅ Scheduled Job: Log Patrol (Every {patrol_mins} mins)")
+        if await self._should_run_daily(job_id):
+            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
 
-        self._scheduler.add_job(
-            self._run_model_verification,
-            trigger=IntervalTrigger(minutes=60),
-            id="model_verification",
-            replace_existing=True,
-        )
-        logger.info("✅ Scheduled Job: Model Verification (Every 60 mins)")
+            async def wrapper():
+                logger.info(f"🕒 Clockwork: Executing daily job '{job_id}'")
+                try:
+                    await job_func()
+                finally:
+                    await self._update_last_run(job_id)
 
-        # 2. Business Jobs (Stateful)
-        await self._schedule_stateful_job(self._run_prune_stale_leads, 1, "prune_stale_leads")
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, 24, "alice_auto_fetch")
-        await self._schedule_stateful_job(self._analyze_token_usage, 24, "token_analysis")
-        await self._schedule_stateful_job(self._run_business_sentinel, sentinel_hours, "business_sentinel")
-        await self._schedule_stateful_job(self._run_daily_market_report, 24, "bob_market_report")
-        await self._schedule_stateful_job(self._run_daily_executive_summary, 24, "daily_executive_summary")
-        await self._schedule_stateful_job(self._run_tech_debt_audit, 336, "tech_debt_audit")
-        await self._schedule_stateful_job(self._run_api_deprecation_scan, 336, "api_deprecation_scan")
+            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
+            logger.info(f"✅ Scheduled Daily: {job_id} (Target: +{delay_mins}m)")
+        else:
+            logger.info(f"⏭️  Skipping Daily: {job_id} (Already completed today)")
 
-        # 3. Task Dispatcher
-        self._scheduler.add_job(
-            self._run_task_dispatcher, trigger=IntervalTrigger(minutes=30), id="task_dispatcher", replace_existing=True
-        )
-        logger.info("✅ Scheduled Job: Task Dispatcher (Every 30 mins)")
+    async def _schedule_stateful_biweekly(self, job_func: Callable, job_id: str, delay_mins: int):
+        """Schedules a bi-weekly job if not run in last 14 days."""
+        if not self._scheduler:
+            return
+
+        if await self._should_run_biweekly(job_id):
+            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+
+            async def wrapper():
+                logger.info(f"🕒 Clockwork: Executing bi-weekly maintenance '{job_id}'")
+                try:
+                    await job_func()
+                finally:
+                    await self._update_last_run(job_id)
+
+            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
+            logger.info(f"✅ Scheduled Bi-weekly: {job_id} (Target: +{delay_mins}m)")
+        else:
+            logger.info(f"⏭️  Skipping Bi-weekly: {job_id} (Run in last 14 days)")
+
+    async def _schedule_jobs(self):
+        """Phase 5.1.14: Unified 13-Job Lifecycle Strategy."""
+        if not self._scheduler:
+            return
+
+        # --- Category 1: Stateless Patrols (1-4 mins) ---
+        self._schedule_stateless(self._run_system_probe, "system_probe", 1, 15)
+        self._schedule_stateless(self._run_log_patrol, "log_patrol", 2, 30)
+        self._schedule_stateless(self._run_task_dispatcher, "task_dispatcher", 3, 30)
+        self._schedule_stateless(self._run_model_verification, "model_verification", 4, 120)
+
+        # --- Category 2: Stateful Daily Jobs (5-35 mins) ---
+        await self._schedule_stateful_daily(self._cleanup_system_probes, "system_probe_cleanup", 5)
+        await self._schedule_stateful_daily(self._run_auto_fetch_leads, "alice_auto_fetch", 6)
+        await self._schedule_stateful_daily(self._run_daily_market_report, "bob_market_report", 10)
+        await self._schedule_stateful_daily(self._run_prune_stale_leads, "prune_stale_leads", 15)
+        await self._schedule_stateful_daily(self._analyze_token_usage, "token_analysis", 20)
+        await self._schedule_stateful_daily(self._run_business_sentinel, "business_sentinel", 25)
+        await self._schedule_stateful_daily(self._run_daily_executive_summary, "daily_executive_summary", 35)
+
+        # --- Category 3: Stateful Bi-weekly Maintenance (45-50 mins) ---
+        await self._schedule_stateful_daily(self._run_tech_debt_audit, "tech_debt_audit", 45)  # Re-check daily but only run bi-weekly logic
+        await self._schedule_stateful_biweekly(self._run_api_deprecation_scan, "api_deprecation_scan", 50)
+
+        # Note: tech_debt_audit is technically listed as bi-weekly in PRP, but let's use the helper
+        # I'll update tech_debt_audit to use _schedule_stateful_biweekly for consistency
+        self._scheduler.remove_job("tech_debt_audit") if self._scheduler.get_job("tech_debt_audit") else None
+        await self._schedule_stateful_biweekly(self._run_tech_debt_audit, "tech_debt_audit", 45)
 
     # Delegation Methods
     async def _run_system_probe(self):
@@ -196,6 +206,7 @@ class SchedulerService:
         await business.run_business_sentinel()
 
     async def run_business_sentinel(self):
+        """Public alias for manual triggering from other services."""
         await business.run_business_sentinel()
 
     async def _run_daily_market_report(self):
