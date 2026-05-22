@@ -89,6 +89,7 @@ export const api = {
   clockIn: opsApi.clockIn.bind(opsApi),
   clockOut: opsApi.clockOut.bind(opsApi),
   getEthicsEvents: opsApi.getEthicsEvents.bind(opsApi),
+  triggerClockworkJob: opsApi.triggerClockworkJob.bind(opsApi),
   triggerSentinel: opsApi.triggerSentinel.bind(opsApi),
   getLeads: opsApi.getLeads.bind(opsApi),
   createLead: opsApi.createLead.bind(opsApi),

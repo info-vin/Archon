@@ -148,16 +148,23 @@ export const SystemHealthDashboard: React.FC = () => {
                                 ) || { total_xp: 0, total_cost: 0, roi_ratio: 0, level: 'Intern' };
                                 
                                 return (
-                                    <AgentRow 
-                                        key={agent.id}
-                                        name={agent.name} 
-                                        role={agent.role} 
-                                        status={agent.status} 
-                                        xpData={xpData}
-                                        cost={xpData.total_cost}
-                                        roi={xpData.roi_ratio.toString()}
-                                        isActive={agent.status === 'active'}
-                                    />
+                                    <div key={agent.id} className="flex flex-col gap-2">
+                                        <AgentRow 
+                                            name={agent.name} 
+                                            role={agent.role} 
+                                            status={agent.status} 
+                                            xpData={xpData}
+                                            cost={xpData.total_cost}
+                                            roi={xpData.roi_ratio.toString()}
+                                            isActive={agent.status === 'active'}
+                                        />
+                                        {agent.id.toLowerCase() === 'clockwork' && agent.jobs_snapshot && (
+                                            <ClockworkJobsTable 
+                                                jobs={agent.jobs_snapshot} 
+                                                onJobTriggered={fetchData} 
+                                            />
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>

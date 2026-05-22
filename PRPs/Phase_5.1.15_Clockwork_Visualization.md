@@ -23,7 +23,7 @@
 * 後端在 `internal_api.py` 的 `/cron/trigger` 擴充支援 `?job_id=xxx` 的單點觸發參數。
 
 ## 驗收標準 (Acceptance Criteria)
-1. [ ] David 登入 Admin UI 後，能在「System Health」分頁看見 Clockwork 專屬的任務擴展列表。
-2. [ ] 列表正確顯示 13 項任務的 `LAST_RUN` 與預計下一次的 `NEXT_RUN` 時間。
-3. [ ] 點擊「立即執行」能成功觸發單一任務而不影響其他任務。
-4. [ ] 通過 `make audit-qa`。
+1. [x] David 登入 Admin UI 後，能在「System Health」分頁看見 Clockwork 專屬的任務擴展列表。
+2. [x] 列表正確顯示 13 項任務的 `LAST_RUN` 與預計下一次的 `NEXT_RUN` 時間。
+3. [x] 點擊「立即執行」能成功觸發單一任務而不影響其他任務。
+4. [x] 通過 `make audit-qa` (前端 Unit Tests 物理驗證)。

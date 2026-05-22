@@ -126,6 +126,12 @@ export const opsApi = {
     return await callAPI<any[]>('/api/ethics/events');
   },
 
+  async triggerClockworkJob(jobId: string): Promise<any> {
+    return await callAPI(`/api/admin/scheduler/job/${jobId}/run`, {
+        method: 'POST'
+    });
+  },
+
   async triggerSentinel(): Promise<any> {
     return await callAPI('/api/marketing/manager/sentinel/run', {
         method: 'POST'

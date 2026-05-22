@@ -1,5 +1,5 @@
 import aiofiles
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, BackgroundTasks
 from pydantic import BaseModel
 
 from ..auth.dependencies import (
@@ -14,6 +14,38 @@ from ..services.agent_service import agent_service
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+@router.post("/scheduler/job/{job_id}/run", dependencies=[Depends(verify_manager_role)])
+async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+    """
+    Phase 5.1.15: Manually trigger a specific Clockwork job from the Admin UI.
+    Requires Manager or Admin role.
+    """
+    from ..services.scheduler_service import scheduler_service
+    
+    job_map = {
+        "system_probe": scheduler_service._run_system_probe,
+        "log_patrol": scheduler_service._run_log_patrol,
+        "task_dispatcher": scheduler_service._run_task_dispatcher,
+        "model_verification": scheduler_service._run_model_verification,
+        "system_probe_cleanup": scheduler_service._cleanup_system_probes,
+        "alice_auto_fetch": scheduler_service._run_auto_fetch_leads,
+        "bob_market_report": scheduler_service._run_daily_market_report,
+        "prune_stale_leads": scheduler_service._run_prune_stale_leads,
+        "token_analysis": scheduler_service._analyze_token_usage,
+        "business_sentinel": scheduler_service._run_business_sentinel,
+        "daily_executive_summary": scheduler_service._run_daily_executive_summary,
+        "tech_debt_audit": scheduler_service._run_tech_debt_audit,
+        "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
+    }
+
+    if job_id not in job_map:
+        raise HTTPException(status_code=400, detail=f"Unknown job_id: {job_id}")
+        
+    background_tasks.add_task(job_map[job_id])
+    logger.info(f"Admin {current_user.get('email')} manually triggered Clockwork job: {job_id}")
+    return {"status": "triggered", "job_id": job_id}
 
 
 @router.post("/upload")

@@ -151,11 +151,21 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="Failed to retrieve credentials") from e
 
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+
+# ... inside the file later ...
+
 @router.post("/cron/trigger")
-async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks, api_key: str | None = None):
+async def trigger_cron_jobs(
+    request: Request, 
+    background_tasks: BackgroundTasks, 
+    api_key: str | None = None,
+    job_id: str | None = Query(None, description="Trigger a specific job by its ID. If omitted, triggers all.")
+):
     """
     Webhook to trigger scheduler jobs externally.
     Allows execution via internal IP or matching ARCHON_CRON_SECRET.
+    Phase 5.1.15: Added support for single job triggering.
     """
     is_internal = is_internal_request(request)
     valid_api_key = os.getenv("ARCHON_CRON_SECRET")
@@ -169,28 +179,34 @@ async def trigger_cron_jobs(request: Request, background_tasks: BackgroundTasks,
 
     try:
         from ..services.scheduler_service import scheduler_service
+        
+        job_map = {
+            "system_probe": scheduler_service._run_system_probe,
+            "log_patrol": scheduler_service._run_log_patrol,
+            "task_dispatcher": scheduler_service._run_task_dispatcher,
+            "model_verification": scheduler_service._run_model_verification,
+            "system_probe_cleanup": scheduler_service._cleanup_system_probes,
+            "alice_auto_fetch": scheduler_service._run_auto_fetch_leads,
+            "bob_market_report": scheduler_service._run_daily_market_report,
+            "prune_stale_leads": scheduler_service._run_prune_stale_leads,
+            "token_analysis": scheduler_service._analyze_token_usage,
+            "business_sentinel": scheduler_service._run_business_sentinel,
+            "daily_executive_summary": scheduler_service._run_daily_executive_summary,
+            "tech_debt_audit": scheduler_service._run_tech_debt_audit,
+            "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
+        }
 
-        # Add all 13 jobs to FastAPI BackgroundTasks for manual concurrent triggering
-        # 1. Stateless Patrols
-        background_tasks.add_task(scheduler_service._run_system_probe)
-        background_tasks.add_task(scheduler_service._run_log_patrol)
-        background_tasks.add_task(scheduler_service._run_task_dispatcher)
-        background_tasks.add_task(scheduler_service._run_model_verification)
+        if job_id:
+            if job_id not in job_map:
+                raise HTTPException(status_code=400, detail=f"Unknown job_id: {job_id}")
+            background_tasks.add_task(job_map[job_id])
+            return {"status": "triggered", "jobs": 1, "job_id": job_id}
+        else:
+            # Add all 13 jobs to FastAPI BackgroundTasks for manual concurrent triggering
+            for func in job_map.values():
+                background_tasks.add_task(func)
 
-        # 2. Daily Jobs
-        background_tasks.add_task(scheduler_service._cleanup_system_probes)
-        background_tasks.add_task(scheduler_service._run_auto_fetch_leads)
-        background_tasks.add_task(scheduler_service._run_daily_market_report)
-        background_tasks.add_task(scheduler_service._run_prune_stale_leads)
-        background_tasks.add_task(scheduler_service._analyze_token_usage)
-        background_tasks.add_task(scheduler_service._run_business_sentinel)
-        background_tasks.add_task(scheduler_service._run_daily_executive_summary)
-
-        # 3. Bi-weekly Jobs
-        background_tasks.add_task(scheduler_service._run_tech_debt_audit)
-        background_tasks.add_task(scheduler_service._run_api_deprecation_scan)
-
-        return {"status": "triggered", "jobs": 13}
+            return {"status": "triggered", "jobs": 13}
     except Exception as e:
         logger.error(f"Error triggering cron jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
