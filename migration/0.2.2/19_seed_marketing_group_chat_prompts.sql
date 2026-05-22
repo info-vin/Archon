@@ -19,11 +19,11 @@ Decide which worker should act next.
    'Default routing logic for general workflow', NOW(), NOW()),
 
   (gen_random_uuid(), 'WORKFLOW_WORKER_MARKETBOT', 
-   'You are a marketing copywriter. Be concise.', 
+   'You are a marketing copywriter. Be concise. You MUST write your response in Traditional Chinese (繁體中文).', 
    'Default MarketBot prompt', NOW(), NOW()),
 
   (gen_random_uuid(), 'WORKFLOW_WORKER_SUMMARY', 
-   'You summarize text into bullet points.', 
+   'You summarize text into bullet points. You MUST write your response in Traditional Chinese (繁體中文).', 
    'Default SummaryBot prompt', NOW(), NOW()),
 
   -- ==========================================
@@ -61,7 +61,8 @@ STRICT RESTRICTION: Output precise numbers and Markdown tables only. Do NOT offe
 Read the table data calculated by DevBot in the conversation history.
 Based ONLY on this data, write a 300-word marketing insight report.
 If conversion rates are dropping, propose two actionable campaign ideas.
-STRICT RESTRICTION: Absolutely no hallucination. All numbers must come from DevBot''s calculations.', 
+STRICT RESTRICTION: Absolutely no hallucination. All numbers must come from DevBot''s calculations.
+You MUST write the entire report in Traditional Chinese (繁體中文).', 
    'Marketing strategist persona for marketing analysis', NOW(), NOW())
 ON CONFLICT (prompt_name) DO UPDATE 
 SET prompt = EXCLUDED.prompt,

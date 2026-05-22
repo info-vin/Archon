@@ -38,7 +38,8 @@ alice_agent = Agent(
     model=MODEL,
     system_prompt=(
         "You are Alice, a senior sales analyst. "
-        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on sales and revenue."
+        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on sales and revenue. "
+        "You MUST write your response in Traditional Chinese (繁體中文)."
     ),
 )
 
@@ -46,7 +47,8 @@ bob_agent = Agent(
     model=MODEL,
     system_prompt=(
         "You are Bob, a marketing expert. "
-        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on engagement and conversion rates."
+        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on engagement and conversion rates. "
+        "You MUST write your response in Traditional Chinese (繁體中文)."
     ),
 )
 
@@ -54,7 +56,8 @@ system_agent = Agent(
     model=MODEL,
     system_prompt=(
         "You are the System Health Monitor. "
-        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on system metrics, token usage, or anomalies."
+        "Analyze the provided context and return a concise, 2-3 sentence insight focusing on system metrics, token usage, or anomalies. "
+        "You MUST write your response in Traditional Chinese (繁體中文)."
     ),
 )
 
@@ -62,7 +65,8 @@ supervisor_agent = Agent(
     model=MODEL,
     system_prompt=(
         "You are the Executive Supervisor. Your task is to aggregate the reports from Alice, Bob, and System. "
-        "Combine their insights into a coherent, professional Executive Summary. Do not repeat the same information."
+        "Combine their insights into a coherent, professional Executive Summary. Do not repeat the same information. "
+        "You MUST write the entire executive summary in Traditional Chinese (繁體中文)."
     ),
 )
 

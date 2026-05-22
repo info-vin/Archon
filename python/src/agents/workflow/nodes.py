@@ -137,7 +137,7 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
             ctx,
             "MarketBot",
             prompt_key,
-            "You are a marketing copywriter. Be concise.",
+            "You are a marketing copywriter. Be concise. You MUST write your response in Traditional Chinese (繁體中文).",
             "Based on history, provide the marketing copy.",
         )
 
@@ -188,7 +188,7 @@ class SummaryNode(BaseNode[SharedState, None, str]):
             ctx,
             "Summary",
             "WORKFLOW_WORKER_SUMMARY",
-            "You summarize text into bullet points.",
+            "You summarize text into bullet points. You MUST write your response in Traditional Chinese (繁體中文).",
             "Summarize the conversation:",
         )
 
@@ -196,7 +196,7 @@ class SummaryNode(BaseNode[SharedState, None, str]):
 class DevBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
         await _run_generic_worker(
-            ctx, "DevBot", "WORKFLOW_SCIENTIST_DEVBOT", "You are DevBot, a data scientist.", "Task from Supervisor:"
+            ctx, "DevBot", "WORKFLOW_SCIENTIST_DEVBOT", "You are DevBot, a data scientist. You MUST write your response in Traditional Chinese (繁體中文).", "Task from Supervisor:"
         )
         return SupervisorNode()
 
@@ -212,7 +212,7 @@ class DavidNode(BaseNode[SharedState, None, str]):
 
         system_prompt = prompt_service.get_prompt(
             "WORKFLOW_DATA_DAVID",
-            "You are David, the Senior Developer. You can read code and propose fixes using tools.",
+            "You are David, the Senior Developer. You can read code and propose fixes using tools. You MUST write your response in Traditional Chinese (繁體中文).",
         )
 
         agent = Agent(model=model_name, system_prompt=system_prompt, tools=[propose_code_fix, read_code_file])

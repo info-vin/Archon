@@ -117,7 +117,7 @@ class StatsService:
             # PERFORMANCE: Extract string conversion outside loop and unroll nested generator
             active_sources_lower = [s.lower() for s in active_sources]
 
-            agents_manifest = [
+            agents_manifest: list[dict[str, Any]] = [
                 {"id": "clockwork", "name": "Clockwork", "role": "Scheduler"},
                 {"id": "sentinel", "name": "Sentinel", "role": "Guard"},
                 {"id": "librarian", "name": "Librarian", "role": "RAG Service"},
@@ -125,27 +125,27 @@ class StatsService:
             ]
 
             # 4. Phase 5.1.15: Clockwork Jobs Snapshot
-            clockwork_jobs = []
+            clockwork_jobs: list[dict[str, Any]] = []
             try:
                 from ..scheduler_service import scheduler_service
-                
+
                 # Get memory state of scheduler jobs
                 active_job_ids = set()
                 if scheduler_service._scheduler:
                     for job in scheduler_service._scheduler.get_jobs():
                         active_job_ids.add(job.id)
                         next_run = job.next_run_time.isoformat() if job.next_run_time else None
-                        
+
                         # Handle stateless initial vs loop jobs
                         display_id = job.id.replace("_initial", "")
-                        
+
                         # Determine Category based on phase 5.1.14 design
                         job_type = "stateful_daily"
                         if display_id in ["system_probe", "log_patrol", "task_dispatcher", "model_verification"]:
                             job_type = "stateless_patrol"
                         elif display_id in ["tech_debt_audit", "api_deprecation_scan"]:
                             job_type = "stateful_biweekly"
-                        
+
                         # Deduplicate (preferring the active loop over the initial delay if both exist)
                         existing_job = next((j for j in clockwork_jobs if j["id"] == display_id), None)
                         if existing_job:
@@ -154,7 +154,7 @@ class StatsService:
                                 existing_job["next_run"] = next_run
                             existing_job["status"] = "scheduled"
                             continue
-                            
+
                         # Fetch Last Run from DB
                         last_run_db = await scheduler_service._get_last_run(display_id)
                         last_run_iso = last_run_db.isoformat() if last_run_db else None
@@ -167,7 +167,7 @@ class StatsService:
                             "next_run": next_run,
                             "status": "scheduled" if next_run else "idle"
                         })
-                
+
                 # Find DB-only jobs that might have completed and been removed from scheduler
                 db_keys_res = self.supabase.table("archon_settings").select("key, value").like("key", "LAST_RUN_%").execute()
                 for row in (db_keys_res.data or []):
@@ -182,7 +182,7 @@ class StatsService:
                             "next_run": None,
                             "status": "completed"
                         })
-                        
+
             except Exception as e:
                 logger.error(f"Failed to fetch clockwork jobs: {e}")
 
@@ -195,13 +195,13 @@ class StatsService:
                         if agent_id in s_lower:
                             is_active = True
                             break
-                
+
                 agent_data = {**agent, "status": "active" if is_active else "standby"}
-                
+
                 # Attach Phase 5.1.15 data to Clockwork
                 if agent_id == "clockwork":
                     agent_data["jobs_snapshot"] = clockwork_jobs
-                    
+
                 active_agents.append(agent_data)
 
             return {

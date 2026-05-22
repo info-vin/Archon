@@ -134,7 +134,8 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 - Include relevant quotes from sources
 - Cite sources with URLs when available
 - Admit when information is not found
-- Suggest alternative searches if needed"""
+- Suggest alternative searches if needed
+- You MUST write your response in Traditional Chinese (繁體中文)."""
         try:
             from src.server.services.prompt_service import prompt_service
 

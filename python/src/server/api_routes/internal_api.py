@@ -11,7 +11,7 @@ import uuid
 from typing import Any
 
 import aiofiles
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from ..services.credential_service import credential_service
@@ -151,14 +151,12 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="Failed to retrieve credentials") from e
 
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
-
 # ... inside the file later ...
 
 @router.post("/cron/trigger")
 async def trigger_cron_jobs(
-    request: Request, 
-    background_tasks: BackgroundTasks, 
+    request: Request,
+    background_tasks: BackgroundTasks,
     api_key: str | None = None,
     job_id: str | None = Query(None, description="Trigger a specific job by its ID. If omitted, triggers all.")
 ):
@@ -179,7 +177,7 @@ async def trigger_cron_jobs(
 
     try:
         from ..services.scheduler_service import scheduler_service
-        
+
         job_map = {
             "system_probe": scheduler_service._run_system_probe,
             "log_patrol": scheduler_service._run_log_patrol,

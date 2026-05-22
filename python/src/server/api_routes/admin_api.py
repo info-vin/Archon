@@ -1,5 +1,5 @@
 import aiofiles
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from ..auth.dependencies import (
@@ -23,7 +23,7 @@ async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, 
     Requires Manager or Admin role.
     """
     from ..services.scheduler_service import scheduler_service
-    
+
     job_map = {
         "system_probe": scheduler_service._run_system_probe,
         "log_patrol": scheduler_service._run_log_patrol,
@@ -42,7 +42,7 @@ async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, 
 
     if job_id not in job_map:
         raise HTTPException(status_code=400, detail=f"Unknown job_id: {job_id}")
-        
+
     background_tasks.add_task(job_map[job_id])
     logger.info(f"Admin {current_user.get('email')} manually triggered Clockwork job: {job_id}")
     return {"status": "triggered", "job_id": job_id}
