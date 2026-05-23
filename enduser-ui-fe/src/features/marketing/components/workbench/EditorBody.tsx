@@ -29,11 +29,23 @@ export const EditorBody: React.FC<EditorBodyProps> = ({
       {/* Visual Header (Image Preview) */}
       {previewUrl && (
         <div className="w-full h-64 md:h-80 relative group overflow-hidden bg-slate-900 shrink-0">
-          <img
-            src={previewUrl}
-            alt="AI Generated Cover"
-            className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
-          />
+          {/\.(mp4|webm)$/i.test(previewUrl) ? (
+            <video
+              src={previewUrl}
+              controls
+              autoPlay
+              muted
+              loop
+              className="w-full h-full object-cover opacity-80"
+              preload="metadata"
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt="AI Generated Cover"
+              className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
           <div className="absolute bottom-6 left-12 right-12">
             <span className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-black text-white uppercase tracking-widest">

@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.1.16 (日、週、月報執行摘要星環化與排程器整合) 已結案並提交。
-*   **今日目標 (Today's Goal)**: 啟動下一階段任務（RAG 快取優化與多 Agent 連動架構開發，或依使用者指示開展後續迭代）。
+*   **當前狀態 (Current Context)**: Phase 5.1.x 至 Phase 5.2.0 已全數結案並提交。
+*   **今日目標 (Today's Goal)**: 完成五月日誌歸檔，釐清最新進度狀態，等待人類指揮官給予下一階段的新指示。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -109,102 +109,6 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026-05-23: 日報流程中斷檢討、環境配置自癒與系統指標修正
-* **1. 數位雙生解密異常（Incorrect padding）修復與源頭防禦**:
-    * **行動**: 修正 `scripts/init_db.py` 中因 5/21 憑證重構而失效的反射加密檢測（原本在檢查 `hasattr(credential_service, 'encrypt_value')`，但重構後的服務並不符合），改為直接引入並呼叫 `CryptoUtils.encrypt_value` 進行 Fernet 加密。重新執行 `make db-init` 後，資料庫中的密鑰全數以密文儲存，解決了 `Incorrect padding` 的解密失敗。
-* **2. 系統指標 Token 花費顯示修復**:
-    * **行動**: 修正 `python/src/server/services/stats/domains/system_metrics.py`，將非交易欄位 `estimated_cost_usd` 修正為正確的資料庫欄位 `cost_usd`，解決交易明細表中的 $0.00 顯示異常。
-* **3. 數位雙生與品質門禁驗收**:
-    * **行動**: 執行 `make twin-scout` 容器化對帳巡檢，五大核心 Persona (Alice, Bob, Charlie, David, DevBot) 的 parity 核查全數綠燈通過。
-* **4. Phase 5.1.17 專案代碼模組化治理（大於 400 行檔案瘦身）**:
-    * **行動**:
-      1. 將後端 `business.py` 中膨脹的週期報告數據收集與 Map-Reduce 群聊啟動邏輯（約 280 行）抽離到新模組 `report_service.py` 中，使 `business.py` 行數自 615 行降至約 330 行。
-      2. 將前端 `ProjectsView.tsx` 中的內部組件 `SidebarProjectCard` 抽離到獨立元件 `SidebarProjectCard.tsx`，使主視圖代碼行數自 438 行降低至約 365 行。
-    * **結果**: 順利消除核心檔案行數超限的風險，前後端架構更趨近 L2 模組化規範，代碼可讀性顯著提升。
-* **5. 日報流程中斷與熔斷機制觸發**:
-    * **行動**: 發現日報排程器未能如期產生結果。查證後發現，Supervisor Agent 整理過去 24 小時的系統日誌時，偵測到了 7 筆 `ALERT` 級別的商業風險訊號（例如：高價值客戶流失風險），這觸發了星環群聊的熔斷機制（Circuit Breaker Tripped），暫停自動摘要並要求人類介入。
-* **6. 環境配置脫節 (Environment Config Disconnect) 修復**:
-    * **行動**: 追查手動觸發失敗的底層原因，發現 `archon-agents` 容器在 `docker-compose.yml` 中遺漏了 `GOOGLE_API_KEY` 等關鍵環境變數掛載，導致 Agent 在內部發生崩潰。已將正確的 API 密鑰補齊。
-* **7. 實體資料庫約束與 Mock 偽證教訓**:
-    * **行動**: 修復了 `report_service.py` 中指派任務給非實體使用者 (AgentUUIDs.SUPERVISOR) 違反 Foreign Key 限制的 Bug，改為指派給人類 Manager (Charlie)。
-    * **反思**: 此前單元測試中使用了 `AsyncMock`，完美繞過了資料庫外鍵與容器環境變數的限制，導致「測試綠燈」的偽證。確立了「必須實體穿透驗證，單測成功不代表整合成功」的鐵律。
-
-### 2026-05-22: Phase 5.1.16 日、週、月報執行摘要星環化與排程器整合落地
-* **1. 真實數據接地與收集器**:
-    * **行動**: 於 `business.py` 實作 `gather_report_context`，自 leads, token_usage, logs 與 tasks 表獲取真實上下文。
-* **2. 週期報告星環與 Map-Reduce 整合**:
-    * **行動**: 日報改由星環群聊任務執行；週報/月報則呼叫 Map-Reduce (`beta_graph.run`) 處理 7 天與 30 天數據，成果存為 done 任務並追蹤 Token 成本。
-* **3. 整合排程器與品質門禁驗證**:
-    * **行動**: 將週/月報掛載至 `scheduler_service.py` 的 Clockwork 排程系統；修復 Mypy 型別宣告與 Ruff E402 錯誤。
-    * **結果**: 後端 576 項單元測試全數綠燈通過，Ruff 與 Mypy 100% 綠燈通過。
-
-### 2026-05-21: Phase 5.1.13 Karpathy 式極簡 AI 知識庫與行銷反饋閉環落地
-* **1. 零 Token 實用主義視覺優化 (local SVG fallback)**:
-    * **行動**: 於 `logo_tool.py` 擴充科技霓虹濾鏡與多樣化幾何圖樣，並在 `content_handler.py` 中整併為乾淨的兩階段 fallback 邏輯，大幅減低雲端 AI 生圖的 API 成本。
-* **2. 「只管丟」原始網址爬網輸入**:
-    * **行動**: 實作前端 `MarketingIngestion` 輸入框與背景 API 對接，成功將網頁內容抓取、切片與向量化流程嵌入 Bob 的內容工作臺。
-* **3. 憑證與測試自癒加固**:
-    * **行動**: 清理 `provider_configs.py` 中的冗餘檢查，建立 `enduser-ui-fe/.env.test` 隔離測試環境，放寬 Vitest timeout，並為後端 integration tests 加裝 `RUN_INTEGRATION_TESTS` 門檻。
-    * **結果**: 後端/前端測試全數物理綠燈通過，`make twin-scout` 跨角色 UI 物理巡檢 100% 通過，成功以單一 Commit 提交推送。
-
-### 2026-05-20: 封存 Phase 5.0.x 歷史文件
-* **1. 歷史文件歸檔與目錄精簡**:
-    * **行動**: 將 `PRPs/Phase_5.0.0_Multi_Agent_Implementation.md`, `PRPs/Phase_5.0.1_API_Error_Handling.md`, `PRPs/Phase_5.0.2_Native_Group_Chat_Feasibility.md` 三份過期計畫文件移至 `PRPs/archive/Phases_5.0.0_to_5.0.2/`。
-    * **結果**: 100% 清除根目錄冗餘，保持 `PRPs` 核心路徑的聚焦與精簡。
-
-### 2026-05-19: Phase 5.1.8 實體貫通驗證與 Makefile 品質門禁升級
-* **1. Centralized LLM Gateway 落地公證**:
-    * **行動**: 審查 `internal_llm_api.py`, `resilience.py` 與 `docker-compose.yml` 架構實體。
-    * **結果**: 確證無虛假開發。`archon-server` 已成功升格為網關，實作 `ThreadingService.rate_limited_operation` (max_concurrent=1) 限制，並將代理 URL 正確注入 `archon-mcp` 與 `archon-agents`。
-* **2. Makefile 進階品質門禁文件擴充**:
-    * **行動**: 重構 `CONTRIBUTING_tw.md` 測試指南，納入進階品質門禁自動化指令。
-    * **結果**: 完整標準化 `make audit-qa`, `make persona-audit`, `make tech-debt-audit`, `make twin-scout` 的使用時機與防禦層級，確立人機協作的驗收指標。
-
-### 2026-05-18: Phase 5.1.7 雙生參數 CLI 雙軌與星型群聊動態自癒巡航落地
-* **1. 雙向對帳引導規格化 (CLI --mode)**:
-    * **行動**: 於 `scripts/twin_scout.py` 中實作 `--mode`（`audit` 與 `action`）選取機制。
-    * **機制**: 在 `action` 模式下啟動 Headed 模式並加載免密碼 `.browser_data/scout_action` 目錄，無縫繼承宿主機 OS Keychain Cookie，根除 Docker 內的 Chromium 加密憑證讀取障礙。
-* **2. 星型群聊 UI 動態自癒核查**:
-    * **行動**: 實作 `verify_multi_agent_chat` 核查函式。自動建立標題為 `Marketing Data Deep Dive` 的任務並指派給 Supervisor (UUID: `f0f00000-0000-0000-0000-000000000000`)，非同步處理 45 秒後切換至 `AI Report` 標籤，利用 Headed 瀏覽器截圖傳送至 Gemini Vision 進行真實對話氣泡的 physical parity 公證。
-* **3. Makefile 自動化與 SOP 全面對帳**:
-    * **行動**: 重構 `Makefile` 納入 `make twin-scout`（容器化 audit）與 `make twin-scout-action`；同步修正 `CONTRIBUTING_tw.md` 指令字眼。
-    * **驗證**: 執行 `make lint-be` (329 檔案) 與 `make test-be` (569 核心單元測試) 100% 綠燈，安全合併並 push 至 `feat/twins` 主幹。
-
-### 2026-05-17: AdminPanelExhaustive E2E 物理加固與 React TypeError 阻斷
-* **1. 系統健康標籤頁 (System Health Tab) 網絡 100% 隔離**:
-    * **行動**: 在 `AdminPanelExhaustive.spec.ts` 中補齊對系統健康看板 5 大核心 API 端點（系統概覽、AI 用量、連線例外日誌、Agent XP、Token 明細）的 Playwright 路由攔截。
-    * **結果**: 切斷 E2E 測試與真實 backend/資料庫冷啟動的物理耦合，徹底消除 「System Probe Failed」 紅色錯誤卡片。
-* **2. Mock 與 TypeScript 數據對齊 (React Crash 阻斷)**:
-    * **行動**: 修正 recent token usage mock 數據結構，補齊 `role`, `user_name`, `tokens`, `context` 等關鍵欄位。
-    * **結果**: 100% 對齊 `TokenUsageDetail` 介面規格，根治 `<TokenUsageTable>` 存取 `row.role.toUpperCase()` 時的 React TypeError 渲染崩潰。
-* **3. 嚴苛測試綠燈公證**:
-    * **行動**: 調優日誌過濾僅顯示 Warning/Error，並在 `CI=1` 且停用自動重試 (`--retries=0`) 的極端模式下驗收。
-    * **結果**: 9 大標籤頁一次性 100% 物理綠燈通過，執行時間收斂至 43.2 秒，消滅 flaky 抖動。
-
-### 2026-05-12: Model SSOT 確立與 Phase 5 星型群聊架構規劃
-* **1. 基礎設施幻覺根除 (Model SSOT 100%)**:
-    * **行動**: 全域盤點並移除了 `agents/`, `server/`, `mcp_server/` 中 13 處關於 `openai:gpt-4o`, `gpt-4.1-nano` 與 `gemini-embedding-001` 的硬編碼回退機制。
-    * **結果**: 導入「Fail Fast」原則，完全依賴 `archon_settings` (資料庫) 與 `.env` 作為唯的模型事實來源。未設定則直接拋出 `ValueError`，根治隱性 429 崩潰。
-* **2. Phase 5 架構藍圖 (LangGraph Evolution)**:
-    * **行動**: 歸檔 Phase 4.6 收尾文件，建立 `Phase_5.0.0_Multi_Agent_Implementation.md` 實作計畫。
-    * **決策**: 
-        * **Reject LangGraph**: 避開 Pydantic v1 依賴衝突，改用原生 `pydantic-graph` 構建狀態機。
-        * **星型群聊 (Star-Topology)**: 捨棄 AutoGen 自由對話，由 Supervisor 動態路由，並加設 `MAX_RECURSION = 3` 熔斷器保護 API 成本。
-* **3. Free Tier 經濟學與模型分級**:
-    * **行動**: 透過實體腳本測試與聯網查證，清空對新模型可用性的幻覺。
-    * **結果**: Supervisor 綁定 `gemini-3-flash-preview`；Worker 綁定 `gemini-3.1-flash-lite-preview`；Embedding 暫不升級至 v2，成功避開每日 1000 次的嚴苛免費限制。
-
-### 2026-05-06: 系統大掃除與技術債自動化巡邏上線
-* **1. 歷史文檔與腳本大掃除**:
-    * **行動**: 刪除 `scripts/` 目錄下 5 個超過 14 天未使用的過期探針與假資料腳本，並將 `PRPs/archive/` 中的古老歷史文件依據「時代分類」進行資料夾歸檔。
-    * **結果**: 專案根目錄與腳本庫大幅度瘦身，歷史文件具備清晰的考古脈絡。
-* **2. 技術債自動化巡邏 (Clockwork Tech-Debt Patrol)**:
-    * **行動**: 於 `Makefile` 加入 `tech-debt-audit` 指令，並將其實作轉換為 Clockwork 的原生 Python 背景任務 (`run_tech_debt_audit`)。
-    * **機制**: 透過 `scheduler_service.py` 設定每 336 小時（14天）自動執行。若發現髒亂，Clockwork 會自動開立 Task 並指派給 `DevBot`，達成從「偵測」到「派單」的全自動化閉環。
-* **3. 系統品質與落體驗證**:
-    * **稽核**: 透過 `phase-audit` 技能深度驗證 Phase 4.6.51~53 皆已物理落地（包含 `client.aio` 非同步化、Librarian 拆分、TTS `AudioPlayer` 元件與提示詞等）。
-    * **公證**: 執行 `make lint-be`, `make test-be`, `make persona-audit` 與 `make twin-scout`，所有品質門禁皆 100% 綠燈通過。
-
 > 目前近期日誌已全數歸檔至歷史檔案。當有新的開發活動時，請記錄於此。
 
 ---
@@ -213,6 +117,24 @@
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年5月：多 Agent 星環拓樸、QA 全自動化與排程器整合
+五月是專案從單一 Agent 升級至多 Agent 協作架構，並將品質門禁與測試自動化推向極致的月份。我們完成了 Phase 5.1.x 到 Phase 5.2.0 的史詩級任務群。
+
+**核心主題歸類**:
+1.  **星環群聊架構與排程器整合 (Ref: Phase 5.1.7 ~ 5.1.16)**:
+    *   **拓樸升級**: 確立「星型群聊 (Star-Topology)」機制，由 Supervisor 動態路由並綁定 Gemini 3.1 系列，防範無限迴圈與成本失控。
+    *   **週期報告自動化**: 實作日、週、月報執行摘要的 Map-Reduce 星環化，並成功與 Clockwork 排程系統深度整合。
+2.  **QA 全自動化與 MBT 硬化 (Ref: Phase 5.2.0, 5.1.2)**:
+    *   **視覺裁判**: 實作 Gemini 3.1 Vision 作為 UI 視覺裁判 (Judge)，並建立 Structured LLM-Judge 確保內容語義品質。
+    *   **測試隔離與網關**: 消除 E2E 測試依賴污染，加裝 `RUN_INTEGRATION_TESTS` 門檻，並完成 `make audit-qa` 整合網關。
+3.  **基礎設施與環境自癒加固 (Ref: Phase 5.1.13, 5.1.17)**:
+    *   **Model SSOT**: 根除模型硬編碼，統一交由 DB / 環境變數控制，落實 Fail-Fast。
+    *   **模組解耦**: 進行大於 400 行的檔案瘦身，強化 L2 架構清晰度，消滅「God Objects」。
+    *   **數位雙生防禦**: 建立 CLI 雙軌機制，加載 `BrowserConfig` 無密碼環境對抗 Docker 加密憑證讀取障礙。
+4.  **體驗升級與 RAG 優化 (Ref: Phase 5.1.13)**:
+    *   **極簡 RAG 入口**: 實作 Karpathy 式極簡知識庫介面，支援原始網址直丟與切片向量化。
+    *   **視覺優化**: 實作科技霓虹濾鏡與幾何 SVG 的「零 Token 視覺 Fallback」，大幅降低雲端成本。
 
 ### 2026年4月：全系統硬化、效能收斂與 Phase 4.6 收尾
 四月是專案從局部功能完善邁向全系統架構硬化與效能收斂的關鍵月份。我們不僅完成了 Phase 4.6 整個史詩級任務群的收尾，還進行了深度的效能優化與架構重構。

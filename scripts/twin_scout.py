@@ -31,6 +31,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Digital Twin Scout v39.1 - 503 Resistant")
     parser.add_argument("--headless", type=str, default="true")
     parser.add_argument("--mode", type=str, default="audit", choices=["audit", "action", "fanout"])
+    parser.add_argument("--record", type=str, default="false", choices=["true", "false"])
     return parser.parse_args()
 
 def limit_diagnostic_capacity(directory="./.twin/diagnostics", max_files=10):
@@ -447,13 +448,19 @@ async def run_scout_session():
         print("🚀 [Scout] Entering ACTION mode for Multi-Agent group chat verification...")
         
         from cookie_injector import KeychainBypassCookieInjector
+        is_record = args.record.lower() == "true"
         
         async with async_playwright() as p:
+            record_dir = "./.twin/videos/temp" if is_record else None
+            record_size = {"width": 1280, "height": 720} if is_record else None
+            
             browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
                 p, 
                 headless=is_headless,
-                viewport={'width': 1920, 'height': 1080},
-                user_agent="ArchonIntegratedScout/3.9.1 (action-twin)"
+                viewport={'width': 1280, 'height': 720}, # standardized 720p resolution
+                user_agent="ArchonIntegratedScout/3.9.1 (action-twin)",
+                record_video_dir=record_dir,
+                record_video_size=record_size
             )
             pg = await ctx.new_page()
             
@@ -461,8 +468,38 @@ async def run_scout_session():
             pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
             
             res_analysis = await verify_multi_agent_chat(pg, client, target_model, mission_prompt)
+            
+            video_path = None
+            if is_record and pg.video:
+                video_path = await pg.video.path()
+                print(f"📹 [Scout] WebM Video recorded at: {video_path}")
+                
             await ctx.close()
             await browser.close()
+            
+            # Post-processing video
+            if is_record and video_path:
+                is_success = "WORKFLOW_SUCCESS" in res_analysis
+                if is_success:
+                    print("🎉 Workflow success! Processing recorded video...")
+                    import subprocess
+                    try:
+                        proc_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "process_marketing_video.py"))
+                        subprocess.run(
+                            [sys.executable, proc_script, "--video", video_path],
+                            check=True
+                        )
+                        print("📹 [Scout] Video post-processing executed successfully.")
+                    except Exception as ve:
+                        print(f"⚠️ [Scout] Video post-processing failed: {ve}")
+                else:
+                    print("❌ Workflow failed! Deleting temp recording video...")
+                    if os.path.exists(video_path):
+                        try:
+                            os.remove(video_path)
+                            print("🗑️ Removed failed recording video.")
+                        except Exception as ve:
+                            print(f"⚠️ Failed to remove failed video: {ve}")
             
             report_text = f"# Digital Twin Action Report (Multi-Agent Chat v39.1)\n\n## Action Verification\n{res_analysis}\n"
             report_dir = "./.twin/diagnostics"

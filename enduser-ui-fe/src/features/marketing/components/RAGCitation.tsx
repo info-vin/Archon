@@ -28,6 +28,8 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
         data-testid={`citation-tag-${citationId}`}
         onClick={() => setIsOpen(!isOpen)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        aria-expanded={isOpen}
+        aria-label={`Source citation ${citationId}: ${citation.title}`}
         className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 hover:bg-indigo-200 hover:scale-110 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10"
         title={`Source: ${citation.title}`}
       >
@@ -43,6 +45,17 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
             </h4>
           </div>
           
+          {/\.(mp4|webm)$/i.test(citation.url) && (
+            <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black">
+              <video
+                src={citation.url}
+                controls
+                className="w-full h-auto max-h-36 object-contain"
+                preload="metadata"
+              />
+            </div>
+          )}
+
           {citation.snippet && (
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-3 italic border-l-2 border-indigo-200 pl-2">
               "{citation.snippet}"

@@ -237,6 +237,35 @@ ON CONFLICT (id) DO UPDATE SET
     publish_date = EXCLUDED.publish_date, 
     image_url = EXCLUDED.image_url;
 
+INSERT INTO blog_posts (id, title, excerpt, content, author_name, publish_date, image_url) VALUES
+('a7777777-7777-7777-7777-777777777777', '人機協作新紀元：Archon 星環多 Agent 協同工作流實戰', '本分析探討 Archon 系統的「多 Agent 星環拓樸工作流」。影片真實展示了 Admin (David Howard) 建立任務，指派 Supervisor 並協調 DevBot 與 MarketBot 協作完成行銷分析的動態畫面。', '# 人機協作新紀元：Archon 星環多 Agent 協同工作流實戰
+
+在當前的自動化開發與行銷實踐中，如何讓多個 AI Agent 彼此無縫協同，同時不產生資訊斷層與死鎖，是系統設計的核心考量。Archon 系統特別實作了「星型群聊 (Star-Topology)」機制，藉由一個 Supervisor Agent 扮演總調度與決策裁判，安全、高效地分發工作給多個專業的 AI 協作者。
+
+本影片真實記錄了這套系統的運行過程，是我們的數位孿生巡檢工具自動側錄而成的行銷素材：
+
+## 實機操作錄影展示
+以下影片展示了 David Howard (Admin) 發起一個 Q2 行銷漏斗分析任務，系統自動調度 AI Agent 協同工作的完整經過：
+
+（請檢視上方影片播放器）
+
+## 協作流程拆解
+1. **任務指派**：Admin 在 Dashboard 點擊「New Task」，將任務發佈並指派給 Supervisor Agent (f0f00000-0000-0000-0000-000000000000)。
+2. **星環建立**：Supervisor 接收需求，動態調用系統工具，開啟專屬的群聊對話框。
+3. **分工運作**：
+   - **DevBot** 負責抓取資料庫與系統日誌。
+   - **MarketBot** 負責整理數據、計算轉換率並撰寫分析報告。
+4. **決策與反饋**：AI 在統一的視窗中像人類團隊一樣交談與排查，並由 Supervisor 彙整最終結果回報給 Admin。
+
+這證明了多 Agent 系統在複雜商業場景下的極致效率。', 'Bob (CMO)', '2026-05-23T12:00:00Z', '/assets/videos/auto_demos/marketing_demo.mp4')
+ON CONFLICT (id) DO UPDATE SET 
+    title = EXCLUDED.title, 
+    excerpt = EXCLUDED.excerpt, 
+    content = EXCLUDED.content, 
+    author_name = EXCLUDED.author_name, 
+    publish_date = EXCLUDED.publish_date, 
+    image_url = EXCLUDED.image_url;
+
 -- Update status to 'published' for seed data visibility
 UPDATE blog_posts 
 SET status = 'published' 
@@ -246,5 +275,6 @@ WHERE id IN (
     'post-3', 
     'a4444444-4444-4444-4444-444444444444', 
     'a5555555-5555-5555-5555-555555555555', 
-    'a6666666-6666-6666-6666-666666666666'
+    'a6666666-6666-6666-6666-666666666666',
+    'a7777777-7777-7777-7777-777777777777'
 );

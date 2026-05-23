@@ -3,6 +3,11 @@ import os
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+for p in [".env", "python/.env", "../.env", "../python/.env"]:
+    if os.path.exists(p):
+        load_dotenv(p)
+
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent / "python" / "src"))
 
@@ -16,7 +21,10 @@ logger = get_logger("seed_knowledge")
 POSSIBLE_DIRS = [
     "../enduser-ui-fe/public/aus/156_resource",      # Host relative
     "/app/frontend_public/aus/156_resource",        # Docker internal mapping
-    "enduser-ui-fe/public/aus/156_resource"          # Root relative
+    "enduser-ui-fe/public/aus/156_resource",         # Root relative
+    "../enduser-ui-fe/public/assets/videos/auto_demos",
+    "/app/frontend_public/assets/videos/auto_demos",
+    "enduser-ui-fe/public/assets/videos/auto_demos"
 ]
 
 SYSTEM_DOCS = [
@@ -26,10 +34,12 @@ SYSTEM_DOCS = [
 ]
 
 TARGET_DIRS = []
+seen_resolved = set()
 for p in POSSIBLE_DIRS:
-    if Path(p).resolve().exists():
+    resolved_path = Path(p).resolve()
+    if resolved_path.exists() and resolved_path not in seen_resolved:
         TARGET_DIRS.append(p)
-        break
+        seen_resolved.add(resolved_path)
 
 TARGET_FILES = []
 for p in SYSTEM_DOCS:
@@ -70,49 +80,69 @@ async def seed_knowledge():
     for file_path in all_file_paths:
         file = file_path.name
 
-                # Filter useful files
-                if file.startswith('.') or file == "DS_Store":
+        # Filter useful files
+        if file.startswith('.') or file == "DS_Store":
+            continue
+
+        try:
+            # Skip companion text files to avoid duplicate entries
+            if file.endswith('.txt'):
+                base_name = file_path.stem
+                parent_dir = file_path.parent
+                has_video = (parent_dir / f"{base_name}.mp4").exists() or (parent_dir / f"{base_name}.webm").exists()
+                if has_video:
+                    print(f"📄 Skipping companion text file (handled via video): {file}")
                     continue
 
-                total_files += 1
-                content = ""
+            total_files += 1
+            content = ""
+            k_type = "technical"
 
-                try:
-                    if file.endswith('.md') or file.endswith('.txt'):
-                        with open(file_path, encoding='utf-8') as f:
-                            content = f.read()
-                    elif file.endswith('.pdf'):
-                        import pdfplumber
-                        with pdfplumber.open(file_path) as pdf:
-                            content = ""
-                            for page in pdf.pages:
-                                content += (page.extract_text() or "") + "\n"
-                    else:
-                        print(f"⚠️  Skipping unsupported file type: {file}")
-                        continue
+            if file.endswith('.md') or file.endswith('.txt'):
+                with open(file_path, encoding='utf-8') as f:
+                    content = f.read()
+            elif file.endswith('.mp4') or file.endswith('.webm'):
+                txt_companion = file_path.with_suffix('.txt')
+                if txt_companion.exists():
+                    with open(txt_companion, encoding='utf-8') as f:
+                        content = f.read()
+                    print(f"🎬 Found companion text for video {file}: {len(content)} chars.")
+                else:
+                    content = f"行銷影片素材: {file}，主要用於系統人機協同展示。"
+                k_type = "marketing"
+            elif file.endswith('.pdf'):
+                import pdfplumber
+                with pdfplumber.open(file_path) as pdf:
+                    content = ""
+                    for page in pdf.pages:
+                        content += (page.extract_text() or "") + "\n"
+            else:
+                total_files -= 1  # Not counting unsupported types
+                print(f"⚠️  Skipping unsupported file type: {file}")
+                continue
 
-                    if not content.strip():
-                        print(f"⚠️  Skipping empty file: {file}")
-                        continue
+            if not content.strip():
+                print(f"⚠️  Skipping empty file: {file}")
+                continue
 
-                    print(f"📄 Archiving: {file} ({len(content)} chars)...")
+            print(f"📄 Archiving: {file} ({len(content)} chars, type: {k_type})...")
 
-                    # Call Librarian
-                    source_id = await librarian.archive_file(
-                        file_name=file,
-                        content=content,
-                        file_path=str(file_path),
-                        knowledge_type="technical" # or infer from folder
-                    )
+            # Call Librarian
+            source_id = await librarian.archive_file(
+                file_name=file,
+                content=content,
+                file_path=str(file_path),
+                knowledge_type=k_type
+            )
 
-                    if source_id:
-                        print(f"   ✅ Done! ID: {source_id}")
-                        success_files += 1
-                    else:
-                        print(f"   ❌ Failed to archive {file}")
+            if source_id:
+                print(f"   ✅ Done! ID: {source_id}")
+                success_files += 1
+            else:
+                print(f"   ❌ Failed to archive {file}")
 
-                except Exception as e:
-                    print(f"   ❌ Error processing {file}: {e}")
+        except Exception as e:
+            print(f"   ❌ Error processing {file}: {e}")
 
     print(f"\n🎉 Seeding Complete. Processed {success_files}/{total_files} files.")
 

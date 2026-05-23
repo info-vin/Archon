@@ -47,8 +47,20 @@ export const SourceContextPane: React.FC<SourceContextPaneProps> = ({
                     <div key={idx} className="p-4 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-2xl hover:shadow-md transition-all group border-l-4 border-l-indigo-500/20">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-[9px] font-black text-indigo-600 uppercase tracking-tighter">REF #{idx + 1}</span>
-                        <ExternalLinkIcon className="w-3 h-3 text-slate-300 group-hover:text-indigo-500 cursor-pointer" />
+                        <a href={ref.metadata.source} target="_blank" rel="noopener noreferrer" aria-label={`Open source ref #${idx + 1}`}>
+                          <ExternalLinkIcon className="w-3 h-3 text-slate-300 group-hover:text-indigo-500 cursor-pointer" />
+                        </a>
                       </div>
+                      {/\.(mp4|webm)$/i.test(ref.metadata.source) && (
+                        <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-black">
+                          <video
+                            src={ref.metadata.source}
+                            controls
+                            className="w-full h-auto max-h-28 object-contain"
+                            preload="metadata"
+                          />
+                        </div>
+                      )}
                       <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-6 leading-relaxed italic">"{ref.content}"</p>
                       <div className="mt-3 text-[9px] font-bold text-slate-400 truncate">Source: {ref.metadata.source}</div>
                     </div>
