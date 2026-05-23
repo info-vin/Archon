@@ -116,6 +116,11 @@
     * **行動**: 修正 `python/src/server/services/stats/domains/system_metrics.py`，將非交易欄位 `estimated_cost_usd` 修正為正確的資料庫欄位 `cost_usd`，解決交易明細表中的 $0.00 顯示異常。
 * **3. 數位雙生與品質門禁驗收**:
     * **行動**: 執行 `make twin-scout` 容器化對帳巡檢，五大核心 Persona (Alice, Bob, Charlie, David, DevBot) 的 parity 核查全數綠燈通過。
+* **4. Phase 5.1.17 專案代碼模組化治理（大於 400 行檔案瘦身）**:
+    * **行動**:
+      1. 將後端 `business.py` 中膨脹的週期報告數據收集與 Map-Reduce 群聊啟動邏輯（約 280 行）抽離到新模組 `report_service.py` 中，使 `business.py` 行數自 615 行降至約 330 行。
+      2. 將前端 `ProjectsView.tsx` 中的內部組件 `SidebarProjectCard` 抽離到獨立元件 `SidebarProjectCard.tsx`，使主視圖代碼行數自 438 行降低至約 365 行。
+    * **結果**: 順利消除核心檔案行數超限的風險，前後端架構更趨近 L2 模組化規範，代碼可讀性顯著提升。
 
 ### 2026-05-22: Phase 5.1.16 日、週、月報執行摘要星環化與排程器整合落地
 * **1. 真實數據接地與收集器**:

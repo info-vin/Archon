@@ -13,7 +13,7 @@ vi.mock('../components/Icons', async (importOriginal) => {
 });
 
 // Mock API with supabase export
-vi.mock('../services/api', () => ({
+vi.mock('../services/api.ts', () => ({
   api: {
     getSystemOverview: vi.fn().mockResolvedValue({ status: 'healthy', integrity_score: 95, knowledge_stats: { total_nodes: 100 } }),
     getEmployees: vi.fn().mockResolvedValue([]),
