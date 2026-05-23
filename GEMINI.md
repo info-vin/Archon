@@ -109,6 +109,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-05-23: 憑證加密 Seeding 異常與系統費用指標欄位修正
+* **1. 數位雙生解密異常（Incorrect padding）修復與源頭防禦**:
+    * **行動**: 修正 `scripts/init_db.py` 中因 5/21 憑證重構而失效的反射加密檢測（原本在檢查 `hasattr(credential_service, 'encrypt_value')`，但重構後的服務並不符合），改為直接引入並呼叫 `CryptoUtils.encrypt_value` 進行 Fernet 加密。重新執行 `make db-init` 後，資料庫中的密鑰全數以密文儲存，解決了 `Incorrect padding` 的解密失敗。
+* **2. 系統指標 Token 花費顯示修復**:
+    * **行動**: 修正 `python/src/server/services/stats/domains/system_metrics.py`，將非交易欄位 `estimated_cost_usd` 修正為正確的資料庫欄位 `cost_usd`，解決交易明細表中的 $0.00 顯示異常。
+* **3. 數位雙生與品質門禁驗收**:
+    * **行動**: 執行 `make twin-scout` 容器化對帳巡檢，五大核心 Persona (Alice, Bob, Charlie, David, DevBot) 的 parity 核查全數綠燈通過。
+
 ### 2026-05-22: Phase 5.1.16 日、週、月報執行摘要星環化與排程器整合落地
 * **1. 真實數據接地與收集器**:
     * **行動**: 於 `business.py` 實作 `gather_report_context`，自 leads, token_usage, logs 與 tasks 表獲取真實上下文。

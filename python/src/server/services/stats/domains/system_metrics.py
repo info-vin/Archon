@@ -107,7 +107,7 @@ class SystemMetrics:
                         "role": row.get("entity_role", "ai_agent"),
                         "model": row["model"],
                         "tokens": row.get("total_tokens", 0),
-                        "cost": float(row.get("estimated_cost_usd", 0.0) or 0.0),
+                        "cost": float(row.get("cost_usd") or 0.0),
                         "context": row.get("context_type", "General"),
                     }
                 )
