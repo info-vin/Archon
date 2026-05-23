@@ -85,8 +85,7 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
 
       const searchLower = search.toLowerCase().trim();
       return options.filter(
-        (_, i) =>
-          searchableLabels[i].includes(searchLower) || searchableValues[i].includes(searchLower),
+        (_, i) => searchableLabels[i].includes(searchLower) || searchableValues[i].includes(searchLower),
       );
     }, [options, search, searchableLabels, searchableValues]);
 
@@ -97,9 +96,7 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
     // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
     const searchLowerCheck = search.toLowerCase();
     const hasCustomOption =
-      allowCustomValue &&
-      search.trim() &&
-      !filteredOptions.some((opt) => opt.label.toLowerCase() === searchLowerCheck);
+      allowCustomValue && search.trim() && !filteredOptions.some((opt) => opt.label.toLowerCase() === searchLowerCheck);
 
     // Event handlers
     const handleSelect = React.useCallback(

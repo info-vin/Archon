@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { api } from '../../../services/api.ts';
 import { SystemOverview, Employee, AlertItem } from '../../../types.ts';
 import { useAuth } from '@/hooks/useAuth';
@@ -195,9 +195,10 @@ export const useManagerNexusStats = () => {
         setRules(prev => prev.map(r => r.key === key ? { ...r, weight: val } : r));
     };
 
+    const totalRuleWeight = useMemo(() => rules.reduce((acc, r) => acc + r.weight, 0), [rules]);
+
     const handleSaveRules = async () => {
-        const total = rules.reduce((acc, r) => acc + r.weight, 0);
-        if (total !== 100) return alert(`Total weight must be 100%. Current: ${total}%`);
+        if (totalRuleWeight !== 100) return alert(`Total weight must be 100%. Current: ${totalRuleWeight}%`);
         
         const newMeta = {
             version: `v1.0.${parseInt(rulesMeta.version.split('.').pop() || '0') + 1}`,
@@ -231,7 +232,7 @@ export const useManagerNexusStats = () => {
         overview, healthTrend, team, approvals, alerts, aiStats,
         commanderTrends, forceReadiness, businessRisks, collabSynergy,
         slaReliability, ethicsAudit, knowledgeRoi, codeProposals,
-        rules, setRules, rulesMeta, setRulesMeta, isSavingRules,
+        rules, setRules, rulesMeta, setRulesMeta, isSavingRules, totalRuleWeight,
         fetchData, handleDispatch, handleApprovePrompt, handleRebuildIndex,
         handleApproveContent, handleCodeAction, handleRuleChange, handleSaveRules
     };
