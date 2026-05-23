@@ -141,8 +141,12 @@ class ReportService:
                 "請啟動星環群聊，協調 Alice, Bob, DevBot 進行討論，最後由 Supervisor (Charlie) 彙整並提供每日執行摘要報告。"
             )
 
+            # Get Charlie's ID for assignment
+            charlie_res = supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute()
+            assignee_id = charlie_res.data[0]["id"] if charlie_res.data else AgentUUIDs.SUPERVISOR
+
             success, tr = await task_service.create_task(
-                project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=AgentUUIDs.SUPERVISOR
+                project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=assignee_id
             )
             if success:
                 logger.info(

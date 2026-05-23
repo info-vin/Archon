@@ -109,7 +109,7 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026-05-23: 憑證加密 Seeding 異常與系統費用指標欄位修正
+### 2026-05-23: 日報流程中斷檢討、環境配置自癒與系統指標修正
 * **1. 數位雙生解密異常（Incorrect padding）修復與源頭防禦**:
     * **行動**: 修正 `scripts/init_db.py` 中因 5/21 憑證重構而失效的反射加密檢測（原本在檢查 `hasattr(credential_service, 'encrypt_value')`，但重構後的服務並不符合），改為直接引入並呼叫 `CryptoUtils.encrypt_value` 進行 Fernet 加密。重新執行 `make db-init` 後，資料庫中的密鑰全數以密文儲存，解決了 `Incorrect padding` 的解密失敗。
 * **2. 系統指標 Token 花費顯示修復**:
@@ -121,6 +121,13 @@
       1. 將後端 `business.py` 中膨脹的週期報告數據收集與 Map-Reduce 群聊啟動邏輯（約 280 行）抽離到新模組 `report_service.py` 中，使 `business.py` 行數自 615 行降至約 330 行。
       2. 將前端 `ProjectsView.tsx` 中的內部組件 `SidebarProjectCard` 抽離到獨立元件 `SidebarProjectCard.tsx`，使主視圖代碼行數自 438 行降低至約 365 行。
     * **結果**: 順利消除核心檔案行數超限的風險，前後端架構更趨近 L2 模組化規範，代碼可讀性顯著提升。
+* **5. 日報流程中斷與熔斷機制觸發**:
+    * **行動**: 發現日報排程器未能如期產生結果。查證後發現，Supervisor Agent 整理過去 24 小時的系統日誌時，偵測到了 7 筆 `ALERT` 級別的商業風險訊號（例如：高價值客戶流失風險），這觸發了星環群聊的熔斷機制（Circuit Breaker Tripped），暫停自動摘要並要求人類介入。
+* **6. 環境配置脫節 (Environment Config Disconnect) 修復**:
+    * **行動**: 追查手動觸發失敗的底層原因，發現 `archon-agents` 容器在 `docker-compose.yml` 中遺漏了 `GOOGLE_API_KEY` 等關鍵環境變數掛載，導致 Agent 在內部發生崩潰。已將正確的 API 密鑰補齊。
+* **7. 實體資料庫約束與 Mock 偽證教訓**:
+    * **行動**: 修復了 `report_service.py` 中指派任務給非實體使用者 (AgentUUIDs.SUPERVISOR) 違反 Foreign Key 限制的 Bug，改為指派給人類 Manager (Charlie)。
+    * **反思**: 此前單元測試中使用了 `AsyncMock`，完美繞過了資料庫外鍵與容器環境變數的限制，導致「測試綠燈」的偽證。確立了「必須實體穿透驗證，單測成功不代表整合成功」的鐵律。
 
 ### 2026-05-22: Phase 5.1.16 日、週、月報執行摘要星環化與排程器整合落地
 * **1. 真實數據接地與收集器**:
