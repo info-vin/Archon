@@ -3,6 +3,9 @@ import { api } from '../../../services/api';
 import { Task, Project, TaskStatus, SortableTaskKeys, SortDirection, Employee } from '../../../types';
 import { useAuth } from '../../../hooks/useAuth';
 
+const STATUS_WEIGHTS: Record<string, number> = { 'todo': 1, 'doing': 2, 'review': 3, 'done': 4 };
+const PRIORITY_WEIGHTS: Record<string, number> = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
+
 export const useDashboardLogic = (selectedProjectId: string) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -62,9 +65,6 @@ export const useDashboardLogic = (selectedProjectId: string) => {
     if (!selectedProjectId || selectedProjectId === 'all') return tasks || [];
     return (tasks || []).filter(task => task.project_id === selectedProjectId);
   }, [tasks, selectedProjectId]);
-
-  const STATUS_WEIGHTS: Record<string, number> = { 'todo': 1, 'doing': 2, 'review': 3, 'done': 4 };
-  const PRIORITY_WEIGHTS: Record<string, number> = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
 
   const sortedTasks = useMemo(() => {
     let sortableTasks = [...filteredTasks];
