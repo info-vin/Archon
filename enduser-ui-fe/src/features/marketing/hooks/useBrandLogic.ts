@@ -68,13 +68,15 @@ export const useBrandLogic = () => {
                 api.getMarketingTrends()
             ]);
             
-            if (results[0].status === 'fulfilled') setPosts(results[0].value);
-            if (results[1].status === 'fulfilled') setTrendsData(results[1].value);
+            if (typeof window !== 'undefined') {
+                if (results[0].status === 'fulfilled') setPosts(results[0].value);
+                if (results[1].status === 'fulfilled') setTrendsData(results[1].value);
+            }
             
         } catch (err) {
             console.error("Failed to load brand data:", err);
         } finally {
-            setLoading(false);
+            if (typeof window !== 'undefined') setLoading(false);
         }
     }, []);
 
@@ -82,11 +84,11 @@ export const useBrandLogic = () => {
         setIsLoadingSources(true);
         try {
             const sourcesData = await api.getContentSources();
-            setSources(sourcesData as ContentSource[]);
+            if (typeof window !== 'undefined') setSources(sourcesData as ContentSource[]);
         } catch (err) {
             console.error("Failed to load content sources:", err);
         } finally {
-            setIsLoadingSources(false);
+            if (typeof window !== 'undefined') setIsLoadingSources(false);
         }
     }, []);
 
