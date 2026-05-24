@@ -97,3 +97,6 @@
 ## 2024-10-24 - React Component Static Weights Dictionary Allocation
 **Learning:** Defining static objects like lookup dictionaries (`STATUS_WEIGHTS`, `PRIORITY_WEIGHTS`) inside a React component or hook function causes them to be recreated on every single render cycle, wasting memory and CPU.
 **Action:** Move static objects or constant lookup dictionaries outside the component or hook definition to prevent them from being reallocated on every render. Additionally, when using these dictionaries inside array sort comparators, retain `.toLowerCase()` for true case-insensitivity rather than expanding the dictionary with specific casing variations, as the latter is a flawed micro-optimization.
+## 2024-05-24 - Expensive Hook Invocations
+**Learning:** Found a severe anti-pattern where a hook returned a function (`hasPermission`) that executed O(N) array transformations, string allocations, and Set creations *on every invocation* during render, rather than pre-calculating the state based on dependencies.
+**Action:** Always memoize derived state (like Set creation from arrays) outside of returned callback functions within hooks, ensuring expensive operations only run when underlying dependencies change.
