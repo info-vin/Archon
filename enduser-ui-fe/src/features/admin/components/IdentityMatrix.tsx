@@ -172,6 +172,8 @@ export const IdentityMatrix: React.FC = () => {
                                                     <button 
                                                         onClick={() => toggleMatrixPermission(row.role, perm)}
                                                         className={`w-6 h-6 rounded-md border flex items-center justify-center mx-auto transition-all ${hasPerm ? 'bg-green-500 border-green-600 text-white' : 'bg-background border-border text-transparent hover:border-primary/50'}`}
+                                                        aria-label={`Toggle permission ${perm} for role ${row.role}`}
+                                                        aria-pressed={hasPerm}
                                                     >
                                                         {hasPerm && <CheckCircleIcon className="w-4 h-4" />}
                                                     </button>
