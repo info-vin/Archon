@@ -8,8 +8,10 @@ for p in [".env", "python/.env", "../.env", "../python/.env"]:
     if os.path.exists(p):
         load_dotenv(p)
 
-# Add src to path
-sys.path.append(str(Path(__file__).parent.parent / "python" / "src"))
+# Add src and python to path
+python_dir = Path(__file__).parent.parent / "python"
+sys.path.append(str(python_dir))
+sys.path.append(str(python_dir / "src"))
 
 from server.config.logfire_config import get_logger
 from server.services.librarian_service import LibrarianService

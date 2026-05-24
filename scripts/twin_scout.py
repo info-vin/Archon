@@ -32,6 +32,7 @@ def parse_args():
     parser.add_argument("--headless", type=str, default="true")
     parser.add_argument("--mode", type=str, default="audit", choices=["audit", "action", "fanout"])
     parser.add_argument("--record", type=str, default="false", choices=["true", "false"])
+    parser.add_argument("--scenario", type=str, default="", help="Path to YAML scenario file")
     return parser.parse_args()
 
 def limit_diagnostic_capacity(directory="./.twin/diagnostics", max_files=10):
@@ -187,136 +188,133 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         print(f"❌ [Scout] {name} FAILED: {e}")
         return {"name": name, "analysis": f"Critical Failure: {e}"}
 
-async def verify_multi_agent_chat(pg, client, target_model, mission_prompt):
-    """
-    Physically logs in as Admin, creates a task assigned to Supervisor (f0f00000-0000-0000-0000-000000000000),
-    waits for Multi-Agent workflow processing, and verifies dynamic bubble rendering.
-    """
-    url = os.getenv("ENDUSER_UI_URL", "http://localhost:5173")
-    print(f"📡 [Scout-Action] Navigating to EndUser UI Auth ({url})...")
-    
-    try:
-        await pg.goto(f"{url}/#/auth", wait_until="domcontentloaded", timeout=30000)
-        
-        # Check if already logged in (if page redirects or input doesn't exist)
-        try:
-            await pg.wait_for_selector('input[type="email"]', timeout=5000)
-            print("🔑 [Scout-Action] Fill login credentials...")
-            await pg.fill('input[type="email"]', "admin@archon.com")
-            await pg.fill('input[type="password"]', "qwer45tyuiop")
-            await pg.click('button[type="submit"]')
-            await asyncio.sleep(3)
-        except Exception:
-            print("⚡ [Scout-Action] Already authenticated or skipping login page...")
+import yaml
+import importlib
 
-        await pg.goto(f"{url}/#/dashboard", wait_until="domcontentloaded", timeout=30000)
-        await pg.wait_for_selector('button:has-text("New Task")', timeout=30000)
+class YAMLScenarioRunner:
+    def __init__(self, yaml_path, client, target_model, is_record, headless):
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            self.config = yaml.safe_load(f)
+        self.client = client
+        self.target_model = target_model
+        self.is_record = is_record
+        self.headless = headless
         
-        # Click "New Task"
-        print("➕ [Scout-Action] Clicking 'New Task'...")
-        await pg.locator('button:has-text("New Task")').first.click()
-        await pg.wait_for_selector('#title', timeout=10000)
+    async def run(self):
+        print(f"🚀 [Scout-Runner] Executing scenario: {self.config.get('name', 'Unknown')}")
         
-        # Fill Title & Description
-        task_title = f"Marketing Data Deep Dive [Scout Action {int(time.time())}]"
-        print(f"✍️ [Scout-Action] Creating task: '{task_title}'...")
-        await pg.fill('#title', task_title)
-        await pg.fill('#description', "Please perform deep marketing analysis for Q2 conversion funnel.")
-        
-        # Switch to Assignment tab
-        await pg.locator('button:has-text("Assignment & Automation")').click()
-        await pg.wait_for_selector('#assignee', timeout=5000)
-        
-        # Select Archon Supervisor (f0f00000-0000-0000-0000-000000000000)
-        await pg.select_option('#assignee', 'f0f00000-0000-0000-0000-000000000000')
-        await asyncio.sleep(1)
-        
-        # Submit Task
-        print("💾 [Scout-Action] Submitting task...")
-        await pg.click('button[type="submit"]')
-        await asyncio.sleep(5) # Wait for modal to close and dashboard to refresh
-        
-        # Wait for the star-topology multi-agent workflow to trigger and run in backend
-        print("⏳ [Scout-Action] Waiting 45s for star-topology Supervisor-Worker processing...")
-        await asyncio.sleep(45)
-        
-        # Open task modal for the newly created task to check AI report
-        print(f"🔍 [Scout-Action] Clicking task '{task_title}' to open details...")
-        await pg.locator(f'text={task_title}').first.click()
-        await pg.wait_for_selector('button:has-text("AI Report")', timeout=20000)
-        
-        # Click AI Report tab
-        print("💬 [Scout-Action] Switching to 'AI Report' tab...")
-        await pg.locator('button:has-text("AI Report")').click()
-        await asyncio.sleep(3) # Wait for chat bubbles rendering
-        
-        # Capture screenshot for Gemini analysis
-        print("📸 [Scout-Action] Capturing dynamic group chat screenshot...")
-        img_bytes = await pg.screenshot(full_page=True)
-        txt = await pg.evaluate("() => document.body.innerText.substring(0, 1500)")
-        
-        system_prompt = (
-            "你是一位精準的工作流診斷員 Digital Twin Scout v39.1。\n"
-            "任務：診斷星型群聊 (Multi-Agent Group Chat) 的 UI 與內容狀態。\n"
-            "請檢查截圖中是否正確顯示 Supervisor 與 DevBot/MarketBot 之間的協作對話泡泡 (WhatsApp風格)。\n"
-            "若聊天記錄非空且正常協作，回傳 [WORKFLOW_SUCCESS]，否則回傳 [WORKFLOW_FAILURE] 並附上原因。\n"
-            "重要規定：請務必全程使用繁體中文（zh-TW）撰寫報告，絕對不可使用簡體中文。"
-        )
-        
-        contents = [
-            f"[DOM Context]: {txt}",
-            types.Part.from_bytes(data=img_bytes, mime_type="image/png")
-        ]
-        
-        analysis = await analyze_with_retry(client, target_model, contents, system_prompt)
-        print(f"✅ [Scout-Action] Multi-Agent chat analysis complete.")
-        return analysis
-        
-    except Exception as e:
-        print(f"❌ [Scout-Action] Star-topology verification FAILED: {e}")
-        return f"WORKFLOW_FAILURE: Critical Failure during verify_multi_agent_chat: {e}"
+        # Pre-hooks
+        hooks = self.config.get("hooks", {})
+        if "before_auth" in hooks:
+            for hook in hooks["before_auth"]:
+                if hook["type"] == "python_function":
+                    mod = importlib.import_module(hook["module"])
+                    func = getattr(mod, hook["function"])
+                    print(f"⏳ [Scout-Runner] Running pre-hook: {hook['module']}.{hook['function']}")
+                    if asyncio.iscoroutinefunction(func):
+                        await func()
+                    else:
+                        func()
 
-async def verify_fanout_executive_summary(pg):
-    """
-    Physically executes the Fan-out scheduler job, then logs in as Charlie,
-    and asserts the [Daily Report] Executive Summary task exists in the DOM.
-    """
-    from src.server.services.scheduler.jobs.business import run_daily_executive_summary
-    print("⏳ [Scout-Fanout] Triggering backend Fan-out Map-Reduce...")
-    await run_daily_executive_summary()
-    print("✅ [Scout-Fanout] Backend Fan-out completed.")
+        url = os.getenv("ENDUSER_UI_URL", "http://localhost:5173")
+        from cookie_injector import KeychainBypassCookieInjector
+        
+        async with async_playwright() as p:
+            record_dir = "./.twin/videos/temp" if self.is_record else None
+            record_size = self.config.get("resolution", {"width": 1280, "height": 720}) if self.is_record else None
+            
+            browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
+                p, 
+                headless=self.headless,
+                viewport=self.config.get("resolution", {"width": 1280, "height": 720}),
+                user_agent="ArchonIntegratedScout/39.1 (scenario-twin)",
+                record_video_dir=record_dir,
+                record_video_size=record_size
+            )
+            pg = await ctx.new_page()
+            pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+            
+            # Auth
+            auth = self.config.get("auth", {})
+            if auth:
+                try:
+                    await pg.goto(f"{url}{auth.get('url', '/#/auth')}", wait_until="domcontentloaded", timeout=30000)
+                    try:
+                        await pg.wait_for_selector('input[type="email"]', timeout=5000)
+                        await pg.fill('input[type="email"]', auth["user"])
+                        pwd = os.getenv(auth.get("password_env", ""), auth.get("password", "qwer45tyuiop"))
+                        await pg.fill('input[type="password"]', pwd)
+                        await pg.click('button[type="submit"]')
+                        await asyncio.sleep(3)
+                    except Exception:
+                        pass # Already logged in
+                except Exception as e:
+                    print(f"❌ [Scout-Runner] Auth failed: {e}")
+                    return f"WORKFLOW_FAILURE: Auth failed - {e}", None
 
-    url = os.getenv("ENDUSER_UI_URL", "http://localhost:5173")
-    print(f"📡 [Scout-Fanout] Navigating to EndUser UI Auth ({url})...")
-    
-    try:
-        await pg.goto(f"{url}/#/auth", wait_until="domcontentloaded", timeout=30000)
-        
-        try:
-            await pg.wait_for_selector('input[type="email"]', timeout=5000)
-            print("🔑 [Scout-Fanout] Fill login credentials...")
-            await pg.fill('input[type="email"]', "charlie@archon.com")
-            await pg.fill('input[type="password"]', "qwer45tyuiop")
-            await pg.click('button[type="submit"]')
-            await asyncio.sleep(3)
-        except Exception:
-            print("⚡ [Scout-Fanout] Already authenticated or skipping login page...")
+            # Execute steps
+            steps = self.config.get("steps", [])
+            for i, step in enumerate(steps):
+                action = step.get("action")
+                print(f"🔄 [Scout-Runner] Step {i+1}: {action}")
+                try:
+                    if action == "goto":
+                        await pg.goto(f"{url}{step['url']}", wait_until=step.get("wait_until", "load"), timeout=step.get("timeout", 30000))
+                    elif action == "click":
+                        if "wait_selector" in step:
+                            await pg.wait_for_selector(step["selector"], timeout=10000)
+                        await pg.locator(step["selector"]).first.click()
+                    elif action == "fill":
+                        val = step["value"].replace("{TIMESTAMP}", str(int(time.time())))
+                        await pg.fill(step["selector"], val)
+                    elif action == "select_option":
+                        await pg.select_option(step["selector"], step["value"])
+                    elif action == "sleep":
+                        await asyncio.sleep(step["duration"] / 1000.0)
+                    elif action == "wait_selector":
+                        await pg.wait_for_selector(step["selector"], timeout=step.get("timeout", 30000))
+                    elif action == "reload":
+                        await pg.reload()
+                except Exception as e:
+                    print(f"❌ [Scout-Runner] Step {i+1} failed: {e}")
+                    await pg.screenshot(path="failed_step.png", full_page=True)
+                    return f"WORKFLOW_FAILURE: Step {i+1} ({action}) failed - {e}", None
 
-        await pg.goto(f"{url}/#/dashboard", wait_until="domcontentloaded", timeout=30000)
-        
-        # Navigate to Dashboard where tasks are visible.
-        # Check if the task is visible
-        print("🔍 [Scout-Fanout] Looking for '[Daily Report]' task card...")
-        # Since it takes time to render, wait for the element
-        await pg.wait_for_selector('text=Daily Report', timeout=15000)
-        await pg.wait_for_selector('text=Executive Summary', timeout=15000)
-        
-        print("✅ [Scout-Fanout] Fan-out task successfully physicalized on frontend.")
-        return "WORKFLOW_SUCCESS: Executive Summary found."
-    except Exception as e:
-        print(f"❌ [Scout-Fanout] Verification FAILED: {e}")
-        await pg.screenshot(path="fanout_debug.png", full_page=True)
-        return f"WORKFLOW_FAILURE: {e}"
+            # Analysis
+            analysis_config = self.config.get("analysis", {})
+            res_analysis = "WORKFLOW_SUCCESS: Steps completed without AI verification."
+            
+            if analysis_config:
+                if analysis_config.get("type") == "static":
+                    res_analysis = analysis_config.get("success_message", "WORKFLOW_SUCCESS")
+                else:
+                    img_bytes = None
+                    if analysis_config.get("screenshot", False):
+                        print("📸 [Scout-Runner] Capturing screenshot for AI...")
+                        img_bytes = await pg.screenshot(full_page=True)
+                    
+                    extract_len = analysis_config.get("dom_extract_length", 1000)
+                    txt = await pg.evaluate(f"() => document.body.innerText.substring(0, {extract_len})")
+                    
+                    sys_prompt = analysis_config.get("system_prompt", "Return [WORKFLOW_SUCCESS] if looks ok.")
+                    
+                    contents = [f"[DOM Context]: {txt}"]
+                    if img_bytes:
+                        contents.append(types.Part.from_bytes(data=img_bytes, mime_type="image/png"))
+                        
+                    res_analysis = await analyze_with_retry(self.client, self.target_model, contents, sys_prompt)
+                    print(f"✅ [Scout-Runner] AI Analysis complete.")
+            
+            video_path = None
+            if self.is_record and pg.video:
+                video_path = await pg.video.path()
+                print(f"📹 [Scout-Runner] WebM Video recorded at: {video_path}")
+            
+            await ctx.close()
+            await browser.close()
+            
+            return res_analysis, video_path
+
 
 async def run_scout_session():
     args = parse_args()
@@ -411,105 +409,47 @@ async def run_scout_session():
                 print("🚀 [Scout] Self-tuning optimizations applied to AgentRegistry.")
             except Exception as e:
                 print(f"⚠️ [Scout] Feedback loop write failed: {e}")
-    elif mode == "fanout":
-        # Fan-out mode (Executive Summary Map-Reduce verification)
-        print("🚀 [Scout] Entering FANOUT mode for Executive Summary Map-Reduce verification...")
-        
-        from cookie_injector import KeychainBypassCookieInjector
-        
-        async with async_playwright() as p:
-            browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
-                p, 
-                headless=is_headless,
-                viewport={'width': 1920, 'height': 1080},
-                user_agent="ArchonIntegratedScout/3.9.1 (fanout-twin)"
-            )
-            pg = await ctx.new_page()
-            
-            # Dismiss all alerts/dialogs safely
-            pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
-            
-            res_analysis = await verify_fanout_executive_summary(pg)
-            await ctx.close()
-            await browser.close()
-            
-            report_text = f"# Digital Twin Fan-out Report (Executive Summary v39.1)\n\n## Fan-out Verification\n{res_analysis}\n"
-            report_dir = "./.twin/diagnostics"
-            os.makedirs(report_dir, exist_ok=True)
-            report_path = f"{report_dir}/report_fanout_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
-            
-            print(f"📄 [Scout] Fan-out Report saved: {report_path}")
-            final_type = "WORKFLOW_FAILURE" if "WORKFLOW_FAILURE" in report_text or "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
-            await log_twin_diagnosis(report_text, final_type)
 
-    else:
-        # Action mode (Multi-Agent star topology dynamic verification)
-        print("🚀 [Scout] Entering ACTION mode for Multi-Agent group chat verification...")
-        
-        from cookie_injector import KeychainBypassCookieInjector
+    if args.scenario:
+        print(f"🚀 [Scout] Entering SCENARIO mode using {args.scenario}...")
         is_record = args.record.lower() == "true"
+        runner = YAMLScenarioRunner(args.scenario, client, target_model, is_record, is_headless)
+        res_analysis, video_path = await runner.run()
         
-        async with async_playwright() as p:
-            record_dir = "./.twin/videos/temp" if is_record else None
-            record_size = {"width": 1280, "height": 720} if is_record else None
-            
-            browser, ctx = await KeychainBypassCookieInjector.create_keychain_bypass_context(
-                p, 
-                headless=is_headless,
-                viewport={'width': 1280, 'height': 720}, # standardized 720p resolution
-                user_agent="ArchonIntegratedScout/3.9.1 (action-twin)",
-                record_video_dir=record_dir,
-                record_video_size=record_size
-            )
-            pg = await ctx.new_page()
-            
-            # Dismiss all alerts/dialogs safely
-            pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
-            
-            res_analysis = await verify_multi_agent_chat(pg, client, target_model, mission_prompt)
-            
-            video_path = None
-            if is_record and pg.video:
-                video_path = await pg.video.path()
-                print(f"📹 [Scout] WebM Video recorded at: {video_path}")
-                
-            await ctx.close()
-            await browser.close()
-            
-            # Post-processing video
-            if is_record and video_path:
-                is_success = "WORKFLOW_SUCCESS" in res_analysis
-                if is_success:
-                    print("🎉 Workflow success! Processing recorded video...")
-                    import subprocess
+        # Post-processing video
+        if is_record and video_path:
+            is_success = "WORKFLOW_SUCCESS" in res_analysis
+            if is_success:
+                print("🎉 Workflow success! Processing recorded video...")
+                import subprocess
+                try:
+                    proc_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "process_marketing_video.py"))
+                    subprocess.run(
+                        [sys.executable, proc_script, "--video", video_path],
+                        check=True
+                    )
+                    print("📹 [Scout] Video post-processing executed successfully.")
+                except Exception as ve:
+                    print(f"⚠️ [Scout] Video post-processing failed: {ve}")
+            else:
+                print("❌ Workflow failed! Deleting temp recording video...")
+                if os.path.exists(video_path):
                     try:
-                        proc_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "process_marketing_video.py"))
-                        subprocess.run(
-                            [sys.executable, proc_script, "--video", video_path],
-                            check=True
-                        )
-                        print("📹 [Scout] Video post-processing executed successfully.")
+                        os.remove(video_path)
+                        print("🗑️ Removed failed recording video.")
                     except Exception as ve:
-                        print(f"⚠️ [Scout] Video post-processing failed: {ve}")
-                else:
-                    print("❌ Workflow failed! Deleting temp recording video...")
-                    if os.path.exists(video_path):
-                        try:
-                            os.remove(video_path)
-                            print("🗑️ Removed failed recording video.")
-                        except Exception as ve:
-                            print(f"⚠️ Failed to remove failed video: {ve}")
-            
-            report_text = f"# Digital Twin Action Report (Multi-Agent Chat v39.1)\n\n## Action Verification\n{res_analysis}\n"
-            report_dir = "./.twin/diagnostics"
-            os.makedirs(report_dir, exist_ok=True)
-            report_path = f"{report_dir}/report_action_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-            with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
-            
-            print(f"📄 [Scout] Action Report saved: {report_path}")
-            final_type = "WORKFLOW_FAILURE" if "WORKFLOW_FAILURE" in report_text or "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
-            await log_twin_diagnosis(report_text, final_type)
+                        pass
+        
+        report_text = f"# Digital Twin Scenario Report\n\n## Scenario Configuration\n{args.scenario}\n\n## Action Verification\n{res_analysis}\n"
+        report_dir = "./.twin/diagnostics"
+        os.makedirs(report_dir, exist_ok=True)
+        report_path = f"{report_dir}/report_scenario_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        with open(report_path, "w", encoding="utf-8") as f: f.write(report_text)
+        
+        print(f"📄 [Scout] Scenario Report saved: {report_path}")
+        final_type = "WORKFLOW_FAILURE" if "WORKFLOW_FAILURE" in report_text or "PARITY_MISMATCH" in report_text else "WORKFLOW_SUCCESS"
+        await log_twin_diagnosis(report_text, final_type)
+        return
 
 if __name__ == "__main__":
     asyncio.run(run_scout_session())

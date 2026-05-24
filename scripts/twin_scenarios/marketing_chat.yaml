@@ -1,0 +1,88 @@
+name: "Marketing Multi-Agent Chat"
+mode: "action"
+description: "Physically logs in as Admin, creates a task assigned to Supervisor, and verifies Multi-Agent group chat"
+
+auth:
+  url: "/#/auth"
+  user: "admin@archon.com"
+  password: "qwer45tyuiop"
+
+# Using standard Playwright wrapper format
+steps:
+  - action: "goto"
+    url: "/#/dashboard"
+    wait_until: "domcontentloaded"
+    timeout: 30000
+
+  - action: "click"
+    selector: 'button:has-text("New Task")'
+    wait_selector: '#title'
+
+  - action: "fill"
+    selector: "#title"
+    value: "Marketing Data Deep Dive [Scout Action {TIMESTAMP}]"
+
+  - action: "fill"
+    selector: "#description"
+    value: "Please perform deep marketing analysis for Q2 conversion funnel."
+
+  - action: "click"
+    selector: '#date-picker-due-date'
+
+  - action: "click"
+    selector: 'button:has-text("Tomorrow")'
+
+  - action: "click"
+    selector: 'button:has-text("CONFIRM SELECTION")'
+
+  - action: "sleep"
+    duration: 1000
+
+  - action: "click"
+    selector: 'button:has-text("Assignment & Automation")'
+
+  - action: "wait_selector"
+    selector: '#assignee:not([disabled])'
+    timeout: 15000
+
+  - action: "select_option"
+    selector: '#assignee'
+    value: 'f0f00000-0000-0000-0000-000000000000'
+
+  - action: "sleep"
+    duration: 1000
+
+  - action: "click"
+    selector: 'button[type="submit"]'
+
+  - action: "sleep"
+    duration: 5000
+
+  # Wait for the star-topology multi-agent workflow
+  - action: "sleep"
+    duration: 45000
+
+  - action: "reload"
+
+  - action: "sleep"
+    duration: 3000
+
+  - action: "click"
+    selector: 'text=Marketing Data Deep Dive [Scout Action {TIMESTAMP}]'
+    wait_selector: 'button:has-text("AI Report")'
+
+  - action: "click"
+    selector: 'button:has-text("AI Report")'
+
+  - action: "sleep"
+    duration: 3000
+
+analysis:
+  dom_extract_length: 1500
+  screenshot: true
+  system_prompt: |
+    你是一位精準的工作流診斷員 Digital Twin Scout v39.1。
+    任務：診斷星型群聊 (Multi-Agent Group Chat) 的 UI 與內容狀態。
+    請檢查截圖中是否正確顯示 Supervisor 與 DevBot/MarketBot 之間的協作對話泡泡 (WhatsApp風格)。
+    若聊天記錄非空且正常協作，回傳 [WORKFLOW_SUCCESS]，否則回傳 [WORKFLOW_FAILURE] 並附上原因。
+    重要規定：請務必全程使用繁體中文（zh-TW）撰寫報告，絕對不可使用簡體中文。

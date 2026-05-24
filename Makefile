@@ -263,30 +263,23 @@ clean:
 		echo "Cancelled"; \
 	fi
 
-.PHONY: twin-scout twin-scout-action twin-scout-fanout twin-scout-marketing generate-marketing-intro twin-fix
+.PHONY: twin-scout twin-record generate-marketing-intro twin-fix
 
 # 執行自動偵察 (容器化對帳模式)
 twin-scout:
 	@echo "🚀 啟動數位孿生偵察員 (容器化對帳 | 目標 Prompt: $${T:-twin_scout_mission})..."
 	@docker exec -i -e SCOUT_PROMPT_KEY=$${T:-twin_scout_mission} archon-server /venv/bin/python scripts/twin_scout.py --mode audit
 
-# 執行自動偵察 (本地原生行動與星型群聊自癒巡檢)
-twin-scout-action:
-	@echo "🚀 啟動數位孿生偵察員 (本機原生模式 | 目標 Prompt: $${T:-twin_scout_mission})..."
+# 執行數位孿生錄影與情境公證 (資料驅動模式)
+# 例如: make twin-record SCENARIO=marketing_chat
+twin-record:
+	@if [ -z "$(SCENARIO)" ]; then \
+		echo "❌ Error: 必須提供 SCENARIO 參數 (例如 make twin-record SCENARIO=marketing_chat)"; \
+		exit 1; \
+	fi
+	@echo "🚀 啟動數位孿生場景公證與錄影 (場景: $(SCENARIO))..."
 	@set -a; [ -f .env ] && . ./.env; set +a; \
-	$(UV) run --env-file .env python scripts/twin_scout.py --mode action --headless false
-
-# 執行 Fan-out 並發引擎物理公證
-twin-scout-fanout:
-	@echo "🚀 啟動數位孿生偵察員 (Fan-out 併發公證)..."
-	@set -a; [ -f .env ] && . ./.env; set +a; \
-	$(UV) run --env-file .env python scripts/twin_scout.py --mode fanout --headless false
-
-# 執行自動偵察 (本地原生行動並啟用側錄影片作為行銷素材)
-twin-scout-marketing:
-	@echo "🚀 啟動行銷素材聯動錄影巡航..."
-	@set -a; [ -f .env ] && . ./.env; set +a; \
-	python/.venv/bin/python scripts/twin_scout.py --mode action --headless false --record true
+	cd python && $(UV) run python ../scripts/twin_scout.py --scenario ../scripts/twin_scenarios/$(SCENARIO).yaml --record true --headless false
 
 # 執行外部 Gemini 行銷素材 (Intro) 生成與下載
 generate-marketing-intro:

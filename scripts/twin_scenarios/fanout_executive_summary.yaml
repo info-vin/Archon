@@ -1,0 +1,38 @@
+name: "Fanout Executive Summary Map-Reduce"
+mode: "fanout"
+description: "Physically executes the Fan-out scheduler job, logs in as Charlie, and asserts the [Daily Report] Executive Summary task exists."
+
+# 這是特別為 fanout 寫的 hook, 在 python 那邊會先解析
+# 我們可以透過 special pre-hook 在 yaml 解析器實作，或保留在 python，
+# 但為求一致，將透過 python 動態 import `run_daily_executive_summary`
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "src.server.services.scheduler.jobs.business"
+      function: "run_daily_executive_summary"
+
+auth:
+  url: "/#/auth"
+  user: "charlie@archon.com"
+  password: "qwer45tyuiop"
+
+steps:
+  - action: "goto"
+    url: "/#/dashboard"
+    wait_until: "domcontentloaded"
+    timeout: 30000
+
+  - action: "wait_selector"
+    selector: 'text=Daily Report'
+    timeout: 15000
+
+  - action: "wait_selector"
+    selector: 'text=Executive Summary'
+    timeout: 15000
+
+analysis:
+  # Fanout does not strictly require Gemini AI check if selectors are found,
+  # because wait_selector will throw an error if missing.
+  # But we can still do a static check report.
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS: Executive Summary found."

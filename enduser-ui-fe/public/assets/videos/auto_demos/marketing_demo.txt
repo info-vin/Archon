@@ -1,0 +1,8 @@
+【人機協作系統操作展示：多 Agent 星環群聊】
+
+本影片展示了 Archon 人機協作工作流的實機運行過程：
+1. David Howard (Admin) 登入系統並開啟「New Task」對話框建立行銷分析任務。
+2. 將任務指派給 Supervisor Agent (f0f00000-0000-0000-0000-000000000000)。
+3. Supervisor 接收任務後，在星環群聊 (WhatsApp 風格) 中，自動召集並調度 DevBot 與 MarketBot 協作。
+4. DevBot 進行數據提取與系統日誌檢查，MarketBot 進行 Q2 漏斗數據行銷分析，多方 AI 角色在統一的對話框中實體化交談，最終產出整合行銷報告。
+此功能是 Archon 核心的「多 Agent 星環拓樸工作流」的物理體現，完全免除人工溝通斷層，實現 AI 協同開發與分析的閉環。

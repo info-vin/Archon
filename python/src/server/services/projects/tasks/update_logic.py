@@ -114,10 +114,18 @@ async def update_task_logic(
             task = update_result["data"][0]
 
             # If the assignee was updated to an AI agent, notify the MCP
-            if "assignee" in update_fields and update_fields["assignee"] in AI_AGENT_ROLES:
-                task_service_instance._notify_ai_agent_of_assignment(
-                    task_id=task_id, agent_id=update_fields["assignee"]
-                )
+            if "assignee" in update_fields:
+                new_assignee = update_fields["assignee"]
+                agent_id = None
+                for name, aid in AI_AGENT_ROLES.items():
+                    if new_assignee and (name.startswith(new_assignee) or new_assignee in name):
+                        agent_id = aid
+                        break
+
+                if agent_id:
+                    task_service_instance._notify_ai_agent_of_assignment(
+                        task_id=task_id, agent_id=agent_id
+                    )
 
             # Phase 5.1.0: Broadcast update via SSE
             await sse_manager.broadcast(

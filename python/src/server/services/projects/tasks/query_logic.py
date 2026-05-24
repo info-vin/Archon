@@ -102,15 +102,22 @@ async def list_tasks_logic(
             if not exclude_large_fields:
                 raw_attachments = task.get("attachments", [])
                 validated_attachments = []
+                latest_agent_output = None
                 if isinstance(raw_attachments, list):
                     for att in raw_attachments:
                         try:
                             # Try to validate and normalize
-                            validated_attachments.append(AgentOutputSchema.model_validate(att).model_dump(mode="json"))
+                            val_att = AgentOutputSchema.model_validate(att).model_dump(mode="json")
+                            validated_attachments.append(val_att)
+                            latest_agent_output = val_att.get("output")
                         except Exception:
                             # Fallback for legacy data
                             validated_attachments.append(att)
+                            if isinstance(att, dict) and "output" in att:
+                                latest_agent_output = att.get("output")
                 task_data["attachments"] = validated_attachments
+                if latest_agent_output is not None:
+                    task_data["agent_output"] = latest_agent_output
                 task_data["sources"] = task.get("sources", [])
                 task_data["code_examples"] = task.get("code_examples", [])
             else:
@@ -198,13 +205,20 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
     # Phase 5.1.0: Transform JSONB attachments to Pydantic objects
     raw_attachments = task_data.get("attachments", [])
     validated_attachments = []
+    latest_agent_output = None
     if isinstance(raw_attachments, list):
         for att in raw_attachments:
             try:
-                validated_attachments.append(AgentOutputSchema.model_validate(att).model_dump(mode="json"))
+                val_att = AgentOutputSchema.model_validate(att).model_dump(mode="json")
+                validated_attachments.append(val_att)
+                latest_agent_output = val_att.get("output")
             except Exception:
                 validated_attachments.append(att)
+                if isinstance(att, dict) and "output" in att:
+                    latest_agent_output = att.get("output")
     task_data["attachments"] = validated_attachments
+    if latest_agent_output is not None:
+        task_data["agent_output"] = latest_agent_output
 
     # 1. Aggregate AI Metrics (Token Usage & Cost)
     try:
