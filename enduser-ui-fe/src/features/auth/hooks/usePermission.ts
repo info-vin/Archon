@@ -1,5 +1,6 @@
 // enduser-ui-fe/src/features/auth/hooks/usePermission.ts
 
+import { useMemo, useCallback } from 'react';
 import { EmployeeRole, PermissionScope } from '../types';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -47,29 +48,28 @@ const ROLE_MAP: Record<string, Set<string>> = {
 export function usePermission() {
   const { user } = useAuth();
   
-  const hasPermission = (permission: PermissionScope): boolean => {
-    if (!user) {
-        return false;
-    }
+  // PERFORMANCE: Precalculate and memoize the full permission set based on the current user.
+  // This prevents O(N) array mapping, redundant string allocations (.toLowerCase()),
+  // and Set instantiations on every single call to hasPermission during render.
+  const allPerms = useMemo(() => {
+    if (!user) return new Set<string>();
 
-    const normalizedReq = permission.toLowerCase();
-
-    // Combined Source: Dynamic + Static Fallback (SSOT)
     const dynamicPerms = user.permissions || (user as any).scopes || [];
-    
-    // Get Static Set based on role
     const normalizedRole = (user.role || '').toLowerCase();
     const staticPermsSet = ROLE_MAP[normalizedRole] || new Set();
     
-    // Union of both sources for 100% reliability
-    const allPerms = new Set([
+    return new Set([
         ...dynamicPerms.map((p: string) => p.toLowerCase()),
         ...Array.from(staticPermsSet).map((p: any) => p.toLowerCase())
     ]);
+  }, [user]);
 
+  const hasPermission = useCallback((permission: PermissionScope): boolean => {
+    if (!user) return false;
     if (allPerms.has('*')) return true;
-    return allPerms.has(normalizedReq);
-  };
+
+    return allPerms.has(permission.toLowerCase());
+  }, [user, allPerms]);
 
   return { hasPermission };
 }
