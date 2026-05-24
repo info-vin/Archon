@@ -8,13 +8,14 @@ interface SentinelRadarProps {
     rules: any[];
     rulesMeta: { version: string };
     isSavingRules?: boolean;
+    totalRuleWeight: number;
     handleRuleChange: (key: string, weight: number) => void;
     handleSaveRules: () => Promise<void>;
 }
 
 export const SentinelRadar: React.FC<SentinelRadarProps> = ({
     businessRisks, processingId, handleDispatch,
-    rules, rulesMeta, isSavingRules, handleRuleChange, handleSaveRules
+    rules, rulesMeta, isSavingRules, totalRuleWeight, handleRuleChange, handleSaveRules
 }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -81,8 +82,8 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                     ))}
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <span className={`text-xs font-bold ${rules.reduce((a,b)=>a+b.weight,0) === 100 ? 'text-green-500' : 'text-red-500'}`}>
-                        Total: {rules.reduce((a,b)=>a+b.weight,0)}%
+                    <span className={`text-xs font-bold ${totalRuleWeight === 100 ? 'text-green-500' : 'text-red-500'}`}>
+                        Total: {totalRuleWeight}%
                     </span>
                     <button
                         onClick={handleSaveRules}
