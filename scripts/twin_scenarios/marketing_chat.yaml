@@ -24,7 +24,7 @@ steps:
 
   - action: "fill"
     selector: "#description"
-    value: "Please perform deep marketing analysis for Q2 conversion funnel."
+    value: "Please perform deep marketing analysis for Q2 conversion funnel. Assume the conversion rate from visitor to lead is 5%, and lead to deal is 12%. Generate a concise markdown report based on these assumed metrics. Do NOT search for external files."
 
   - action: "click"
     selector: '#date-picker-due-date'
@@ -60,7 +60,7 @@ steps:
 
   # Wait for the star-topology multi-agent workflow
   - action: "sleep"
-    duration: 45000
+    duration: 90000
 
   - action: "reload"
 

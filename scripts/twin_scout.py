@@ -259,6 +259,9 @@ class YAMLScenarioRunner:
                     print(f"❌ [Scout-Runner] Auth failed: {e}")
                     return f"WORKFLOW_FAILURE: Auth failed - {e}", None
 
+            # Generate a single session timestamp for consistent interpolation across steps
+            session_timestamp = str(int(time.time()))
+
             # Execute steps
             steps = self.config.get("steps", [])
             for i, step in enumerate(steps):
@@ -268,18 +271,27 @@ class YAMLScenarioRunner:
                     if action == "goto":
                         await pg.goto(f"{url}{step['url']}", wait_until=step.get("wait_until", "load"), timeout=step.get("timeout", 30000))
                     elif action == "click":
+                        selector = step["selector"].replace("{TIMESTAMP}", session_timestamp)
                         if "wait_selector" in step:
-                            await pg.wait_for_selector(step["selector"], timeout=10000)
-                        await pg.locator(step["selector"]).first.click()
+                            # The original logic waited for the element itself to appear before clicking
+                            await pg.wait_for_selector(selector, timeout=10000)
+                        await pg.locator(selector).first.click()
+                        # If a specific wait_selector was provided, wait for it AFTER clicking
+                        if "wait_selector" in step and step["wait_selector"] != step["selector"] and isinstance(step["wait_selector"], str):
+                            ws = step["wait_selector"].replace("{TIMESTAMP}", session_timestamp)
+                            await pg.wait_for_selector(ws, timeout=10000)
                     elif action == "fill":
-                        val = step["value"].replace("{TIMESTAMP}", str(int(time.time())))
-                        await pg.fill(step["selector"], val)
+                        val = step["value"].replace("{TIMESTAMP}", session_timestamp)
+                        selector = step["selector"].replace("{TIMESTAMP}", session_timestamp)
+                        await pg.fill(selector, val)
                     elif action == "select_option":
-                        await pg.select_option(step["selector"], step["value"])
+                        selector = step["selector"].replace("{TIMESTAMP}", session_timestamp)
+                        await pg.select_option(selector, step["value"])
                     elif action == "sleep":
                         await asyncio.sleep(step["duration"] / 1000.0)
                     elif action == "wait_selector":
-                        await pg.wait_for_selector(step["selector"], timeout=step.get("timeout", 30000))
+                        selector = step["selector"].replace("{TIMESTAMP}", session_timestamp)
+                        await pg.wait_for_selector(selector, timeout=step.get("timeout", 30000))
                     elif action == "reload":
                         await pg.reload()
                 except Exception as e:
@@ -329,7 +341,11 @@ async def run_scout_session():
     args = parse_args()
     is_headless = args.headless.lower() == "true"
     mode = args.mode.lower()
-    
+
+    # If scenario is provided, override mode so we don't run the hardcoded audit loop
+    if args.scenario:
+        mode = "scenario"
+
     # Phase 4.6.46 Hardening: Wait for backend hot-reload stability
     if mode == "audit":
         print("⏳ [Scout] Cooling down 15s for backend stability (Anti-503)...")

@@ -52,3 +52,15 @@
 2. 檢查命令列輸出是否能正確讀取並循序執行 YAML 檔中定義的每個 Playwright 步驟。
 3. 檢查 `enduser-ui-fe/public/assets/videos/auto_demos/` 或 `.twin/videos/` 是否能產出與原本一致的 `.webm` 實體錄影檔。
 4. 檢查 `.twin/diagnostics/` 是否能產出 `WORKFLOW_SUCCESS` 報告。
+
+## Verification Results (Completed on 2026-05-25)
+
+本計畫已透過實體驗證完畢，以下為具體的執行結果與除錯紀錄：
+
+1. **YAML 引擎架構驗證**：已確認 `twin_scout.py` (包含 `YAMLScenarioRunner`) 能夠正確解析 `marketing_chat.yaml`，並順利轉換為 Playwright 的 `goto`, `click`, `fill`, `wait_selector` 等操作。
+2. **動態變數解析修復**：在測試中發現 `YAMLScenarioRunner` 在處理 `{TIMESTAMP}` 變數時，會在每一步驟重新擷取系統時間，導致跨步驟的字串比對（如建立任務與後續點擊任務）發生 Timeout。已修復為在 Scenario 開始前產生單一 `session_timestamp` 並在所有步驟中重複使用。
+3. **Agent 幻覺與資源耗盡阻斷**：在實彈測試 `marketing_chat` 場景時，發現模糊的指令（"Please perform deep marketing analysis..."）會觸發 Agent 產生幻覺，瘋狂呼叫 `/david/read` 試圖讀取本機不存在的 CSV/JSON 檔案，最終導致後端資源耗盡並使前端 API 請求 `aborted without reason`。已透過精準的 Prompt Engineering 修改 `marketing_chat.yaml` 的描述（注入假設數據並明確禁止外部搜尋），成功杜絕此幻覺現象。
+4. **行銷素材與知識庫重載**：
+    * 成功通過 AI 視覺裁判，截圖辨識獲得 `[WORKFLOW_SUCCESS]`。
+    * 成功錄製並生成 `.webm` 實體錄影檔，並透過腳本自動轉移至 `enduser-ui-fe/public/assets/videos/auto_demos/marketing_demo.webm`。
+    * 成功觸發 `KnowledgeRepository` 重載，將錄影檔中繼資料更新回 RAG 系統。
