@@ -120,15 +120,30 @@ class AnalyticsHandler:
             return {"error": f"Seeding failed: {str(e)}"}
 
     async def get_combined_sources(self, user_id: str) -> list[dict]:
-        leads = self.supabase_client.table("leads").select("*").limit(10).execute().data or []
+        leads = (
+            self.supabase_client.table("leads")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+            .data
+            or []
+        )
         tasks = (
-            self.supabase_client.table("archon_tasks").select("*").eq("assignee_id", user_id).limit(10).execute().data
+            self.supabase_client.table("archon_tasks")
+            .select("*")
+            .eq("assignee_id", user_id)
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+            .data
             or []
         )
         blogs = (
             self.supabase_client.table("blog_posts")
             .select("*")
             .in_("status", ["draft", "changes_requested"])
+            .order("created_at", desc=True)
             .limit(10)
             .execute()
             .data

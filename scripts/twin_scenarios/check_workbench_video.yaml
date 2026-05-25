@@ -1,0 +1,45 @@
+name: "Check Workbench Video Rendering"
+mode: "action"
+description: "Logs in as Bob (Marketing), clicks a Victory Feed item, opens Workbench, and verifies the video element exists."
+
+auth:
+  url: "/#/auth"
+  user: "bob@archon.com"
+  password: "qwer45tyuiop"
+
+steps:
+  - action: "goto"
+    url: "/#/brand"
+    wait_until: "domcontentloaded"
+    timeout: 30000
+
+  - action: "sleep"
+    duration: 3000
+
+  - action: "click"
+    selector: 'button:has-text("Workbench")'
+
+  - action: "sleep"
+    duration: 3000
+
+  - action: "click"
+    selector: 'h4:has-text("Neogence")'
+
+  - action: "sleep"
+    duration: 5000
+
+  - action: "wait_selector"
+    selector: "video"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 5000
+
+analysis:
+  dom_extract_length: 5000
+  screenshot: true
+  system_prompt: |
+    你是一位精準的工作流診斷員 Digital Twin Scout v39.1。
+    任務：診斷 Bob 的 Workbench 中的 Librarian Knowledge Base 是否成功渲染影片。
+    只要截圖中出現了影片播放器（即帶有播放控制按鈕、進度條或影片封面的播放區塊，如 Ref #1 下的播放器），就代表渲染成功，此時必須回傳 [WORKFLOW_SUCCESS]。
+    重要規定：請務必全程使用繁體中文（zh-TW）撰寫報告，絕對不可使用簡體中文。

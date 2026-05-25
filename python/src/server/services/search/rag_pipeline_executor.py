@@ -87,6 +87,8 @@ async def execute_rag_pipeline(
             for i, result in enumerate(results):
                 try:
                     res_metadata = result.get("metadata", {})
+                    if "source" not in res_metadata and result.get("url"):
+                        res_metadata = {**res_metadata, "source": result.get("url")}
                     base_score = float(result.get("similarity") or 0.0)
 
                     # Policy Boosting

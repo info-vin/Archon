@@ -168,6 +168,10 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         txt = await pg.evaluate("() => document.body.innerText.substring(0, 1000)")
         img_bytes = await pg.screenshot(full_page=True)
         
+        # Save screenshot locally for debugging
+        with open(f"./.twin/diagnostics/{name.split()[0]}.png", "wb") as f:
+            f.write(img_bytes)
+        
         system_prompt = (
             f"你是一位精準的工作流診斷員 Digital Twin Scout v39.1。\n"
             f"任務：診斷角色 {name} 的 UI 狀態。特殊指令：{mission_prompt}\n"
@@ -233,6 +237,8 @@ class YAMLScenarioRunner:
             )
             pg = await ctx.new_page()
             pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+            pg.on("console", lambda msg: print(f"🖥️ [Browser Console] {msg.type}: {msg.text}"))
+            pg.on("pageerror", lambda err: print(f"❌ [Browser Page Error] {err}"))
             
             # Auth
             auth = self.config.get("auth", {})
@@ -292,6 +298,8 @@ class YAMLScenarioRunner:
                     if analysis_config.get("screenshot", False):
                         print("📸 [Scout-Runner] Capturing screenshot for AI...")
                         img_bytes = await pg.screenshot(full_page=True)
+                        with open("./.twin/diagnostics/scenario_screenshot.png", "wb") as f:
+                            f.write(img_bytes)
                     
                     extract_len = analysis_config.get("dom_extract_length", 1000)
                     txt = await pg.evaluate(f"() => document.body.innerText.substring(0, {extract_len})")

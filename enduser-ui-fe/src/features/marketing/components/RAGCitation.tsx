@@ -45,10 +45,10 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations 
             </h4>
           </div>
           
-          {/\.(mp4|webm)$/i.test(citation.url) && (
+          {/\.(mp4|webm)(#.*)?$/i.test(citation.url) && (
             <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black">
               <video
-                src={citation.url}
+                src={citation.url.replace(/^file:\/\/.*\/(public|frontend_public)\//, '/').split('#')[0]}
                 controls
                 className="w-full h-auto max-h-36 object-contain"
                 preload="metadata"

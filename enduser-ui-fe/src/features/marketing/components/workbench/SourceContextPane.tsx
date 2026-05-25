@@ -51,10 +51,10 @@ export const SourceContextPane: React.FC<SourceContextPaneProps> = ({
                           <ExternalLinkIcon className="w-3 h-3 text-slate-300 group-hover:text-indigo-500 cursor-pointer" />
                         </a>
                       </div>
-                      {/\.(mp4|webm)$/i.test(ref.metadata.source) && (
+                      {/\.(mp4|webm)(#.*)?$/i.test(ref.metadata.source) && (
                         <div className="mb-3 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-black">
                           <video
-                            src={ref.metadata.source}
+                            src={ref.metadata.source.replace(/^file:\/\/.*\/(public|frontend_public)\//, '/').split('#')[0]}
                             controls
                             className="w-full h-auto max-h-28 object-contain"
                             preload="metadata"

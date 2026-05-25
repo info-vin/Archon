@@ -29,9 +29,9 @@ export const EditorBody: React.FC<EditorBodyProps> = ({
       {/* Visual Header (Image Preview) */}
       {previewUrl && (
         <div className="w-full h-64 md:h-80 relative group overflow-hidden bg-slate-900 shrink-0">
-          {/\.(mp4|webm)$/i.test(previewUrl) ? (
+          {/\.(mp4|webm)(#.*)?$/i.test(previewUrl) ? (
             <video
-              src={previewUrl}
+              src={previewUrl.replace(/^file:\/\/.*\/(public|frontend_public)\//, '/').split('#')[0]}
               controls
               autoPlay
               muted
