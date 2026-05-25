@@ -169,6 +169,7 @@ async def inspect_and_analyze(pg, p_config, reality_map, client, target_model, m
         img_bytes = await pg.screenshot(full_page=True)
         
         # Save screenshot locally for debugging
+        os.makedirs("./.twin/diagnostics", exist_ok=True)
         with open(f"./.twin/diagnostics/{name.split()[0]}.png", "wb") as f:
             f.write(img_bytes)
         
