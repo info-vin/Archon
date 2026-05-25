@@ -15,12 +15,18 @@
 
 ### `scripts/twin_scenarios/` (New Sub-component)
 
-建立一個全新的配置資料夾，專門存放所有 Scout 的場景定義檔。
+建立一個全新的配置資料夾，專門存放所有 Scout 的場景定義檔。為落實資料驅動精神，本階段建立了以下三個核心公證場景矩陣：
 
-#### [NEW] `scripts/twin_scenarios/marketing_chat.yaml`
-將原本 `verify_multi_agent_chat` 的硬編碼轉換為 YAML 配置，包含以下區塊：
-- `auth`: 登入角色設定 (如 admin@archon.com)
-- `steps`: 動作陣列 (包含 `action: click`, `action: fill`, `action: goto`, `action: select_option`, `action: sleep` 等)
+| 優先級 | 腳本名稱 (Scenario YAML) | 核心目的 (Purpose) | 涵蓋層級 (Scope) | 複雜度 | AI 視覺裁判 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **P0** | `marketing_chat.yaml` | 驗證星型群聊實體運作（原 `verify_multi_agent_chat` 重構） | UI -> DB -> LLM -> AI 協作 | 🔴 極高 | 是 (辨識對話泡泡) |
+| **P1** | `fanout_executive_summary.yaml`| 驗證 Clockwork 背景排程（原 `verify_fanout...` 重構） | Cron -> DB -> UI 聚合 | 🟠 高 | 否 (靜態 DOM 檢查) |
+| **P2** | `check_workbench_video.yaml` | 驗證 RAG 影音素材渲染 (Phase 5.3.2 防禦) | DB (Regex) -> UI (Media) | 🟡 中 | 是 (辨識播放器 UI) |
+
+**YAML 配置共同結構 (Schema):**
+- `hooks`: 支援跨界整合 (如呼叫 Python 函數觸發排程)
+- `auth`: 登入角色設定 (如 `admin@archon.com`)
+- `steps`: 動作陣列 (`action: click`, `fill`, `goto`, `select_option`, `sleep` 等)
 - `analysis`: Gemini 驗證設定 (使用的 System Prompt Key 與成功條件)
 
 ### Core Twin Scout Engine
