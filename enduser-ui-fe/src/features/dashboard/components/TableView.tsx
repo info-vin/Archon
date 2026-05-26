@@ -55,12 +55,14 @@ export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditi
                 <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                         <UserAvatar 
-                            name={task.assignee || 'Unassigned'} 
+                            name={userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee || 'Unassigned'} 
                             size={20} 
-                            isAI={task.assignee?.toLowerCase().includes('bot')}
+                            isAI={task.assignee?.toLowerCase().includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
                             role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
                         />
-                        <span className="text-slate-600 dark:text-slate-400 font-medium">{task.assignee || 'None'}</span>
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">
+                            {userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee || 'None'}
+                        </span>
                     </div>
                 </td>
                 <td className="px-6 py-4"><PriorityBadge priority={task.priority} /></td>

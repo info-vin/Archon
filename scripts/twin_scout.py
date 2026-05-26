@@ -358,7 +358,7 @@ async def run_scout_session():
         print("❌ [Scout] GEMINI_API_KEY missing. Aborting.")
         return
 
-    target_model = (await credential_service.get_credential("MARKETING_MODEL") or "gemini-3.1-flash-lite-preview").split("/")[-1]
+    target_model = (await credential_service.get_credential("MARKETING_MODEL") or "gemini-3.1-flash-lite").split("/")[-1]
     client = genai.Client(api_key=api_key)
 
     mission_key = os.getenv("SCOUT_PROMPT_KEY", "twin_scout_mission")
@@ -449,8 +449,9 @@ async def run_scout_session():
                 import subprocess
                 try:
                     proc_script = os.path.abspath(os.path.join(os.path.dirname(__file__), "process_marketing_video.py"))
+                    scenario_name = os.path.basename(args.scenario).replace('.yaml', '')
                     subprocess.run(
-                        [sys.executable, proc_script, "--video", video_path],
+                        [sys.executable, proc_script, "--video", video_path, "--scenario", scenario_name],
                         check=True
                     )
                     print("📹 [Scout] Video post-processing executed successfully.")

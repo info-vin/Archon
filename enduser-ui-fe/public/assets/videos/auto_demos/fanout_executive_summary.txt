@@ -1,0 +1,3 @@
+【自動化驗證展示：fanout_executive_summary】
+
+本影片展示了系統 fanout_executive_summary 場景的實機自動化驗證過程，作為 E2E MBT 測試的視覺公證證據。

@@ -49,7 +49,7 @@ async def generate_audio_stream(request: TTSRequest, current_user: dict = Depend
             raise HTTPException(status_code=500, detail="No API key for semantic translation")
 
         client = genai.Client(api_key=api_key)
-        model_name = SYSTEM_MODELS.get("DEFAULT_TEXT", "models/gemini-3.1-flash-lite-preview").split("/")[-1]
+        model_name = SYSTEM_MODELS.get("DEFAULT_TEXT", "models/gemini-3.1-flash-lite").split("/")[-1]
 
         system_instruction = (
             "You are a Senior Chief of Staff translating dashboard JSON data into a fluent, "

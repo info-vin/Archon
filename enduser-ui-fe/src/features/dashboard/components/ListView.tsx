@@ -54,12 +54,14 @@ export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditing
                         <div className="flex flex-col items-end gap-1">
                             <div className="flex items-center gap-2">
                                 <UserAvatar 
-                                    name={task.assignee || 'Unassigned'} 
+                                    name={userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee || 'Unassigned'} 
                                     size={24} 
-                                    isAI={task.assignee?.toLowerCase().includes('bot')}
+                                    isAI={task.assignee?.toLowerCase().includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
                                     role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
                                 />
-                                <span className="text-sm font-medium text-gray-600">{task.assignee || 'Unassigned'}</span>
+                                <span className="text-sm font-medium text-gray-600">
+                                    {userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee || 'Unassigned'}
+                                </span>
                             </div>
                             {task.due_date && (
                                 <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">

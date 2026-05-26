@@ -34,7 +34,7 @@ async def play_charlie_briefing():
     # 2. 啟動 Gemini 進行語義化轉譯
     api_key = await credential_service.get_credential("GOOGLE_API_KEY")
     client = genai.Client(api_key=api_key)
-    model_name = SYSTEM_MODELS.get("DEFAULT_TEXT", "models/gemini-3.1-flash-lite-preview").split("/")[-1]
+    model_name = SYSTEM_MODELS.get("DEFAULT_TEXT", "models/gemini-3.1-flash-lite").split("/")[-1]
     
     system_instruction = (
         "You are a Senior Chief of Staff translating dashboard JSON data into a fluent, "

@@ -72,12 +72,14 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
                          {task.assignee ? (
                             <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100">
                                 <UserAvatar 
-                                    name={task.assignee} 
+                                    name={userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee} 
                                     size={18} 
-                                    isAI={task.assignee.toLowerCase().includes('bot')}
+                                    isAI={task.assignee.toLowerCase().includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
                                     role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
                                 />
-                                <span className="text-[11px] text-gray-500 font-medium truncate max-w-[80px]">{task.assignee}</span>
+                                <span className="text-[11px] text-gray-500 font-medium truncate max-w-[80px]">
+                                    {userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee}
+                                </span>
                             </div>
                          ) : (
                             <span className="text-[11px] text-gray-400 italic">Unassigned</span>

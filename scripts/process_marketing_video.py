@@ -7,6 +7,7 @@ import sys
 def main():
     parser = argparse.ArgumentParser(description="Process recorded WebM video into MP4 format for marketing.")
     parser.add_argument("--video", required=True, help="Path to the recorded webm video file")
+    parser.add_argument("--scenario", default="marketing_demo", help="Name of the scenario for output file prefix")
     args = parser.parse_args()
     
     webm_path = args.video
@@ -17,8 +18,11 @@ def main():
     output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'enduser-ui-fe', 'public', 'assets', 'videos', 'auto_demos'))
     os.makedirs(output_dir, exist_ok=True)
     
-    mp4_target = os.path.join(output_dir, "marketing_demo.mp4")
-    webm_target = os.path.join(output_dir, "marketing_demo.webm")
+    # Use scenario name for file prefix (replace '_chat' with '_demo' for backward compatibility or just use scenario name)
+    prefix = args.scenario.replace('_chat', '_demo') if args.scenario == 'marketing_chat' else args.scenario
+    
+    mp4_target = os.path.join(output_dir, f"{prefix}.mp4")
+    webm_target = os.path.join(output_dir, f"{prefix}.webm")
     
     # 1. Convert WebM to MP4 using FFmpeg if available
     ffmpeg_available = shutil.which("ffmpeg") is not None
@@ -43,18 +47,25 @@ def main():
         print(f"📂 Copied raw WebM to: {webm_target}")
         
     # 2. Write companion metadata text file
-    txt_target = os.path.join(output_dir, "marketing_demo.txt")
-    print(f"✍️ Writing marketing metadata description to: {txt_target}...")
+    txt_target = os.path.join(output_dir, f"{prefix}.txt")
+    print(f"✍️ Writing metadata description to: {txt_target}...")
     
-    metadata_content = (
-        "【人機協作系統操作展示：多 Agent 星環群聊】\n\n"
-        "本影片展示了 Archon 人機協作工作流的實機運行過程：\n"
-        "1. David Howard (Admin) 登入系統並開啟「New Task」對話框建立行銷分析任務。\n"
-        "2. 將任務指派給 Supervisor Agent (f0f00000-0000-0000-0000-000000000000)。\n"
-        "3. Supervisor 接收任務後，在星環群聊 (WhatsApp 風格) 中，自動召集並調度 DevBot 與 MarketBot 協作。\n"
-        "4. DevBot 進行數據提取與系統日誌檢查，MarketBot 進行 Q2 漏斗數據行銷分析，多方 AI 角色在統一的對話框中實體化交談，最終產出整合行銷報告。\n"
-        "此功能是 Archon 核心的「多 Agent 星環拓樸工作流」的物理體現，完全免除人工溝通斷層，實現 AI 協同開發與分析的閉環。"
-    )
+    if args.scenario == "marketing_chat":
+        metadata_content = (
+            "【人機協作系統操作展示：多 Agent 星環群聊】\n\n"
+            "本影片展示了 Archon 人機協作工作流的實機運行過程：\n"
+            "1. David Howard (Admin) 登入系統並開啟「New Task」對話框建立行銷分析任務。\n"
+            "2. 將任務指派給 Supervisor Agent (f0f00000-0000-0000-0000-000000000000)。\n"
+            "3. Supervisor 接收任務後，在星環群聊 (WhatsApp 風格) 中，自動召集並調度 DevBot 與 MarketBot 協作。\n"
+            "4. DevBot 進行數據提取與系統日誌檢查，MarketBot 進行 Q2 漏斗數據行銷分析，多方 AI 角色在統一的對話框中實體化交談，最終產出整合行銷報告。\n"
+            "此功能是 Archon 核心的「多 Agent 星環拓樸工作流」的物理體現，完全免除人工溝通斷層，實現 AI 協同開發與分析的閉環。"
+        )
+    else:
+        metadata_content = (
+            f"【自動化驗證展示：{prefix}】\n\n"
+            f"本影片展示了系統 {prefix} 場景的實機自動化驗證過程，"
+            "作為 E2E MBT 測試的視覺公證證據。"
+        )
     
     with open(txt_target, "w", encoding="utf-8") as f:
         f.write(metadata_content)

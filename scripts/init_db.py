@@ -175,9 +175,9 @@ def seed_data(cursor: PGCursor) -> None:
     # Bob Workflow Specific Settings - Physically Hardened (System Protected)
     bob_settings = [
         ("STORY_CANDIDATE_SCORE_THRESHOLD", "80", "marketing", "Minimum score for victory feed", False),
-        ("NANA_BANANA_MODEL", "models/gemini-3.1-flash-lite-preview", "marketing", "Image generation model for Nana Banana", False),
-        ("MARKETING_MODEL", "models/gemini-3.1-flash-lite-preview", "marketing", "Primary model for marketing content generation", False),
-        ("MODEL_CHOICE", "models/gemini-3.1-flash-lite-preview", "system", "Global primary model choice for agents and RAG", False),
+        ("NANA_BANANA_MODEL", "models/gemini-3.1-flash-lite", "marketing", "Image generation model for Nana Banana", False),
+        ("MARKETING_MODEL", "models/gemini-3.1-flash-lite", "marketing", "Primary model for marketing content generation", False),
+        ("MODEL_CHOICE", "models/gemini-3.1-flash-lite", "system", "Global primary model choice for agents and RAG", False),
         ("SCHEDULER_PROBE_INTERVAL_MINS", "60", "system", "Frequency of system heartbeat probes (minutes)", False),
         ("SCHEDULER_PATROL_INTERVAL_MINS", "60", "system", "Frequency of log auto-repair scans (minutes)", False),
         ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)", False),
