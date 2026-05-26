@@ -323,9 +323,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                   type="button" 
                   onClick={handleDelete} 
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 text-sm"
+                  aria-label={isSubmitting ? 'Archiving task...' : 'Archive Task'}
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
                 >
-                  Archive Task
+                  {isSubmitting && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
+                  {isSubmitting ? 'Archiving...' : 'Archive Task'}
                 </button>
               )}
             </div>
