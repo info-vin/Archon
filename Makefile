@@ -271,15 +271,15 @@ twin-scout:
 	@docker exec -i -e SCOUT_PROMPT_KEY=$${T:-twin_scout_mission} archon-server /venv/bin/python scripts/twin_scout.py --mode audit
 
 # 執行數位孿生錄影與情境公證 (資料驅動模式)
-# 例如: make twin-record SCENARIO=marketing_chat
+# 例如: make twin-record SUBDIR=02_stateful_daily SCENARIO=marketing_chat
 twin-record:
-	@if [ -z "$(SCENARIO)" ]; then \
-		echo "❌ Error: 必須提供 SCENARIO 參數 (例如 make twin-record SCENARIO=marketing_chat)"; \
-		exit 1; \
-	fi
-	@echo "🚀 啟動數位孿生場景公證與錄影 (場景: $(SCENARIO))..."
-	@set -a; [ -f .env ] && . ./.env; set +a; \
-	cd python && $(UV) run python ../scripts/twin_scout.py --scenario ../scripts/twin_scenarios/$(SCENARIO).yaml --record true --headless false
+        @if [ -z "$(SCENARIO)" ]; then \
+                echo "❌ Error: 必須提供 SCENARIO 參數 (例如 make twin-record SUBDIR=02_stateful_daily SCENARIO=marketing_chat)"; \
+                exit 1; \
+        fi
+        @echo "🚀 啟動數位孿生場景公證與錄影 (場景: $(SUBDIR)/$(SCENARIO))..."
+        @set -a; [ -f .env ] && . ./.env; set +a; \
+        cd python && $(UV) run python ../scripts/twin_scout.py --scenario ../scripts/twin_scenarios/$(SUBDIR)/$(SCENARIO).yaml --record true --headless false
 
 # 執行外部 Gemini 行銷素材 (Intro) 生成與下載
 generate-marketing-intro:
