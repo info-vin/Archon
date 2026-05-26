@@ -77,11 +77,9 @@ export const useSystemSettings = (categories: string[]) => {
     const fetchSettings = useCallback(async () => {
         setLoading(true);
         try {
-            let allSettings: any[] = [];
-            for (const category of categories) {
-                const data = await api.getSystemSettings(category);
-                allSettings = [...allSettings, ...data];
-            }
+            const promises = categories.map(category => api.getSystemSettings(category));
+            const results = await Promise.all(promises);
+            const allSettings = results.flat();
             setSettings(allSettings);
         } catch (err: any) {
             alert("Failed to load settings: " + err.message);
