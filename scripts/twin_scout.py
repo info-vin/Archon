@@ -14,7 +14,7 @@ for p in [".env", "python/.env", "../.env", "../python/.env"]:
 
 # --- Physical Environment Realignment (Phase 4.6.39 / 5.1.7) ---
 # Align PYTHONPATH dynamically for both Docker (/app) and Host (local workspace)
-for p in ["/app", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "python"))]:
+for p in ["/app", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "python")), os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
@@ -236,6 +236,8 @@ class YAMLScenarioRunner:
                 record_video_dir=record_dir,
                 record_video_size=record_size
             )
+            # Intercept and block SSE connections to prevent hanging on open streams
+            await ctx.route("**/api/sse/**", lambda route: asyncio.create_task(route.fulfill(status=204)))
             pg = await ctx.new_page()
             pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
             pg.on("console", lambda msg: print(f"🖥️ [Browser Console] {msg.type}: {msg.text}"))
@@ -252,8 +254,9 @@ class YAMLScenarioRunner:
                         pwd = os.getenv(auth.get("password_env", ""), auth.get("password", "qwer45tyuiop"))
                         await pg.fill('input[type="password"]', pwd)
                         await pg.click('button[type="submit"]')
-                        await asyncio.sleep(3)
-                    except Exception:
+                        await pg.wait_for_function('window.location.hash !== "#/auth"', timeout=15000)
+                    except Exception as e:
+                        print(f"⚠️ [Scout-Runner] Login exception: {e}")
                         pass # Already logged in
                 except Exception as e:
                     print(f"❌ [Scout-Runner] Auth failed: {e}")
@@ -270,6 +273,9 @@ class YAMLScenarioRunner:
                 try:
                     if action == "goto":
                         await pg.goto(f"{url}{step['url']}", wait_until=step.get("wait_until", "load"), timeout=step.get("timeout", 30000))
+                    elif action == "scroll_into_view":
+                        selector = step["selector"].replace("{TIMESTAMP}", session_timestamp)
+                        await pg.locator(selector).first.scroll_into_view_if_needed()
                     elif action == "click":
                         selector = step["selector"].replace("{TIMESTAMP}", session_timestamp)
                         if "wait_selector" in step:
@@ -392,6 +398,8 @@ async def run_scout_session():
                     viewport={'width': 1920, 'height': 1080},
                     user_agent=f"ArchonIntegratedScout/3.9.1 ({safe_name})"
                 )
+                # Intercept and block SSE connections to prevent hanging on open streams
+                await ctx.route("**/api/sse/**", lambda route: asyncio.create_task(route.fulfill(status=204)))
                 pg = await ctx.new_page()
                 res = await inspect_and_analyze(pg, p_config, reality_map, client, target_model, mission_prompt)
                 global_report.append(res)

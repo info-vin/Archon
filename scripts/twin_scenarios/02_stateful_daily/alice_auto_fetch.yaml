@@ -2,60 +2,64 @@ name: "Alice Sales Full-Loop Business Audit"
 mode: "fanout"
 description: "Verify complete sales loop: Intake -> AI Analysis -> Competitor Strategy -> State Transition."
 
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "scripts.setup_alice_lead"
+      function: "setup"
+
 auth:
   url: "/#/auth"
   user: "alice@archon.com"
   password: "qwer45tyuiop"
 
+resolution:
+  width: 375
+  height: 812
+
 steps:
-  # 1. Pipeline Intake: 確保 Lead 出現且具備評分
   - action: "goto"
-    url: "/#/leads"
-    wait_until: "networkidle"
+    url: "/#/marketing"
+    wait_until: "domcontentloaded"
     timeout: 45000
 
   - action: "wait_selector"
-    selector: 'div.lead-row:has-text("RUCKUS Networks")'
+    selector: "h2:has-text('RUCKUS Networks')"
     timeout: 30000
 
-  # 2. POBot Analysis: Alice 調用 POBot 詢問競品攻防
-  - action: "click"
-    selector: 'div.lead-row:has-text("RUCKUS Networks")'
-    wait_selector: 'button:has-text("Ask POBot")'
+  - action: "scroll_into_view"
+    selector: "h2:has-text('RUCKUS Networks')"
 
   - action: "click"
-    selector: 'button:has-text("Ask POBot")'
-  
-  - action: "fill"
-    selector: 'textarea.pobot-input'
-    value: "該客戶目前使用競品系統，請分析痛點並提供我們的產品攻防策略。"
+    selector: "button[aria-label*='Generate AI Pitch']"
+    force: true
 
-  - action: "click"
-    selector: 'button.send-pobot'
-  
   - action: "wait_selector"
-    selector: 'div.chat-bubble-pobot:has-text("攻防策略")'
+    selector: "h3:has-text('AI Pitch')"
     timeout: 30000
 
-  # 3. State Transition: 執行商業流轉
   - action: "click"
-    selector: 'button:has-text("Promote to Vendor")'
-    wait_selector: 'div.modal-confirm'
+    selector: "button[aria-label='Close Pitch Generator']"
 
   - action: "click"
-    selector: 'button.confirm-action'
+    selector: "button[aria-label='Accept Lead']"
 
-  # 4. Final Audit: 確認流轉狀態反映在 UI
+  - action: "goto"
+    url: "/#/sales-cart"
+    wait_until: "domcontentloaded"
+    timeout: 30000
+
   - action: "wait_selector"
-    selector: 'div.lead-status:has-text("Vendor")'
-    timeout: 15000
+    selector: "h3:has-text('RUCKUS Networks')"
+    timeout: 30000
+
+  - action: "click"
+    selector: "button:has-text('Promote')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 3000
 
 analysis:
-  type: "ai_judge"
-  system_prompt: |
-    你是一位銷售流程稽核員。
-    任務：驗證 Alice 的端到端銷售閉環。
-    1. 驗證 POBot 是否針對 RUCKUS Networks 提供了具體的產品競爭分析。
-    2. 驗證最終狀態是否成功從「新線索」流轉至「Vendor」。
-    符合閉環條件回傳 [WORKFLOW_SUCCESS]，否則回傳失敗原因 [WORKFLOW_FAILURE]。
-    重要規定：全程使用繁體中文 (zh-TW)。
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS"

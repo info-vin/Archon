@@ -98,7 +98,7 @@ export async function callAPI<T>(
 
     // 3. Timeout Logic (Resiliency against hangs)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     let response;
     try {
