@@ -19,15 +19,15 @@ auth:
 steps:
   - action: "goto"
     url: "/#/dashboard"
-    wait_until: "domcontentloaded"
+    wait_until: "networkidle"
+    timeout: 45000
+
+  - action: "wait_selector"
+    selector: 'div.task-card:has-text("Daily Report")'
     timeout: 30000
 
   - action: "wait_selector"
-    selector: 'text=Daily Report'
-    timeout: 15000
-
-  - action: "wait_selector"
-    selector: 'text=Executive Summary'
+    selector: 'div.task-card:has-text("Executive Summary")'
     timeout: 15000
 
 analysis:
