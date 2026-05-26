@@ -17,11 +17,14 @@ scripts/twin_scenarios/
 │   # 涵蓋：system_probe, log_patrol, model_verification
 │   # 策略：【豁免 UI 錄影】不依賴 Playwright UI 操作。採用純後端 API 斷言與資料庫日誌穿透驗證 (Backend-to-Backend Auditing)，避免無效錄影消耗 CI 資源與儲存空間。
 ├── 02_stateful_daily/             # 核心商業閉環 (Stateful Business Loops)
-│   # 涵蓋：alice_auto_fetch, bob_market_report, marketing_chat
+│   # 涵蓋：alice_auto_fetch, bob_market_report, marketing_chat, check_workbench_video
 │   # 策略：【強制 UI 錄影】實施資料庫前置注入 (Idempotent Seeding)，並執行完整的跨 Agent UI 協作驗證。
 └── 03_governance/                 # 全局決策與治理 (Governance & Consolidation)
     # 涵蓋：fanout_executive_summary, tech_debt_audit
-    # 策略：【強制 UI 錄影】驗證 Map-Reduce 產出是否準確匯總至 Manager Nexus 面板。
+    # 策略：區分驗證級別。fanout 報表【強制 UI 錄影】驗證產出是否匯總至 Nexus 面板；tech_debt_audit 則【豁免 UI 錄影】，採後端日誌穿透驗證。
+├── 04_persona_workflows/          # 人類角色操作閉環 (Human-in-the-loop Full UI Coverage)
+│   # 涵蓋：alice_hunter_mode, alice_visit_log, bob_pitch_generation, charlie_approval_guard, david_rbac_matrix
+│   # 策略：【強制 UI 錄影】完全拋棄單點按鈕測試，執行跨組件、跨 Modal 的「地毯式全介面驗證」。所有腳本必須可被 `make twin-record` 執行，產出真實操作錄影。
 ```
 
 ### 2.2 韌性化網路與渲染阻斷機制 (Network & Rendering Resilience)
