@@ -230,7 +230,6 @@ def load_environment_config() -> EnvironmentConfig:
         "gemini-3.1-pro-preview": {"input": 1.25, "output": 5.00},
         "gemini-3.1-flash": {"input": 0.10, "output": 0.40},
         "gemini-3.1-flash-lite": {"input": 0.05, "output": 0.20},
-        "gemini-3.1-flash-lite": {"input": 0.05, "output": 0.20},
         "text-embedding-004": {"input": 0.02, "output": 0.00},
         "ollama": {"input": 0.00, "output": 0.00},
     }
