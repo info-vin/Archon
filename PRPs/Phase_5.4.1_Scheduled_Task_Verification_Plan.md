@@ -53,8 +53,16 @@ scripts/twin_scenarios/
 
 ---
 
-## 4. 交付與驗收標準 (Acceptance Criteria & Delivery)
+## 5. 待執行公證清單 (Pending Verification Checklist)
 
-1. **自動化公證庫建立**：完成排程任務對應的場景編寫，並收斂至上述三大類別目錄（其中 `01_stateless_patrols` 採 API 層級斷言，免除 YAML 錄影配置）。
-2. **零人工介入執行**：透過 `make twin-record SUBDIR=<dir> SCENARIO=<name>` 指令，所有 Stateful 與 Governance 任務必須能在無人值守 (Unattended) 的 Headless Docker 環境中達成 100% 綠燈通過率。
-3. **影音與報告歸檔**：所有驗證過程的錄影檔 (`.webm`) 與診斷報告 (`.md`) 必須無縫整合回前端的 Librarian 知識庫與 `assets/videos/auto_demos/` 目錄，作為系統演進的不可篡改實體證據 (Immutable Audit Trail)。
+以下是截至目前為止，尚未完成實作與自動化錄影驗證的場景清單。我們將依序完成這些 YAML 腳本的編寫與除錯。
+
+### 02_stateful_daily (商業閉環)
+- [ ] `bob_market_report.yaml`: 驗證 Bob 的市場情報產出與 RAG 資料聚合。
+
+### 04_persona_workflows (全介面人類角色操作)
+- [ ] `alice_hunter_mode.yaml`: 移動端觸控模擬，驗證 Alice 滑動卡片初篩。
+- [ ] `alice_visit_log.yaml`: 語音上傳與 GPS 模擬，驗證多模態 AI 轉譯。
+- [ ] `bob_pitch_generation.yaml`: 驗證 Bob 一鍵生成行銷提案 (Pitch) 與渲染。
+- [ ] `charlie_approval_guard.yaml`: 驗證 Charlie 退件流程與 AI 理由生成是否寫入知識庫。
+- [ ] `david_rbac_matrix.yaml`: 驗證 Admin 在 Identity Matrix 變更權限並即時生效。
