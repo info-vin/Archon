@@ -30,7 +30,7 @@ async def run_system_probe():
         if success:
             logger.info(f"✅ Clockwork: {msg}")
         else:
-            logger.error(f"❌ Clockwork: {msg} | Details: {result.get('details', {}).get('errors')}")
+            logger.error(f"❌ Clockwork: {msg} | Details: {result.get('details', {})}")
 
         try:
             supabase.table("archon_logs").insert(

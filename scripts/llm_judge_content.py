@@ -42,10 +42,18 @@ async def get_target_posts() -> list[dict]:
     """Retrieves target posts from supabase with robust local fallback for standalone QA."""
     try:
         supabase = get_supabase_client()
-        res = supabase.table("blog_posts").select("*").order("updated_at", desc=True).limit(5).execute()
+        res = supabase.table("blog_posts").select("*").order("updated_at", desc=True).limit(20).execute()
         if res.data:
-            print(f"📦 [LLMJudge] Successfully fetched {len(res.data)} blog posts from database.")
-            return res.data
+            # Filter out empty or placeholder drafts before judging
+            valid_posts = []
+            for p in res.data:
+                content = str(p.get("content") or "").strip()
+                if len(content) > 100:
+                    valid_posts.append(p)
+            
+            if valid_posts:
+                print(f"📦 [LLMJudge] Successfully fetched {len(valid_posts[:5])} valid blog posts from database.")
+                return valid_posts[:5]
     except Exception as e:
         print(f"⚠️ [LLMJudge] Database fetch failed/unavailable ({e}). Switching to local fallback mock dataset.")
     

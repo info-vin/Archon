@@ -63,7 +63,7 @@ async def call_api(
         headers = kwargs.pop("headers", {})
         if service_key:
             headers["Authorization"] = f"Bearer {service_key}"
-        
+
         async with get_http_client(timeout=timeout, for_polling=for_polling) as client:
             response = await client.request(method, url, headers=headers, **kwargs)
 

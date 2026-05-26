@@ -88,7 +88,7 @@ class DefaultLLMStrategy(BaseAgentStrategy):
             all_mcp_tools = await agent_service.mcp_client.list_tools()
             logger.info(f"Dynamic Tool Discovery: Synced {len(all_mcp_tools)} tools from MCP.")
 
-        agent_tools_list: list[str] = list(config.get("tools", []))
+        agent_tools_list: list[str] = list(config.get("tools") or [])
         agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]
 
         tools_param = agent_tools if agent_tools else None
@@ -136,7 +136,7 @@ class DefaultLLMStrategy(BaseAgentStrategy):
                 await agent_service._award_agent_xp(agent_id, task_data, final_output)
 
         except Exception as e:
-            logger.error(f"Error executing DefaultLLMStrategy: {e}")
+            logger.error(f"Error executing DefaultLLMStrategy: {e}", exc_info=True)
             await task_service.update_task(task_id, {"status": "failed"})
 
 

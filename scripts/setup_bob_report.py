@@ -81,7 +81,13 @@ async def run_setup():
     mock_blog_post = {
         "title": blog_title,
         "excerpt": "Today's tech job market movements and analysis.",
-        "content": "This is a mock daily market intelligence report written in Traditional Chinese (繁體中文). Tech jobs are trending up in wireless systems engineering, Wi-Fi 6, and enterprise networking solutions.",
+        "content": """這是一份針對近期科技就業市場趨勢的深度行銷情報分析報告。
+
+根據我們系統在過去 24 小時內所擷取的大量商機與職缺數據顯示，企業端對於具備無線通訊技術背景的工程師需求正呈現顯著的上升趨勢。特別是在 Wi-Fi 6 標準普及化與 5G 專網建置的雙重驅動下，包含 Ruckus Networks 在內的企業級網路設備商，正積極擴編其無線系統工程與技術支援團隊。
+
+進一步分析這些職缺的技術需求，我們發現單一的硬體維護技能已不足以滿足現代企業的期望。市場目前高度青睞能夠結合雲端控制器 (Cloud Controllers)、軟體定義網路 (SDN) 以及具備基礎 Python 自動化腳本撰寫能力的複合型人才。這暗示著網路基礎設施的部署模式，正從傳統的硬體堆疊迅速轉向高度軟體化與可程式化的智能維運 (AIOps) 模式。
+
+對於我們的行銷與業務開發策略而言，這是一個極佳的切入點。我們應該針對這些正在擴張網路工程團隊的企業，主動推送我們在自動化維運與智慧監控解決方案上的成功案例，以精準命中他們在擴展基礎設施時所面臨的人力與管理痛點。""",
         "author_name": "Archon MarketBot",
         "status": "draft",
         "target_brand": "Archon",
