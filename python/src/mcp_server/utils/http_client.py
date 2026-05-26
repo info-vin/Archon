@@ -57,8 +57,15 @@ async def call_api(
         api_url = get_api_url()
         url = urljoin(api_url, path)
 
+        # Inject service key for internal auth
+        import os
+        service_key = os.getenv("SUPABASE_SERVICE_KEY")
+        headers = kwargs.pop("headers", {})
+        if service_key:
+            headers["Authorization"] = f"Bearer {service_key}"
+        
         async with get_http_client(timeout=timeout, for_polling=for_polling) as client:
-            response = await client.request(method, url, **kwargs)
+            response = await client.request(method, url, headers=headers, **kwargs)
 
             if response.status_code in (200, 201):
                 return {"success": True, **response.json()}

@@ -36,7 +36,8 @@ async def get_user_from_token(token: str) -> Any | None:
                 email = payload.get("email", "")
 
                 # Broaden fallback to all @archon.com users to support Alice/Bob/Charlie/David
-                if email.endswith("@archon.com") or payload.get("sub"):
+                # Phase 5.4.1: Support Service Key for MCP background calls
+                if email.endswith("@archon.com") or payload.get("sub") or payload.get("role") == "service_role":
                     from dataclasses import dataclass
 
                     @dataclass
@@ -47,10 +48,13 @@ async def get_user_from_token(token: str) -> Any | None:
 
                     # Determine role from metadata or fallback to employee
                     metadata = payload.get("user_metadata", {})
+                    # If it's a service key, map to system_admin role
+                    if payload.get("role") == "service_role":
+                        metadata["role"] = "system_admin"
 
                     return MockUser(
-                        id=payload.get("sub", "dev-user"),
-                        email=email,
+                        id=payload.get("sub", "system-agent"),
+                        email=email or "system@archon.com",
                         user_metadata=metadata,
                     )
             except Exception:
