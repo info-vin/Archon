@@ -1,0 +1,53 @@
+name: "Alice Hunter Mode Swipe Card E2E Verification"
+mode: "fanout"
+description: "Verify mobile swipe-to-shortlist card action transitions the queue to empty state on Alice's Hunter Mode."
+
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "scripts.setup_alice_lead"
+      function: "setup"
+
+auth:
+  url: "/#/auth"
+  user: "alice@archon.com"
+  password: "qwer45tyuiop"
+
+resolution:
+  width: 375
+  height: 812
+
+steps:
+  - action: "goto"
+    url: "/#/marketing"
+    wait_until: "domcontentloaded"
+    timeout: 45000
+
+  - action: "click"
+    selector: "button:has-text('My Leads')"
+    timeout: 10000
+
+  - action: "wait_selector"
+    selector: "span:has-text('Hunter Mode: Swipe to Shortlist')"
+    timeout: 20000
+
+  - action: "wait_selector"
+    selector: "h2:has-text('RUCKUS Networks')"
+    timeout: 15000
+
+  # Click Accept Lead (Shortlist) to process the only pending lead
+  - action: "click"
+    selector: "button[aria-label='Accept Lead']"
+    timeout: 10000
+
+  # Verify it transitions to the empty queue state ("All Caught Up!")
+  - action: "wait_selector"
+    selector: "h3:has-text('All Caught Up!')"
+    timeout: 15000
+
+  - action: "sleep"
+    duration: 3000
+
+analysis:
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS"

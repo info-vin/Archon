@@ -1,0 +1,77 @@
+name: "Alice Visit Log E2E Verification"
+mode: "fanout"
+description: "Verify Alice's visit logging flow: geolocation acquisition, simulated voice log transcription, and AI summary generation."
+
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "scripts.setup_alice_lead"
+      function: "setup"
+
+auth:
+  url: "/#/auth"
+  user: "alice@archon.com"
+  password: "qwer45tyuiop"
+
+resolution:
+  width: 375
+  height: 812
+
+steps:
+  - action: "goto"
+    url: "/#/marketing"
+    wait_until: "domcontentloaded"
+    timeout: 45000
+
+  - action: "click"
+    selector: "button:has-text('My Leads')"
+    timeout: 10000
+
+  - action: "wait_selector"
+    selector: "h2:has-text('RUCKUS Networks')"
+    timeout: 20000
+
+  # Click the floating Action Button (FAB) to create a visit log
+  - action: "click"
+    selector: "button[title='New Visit Log']"
+    timeout: 15000
+
+  # Select visit type
+  - action: "click"
+    selector: "button:has-text('Client Meeting')"
+    timeout: 10000
+
+  # Fetch location (confirm dialog handled by twin scout runner)
+  - action: "click"
+    selector: "button[aria-label='Get current location']"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 1000
+
+  # Simulate voice log note input
+  - action: "click"
+    selector: "button:has-text('Simulate Voice')"
+    timeout: 10000
+
+  # Save and submit the log
+  - action: "click"
+    selector: "button:has-text('Save Visit')"
+    timeout: 10000
+
+  # Wait for the AI processing to complete and show success summary modal
+  - action: "wait_selector"
+    selector: "h3:has-text('Visit Logged!')"
+    timeout: 25000
+
+  # Click Done to close
+  - action: "click"
+    selector: "button:has-text('Done')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 3000
+
+analysis:
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS"

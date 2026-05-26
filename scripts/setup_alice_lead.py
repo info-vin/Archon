@@ -16,12 +16,16 @@ def setup():
 
     h = {'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'}
 
-    # 1. Find lead
+    # 1. Find lead and isolate the queue by updating other new/pending leads to shortlisted
     try:
+        # Move other new/pending leads to shortlisted so only RUCKUS is new
+        requests.patch(f'{url}/rest/v1/leads?status=in.(new,pending)&company_name=not.like.*RUCKUS*', json={'status': 'shortlisted'}, headers=h)
+        print("Isolated new/pending leads queue.")
         leads = requests.get(f'{url}/rest/v1/leads?company_name=like.*RUCKUS*', headers=h).json()
     except Exception as e:
-        print(f"Error querying leads: {e}")
+        print(f"Error querying/isolating leads: {e}")
         leads = []
+
 
     import datetime
     now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -45,7 +49,7 @@ def setup():
         try:
             res = requests.post(f'{url}/rest/v1/leads', json=new_lead, headers=h)
             if res.status_code in [200, 201]:
-                print("Mock RUCKUS lead created and shortlisted.")
+                print("Mock RUCKUS lead created.")
             else:
                 print(f"Failed to create mock RUCKUS lead: {res.text}")
         except Exception as e:
