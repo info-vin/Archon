@@ -4,6 +4,16 @@ import { TaskModal } from './TaskModal';
 import userEvent from '@testing-library/user-event';
 import { Task, TaskPriority, TaskStatus } from '../types';
 
+// Mock Icons
+vi.mock('./Icons.tsx', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./Icons.tsx')>();
+  return {
+    ...actual,
+    XIcon: () => <span>XIcon</span>,
+    RefreshCwIcon: () => <span>RefreshCwIcon</span>,
+  };
+});
+
 // Mock API
 vi.mock('../services/api', () => ({
   api: {
