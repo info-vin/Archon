@@ -15,13 +15,13 @@
 scripts/twin_scenarios/
 ├── 01_stateless_patrols/          # 無狀態高頻巡檢 (Stateless Operations)
 │   # 涵蓋：system_probe, log_patrol, model_verification
-│   # 策略：不依賴 UI 狀態，著重於背景 API 斷言與系統健康度指標驗證。
+│   # 策略：【豁免 UI 錄影】不依賴 Playwright UI 操作。採用純後端 API 斷言與資料庫日誌穿透驗證 (Backend-to-Backend Auditing)，避免無效錄影消耗 CI 資源與儲存空間。
 ├── 02_stateful_daily/             # 核心商業閉環 (Stateful Business Loops)
 │   # 涵蓋：alice_auto_fetch, bob_market_report, marketing_chat
-│   # 策略：實施資料庫前置注入 (Idempotent Seeding)，並執行完整的跨 Agent UI 協作驗證。
+│   # 策略：【強制 UI 錄影】實施資料庫前置注入 (Idempotent Seeding)，並執行完整的跨 Agent UI 協作驗證。
 └── 03_governance/                 # 全局決策與治理 (Governance & Consolidation)
     # 涵蓋：fanout_executive_summary, tech_debt_audit
-    # 策略：驗證 Map-Reduce 產出是否準確匯總至 Manager Nexus 面板。
+    # 策略：【強制 UI 錄影】驗證 Map-Reduce 產出是否準確匯總至 Manager Nexus 面板。
 ```
 
 ### 2.2 韌性化網路與渲染阻斷機制 (Network & Rendering Resilience)
@@ -52,6 +52,6 @@ scripts/twin_scenarios/
 
 ## 4. 交付與驗收標準 (Acceptance Criteria & Delivery)
 
-1. **自動化公證庫建立**：完成 14 項排程任務所對應的 YAML 場景編寫，並收斂至上述三大類別目錄。
-2. **零人工介入執行**：透過 `make twin-record SUBDIR=<dir> SCENARIO=<name>` 指令，所有任務必須能在無人值守 (Unattended) 的 Headless Docker 環境中達成 100% 綠燈通過率。
+1. **自動化公證庫建立**：完成排程任務對應的場景編寫，並收斂至上述三大類別目錄（其中 `01_stateless_patrols` 採 API 層級斷言，免除 YAML 錄影配置）。
+2. **零人工介入執行**：透過 `make twin-record SUBDIR=<dir> SCENARIO=<name>` 指令，所有 Stateful 與 Governance 任務必須能在無人值守 (Unattended) 的 Headless Docker 環境中達成 100% 綠燈通過率。
 3. **影音與報告歸檔**：所有驗證過程的錄影檔 (`.webm`) 與診斷報告 (`.md`) 必須無縫整合回前端的 Librarian 知識庫與 `assets/videos/auto_demos/` 目錄，作為系統演進的不可篡改實體證據 (Immutable Audit Trail)。
