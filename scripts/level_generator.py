@@ -12,7 +12,7 @@ def generate_levels():
     
     # Campaign A: RBAC Defense Matrix (Negative Tests)
     # Generate 40 micro-scenarios testing different unauthorized endpoints per persona
-    personas = ["alice@archon.com", "bob@archon.com", "dev.bot@archon.com"]
+    personas = ["alice@archon.com", "bob@archon.com", "charlie@archon.com", "dev.bot@archon.com"]
     forbidden_routes = ["/#/admin", "/#/nexus", "/#/settings"]
     for i in range(1, 41):
         persona = personas[(i - 1) % len(personas)]

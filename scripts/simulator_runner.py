@@ -31,13 +31,11 @@ async def run_scenario_with_chaos(scenario_path: str, is_headless: bool, enable_
             cfg = yaml.safe_load(f)
             
         # Initialize Gemini API dummy or real client (we pass None to run statically/mocked)
-        # Note: YAMLScenarioRunner takes (yaml_path, client, target_model, is_record, headless)
-        runner = YAMLScenarioRunner(scenario_path, None, "gemini-3.1-flash-lite", False, is_headless)
+        # Note: YAMLScenarioRunner takes (yaml_path, client, target_model, is_record, headless, enable_chaos)
+        runner = YAMLScenarioRunner(scenario_path, None, "gemini-3.1-flash-lite", False, is_headless, enable_chaos=enable_chaos)
         
         # Inject Chaos Hook if enabled
         if enable_chaos:
-            # We can print that chaos configuration has been activated for the browser context
-            # Like mock latency 2000-5000ms or 500 status code injection
             print(f"⚡ [Chaos Injection] Activating network latency & 500 error rules for {scenario_name}")
             
         start_time = time.time()
@@ -47,14 +45,52 @@ async def run_scenario_with_chaos(scenario_path: str, is_headless: bool, enable_
             res_analysis, video_path = await runner.run()
             duration = time.time() - start_time
             
-            # Simple mockup visual diff gate check (Pixelmatch logic)
-            visual_diff_pct = random.uniform(0.1, 4.5)  # Mocked pixel difference
-            print(f"📊 [Visual Gate] Level {scenario_name} layout mismatch rating: {visual_diff_pct:.2f}%")
+            # Real visual diff gate check logic using PIL
+            screenshot_path = "./.twin/diagnostics/scenario_screenshot.png"
+            os.makedirs("./.twin/baselines", exist_ok=True)
+            baseline_path = f"./.twin/baselines/{scenario_name}_baseline.png"
+            
+            visual_diff_pct = 0.0
+            is_success = "WORKFLOW_SUCCESS" in res_analysis or "Steps completed" in res_analysis
+            
+            if os.path.exists(screenshot_path):
+                if not os.path.exists(baseline_path):
+                    import shutil
+                    shutil.copy(screenshot_path, baseline_path)
+                    print(f"📊 [Visual Gate] Level {scenario_name} layout mismatch rating: 0.00% (Baseline established)")
+                else:
+                    try:
+                        from PIL import Image, ImageChops
+                        img1 = Image.open(screenshot_path).convert('RGB')
+                        img2 = Image.open(baseline_path).convert('RGB')
+                        
+                        if img1.size == img2.size:
+                            diff = ImageChops.difference(img1, img2)
+                            non_zero_pixels = sum(1 for p in diff.getdata() if any(c > 10 for c in p))
+                            total_pixels = img1.size[0] * img1.size[1]
+                            visual_diff_pct = (non_zero_pixels / total_pixels) * 100.0
+                            print(f"📊 [Visual Gate] Level {scenario_name} layout mismatch rating: {visual_diff_pct:.2f}%")
+                        else:
+                            visual_diff_pct = 100.0
+                            print(f"📊 [Visual Gate] Level {scenario_name} layout mismatch rating: 100.00% (Dimension mismatch)")
+                    except Exception as pe:
+                        print(f"⚠️ [Visual Gate] Image comparison failed: {pe}")
+            else:
+                print(f"📊 [Visual Gate] Level {scenario_name} layout mismatch rating: 0.00% (No screenshot captured)")
+                
             if visual_diff_pct > 5.0:
                 print(f"⚠️ [Visual Gate] Visual layout deviation exceeds 5%! Triggering scripts/vision_judge.py...")
-                # In real scenario we would execute vision_judge.py
+                import subprocess
+                try:
+                    subprocess.run(
+                        [sys.executable, "scripts/vision_judge.py", "--image", screenshot_path],
+                        check=True
+                    )
+                    print(f"✅ [Visual Gate] scripts/vision_judge.py approved the layout changes.")
+                except Exception as ve:
+                    print(f"❌ [Visual Gate] scripts/vision_judge.py rejected the layout changes: {ve}")
+                    is_success = False
             
-            is_success = "WORKFLOW_SUCCESS" in res_analysis or "Steps completed" in res_analysis
             status = "PASSED" if is_success else "FAILED"
             print(f"🏁 [Simulator] Level {scenario_name} finished in {duration:.2f}s: {status}")
             return {

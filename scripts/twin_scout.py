@@ -197,14 +197,15 @@ import yaml
 import importlib
 
 class YAMLScenarioRunner:
-    def __init__(self, yaml_path, client, target_model, is_record, headless):
+    def __init__(self, yaml_path, client, target_model, is_record, headless, enable_chaos=False):
         with open(yaml_path, 'r', encoding='utf-8') as f:
             self.config = yaml.safe_load(f)
         self.client = client
         self.target_model = target_model
         self.is_record = is_record
         self.headless = headless
-        
+        self.enable_chaos = enable_chaos
+
     async def run(self):
         print(f"🚀 [Scout-Runner] Executing scenario: {self.config.get('name', 'Unknown')}")
         
@@ -277,6 +278,26 @@ class YAMLScenarioRunner:
                 content_type="application/json",
                 body=json.dumps(mock_suggested_reason)
             )))
+
+            if getattr(self, "enable_chaos", False):
+                import random
+                async def chaos_handler(route):
+                    if random.random() < 0.05:
+                        print("⚡ [Chaos Network Injection] Intercepted request and simulated HTTP 500 error!")
+                        await route.fulfill(
+                            status=500,
+                            content_type="application/json",
+                            body='{"error": "Internal Chaos Server Error"}'
+                        )
+                    else:
+                        if random.random() < 0.50:
+                            delay = random.uniform(1.0, 3.0)
+                            print(f"⏳ [Chaos Network Injection] Introducing artificial delay of {delay:.2f}s...")
+                            await asyncio.sleep(delay)
+                        await route.continue_()
+                
+                await ctx.route("**/api/marketing/**", lambda route: asyncio.create_task(chaos_handler(route)))
+                await ctx.route("**/api/stats/**", lambda route: asyncio.create_task(chaos_handler(route)))
 
             pg = await ctx.new_page()
 
