@@ -65,7 +65,7 @@ scripts/twin_scenarios/
 - [x] `alice_visit_log.yaml`: 語音上傳與 GPS 模擬，驗證多模態 AI 轉譯。
 - [x] `bob_pitch_generation.yaml`: 驗證 Bob 一鍵生成行銷提案 (Pitch) 與渲染。
 - [x] `charlie_approval_guard.yaml`: 驗證 Charlie 退件流程與 AI 理由生成是否寫入知識庫。
-- [ ] `david_rbac_matrix.yaml`: 驗證 Admin 在 Identity Matrix 變更權限並即時生效。
+- [x] `david_rbac_matrix.yaml`: 驗證 Admin 在 Identity Matrix 變更權限並即時生效。
 
 ---
 
@@ -156,3 +156,15 @@ scripts/twin_scenarios/
 2. **資料自癒與前置淨化**：
    * **問題**：若要讓 Charlie 審核特定文章，必須保證資料庫中存在狀態為 `review` 且標題為 `Charlie Verification Blog Post` 的文章項目。
    * **修復**：新增 `scripts/setup_charlie_approval.py` 作為 Scenario Pre-Hook，在測試啟動前自動物理刪除同名文章，並重新寫入一筆狀態為 `review`、作者為 `Bob` 的全新測試文章，實現了測試的百分之百冪等。
+
+---
+
+### E2E 驗證流程修復 Walkthrough (david_rbac_matrix.yaml)
+我們已成功實作並驗證 `david_rbac_matrix.yaml` 的 E2E 驗證情境，所有步驟順利通過並完成業務閉環（Reset Permissions -> Switch to User Management Tab -> Load Registry -> Switch to Matrix Tab -> Toggle Permission -> Save Matrix）。
+
+#### 變更項目與修復內容
+1. **解決動態變更權限持久性與冪等問題**：
+   * **問題**：測試步驟會動態點擊變更銷售角色 (`sales`) 的權限，並在完成後進行保存。若無前置還原步驟，重複執行會使該權限在「已開啟」和「已關閉」狀態之間反覆橫跳，造成 E2E 狀態不可預測。
+   * **修復**：新增 `scripts/setup_david_rbac.py` 前置 Hook，在登入與點擊前，主動向 Supabase 資料庫中的 `archon_roles_permissions` 表更新，將 `sales` 的權限還原至預設的初始陣列。
+   * **效果**：消除了測試殘留狀態，保證測試前後銷售角色權限的完全一致。
+

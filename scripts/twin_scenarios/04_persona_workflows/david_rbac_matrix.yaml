@@ -1,0 +1,67 @@
+name: "David RBAC Matrix E2E Verification"
+mode: "scenario"
+description: "Verify David Howard (Admin) navigating to User Management, switching to the RBAC Matrix, toggling a permission, and saving it."
+
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "scripts.setup_david_rbac"
+      function: "setup"
+
+auth:
+  url: "/#/auth"
+  user: "admin@archon.com"
+  password: "qwer45tyuiop"
+
+resolution:
+  width: 1280
+  height: 720
+
+steps:
+  - action: "goto"
+    url: "/#/admin"
+    wait_until: "domcontentloaded"
+    timeout: 45000
+
+  - action: "sleep"
+    duration: 3000
+
+  # Switch to User Management Tab
+  - action: "click"
+    selector: "button:has-text('User Management')"
+    timeout: 10000
+
+  # Wait for the Personnel list to appear
+  - action: "wait_selector"
+    selector: "h2:has-text('Personnel Registry')"
+    timeout: 15000
+
+  # Switch to Role Permissions Matrix sub-tab
+  - action: "click"
+    selector: "button:has-text('Role Permissions Matrix')"
+    timeout: 10000
+
+  # Wait for matrix grid to load
+  - action: "wait_selector"
+    selector: "h2:has-text('Role Capabilities Matrix')"
+    timeout: 15000
+
+  # Toggle task:read:all for sales
+  - action: "click"
+    selector: "button[aria-label='Toggle permission task:read:all for role sales']"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 1000
+
+  # Click Save Matrix
+  - action: "click"
+    selector: "button:has-text('SAVE MATRIX')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 3000
+
+analysis:
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS"
