@@ -1,0 +1,66 @@
+name: "Bob Pitch Generation E2E Verification"
+mode: "fanout"
+description: "Verify Bob searching for leads, generating a pitch from search results, and saving it to the pipeline."
+
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "scripts.setup_bob_pitch"
+      function: "setup"
+
+auth:
+  url: "/#/auth"
+  user: "bob@archon.com"
+  password: "qwer45tyuiop"
+
+resolution:
+  width: 1280
+  height: 720
+
+steps:
+  - action: "goto"
+    url: "/#/marketing"
+    wait_until: "domcontentloaded"
+    timeout: 45000
+
+  # Switch to Job Search Tab
+  - action: "click"
+    selector: "button:has-text('Job Search')"
+    timeout: 10000
+
+  # Fill the search input
+  - action: "fill"
+    selector: "input[aria-label='Job title search']"
+    value: "wireless"
+
+  # Find leads
+  - action: "click"
+    selector: "button:has-text('Find Leads')"
+    timeout: 10000
+
+  # Wait for mock leads to appear
+  - action: "wait_selector"
+    selector: "h2:has-text('Identified Leads')"
+    timeout: 15000
+
+  # Click Generate Pitch
+  - action: "click"
+    selector: "button:has-text('Generate Pitch')"
+    timeout: 10000
+
+  # Wait for pitch preview to render
+  - action: "wait_selector"
+    selector: "h2:has-text('Generated Pitch')"
+    timeout: 20000
+
+  # Save the pitch and promote to pipeline (confirm alert is handled automatically)
+  - action: "click"
+    selector: "button:has-text('Approve & Save')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 3000
+
+analysis:
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS"

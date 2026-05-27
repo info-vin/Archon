@@ -1,0 +1,71 @@
+name: "Charlie Content Review and Rejection E2E Verification"
+mode: "scenario"
+description: "Verify Charlie reviewing content, requesting AI-suggested improvements, and returning it."
+
+hooks:
+  before_auth:
+    - type: "python_function"
+      module: "scripts.setup_charlie_approval"
+      function: "setup"
+
+auth:
+  url: "/#/auth"
+  user: "charlie@archon.com"
+  password: "qwer45tyuiop"
+
+resolution:
+  width: 1280
+  height: 720
+
+steps:
+  - action: "goto"
+    url: "/#/nexus"
+    wait_until: "domcontentloaded"
+    timeout: 45000
+
+  - action: "sleep"
+    duration: 5000
+
+  # Click the Op Load HUD Card to switch to the Operational Load tab
+  - action: "click"
+    selector: "span:has-text('Op Load')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 2000
+
+  # Click the specific verification blog post seeded in review state
+  - action: "click"
+    selector: "h4:has-text('Charlie Verification Blog Post')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 2000
+
+  # Click RETURN to open instructions text area
+  - action: "click"
+    selector: "button:has-text('RETURN')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 1000
+
+  # Click Suggest with AI to get rejection reasons filled automatically via mock route
+  - action: "click"
+    selector: "button:has-text('Suggest with AI')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 3000
+
+  # Confirm return (which calls processApproval and sends status to changes_requested)
+  - action: "click"
+    selector: "button:has-text('CONFIRM RETURN')"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 5000
+
+analysis:
+  type: "static"
+  success_message: "WORKFLOW_SUCCESS"

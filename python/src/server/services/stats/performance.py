@@ -17,10 +17,13 @@ class PerformanceManager:
         self.supabase = supabase_client or get_supabase_client()
 
     @staticmethod
-    def calculate_ai_score(content: str, metadata: dict | None = None) -> int:
+    def calculate_ai_score(content: str | None, metadata: dict | None = None) -> int:
         """Physical Business Integrity Scoring (Phase 4.6.15)."""
+        if not content:
+            return 0
         score = 100
         words = content.split()
+
         word_count = len(words)
         if word_count < 50:
             score -= 50

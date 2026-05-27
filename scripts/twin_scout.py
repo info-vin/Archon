@@ -238,7 +238,47 @@ class YAMLScenarioRunner:
             )
             # Intercept and block SSE connections to prevent hanging on open streams
             await ctx.route("**/api/sse/**", lambda route: asyncio.create_task(route.fulfill(status=204)))
+            
+            # Intercept and mock job search and pitch generation for E2E stability
+            mock_jobs = [
+                {
+                    "title": "Wireless System Engineer",
+                    "company": "RUCKUS Networks",
+                    "url": "https://example.com/ruckus",
+                    "description": "Experience with Ruckus Access Points preferred.",
+                    "description_full": "Full description of Wireless System Engineer at RUCKUS Networks.",
+                    "source": "mock",
+                    "identified_need": "- **技術棧**: Ruckus APs, Wi-Fi 6, CCNA.\n- **痛點預測**: 需要專業無線網路部署與疑難排解技能。"
+                }
+            ]
+            import json
+            await ctx.route("**/api/marketing/jobs**", lambda route: asyncio.create_task(route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(mock_jobs)
+            )))
+            
+            mock_pitch = {
+                "content": "親愛的 RUCKUS Networks 團隊，\n\n我們注意到您正在尋找 Wireless System Engineer。作為領先的 AI 自動化平台，Archon 能夠為您提供專業的無線網路部署和故障排除自動化方案...",
+                "references": ["RUCKUS Networks Job Post"]
+            }
+            await ctx.route("**/api/marketing/generate-pitch**", lambda route: asyncio.create_task(route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(mock_pitch)
+            )))
+
+            mock_suggested_reason = {
+                "suggested_reason": "AI Generated Rejection Reason: Content needs more detailed technical examples and better grammar alignment."
+            }
+            await ctx.route("**/api/marketing/suggestions/*/reject**", lambda route: asyncio.create_task(route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(mock_suggested_reason)
+            )))
+
             pg = await ctx.new_page()
+
             pg.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
             pg.on("console", lambda msg: print(f"🖥️ [Browser Console] {msg.type}: {msg.text}"))
             pg.on("pageerror", lambda err: print(f"❌ [Browser Page Error] {err}"))

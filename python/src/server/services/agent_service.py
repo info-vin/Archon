@@ -86,9 +86,10 @@ class AgentService:
         # Physical Scoring instead of random (Phase 4.6.15)
         # We derive metadata from the task context
         meta = {
-            "lint_passed": "Success" in output_message,  # Heuristic for self-healing
+            "lint_passed": "Success" in output_message if output_message else False,  # Heuristic for self-healing
             "required_terms": ["Archon"] if agent_id == AgentUUIDs.LIBRARIAN else [],
         }
+
 
         score = stats_service.calculate_ai_score(output_message, meta)
         # Translate 0-100 score to 0-15 XP

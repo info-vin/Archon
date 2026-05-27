@@ -33,7 +33,9 @@ class LeadHandler:
         return res.data if success and hasattr(res, "data") and res.data is not None else []
 
     async def create_lead(self, lead_data: dict, creator_id: str | None = None) -> tuple[bool, dict]:
-        lead_data["created_from_user_id"] = creator_id
+        if "created_from_user_id" in lead_data:
+            del lead_data["created_from_user_id"]
+
         if not lead_data.get("enrichment_score") or lead_data.get("enrichment_score") == 0:
             lead_data["enrichment_score"] = await self.calculate_lead_score(lead_data.get("job_title"))
 
