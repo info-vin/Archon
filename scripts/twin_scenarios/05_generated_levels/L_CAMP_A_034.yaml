@@ -1,7 +1,7 @@
-name: Campaign A Level 034 - RBAC Block for alice to /#/admin
+name: Campaign A Level 034 - RBAC Block for bob to /#/admin
 mode: scenario
-description: Verify persona alice@archon.com is blocked with HTTP 403 or redirect
-  when accessing /#/admin.
+description: Verify persona bob@archon.com is blocked with HTTP 403 or redirect when
+  accessing /#/admin.
 hooks:
   before_auth:
   - type: python_function
@@ -12,7 +12,7 @@ hooks:
       force_clean: true
 auth:
   url: /#/auth
-  user: alice@archon.com
+  user: bob@archon.com
   password: qwer45tyuiop
 resolution:
   width: 1280

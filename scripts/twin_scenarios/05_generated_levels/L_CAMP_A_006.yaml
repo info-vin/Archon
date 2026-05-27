@@ -1,7 +1,7 @@
-name: Campaign A Level 006 - RBAC Block for dev.bot to /#/settings
+name: Campaign A Level 006 - RBAC Block for bob to /#/settings
 mode: scenario
-description: Verify persona dev.bot@archon.com is blocked with HTTP 403 or redirect
-  when accessing /#/settings.
+description: Verify persona bob@archon.com is blocked with HTTP 403 or redirect when
+  accessing /#/settings.
 hooks:
   before_auth:
   - type: python_function
@@ -12,7 +12,7 @@ hooks:
       force_clean: true
 auth:
   url: /#/auth
-  user: dev.bot@archon.com
+  user: bob@archon.com
   password: qwer45tyuiop
 resolution:
   width: 1280
