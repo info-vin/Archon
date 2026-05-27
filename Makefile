@@ -263,7 +263,7 @@ clean:
 		echo "Cancelled"; \
 	fi
 
-.PHONY: twin-scout twin-record generate-marketing-intro twin-fix
+.PHONY: twin-scout twin-record generate-marketing-intro twin-fix twin-gen-levels twin-simulator
 
 # 執行自動偵察 (容器化對帳模式)
 twin-scout:
@@ -280,6 +280,16 @@ twin-record:
 	@echo "🚀 啟動數位孿生場景公證與錄影 (場景: $(SUBDIR)/$(SCENARIO))..."
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	cd python && $(UV) run python ../scripts/twin_scout.py --scenario ../scripts/twin_scenarios/$(SUBDIR)/$(SCENARIO).yaml --record true --headless false
+
+# 產生數位雙生模擬器關卡
+twin-gen-levels:
+	@echo "⚙️  動態產生 100+ 個參數化關卡腳本..."
+	cd python && $(UV) run python ../scripts/level_generator.py
+
+# 啟動數位雙生動態模擬器 (限額跑前幾關以防超時)
+twin-simulator:
+	@echo "🎮 啟動數位雙生動態模擬器 (百關 E2E 矩陣驗證)..."
+	cd python && $(UV) run python ../scripts/simulator_runner.py --headless true --limit 3
 
 # 執行外部 Gemini 行銷素材 (Intro) 生成與下載
 generate-marketing-intro:
