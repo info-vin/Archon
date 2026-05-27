@@ -5,8 +5,8 @@ description: "Verify Charlie reviewing content, requesting AI-suggested improvem
 hooks:
   before_auth:
     - type: "python_function"
-      module: "scripts.setup_charlie_approval"
-      function: "setup"
+      module: "scripts.setup_personas"
+      function: "setup_charlie"
 
 auth:
   url: "/#/auth"

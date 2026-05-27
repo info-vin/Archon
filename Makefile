@@ -81,7 +81,7 @@ db-reset:
 # Verify database seed data
 verify-data:
 	@echo "Verifying database state inside docker container..."
-	@docker exec -i archon-server /venv/bin/python - < scripts/verify_seed.py
+	@docker exec -i archon-server /venv/bin/python - < scripts/archive/verify_seed.py
 
 # Run Librarian Probe (Diagnostics)
 # --- 5-Persona Physical Health Gate ---
@@ -98,11 +98,11 @@ audit-qa:
 	@cd enduser-ui-fe && $(PNPM) run test:unit
 	@cd archon-ui-main && $(PNPM) test
 	@echo "Step 3: Running DNS Leak Probe static scan..."
-	@bash scripts/probe_dns_leak.sh
+	@cd python && $(UV) run python ../scripts/probe_dns_leak.py
 	@echo "Step 4: Running Mobile Viewport Scroll Lockup static scan..."
 	@cd python && $(UV) run python ../scripts/check_scroll_lockup.py
 	@echo "Step 5: Running Shadow DB Migration verifier..."
-	@cd python && $(UV) run python ../scripts/verify_migrations.py
+	@cd python && $(UV) run python ../scripts/verify_system.py --check migrations
 	@echo "Step 6: Running LLM Content Judge Semantic checks..."
 	@cd python && $(UV) run python ../scripts/llm_judge_content.py
 	@echo "Step 7: Running Backend FAST Unit Tests (Skipping Integration)..."
@@ -332,21 +332,11 @@ tech-debt-audit:
 	@echo "--- 2. Stale Scripts Check ---"
 	@threshold=$$(date -v-14d +%s 2>/dev/null || date -d "14 days ago" +%s 2>/dev/null); \
 	stale_found=0; \
-	for file in scripts/*.py scripts/*.sh python/scripts/*.py; do \
+	for file in scripts/*.py python/scripts/*.py; do \
 		if [ -f "$$file" ]; then \
 			last_commit=$$(git log -1 --format="%ct" -- "$$file" 2>/dev/null); \
 			if [ -n "$$last_commit" ] && [ "$$last_commit" -lt "$$threshold" ]; then \
 				echo "⚠️  [WARNING] Stale script found: $$file (No updates in > 14 days)."; \
-				stale_found=1; \
-			fi \
-		fi \
-	done; \
-	if [ "$$stale_found" -eq 0 ]; then \
-		echo "✅ No stale scripts found."; \
-	fi
-	@echo "--- 3. Action Item ---"
-	@echo "💡 Charlie: If warnings exist, assign a cleanup task to DevBot."
-️  [WARNING] Stale script found: $$file (No updates in > 14 days)."; \
 				stale_found=1; \
 			fi \
 		fi \

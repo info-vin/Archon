@@ -5,8 +5,8 @@ description: "Verify Bob searching for leads, generating a pitch from search res
 hooks:
   before_auth:
     - type: "python_function"
-      module: "scripts.setup_bob_pitch"
-      function: "setup"
+      module: "scripts.setup_personas"
+      function: "setup_bob_pitch"
 
 auth:
   url: "/#/auth"

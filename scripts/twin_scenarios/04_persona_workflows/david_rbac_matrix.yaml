@@ -5,8 +5,8 @@ description: "Verify David Howard (Admin) navigating to User Management, switchi
 hooks:
   before_auth:
     - type: "python_function"
-      module: "scripts.setup_david_rbac"
-      function: "setup"
+      module: "scripts.setup_personas"
+      function: "setup_david"
 
 auth:
   url: "/#/auth"

@@ -110,8 +110,8 @@ def generate_levels():
                 "before_auth": [
                     {
                         "type": "python_function",
-                        "module": "scripts.setup_level_sandbox",
-                        "function": "setup",
+                        "module": "scripts.setup_personas",
+                        "function": "setup_sandbox",
                         "args": {
                             "level_id": lvl["id"],
                             "force_clean": True

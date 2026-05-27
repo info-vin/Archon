@@ -5,8 +5,8 @@ description: "Verify complete sales loop: Intake -> AI Analysis -> Competitor St
 hooks:
   before_auth:
     - type: "python_function"
-      module: "scripts.setup_alice_lead"
-      function: "setup"
+      module: "scripts.setup_personas"
+      function: "setup_alice"
 
 auth:
   url: "/#/auth"
