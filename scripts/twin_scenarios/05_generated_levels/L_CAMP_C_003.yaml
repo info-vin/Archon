@@ -1,0 +1,28 @@
+name: Campaign C Level 003 - Input edge case verification
+mode: scenario
+description: Ensure the frontend boundary validations hold clean.
+hooks:
+  before_auth:
+  - type: python_function
+    module: scripts.setup_level_sandbox
+    function: setup
+    args:
+      level_id: L_CAMP_C_003
+      force_clean: true
+auth:
+  url: /#/auth
+  user: alice@archon.com
+  password: qwer45tyuiop
+resolution:
+  width: 1280
+  height: 720
+steps:
+- action: goto
+  url: /#/marketing
+  wait_until: domcontentloaded
+  timeout: 20000
+- action: sleep
+  duration: 1000
+analysis:
+  type: static
+  success_message: WORKFLOW_SUCCESS

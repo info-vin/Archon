@@ -91,7 +91,7 @@ describe('ManagerNexus Reliability Verification', () => {
     fireEvent.click(opLoadCard);
 
     // 2. Switch to DevOps tab
-    const devOpsTab = screen.getByRole('button', { name: /Dev Ops/i });
+    const devOpsTab = await screen.findByRole('button', { name: /Dev Ops/i });
     fireEvent.click(devOpsTab);
 
     // 3. Verify real data from getPendingChanges mock is visible

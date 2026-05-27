@@ -129,3 +129,23 @@ analysis:
   1. **實作 Playwright 網路混沌注入**：在 `simulator_runner.py` 中，針對指定比例 (e.g., 5%) 的 API 請求，隨機注入 2000ms - 5000ms 的延遲 (Latency Mock) 或隨機返回 HTTP 500/503。
   2. **UI 隨機干擾 (Chaos Monkey Event)**：在 Playwright 執行 Steps 的空檔中，有 10% 機率隨機觸發 `page.reload()` 或隨機發送點擊事件，驗證前端狀態機 (State Machine) 是否會鎖死或陷入無窮載入。
 
+---
+
+## 6. 行動前風險評估原則 (Pre-Action Risk Assessment)
+
+在落地百關動態模擬器前，針對並發測試環境可能面臨的架構風險，確立以下防禦設計邏輯：
+
+1. **資料庫連線池與交易死鎖防禦**：
+   * *風險*：高並發 (Concurrency = 5) 執行前置 seeding 時，同時對公共資料進行 `DELETE`/`INSERT` 會導致資料庫連線池耗盡或 row-level 死鎖。
+   * *防禦*：在 `setup_level_sandbox.py` 中，所有寫入的測試資料必須以 `level_id` 作為資料隔離 UUID 標記。同時，在批次啟動前置 Hook 時引入 `random.uniform(0.1, 0.5)` 的錯峰時間差 (Jitter)。
+2. **瀏覽器 LocalStorage / Cookie 狀態隔離**：
+   * *風險*：並發 Playwright 實例若共享相同的本地瀏覽器快取目錄，會導致角色登入狀態 (Session/Token) 互相覆蓋污染，引發測試大面積 403 偽陰性錯誤。
+   * *防禦*：必須為每個執行的關卡實例，動態分配唯一獨立的臨時目錄（如 `./.browser_data/session_{level_id}_{timestamp}`），並在執行完成後自動進行清理。
+3. **無 FFmpeg 系統環境自癒處理**：
+   * *風險*：在 CI/CD 容器等無 FFmpeg 的環境下，影片後處理腳本 `process_marketing_video.py` 拋出 command 缺失錯誤會導致測試即便通過依然返回 Exit Code 1。
+   * *防禦*：優化影片處理逻辑，將無 FFmpeg 的 fallback copy 行為定義為「正常通過」並不干擾最終 Runner 的 Exit Code。
+4. **關卡依賴與拓樸排序機制**：
+   * *風險*：商業流程存在上下游關係（例如 A 文章必須先發布，B 審查關卡才能進行），無序併發會造成時序競爭錯誤。
+   * *防禦*：YAML 中支援宣告 `dependency: []`，`simulator_runner.py` 會先進行拓樸排序 (Topological Sort)，依依賴關係順序執行，其餘無相依關卡才進行併發執行。
+
+

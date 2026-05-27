@@ -216,10 +216,11 @@ class YAMLScenarioRunner:
                     mod = importlib.import_module(hook["module"])
                     func = getattr(mod, hook["function"])
                     print(f"⏳ [Scout-Runner] Running pre-hook: {hook['module']}.{hook['function']}")
+                    kwargs = hook.get("args", {})
                     if asyncio.iscoroutinefunction(func):
-                        await func()
+                        await func(**kwargs)
                     else:
-                        func()
+                        func(**kwargs)
 
         url = os.getenv("ENDUSER_UI_URL", "http://localhost:5173")
         from cookie_injector import KeychainBypassCookieInjector

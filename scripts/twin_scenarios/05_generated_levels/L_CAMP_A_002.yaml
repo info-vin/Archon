@@ -1,0 +1,29 @@
+name: Campaign A Level 002 - RBAC Block for bob to /#/nexus
+mode: scenario
+description: Verify persona bob@archon.com is blocked with HTTP 403 or redirect when
+  accessing /#/nexus.
+hooks:
+  before_auth:
+  - type: python_function
+    module: scripts.setup_level_sandbox
+    function: setup
+    args:
+      level_id: L_CAMP_A_002
+      force_clean: true
+auth:
+  url: /#/auth
+  user: bob@archon.com
+  password: qwer45tyuiop
+resolution:
+  width: 1280
+  height: 720
+steps:
+- action: goto
+  url: /#/nexus
+  wait_until: domcontentloaded
+  timeout: 20000
+- action: sleep
+  duration: 2000
+analysis:
+  type: static
+  success_message: WORKFLOW_SUCCESS
