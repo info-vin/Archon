@@ -102,3 +102,30 @@ analysis:
 2. **狀態空間爆炸 (State Space Explosion)**：
    * *隱患*：常規 E2E 僅能覆蓋快樂路徑，無法驗證高併發或異常中止時的灰色地帶。
    * *優化*：引入**「混沌測試 (Chaos Testing) 模擬器」**，在執行期間隨機注入斷網、重整與重複點擊，確保極端干擾下的自癒能力。
+
+---
+
+## 5. 實作計畫 (Implementation Plan)
+
+為逐步落地上述優化方向並完成百關測試，規劃以下三階段實作方案：
+
+### 階段一：矩陣關卡自動產生器與自動化執行器 (Matrix Level Generator & Runner)
+* **目標**：實現動態產生與批次運行 100+ 個微型測試關卡，產出「關卡通過矩陣表」。
+* **工作項目**：
+  1. **實作 `scripts/level_generator.py`**：採用範本渲染引擎 (Jinja2)，讀取關卡矩陣設定檔 (JSON/YAML)，動態產生 100+ 個參數化測試場景。
+  2. **實作 `scripts/simulator_runner.py`**：擴充現有 `twin_scout.py` 的 YAML 執行邏輯，支援併發關卡執行限制 (Concurrency Cap = 5)，防止機器過載。
+  3. **產出 Dashboard 結算報告**：在 `scripts/` 下新增一個報告彙整工具，執行完畢後自動輸出 HTML / Markdown 格式的關卡通過報告。
+
+### 階段二：AI 視覺裁判整合 (Visual Judge Integration)
+* **目標**：引入 `visual_judge.py` 對複雜 UI（如 HUD 折線圖、彈出視窗遮擋）進行佈局與對比度校驗，解除「DOM 在但按鈕點不到」的盲區。
+* **工作項目**：
+  1. **擴充 `YAMLScenarioRunner`**：當 `analysis.type` 為 `visual_judge` 時，自動擷取 Playwright 完工後的 Full-page 截圖。
+  2. **調用 `visual_judge.py` 核心服務**：將截圖、DOM Context 以及 AI 視覺檢查 Prompt 送入 Gemini API，回傳視覺布局合規性簽證。
+  3. **整合 Visual Diff 門檻**：基於像素比對法 (Pixelmatch) 進行預篩，當像素變更率大於 5% 時才觸發 LLM-Judge 進行細緻語義評判，以節省 API Token 費用。
+
+### 階段三：混沌工程模擬器 (Chaos Testing Simulator)
+* **目標**：在 UI 執行期間，隨機注入非同步異常，硬化系統的韌性。
+* **工作項目**：
+  1. **實作 Playwright 網路混沌注入**：在 `simulator_runner.py` 中，針對指定比例 (e.g., 5%) 的 API 請求，隨機注入 2000ms - 5000ms 的延遲 (Latency Mock) 或隨機返回 HTTP 500/503。
+  2. **UI 隨機干擾 (Chaos Monkey Event)**：在 Playwright 執行 Steps 的空檔中，有 10% 機率隨機觸發 `page.reload()` 或隨機發送點擊事件，驗證前端狀態機 (State Machine) 是否會鎖死或陷入無窮載入。
+
