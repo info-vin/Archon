@@ -745,3 +745,30 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 - **`subscriptions`**: 
     - **Ref**: 2025-09 重構 (277bfda)
     - **初衷**: 為「商業化付費模式」預留的數據模型，支援 API 訂閱與用量計費。
+
+---
+
+## 附錄 F：數位雙生動態模擬器與 E2E 驗證規範 (Digital Twin Simulator & E2E Verification Standard)
+
+> **更新日期**: 2026-05-27 (Digital Twin Simulator Hardening)
+> **說明**: 本章節記錄了 Phase 5.4.2 引入的數位雙生動態模擬器 (Digital Twin Simulator) 架構與全自動化驗證規範。
+
+### 1. 智慧型流程自動化 (IPA, Intelligent Process Automation) 原則
+本專案的 E2E 自動化測試本質上為結合了 AI 認知能力的 **IPA 機器人**，而非傳統脆弱的 RPA。所有關卡設計與除錯必須遵守以下原則：
+* **語義自癒定位 (Semantic Locators)**：優先使用 Intent-based text 定位（如 `button:has-text('RETURN')`），嚴禁使用易因排版改變而斷裂的靜態 CSS 階層路徑。
+* **狀態沙盒自癒 (Idempotent Sandboxing)**：所有具備狀態 (Stateful) 的測試，必須在關卡啟動前掛載 Python Pre-hook 清理並還原測試專屬資料，確保測試的可重複性與獨立性。
+* **AI 視覺與 layout 校驗**：透過與 Gemini Vision 模型的原生整合，在必要步驟擷取 Full-page 截圖並送入 `scripts/vision_judge.py` 進行排版、對比度與元件覆蓋的語義評判。
+
+### 2. 數位雙生模擬器核心元件
+* **`scripts/level_generator.py`**：採用參數化矩陣關卡設計，動態渲染並產生 100+ 個微型測試關卡 YAML，分流管理於 `scripts/twin_scenarios/05_generated_levels/`。
+* **`scripts/simulator_runner.py`**：
+    * **並發限制 (Concurrency Cap)**：預設限制 Concurrency = 3，防範機器資源過載。
+    * **混沌注入 (Chaos Injection)**：隨機針對 5% 的 API 請求注入 2s-5s 的延遲或回傳 HTTP 500/503，並隨機觸發 `page.reload()` 測試前端狀態機的硬化自癒能力。
+    * **像素預篩 (Pixelmatch Gate)**：新舊截圖像素變更率大於 5% 時才觸發 Gemini Vision 視覺審查，以節省 API Token 費用。
+* **`scripts/setup_level_sandbox.py`**：統一的關卡沙盒 pre-hook 管理器。在進行資料庫寫入時，測試數據必須以 `level_id` 隔離，並引入 `random.uniform(0.1, 0.5)` 的錯峰時間差 (Jitter) 以防範多執行緒並發資料庫死鎖。
+
+### 3. Makefile 標準指令
+* **`make twin-gen-levels`**：重新產生並渲染 100+ 個微型關卡 YAML 腳本。
+* **`make twin-simulator`**：啟動模擬器進行百關全自動闖關，並在 `.twin/diagnostics/` 下產出關卡通過率 Markdown 總結報告。
+* **`make twin-record SUBDIR=... SCENARIO=...`**：啟動單一關卡除錯模式，支援 `headless=false` 視覺回放與錄影存檔。
+
