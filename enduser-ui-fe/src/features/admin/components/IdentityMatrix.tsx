@@ -57,9 +57,11 @@ export const IdentityMatrix: React.FC = () => {
         setIsSavingMatrix(true);
         try {
             // Save each changed role (Simplified for MVP: save all current state)
-            for (const row of rbacMatrix) {
-                await api.updateRBACRole(row.role, row.permissions, row.description);
-            }
+            // PERFORMANCE OPTIMIZATION: Converted sequential loop to parallel requests.
+            // Impact: Reduces O(N) waiting time to O(1) concurrent waiting time, significantly speeding up matrix saves.
+            await Promise.all(
+                rbacMatrix.map(row => api.updateRBACRole(row.role, row.permissions, row.description))
+            );
             alert('RBAC Matrix saved successfully!');
         } catch (error: any) {
             alert(`Error saving matrix: ${error.message}`);
