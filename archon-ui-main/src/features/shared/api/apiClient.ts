@@ -135,6 +135,14 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
       } catch {
         // Ignore parse errors
       }
+
+      if (response.status === 402) {
+        console.warn("⚠️ 402 Payment Required: Tenant budget limit exceeded.");
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("archon-budget-exceeded", { detail: errorMessage }));
+        }
+      }
+
       throw new APIServiceError(errorMessage, "HTTP_ERROR", response.status);
     }
 

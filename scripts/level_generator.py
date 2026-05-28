@@ -38,14 +38,24 @@ def generate_levels():
         
     # Campaign B: Latency / 503 Resilient Load Tests (30 Levels)
     for i in range(1, 31):
+        # Calculate dynamic chaos parameters based on level ID index
+        latency = i * 100  # 100ms up to 3000ms latency
+        error_rate = round(0.02 * (i % 5), 2)  # 0% to 8% HTTP 500 error rate
+        offline = [2] if i % 10 == 0 else []  # Simulate offline on step 2 for every 10th level
+        
         levels.append({
             "id": f"L_CAMP_B_{i:03d}",
             "name": f"Campaign B Level {i:03d} - Stress Load verification",
-            "description": "Stress-test the system responsiveness under artificial latency.",
+            "description": f"Stress-test the system responsiveness under artificial latency ({latency}ms) and error rate ({error_rate * 100}%).",
             "auth": {
                 "url": "/#/auth",
                 "user": "bob@archon.com",
                 "password": "qwer45tyuiop"
+            },
+            "chaos": {
+                "latency_ms": latency,
+                "error_rate": error_rate,
+                "offline_steps": offline
             },
             "steps": [
                 {"action": "goto", "url": "/#/brand", "wait_until": "domcontentloaded", "timeout": 20000},
@@ -124,6 +134,9 @@ def generate_levels():
             "steps": lvl["steps"],
             "analysis": lvl["analysis"]
         }
+        if "chaos" in lvl:
+            yaml_content["chaos"] = lvl["chaos"]
+            
         with open(file_path, "w", encoding="utf-8") as f:
             yaml.dump(yaml_content, f, allow_unicode=True, sort_keys=False)
             

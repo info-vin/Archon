@@ -5,8 +5,8 @@ description: Verify persona alice@archon.com is blocked with HTTP 403 or redirec
 hooks:
   before_auth:
   - type: python_function
-    module: scripts.setup_level_sandbox
-    function: setup
+    module: scripts.setup_personas
+    function: setup_sandbox
     args:
       level_id: L_CAMP_A_017
       force_clean: true

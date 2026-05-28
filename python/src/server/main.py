@@ -50,6 +50,7 @@ from .api_routes.system_api import router as system_router  # NEW IMPORT
 from .api_routes.test_api import router as test_api_router  # NEW IMPORT
 from .api_routes.version_api import router as version_router
 from .api_routes.visit_log_api import router as visit_log_router  # NEW IMPORT
+from .middleware.budget_guard import BudgetGuardMiddleware
 
 # Import Logfire configuration
 
@@ -81,6 +82,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(BudgetGuardMiddleware)
 
 
 app.include_router(test_api_router)  # NEW ROUTER

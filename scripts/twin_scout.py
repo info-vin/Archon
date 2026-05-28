@@ -205,6 +205,7 @@ class YAMLScenarioRunner:
         self.is_record = is_record
         self.headless = headless
         self.enable_chaos = enable_chaos
+        self.current_step_index = 0
 
     async def run(self):
         print(f"🚀 [Scout-Runner] Executing scenario: {self.config.get('name', 'Unknown')}")
@@ -279,25 +280,41 @@ class YAMLScenarioRunner:
                 body=json.dumps(mock_suggested_reason)
             )))
 
-            if getattr(self, "enable_chaos", False):
+            # Parse chaos config from YAML or command line
+            chaos_cfg = self.config.get("chaos", {})
+            chaos_enabled = getattr(self, "enable_chaos", False) or bool(chaos_cfg)
+
+            if chaos_enabled:
                 import random
+                error_rate = chaos_cfg.get("error_rate", 0.05 if getattr(self, "enable_chaos", False) else 0.0)
+                latency_ms = chaos_cfg.get("latency_ms", 1000 if getattr(self, "enable_chaos", False) else 0)
+                offline_steps = chaos_cfg.get("offline_steps", [])
+                
                 async def chaos_handler(route):
-                    if random.random() < 0.05:
-                        print("⚡ [Chaos Network Injection] Intercepted request and simulated HTTP 500 error!")
+                    current_step = getattr(self, "current_step_index", 0)
+                    if current_step in offline_steps:
+                        print(f"🔌 [Chaos Network Injection] Step {current_step} is OFFLINE. Aborting request!")
+                        await route.abort("internetdisconnected")
+                        return
+
+                    if error_rate > 0 and random.random() < error_rate:
+                        print(f"⚡ [Chaos Network Injection] Intercepted request and simulated HTTP 500 error! (Rate: {error_rate})")
                         await route.fulfill(
                             status=500,
                             content_type="application/json",
                             body='{"error": "Internal Chaos Server Error"}'
                         )
                     else:
-                        if random.random() < 0.50:
-                            delay = random.uniform(1.0, 3.0)
-                            print(f"⏳ [Chaos Network Injection] Introducing artificial delay of {delay:.2f}s...")
-                            await asyncio.sleep(delay)
+                        if latency_ms > 0:
+                            delay_s = latency_ms / 1000.0
+                            jitter = random.uniform(0.8, 1.2)
+                            final_delay = delay_s * jitter
+                            print(f"⏳ [Chaos Network Injection] Introducing artificial delay of {final_delay:.2f}s...")
+                            await asyncio.sleep(final_delay)
                         await route.continue_()
                 
-                await ctx.route("**/api/marketing/**", lambda route: asyncio.create_task(chaos_handler(route)))
-                await ctx.route("**/api/stats/**", lambda route: asyncio.create_task(chaos_handler(route)))
+                # Intercept all API endpoints in chaos mode
+                await ctx.route("**/api/**", lambda route: asyncio.create_task(chaos_handler(route)))
 
             pg = await ctx.new_page()
 
@@ -330,6 +347,7 @@ class YAMLScenarioRunner:
             # Execute steps
             steps = self.config.get("steps", [])
             for i, step in enumerate(steps):
+                self.current_step_index = i + 1
                 action = step.get("action")
                 print(f"🔄 [Scout-Runner] Step {i+1}: {action}")
                 try:

@@ -4,8 +4,8 @@ description: Ensure the frontend boundary validations hold clean.
 hooks:
   before_auth:
   - type: python_function
-    module: scripts.setup_level_sandbox
-    function: setup
+    module: scripts.setup_personas
+    function: setup_sandbox
     args:
       level_id: L_CAMP_C_004
       force_clean: true

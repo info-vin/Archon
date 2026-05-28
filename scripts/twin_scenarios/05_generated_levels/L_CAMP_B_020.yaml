@@ -1,11 +1,12 @@
 name: Campaign B Level 020 - Stress Load verification
 mode: scenario
-description: Stress-test the system responsiveness under artificial latency.
+description: Stress-test the system responsiveness under artificial latency (2000ms)
+  and error rate (0.0%).
 hooks:
   before_auth:
   - type: python_function
-    module: scripts.setup_level_sandbox
-    function: setup
+    module: scripts.setup_personas
+    function: setup_sandbox
     args:
       level_id: L_CAMP_B_020
       force_clean: true
@@ -26,3 +27,8 @@ steps:
 analysis:
   type: static
   success_message: WORKFLOW_SUCCESS
+chaos:
+  latency_ms: 2000
+  error_rate: 0.0
+  offline_steps:
+  - 2

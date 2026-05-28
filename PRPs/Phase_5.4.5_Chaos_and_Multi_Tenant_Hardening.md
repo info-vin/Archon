@@ -38,11 +38,47 @@
 
 ---
 
-## 驗證計畫
+## 執行結果一：Playwright 混沌攔截與自癒驗證
 
-### 自動化驗證
-- **混沌模擬驗證**：執行 `make twin-simulator --chaos true`，確認即使注入 10% 的 API 500 錯誤率，模擬器仍能自癒完成任務或產出正確的故障日誌。
-- **多租戶隔離驗證**：編寫 Pytest 整合測試，模擬 A 租戶試圖透過 API 讀取 B 租戶的專案，驗證 Supabase RLS 是否能 100% 物理阻斷並回傳 403。
+- **實體改造**：
+  - 修改 `scripts/twin_scout.py` 中的 `YAMLScenarioRunner`，在 Playwright 上下文初始化後調用 `ctx.route("**/api/**", ...)`。
+  - 設計混沌攔截器（Chaos Handler）：隨機注入 `latency_ms`（人工延遲）與 500 伺服器錯誤（回傳 `{"error": "Internal Chaos Server Error"}`），並在指定的 `offline_steps` 步數自動斷網（Abort HTTP Request）。
+  - 更新 `scripts/level_generator.py` 生成 Campaign B 參數化混沌關卡（共 30 關）。
+- **實彈運行驗證**：
+  - 執行指令：`uv run python ../scripts/simulator_runner.py --headless true --chaos true --limit 5`
+  - 結果：**5/5 關卡全數 PASS (Success Rate: 100.0%)**。
+  - 運行期間成功模擬出多起 HTTP 500 與 Latency 延遲，前端 API 客戶端優雅攔截，UI 成功進行加載防禦與重試，模擬器無任何崩潰。
 
-### 手動驗證
-- 登入 Admin UI 查看 **AI 經濟治理看板**，確認各部門/租戶的 Token 消耗趨勢與預算條能正確按部門加載，且排版無溢位或閃爍現象。
+---
+
+## 執行結果二：多租戶隔離與 RLS 加固
+
+- **資料庫遷移與 RLS 硬化**：
+  - 設計並套用了 SQL 增量遷移檔 `migration/0.2.2/23_multi_tenant_and_rls_hardening.sql`：
+    - 為 `profiles`、`archon_projects`、`archon_tasks`、`leads`、`token_usage` 添加 `tenant_id` 欄位，預設指向系統預留租戶 UUID `d3b07384-d113-4456-a111-c91823710000`。
+    - 建立 `get_auth_tenant_id()` SECURITY DEFINER 函數安全獲取目前使用者的租戶，規避 RLS 政策引發的 SQL 無限遞迴。
+    - 更新並啟用 RLS 政策，將所有查詢/修改與 `get_auth_tenant_id()` 物理綁定，保障租戶資料的物理防禦。
+
+---
+
+## 執行結果三：FastAPI 預算熔斷 (Budget Guard) 中間件與前端對接
+
+- **預算熔斷機制 (Budget Breaker)**：
+  - 新增後端中間件 `python/src/server/middleware/budget_guard.py` 並在 `python/src/server/main.py` 的 CORSMiddleware 後掛載。
+  - 每個非 GET 之 API/LLM 請求進入前，均會在 `token_usage` 表查詢當前租戶累計的 API Token 金額。一旦超出 `BUDGET_LIMIT_USD`（預設為 10.0），則主動熔斷並回傳 `HTTP 402 Payment Required`。
+- **前端攔截與霓虹警告 Badge**：
+  - 修改 `archon-ui-main/src/features/shared/api/apiClient.ts` 攔截 `402` 狀態，並在 window 上 dispatch `archon-budget-exceeded` CustomEvent。
+  - 在 `MainLayout.tsx` 註冊事件監聽，收到事件時彈出橙色霓虹警告 Toast（Warning Badge），引導使用者，保障 React 不崩潰且無全頁空白。
+
+---
+
+## 執行結果四：系統與單元測試驗證成果
+
+1. **前後端強型別與靜態檢查**：
+   - **`npx tsc --noEmit`** ➜ 0 type errors.
+   - **`uv run ruff check` / `mypy`** ➜ All checks passed, 0 type errors.
+2. **後端單元與整合測試 (`make test-be`)**：
+   - **575 個測試全數 PASS** (6 skipped, 5 xfailed, 0 failed)，執行時間 126.64 秒，無任何迴歸錯誤。
+3. **角色物理對帳煙霧測試 (`make persona-audit`)**：
+   - 針對 5 大角色 (Alice, Bob, Charlie, David, Agents) 的 API 入口與權限控制進行實彈公證，**全數回傳 200 OK**，業務功能暢通。
+

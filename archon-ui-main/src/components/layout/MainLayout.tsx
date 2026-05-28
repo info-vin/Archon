@@ -128,6 +128,19 @@ export function MainLayout({ children, className }: MainLayoutProps) {
     }
   }, [isBackendError, backendError, showToast]);
 
+  // Handle budget warning event
+  useEffect(() => {
+    const handleBudgetExceeded = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      const errorMessage = customEvent.detail || "Tenant budget limit exceeded. Please contact your administrator.";
+      showToast(errorMessage, "warning", 8000);
+    };
+    window.addEventListener("archon-budget-exceeded", handleBudgetExceeded);
+    return () => {
+      window.removeEventListener("archon-budget-exceeded", handleBudgetExceeded);
+    };
+  }, [showToast]);
+
   return (
     <div className={cn("relative min-h-screen overflow-hidden", className)}>
       {/* TEMPORARY: Show backend startup error using old component */}
