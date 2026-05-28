@@ -14,7 +14,7 @@ logger = logging.getLogger("init_db")
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("src.server.services.auth_service").setLevel(logging.ERROR)
 
-DB_URL = os.getenv("SUPABASE_DB_URL")
+DB_URL = os.getenv("SUPABASE_DB_SESSION_URL") or os.getenv("SUPABASE_DB_URL")
 
 try:
     from src.server.services.auth_service import AuthService
