@@ -49,6 +49,8 @@ export const AdminCorrectionAnalytics: React.FC = () => {
             onClick={() => send({ type: 'FETCH' })}
             disabled={isLoading}
             className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            aria-label="Refresh analytics"
+            title="Refresh analytics"
           >
             <RefreshCwIcon className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
