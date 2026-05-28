@@ -8,6 +8,7 @@ from src.server.config.model_ssot import SYSTEM_MODELS
 from src.server.services.credential_service import credential_service
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_audio_semantic_loop_live(client):
     """

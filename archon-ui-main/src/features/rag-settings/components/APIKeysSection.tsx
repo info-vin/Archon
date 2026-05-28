@@ -33,14 +33,8 @@ export const APIKeysSection = () => {
       // Load all credentials
       const allCredentials = await credentialsService.getAllCredentials();
       
-      // Filter to only show API keys (credentials that end with _KEY or _API)
-      // AND exclude enduser_config category to keep 104 settings isolated from 3737
-      const apiKeys = allCredentials.filter(cred => {
-        const key = cred.key.toUpperCase();
-        const isApiKey = key.includes('_KEY') || key.includes('_API') || key.includes('API_');
-        const isEndUserConfig = cred.category === 'enduser_config';
-        return isApiKey && !isEndUserConfig;
-      });
+      // Filter strictly by the 'api_keys' category to prevent false positives (e.g., LAST_RUN_API_DEPRECATION_SCAN)
+      const apiKeys = allCredentials.filter(cred => cred.category === 'api_keys');
       
       // Convert to UI format
       const uiCredentials = apiKeys.map(cred => {
