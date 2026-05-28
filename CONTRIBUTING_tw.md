@@ -397,6 +397,8 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
   - migration/0.2.2/19_seed_marketing_group_chat_prompts.sql
   - migration/0.2.2/20_seed_supervisor_agent.sql
   - migration/0.2.2/21_seed_reports_workflow_prompts.sql
+  - migration/0.2.2/22_add_performance_indexes.sql
+  - migration/0.2.2/23_multi_tenant_and_rls_hardening.sql
   - migration/0.2.2/RESET_DB.sql
   - migration/0.2.2/seed_blog_posts.sql
   - migration/0.2.2/seed_mock_data.sql
