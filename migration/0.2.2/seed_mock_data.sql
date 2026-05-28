@@ -20,19 +20,19 @@ ON CONFLICT (id) DO UPDATE SET
 -- DevBot (Uses system_admin role for full system access)
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    'ai-dev-bot', 'BOT-001', 'Archon DevBot', 'dev.bot@archon.com', 'Engineering', 'AI Developer', 'active', 'system_admin', 'https://api.dicebear.com/7.x/bottts/svg?seed=DevBot'
+    'e1682371-0000-0000-0000-000000000000', 'BOT-001', 'Archon DevBot', 'archondevbot@archon.ai', 'Engineering', 'AI Developer', 'active', 'system_admin', 'https://api.dicebear.com/7.x/bottts/svg?seed=DevBot'
 ) ON CONFLICT (id) DO UPDATE SET role = 'system_admin', status = 'active';
 
 -- MarketBot (Uses marketing role for lead/blog access)
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    'ai-market-bot', 'BOT-002', 'Archon MarketBot', 'market.bot@archon.com', 'Marketing', 'AI Marketer', 'active', 'marketing', 'https://api.dicebear.com/7.x/bottts/svg?seed=MarketBot'
+    'a11ce000-0000-0000-0000-000000000000', 'BOT-002', 'Archon MarketBot', 'archonmarketbot@archon.ai', 'Marketing', 'AI Marketer', 'active', 'marketing', 'https://api.dicebear.com/7.x/bottts/svg?seed=MarketBot'
 ) ON CONFLICT (id) DO UPDATE SET role = 'marketing', status = 'active';
 
 -- Librarian (Uses marketing role for knowledge access)
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    'ai-librarian', 'BOT-003', 'Archon Librarian', 'lib.bot@archon.com', 'Knowledge', 'AI Librarian', 'active', 'marketing', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'
+    'b0b00000-0000-0000-0000-000000000000', 'BOT-003', 'Archon Librarian', 'archonlibrarian@archon.ai', 'Knowledge', 'AI Librarian', 'active', 'marketing', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'
 ) ON CONFLICT (id) DO UPDATE SET role = 'marketing', status = 'active';
 
 -- 4. Base Project

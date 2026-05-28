@@ -202,7 +202,18 @@ def sync_auth_users(cursor: PGCursor) -> None:
     logger.info("🔄 Starting Robust Auth Sync...")
     supabase = get_supabase_client()
     auth_service = AuthService(supabase)
-    cursor.execute("SELECT id, email, name, role FROM profiles WHERE status = 'active'")
+    cursor.execute("""
+        SELECT id, email, name, role FROM profiles 
+        WHERE status = 'active'
+          AND id NOT IN (
+              'f0f00000-0000-0000-0000-000000000000',
+              'a11ce000-0000-0000-0000-000000000000',
+              'b0b00000-0000-0000-0000-000000000000',
+              'e1682371-0000-0000-0000-000000000000',
+              'p0b00000-0000-0000-0000-000000000000',
+              'e1bf7a99-44bf-44ce-a460-cb4e31e798f4'
+          )
+    """)
     profiles = cursor.fetchall()
 
     DEFAULT_PW = "qwer45tyuiop"
