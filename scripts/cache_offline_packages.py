@@ -27,7 +27,7 @@ def main():
     for pkg in PACKAGES:
         print(f"📦 Downloading {pkg}...")
         try:
-            cmd = [sys.executable, "-m", "pip", "download", "-d", args.output, pkg]
+            cmd = [sys.executable, "-m", "pip", "download", "-d", args.output, "--extra-index-url", "https://download.pytorch.org/whl/cpu", pkg]
             subprocess.run(cmd, check=True)
             print(f"✅ {pkg} downloaded successfully.")
         except subprocess.CalledProcessError as e:
