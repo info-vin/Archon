@@ -115,3 +115,143 @@ class SystemMetrics:
         except Exception as e:
             logger.error(f"SystemMetrics: Recent token usage fetch failed: {e}")
             return []
+
+    async def get_team_availability(self, user_ids: list[str], target_date: str) -> list[dict[str, Any]]:
+        """
+        Calculates availability for team members by analyzing existing non-done tasks.
+        Excludes busy segments from the working day (09:00 to 18:00 local GMT+8 time).
+        """
+        try:
+            import re
+            # Extract YYYY-MM-DD cleanly using regex to avoid parsing crashes (GAP-004 fix)
+            date_match = re.search(r"(\d{4}-\d{2}-\d{2})", target_date)
+            if not date_match:
+                raise ValueError(f"Invalid date format: {target_date}")
+            clean_date = date_match.group(1)
+
+            # 1. Query tasks in local business timezone offset (+08:00)
+            start_iso = f"{clean_date}T00:00:00+08:00"
+            end_iso = f"{clean_date}T23:59:59+08:00"
+
+            res = (
+                self.supabase.table("archon_tasks")
+                .select("assignee_id, due_date, estimated_hours")
+                .in_("assignee_id", user_ids)
+                .neq("status", "done")
+                .or_("archived.is.null,archived.is.false")
+                .gte("due_date", start_iso)
+                .lte("due_date", end_iso)
+                .execute()
+            )
+
+            tasks = res.data or []
+
+            # 2. Establish busy intervals in timezone-aware datetimes
+            busy_intervals = []
+            for task in tasks:
+                raw_due = task.get("due_date")
+                if not raw_due:
+                    continue
+                try:
+                    # Convert Zulu time Z to +00:00 for python fromisoformat compatibility
+                    due_dt = datetime.fromisoformat(str(raw_due).replace("Z", "+00:00"))
+                except Exception:
+                    continue
+
+                est_hours = float(task.get("estimated_hours") or 1.0)
+                if est_hours <= 0:
+                    est_hours = 1.0
+
+                start_dt = due_dt - timedelta(hours=est_hours)
+                busy_intervals.append((start_dt, due_dt))
+
+            # Sort and merge busy intervals
+            busy_intervals.sort(key=lambda x: x[0])
+            merged_busy = []
+            for start, end in busy_intervals:
+                if not merged_busy:
+                    merged_busy.append((start, end))
+                else:
+                    last_start, last_end = merged_busy[-1]
+                    if start <= last_end:
+                        # Overlap, merge
+                        merged_busy[-1] = (last_start, max(last_end, end))
+                    else:
+                        merged_busy.append((start, end))
+
+            # 3. Working hours start/end in GMT+8 (09:00 - 18:00 Taipei business hours)
+            work_start = datetime.fromisoformat(f"{clean_date}T09:00:00+08:00")
+            work_end = datetime.fromisoformat(f"{clean_date}T18:00:00+08:00")
+
+            # Find free intervals in [work_start, work_end]
+            free_slots = []
+            current_time = work_start
+
+            for start, end in merged_busy:
+                # If busy segment starts after current_time, we have a potential gap
+                if start > current_time:
+                    gap_start = current_time
+                    gap_end = min(start, work_end)
+                    if gap_start < gap_end:
+                        free_slots.append((gap_start, gap_end))
+                current_time = max(current_time, end)
+                if current_time >= work_end:
+                    break
+
+            if current_time < work_end:
+                free_slots.append((current_time, work_end))
+
+            # 4. Standardize free slots into 1-hour slots or candidate meeting blocks
+            recommendations = []
+            for slot_start, slot_end in free_slots:
+                duration = (slot_end - slot_start).total_seconds() / 3600.0
+                # Chunk into 1-hour meetings
+                temp_start = slot_start
+                while (slot_end - temp_start).total_seconds() >= 3600.0:
+                    recommendations.append({
+                        "start_time": temp_start.isoformat(),
+                        "end_time": (temp_start + timedelta(hours=1.0)).isoformat()
+                    })
+                    temp_start += timedelta(hours=1.0)
+                    if len(recommendations) >= 3:
+                        break
+                if len(recommendations) >= 3:
+                    break
+
+            # Fallback if no recommendation generated (e.g. fully busy day)
+            if not recommendations:
+                default_hours = [9, 13, 16]
+                for dh in default_hours:
+                    ds = datetime.fromisoformat(f"{clean_date}T{dh:02d}:00:00+08:00")
+                    recommendations.append({
+                        "start_time": ds.isoformat(),
+                        "end_time": (ds + timedelta(hours=1.0)).isoformat()
+                    })
+
+            return recommendations[:3]
+        except Exception as e:
+            logger.error(f"SystemMetrics: get_team_availability failed: {e}")
+            # Extract clean date safely for fallback default slots
+            try:
+                date_match = re.search(r"(\d{4}-\d{2}-\d{2})", target_date)
+                fallback_date = date_match.group(1) if date_match else "2026-06-01"
+            except Exception:
+                fallback_date = "2026-06-01"
+
+            # Safe local fallback (GMT+8)
+            return [
+                {
+                    "start_time": f"{fallback_date}T09:00:00+08:00",
+                    "end_time": f"{fallback_date}T10:00:00+08:00"
+                },
+                {
+                    "start_time": f"{fallback_date}T13:00:00+08:00",
+                    "end_time": f"{fallback_date}T14:00:00+08:00"
+                },
+                {
+                    "start_time": f"{fallback_date}T16:00:00+08:00",
+                    "end_time": f"{fallback_date}T17:00:00+08:00"
+                }
+            ]
+
+

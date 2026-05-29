@@ -113,6 +113,25 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                     <p className="text-gray-500 text-xs italic line-clamp-3">{summary.voice_transcript}</p>
                                 </div>
                             )}
+                            {summary?.scheduling_recommendation && (
+                                <div className="mt-2 pt-2 border-t border-purple-200 text-left">
+                                    <p className="font-bold text-purple-700 mb-2 text-xs flex items-center gap-1">
+                                        📅 SUGGESTED MEETING SLOTS (GMT+8)
+                                    </p>
+                                    <p className="text-gray-600 text-xs mb-3 italic">{summary.scheduling_recommendation.conflict_summary}</p>
+                                    <div className="flex flex-col gap-1">
+                                        {summary.scheduling_recommendation.suggested_slots.map((slot: any, idx: number) => {
+                                            const st = new Date(slot.start_time);
+                                            const et = new Date(slot.end_time);
+                                            return (
+                                                <div key={idx} className="p-2 bg-purple-50 text-purple-900 border border-purple-100 rounded text-xs">
+                                                    Slot {String.fromCharCode(65 + idx)}: {st.toLocaleDateString()} {st.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ~ {et.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <button onClick={onSuccess} className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold">

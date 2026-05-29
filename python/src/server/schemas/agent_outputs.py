@@ -44,3 +44,30 @@ class AgentOutputSchema(BaseModel):
         """Pydantic config for serialization"""
 
         json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class VoiceProcessResult(BaseModel):
+    """Pydantic model representing the parsed voice transcription and scheduling details."""
+
+    transcript: str = Field(default="", description="語音逐字稿")
+    summary: str = Field(default="音訊處理完成。", description="語音摘要")
+    tasks: list[str] = Field(default_factory=list, description="跟進任務清單")
+    scheduling_intent: bool = Field(default=False, description="是否提及下次預約會議時間的意圖")
+    requested_date: str | None = Field(None, description="請求會議的日期 (YYYY-MM-DD)")
+    requested_duration_hours: float = Field(1.0, description="請求會議預估時數 (小時)")
+    meeting_topic: str | None = Field(None, description="會議討論主題與大綱")
+
+
+
+class TimeSlot(BaseModel):
+    start_time: datetime
+    end_time: datetime
+
+
+class SchedulingRecommendation(BaseModel):
+    """Structured response returned by MarketBot/StatsService to the frontend."""
+
+    meeting_topic: str
+    suggested_slots: list[TimeSlot] = Field(default_factory=list, description="推薦的三個可行空檔選項")
+    conflict_summary: str = Field(description="排除忙碌行程的簡短原因說明")
+

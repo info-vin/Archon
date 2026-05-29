@@ -34,17 +34,18 @@ class VisitLogService(BaseRepository):
 
         return self.execute_query(_query, "Failed to list logs")
 
-    async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str]]:
+    async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str], Any]:
         """
         Processes audio using official google-genai SDK (Phase 4.6.39 pattern).
-        Returns: (transcript, summary, tasks)
+        Returns: (transcript, summary, tasks, parsed_ai_res)
         """
         try:
             # 1. Get Credentials
             api_key = await credential_service.get_credential("GEMINI_API_KEY")
             if not api_key:
                 logger.error("VisitLogService: GEMINI_API_KEY missing.")
-                return "[Error: API Key Missing]", "AI processing failed.", []
+                from src.server.schemas.agent_outputs import VoiceProcessResult
+                return "[Error: API Key Missing]", "AI processing failed.", [], VoiceProcessResult()
 
             rag_strategy = await credential_service.get_credentials_by_category("rag_strategy")
             model_name = (rag_strategy.get("AUDIO_MODEL") or SYSTEM_MODELS["DEFAULT_TEXT"]).split("/")[-1]
@@ -63,8 +64,17 @@ class VisitLogService(BaseRepository):
                     "VOICE_TRANSCRIPTION",
                     (
                         "你是一位專業的業務助理。請準確地將拜訪錄音轉錄為繁體中文逐字稿，"
-                        "總結關鍵對話內容，並提取跟進任務。回傳格式為 JSON: "
-                        "{'transcript': '...', 'summary': '...', 'tasks': ['...']}"
+                        "總結關鍵對話內容，並提取跟進任務。此外，請分析是否有提及預約下次開會時間或下次預約的意圖。\n"
+                        "回傳格式為 JSON:\n"
+                        "{\n"
+                        "  \"transcript\": \"逐字稿內容...\",\n"
+                        "  \"summary\": \"AI摘要...\",\n"
+                        "  \"tasks\": [\"任務1\"],\n"
+                        "  \"scheduling_intent\": true/false,\n"
+                        "  \"requested_date\": \"YYYY-MM-DD 或 null\",\n"
+                        "  \"requested_duration_hours\": 1.0,\n"
+                        "  \"meeting_topic\": \"會議主題或 null\"\n"
+                        "}"
                     ),
                 )
 
@@ -77,25 +87,49 @@ class VisitLogService(BaseRepository):
                 if os.path.exists(tmp_path):
                     os.remove(tmp_path)
 
-            result = json.loads(cast(str, response.text))
-            return (result.get("transcript", ""), result.get("summary", "音訊處理完成。"), result.get("tasks", []))
+            # Clean JSON markdown blocks if present (Fragile JSON Parsing Fix)
+            clean_text = cast(str, response.text).strip()
+            if clean_text.startswith("```"):
+                lines = clean_text.splitlines()
+                if lines[0].startswith("```json") or lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                clean_text = "\n".join(lines).strip()
+
+            result = json.loads(clean_text)
+
+            # Validate using VoiceProcessResult model (Dead Code / Hallucination Fix)
+            from src.server.schemas.agent_outputs import VoiceProcessResult
+            parsed_res = VoiceProcessResult.model_validate(result)
+
+            return (
+                parsed_res.transcript,
+                parsed_res.summary,
+                parsed_res.tasks,
+                parsed_res
+            )
         except Exception as e:
             logger.error(f"VisitLogService: AI processing crashed: {e}")
-            return f"[AI Error: {e}]", "System error during transcription.", []
+            from src.server.schemas.agent_outputs import VoiceProcessResult
+            return f"[AI Error: {e}]", "System error during transcription.", [], VoiceProcessResult()
 
     async def create_log(self, data: dict, audio_file: Any = None) -> tuple[bool, Any]:
         """
         Creates a visit log and automatically triggers Task Generation (GAP-009).
+        Supports Phase 5.4.6 PydanticAI voice scheduling loop.
         """
+        from src.server.schemas.agent_outputs import VoiceProcessResult
         transcript = ""
         summary = data.get("summary", "No audio provided.")
         tasks: list[str] = []
+        parsed_ai_res = VoiceProcessResult()
 
         if audio_file:
             logger.info("VisitLogService: Processing audio file...")
             audio_content = await audio_file.read()
             mime_type = audio_file.content_type or "audio/webm"
-            transcript, summary, tasks = await self._process_voice_with_ai(audio_content, mime_type)
+            transcript, summary, tasks, parsed_ai_res = await self._process_voice_with_ai(audio_content, mime_type)
 
         # 1. Insert Visit Log
         log_payload = {
@@ -117,18 +151,16 @@ class VisitLogService(BaseRepository):
         if not success or not res:
             return False, res
 
-        # res is typically a list from Supabase PostgREST
         created_log = res[0] if isinstance(res, list) and len(res) > 0 else res
         visit_id = created_log.get("id")
 
-        # 2. Automated Task Dispatch (Phase 4.6.45: Robust Discovery)
+        # 2. Automated Task Dispatch / Scheduling Recommendation (Phase 5.4.6)
         try:
             from src.server.services.projects.task_service import task_service
+            from src.server.services.agent_registry import get_agent_uuid
+            from datetime import datetime
 
-            # Strategy: 1. Try title matching 'Ops' 2. Fallback
             project_id = None
-
-            # Try fuzzy match 'Ops' first to avoid hard 'Field Ops' constraint
             proj_res = (
                 self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
             )
@@ -136,28 +168,94 @@ class VisitLogService(BaseRepository):
                 project_id = proj_res.data[0]["id"]
 
             if not project_id:
-                # Fallback to any active project
                 fallback = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
-                project_id = fallback.data[0]["id"] if fallback.data else None
+                # Empty DB safety: Protect against IndexError (GAP-005 Fix)
+                project_id = fallback.data[0]["id"] if fallback.data and len(fallback.data) > 0 else None
 
             if project_id and visit_id:
                 entity_name = data.get("company_name") or "客戶"
-                task_title = f"[Field Ops] 追蹤: {entity_name} - {summary[:30]}..."
-                task_desc = (
-                    f"**由語音日誌自動產生**\n\n"
-                    f"**逐字稿:**\n{transcript}\n\n"
-                    f"**AI 摘要:**\n{summary}\n\n"
-                    f"**拜訪地點:** {log_payload['location_address'] or '未提供'}"
-                )
+                is_meeting = parsed_ai_res.scheduling_intent
+                requested_date = parsed_ai_res.requested_date
 
-                await task_service.create_task(
-                    project_id=project_id,
-                    title=task_title,
-                    description=task_desc,
-                    assignee_id=data.get("user_id"),
-                    sources=[{"type": "visit_log", "id": str(visit_id)}],
-                )
-                logger.info(f"VisitLogService: Successfully dispatched auto-task for log {visit_id}")
+                if is_meeting and requested_date:
+                    # Retrieve Bob & Charlie agent UUIDs
+                    bob_id = get_agent_uuid("market-bot")
+                    charlie_id = get_agent_uuid("supervisor")
+
+                    # Fallback check for missing Agents (GAP-005 Fix)
+                    if not bob_id:
+                        logger.warning("VisitLogService: Bob (market-bot) UUID not found in profiles, using default.")
+                        bob_id = "00000000-0000-0000-0000-000000000002"
+                    if not charlie_id:
+                        logger.warning("VisitLogService: Charlie (supervisor) UUID not found in profiles, using default.")
+                        charlie_id = "00000000-0000-0000-0000-000000000001"
+
+                    # Invoke availability checker
+                    from src.server.services.stats import stats_service
+                    slots = await stats_service.get_team_availability([bob_id, charlie_id], requested_date)
+
+                    slot_texts = []
+                    for i, slot in enumerate(slots):
+                        try:
+                            st = datetime.fromisoformat(slot["start_time"])
+                            et = datetime.fromisoformat(slot["end_time"])
+                            slot_texts.append(f"選項 {chr(65+i)}: {st.strftime('%Y-%m-%d %H:%M')} ~ {et.strftime('%H:%M')} (GMT+8)")
+                        except Exception:
+                            slot_texts.append(f"選項 {chr(65+i)}: {slot['start_time']} ~ {slot['end_time']}")
+
+                    conflict_summary = (
+                        f"已為 Bob (MarketBot) 與 Charlie (Supervisor) 排除行程衝突。建議開會時間選項如下：\n" +
+                        "\n".join(slot_texts)
+                    )
+
+                    topic = parsed_ai_res.meeting_topic or "需求對接討論會"
+                    task_title = f"[待確認會議] {entity_name} - {topic}"
+                    task_desc = (
+                        f"**由語音日誌自動分析排程**\n\n"
+                        f"**會議主題:** {topic}\n"
+                        f"**預計日期:** {requested_date}\n\n"
+                        f"**{conflict_summary}**\n\n"
+                        f"**逐字稿:**\n{transcript}\n\n"
+                        f"**AI 摘要:**\n{summary}"
+                    )
+
+                    # Assign task to Bob, add Charlie as collaborator
+                    collabs = [charlie_id]
+                    if data.get("user_id"):
+                        collabs.append(data.get("user_id"))
+
+                    await task_service.create_task(
+                        project_id=project_id,
+                        title=task_title,
+                        description=task_desc,
+                        assignee="Archon MarketBot",
+                        assignee_id=bob_id,
+                        collaborator_agent_ids=collabs,
+                        sources=[{"type": "visit_log", "id": str(visit_id)}],
+                    )
+                    # Expose recommendations in response so frontend can show them immediately
+                    created_log["scheduling_recommendation"] = {
+                        "meeting_topic": topic,
+                        "suggested_slots": slots,
+                        "conflict_summary": conflict_summary
+                    }
+                else:
+                    task_title = f"[Field Ops] 追蹤: {entity_name} - {summary[:30]}..."
+                    task_desc = (
+                        f"**由語音日誌自動產生**\n\n"
+                        f"**逐字稿:**\n{transcript}\n\n"
+                        f"**AI 摘要:**\n{summary}\n\n"
+                        f"**拜訪地點:** {log_payload['location_address'] or '未提供'}"
+                    )
+
+                    await task_service.create_task(
+                        project_id=project_id,
+                        title=task_title,
+                        description=task_desc,
+                        assignee_id=data.get("user_id"),
+                        sources=[{"type": "visit_log", "id": str(visit_id)}],
+                    )
+                logger.info(f"VisitLogService: Successfully dispatched task/schedule for log {visit_id}")
         except Exception as task_err:
             logger.error(f"VisitLogService: Auto-task dispatch failed: {task_err}")
 

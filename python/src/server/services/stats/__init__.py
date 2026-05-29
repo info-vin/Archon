@@ -218,6 +218,10 @@ class StatsService:
             logger.error(f"StatsService: Overview failed: {e}")
             return {"status": "error", "error": str(e)}
 
+    async def get_team_availability(self, user_ids: list[str], target_date: str) -> list[dict[str, Any]]:
+        """Delegates to SystemMetrics for availability calculation (Phase 5.4.6)."""
+        return await self.metrics.system_metrics.get_team_availability(user_ids, target_date)
+
 
 # Global singleton instance
 stats_service = StatsService()
