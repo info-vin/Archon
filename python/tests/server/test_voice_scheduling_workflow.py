@@ -1,9 +1,11 @@
-import pytest
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
-from datetime import datetime, timedelta
+
+import pytest
+
+from src.server.schemas.agent_outputs import VoiceProcessResult
 from src.server.services.stats import stats_service
 from src.server.services.visit_log_service import visit_log_service
-from src.server.schemas.agent_outputs import VoiceProcessResult
 
 
 @pytest.mark.asyncio
@@ -38,20 +40,20 @@ async def test_scheduling_algorithm_availability():
     # Patch system_metrics supabase select table queries
     with patch.object(stats_service.metrics.system_metrics.supabase, "table") as mock_table:
         mock_table.return_value.select.return_value.in_.return_value.neq.return_value.or_.return_value.gte.return_value.lte.return_value.execute = MagicMockExecutor(mock_res)
-        
+
         slots = await stats_service.get_team_availability(user_ids, target_date)
-        
+
         assert len(slots) == 3
         # Assertions to verify slots are outside busy ranges
         for slot in slots:
             st = datetime.fromisoformat(slot["start_time"])
             et = datetime.fromisoformat(slot["end_time"])
-            
+
             # Should not intersect with Bob: 09:00-11:00
             bob_start = datetime.fromisoformat(f"{target_date}T09:00:00+08:00")
             bob_end = datetime.fromisoformat(f"{target_date}T11:00:00+08:00")
             assert not (st < bob_end and et > bob_start)
-            
+
             # Should not intersect with Charlie: 14:00-15:00
             charlie_start = datetime.fromisoformat(f"{target_date}T14:00:00+08:00")
             charlie_end = datetime.fromisoformat(f"{target_date}T15:00:00+08:00")
@@ -70,7 +72,7 @@ async def test_fragile_date_parsing_robustness():
 
     with patch.object(stats_service.metrics.system_metrics.supabase, "table") as mock_table:
         mock_table.return_value.select.return_value.in_.return_value.neq.return_value.or_.return_value.gte.return_value.lte.return_value.execute = MagicMockExecutor(mock_res)
-        
+
         # Should parse clean date and return fallback or empty slots instead of raising exception
         slots = await stats_service.get_team_availability(user_ids, dirty_date)
         assert len(slots) == 3
@@ -117,7 +119,7 @@ async def test_end_to_end_voice_scheduling_integration():
 
     # Stub VisitLogService database insert
     mock_log_db_res = [{"id": "log-uuid-777", "summary": "預約下次會議"}]
-    
+
     # Stub task service and agent resolver
     with patch.object(visit_log_service, "_process_voice_with_ai", AsyncMock(return_value=(
         mock_parsed_ai_res.transcript,
@@ -143,7 +145,7 @@ async def test_end_to_end_voice_scheduling_integration():
             rec = log_res["scheduling_recommendation"]
             assert rec["meeting_topic"] == "需求規格書討論"
             assert len(rec["suggested_slots"]) == 3
-            
+
             # Assert task was created and dispatched to Bob with Charlie as collaborator
             mock_create_task.assert_called_once()
             args, kwargs = mock_create_task.call_args

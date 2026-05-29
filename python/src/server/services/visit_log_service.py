@@ -156,9 +156,10 @@ class VisitLogService(BaseRepository):
 
         # 2. Automated Task Dispatch / Scheduling Recommendation (Phase 5.4.6)
         try:
-            from src.server.services.projects.task_service import task_service
-            from src.server.services.agent_registry import get_agent_uuid
             from datetime import datetime
+
+            from src.server.services.agent_registry import get_agent_uuid
+            from src.server.services.projects.task_service import task_service
 
             project_id = None
             proj_res = (
@@ -204,7 +205,7 @@ class VisitLogService(BaseRepository):
                             slot_texts.append(f"選項 {chr(65+i)}: {slot['start_time']} ~ {slot['end_time']}")
 
                     conflict_summary = (
-                        f"已為 Bob (MarketBot) 與 Charlie (Supervisor) 排除行程衝突。建議開會時間選項如下：\n" +
+                        "已為 Bob (MarketBot) 與 Charlie (Supervisor) 排除行程衝突。建議開會時間選項如下：\n" +
                         "\n".join(slot_texts)
                     )
 
@@ -222,7 +223,7 @@ class VisitLogService(BaseRepository):
                     # Assign task to Bob, add Charlie as collaborator
                     collabs = [charlie_id]
                     if data.get("user_id"):
-                        collabs.append(data.get("user_id"))
+                        collabs.append(str(data.get("user_id")))
 
                     await task_service.create_task(
                         project_id=project_id,

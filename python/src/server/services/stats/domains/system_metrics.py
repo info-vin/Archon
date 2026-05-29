@@ -167,7 +167,7 @@ class SystemMetrics:
 
             # Sort and merge busy intervals
             busy_intervals.sort(key=lambda x: x[0])
-            merged_busy = []
+            merged_busy: list[tuple[datetime, datetime]] = []
             for start, end in busy_intervals:
                 if not merged_busy:
                     merged_busy.append((start, end))
@@ -204,7 +204,6 @@ class SystemMetrics:
             # 4. Standardize free slots into 1-hour slots or candidate meeting blocks
             recommendations = []
             for slot_start, slot_end in free_slots:
-                duration = (slot_end - slot_start).total_seconds() / 3600.0
                 # Chunk into 1-hour meetings
                 temp_start = slot_start
                 while (slot_end - temp_start).total_seconds() >= 3600.0:
