@@ -109,6 +109,24 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年5月29日：Phase 5.5.0 離線硬化與 ENOSPC 磁碟危機救援
+
+今日我們成功完成了 Phase 5.5.0「無網路極端環境下之系統自動擴充與離線硬化計畫」，過程充滿了硬體層級的驚險挑戰，核心成果如下：
+
+1. **離線架構落地與資料庫降階**：
+   * 成功實作 `OFFLINE_MODE` 雙軌機制。當啟動離線模式時，`migration_service.py` 會自動清空原有 768 維度數據，並將 `embedding` 欄位降階為 384 維度，無縫接軌本地的 SentenceTransformer 引擎。
+   * 實作本地多模態回退機制：在無網狀態下，`vision_judge.py` 會自動轉接本地的 Ollama (`gemma4:e4b`) 進行視覺排版對帳。
+2. **巨獸級映像檔與 ENOSPC 危機**：
+   * 在執行 Docker 建置時，遭遇了嚴重的 `ENOSPC: no space left on device` (硬碟 100% 滿載) 導致系統假死與 I/O Error。
+   * **物理剖析**：啟動臨時容器調查後，發現 `archon-server` 映像檔竟然高達 **31.5 GB**。
+   * **真兇與修復**：
+     - **CUDA 死重**：下載的 PyTorch 與離線 Wheels 包含了 2.7GB+ 的 Nvidia CUDA 驅動。我們在安裝指令中強制加上 `--extra-index-url https://download.pytorch.org/whl/cpu`，將其徹底剃除。
+     - **快取地雷**：錯誤地在 `Dockerfile.server` 寫入 `COPY --from=builder /root/.cache /root/.cache`，導致 8.3GB 的建置快取被封裝。移除該行後，最終映像檔成功瘦身至 **5.02 GB**。
+3. **Sparse File 壓縮機制**：
+   * 學到教訓：在 macOS 上，即使透過 `docker system prune` 或 "Clean / Purge data" 刪除了大量 Docker 數據，Host 端的 `Docker.raw` (Sparse File) 不會立即縮小，**必須重啟 Docker Desktop** 才能觸發底層的空間回收壓縮 (Compaction)。
+4. **離線雙生模擬成功**：
+   * 最終執行 `OFFLINE_MODE=true make twin-simulator`，成功在完全隔離雲端的情況下，以本地模型通過了混沌網路注入與三個 RBAC 關卡的動態驗證。
+
 ### 2026年5月27日：Phase 5.3 & 5.4 實體稽核與 QA 門禁自癒
 
 今日我們進行了 Phase 5.3 與 5.4 系列計畫的深度物理稽核，並執行了嚴格的 `make audit-qa` 門禁檢查，核心成果如下：
