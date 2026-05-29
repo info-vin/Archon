@@ -5,6 +5,7 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../../src/hooks/useAuth';
 import { AppRoutes } from '../../src/App';
+import { api } from '../../src/services/api';
 
 // SECTION 1: MOCK DATA TEMPLATE
 const { MOCK_ADMIN_USER } = vi.hoisted(() => ({
@@ -71,6 +72,11 @@ afterEach(() => {
   // Re-inject core tokens to prevent redirect to /auth
   localStorage.setItem('supabaseUrl', 'https://mock.supabase.co');
   localStorage.setItem('supabaseKey', 'mock-key');
+
+  // Reset API mocks to prevent cross-test leakage/pollution
+  if (api && api.getCurrentUser) {
+    vi.mocked(api.getCurrentUser).mockResolvedValue(structuredClone(MOCK_ADMIN_USER) as any);
+  }
 });
 
 afterAll(() => {
