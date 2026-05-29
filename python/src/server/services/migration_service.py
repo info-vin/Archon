@@ -259,6 +259,66 @@ class MigrationService:
             "applied_count": len(applied),
         }
 
+    async def adapt_vector_dimensions_for_offline_mode(self) -> None:
+        """
+        Alters vector column dimensions in the database to 384 and rebuilds HNSW indexes
+        if OFFLINE_MODE is enabled.
+        """
+        import os
+        if os.getenv("OFFLINE_MODE", "false").lower() != "true":
+            return
+
+        db_url = os.getenv("SUPABASE_DB_URL")
+        if not db_url:
+            logfire.warning("OFFLINE_MODE is true but SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
+            return
+
+        logfire.info("OFFLINE_MODE is enabled. Adapting vector database columns to 384 dimensions...")
+        
+        # Connect using psycopg2 to run DDL command
+        import psycopg2
+        
+        sql_commands = [
+            "DROP INDEX IF EXISTS public.archon_crawled_pages_embedding_idx CASCADE;",
+            "ALTER TABLE public.archon_crawled_pages ALTER COLUMN embedding TYPE public.vector(384);",
+            "CREATE INDEX IF NOT EXISTS archon_crawled_pages_embedding_idx ON public.archon_crawled_pages USING hnsw (embedding public.vector_cosine_ops);",
+            
+            "DROP INDEX IF EXISTS public.archon_code_examples_embedding_idx CASCADE;",
+            "ALTER TABLE public.archon_code_examples ALTER COLUMN embedding TYPE public.vector(384);",
+            "CREATE INDEX IF NOT EXISTS archon_code_examples_embedding_idx ON public.archon_code_examples USING hnsw (embedding public.vector_cosine_ops);"
+        ]
+        
+        conn = None
+        try:
+            # Connect to pg database
+            conn = psycopg2.connect(db_url)
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                # Check current dimension of the vector columns
+                try:
+                    cursor.execute(
+                        "SELECT atttypmod FROM pg_attribute WHERE attrelid = 'public.archon_crawled_pages'::regclass AND attname = 'embedding';"
+                    )
+                    row = cursor.fetchone()
+                    if row and row[0] == 384:
+                        logfire.info("Vector columns are already at 384 dimensions. No adaptation needed.")
+                        return
+                except Exception as check_err:
+                    logfire.warning(f"Could not check current vector dimension (table might not exist yet): {check_err}")
+
+                logfire.info("Altering columns and rebuilding indexes...")
+                for cmd in sql_commands:
+                    try:
+                        cursor.execute(cmd)
+                    except Exception as e:
+                        logfire.warning(f"Failed to execute command '{cmd}': {e}")
+                logfire.info("✅ Vector columns successfully adapted to 384 dimensions.")
+        except Exception as e:
+            logfire.error(f"❌ Failed to adapt vector database dimensions: {e}", exc_info=True)
+        finally:
+            if conn:
+                conn.close()
+
 
 # Export singleton instance
 migration_service = MigrationService()

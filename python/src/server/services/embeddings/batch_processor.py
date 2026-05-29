@@ -40,6 +40,31 @@ async def create_embeddings_batch(
     if not texts:
         return EmbeddingBatchResult()
 
+    # Dynamic offline mode handling using sentence-transformers
+    if os.getenv("OFFLINE_MODE", "false").lower() == "true":
+        search_logger.info("OFFLINE_MODE is enabled. Generating embeddings locally using 'all-MiniLM-L6-v2'.")
+        try:
+            from sentence_transformers import SentenceTransformer
+            model = SentenceTransformer("all-MiniLM-L6-v2")
+            
+            # SentenceTransformer encode executes synchronously, wrap in executor to keep it async friendly
+            loop = asyncio.get_event_loop()
+            embeddings_np = await loop.run_in_executor(
+                None, lambda: model.encode(texts, show_progress_bar=False)
+            )
+            
+            result = EmbeddingBatchResult()
+            for text_item, emb in zip(texts, embeddings_np):
+                result.add_success(emb.tolist(), text_item)
+            return result
+        except Exception as e:
+            search_logger.error(f"Failed to generate local embeddings: {e}", exc_info=True)
+            result = EmbeddingBatchResult()
+            final_error = EmbeddingAPIError(f"Local embedding failure: {str(e)}", original_error=e)
+            for text_item in texts:
+                result.add_failure(text_item, final_error)
+            return result
+
     # Validate that all items in texts are strings
     validated_texts = []
     for i, text in enumerate(texts):

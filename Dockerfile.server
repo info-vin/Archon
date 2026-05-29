@@ -17,6 +17,14 @@ RUN uv venv /venv && \
     . /venv/bin/activate && \
     uv pip install --group server
 
+# Pre-download critical python wheels for offline self-expansion
+COPY scripts/cache_offline_packages.py scripts/
+RUN python scripts/cache_offline_packages.py --output /app/offline_wheels
+
+# Pre-download and cache SentenceTransformer model weights for offline RAG
+RUN uv pip install --python /venv/bin/python --no-index --find-links=/app/offline_wheels sentence-transformers && \
+    /venv/bin/python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
 # Runtime stage
 FROM python:3.12-slim
 
@@ -53,6 +61,8 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the virtual environment from builder
 COPY --from=builder /venv /venv
+COPY --from=builder /app/offline_wheels /app/offline_wheels
+COPY --from=builder /root/.cache /root/.cache
 
 # Install Playwright browsers
 ENV PATH=/venv/bin:$PATH

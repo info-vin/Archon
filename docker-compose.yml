@@ -39,6 +39,11 @@ services:
       - AGENTS_SERVICE_URL=${AGENTS_SERVICE_URL:-http://archon-agents:${ARCHON_AGENTS_PORT:-8052}}
       - ENABLE_TEST_ENDPOINTS=true
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+      - OFFLINE_MODE=${OFFLINE_MODE:-false}
+      - PIP_NO_INDEX=${PIP_NO_INDEX:-}
+      - PIP_FIND_LINKS=${PIP_FIND_LINKS:-/app/offline_wheels}
+      - UV_NO_INDEX=${UV_NO_INDEX:-}
+      - UV_FIND_LINKS=${UV_FIND_LINKS:-/app/offline_wheels}
     env_file:
       - .env
     networks:
@@ -158,6 +163,11 @@ services:
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - MCP_SERVICE_URL=${MCP_SERVICE_URL:-http://archon-mcp:${ARCHON_MCP_PORT:-8051}}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+      - OFFLINE_MODE=${OFFLINE_MODE:-false}
+      - PIP_NO_INDEX=${PIP_NO_INDEX:-}
+      - PIP_FIND_LINKS=${PIP_FIND_LINKS:-/app/offline_wheels}
+      - UV_NO_INDEX=${UV_NO_INDEX:-}
+      - UV_FIND_LINKS=${UV_FIND_LINKS:-/app/offline_wheels}
     volumes:
       - ./python/src/agents:/app/src/agents
       - ./python/src/server/services/search/reranking_strategy.py:/app/src/server/services/search/reranking_strategy.py

@@ -81,19 +81,25 @@ async def run_judge_session():
     """Executes the LLM Judge content checking suite against generated assets."""
     print("🎭 [LLMJudge] Starting AI Content Semantic Quality Judgement Suite...")
     
-    # Load API Key resiliently
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        try:
-            api_key = await credential_service.get_credential("GEMINI_API_KEY")
-        except Exception:
-            pass
+    # Check if OFFLINE_MODE is enabled
+    offline_mode = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+    
+    client = None
+    if not offline_mode:
+        # Load API Key resiliently
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            try:
+                api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            except Exception:
+                pass
+                
+        if not api_key:
+            print("❌ [LLMJudge] GEMINI_API_KEY is not configured in environment or database. Aborting.")
+            sys.exit(1)
             
-    if not api_key:
-        print("❌ [LLMJudge] GEMINI_API_KEY is not configured in environment or database. Aborting.")
-        sys.exit(1)
+        client = genai.Client(api_key=api_key)
         
-    client = genai.Client(api_key=api_key)
     posts = await get_target_posts()
     
     system_instruction = (
@@ -118,19 +124,44 @@ async def run_judge_session():
         print(f"🔍 [LLMJudge] Judging Post [{post_id}] - \"{title}\"...")
         
         try:
-            response = client.models.generate_content(
-                model='gemini-3.1-flash-lite',
-                contents=f"Title: {title}\nContent:\n{content}",
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    response_mime_type="application/json",
-                    response_schema=ContentQualityJudgement,
-                    temperature=0.0
+            if offline_mode:
+                import httpx
+                ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+                ollama_model = "gemma4:e4b"
+                
+                payload = {
+                    "model": ollama_model,
+                    "system": system_instruction,
+                    "prompt": f"Title: {title}\nContent:\n{content}\n"
+                              "Provide a structured JSON response matching the following keys:\n"
+                              "{\n  \"title\": string,\n  \"word_count_check\": {\"assertion_name\": string, \"passed\": bool, \"score\": int, \"reason\": string, \"cliches_found\": [string]},\n  \"cliche_check\": {\"assertion_name\": string, \"passed\": bool, \"score\": int, \"reason\": string, \"cliches_found\": [string]},\n  \"tone_check\": {\"assertion_name\": string, \"passed\": bool, \"score\": int, \"reason\": string, \"cliches_found\": [string]},\n  \"overall_passed\": bool,\n  \"final_grade\": string,\n  \"recommendations\": [string]\n}",
+                    "format": "json",
+                    "stream": false,
+                    "options": {
+                        "temperature": 0.1
+                    }
+                }
+                
+                resp = httpx.post(f"{ollama_host}/api/generate", json=payload, timeout=60.0)
+                if resp.status_code != 200:
+                    raise RuntimeError(f"Ollama API failed: {resp.text}")
+                
+                response_text = resp.json().get("response", "")
+            else:
+                response = client.models.generate_content(
+                    model='gemini-3.1-flash-lite',
+                    contents=f"Title: {title}\nContent:\n{content}",
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        response_mime_type="application/json",
+                        response_schema=ContentQualityJudgement,
+                        temperature=0.0
+                    )
                 )
-            )
+                response_text = response.text
             
             # Parse structured Pydantic judgment
-            judgement = ContentQualityJudgement.model_validate_json(response.text)
+            judgement = ContentQualityJudgement.model_validate_json(response_text)
             judgement.post_id = post_id  # Ensure exact ID alignment
             
             reports.append(judgement)
