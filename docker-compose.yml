@@ -38,6 +38,7 @@ services:
       - AGENTS_ENABLED=${AGENTS_ENABLED:-false}
       - AGENTS_SERVICE_URL=${AGENTS_SERVICE_URL:-http://archon-agents:${ARCHON_AGENTS_PORT:-8052}}
       - ENABLE_TEST_ENDPOINTS=true
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
     env_file:
       - .env
     networks:
@@ -156,6 +157,7 @@ services:
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - MCP_SERVICE_URL=${MCP_SERVICE_URL:-http://archon-mcp:${ARCHON_MCP_PORT:-8051}}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
     volumes:
       - ./python/src/agents:/app/src/agents
       - ./python/src/server/services/search/reranking_strategy.py:/app/src/server/services/search/reranking_strategy.py
@@ -269,6 +271,23 @@ services:
       - ./.browser_data:/app/.browser_data
       - ./.twin:/app/.twin
       - ./scripts/twin_scout.py:/app/scout.py
+
+  # Ollama Local 推論引擎 (HTTP API)
+  ollama:
+    profiles: ["backend"]
+    image: ollama/ollama:latest
+    container_name: archon-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   app-network:
