@@ -280,10 +280,12 @@ class MigrationService:
         
         sql_commands = [
             "DROP INDEX IF EXISTS public.archon_crawled_pages_embedding_idx CASCADE;",
+            "UPDATE public.archon_crawled_pages SET embedding = NULL;",
             "ALTER TABLE public.archon_crawled_pages ALTER COLUMN embedding TYPE public.vector(384);",
             "CREATE INDEX IF NOT EXISTS archon_crawled_pages_embedding_idx ON public.archon_crawled_pages USING hnsw (embedding public.vector_cosine_ops);",
             
             "DROP INDEX IF EXISTS public.archon_code_examples_embedding_idx CASCADE;",
+            "UPDATE public.archon_code_examples SET embedding = NULL;",
             "ALTER TABLE public.archon_code_examples ALTER COLUMN embedding TYPE public.vector(384);",
             "CREATE INDEX IF NOT EXISTS archon_code_examples_embedding_idx ON public.archon_code_examples USING hnsw (embedding public.vector_cosine_ops);"
         ]
