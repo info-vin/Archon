@@ -1,0 +1,58 @@
+---
+id: phase-4-6-part2-hardening
+title: Phase 4.6 (Part 2) - 系統硬化與數位雙生
+sidebar_position: 8
+tags: [system-hardening, rbac, digital-twin, tech-debt]
+---
+
+# Phase 4.6 (Part 2): 系統硬化、動態 RBAC 與數位雙生
+
+## 📝 脈絡與目標 (Context & Objective)
+
+在 Phase 4.6 的中後期（對應 4.6.21 至 4.6.40），系統地基已初步穩固，開發重心正式轉向「系統架構硬化 (System Hardening)」與「數位雙生 (Digital Twin)」的深度整合。本階段的核心目標在於消除前期快速迭代所累積的技術債（如超過 600 行的 God Objects），將散落的硬編碼權限邏輯收攏為動態的 RBAC 矩陣，並賦予數位雙生系統深入感知工作流斷層的能力。我們透過一系列物理層面的重構與網路韌性設計，確保了在極端環境（如 WAF 阻斷、API 503 超載）下系統仍具備自癒與容錯能力。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 技術債清算 (Technical Debt Liquidation)
+我們執行了嚴格的檔案規模門禁，針對超過 600 行的「上帝物件 (God Objects)」進行 L2 級別的模組化拆分，以降低系統耦合度。
+- **認證與網址處理拆分**: 將龐大的 `CredentialService` 拆分為專職負責加密的 `encryption_util.py` 與處理 API 的 `manager.py`；將 `UrlHandler` 瘦身，提取常數至 `constants.py`，邏輯拆分至 `naming.py`。
+- **樣式與安全邊界分離**: 將超過 600 行的 `Styles.ts` 重構。同時實作了爬蟲目標 (Crawler Target) 的部門隔離，透過 RLS 硬化資料庫存取邊界。
+
+### 2. 動態 RBAC 執行與身分矩陣 (Dynamic RBAC Enforcement & Identity Matrix)
+徹底廢棄在 API 路由層 (`projects/core.py`) 寫死 `if u_role not in ["admin"]` 的反模式，將權限機制外掛化。
+- **資料庫驅動 (Database-Driven)**: 建立 `public.archon_roles_permissions` 表，將 Role 與 Scope 綁定。
+- **RBACService 快取與降級**: 實作了帶有記憶體快取 (`_matrix_cache`) 的 `RBACService` 進行毫秒級的權限校驗，並內建了連線失敗時退回 `permissions.py` 靜態定義的 Fallback 機制。
+- **Identity Matrix UI**: 於 Admin UI 實體化「身分權限矩陣」，允許系統管理員在畫面上動態勾選各角色的細粒度權限（如 `task:create`, `leads:view:all`）並即時生效，無需重啟服務。
+
+### 3. 數位雙生深度感知與爬蟲韌性 (Digital Twin Deep Perception & Crawler Resilience)
+賦予 Agent 真正的「工作流預期心理」，打破過去僅比較視覺畫面的盲點。
+- **現實快照注入 (Reality Context Injection)**: 巡檢前主動查詢資料庫（如 Alice 目前應有 0 筆任務），並將實體數據餵給 Gemini Vision。若 UI 渲染出異常數量，系統將精確標記 `[PARITY_MISMATCH]` 斷層。
+- **503 結構性防禦 (Anti-503 Pattern)**: 廢棄 LangChain 多模態封裝，遷移至原生的 `google-genai` SDK `client.aio`。放棄將 5 位角色的截圖打包傳送（導致 Payload 龐大遭伺服器丟棄），改採「一人一診」的原子化分析，輔以指數退避重試，徹底根除 503 錯誤。
+- **雙生資料橋接**: 捨棄純 Markdown 的單機日誌，將巡檢結果與斷層診斷同步寫入 `archon_logs`，讓 Charlie 等管理員能在 Nexus 儀表板的協作矩陣中即時看見雙生系統的預警。
+- **爬蟲韌性 (WAF Defense)**: 面對 Docker 資料中心 IP 遭 104 WAF 阻斷的問題，引入 Windows 10 x64 指紋對齊，並實施了 `MOCK_JOBS` 實體歷史資料緩衝；當連線失敗時自動回傳降級資料，確保業務演示不中斷。
+
+### 4. 網路韌性與工作流自癒 (Network Resilience & Workflow Self-Healing)
+修正系統在複雜部署與異常狀態下的死鎖問題，確保使用者體驗的連貫性。
+- **網路代理回歸 (Proxy Reversion)**: 經歷了試圖手寫網路改寫邏輯的錯誤，最終將內網 DNS (`archon-server`) 與外網 (`localhost`) 的衝突問題，乾淨俐落地交由 Vite Proxy 代理模式處理。
+- **RBAC 權限遮蔽修復**: 修正 Bob (Marketing) 因誤用 Alice 專屬權限 (`leads:view:sales`) 而導致的靜默 `Access Denied` 錯誤。
+- **空狀態防禦 (Empty State Defense)**: 解決 Alice 儀表板在資料庫查詢為 0 時，前端因 API 空響應而卡死在無限 `Loading tasks...` 的佈局死鎖。強制實施了空陣列回傳切換至 `EmptyState` 元件的物理防禦。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::warning[鐵律 1: 拒絕 God Objects 與隱式邏輯]
+
+超過 600 行的檔案與寫死在 API 層的權限判斷是系統崩潰的溫床。所有的權限（Scope）必須交由單一的 `RBACService` 與資料庫矩陣進行動態調度，徹底達成「修改權限免重啟」的營運目標。
+
+:::
+
+:::warning[鐵律 2: 數位雙生的原子化與數據對齊]
+
+切勿為了節省連線次數而打包超大 Payload（如同時傳遞 5 張高畫質截圖），這必然會觸發 LLM API 的資源競爭與 503 錯誤。雙生系統必須實施「一人一診」的原子化分析。同時，任何 UI 的檢測都必須附帶 DB 實體數據（Reality Context）的對齊，否則只是毫無意義的圖片比較。
+
+:::
+
+:::warning[鐵律 3: 網路邊界與空狀態防禦機制]
+
+前端元件在處理非同步請求時，絕不可假設「快樂路徑」。必須實作明確的 `EmptyState` 來接住空數據；同時，外部爬蟲功能必須自帶具備實體價值的歷史 Mock 緩衝（Stateful Fallback），絕不允許因外部 WAF 阻斷導致系統核心演示歸零。
+
+:::

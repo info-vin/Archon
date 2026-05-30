@@ -1,0 +1,62 @@
+---
+id: phase-5-1-architecture-refactoring
+title: Phase 5.1.x - 架構重構與排程器整合
+sidebar_position: 5
+tags: [architecture, async-io, scheduler, rag, llm-gateway]
+---
+
+# Phase 5.1.x: 架構重構與系統硬化 (Architecture Refactoring & Hardening)
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 5.1.x 是一系列針對底層架構、高併發效能、非同步 I/O 以及自動化排程所進行的深度重構與硬化工程。此階段的核心目標是消除系統中的技術債（如事件迴圈阻塞、API 限流崩潰、前端輪詢效能低落），並透過建立統一的 LLM Gateway、Clockwork 狀態化排程器以及 Karpathy 式極簡 RAG 架構，將 Archon 從單純的功能驗證推進至具備高度容錯與自癒能力的生產級 (Production-ready) 系統。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 非同步 I/O 重構與 Bulk Insert (Async I/O & Database Optimization)
+全面根除了隱藏在高併發場景下的 I/O 阻塞技術債：
+- **`aiofiles` 全面替換**: 透過 AST 掃描，將 9 個核心檔案（如 `internal_api.py`, `migration_service.py`）中的同步 `open()` 操作全面替換為 `async with aiofiles.open(...)`，徹底釋放 asyncio 事件迴圈。
+- **資料庫 Bulk Insert**: 將 `job_board_service.py` 與 `task_dispatcher.py` 中的「迴圈內單筆 Insert」反模式重構為陣列收集後的批次寫入（Bulk Insert），大幅減少資料庫連線往返與 I/O 阻塞。
+
+### 2. Clockwork 排程器與 Workflow Engine Fan-out
+重新設計了背景任務的調度邏輯，捨棄死板的絕對時間，改用生命週期與狀態驅動：
+- **狀態鎖與相對延遲佇列 (State-Driven Delay Queue)**: 針對 13 項背景任務（如 `alice_auto_fetch`, `business_sentinel`），導入基於 `archon_settings` 的冪等性狀態鎖（`@daily_once`, `@biweekly_once`），並搭配 Docker 開機相對延遲（Jitter/Delay Queue），徹底解決重啟時的「雷鳴群效應 (Thundering Herd)」。
+- **Fan-out Map-Reduce 引擎**: 實作 Pydantic Graph 進行並發情報彙整（場景：Charlie 的每日戰情報告）。Supervisor 同時喚醒 Alice, Bob, System 三個 Agent（Map 發散），最後透過 Join Node 聚合（Reduce）。
+- **併發控制與 429 防禦**: 實體注入 `asyncio.Semaphore(2)`，將並行任務平滑化以符合 Gemini Free-Tier 限制（15 RPM），並搭配 `_run_agent_with_retry` 進行指數退避。
+
+### 3. Centralized LLM Gateway (模型單一事實來源)
+解決了多容器（`archon-server`, `archon-agents`, `archon-mcp`）分散式盲目競爭 API Quota 的問題：
+- **算力網關集中化**: 將 `archon-server` 升格為 Internal LLM Gateway (`/internal/llm/gemini/v1beta/`)。
+- **優雅排隊機制**: 強制繼承 `ThreadingService` 的單線化排隊 (`max_concurrent=1`)。金鑰統一託管，其他容器僅透過 `API_GATEWAY_URL` 呼叫，徹底消滅多容器引發的 429 崩潰。
+
+### 4. Karpathy 式極簡 RAG 與反饋閉環
+實踐「輕量化視覺、重度原始輸入、強大反饋閉環」的 AI 知識庫哲學：
+- **零 Token 視覺降級**: 將 `logo_tool.py` 與 `content_handler.py` 優化，遭遇 API 429 或未配置時，自動優雅降級為本地產生的 Tron 風格幾何 SVG，實現零成本佔位圖。
+- **Librarian 獵人模式**: 在前端實作 `MarketingIngestion.tsx`，允許使用者直接貼入原始 URL，背景自動完成爬網與 Embedding 向量切片。
+- **風格審查閉環**: 經理駁回文章時自動將評論寫入資料庫 (`archive_style_critique`)，並在下次生成時由系統主動注入至 System Prompt，實現自我修正。
+
+### 5. 前端 SSE 反應式重構與 MBT 硬化
+- **SSE 狀態機被動化**: 實作 `useSSE` Hook 取代主動輪詢 (`setInterval`)。重構 `salesCartMachine.ts` 等 XState 狀態機，改為監聽 `SSE_TASK_UPDATED` 等事件來驅動狀態流轉。
+- **MBT 與 E2E 深度硬化**: 針對 Playwright 測試導入 `data-testid` 取代脆弱的 DOM 結構定位，解決 React 條件渲染導致的「幽靈元素」問題；注入 `waitForSpinner` 處理非同步等待；並全面新增針對 503 斷線及空資料（Empty State，防禦 Recharts `NaN` 崩潰）的負面斷言測試。
+
+### 6. Code Governance (巨型檔案重構)
+執行非破壞性模組化拆分，將超過 400 行的檔案解耦：
+- **後端**: 將 `business.py` 中負責報表生成的邏輯抽離至單例的 `report_service.py`。
+- **前端**: 將 `ProjectsView.tsx` 中的 `SidebarProjectCard` 獨立為專屬子元件，提升 L2 架構清晰度。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::danger 絕對禁止阻塞 Event Loop
+在 `async def` 中絕對禁止使用同步的 `open()` 讀寫檔案，這會直接癱瘓 FastAPI 的高併發處理能力。**必須 100% 使用 `aiofiles`。**
+:::
+
+:::warning API 額度與盲目競爭
+分散式的多微服務架構若各自持有 API Key 直接對外請求，是 Free Tier 的天敵，將導致 RateLimiter 失去作用。**必須設立統一的 Internal LLM Gateway 進行算力排隊管控。**
+:::
+
+:::danger React 條件渲染與 MBT 測試
+在執行 Playwright/MBT 測試時，切勿依賴文字或 CSS 階層定位，因 React 狀態機切換（如任務完成後清空清單）會導致元件瞬間卸載。**必須落實 `data-testid` 物理定位，並對於會消失的元件使用 `.not.toBeVisible()` 進行斷言。**
+:::
+
+:::tip 負面路徑與空狀態 (Empty State) 防禦
+E2E 測試不能只有快樂路徑。必須涵蓋網路 503/429 模擬，且針對前端圖表（如 Recharts），必須撰寫空資料（如 `[]` 或 `None`）的負面測試，防範 `TickItem` 報錯引發 React 全域崩潰。
+:::

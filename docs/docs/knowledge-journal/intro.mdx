@@ -1,0 +1,21 @@
+---
+id: intro
+title: Knowledge Journal Introduction
+sidebar_position: 1
+---
+
+# Knowledge Journal 
+
+Welcome to the AI-Driven Knowledge Journal.
+
+This section is our "Living Memory" (inspired by Andrej Karpathy's minimal wiki philosophy). It is NOT a place for raw planning documents. It is a highly distilled repository of system architecture, critical debugging lessons, and empirical truths extracted from historical project phases.
+
+## The Archon Tri-Layer Knowledge System
+This journal operates on a three-layer principle to prevent AI hallucination and maintain context efficiency:
+
+1. **Layer 1: The Vault (Raw Data)** 
+   Historical documents (e.g., `PRPs/archive/`) are compressed into `.tar.gz` files. They are removed from the active context window to prevent the AI from adopting outdated code patterns.
+2. **Layer 2: The Encyclopedia (This Wiki)**
+   The AI analyzes the raw documents, cross-references them against actual `git log` truths, and distills them into the `.mdx` files you see here. This serves as the deep reference guide for humans and complex AI inquiries.
+3. **Layer 3: The Schema (`GEMINI.md`)**
+   Only the most critical, fatal "Iron Laws" extracted from this wiki are promoted to the root `GEMINI.md`. These laws form the AI's immediate "instincts" loaded at the start of every session.

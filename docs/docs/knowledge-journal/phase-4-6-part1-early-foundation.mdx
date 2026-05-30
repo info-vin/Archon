@@ -1,0 +1,61 @@
+---
+id: phase-4-6-part1-early-foundation
+title: Phase 4.6 (Part 1) - 全角色工作流與早期奠基
+sidebar_position: 9
+tags: [agent-foundation, persona-workflows, rbac, prompt-governance]
+---
+
+# Phase 4.6 (Part 1): 全角色工作流與早期奠基
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 4.6 的早期階段（Part 1）是整個系統從單一功能驗證，邁向企業級多角色協作的關鍵基石。此階段確立了以 Alice (Sales)、Bob (Marketing)、Charlie (Manager) 與 Admin 為核心的「全角色工作流」，不僅完成實體 UI 與後端服務的對齊，更從底層解決了跨部門協作的狀態同步與權限隔離。此外，也成功導入了提示詞治理 (Prompt Governance)、統一審核流程 (Unified Approval Workflow)、Agent 經驗值系統 (Agent XP) 與早期數位雙生 (Digital Twin) 巡檢，確保 AI 代理的操作有跡可循且具備嚴格的安全邊界。
+
+## 🔍 全角色工作流實體架構 (Persona Workflows Deep Dive)
+
+### 👩‍💼 Alice (Sales): 獵人模式與前線情報採集
+*   **行動優先 (Mobile-First) 設計**：以單手操作為核心，實作類似 Tinder 的卡片滑動篩選 (Leads Card Stack)，提供快速的業務決策（Shortlist 或 Archive）。
+*   **一鍵提案 (Pitch Mode)**：針對 Shortlisted 潛在客戶，利用 RAG 結合 LLM 秒生高對比度的全螢幕話術草稿，適應強光下的戶外閱讀。
+*   **語音即任務 (Field Ops)**：實作按需 (On-Demand) GPS 定位與原生錄音上傳。拜訪結束後，語音可透過 Gemini 轉錄，並自動產出 TODO 任務，形成研究脈絡。
+*   **自動歸檔與補全 (Pruning & Enrichment Loop)**：由排程器負責背景梳理過期 Leads 並產生 50 字以內的精煉洞察。
+
+### 👤 Bob (Marketing): 三代理人協作的內容工作臺
+*   **內容 IDE 工作臺**：棄用傳統表單，打造 30/70 分割畫面的沉浸式工作環境，整合戰果牆 (Victory Feed) 與 AI 配置器。
+*   **3-Agent 協作模型**：
+    *   **Librarian (研究助手)**：提供 RAG 脈絡與 Alice 收集的前線情報。
+    *   **MarketBot (撰稿助手)**：根據維度參數（長度、風格）自動生成草稿，支援 Pydantic Alias 數據映射。
+    *   **Nana Banana (視覺助手)**：作為系統外掛，使用 MCP 引擎物理生成幾何 SVG 向量圖，不耗費雲端 Token。
+*   **狀態與任務同步**：儲存文章時自動將關聯 Task 標記為 `DOING`，通過 AI 合規檢查後提交則轉為 `REVIEW`。
+
+### 👨‍💼 Charlie (Manager): 例外管理與指揮官中樞
+*   **「Management by Exception」哲學**：Charlie 不需緊盯日常數據，由 Sentinel (哨兵) 每 12 小時掃描 14 天以上的停滯商機並觸發 Alert。
+*   **智慧分派 (Dispatch)**：接獲 Alert 後，調用 Librarian 自動轉譯生成追蹤任務給 Alice。
+*   **跨角色戰情室 (Nexus Command)**：以 168 小時 CAP 保護的 Velocity 生產速率為指標，並具備跨部門的全域可見性，實時追蹤 ROI 與 Token 成本。
+
+### 🛠️ Admin (Architect): 系統硬化與治理奠基
+*   **上帝視角與物理權限**：綁定 Port 5173 控制台，專注於系統健康、API 延遲與 Token 成本治理。實作 `X-Admin-Secret` M2M 防護。
+*   **配置與白名單持久化**：實施 Crawler Targets 的爬蟲白名單放行，以及 `TOKEN_PRICING_JSON` 與 `archon_settings` 的動態設定。
+*   **Agent 治理**：利用 Clockwork 自動派單、DevBot 進行代碼修復提案，從基礎設施層級確保系統自癒與穩定。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::tip [Prompt Governance & Token Optimization] 提示詞解耦與 Token 透明化
+**決不硬編碼提示詞**：所有 Agent 提示詞已全數從 Python 代碼抽離至資料庫 (`archon_prompts`)。Admin 握有全域權限，Manager 僅能修改業務型 Prompt。
+**動態定價與 ROI**：透過 `TOKEN_PRICING_JSON` 動態解析 Token 成本，並將每筆耗費精確關聯回 `TaskModal`，達成 ROI 實體透明管理。
+:::
+
+:::warning [Agent Gamification & XP] Agent XP 權限閘門
+**資歷化安全網**：嚴守不開新表的原則！利用現有 `archon_logs` 的 Append-Only 特性聚合 Agent 總經驗值 (XP)。Agent 必須達到 Level 1 (500 XP) 才能解除唯讀狀態，獲取實體的 L2+ 代碼修復權限。
+:::
+
+:::danger [Unified Approval Workflow] 統一審核與雙軌提案機制的不可繞過性
+**實體寫入前攔截**：揚棄散落各處的審核頁。所有的 AI 產出（包含 DevBot 代碼修復、MarketBot 內容）**絕對禁止直接寫入生產環境**。
+*   **系統級**：以 `proposed_changes` 表儲存 JSONB `old_content`/`new_content` 供實體 Diff 預覽。
+*   **業務級**：以實體表的 `status: review` 流轉。
+這些產出皆需於統一的 `/approvals` 頁面經人類主管核准（Polymorphic Execution）方可物理落地。
+:::
+
+:::danger [Backend Resilience & UI] 空資料與解析崩潰防禦
+1. **JSON 解析防禦**：針對 Gemini 2.0 長文生成的換行符號問題，必須實作 `safe_json_loads`，導入「Markdown 移除、控制字元清理、非嚴格模式」的三重防禦。
+2. **防禦性陣列查詢**：嚴禁在後端使用 `.single()` 或 `.maybe_single()` 獲取可能為空的資料，必須全面改為 `.execute()` 並檢查長度，杜絕 PGRST116 導致的 500 錯誤。
+3. **Headless 圖表渲染崩潰**：所有基於 Recharts 的圖表組件，必須將動畫強制關閉 (`isAnimationActive={false}`)，防止在 E2E 無頭環境下因動畫計算座標產生 NaN 導致的 `TickItem Error` 崩潰。
+:::

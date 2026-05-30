@@ -1,0 +1,47 @@
+---
+id: phase-5-4-0-twin-scout-chaos
+title: Phase 5.4.x - 雙生模擬器重構與混沌工程
+sidebar_position: 2
+tags: [chaos-testing, digital-twin, mbt, multi-tenant, architecture]
+---
+
+# Phase 5.4.x: 數位雙生模擬器重構與混沌工程
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 5.4 系列標誌著專案的驗證體系從「靜態腳本」邁向「動態、資料驅動的混沌模擬」。過去的端到端測試 (`twin_scout.py`) 高度硬編碼，導致維護成本極高。本階段的目標是將其重構為「配置驅動 (Config-Driven) / 資料驅動 (Data-Driven)」架構，並導入主動式網路混沌攔截 (Active Network Chaos Interception)，以真實驗證前端的加載防禦與自癒能力。同時，我們落實了多租戶隔離與 AI 預算熔斷機制。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 數位雙生 YAML 引擎 (Config-Driven Scout)
+- **重構與模組化**: 移除 `twin_scout.py` 中的硬編碼測試函數，引入通用的 `YAMLScenarioRunner`。所有的操作步驟 (如 `goto`, `click`, `fill`) 皆從 `scripts/twin_scenarios/*.yaml` (如 `marketing_chat.yaml`, `fanout_executive_summary.yaml`) 中動態解析。
+- **幻覺阻斷與變數解析**: 修復了跨步驟 `{TIMESTAMP}` 動態變數因重新取值造成的 Timeout。針對 AI Agent 在執行模糊指令時產生的「尋找本機不存在檔案」之幻覺，我們透過精準的 Prompt Engineering 注入假設數據並禁止外部搜尋。
+
+### 2. 主動式混沌攔截 (Active Network Chaos)
+- **實體攔截機制**: 利用 Playwright 的 `page.route("**/api/**")` 實作網路攔截器。在 YAML 腳本中引入 `chaos` 參數（如延遲 1500ms、10% 機率回傳 HTTP 500、指定步驟斷網）。
+- **實體驗證成果**: 在執行 30 關參數化混沌關卡時 (100% PASS Rate)，成功模擬伺服器錯誤。驗證了前端 API 客戶端能優雅攔截，UI 成功進行 Retry 與降級顯示，未引發 React 渲染崩潰。
+
+### 3. 多租戶實體隔離與帳單硬化 (Multi-Tenant & Budget Guard)
+- **資料庫遷移與 RLS**: 實施 `0.2.2/23_multi_tenant_and_rls_hardening.sql`。為核心資料表注入 `tenant_id`，並綁定 `auth.jwt() -> 'tenant_id'` 啟動 Row Level Security (RLS) 物理隔離。
+- **預算熔斷器 (Budget Guard)**: 實作 FastAPI `BudgetGuardMiddleware`。在非 GET 請求時查詢累計 Token 費用，超出預算上限即回傳 HTTP 402 (Payment Required)。
+- **霓虹警告 Badge**: 前端攔截 HTTP 402 後，發送 `archon-budget-exceeded` 全域事件，觸發 UI 顯示非阻塞性的橙色警告 Badge。
+
+### 4. Alice 語音排程閉環 (Cross-Role Scheduling)
+- **演算法實作**: 新增 `StatsService` 的 `get_team_availability` 演算法。透過撈取 `archon_tasks` 並排除交疊時段，成功實作了自動比對跨角色 (Bob & Charlie) 忙碌度並推薦三個預約空檔的邏輯。
+- **測試公證**: 透過 Pytest 物理公證解決了時區對齊 (`GMT+8`)、髒日期解析 (RegEx 安全提取)、以及 Pydantic AI 回傳 JSON 的清理與反序列化。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::warning[動態變數在 YAML 解析中的時間差陷阱]
+在解析步驟腳本時，若每一步都獨立計算 `{TIMESTAMP}`，會導致「建立任務」與「驗證任務清單」時的時間戳不一致。
+**鐵律**: 腳本執行引擎必須在 Scenario **開始前**產生單一且固定的 `session_timestamp`，並在整個生命週期中共享，以保證跨步驟斷言的穩定性。
+:::
+
+:::danger[RLS 導致的無限遞迴陷阱]
+在 Supabase 設定 RLS 政策時，如果政策中直接 `SELECT` 自己或其他包含類似政策的資料表，會引發 `infinite recursion` (HTTP 500)。
+**鐵律**: 必須透過 `SECURITY DEFINER` 的資料庫函數（如 `get_auth_tenant_id()`）安全地從 JWT 提取變數，再與 Row 進行綁定比對，徹底阻斷 SQL 遞迴查詢。
+:::
+
+:::tip[AI 作為裁判的幻覺控制]
+將 AI 引入測試流程不僅有成本考量，還有極高的「幻覺破壞性」。如果測試指令太模糊，AI 可能會偏離測試目標而去嘗試「自己找資料」。
+**鐵律**: 必須透過 YAML 嚴格定義 System Prompt，並明令禁止其呼叫無關的外部工具 (Tool Calling Restriction)，保持裁判的行為在決策邊界內。
+:::

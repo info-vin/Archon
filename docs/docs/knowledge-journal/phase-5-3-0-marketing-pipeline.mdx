@@ -1,0 +1,46 @@
+---
+id: phase-5-3-0-marketing-pipeline
+title: Phase 5.3.x - 行銷工作台與雙用途錄影資產
+sidebar_position: 3
+tags: [marketing, media-pipeline, rag, frontend-rendering, bugfix]
+---
+
+# Phase 5.3.x: 數位孿生錄影與知識庫行銷素材聯動
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 5.3 系列（包含 5.3.0, 5.3.1, 5.3.2）旨在打造一個「雙用途行銷管道 (Dual-Purpose Marketing Pipeline)」。我們將自動化測試 (QA) 的錄影過程轉化為行銷素材。系統透過 `twin_scout.py` 在 E2E 測試時自動側錄操作過程，並將這些高質量的實機 Demo 影片存入知識庫 (Librarian)。行銷 Persona (Bob) 即可在行銷工作台 (Workbench) 透過 RAG 直接查詢、播放並引用這些錄影資產。同時，我們也修復了 AI 任務指派失效與影片播放器渲染的問題。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 外部生成與本地錄影雙軌管道
+- **外部素材 (Intro/Outro)**: 實作 `generate_gemini_intro.py`，利用 Playwright 自動登入 Google Gemini 並輸入 Prompt，抓取生成的 4 秒概念影片。實作「互動式自癒登入」，在 Session 過期時提供 3 分鐘緩衝等待人類手動接管。
+- **本地錄製 (Body)**: 修改 `twin_scout.py`，在綠燈驗收 (`WORKFLOW_SUCCESS`) 時，將產生的 `.webm` 透過 FFmpeg 轉換為通用 `.mp4`，並自動產生 companion `.txt` 以利後續 RAG 語義索引。
+
+### 2. 任務指派與通知機制自癒 (AI Assignee Bug)
+- **問題**: 建立任務時漏填 Required 的「Due Date」導致前端卡死。後端 `ops.py` 因避開外鍵限制，截斷了 UUID 導致 AI Agent 接收不到通知，任務滯留 `todo` 狀態。
+- **修復**: 在測試腳本中加入精確的 Playwright 日期點選步驟。後端改為「前綴/子字串容錯匹配」，動態推斷正確的 AI Agent UUID 進行任務派發，恢復 AI 處理流程。
+
+### 3. RAG 影片播放器與渲染修復
+- **問題**: 後端 RAG 執行器回傳的 `metadata` 遺失了 `source` 欄位；前端 `apiClient.ts` 的 10 秒超時在本地 CPU 執行 Rerank 時被觸發；Victory Feed 排序邏輯錯誤導致新 Lead 被舊資料擠出。
+- **修復**: 
+  - 在 `rag_pipeline_executor.py` 中物理回填 `source` 屬性。
+  - 在 `analytics_handler.py` 實作「資料庫層降序排序 (`order("created_at", desc=True)`)」。
+  - 關閉 `USE_RERANKING` 避開 CPU 瓶頸造成的 10s timeout。
+  - 前端將正則表達式擴充為 `/\.(mp4|webm)(#.*)?$/i` 以相容 RAG 的 Hash Fragment，並將 `file:///` 路徑轉換為前端 Public URL 進行 `<video>` 渲染。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::warning[依賴資料庫分頁的致命陷阱 (Partial Limit Sorting)]
+在取得近期紀錄 (如前 10 筆 Leads) 時，**絕對禁止**先從資料庫抓取部分資料再到 Python 應用層進行排序與過濾（這會造成新資料被隱形排除）。
+**鐵律**: 必須在 Supabase/SQL 查詢層級先實施 `.order("created_at", desc=True)` 再進行 `.limit()` 截斷。
+:::
+
+:::danger[API 硬性超時與 CPU 效能瓶頸]
+當前端設置了嚴格的 API 請求超時（如 10 秒），而在本地開發環境（通常為 CPU Only）執行複雜的 Rerank 模型（需 12 秒）時，會引發無限的 Abort Error。
+**鐵律**: 優先從系統架構層面解除瓶頸（如關閉本地的 Rerank 降級運行），而非盲目去拔除前端的超時保護機制。
+:::
+
+:::tip[AI 視覺裁判的靈活性 (Visual Judge Relaxation)]
+在使用 AI 檢驗前端組件（例如影片播放器）是否渲染成功時，不要讓 AI 去等待影片「實際播放的動態畫面」。
+**鐵律**: 應透過 Prompt 指示 AI 裁判：「只要畫面上出現包含影片控制按鈕（如播放鍵、進度條）的播放器元件，即算作成功」，避免靜態截圖被誤判為 Failure。
+:::
