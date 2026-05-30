@@ -1,0 +1,58 @@
+---
+id: phase-legacy-foundation
+title: Legacy Phases - 系統嫁接與業務奠基
+sidebar_position: 10
+tags: [legacy, system-grafting, ui-split, tech-debt]
+---
+
+# Legacy Phases: 系統嫁接、UI 拆分與 Agent 初醒
+
+## 📝 脈絡與目標 (Context & Objective)
+
+本篇日誌濃縮了 Archon 專案早期的關鍵發展階段（Phase 3 至 Phase 4.11），涵蓋了系統從早期的獨立原型，逐步發展為具備商業價值與初步自主 AI 協作能力的完整歷程。
+
+這些「遺產階段 (Legacy Phases)」包含三大核心里程碑：
+1. **系統嫁接 (Phase 3)**: 將早期的孤島系統整合為一個統一架構，確立了 Admin UI (`archon-ui-main`) 與 EndUser UI (`enduser-ui-fe`) 的前後端雙軌配置。
+2. **商業功能拓展 (Phase 4.0 - 4.5)**: 實踐「AI 作為隊友」的願景，導入銷售情資 (Sales Intelligence) 工作流、市場洞察與內部 HR 數據儀表板，並確立了角色為本 (Alice, Bob, Charlie) 的協作情境。
+3. **神經連結與技術債清償 (Phase 4.7 - 4.11)**: 喚醒 Agent 的本體意識，透過 MCP (Model Context Protocol) 將各類工具（爬蟲、知識庫、文件操作）橋接至核心大腦，同時發起大規模的型別安全與測試覆蓋率清洗行動。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 系統嫁接與 Render 部署 (System Grafting)
+在 Phase 3，專案面臨最大的挑戰是將實驗性質的分支（如 `feature/e2e-file-upload`）平滑嫁接到主幹 (`dev/v1`)。
+- **配置統一**: 將 `docker-compose.yml` 與 `Makefile` 定義為部署與開發啟動的單一事實來源 (Single Source of Truth)。這解決了本地開發環境與 CI/CD 環境配置不同步的「精神分裂」問題。
+- **前端雙軌制**: 確認並穩固了管理後台 (`archon-ui-main`，Port 3737) 與終端用戶介面 (`enduser-ui-fe`，Port 5173) 的隔離設計。
+- **雲端部署地雷**: 在首次部署至 Render 時，遭遇了 404/500 迷霧。根本原因是 Render 需要明確的 SPA (Single Page Application) 路由重寫規則，將所有非 API 的請求回退 (Fallback) 至 `index.html`。
+
+### 2. 商業價值與 UI 拆分 (Business Value Expansion)
+Phase 4 中期，開發重心從純技術基礎轉向業務流程落地：
+- **AI 隊友指派 (AI Agent Assignment)**: 在任務管理彈出視窗 (`TaskModal.tsx`) 中，實作了整合人類與 AI 代理的下拉選單，並在後端實作 `agent_service.run_agent_task` 非同步回呼機制。
+- **銷售情資工作流 (Sales Nexus)**: 引入了外部 104 人力銀行爬蟲服務 (`JobBoardService`)，透過分析招募職缺來挖掘 B2B 潛在客戶 (Leads)。並使用 MarketBot 自動生成客製化的銷售開發信 (Sales Pitch)。
+- **HR 分析儀表板 (StatsPage)**: 導入 `recharts`，開發能實際從 `archon_tasks` 表讀取數據的任務分佈圓餅圖與績效長條圖。
+
+### 3. 神經連結與架構穩定化 (Neural Wiring & Stabilization)
+Phase 4 的末期，系統致力於讓 Agent「聰明且安全」地工作：
+- **MCP 工具庫整合**: 在 `AgentService` 實作了二次對話 (Two-pass) 邏輯（Think-Act 迴圈），讓 Agent 能先呼叫工具 (如 `search_code_examples`, `crawl_job_market`) 獲取 Context，再進行實質操作。
+- **RBAC 與守衛員 (Sentinel/Clockwork)**: 將系統防護機制從單純的路由阻擋，提升為「主動巡邏」。引入 `APScheduler` 定期掃描錯誤日誌，並可主動呼叫 DevBot 進行初步修復。
+- **零型別錯誤 (Type Safety Purge)**: 針對後端的 MyPy 錯誤展開大規模清剿。修復了隱式 Optional、Dict Key 型別與第三方套件相容性等問題，達成了歷史性的「零 MyPy 錯誤」里程碑。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+在此時期，我們從無數次的錯誤中提煉出以下不可違背的開發鐵律。
+
+:::warning[鐵律 1：Makefile 是單一事實來源]
+任何文件（如 README 或開發指南）中的啟動指令都可能過時。當發生啟動異常或相依性錯誤時，**必須** 優先查閱 `Makefile`。所有的依賴更新（如使用 `uv sync` 或 `pnpm`）與啟動配置（如 Docker profiles）皆以 `Makefile` 為最終仲裁者。
+:::
+
+:::tip[鐵律 2：測試模式的黃金法則 (The Golden Pattern)]
+在進行涉及非同步 Agent 回呼的端對端 (E2E) 或後端整合測試時，**必須** 在 `app` 導入之前，於模組級別使用 `patch` 攔截單例服務（如 `agent_service`），並嚴格定義 Setup/Teardown 的生命週期。這能徹底杜絕測試間的狀態污染與 Promise Hanging 問題。
+:::
+
+:::danger[鐵律 3：資料庫遷移的冪等性 (Idempotency)]
+所有在 `migration/` 下的 SQL 腳本都必須具備冪等性。
+對於不支援 `CREATE ... IF NOT EXISTS` 的資料庫物件（例如 `POLICY` 或 `FUNCTION`），在建立前必須先執行 `DROP ... IF EXISTS`，確保腳本即使被重複執行也不會導致 CI/CD 崩潰。
+:::
+
+:::info[鐵律 4：合併後的完整性驗證 (Post-Merge Validation)]
+即使是處理單純的 UI 樣式修復分支，在合併回主幹 (`main` 或 `dev/v1`) 後，也**必須** 立即在本地執行完整的 `make lint` 與 `make test`。歷史教訓證明，看似無害的合併經常會引發意料之外的 Import 遺漏或 ESLint 衝突。
+:::

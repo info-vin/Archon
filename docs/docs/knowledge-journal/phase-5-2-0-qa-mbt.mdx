@@ -1,0 +1,33 @@
+---
+id: phase-5-2-0-qa-mbt
+title: Phase 5.2.0 - QA 自動化與 MBT 硬化
+sidebar_position: 4
+tags: [qa, testing, playwright, infrastructure, ai-judge]
+---
+
+# Phase 5.2.0: QA 全自動化驗證與 MBT 狀態機硬化
+
+## 📝 脈絡與目標 (Context & Objective)
+本階段的目標是徹底消除「人工自檢」的低效與盲區。我們拒絕「快樂路徑 (Happy Path)」，改以 **MBT (狀態機邏輯遍歷，Model-Based Testing)** 與 **VRT (像素級視覺比對，Visual Regression Testing)** 為核心，並將環境邊界限制 (如網路、身分、聲音) 強制轉化為 CI 流程中的自動化阻斷點。
+
+## 🔍 Git 實體落地真相 (Empirical Actions)
+- **Commit `66c9ec34` (繞過 Keychain)**: 實作了 `scripts/cookie_injector.py`。這個腳本透過將預先錄製的 `storage_state.json` 直接物理注入 Playwright 的 `BrowserContext` 中，成功繞過了 Docker/CI 環境下無法存取 OS Keychain 的致命限制。
+- **Commit `208b6ba9` (AI 語意裁判)**: 實作了 `scripts/llm_judge_content.py`。建立了一個基於結構化 Schema 的 LLM 裁判 (LLM-Judge)，用以在測試中驗證 AI 生成內容的「語意不變性 (Semantic Invariants)」，取代了傳統脆弱的正則表達式 (Regex) 斷言。
+
+## ⚠️ 核心教訓與摩擦點 (Critical Learnings)
+
+:::warning[物理環境邊界：OS Keychain 陷阱]
+Docker 或 CI 環境（如 GitHub Actions）**絕對無法存取**原生作業系統的 OS Keychain (macOS/Linux)。如果您的 Playwright 測試依賴載入「實體瀏覽器 Profile」來取得登入狀態，該測試在 CI 環境下會引發授權失敗或無限靜默掛起 (Silent Hang)。
+:::
+
+:::tip[AI 作為 E2E 測試的裁判 (AI as a Validator)]
+當我們在測試 AI 生成的內容（如：生成的部落格草稿是否符合語氣、視覺排版是否因動態內容而崩潰）時，傳統的 DOM 查詢 (`expect(locator).toBeVisible()`) 是無效的。必須將 Gemini 模型本身引入測試流水線，擔任公證人。
+:::
+
+## 🛡️ 實戰鐵律 (The "Iron Laws")
+1. **CI 測試絕對禁止依賴本地 Profile**: 
+   撰寫 E2E 測試時，嚴禁嘗試載入使用者的 Chrome/Edge Profile。必須使用 `cookie_injector.py` 等機制，將加密 Cookie 或 JWT Token 物理注入至乾淨的瀏覽器上下文中。
+2. **語意斷言必須使用 LLM-Judge**:
+   在自動化測試中，若需斷言 AI 產出的文章、洞察或排版品質，必須呼叫 `llm_judge_content.py` 進行結構化品質審查，不得使用寫死的字串比對。
+3. **無網環境的 Shadow DB 隔離**:
+   針對純雲端資料庫 (如 Supabase)，在 CI 執行 Schema 遷移測試時，必須在容器內臨時拉起一個極簡的 `postgres:alpine` 作為「影子資料庫 (Shadow DB)」，嚴禁對遠端生產資料庫進行暴力寫入測試。

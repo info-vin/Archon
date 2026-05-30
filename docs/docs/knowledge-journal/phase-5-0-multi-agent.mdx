@@ -1,0 +1,53 @@
+---
+id: phase-5-0-multi-agent
+title: Phase 5.0.x - 多智能體架構與 API 韌性
+sidebar_position: 6
+tags: [multi-agent, pydantic-ai, error-handling, mcp, react-rendering]
+---
+
+# Phase 5.0.x: 多智能體星型群聊架構與 API 韌性硬化
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 5.0.x 系列（包含 5.0.0, 5.0.1, 5.0.2）是系統架構的重大分水嶺。我們解決了舊架構中「單點 AI 無法互相協作」與「MCP 工具權限未細分」的問題，將系統升級為「有狀態的多智能體協作網路」，並深度解決了頻繁調用 LLM 所引發的 429 配額耗盡與 React 渲染死鎖問題。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 拋棄 LangGraph，自建 Pydantic-Graph 星型路由
+- **決策背景**: 為避免 LangChain 的歷史包袱與依賴地獄，我們放棄原生 LangGraph。
+- **實作細節**: 
+  - 在 `archon-agents` 服務中，利用 `pydantic-graph` 實作了輕量級狀態流轉引擎 `WorkflowEngine`。
+  - 定義了全域狀態 `SharedState(BaseModel)`，用來跨節點傳遞 `messages` (歷史紀錄) 與 `artifacts` (共享檔案)。
+  - 實行**主持人中心制 (Star-Topology)**：所有 Worker (如 MarketBot) 執行完畢後，必須將控制權交還給 Supervisor 節點，由大腦決定下一步，防止 AI 群聊失控。
+
+### 2. 異質化模型拓樸 (Heterogeneous Model Topology)
+- **大腦節點 (Supervisor)**：強制綁定高智商的 `gemini-3-flash-preview`，專職負責 `_route_next_node` 與工具邏輯判斷。
+- **苦力節點 (Worker Nodes)**：強制降級綁定 `gemini-3.1-flash-lite-preview`，負責高併發的資料抽取與格式化，大幅節省 Token 成本。
+
+### 3. 動態 MCP 與 RBAC (Logical Dynamic MCP Federation)
+- **實作細節**: 我們拒絕為不同 Agent 開設多個 MCP 容器。在單一 `archon-mcp` (Port 8051) 中，當 `mcp_client.py` 發出 `ListTools` 請求時，會夾帶 `X-Agent-Type`。伺服器端的 `RBACService` 會根據該身分**動態裁切並回傳**其有權限使用的 Tool Schema（例如：向 MarketBot 隱藏 `delete_project` 工具）。
+
+### 4. 前後端即時群聊橋接 (The Backend Wiring)
+- **解決斷層**: 前端原本只有一個字串顯示框。我們透過修改 `agent_service.py` 的 `_run_general_agent_task`，將原本單次呼叫 LLM 的邏輯，改為透過 `httpx.post("http://archon-agents:8052/agents/workflow/run")` 將任務轉發給 8052 埠的 `WorkflowEngine`。
+- **資料庫擴充**: `archon_tasks.agent_output` 欄位被升級為 JSONB，完整寫入 `messages` 陣列 (`[{role: "supervisor", content: "..."}, ...]`)，而非只存最終結果。
+- **前端實作**: 新增 `TaskAgentGroupChat.tsx` 元件，透過 `ROLE_CONFIG` 定義各 Agent 的大頭貼與對話泡泡顏色，將 JSONB 轉換為 WhatsApp 風格的群聊介面。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::warning[API 配額陷阱與金鑰輪替 (HTTP 429)]
+Google Gemini API (如 `gemini-3-flash`) 的免費額度極為嚴苛（每日可能僅 20 次）。在多智能體頻繁交互下會瞬間耗盡。
+**鐵律**: 必須在 `_run_agent_with_retry` 中實作指數退避 (Exponential Backoff，搭配 `tenacity`)。當遭遇 429 時，系統必須具備**金鑰自動輪替 (Key Rotation)** 能力，自動從 `GEMINI_API_KEY` 切換至備用的 `GOOGLE_API_KEY` 續傳。
+:::
+
+:::danger[React 深層陣列依賴導致的渲染死鎖 (Rendering Deadlocks)]
+歷史 Commit (`aae75a1`, `2dae433`) 血淚教訓：當前端渲染群聊紀錄時，資料庫回傳的 `agent_output.messages` 是一個深層巢狀的 JSON Array。
+**鐵律**: **絕對禁止**將這個 JSON Array 直接放入 React `useEffect` 的 Dependency 陣列中。必須使用 `useMemo` 隔離，或者僅依賴基礎型別 (如 `messages.length` 或字串化後的結果) 來觸發更新，否則會引發無限重新渲染導致瀏覽器卡死。
+:::
+
+:::tip[跨容器 LLM 通訊必須設定高超時]
+當主伺服器 (`archon-server`) 透過 HTTP 呼叫 Agent 微服務 (`archon-agents`) 時，由於星型群聊可能耗時數分鐘，**絕對不可**使用預設的 HTTP Timeout。**鐵律**: 必須顯式設定超時時間（如 `httpx.post(..., timeout=300.0)`）。
+:::
+
+:::tip[500 Error 的真凶與資料庫空狀態防禦]
+在 MCP 架構中，HTTP 500 通常不是外部網路錯誤，而是 MCP Tool 內部拋出了 Unhandled Exception。
+**鐵律**: 查詢資料庫時，**絕對禁止**使用 Supabase Python 客戶端的 `.single()`，因其在無對應資料時會直接拋出 `PGRST116` 錯誤並穿透 RPC Bridge 導致 500。必須使用陣列查詢 `.execute()` 並透過 `if res.data and len(res.data) > 0:` 防禦空狀態。
+:::

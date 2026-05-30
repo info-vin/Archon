@@ -1,0 +1,56 @@
+---
+id: phase-4-6-part3-stabilization
+title: Phase 4.6 (Part 3) - 系統穩定與全端公證
+sidebar_position: 7
+tags: [system-stabilization, e2e-testing, smart-routing, tts]
+---
+
+# Phase 4.6 (Part 3): 系統穩定化、Nexus 硬化與 E2E 全端公證
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 4.6 的最後衝刺階段（Phases 4.6.41 至 4.6.61）標誌著 Archon 系統從「功能完備」邁向「工業級穩定」的關鍵轉折點。本階段的核心目標是消除開發過程中遺留的技術債、修復「快樂路徑 (Happy Path)」思維帶來的環境污染與隱性崩潰，並徹底硬化系統基礎設施。
+
+透過建立全域網路限流 (Rate Limiting)、零 Token 成本的 UI 測試基礎設施 (MBT)、全端物理對帳 (Physical Parity)，以及將系統治理（Knowledge Governance）轉向任務導向架構，我們成功實現了穩定的多角色協作閉環與 E2E 高效驗證。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. Admin System Hardening 與 Knowledge Governance
+*   **Audit Trail 2.0 與資源監控**: 我們在 `archon_logs` 實作了專屬的 `admin-audit` 審計鏈條追蹤提案的批准記錄。同時，`ThreadingService` 現已整合記憶體與資源壓力的主動報警 (OOM alerts)，並即時反饋至 Admin 介面。
+*   **Crawler Resilience (爬蟲自癒韌性)**: 面對 403 封鎖，我們實作了帶有 User-Agent 輪替與指數退避 (Exponential Backoff) 的 `SmartRetry` 自癒邏輯。
+*   **Task-Driven RAG 注入管線**: Admin UI 徹底拋棄了舊版進度條，轉向「智能體工作流 (Agentic Workflow)」架構。爬蟲目標被視為一種後台工單 (Task)，由 XState 狀態機與 AI Librarian 直接管理。
+*   **智慧資產與認知分析**: 行銷端實作了由 XState 驅動的 `SmartImagePicker`；生成文章導入了 RAG 來源標籤 (Citation Badge) 透明化機制；Admin 端則新增了 `AI_CORRECTION` 修改追蹤，建立精確的認知分析閉環。
+
+### 2. Smart Routing, Rate Limiting 與 Cost/MCP Alignment
+*   **全域限流防禦 (Global Rate Limiter)**: 為解決 Gemini Free Tier 嚴苛的速率限制 (429/503 錯誤)，系統導入了 `GlobalThrottler` (漏桶演算法)，對 Pro 模型 (間隔 32s) 與 Lite 模型 (間隔 4.5s) 實施主動排隊。
+*   **智慧路由與零硬編碼**: 在 `AgentRegistry` 中為模型引入 `model_tier` 屬性，徹底根除代碼中對特定模型的硬編碼，實現基於複雜度的動態路由。
+*   **MCP 物理層解鎖**: 修正了 `docker-compose.yml` 中的 volume 掛載問題，將影子架構中的原生工具（如檔案修改、執行 Shell）正確遷移至 `archon-mcp` 實體執行。
+*   **Cost/ROI 斷層修復**: 修復了因 SQL JOIN (`PGRST200`) 引發的 token 數據無法回傳問題，並在前端正式掛載 `TokenUsageTable` 及 ROI 分析標籤頁。
+
+### 3. Universal Web Grounding, Librarian Split 與 TTS Realization
+*   **非同步 SDK 歸一化**: 將系統內所有 `google-genai` 的呼叫全面統一至非同步 `client.aio`，搭配 `@retry_with_backoff` 自癒機制，消滅了 FastAPI 伺服器的阻塞風險與 504 Timeout 問題。同時為 Marketing Blog 的生成導入了 `google_search` Web Grounding 檢索能力。
+*   **LibrarianService 模組化解耦**: 將行數過長的 God Object 物理拆分至 `web_archiver`, `business_archiver`, `file_archiver`，並以 Facade 模式維持向後相容性。
+*   **TTS 實體發聲 (Text-to-Speech)**: 引進 `gemini-3.1-flash-tts-preview` 模型構建 `TextToSpeechService`。API 以非同步串流直接傳輸 Raw WAV 位元組至前端，全程 In-Memory 不落地。這項技術被應用於 Charlie 的 Manager Nexus「天氣預報式戰情報告」以及 Bob 的行銷試聽錄音室中。
+
+### 4. Nexus Hardening, UI Testing Infrastructure 與 E2E Stability
+*   **MBT 防禦網 (Model-Based Testing)**: 大規模導入 XState 重構前端複雜的 React 元件（如 `PromptManagement`, `ApprovalsPage`），並使用 Playwright 驅動時光機回放 (Trace Viewer)，實現零 Token 成本的 UI 狀態覆蓋與極端網路測試。
+*   **全域測試基礎設施**: 實作了 `global.setup.ts` 處理認證持久化，並引入 `systemFixtures.ts` 提供具狀態的模擬 (Stateful Mocks)。這終結了各自為政的幻覺測試與 UI 腐化 (UI Rot)。
+*   **後端空資料防禦 (Backend Empty State Hardening)**: 全面棄用 `supabase-py` 中危險的 `.single()` 與 `.maybe_single()`，改用安全的陣列查詢檢查，從根本上防堵 HTTP 500 錯誤。
+*   **窮舉式 Admin 驗證 (Exhaustive Verification)**: 執行針對 9 個管理員標籤頁的無死角 Playwright 測試。在前端關閉了無頭環境下易崩潰的圖表動畫 (`isAnimationActive={false}`)，並嚴格處理了所有的空狀態 (Empty State) 優雅降級渲染。
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::danger[絕對禁止依賴樂觀路徑 (Happy Path)]
+開發與測試絕不可建立在「資料庫已有豐富測試資料」的幻想之上。所有系統端點必須能承受**空狀態 (Empty State)**；所有 MBT 測試腳本也必須涵蓋 API 回傳 500、網路極度延遲或空結果的負面斷言。
+:::
+
+:::warning[先設計狀態，再寫 UI]
+在修改或新增複雜的 React 業務元件前，必須先建立 XState `machine.ts`，窮舉所有可能發生的狀態（包含載入、失敗與交互競態條件）。拒絕使用無結構的 `useState` 群組來管理分散非同步操作。
+:::
+
+:::tip[防禦性圖表與列表渲染]
+在所有列表與資料看板 (Dashboards) 開發時，必須進行物理斷言檢查 (如 `data.length > 0` 或 `Object.keys().length > 0`)。此外，在 E2E 無頭環境下，基於 Recharts 等引擎的圖表必須自動關閉動畫，以避免物理座標計算產生 `NaN` 而崩潰。
+:::
+
+:::danger[E2E 測試與 DOM 的 100% 物理對齊]
+自動化 E2E 測試是真實系統可用性的唯一證明。當對 UI 文字或路由進行任何修改時，對應的 Playwright 選取器與狀態驗證必須在同一 PR 內同步更新，杜絕 UI 腐化。測試必須採用 Trace Viewer 的「時光機公證」，不可使用不可重現的幻覺 Mock。
+:::

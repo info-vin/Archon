@@ -109,6 +109,15 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年5月30日：Phase 5.3 & 5.4 歷史歸檔、知識庫萃取與全端門禁公證
+
+今日我們專注於降低專案的認知負載 (Cognitive Load) 與技術債清理，並執行了全系統的健康度檢查：
+
+1. **歷史計畫物理歸檔 (Archive)**：將 `Phase_5.3.*` 與 `Phase_5.4.*` 系列的 PRP 文件徹底移出工作區，壓縮並封裝至 `PRPs/archive/Phase_5_Archive.tar.gz`，維持工作區極簡，避免 AI 讀取過期的歷史計畫產生幻覺。
+2. **知識庫萃取 (Knowledge Journal)**：將歸檔的血淚教訓與架構決策，提煉為 Docusaurus `.mdx` 文件 (`phase-5-3-0-marketing-pipeline`, `phase-5-4-0-twin-scout-chaos`)。確立了「主動式網路混沌攔截」及「AI 預算熔斷機制」的鐵律，並重整側邊欄排序。
+3. **全端品質門禁公證 (Audit-QA)**：執行 `make audit-qa`，以 100% 成功率通過前端 Linter/E2E、後端 578 項 Pytest 以及全角色實體權限對帳 (200 OK)，確保系統處於絕對健康的基線。
+4. **AI 協作模式釐清**：確認了使用 `@generalist` 等語法呼叫內建 Sub-agent 處理繁重閱讀任務的 SOP，以保護主 Session 的上下文記憶體。
+
 ### 2026年5月29日：Phase 5.5.0 離線硬化與 ENOSPC 磁碟危機救援
 
 今日我們成功完成了 Phase 5.5.0「無網路極端環境下之系統自動擴充與離線硬化計畫」，過程充滿了硬體層級的驚險挑戰，核心成果如下：
