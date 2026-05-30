@@ -51,6 +51,18 @@
 
 ---
 
+## 5. 基礎設施瘦身與測試防護 (Infrastructure Slimming & Test Hardening)
+在審查過去 10 次的 Git Commit 歷史後，我們發現此階段除了資料庫重整，還包含了針對 CI/CD 基礎設施與測試環境的關鍵硬化：
+* **徹底解決 Docker Image Bloat (ENOSPC 危機)**：
+  - 移除了 `Dockerfile.server` 中錯誤的 `COPY --from=builder /root/.cache` 語法，防止高達 8GB 的無用快取被封裝。
+  - 在下載離線 Wheel 腳本 (`cache_offline_packages.py`) 中強制加入 `--extra-index-url https://download.pytorch.org/whl/cpu`，剃除高達數 GB 的 Nvidia CUDA 驅動依賴，成功將系統映像檔從 31GB 壓制到 5GB。
+* **E2E 測試交叉污染防護**：
+  - 修復了前端 E2E 測試的基礎設定 (`enduser-ui-fe/tests/e2e/e2e.setup.tsx`)。
+  - 實作在 `afterEach` 階段強制重置 `getCurrentUser` Mock 狀態，徹底解決了因身分狀態殘留導致的「測試交叉污染 (Cross-test pollution)」，確保每一輪 RBAC 隔離測試的準確性。
+* **開發者規範同步**：將上述 ENOSPC 危機與 Docker.raw (Sparse File) 的底層坑洞，正式寫入 `CONTRIBUTING_tw.md` 與 `GEMINI.md` 的「第一章：核心工作習慣」中，避免未來團隊重蹈覆轍。
+
+---
+
 ## 驗證指標 (Acceptance Criteria)
 1. 執行完整的 DB Init 腳本後，88 筆真實 Leads 與自定義 Agent 提示詞必須完好存在於資料庫中。
 2. 系統啟動時，Migration 應只需執行核心的 01~12 腳本，不再需要執行 13~23 的零碎補丁。
