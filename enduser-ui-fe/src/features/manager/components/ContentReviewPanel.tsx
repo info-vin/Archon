@@ -84,7 +84,7 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     <span className="text-[10px] text-gray-400 font-bold uppercase">{selectedContent.author_name || selectedContent.authorName}</span>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close content preview"><XIcon className="w-4 h-4" /></button>
+                            <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close content preview" title="Close content preview"><XIcon className="w-4 h-4" /></button>
                         </div>
 
                         <div className="prose prose-sm dark:prose-invert max-w-none mb-8 bg-white dark:bg-slate-950 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
