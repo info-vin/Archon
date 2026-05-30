@@ -73,9 +73,9 @@ INSERT INTO leads (
 ) VALUES 
 (
     '00000000-0000-0000-0000-111111111111', 
-    'Stale Corp Inc', 
-    'Old Contact', 
-    'contact@stale.com', 
+    'Apex Logistics Solutions', 
+    'Sarah Jenkins (VP of Operations)', 
+    's.jenkins@apexlogistics.com', 
     'new', 
     'manual', 
     10, 
@@ -84,9 +84,9 @@ INSERT INTO leads (
 ),
 (
     '00000000-0000-0000-0000-222222222222', 
-    'Legacy Systems Ltd', 
-    'Jane Legacy', 
-    'jane@legacy.com', 
+    'Nexus Financial Group', 
+    'Marcus Vance (CTO)', 
+    'm.vance@nexusfin.com', 
     'contacted', 
     'manual', 
     60, -- High score but stale
@@ -159,3 +159,14 @@ VALUES
     'Charlie',
     NOW() - INTERVAL '30 minutes'
 );
+
+-- 6. Add a Star-Topology test task assigned to Supervisor
+INSERT INTO archon_tasks (id, title, description, assignee, assignee_id, status)
+VALUES (
+    '00000000-0000-0000-0000-333333333333',
+    'Marketing Data Deep Dive - Q4 Campaign ROI',
+    'Please analyze the Q4 campaign performance data, calculate the conversion rates, and provide a marketing strategy for the upcoming year.',
+    'Archon Supervisor',
+    'e1682371-0000-0000-0000-000000000000',
+    'todo'
+) ON CONFLICT DO NOTHING;
