@@ -25,6 +25,8 @@ CREATE TABLE public.archon_tasks (
     assignee_id text,
     estimated_hours double precision DEFAULT 0,
     actual_hours double precision DEFAULT 0,
+    collaborator_agent_ids text[] DEFAULT '{}'::text[],
+    tenant_id UUID DEFAULT 'd3b07384-d113-4456-a111-c91823710000',
     CONSTRAINT archon_tasks_assignee_check CHECK (((assignee IS NOT NULL) AND (assignee <> ''::text)))
 );
 
@@ -187,39 +189,7 @@ CREATE TABLE public.attendance_logs (
 
 ALTER TABLE public.attendance_logs OWNER TO postgres;
 
---
--- Name: customers; Type: TABLE; Schema: public; Owner: postgres
---
 
-CREATE TABLE public.customers (
-    id uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
-    name text NOT NULL,
-    email text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-ALTER TABLE public.customers OWNER TO postgres;
-
---
--- Name: TABLE customers; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON TABLE public.customers IS '儲存客戶資訊。';
-
-
---
--- Name: COLUMN customers.name; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON COLUMN public.customers.name IS '客戶的完整名稱或公司名稱。';
-
-
---
--- Name: COLUMN customers.email; Type: COMMENT; Schema: public; Owner: postgres
---
-
-COMMENT ON COLUMN public.customers.email IS '客戶的主要聯絡電子郵件。';
 
 
 --
@@ -260,20 +230,6 @@ ALTER SEQUENCE public.gemini_logs_id_seq OWNER TO postgres;
 ALTER SEQUENCE public.gemini_logs_id_seq OWNED BY public.gemini_logs.id;
 
 
---
--- Name: market_insights; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.market_insights (
-    id uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
-    keyword text NOT NULL,
-    insight_summary text,
-    related_blog_id text,
-    created_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.market_insights OWNER TO postgres;
 
 --
 -- Name: marketing_trends; Type: TABLE; Schema: public; Owner: postgres
@@ -290,21 +246,6 @@ CREATE TABLE public.marketing_trends (
 
 ALTER TABLE public.marketing_trends OWNER TO postgres;
 
---
--- Name: subscriptions; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.subscriptions (
-    id uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
-    email text NOT NULL,
-    lead_id uuid,
-    status text DEFAULT 'active'::text,
-    tags text[],
-    created_at timestamp with time zone DEFAULT now()
-);
-
-
-ALTER TABLE public.subscriptions OWNER TO postgres;
 
 --
 -- Name: token_usage; Type: TABLE; Schema: public; Owner: postgres
@@ -321,7 +262,8 @@ CREATE TABLE public.token_usage (
     total_tokens integer GENERATED ALWAYS AS ((input_tokens + output_tokens)) STORED,
     cost_usd numeric(10,6) DEFAULT 0,
     context_type text,
-    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    tenant_id UUID DEFAULT 'd3b07384-d113-4456-a111-c91823710000'
 );
 
 

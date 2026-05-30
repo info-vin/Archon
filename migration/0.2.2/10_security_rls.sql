@@ -56,11 +56,6 @@ CREATE POLICY "Allow all authenticated users to view schemas" ON public.archon_e
 CREATE POLICY "Allow app logging" ON public.gemini_logs FOR INSERT TO authenticated WITH CHECK (true);
 
 
---
--- Name: customers Allow authenticated read access; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow authenticated read access" ON public.customers FOR SELECT TO authenticated USING (true);
 
 
 --
@@ -95,7 +90,7 @@ CREATE POLICY "Allow authenticated users to read and update archon_project_sou" 
 -- Name: archon_projects Allow authenticated users to read and update archon_projects; Type: POLICY; Schema: public; Owner: postgres
 --
 
-CREATE POLICY "Allow authenticated users to read and update archon_projects" ON public.archon_projects TO authenticated USING (true);
+CREATE POLICY "Allow authenticated users to read and update archon_projects" ON public.archon_projects TO authenticated USING (tenant_id = public.get_auth_tenant_id()) WITH CHECK (tenant_id = public.get_auth_tenant_id());
 
 
 --
@@ -142,11 +137,6 @@ CREATE POLICY "Allow authenticated users to select vendors" ON public.vendors FO
 CREATE POLICY "Allow authenticated users to update vendors" ON public.vendors FOR UPDATE TO authenticated USING (true);
 
 
---
--- Name: market_insights Allow authenticated users to view insights; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow authenticated users to view insights" ON public.market_insights FOR SELECT USING ((auth.role() = 'authenticated'::text));
 
 
 --
@@ -291,14 +281,6 @@ CREATE POLICY "Allow service role to insert ethics logs" ON public.archon_ethics
 
 CREATE POLICY "Allow system logging" ON public.archon_logs FOR INSERT TO authenticated WITH CHECK (true);
 
-
---
--- Name: customers Allow write access for sales and management; Type: POLICY; Schema: public; Owner: postgres
---
-
-CREATE POLICY "Allow write access for sales and management" ON public.customers USING ((((auth.jwt() ->> 'role'::text) = 'service_role'::text) OR (EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = (auth.uid())::text) AND (profiles.role = ANY (ARRAY['admin'::text, 'manager'::text, 'sales'::text, 'system_admin'::text])))))));
 
 
 --
@@ -554,11 +536,6 @@ CREATE POLICY child_pages_isolation ON public.archon_crawled_pages FOR SELECT TO
   WHERE (s.source_id = archon_crawled_pages.source_id))));
 
 
---
--- Name: customers; Type: ROW SECURITY; Schema: public; Owner: postgres
---
-
-ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: archon_sources dept_isolation_read; Type: POLICY; Schema: public; Owner: postgres
@@ -592,11 +569,6 @@ ALTER TABLE public.gemini_logs ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 
---
--- Name: market_insights; Type: ROW SECURITY; Schema: public; Owner: postgres
---
-
-ALTER TABLE public.market_insights ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: marketing_trends; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -616,11 +588,6 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.proposed_changes ENABLE ROW LEVEL SECURITY;
 
---
--- Name: subscriptions; Type: ROW SECURITY; Schema: public; Owner: postgres
---
-
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: token_usage; Type: ROW SECURITY; Schema: public; Owner: postgres
@@ -771,12 +738,6 @@ GRANT ALL ON TABLE public.blog_posts TO authenticated;
 GRANT ALL ON TABLE public.blog_posts TO service_role;
 
 
---
--- Name: TABLE customers; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.customers TO authenticated;
-GRANT ALL ON TABLE public.customers TO service_role;
 
 
 --
@@ -795,12 +756,6 @@ GRANT ALL ON TABLE public.leads TO authenticated;
 GRANT ALL ON TABLE public.leads TO service_role;
 
 
---
--- Name: TABLE market_insights; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.market_insights TO authenticated;
-GRANT ALL ON TABLE public.market_insights TO service_role;
 
 
 --
@@ -827,12 +782,6 @@ GRANT ALL ON TABLE public.proposed_changes TO authenticated;
 GRANT ALL ON TABLE public.proposed_changes TO service_role;
 
 
---
--- Name: TABLE subscriptions; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT ALL ON TABLE public.subscriptions TO authenticated;
-GRANT ALL ON TABLE public.subscriptions TO service_role;
 
 
 --

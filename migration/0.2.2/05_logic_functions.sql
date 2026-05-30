@@ -445,3 +445,30 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+
+-- Added from Patch 13: optimize_task_reordering
+CREATE OR REPLACE FUNCTION increment_task_orders(
+    p_project_id UUID,
+    p_status TEXT,
+    p_start_order INT
+)
+RETURNS void AS $$
+BEGIN
+    UPDATE archon_tasks
+    SET 
+        task_order = task_order + 1,
+        updated_at = NOW()
+    WHERE 
+        project_id = p_project_id 
+        AND status = p_status
+        AND task_order >= p_start_order;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Added from Patch 23: multi_tenant_and_rls_hardening
+CREATE OR REPLACE FUNCTION public.get_auth_tenant_id()
+RETURNS UUID SECURITY DEFINER AS $$
+BEGIN
+  RETURN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()::text LIMIT 1);
+END;
+$$ LANGUAGE plpgsql STABLE;

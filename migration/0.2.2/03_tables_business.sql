@@ -95,7 +95,6 @@ COMMENT ON COLUMN public.blog_posts.target_brand IS 'Brand channel (e.g., Archon
 --
 -- Name: leads; Type: TABLE; Schema: public; Owner: postgres
 --
-
 CREATE TABLE public.leads (
     id uuid DEFAULT extensions.uuid_generate_v4() NOT NULL,
     company_name text NOT NULL,
@@ -122,7 +121,8 @@ CREATE TABLE public.leads (
     source text DEFAULT 'manual'::text,
     pitch_content text,
     lost_reason text,
-    lost_competitor text
+    lost_competitor text,
+    tenant_id UUID DEFAULT 'd3b07384-d113-4456-a111-c91823710000'
 );
 
 
@@ -292,7 +292,8 @@ CREATE TABLE public.archon_projects (
     github_repo text,
     pinned boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    tenant_id UUID DEFAULT 'd3b07384-d113-4456-a111-c91823710000'
 );
 
 

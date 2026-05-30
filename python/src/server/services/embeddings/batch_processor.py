@@ -46,15 +46,15 @@ async def create_embeddings_batch(
         try:
             from sentence_transformers import SentenceTransformer
             model = SentenceTransformer("all-MiniLM-L6-v2")
-            
+
             # SentenceTransformer encode executes synchronously, wrap in executor to keep it async friendly
             loop = asyncio.get_event_loop()
             embeddings_np = await loop.run_in_executor(
                 None, lambda: model.encode(texts, show_progress_bar=False)
             )
-            
+
             result = EmbeddingBatchResult()
-            for text_item, emb in zip(texts, embeddings_np):
+            for text_item, emb in zip(texts, embeddings_np, strict=False):
                 result.add_success(emb.tolist(), text_item)
             return result
         except Exception as e:

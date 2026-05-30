@@ -25,11 +25,11 @@ async def lifespan(app: FastAPI):
     from src.server.services.crawler_manager import cleanup_crawler
     from src.server.services.credential_service import initialize_credentials
     from src.server.services.log_service import log_service
+    from src.server.services.migration_service import migration_service
     from src.server.services.prompt_service import prompt_service
     from src.server.services.scheduler_service import SchedulerService
     from src.server.services.search.reranking_strategy import reranking_strategy
     from src.server.services.system.worker_service import worker_service
-    from src.server.services.migration_service import migration_service
 
     # Keep track of initialized components for cleanup
     initialized_components = set()
