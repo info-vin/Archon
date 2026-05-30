@@ -109,12 +109,6 @@ ALTER TABLE ONLY public.leads
     ADD CONSTRAINT leads_linked_project_id_fkey FOREIGN KEY (linked_project_id) REFERENCES public.archon_projects(id);
 
 
---
--- Name: market_insights market_insights_related_blog_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.market_insights
-    ADD CONSTRAINT market_insights_related_blog_id_fkey FOREIGN KEY (related_blog_id) REFERENCES public.blog_posts(id);
 
 
 --
@@ -125,12 +119,6 @@ ALTER TABLE ONLY public.proposed_changes
     ADD CONSTRAINT proposed_changes_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES auth.users(id);
 
 
---
--- Name: subscriptions subscriptions_lead_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_lead_id_fkey FOREIGN KEY (lead_id) REFERENCES public.leads(id);
 
 
 --
@@ -147,14 +135,6 @@ ALTER TABLE ONLY public.token_usage
 
 ALTER TABLE ONLY public.vendors
     ADD CONSTRAINT vendors_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES auth.users(id);
-
-
---
--- Name: visit_logs visit_logs_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.visit_logs
-    ADD CONSTRAINT visit_logs_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id);
 
 
 --

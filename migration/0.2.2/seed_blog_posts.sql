@@ -278,3 +278,43 @@ WHERE id IN (
     'a6666666-6666-6666-6666-666666666666',
     'a7777777-7777-7777-7777-777777777777'
 );
+
+-- Post 8: Complex layout for Visual Judge testing
+INSERT INTO public.blog_posts (id, title, excerpt, content, author_name, target_brand, status)
+VALUES (
+    '21fba827-0000-4b2a-89fb-b9244fa12b18',
+    'Technical Architecture & AI ROI Metrics (Visual Test)',
+    'A deep dive into system performance including tables, formulas, and code blocks.',
+    '# System Architecture Review
+
+Here is a breakdown of our recent performance metrics.
+
+## 1. ROI Table
+| Metric | Q3 | Q4 | Growth |
+|---|---|---|---|
+| **Server Uptime** | 99.8% | 99.99% | +0.19% |
+| **Token Cost** | 20.5 | 5.2 | -62.4% |
+| **RAG Latency** | 2.4s | 0.8s | -66% |
+
+## 2. Cost Calculation Formula
+Our new dynamic routing cost formula:
+```math
+Total Cost = SUM(Tokens_in * Price_in + Tokens_out * Price_out)
+```
+
+## 3. Implementation Code
+Here is how we implemented the tensor reshaping for the new vector database:
+```python
+import torch
+def reshape_vectors(embeddings: torch.Tensor, target_dim: int = 384) -> torch.Tensor:
+    """Reshapes 768d vectors to 384d using PCA-like reduction."""
+    if embeddings.shape[-1] == target_dim:
+        return embeddings
+    return embeddings[:, :target_dim]
+```
+
+> **Note:** Ensure all columns align properly on mobile views.',
+    'Archon DevBot',
+    'Archon',
+    'published'
+) ON CONFLICT DO NOTHING;

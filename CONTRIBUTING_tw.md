@@ -728,14 +728,14 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 D：基礎設施物理審計 (Infrastructure Audit)
 
-> **結算日期**: 2026-04-02
-> **狀態**: 🟡 **映像檔體積待優化**。目前 `archon-server` 體積為 10.2GB。
+> **結算日期**: 2026-05-29 (Phase 5.5.0 Offline Hardening)
+> **狀態**: 🟢 **映像檔體積已大幅最佳化**。目前 `archon-server` 體積已成功從 10.2GB (甚至一度膨脹至 31.5GB) 瘦身至 **5.02GB**。
 
-- **體積組成真相 (物理公證)**:
-    - **NVIDIA/CUDA 庫**: 2.85 GB (路徑: `/venv/lib/python3.12/site-packages/nvidia`)。
-    - **PyTorch (GPU版)**: 1.51 GB (內含 816MB 之 `libtorch_cuda.so`)。
-    - **Playwright Chromium**: 622 MB。
-- **硬體對帳結論**: 透過物理探針 `torch.cuda.is_available()` 證實目前環境僅抓取 **CPU only**。上述 3GB+ 的 CUDA 庫為無效死重，未來應遷移至 `torch-cpu` 分支。
+- **體積組成真相與修復 (物理公證)**:
+    - **NVIDIA/CUDA 庫**: 曾經高達 2.85 GB。
+    - **PyTorch (GPU版)**: 曾經高達 1.51 GB。
+    - **修復行動 (Phase 5.5.0)**: 在建置離線環境時，明確在 `Dockerfile.server` 與離線腳本中加入 `--extra-index-url https://download.pytorch.org/whl/cpu`，強迫 `uv pip install` 僅下載 CPU 版本的套件。成功移除了所有無效的 CUDA 死重。
+    - **快取地雷**: 嚴禁在 Dockerfile 寫入 `COPY --from=builder /root/.cache /root/.cache`，這會導致數 GB 的編譯快取被封裝進生產映像檔中，引發 `ENOSPC` 磁碟耗盡危機。
 
 ## 附錄 E：資料庫表格設計初衷 (Schema Rationale)
 

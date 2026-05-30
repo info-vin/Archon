@@ -31,3 +31,4 @@ node_modules/
 .twin/
 python/.twin/
 
+ollama_data/

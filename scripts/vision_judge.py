@@ -90,6 +90,78 @@ def load_api_key() -> str:
     return api_key
 
 
+def run_ollama_vision_judge(image_path: Path, prompt: str, model_arg: str):
+    import base64
+    import httpx
+    
+    print("🔌 OFFLINE_MODE detected. Using local Ollama for visual evaluation...")
+    
+    # Read and encode image to base64
+    try:
+        with open(image_path, "rb") as image_file:
+            img_b64 = base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception as e:
+        print(f"❌ Error reading image for Ollama: {e}")
+        sys.exit(1)
+        
+    ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+    # Default to local gemma4:e4b for offline multimodal evaluation
+    ollama_model = "gemma4:e4b"
+    
+    print(f"🚀 Sending screenshot to Ollama model '{ollama_model}' at {ollama_host}...")
+    
+    payload = {
+        "model": ollama_model,
+        "prompt": prompt + "\nRespond ONLY in the JSON format matching the schema:\n"
+                  "{\n  \"passed\": bool,\n  \"issues\": [string],\n  \"details\": string\n}",
+        "images": [img_b64],
+        "format": "json",
+        "stream": false,
+        "options": {
+            "temperature": 0.1
+        }
+    }
+    
+    try:
+        resp = httpx.post(f"{ollama_host}/api/generate", json=payload, timeout=90.0)
+        if resp.status_code != 200:
+            print(f"❌ Ollama API failed with status {resp.status_code}: {resp.text}")
+            sys.exit(1)
+            
+        result_data = resp.json()
+        response_text = result_data.get("response", "")
+        
+        # Parse visual judgment
+        judgment_dict = json.loads(response_text)
+        judgment = VisionJudgment(**judgment_dict)
+    except Exception as e:
+        print(f"❌ Failed to execute or parse Ollama visual evaluation: {e}")
+        if 'resp' in locals():
+            print(f"Raw Ollama response: {resp.text}")
+        sys.exit(1)
+        
+    print("\n" + "=" * 50)
+    print("🎯 [OFFLINE VISUAL JUDGE RESULTS]")
+    print("=" * 50)
+    print(f"Status:  {'🟢 PASSED' if judgment.passed else '🔴 FAILED'}")
+    print(f"Details: {judgment.details}\n")
+ 
+    if judgment.issues:
+        print("⚠️  [ISSUES DETECTED]:")
+        for idx, issue in enumerate(judgment.issues, 1):
+            print(f"  {idx}. {issue}")
+    else:
+        print("✅ No visual issues detected!")
+    print("=" * 50)
+ 
+    if judgment.passed:
+        print("\n🟢 Local visual verification passed.")
+        sys.exit(0)
+    else:
+        print("\n🔴 Local visual verification failed.")
+        sys.exit(1)
+
+
 def main():
     args = parse_args()
     image_path = Path(args.image)
@@ -97,6 +169,28 @@ def main():
     if not image_path.exists():
         print(f"❌ Error: Image file not found: {image_path}")
         sys.exit(1)
+
+    # Set up the default verification prompt specifically tuned for Star-Topology multi-agent chat
+    default_prompt = (
+        "You are an Elite QA Visual Automation Judge. Analyze the provided browser screenshot of "
+        "the Multi-Agent Star-Topology Chat UI. Verify if it meets our strict visual and logical "
+        "design specifications:\n\n"
+        "1. WhatsApp-Style Chat History Layout:\n"
+        "   - Inspect if message bubbles (chat bubbles) are clean, fully visible, and properly styled.\n"
+        "   - Ensure there is NO OVERLAPPING TEXT, cut-off words, or visual distortions in any of the bubbles.\n\n"
+        "2. Role-Based Avatar Color Coding:\n"
+        "   - Identify different agent/user avatars (Supervisor, Librarian, AI Developer, User, etc.).\n"
+        "   - Check if their color matches their respective role or permissions correctly (e.g. Supervisor avatar has its designated accent color, user has its fallback, etc.).\n"
+        "   - Verify that all active avatars are clearly rendered without layout glitches.\n\n"
+        "Perform a rigorous audit and return your findings in the requested structured JSON schema."
+    )
+    prompt = args.prompt if args.prompt else default_prompt
+
+    # OFFLINE_MODE check
+    offline_mode = os.environ.get("OFFLINE_MODE", "false").lower() == "true"
+    if offline_mode:
+        run_ollama_vision_judge(image_path, prompt, args.model)
+        return
 
     # Clean up model name to remove redundant prefixes if any
     model_name = args.model
@@ -115,23 +209,6 @@ def main():
     except Exception as e:
         print(f"❌ Error loading image: {e}")
         sys.exit(1)
-
-    # Set up the default verification prompt specifically tuned for Star-Topology multi-agent chat
-    default_prompt = (
-        "You are an Elite QA Visual Automation Judge. Analyze the provided browser screenshot of "
-        "the Multi-Agent Star-Topology Chat UI. Verify if it meets our strict visual and logical "
-        "design specifications:\n\n"
-        "1. WhatsApp-Style Chat History Layout:\n"
-        "   - Inspect if message bubbles (chat bubbles) are clean, fully visible, and properly styled.\n"
-        "   - Ensure there is NO OVERLAPPING TEXT, cut-off words, or visual distortions in any of the bubbles.\n\n"
-        "2. Role-Based Avatar Color Coding:\n"
-        "   - Identify different agent/user avatars (Supervisor, Librarian, AI Developer, User, etc.).\n"
-        "   - Check if their color matches their respective role or permissions correctly (e.g. Supervisor avatar has its designated accent color, user has its fallback, etc.).\n"
-        "   - Verify that all active avatars are clearly rendered without layout glitches.\n\n"
-        "Perform a rigorous audit and return your findings in the requested structured JSON schema."
-    )
-
-    prompt = args.prompt if args.prompt else default_prompt
 
     print(f"🚀 Submitting image to {model_name} for visual audit...")
 

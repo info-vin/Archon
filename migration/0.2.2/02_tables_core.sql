@@ -38,7 +38,8 @@ CREATE TABLE public.profiles (
     status text,
     role text,
     avatar text,
-    permission_overrides jsonb DEFAULT '{}'::jsonb
+    permission_overrides jsonb DEFAULT '{}'::jsonb,
+    tenant_id UUID DEFAULT 'd3b07384-d113-4456-a111-c91823710000'
 );
 
 

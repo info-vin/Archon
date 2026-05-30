@@ -259,6 +259,68 @@ class MigrationService:
             "applied_count": len(applied),
         }
 
+    async def adapt_vector_dimensions_for_offline_mode(self) -> None:
+        """
+        Alters vector column dimensions in the database and rebuilds HNSW indexes
+        to match the active mode (384 dimensions for offline, 768 for online).
+        """
+        import os
+        is_offline = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+        target_dim = 384 if is_offline else 768
+
+        db_url = os.getenv("SUPABASE_DB_URL")
+        if not db_url:
+            logfire.warning("SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
+            return
+
+        logfire.info(f"Checking vector database column dimensions (Target: {target_dim})...")
+
+        # Connect using psycopg2 to run DDL command
+        import psycopg2
+
+        sql_commands = [
+            "DROP INDEX IF EXISTS public.archon_crawled_pages_embedding_idx CASCADE;",
+            "UPDATE public.archon_crawled_pages SET embedding = NULL;",
+            f"ALTER TABLE public.archon_crawled_pages ALTER COLUMN embedding TYPE public.vector({target_dim});",
+            "CREATE INDEX IF NOT EXISTS archon_crawled_pages_embedding_idx ON public.archon_crawled_pages USING hnsw (embedding public.vector_cosine_ops);",
+
+            "DROP INDEX IF EXISTS public.archon_code_examples_embedding_idx CASCADE;",
+            "UPDATE public.archon_code_examples SET embedding = NULL;",
+            f"ALTER TABLE public.archon_code_examples ALTER COLUMN embedding TYPE public.vector({target_dim});",
+            "CREATE INDEX IF NOT EXISTS archon_code_examples_embedding_idx ON public.archon_code_examples USING hnsw (embedding public.vector_cosine_ops);"
+        ]
+
+        conn = None
+        try:
+            # Connect to pg database
+            conn = psycopg2.connect(db_url)
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                # Check current dimension of the vector columns
+                try:
+                    cursor.execute(
+                        "SELECT atttypmod FROM pg_attribute WHERE attrelid = 'public.archon_crawled_pages'::regclass AND attname = 'embedding';"
+                    )
+                    row = cursor.fetchone()
+                    if row and row[0] == target_dim:
+                        logfire.info(f"Vector columns are already at {target_dim} dimensions. No adaptation needed.")
+                        return
+                except Exception as check_err:
+                    logfire.warning(f"Could not check current vector dimension: {check_err}")
+
+                logfire.info(f"Altering columns and rebuilding indexes to {target_dim} dimensions...")
+                for cmd in sql_commands:
+                    try:
+                        cursor.execute(cmd)
+                    except Exception as e:
+                        logfire.warning(f"Failed to execute command '{cmd}': {e}")
+                logfire.info(f"✅ Vector columns successfully adapted to {target_dim} dimensions.")
+        except Exception as e:
+            logfire.error(f"❌ Failed to adapt vector database dimensions: {e}", exc_info=True)
+        finally:
+            if conn:
+                conn.close()
+
 
 # Export singleton instance
 migration_service = MigrationService()

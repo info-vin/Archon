@@ -1,14 +1,14 @@
 -- Name: archon_code_examples_embedding_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX archon_code_examples_embedding_idx ON public.archon_code_examples USING ivfflat (embedding public.vector_cosine_ops);
+CREATE INDEX archon_code_examples_embedding_idx ON public.archon_code_examples USING hnsw (embedding public.vector_cosine_ops);
 
 
 --
 -- Name: archon_crawled_pages_embedding_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX archon_crawled_pages_embedding_idx ON public.archon_crawled_pages USING ivfflat (embedding public.vector_cosine_ops);
+CREATE INDEX archon_crawled_pages_embedding_idx ON public.archon_crawled_pages USING hnsw (embedding public.vector_cosine_ops);
 
 
 --
@@ -306,3 +306,9 @@ CREATE INDEX idx_token_usage_user_id ON public.token_usage USING btree (user_id)
 
 
 --
+
+-- Added from Patch 22: performance indexes
+CREATE INDEX IF NOT EXISTS idx_archon_tasks_assignee_status ON public.archon_tasks (assignee_id, status);
+CREATE INDEX IF NOT EXISTS idx_leads_status_enrichment ON public.leads (status, enrichment_score);
+CREATE INDEX IF NOT EXISTS idx_archon_logs_level_type ON public.archon_logs (level, type);
+CREATE INDEX IF NOT EXISTS idx_token_usage_provider_cost ON public.token_usage (provider, cost_usd DESC);

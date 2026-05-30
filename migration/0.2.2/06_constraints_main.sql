@@ -173,12 +173,6 @@ ALTER TABLE ONLY public.blog_posts
     ADD CONSTRAINT blog_posts_pkey PRIMARY KEY (id);
 
 
---
--- Name: customers customers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.customers
-    ADD CONSTRAINT customers_pkey PRIMARY KEY (id);
 
 
 --
@@ -197,12 +191,6 @@ ALTER TABLE ONLY public.leads
     ADD CONSTRAINT leads_pkey PRIMARY KEY (id);
 
 
---
--- Name: market_insights market_insights_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.market_insights
-    ADD CONSTRAINT market_insights_pkey PRIMARY KEY (id);
 
 
 --
@@ -237,20 +225,8 @@ ALTER TABLE ONLY public.proposed_changes
     ADD CONSTRAINT proposed_changes_pkey PRIMARY KEY (id);
 
 
---
--- Name: subscriptions subscriptions_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_email_key UNIQUE (email);
 
 
---
--- Name: subscriptions subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.subscriptions
-    ADD CONSTRAINT subscriptions_pkey PRIMARY KEY (id);
 
 
 --
