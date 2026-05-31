@@ -13,12 +13,13 @@ test('Manager (Charlie) can access Team Management Panel', async () => {
     const charlie = { id: 'user-3', name: 'Charlie', role: EmployeeRole.MANAGER };
     vi.mocked(api.getCurrentUser).mockResolvedValue(charlie as any);
     
-    renderApp(['/team']);
-
     // 3. Mock team data specifically for this test to overcome isolation
     vi.mocked(api.getEmployees).mockResolvedValue([
         { id: 'alice-123', name: 'Alice Johnson', role: 'sales', department: 'Marketing' }
     ] as any);
+    vi.mocked(api.getAiUsage).mockResolvedValue({ total_cost: 0, models: [] } as any);
+
+    renderApp(['/team']);
 
     expect(await screen.findByRole('heading', { name: /Team Management/i }, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByText(/Alice Johnson/i)).toBeInTheDocument();

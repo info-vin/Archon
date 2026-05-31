@@ -7,11 +7,13 @@ from pathlib import Path
 from typing import Any
 
 import aiofiles
-import logfire
 from supabase import Client
 
+from ..config.logfire_config import get_logger
 from ..config.version import ARCHON_VERSION
 from .client_manager import get_supabase_client
+
+logger = get_logger(__name__)
 
 
 class MigrationRecord:
@@ -100,7 +102,7 @@ class MigrationService:
         try:
             # Check if table exists first
             if not await self.check_migrations_table_exists():
-                logfire.info("Migrations table does not exist, returning empty list")
+                logger.info("Migrations table does not exist, returning empty list")
                 return []
 
             supabase = self._get_supabase_client()
@@ -112,7 +114,7 @@ class MigrationService:
 
             return [MigrationRecord(row) for row in result.data]
         except Exception as e:
-            logfire.error(f"Error fetching applied migrations: {e}")
+            logger.error(f"Error fetching applied migrations: {e}")
             # Return empty list if we can't fetch migrations
             return []
 
@@ -126,7 +128,7 @@ class MigrationService:
         migrations: list[PendingMigration] = []
 
         if not self._migrations_dir.exists():
-            logfire.warning(f"Migration directory does not exist: {self._migrations_dir}")
+            logger.warning(f"Migration directory does not exist: {self._migrations_dir}")
             return migrations
 
         # Scan root migration directory for SQL files
@@ -148,7 +150,7 @@ class MigrationService:
                 )
                 migrations.append(migration)
             except Exception as e:
-                logfire.error(f"Error reading migration file {sql_file}: {e}")
+                logger.error(f"Error reading migration file {sql_file}: {e}")
 
         # Scan all version directories
         for version_dir in sorted(self._migrations_dir.iterdir()):
@@ -161,7 +163,7 @@ class MigrationService:
             # This prevents obsolete version folders (e.g., 0.1.0, 0.2.1) from cluttering the UI
             # with "pending" warnings when the system is already at 0.2.2+.
             if version != ARCHON_VERSION and version != "0.0.0":
-                logfire.debug(f"Skipping obsolete migration directory: {version}")
+                logger.debug(f"Skipping obsolete migration directory: {version}")
                 continue
 
             # Scan all SQL files in version directory
@@ -187,7 +189,7 @@ class MigrationService:
                     )
                     migrations.append(migration)
                 except Exception as e:
-                    logfire.error(f"Error reading migration file {sql_file}: {e}")
+                    logger.error(f"Error reading migration file {sql_file}: {e}")
 
         return migrations
 
@@ -204,7 +206,7 @@ class MigrationService:
         # Check if migrations table exists
         if not await self.check_migrations_table_exists():
             # Bootstrap case - all migrations are pending
-            logfire.info("Migrations table doesn't exist, all migrations are pending")
+            logger.info("Migrations table doesn't exist, all migrations are pending")
             return all_migrations
 
         # Get applied migrations from database
@@ -270,10 +272,10 @@ class MigrationService:
 
         db_url = os.getenv("SUPABASE_DB_URL")
         if not db_url:
-            logfire.warning("SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
+            logger.warning("SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
             return
 
-        logfire.info(f"Checking vector database column dimensions (Target: {target_dim})...")
+        logger.info(f"Checking vector database column dimensions (Target: {target_dim})...")
 
         # Connect using psycopg2 to run DDL command
         import psycopg2
@@ -303,20 +305,20 @@ class MigrationService:
                     )
                     row = cursor.fetchone()
                     if row and row[0] == target_dim:
-                        logfire.info(f"Vector columns are already at {target_dim} dimensions. No adaptation needed.")
+                        logger.info(f"Vector columns are already at {target_dim} dimensions. No adaptation needed.")
                         return
                 except Exception as check_err:
-                    logfire.warning(f"Could not check current vector dimension: {check_err}")
+                    logger.warning(f"Could not check current vector dimension: {check_err}")
 
-                logfire.info(f"Altering columns and rebuilding indexes to {target_dim} dimensions...")
+                logger.info(f"Altering columns and rebuilding indexes to {target_dim} dimensions...")
                 for cmd in sql_commands:
                     try:
                         cursor.execute(cmd)
                     except Exception as e:
-                        logfire.warning(f"Failed to execute command '{cmd}': {e}")
-                logfire.info(f"✅ Vector columns successfully adapted to {target_dim} dimensions.")
+                        logger.warning(f"Failed to execute command '{cmd}': {e}")
+                logger.info(f"✅ Vector columns successfully adapted to {target_dim} dimensions.")
         except Exception as e:
-            logfire.error(f"❌ Failed to adapt vector database dimensions: {e}", exc_info=True)
+            logger.error(f"❌ Failed to adapt vector database dimensions: {e}", exc_info=True)
         finally:
             if conn:
                 conn.close()

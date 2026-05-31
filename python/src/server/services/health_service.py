@@ -84,10 +84,9 @@ class HealthService(BaseRepository):
                 _query_indexed, "Error counting indexed sources", require_data=False
             )
             if idx_success:
-                indexed_count = int(idx_res.get("count") or 0)
-                if indexed_count == 0:
-                    idx_data = idx_res.get("data") or []
-                    indexed_count = len({row["source_id"] for row in idx_data})
+                idx_data = idx_res.get("data") or []
+                # Count the number of unique source_ids that have active crawled pages
+                indexed_count = len({row["source_id"] for row in idx_data})
 
                 alignment_score = (indexed_count / total_count) * 70.0
         else:

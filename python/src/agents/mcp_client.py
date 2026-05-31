@@ -54,8 +54,10 @@ class MCPClient:
                 else:
                     self.mcp_url = f"http://localhost:{mcp_port}"
 
-        self.client = httpx.AsyncClient(timeout=2.0)
-        logger.info(f"MCP Client initialized with URL: {self.mcp_url}, agent_type: {self.agent_type}")
+        import os
+        timeout_val = float(os.getenv("MCP_REQUEST_TIMEOUT", "30.0"))
+        self.client = httpx.AsyncClient(timeout=timeout_val)
+        logger.info(f"MCP Client initialized with URL: {self.mcp_url}, agent_type: {self.agent_type}, timeout: {timeout_val}s")
 
     async def __aenter__(self):
         """Async context manager entry."""

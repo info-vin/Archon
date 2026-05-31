@@ -10,8 +10,26 @@ Modules:
 - knowledge_api: Knowledge base, crawling, and RAG operations
 - projects_api: Project and task management with streaming
 """
+# ruff: noqa: E402
 
 import os
+import warnings
+
+# Suppress the noisy transformers LambdaRuntimeClient deprecation warnings
+warnings.filterwarnings("ignore", message=".*LambdaRuntimeClient.*")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="transformers")
+# Suppress FastAPIDeprecationWarning from fastapi package
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="fastapi")
+warnings.filterwarnings("ignore", message=".*regex.*")
+
+import logging
+
+try:
+    import transformers.utils.logging as transformers_logging
+    transformers_logging.set_verbosity_error()
+except ImportError:
+    pass
+logging.getLogger("transformers").setLevel(logging.ERROR)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

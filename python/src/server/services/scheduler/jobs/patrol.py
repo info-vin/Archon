@@ -168,12 +168,34 @@ async def cleanup_system_probes():
         )
         deleted_sources = len(res_sources.data or [])
 
-        if any([deleted_leads, deleted_pages, deleted_versions, deleted_sources]):
+        # 5. Clean up any orphaned sources in the database (e.g. leftover test files with no vector index)
+        deleted_orphans = 0
+        try:
+            sources_res = supabase.table("archon_sources").select("source_id").execute()
+            all_sources = {s["source_id"] for s in sources_res.data or []}
+
+            pages_res = supabase.table("archon_crawled_pages").select("source_id").execute()
+            indexed_sources = {p["source_id"] for p in pages_res.data or []}
+
+            orphaned_sources = all_sources - indexed_sources
+            if orphaned_sources:
+                logger.info(f"🧹 Clockwork: Found {len(orphaned_sources)} orphaned RAG sources. Pruning...")
+                for sid in orphaned_sources:
+                    supabase.table("archon_document_versions").delete().eq("document_id", sid).execute()
+                    supabase.table("archon_project_sources").delete().eq("source_id", sid).execute()
+                    supabase.table("archon_sources").delete().eq("source_id", sid).execute()
+                deleted_orphans = len(orphaned_sources)
+                logger.info(f"✅ Clockwork: Pruned {deleted_orphans} orphaned sources.")
+        except Exception as prune_err:
+            logger.warning(f"⚠️ Clockwork: Failed to prune orphaned RAG sources: {prune_err}")
+
+        if any([deleted_leads, deleted_pages, deleted_versions, deleted_sources, deleted_orphans]):
             logger.info(
-                f"✅ Clockwork: Cleanup complete. Deleted {deleted_leads} leads, {deleted_pages} pages, {deleted_versions} versions, {deleted_sources} sources."
+                f"✅ Clockwork: Cleanup complete. Deleted {deleted_leads} leads, {deleted_pages} pages, "
+                f"{deleted_versions} versions, {deleted_sources} sources, {deleted_orphans} orphans."
             )
         else:
-            logger.info("✅ Clockwork: Cleanup complete. No expired probe data found.")
+            logger.info("✅ Clockwork: Cleanup complete. No expired probe data or RAG orphans found.")
     except Exception as e:
         logger.error(f"💥 Clockwork: System Probe Cleanup Failed: {e}")
 

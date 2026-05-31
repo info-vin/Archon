@@ -32,6 +32,7 @@ from .workflow_engine import WorkflowEngine
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger("google_genai._api_client").setLevel(logging.ERROR)
 
 
 # Request/Response models

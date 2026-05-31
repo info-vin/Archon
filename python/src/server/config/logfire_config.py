@@ -125,6 +125,7 @@ def setup_logfire(
     logging.getLogger("hpack").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("transformers").setLevel(logging.ERROR)
 
     _logfire_configured = True
     logging.info(f"📋 Logging configured (Logfire: {'enabled' if _logfire_enabled else 'disabled'})")
