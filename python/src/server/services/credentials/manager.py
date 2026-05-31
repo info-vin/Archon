@@ -23,11 +23,19 @@ class CredentialManager:
 
     def __init__(self):
         self._supabase: Client | None = None
+        self._repository: Any | None = None
         self._cache: dict[str, Any] = {}
         self._cache_initialized = False
         self._rag_settings_cache: dict[str, Any] | None = None
         self._rag_cache_timestamp: float | None = None
         self._rag_cache_ttl = 300  # 5 minutes TTL for RAG settings cache
+
+    def _get_repository(self) -> Any:
+        """Get or create the CredentialRepository."""
+        if self._repository is None:
+            from .repository import CredentialRepository
+            self._repository = CredentialRepository(self._get_supabase_client())
+        return self._repository
 
     def _get_supabase_client(self) -> Client:
         """
@@ -74,13 +82,11 @@ class CredentialManager:
             A dictionary of all loaded credentials.
         """
         try:
-            supabase = self._get_supabase_client()
-
-            # Fetch all credentials from archon_settings
-            result = supabase.table("archon_settings").select("*").execute()
+            repository = self._get_repository()
+            data = repository.fetch_all()
 
             credentials = {}
-            for item in result.data:
+            for item in data:
                 key = item["key"]
                 if item["is_encrypted"] and item["encrypted_value"]:
                     # For encrypted values, we store the encrypted version
@@ -189,8 +195,6 @@ class CredentialManager:
             True if successful, False otherwise
         """
         try:
-            supabase = self._get_supabase_client()
-
             data: dict[str, Any] = {
                 "key": key,
                 "is_encrypted": is_encrypted,
@@ -205,11 +209,9 @@ class CredentialManager:
                 data["value"] = value
                 data["encrypted_value"] = None
 
-            # Upsert to database with proper conflict handling
-            supabase.table("archon_settings").upsert(
-                data,
-                on_conflict="key",
-            ).execute()
+            # Upsert to database via repository
+            repository = self._get_repository()
+            repository.upsert(data)
 
             # Invalidate RAG settings cache if this is a rag_strategy setting
             if category == "rag_strategy":
@@ -235,10 +237,9 @@ class CredentialManager:
             True if successful.
         """
         try:
-            supabase = self._get_supabase_client()
-
-            # Execute delete on Supabase
-            supabase.table("archon_settings").delete().eq("key", key).execute()
+            # Execute delete via repository
+            repository = self._get_repository()
+            repository.delete(key)
 
             # Remove from local cache
             if key in self._cache:
@@ -279,11 +280,11 @@ class CredentialManager:
                 return self._rag_settings_cache
 
         try:
-            supabase = self._get_supabase_client()
-            result = supabase.table("archon_settings").select("*").eq("category", category).execute()
+            repository = self._get_repository()
+            data = repository.fetch_by_category(category)
 
             credentials = {}
-            for item in result.data:
+            for item in data:
                 key = item["key"]
                 if item["is_encrypted"]:
                     credentials[key] = {
@@ -310,18 +311,11 @@ class CredentialManager:
     async def list_all_credentials(self) -> list[CredentialItem]:
         """Get all credentials as a list of CredentialItem objects (for Settings UI)."""
         try:
-            supabase = self._get_supabase_client()
-
-            # Physically filter out system protected keys from the list (for Admin UI 3737)
-            # We use a select with the filter if the column exists
-            try:
-                result = supabase.table("archon_settings").select("*").eq("is_system_protected", False).execute()
-            except Exception:
-                # Fallback if column does not exist yet
-                result = supabase.table("archon_settings").select("*").execute()
+            repository = self._get_repository()
+            data = repository.fetch_non_system_protected()
 
             credentials = []
-            for item in result.data:
+            for item in data:
                 if item["is_encrypted"] and item["encrypted_value"]:
                     cred = CredentialItem(
                         key=item["key"],

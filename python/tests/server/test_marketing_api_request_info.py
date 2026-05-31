@@ -17,7 +17,7 @@ def create_test_app():
 def mock_dependencies():
     with (
         patch("src.server.services.marketing.content_handler.get_logger", return_value=MagicMock()),
-        patch("src.server.services.marketing.content_handler.RAGService") as mock_rag_class,
+        patch("src.server.services.search.rag_service.RAGService") as mock_rag_class,
         patch("src.server.services.marketing_service.get_supabase_client") as mock_supabase_factory,
     ):
         mock_supabase = MagicMock()
