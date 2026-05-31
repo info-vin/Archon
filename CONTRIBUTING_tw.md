@@ -382,6 +382,29 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 > **📝 遷移檔更新通知 (Migration Updates)**
 > 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 下的版本子目錄中（如 `migration/0.2.2/`），並依照檔案前綴數字順序執行。
+>
+> 最新發現的遷移檔 (v0.2.2):
+> - `01_foundation_types.sql`
+> - `02_tables_core.sql`
+> - `03_tables_business.sql`
+> - `04_tables_ops.sql`
+> - `05_logic_functions.sql`
+> - `06_constraints_main.sql`
+> - `07_logic_indexes.sql`
+> - `08_logic_triggers.sql`
+> - `09_constraints_fkeys.sql`
+> - `10_security_rls.sql`
+> - `11_seed_config.sql`
+> - `12_seed_rbac.sql`
+> - `18_seed_crawler_targets.sql`
+> - `19_seed_marketing_group_chat_prompts.sql`
+> - `20_seed_supervisor_agent.sql`
+> - `21_seed_reports_workflow_prompts.sql`
+> - `99_rescue_live_data.sql`
+> - `RESET_DB.sql`
+> - `seed_blog_posts.sql`
+> - `seed_mock_data.sql`
+> - `seed_rag_defaults.sql`
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 

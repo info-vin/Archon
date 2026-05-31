@@ -6,6 +6,7 @@ import DiffViewer from '../components/DiffViewer';
 import { SmartImagePicker } from '../features/marketing/components/SmartImagePicker';
 // Icons
 import { ArrowLeftIcon, SaveIcon, ImageIcon, CheckIcon, Wand2Icon, AlertTriangleIcon } from 'lucide-react';
+import { RefreshCwIcon } from '../components/Icons';
 
 const BlogEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -124,7 +125,7 @@ const BlogEditor: React.FC = () => {
                         disabled={saving}
                         className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-200"
                     >
-                        <SaveIcon className="w-4 h-4" />
+                        {saving ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <SaveIcon className="w-4 h-4" />}
                         {saving ? 'Saving...' : 'Save Post'}
                     </button>
                 </div>
