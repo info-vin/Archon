@@ -164,10 +164,13 @@
 | 目的與驗證層級 | 指令 | 使用時機與說明 |
 | :--- | :--- | :--- |
 | **靜態語法與型別分析** | `make lint`<br>`make lint-fe`<br>`make lint-be` | **時機**: 提交程式碼 (Commit/Push) 前。<br>**說明**: 確保代碼符合 Biome/ESLint/Ruff 規範及 MyPy 型別安全。 |
-| **全域 Persona 物理巡檢** | `make persona-audit` | **時機**: 涉及 RBAC 權限或核心流程修改後。<br>**說明**: 確保五大核心角色 (Alice, Bob, Charlie, David, Agents) 的工作流程暢通，無權限或邏輯斷層。 |
-| **數位孿生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
-| **數位孿生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
+| **全域 Persona 物理巡檢** | `make persona-audit` | **時機**: 涉及 RBAC 權限或核心流程修改後。<br>**說明**: 確保五大核心角色 (Alice, Bob, Charlie, David, Agents) 的工作流程暢通，且回傳非零退出碼以防錯誤被吞。 |
+| **數位忿生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
+| **數位忿生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
+| **數位雙生百關動態模擬** | `make twin-simulator` | **時機**: 驗證極端混沌環境下的 UI 自癒能力時。<br>**說明**: 跑百關 E2E 模擬矩陣驗證（限額執行前幾關防超時），會搭配 `make twin-gen-levels` 生成與 `make twin-record` 單關錄影除錯。 |
 | **終極自動化品質門禁** | `make audit-qa` | **時機**: Major Release、PR 合併至主幹前的最終驗收。<br>**說明**: 執行最嚴格的串流驗證，包含 DNS 洩漏掃描、UI 巢狀死鎖檢查、Migration 驗證、LLM 語意裁判、後端測試與前端 E2E 邊界測試。 |
+| **毀滅性 E2E 測試門禁** | `make audit-qa-e2e` | **時機**: PR 合併至主幹前的 E2E 重點驗收。<br>**說明**: 執行會破壞並重置資料庫的 Playwright 關鍵 spec 測試門禁。 |
+| **終極物理同步與重建** | `make sync-grounding` | **時機**: 代碼基線嚴重混亂或依賴損毀時。<br>**說明**: 強制重新拉取分支，全新 build 全 Docker 容器，清理並初始化資料庫，實施實體映像檔大小監控。 |
 | **自動化技術債巡邏** | `make tech-debt-audit` | **時機**: 定期檢查（排程）或專案整理時。<br>**說明**: 掃描未歸檔的歷史文件 (PRPs) 與過期殭屍腳本，輸出任務供 DevBot 處理。 |
 | **Token 效能與用量診斷** | `make test-perf` | **時機**: 發生 LLM Rate Limit (429) 或效能瓶頸時。<br>**說明**: 重現多併發下的 Token blocking 行為進行偵錯。 |
 | **驗證種子資料寫入** | `make verify-data` | **時機**: 初始化資料庫 (`make db-init`) 之後。<br>**說明**: 驗證 Mock 資料是否正確寫入。 |
@@ -265,13 +268,15 @@ def test_some_endpoint():
 | 問題 | 症狀 | 解決方案 |
 | :--- | :--- | :--- |
 | **Import Error** | `Failed to resolve import` | `package.json` 中缺少開發依賴。執行 `pnpm install --save-dev <package>`。 |
-| **Aria Label** | 找不到純圖示按鈕 | 為按鈕加上 `aria-label="描述"` 屬性。 |
+| **Aria Label & Accessibility** | 找不到純圖示按鈕 / Accessibility 稽核失敗 | 依規範為所有圖示/重整/關閉按鈕加上 `aria-label="描述"` 與 `title="描述"` 屬性，方便 E2E 透過 ARIA 穩定定位。 |
 | **Event Click** | `required` 表單提交無反應 | 使用 `fireEvent.submit(submitButton)` 直接觸發提交。 |
 | **Hoisting** | `vi.mock` 變數提升錯誤 | 將 `vi.mock` 需要的變數直接定義在工廠函式**內部**。 |
 | **MSW Intercept** | `intercepted a request without a matching request handler` | 檢查測試中的 URL 參數是否與 Handler 定義完全匹配。動態注入請用 `server.use()`。 |
 | **Timeout** | `Test timed out` | 檢查 `await waitFor` 是否在等待一個永遠不會出現的元素，或 API Mock 未正確回傳。 |
 | **Async State** | `act(...) warning` | 確保所有觸發狀態更新的操作都被 `await`，或包在 `act(() => ...)` 中。 |
 | **Element type is invalid** | `check the render method of ...` | 通常是 Import 錯誤。檢查是否混淆了 `default export` 與 `named export`，或引用了不存在的元件。 |
+| **Mock Pollution** | 全域 Mock 跨測試互相污染，導致結果不穩定 | 必須在 `afterEach` 或 `teardown` 階段執行 `vi.resetAllMocks()` 或手動重置該 Mock 狀態以維持環境純淨。 |
+| **Audit Error Silencing** | 巡檢腳本失敗但 CI 仍顯示綠燈 | 確保 `persona_smoke_test.py` 等驗證腳本具備實體錯誤傳播機制（拋出非零 Exit Code），嚴禁靜默吞除 Exception。 |
 
 ### 3.5 AI Agent 自癒能力驗證 (Self-Healing Verification)
 
@@ -376,19 +381,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 ### 4.3 部署標準作業流程 (SOP)
 
 > **📝 遷移檔更新通知 (Migration Updates)**
-> 部署前請確保已套用最新的 `0.2.2` 版本 SQL 遷移檔。
-> *(完整的 SQL 遷移檔歷史、設計初衷與詳細執行順序，請參閱專案 Wiki 或本文件下方的手動初始化表格)*
-
-- `migration/0.2.2/01_foundation_types.sql` 至 `12_seed_rbac.sql` (基礎設施與權限)
-- `migration/0.2.2/18_seed_crawler_targets.sql`
-- `migration/0.2.2/19_seed_marketing_group_chat_prompts.sql`
-- `migration/0.2.2/20_seed_supervisor_agent.sql`
-- `migration/0.2.2/21_seed_reports_workflow_prompts.sql`
-- `migration/0.2.2/99_rescue_live_data.sql`
-- `migration/0.2.2/RESET_DB.sql`
-- `migration/0.2.2/seed_blog_posts.sql`
-- `migration/0.2.2/seed_mock_data.sql`
-- `migration/0.2.2/seed_rag_defaults.sql`
+> 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 下的版本子目錄中（如 `migration/0.2.2/`），並依照檔案前綴數字順序執行。
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
@@ -444,24 +437,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     
         **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
     > **僅當 `make db-init` 失敗時使用**
-    > 若自動腳本無法執行，請依序手動執行以下 SQL 檔案：
-
-    1.  登入 Supabase 儀表板並進入 **SQL Editor**。
-
-        | 順序 | 檔案路徑 (migration/0.2.2/...) | 用途與說明 |
-        | :--- | :--- | :--- |
-        | 1 | `01_foundation_types.sql` | **[基礎]** 建立 ENUMs 與基礎數據類型。 |
-        | 2 | `02_tables_core.sql` | **[結構]** 建立核心系統表 (Settings, Profiles)。 |
-        | 3 | `03_tables_business.sql` | **[結構]** 建立業務表 (Projects, Tasks, Leads)。 |
-        | 4 | `04_tables_ops.sql` | **[結構]** 建立任務審核、日誌與營運表。 |
-        | 5 | `05_logic_functions.sql` | **[邏輯]** 注入 RAG 搜尋與業務邏輯 SQL 函式。 |
-        | 6 | `06_constraints_main.sql` | **[約束]** 定義所有表格的主鍵 (PK) 與唯一性 (Unique)。 |
-        | 7 | `07_logic_indexes.sql` | **[效能]** 建立向量索引、搜尋索引與效能優化。 |
-        | 8 | `08_logic_triggers.sql` | **[自動化]** 設定更新時戳與狀態連動 Trigger。 |
-        | 9 | `09_constraints_fkeys.sql` | **[關聯]** 定義表格間的 Foreign Key 物理連結。 |
-        | 10 | `10_security_rls.sql` | **[安控]** 開啟 RLS 並定義存取政策 (Policies)。 |
-        | 11 | `11_seed_config.sql` | **[配置]** 初始化系統參數與 RAG 預設值。 |
-        | 12 | `12_seed_rbac.sql` | **[權限]** 注入動態 RBAC 矩陣初始數據。 |
+    > 若自動腳本無法執行，請登入 Supabase 儀表板並進入 **SQL Editor**，依序執行當前版本資料夾下的 SQL 遷移檔案：
+    >
+    > 1. **基礎與核心結構**：`01_foundation_types.sql` -> `02_tables_core.sql` -> `03_tables_business.sql` -> `04_tables_ops.sql`
+    > 2. **邏輯與約束**：`05_logic_functions.sql` -> `06_constraints_main.sql` -> `07_logic_indexes.sql` -> `08_logic_triggers.sql` -> `09_constraints_fkeys.sql`
+    > 3. **安全政策與種子資料**：`10_security_rls.sql` -> `11_seed_config.sql` -> `12_seed_rbac.sql`
         
 3.  **階段三：執行部署**
 
@@ -645,89 +625,44 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-> **結算日期**: 2026-03-26 (Phase 4.6.20 Hardening Baseline)
-> **狀態**: 🟢 **全系統巨型檔案已清零**。不再存在任何超過 1000 行的原始碼檔案。
-> **新增指標**: 已達成 MCP 伺服器 36% 體積縮減 (759 -> 487 行)，成功落實物理工具持久化 (mcp-cache)。
-
-| 檔案路徑 | 原始行數 | 目前行數 | 最終狀態 | 成果 |
-| :--- | :---: | :---: | :--- | :--- |
-| `rag-settings/index.tsx` | 2411 | **347** | ✅ **已拆分** | 業務邏輯抽離至 `useRagSettingsData.ts` |
-| `projects_api.py` | 1797 | **297** | ✅ **已拆分** | 轉型為 Facade 模式並分離 Pydantic |
-| `mcp_server.py` | 759 | **487** | ✅ **已重構** | 成功實施 Phase 4.6.20 瘦身與模組化 |
-| `code_extraction_service.py` | 1581 | **227** | ✅ **已拆分** | 拆分至 `logic/` 子目錄 |
-| `ManagerNexus.tsx` | 1577 | **515** | ✅ **已拆分** | 拆分為 10 個專門 Domain 組件 |
+> **結算日期**: 2026-05-31 (Phase 5.5.0 Hardening Baseline)
+> **狀態**: 🟢 **全系統巨型檔案清零已落實**。目前不存在任何超過 1000 行的原始碼檔案。
+> 
+* **長效機制**：技術債改由自動化工具監控。每次提交前或定期運行 `make tech-debt-audit`，自動掃描過期腳本與 PRPs 雜亂檔案，確保無程式碼腐化。
 
 ---
 
 ## 附錄 C：系統演進現狀 (System Evolution Status)
 
-> **更新日期**: 2026-03-26 (Hybrid Hardening State)
-> **說明**: 本章節記錄了 Phase 4.6.x 期間完成的核心架構硬化與後續系統整合現狀。
-
-- **0. 硬化基礎 (Hardening Foundation) - Phase 4.6.17 ~ 4.6.21**:
-    - **MCP Slimming (4.6.20)**: 成功重構 `mcp_server.py`，將核心生命週期與工具定義分離，完成 36% 代碼精簡與物理緩存 (`mcp-cache`) 實作。
-    - **Permission Hardening (4.6.21)**: 取消 LLM 思考指令雙軌制。實作 `TOOL_CONFIG` 工具調用授權白名單機制，強制 Agent 所有操作（包含 `command`）須經過 MCP/工具層審驗，完成指令全代理與 XP 動態治理機制。
-    - **Physical Recovery**: 修正了 `HealthService` 長達兩週的探針崩潰，達成 554 個後端測試 100% 通過。
-    - **Dynamic Discovery**: 實作動態工具發現 (`list_tools`) 與 OpenAI 模式同步。
-- **1. 神經連結 (Neural Wiring) - Phase 4.7**: 系統已初步導入 **Model Context Protocol (MCP)**。
-    - **Client**: `AgentService` 透過單例的 `MCPClient` (`src/agents/mcp_client.py`) 與工具層通訊。
-    - **Two-pass Loop**: Agent 的思考迴圈已升級為「Think (分析) -> Tool (執行) -> Act (回應)」模式。
-- **2. Agent 覺醒 (Agent Awakening) - Phase 4.8**: 
-    - **Registry**: 角色定義、Prompt 與工具權限已集中於 `src/server/services/agent_registry.py`。
-    - **Hybrid Logic**: 目前處於過渡期「混合模式」，保留 4.6 的 XP 等級評分系統，同時支援真實工具呼叫，下一步會將 XP 與等級納入物理工具檢查。
-- **3. 長期型別政策 (Long-term Type Policy) - Phase 4.11**:
-    - **Type Safety**: 後端代碼庫已達成物理性 **Zero MyPy Errors**。
-    - **測試防護網**: 
-        - **Backend**: 554 個測試 (100% 通過)。
-        - **Frontend**: 183 個測試 (Unit + E2E + Admin，100% 通過)。
+* **工具與權限 (MCP)**：全面使用 `AgentService` + `MCPClient` 雙階段迴圈（Think -> Tool -> Act），並受 `TOOL_CONFIG` 授權白名單與 XP 動態治理機制保護。
+* **Agent 註冊**：所有 Agent 定義、Prompts、與權限階層集中於 `src/server/services/agent_registry.py`，關閉 LLM 思考指令雙軌制。
+* **長期型別與測試防線**：後端物理性 Zero MyPy Errors，後端測試 554+ 項與前端測試 183+ 項達成 100% 通過率。
 
 ---
 
 ## 附錄 D：基礎設施物理審計 (Infrastructure Audit)
 
 > **結算日期**: 2026-05-29 (Phase 5.5.0 Offline Hardening)
-> **狀態**: 🟢 **映像檔體積已大幅最佳化**。目前 `archon-server` 體積已成功從 10.2GB (甚至一度膨脹至 31.5GB) 瘦身至 **5.02GB**。
-
-- **體積組成真相與修復 (物理公證)**:
-    - **NVIDIA/CUDA 庫**: 曾經高達 2.85 GB。
-    - **PyTorch (GPU版)**: 曾經高達 1.51 GB。
-    - **修復行動 (Phase 5.5.0)**: 在建置離線環境時，明確在 `Dockerfile.server` 與離線腳本中加入 `--extra-index-url https://download.pytorch.org/whl/cpu`，強迫 `uv pip install` 僅下載 CPU 版本的套件。成功移除了所有無效的 CUDA 死重。
-    - **快取地雷**: 嚴禁在 Dockerfile 寫入 `COPY --from=builder /root/.cache /root/.cache`，這會導致數 GB 的編譯快取被封裝進生產映像檔中，引發 `ENOSPC` 磁碟耗盡危機。
-
-## 附錄 E：資料庫表格設計初衷 (Schema Rationale)
-
-> **說明**: 本章節記錄了部分看似「死代碼」表格的設立原因，防止誤刪。
-
-- **`market_insights`**: 
-    - **Ref**: Phase 4.2 (0b86ad8)
-    - **初衷**: 為了 Bob 產出的「戰略級市場分析報告」預留空間。雖然目前 `leads` 承擔了大部分業務數據，但此表為未來長期趨勢分析的基石。
-- **`subscriptions`**: 
-    - **Ref**: 2025-09 重構 (277bfda)
-    - **初衷**: 為「商業化付費模式」預留的數據模型，支援 API 訂閱與用量計費。
+> **狀態**: 🟢 **映像檔體積已大幅最佳化**。目前 `archon-server` 體積已成功由 31.5GB 瘦身至 **5.02GB**。
+> 
+* **體積減重核心**：
+  1. **CPU PyTorch 強制約束**：安裝時指定 `--extra-index-url https://download.pytorch.org/whl/cpu` 剃除數 GB 的 CUDA 庫死重。
+  2. **編譯快取防禦**：Dockerfile 嚴禁 `COPY` 建置快取（如 `/root/.cache`）進入生產映像檔，防範 `ENOSPC` 磁碟耗盡。
 
 ---
 
-## 附錄 F：數位雙生動態模擬器與 E2E 驗證規範 (Digital Twin Simulator & E2E Verification Standard)
+## 附錄 E：資料庫表格設計初衷 (Schema Rationale)
 
-> **更新日期**: 2026-05-27 (Digital Twin Simulator Hardening)
-> **說明**: 本章節記錄了 Phase 5.4.2 引入的數位雙生動態模擬器 (Digital Twin Simulator) 架構與全自動化驗證規範。
+為了防止誤刪或誤改，特此記錄看似無即時呼叫的保留表之設計初衷：
+* **`market_insights`** (Phase 4.2)：為 Bob 產出的「戰略級市場分析報告」預留的長期趨勢分析基石。
+* **`subscriptions`** (2025-09 重構)：為未來「商業化付費模式」預留的 API 訂閱與計費數據模型。
 
-### 1. 智慧型流程自動化 (IPA, Intelligent Process Automation) 原則
-本專案的 E2E 自動化測試本質上為結合了 AI 認知能力的 **IPA 機器人**，而非傳統脆弱的 RPA。所有關卡設計與除錯必須遵守以下原則：
-* **語義自癒定位 (Semantic Locators)**：優先使用 Intent-based text 定位（如 `button:has-text('RETURN')`），嚴禁使用易因排版改變而斷裂的靜態 CSS 階層路徑。
-* **狀態沙盒自癒 (Idempotent Sandboxing)**：所有具備狀態 (Stateful) 的測試，必須在關卡啟動前掛載 Python Pre-hook 清理並還原測試專屬資料，確保測試的可重複性與獨立性。
-* **AI 視覺與 layout 校驗**：透過與 Gemini Vision 模型的原生整合，在必要步驟擷取 Full-page 截圖並送入 `scripts/vision_judge.py` 進行排版、對比度與元件覆蓋的語義評判。
+---
 
-### 2. 數位雙生模擬器核心元件
-* **`scripts/level_generator.py`**：採用參數化矩陣關卡設計，動態渲染並產生 100+ 個微型測試關卡 YAML，分流管理於 `scripts/twin_scenarios/05_generated_levels/`。
-* **`scripts/simulator_runner.py`**：
-    * **並發限制 (Concurrency Cap)**：預設限制 Concurrency = 3，防範機器資源過載。
-    * **混沌注入 (Chaos Injection)**：隨機針對 5% 的 API 請求注入 2s-5s 的延遲或回傳 HTTP 500/503，並隨機觸發 `page.reload()` 測試前端狀態機的硬化自癒能力。
-    * **像素預篩 (Pixelmatch Gate)**：新舊截圖像素變更率大於 5% 時才觸發 Gemini Vision 視覺審查，以節省 API Token 費用。
-* **`scripts/setup_level_sandbox.py`**：統一的關卡沙盒 pre-hook 管理器。在進行資料庫寫入時，測試數據必須以 `level_id` 隔離，並引入 `random.uniform(0.1, 0.5)` 的錯峰時間差 (Jitter) 以防範多執行緒並發資料庫死鎖。
+## 附錄 F：數位雙生與 E2E 驗證規範 (Digital Twin & E2E Standard)
 
-### 3. Makefile 標準指令
-* **`make twin-gen-levels`**：重新產生並渲染 100+ 個微型關卡 YAML 腳本。
-* **`make twin-simulator`**：啟動模擬器進行百關全自動闖關，並在 `.twin/diagnostics/` 下產出關卡通過率 Markdown 總結報告。
-* **`make twin-record SUBDIR=... SCENARIO=...`**：啟動單一關卡除錯模式，支援 `headless=false` 視覺回放與錄影存檔。
-
+* **IPA 自癒定位原則**：優先使用語意定位（如 `button:has-text('...')`），嚴禁易斷裂的 CSS 階層路徑。具備 Sandbox Idempotency（測試前自動重置）與 Pixelmatch 預篩的 Gemini Vision 視覺評判。
+* **核心工具組**：
+  * `level_generator.py` (`make twin-gen-levels`)：自動動態生成 100+ 個參數化關卡 YAML 腳本。
+  * `simulator_runner.py` (`make twin-simulator`)：百關全自動闖關（預設 limit=3 以防超時），並提供 5% 延遲/500 錯誤的混沌注入驗證。
+  * `twin_scout.py` (`make twin-record`)：單關 `headless=false` 視覺回放、錄影除錯與模擬。
