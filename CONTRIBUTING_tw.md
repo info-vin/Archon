@@ -375,49 +375,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ### 4.3 部署標準作業流程 (SOP)
 
-- New SQL migrations have been found (version 0.2.2). Make sure to apply them during deployment:
-  - migration/0.2.2/01_foundation_types.sql
-  - migration/0.2.2/02_tables_core.sql
-  - migration/0.2.2/03_tables_business.sql
-  - migration/0.2.2/04_tables_ops.sql
-  - migration/0.2.2/05_logic_functions.sql
-  - migration/0.2.2/06_constraints_main.sql
-  - migration/0.2.2/07_logic_indexes.sql
-  - migration/0.2.2/08_logic_triggers.sql
-  - migration/0.2.2/09_constraints_fkeys.sql
-  - migration/0.2.2/10_security_rls.sql
-  - migration/0.2.2/11_seed_config.sql
-  - migration/0.2.2/12_seed_rbac.sql
-  - migration/0.2.2/13_optimize_task_reordering.sql
-  - migration/0.2.2/14_sync_persona_parity.sql
-  - migration/0.2.2/15_add_blog_cover_image.sql
-  - migration/0.2.2/16_add_task_collaborators.sql
-  - migration/0.2.2/17_drop_unused_tables.sql
-  - migration/0.2.2/18_seed_crawler_targets.sql
-  - migration/0.2.2/19_seed_marketing_group_chat_prompts.sql
-  - migration/0.2.2/20_seed_supervisor_agent.sql
-  - migration/0.2.2/21_seed_reports_workflow_prompts.sql
-  - migration/0.2.2/22_add_performance_indexes.sql
-  - migration/0.2.2/23_multi_tenant_and_rls_hardening.sql
-  - migration/0.2.2/RESET_DB.sql
-  - migration/0.2.2/seed_blog_posts.sql
-  - migration/0.2.2/seed_mock_data.sql
-  - migration/0.2.2/seed_rag_defaults.sql
+> **📝 遷移檔更新通知 (Migration Updates)**
+> 部署前請確保已套用最新的 `0.2.2` 版本 SQL 遷移檔。
+> *(完整的 SQL 遷移檔歷史、設計初衷與詳細執行順序，請參閱專案 Wiki 或本文件下方的手動初始化表格)*
 
-
-### 2024-05-20 新增資料庫遷移檔
-- `migration/0.2.2/01_foundation_types.sql`
-- `migration/0.2.2/02_tables_core.sql`
-- `migration/0.2.2/03_tables_business.sql`
-- `migration/0.2.2/04_tables_ops.sql`
-- `migration/0.2.2/05_logic_functions.sql`
-- `migration/0.2.2/06_constraints_main.sql`
-- `migration/0.2.2/07_logic_indexes.sql`
-- `migration/0.2.2/08_logic_triggers.sql`
-- `migration/0.2.2/09_constraints_fkeys.sql`
-- `migration/0.2.2/10_security_rls.sql`
-- `migration/0.2.2/11_seed_config.sql`
-- `migration/0.2.2/12_seed_rbac.sql`
+- `migration/0.2.2/01_foundation_types.sql` 至 `12_seed_rbac.sql` (基礎設施與權限)
 - `migration/0.2.2/13_optimize_task_reordering.sql`
 - `migration/0.2.2/14_sync_persona_parity.sql`
 - `migration/0.2.2/15_add_blog_cover_image.sql`
@@ -426,12 +388,14 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - `migration/0.2.2/18_seed_crawler_targets.sql`
 - `migration/0.2.2/19_seed_marketing_group_chat_prompts.sql`
 - `migration/0.2.2/20_seed_supervisor_agent.sql`
+- `migration/0.2.2/21_seed_reports_workflow_prompts.sql`
+- `migration/0.2.2/22_add_performance_indexes.sql`
+- `migration/0.2.2/23_multi_tenant_and_rls_hardening.sql`
 - `migration/0.2.2/RESET_DB.sql`
 - `migration/0.2.2/seed_blog_posts.sql`
 - `migration/0.2.2/seed_mock_data.sql`
 - `migration/0.2.2/seed_rag_defaults.sql`
 - `migration/temp_fix_seq.sql`
-
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
