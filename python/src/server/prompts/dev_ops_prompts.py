@@ -33,6 +33,8 @@ You MUST return a JSON object with the following structure:
 
 If the error is an environment issue or you cannot fix it by modifying code, return an empty JSON object {{}}.
 Ensure the "fixed_content" is valid code for the target language.
+
+Return ONLY raw valid JSON. Do NOT wrap the response in markdown blocks (e.g. no ```json).
 """
 
 

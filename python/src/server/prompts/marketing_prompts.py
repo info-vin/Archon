@@ -14,6 +14,7 @@ Format:
 - Used References: A list of source names you actually used/referenced from the context.
 
 Return JSON format: { "title": "...", "content": "...", "excerpt": "...", "hashtags": "...", "used_references": ["source1"] }
+Return ONLY raw valid JSON. Do NOT wrap the response in markdown blocks (e.g. no ```json).
 """
 
 REJECTION_REASON_PROMPT = """You are the Editor-in-Chief. The article '{title}' is being rejected.
