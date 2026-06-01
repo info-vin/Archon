@@ -1,5 +1,6 @@
 // archon-ui-main/src/features/auth/hooks/usePermission.ts
 
+import { useMemo, useCallback } from "react";
 import { EmployeeRole, PermissionScope } from "@/features/auth/types";
 
 /**
@@ -73,11 +74,19 @@ const ROLE_PERMISSIONS: Record<EmployeeRole, Set<PermissionScope>> = {
  * Usage: const { hasPermission } = usePermission(userRole);
  */
 export function usePermission(role: EmployeeRole | undefined) {
-  const hasPermission = (permission: PermissionScope): boolean => {
-    if (!role) return false;
-    const permissions = ROLE_PERMISSIONS[role.toLowerCase() as EmployeeRole];
-    return permissions?.has(permission) ?? false;
-  };
+  // PERFORMANCE: Memoize derived state outside of the returned callback to prevent
+  // redundant string allocations (.toLowerCase()) on every single invocation during render.
+  const permissions = useMemo(() => {
+    if (!role) return undefined;
+    return ROLE_PERMISSIONS[role.toLowerCase() as EmployeeRole];
+  }, [role]);
+
+  const hasPermission = useCallback(
+    (permission: PermissionScope): boolean => {
+      return permissions?.has(permission) ?? false;
+    },
+    [permissions],
+  );
 
   return { hasPermission };
 }
