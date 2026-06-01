@@ -27,9 +27,11 @@ description: 階段目標完整性稽核 (Phase Audit)。當啟動新階段、�
   - 🟢 **Ghost Document (幽靈文件)**: 代碼中已實作目標邏輯，但文件仍是 `[ ]`。
   - 🔴 **Code Gap (真實開發斷層)**: 文件有寫，但代碼中完全搜尋不到實體邏輯。
 
-### Step 3: 版本與技術債掃描 (Branch & Tech Debt Scan)
-確認當前工作區狀態，並巡邏是否有累積的技術債。
-- **Git 狀態**: 使用 `run_shell_command("git status && git log -n 5 --oneline")` 確認當前分支與最新變更，檢查是否有未追蹤的垃圾檔案（如測試產出）。
+### Step 3: 版本同步與技術債掃描 (Branch Sync & Tech Debt Scan)
+確認當前工作區狀態，強制與遠端對齊，並巡邏是否有累積的技術債。
+- **Git 狀態對齊**: 必須先確認地端與遠端同步，執行 `run_shell_command("git fetch origin && git status")` 確認落差。
+- **拉取最新代碼**: 若有落後，執行 `run_shell_command("git pull --rebase origin <當前分支名稱>")` 進行乾淨的合併。
+- **檢查變更歷史**: 執行 `run_shell_command("git log -n 5 --oneline")` 確認最新變更，並檢查是否有未追蹤的垃圾檔案。
 - **巨型檔案巡邏 (Monolith Check)**: 執行 Python 腳本掃描超過 400 行的源碼檔案，預防 God Object 產生。
   - *Script 範例*: 遍歷 `src/` 目錄，找出行數大於 400 的 `.py`, `.ts`, `.tsx` 檔案。
 

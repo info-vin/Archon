@@ -156,7 +156,10 @@ dev-docker: check
 	@echo "Starting full Docker environment..."
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	$(COMPOSE) --profile backend --profile frontend --profile enduser --profile agents up -d --build
-	@echo "✓ All services running"
+	@echo "Waiting 30 seconds for services to become healthy..."
+	@sleep 30
+	@make probe
+	@echo "✓ All services running and verified"
 	@echo "Admin UI: http://localhost:3737"
 	@echo "End-User UI: http://localhost:5173"
 	@echo "API Server: http://localhost:8181"
