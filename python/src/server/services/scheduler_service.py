@@ -123,84 +123,76 @@ class SchedulerService:
         logger.info(f"✅ Scheduled Stateless: {job_id} (Start: +{delay_mins}m, Loop: {interval_mins}m)")
 
     async def _schedule_stateful_daily(self, job_func: Callable, job_id: str, delay_mins: int):
-        """Schedules a daily job if not already run today."""
+        """Schedules a daily job if not already run today, catching up if missed."""
         if not self._scheduler:
             return
 
-        if await self._should_run_daily(job_id):
-            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
-
-            async def wrapper():
+        async def wrapper():
+            if await self._should_run_daily(job_id):
                 logger.info(f"🕒 Clockwork: Executing daily job '{job_id}'")
                 try:
                     await job_func()
                 finally:
                     await self._update_last_run(job_id)
 
-            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
-            logger.info(f"✅ Scheduled Daily: {job_id} (Target: +{delay_mins}m)")
-        else:
-            logger.info(f"⏭️  Skipping Daily: {job_id} (Already completed today)")
+        run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+        self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
+        self._scheduler.add_job(wrapper, trigger=IntervalTrigger(hours=1), id=f"{job_id}_recurring", replace_existing=True)
+        logger.info(f"✅ Scheduled Daily: {job_id} (Catchup: +{delay_mins}m, Check: 1h)")
 
     async def _schedule_stateful_weekly(self, job_func: Callable, job_id: str, delay_mins: int):
-        """Schedules a weekly job if not already run in the last 7 days."""
+        """Schedules a weekly job, catching up if missed."""
         if not self._scheduler:
             return
 
-        if await self._should_run_weekly(job_id):
-            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
-
-            async def wrapper():
+        async def wrapper():
+            if await self._should_run_weekly(job_id):
                 logger.info(f"🕒 Clockwork: Executing weekly job '{job_id}'")
                 try:
                     await job_func()
                 finally:
                     await self._update_last_run(job_id)
 
-            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
-            logger.info(f"✅ Scheduled Weekly: {job_id} (Target: +{delay_mins}m)")
-        else:
-            logger.info(f"⏭️  Skipping Weekly: {job_id} (Run in last 7 days)")
+        run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+        self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
+        self._scheduler.add_job(wrapper, trigger=IntervalTrigger(hours=4), id=f"{job_id}_recurring", replace_existing=True)
+        logger.info(f"✅ Scheduled Weekly: {job_id} (Catchup: +{delay_mins}m, Check: 4h)")
 
     async def _schedule_stateful_monthly(self, job_func: Callable, job_id: str, delay_mins: int):
-        """Schedules a monthly job if not already run in the last 30 days."""
+        """Schedules a monthly job, catching up if missed."""
         if not self._scheduler:
             return
 
-        if await self._should_run_monthly(job_id):
-            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
-
-            async def wrapper():
+        async def wrapper():
+            if await self._should_run_monthly(job_id):
                 logger.info(f"🕒 Clockwork: Executing monthly job '{job_id}'")
                 try:
                     await job_func()
                 finally:
                     await self._update_last_run(job_id)
 
-            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
-            logger.info(f"✅ Scheduled Monthly: {job_id} (Target: +{delay_mins}m)")
-        else:
-            logger.info(f"⏭️  Skipping Monthly: {job_id} (Run in last 30 days)")
+        run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+        self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
+        self._scheduler.add_job(wrapper, trigger=IntervalTrigger(hours=12), id=f"{job_id}_recurring", replace_existing=True)
+        logger.info(f"✅ Scheduled Monthly: {job_id} (Catchup: +{delay_mins}m, Check: 12h)")
 
     async def _schedule_stateful_biweekly(self, job_func: Callable, job_id: str, delay_mins: int):
-        """Schedules a bi-weekly job if not run in last 14 days."""
+        """Schedules a bi-weekly job, catching up if missed."""
         if not self._scheduler:
             return
 
-        if await self._should_run_biweekly(job_id):
-            run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
-
-            async def wrapper():
+        async def wrapper():
+            if await self._should_run_biweekly(job_id):
                 logger.info(f"🕒 Clockwork: Executing bi-weekly maintenance '{job_id}'")
                 try:
                     await job_func()
                 finally:
                     await self._update_last_run(job_id)
 
-            self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=job_id, replace_existing=True)
-            logger.info(f"✅ Scheduled Bi-weekly: {job_id} (Target: +{delay_mins}m)")
-        else:
-            logger.info(f"⏭️  Skipping Bi-weekly: {job_id} (Run in last 14 days)")
+        run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
+        self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
+        self._scheduler.add_job(wrapper, trigger=IntervalTrigger(hours=12), id=f"{job_id}_recurring", replace_existing=True)
+        logger.info(f"✅ Scheduled Bi-weekly: {job_id} (Catchup: +{delay_mins}m, Check: 12h)")
 
     async def _schedule_jobs(self):
         """Phase 5.1.16: Unified Job Lifecycle Strategy including Weekly/Monthly summaries."""
