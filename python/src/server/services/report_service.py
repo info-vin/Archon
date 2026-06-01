@@ -187,7 +187,7 @@ class ReportService:
             state.shared.messages = [
                 {
                     "role": "user",
-                    "content": f"這是過去 7 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。",
+                    "content": f"這是過去 7 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。",
                 }
             ]
 
@@ -249,7 +249,7 @@ class ReportService:
             state.shared.messages = [
                 {
                     "role": "user",
-                    "content": f"這是過去 30 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。",
+                    "content": f"這是過去 30 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。",
                 }
             ]
 
