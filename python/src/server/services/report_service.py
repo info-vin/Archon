@@ -178,16 +178,22 @@ class ReportService:
             from src.agents.workflow.engine_beta_graph import BetaState, beta_graph
             from src.agents.workflow.state import SharedState
             from src.server.services.projects.task_service import task_service
+            from src.server.services.prompt_service import prompt_service
 
             # 1. Gather 7-day context
             context_md = await self.gather_report_context(7)
 
             # 2. Initialize State with context as first message
             state = BetaState(shared=SharedState())
+            
+            default_weekly_prompt = "這是過去 7 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。"
+            prompt_template = prompt_service.get_prompt("WEEKLY_EXECUTIVE_SUMMARY", default=default_weekly_prompt)
+            prompt_content = prompt_template.replace("{context_md}", context_md)
+            
             state.shared.messages = [
                 {
                     "role": "user",
-                    "content": f"這是過去 7 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。",
+                    "content": prompt_content,
                 }
             ]
 
