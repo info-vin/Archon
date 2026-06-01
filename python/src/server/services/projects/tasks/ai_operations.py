@@ -81,11 +81,15 @@ async def refine_task_description_logic(supabase_client, title: str, description
 
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
+        from src.server.services.prompt_service import prompt_service
+        default_instruction = "You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language."
+        system_instruction = prompt_service.get_prompt("PROJECT_OWNER_ASSISTANT_PO", default=default_instruction)
+
         response = client.models.generate_content(
             model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction="You are POBot, a helpful Product Owner assistant. ALWAYS answer in Traditional Chinese (Taiwan繁體中文), regardless of the input language.",
+                system_instruction=system_instruction,
                 temperature=0.7,
             ),
         )
@@ -230,11 +234,14 @@ async def generate_task_from_alert_logic(
 
         @retry_with_backoff(max_retries=2)
         async def _call_gemini():
+            from src.server.services.prompt_service import prompt_service
+            default_instruction = "You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan)."
+            system_instruction = prompt_service.get_prompt("CHARLIE_ASSISTANT_PM", default=default_instruction)
             return await client.aio.models.generate_content(
                 model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction="You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan).",
+                    system_instruction=system_instruction,
                     temperature=0.7,
                 ),
             )

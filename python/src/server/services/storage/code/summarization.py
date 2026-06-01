@@ -88,12 +88,16 @@ Format your response as JSON:
 
         client = openai.OpenAI(api_key=api_key)
 
+        from src.server.services.prompt_service import prompt_service
+        default_instruction = "You are a helpful assistant that analyzes code examples."
+        system_prompt = prompt_service.get_prompt("CODE_EXAMPES_AUDITOR", default=default_instruction)
+
         response = client.chat.completions.create(
             model=model_choice,
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that analyzes code examples.",
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": prompt},
             ],

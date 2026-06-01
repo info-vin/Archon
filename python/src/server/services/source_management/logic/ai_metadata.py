@@ -34,12 +34,16 @@ The above content is from the documentation for '{source_id}'. Please provide a 
                 raise ValueError("MODEL_CHOICE is not configured in rag_strategy settings")
             search_logger.info(f"Generating summary for {source_id} using model: {model_choice}")
 
+            from src.server.services.prompt_service import prompt_service
+            default_instruction = "You are a helpful assistant that provides concise library/tool/framework summaries."
+            system_prompt = prompt_service.get_prompt("SOURCE_METADATA_SUMMARY", default=default_instruction)
+
             response = await client.chat.completions.create(
                 model=model_choice,
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful assistant that provides concise library/tool/framework summaries.",
+                        "content": system_prompt,
                     },
                     {"role": "user", "content": prompt},
                 ],
@@ -107,10 +111,14 @@ Content sample:
 Generate a title in this format: "[Service Name] [Source Type]"
 Generate only the title, nothing else."""
 
+                from src.server.services.prompt_service import prompt_service
+                default_title_instruction = "You are a helpful assistant that generates concise titles."
+                system_prompt = prompt_service.get_prompt("SOURCE_TITLE_GENERATOR", default=default_title_instruction)
+
                 response = await client.chat.completions.create(
                     model=model_choice,
                     messages=[
-                        {"role": "system", "content": "You are a helpful assistant that generates concise titles."},
+                        {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt},
                     ],
                 )

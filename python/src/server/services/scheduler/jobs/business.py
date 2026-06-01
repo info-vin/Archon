@@ -326,7 +326,7 @@ async def run_api_deprecation_scan():
             project_id=project_id,
             title=task_title,
             description=task_desc,
-            assignee_id=AI_AGENT_ROLES.get("Librarian (Research)") or "ai-librarian",
+            assignee_id=AI_AGENT_ROLES.get("Librarian (Knowledge)") or AgentUUIDs.LIBRARIAN,
         )
 
         if success:

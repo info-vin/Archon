@@ -294,12 +294,12 @@ class TestNoZeroEmbeddings:
         test_text = "This is a test"
 
         # Test: Batch function with error should return failure result, not zeros
-        with patch("src.server.services.embeddings.embedding_service.get_llm_client") as mock_client:
-            # Mock the client to raise an error
-            mock_ctx = AsyncMock()
-            mock_ctx.__aenter__.return_value.embeddings.create.side_effect = Exception("Test error")
-            mock_client.return_value = mock_ctx
+        mock_client = MagicMock()
+        mock_client.aclose = AsyncMock()
+        mock_client.embeddings.create.side_effect = Exception("Test error")
+        mock_create_client = AsyncMock(return_value=mock_client)
 
+        with patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client):
             result = await create_embeddings_batch([test_text])
             # Should return result with failures, not zeros
             assert isinstance(result, EmbeddingBatchResult)

@@ -51,11 +51,12 @@ async def generate_audio_stream(request: TTSRequest, current_user: dict = Depend
         client = genai.Client(api_key=api_key)
         model_name = SYSTEM_MODELS.get("DEFAULT_TEXT", "models/gemini-3.1-flash-lite").split("/")[-1]
 
-        system_instruction = (
+        default_instruction = (
             "You are a Senior Chief of Staff translating dashboard JSON data into a fluent, "
             "natural spoken briefing script. Read the provided prompt template to understand "
             "the voice style and instructions."
         )
+        system_instruction = prompt_service.get_prompt("CHIEF_OF_STAFF_AUDIO_BRIEFING", default=default_instruction)
 
         prompt = (
             f"=== Prompt Template ===\n{template}\n\n"

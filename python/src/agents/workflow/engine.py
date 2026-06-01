@@ -51,8 +51,13 @@ class WorkflowEngine:
                             except Exception as e:
                                 logger.warning(f"⚠️ Background telemetry failed: {e}")
 
-                    # Fire and forget the telemetry task
-                    asyncio.create_task(log_telemetry())
+                    # Await with a short timeout to ensure it completes before CLI process terminates
+                    try:
+                        await asyncio.wait_for(log_telemetry(), timeout=2.0)
+                    except TimeoutError:
+                        logger.warning("⚠️ Telemetry logging timed out (2.0s limit).")
+                    except Exception as tele_err:
+                        logger.warning(f"⚠️ Telemetry logging failed: {tele_err}")
             except Exception as e:
                 logger.warning(f"⚠️ Failed to initiate background token logging: {e}")
 

@@ -275,6 +275,11 @@ class MigrationService:
             logger.warning("SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
             return
 
+        # Prevent destructive downscaling on production cloud database (supabase.co)
+        if "supabase.co" in db_url and target_dim == 384:
+            logger.warning("⚠️ Protected: Attempted vector downscaling to 384 on cloud database. Skipping to prevent data loss.")
+            return
+
         logger.info(f"Checking vector database column dimensions (Target: {target_dim})...")
 
         # Connect using psycopg2 to run DDL command

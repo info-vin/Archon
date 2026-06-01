@@ -185,11 +185,11 @@ class ReportService:
 
             # 2. Initialize State with context as first message
             state = BetaState(shared=SharedState())
-            
+
             default_weekly_prompt = "這是過去 7 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。"
             prompt_template = prompt_service.get_prompt("WEEKLY_EXECUTIVE_SUMMARY", default=default_weekly_prompt)
             prompt_content = prompt_template.replace("{context_md}", context_md)
-            
+
             state.shared.messages = [
                 {
                     "role": "user",

@@ -50,12 +50,16 @@ Answer only with the succinct context and nothing else. Do not repeat the chunk 
 
                     model = SYSTEM_MODELS["DEFAULT_TEXT"]
 
+                from ..prompt_service import prompt_service
+                default_system_prompt = "You are a professional librarian that provides high-signal contextual metadata for RAG retrieval."
+                system_prompt = prompt_service.get_prompt("EMBED_CONTEXT_GENERATOR", default_system_prompt)
+
                 response = await client.chat.completions.create(
                     model=model,
                     messages=[
                         {
                             "role": "system",
-                            "content": "You are a professional librarian that provides high-signal contextual metadata for RAG retrieval.",
+                            "content": system_prompt,
                         },
                         {"role": "user", "content": prompt},
                     ],
@@ -154,13 +158,17 @@ async def generate_contextual_embeddings_batch(
 
             batch_prompt += "For each chunk, provide a short succinct context to situate it within the overall document for improving search retrieval. Answer only with the succinct context. Format your response as:\\nCHUNK 1: [context]\\nCHUNK 2: [context]\\netc."
 
+            from ..prompt_service import prompt_service
+            default_batch_prompt = "You are a professional librarian that generates high-signal contextual information for RAG retrieval."
+            system_prompt = prompt_service.get_prompt("EMBED_CONTEXT_GENERATOR", default_batch_prompt)
+
             # Make single API call for ALL chunks
             response = await client.chat.completions.create(
                 model=model_choice,
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a professional librarian that generates high-signal contextual information for RAG retrieval.",
+                        "content": system_prompt,
                     },
                     {"role": "user", "content": batch_prompt},
                 ],

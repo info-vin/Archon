@@ -185,13 +185,15 @@ class ExtractionService:
 
         # 3. Extract with LLM using the schema definition
         from .llm_provider_service import get_llm_client
-
+        from .prompt_service import prompt_service
         schema_json = schema["schema_definition"]
-        system_prompt = (
-            f"You are a Data Extraction Expert. Extract structured data from the provided content "
-            f"strictly following this JSON schema: {schema_json}. \n"
+        default_prompt_template = (
+            "You are a Data Extraction Expert. Extract structured data from the provided content "
+            "strictly following this JSON schema: {schema_json}. \n"
             "Return only the extracted data as a JSON object."
         )
+        system_prompt_template = prompt_service.get_prompt("DATA_EXTRACTION_EXPERT", default_prompt_template)
+        system_prompt = system_prompt_template.format(schema_json=schema_json)
 
         async with get_llm_client() as client:
             response = await client.chat.completions.create(
