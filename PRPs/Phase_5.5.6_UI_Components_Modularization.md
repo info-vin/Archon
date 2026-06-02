@@ -79,10 +79,10 @@ pnpm run lint
 ## Final Validation Checklist
 
 ### Technical Validation
-- [ ] TypeScript checks pass (if `pnpm run typecheck` is available)
-- [ ] Linter passes: `cd archon-ui-main && pnpm run lint`
+- [x] TypeScript checks pass (if `pnpm run typecheck` is available)
+- [x] Linter passes: `cd archon-ui-main && pnpm run lint`
 
 ### Feature Validation
-- [ ] Chat panel resizes correctly.
-- [ ] Chat session connects and streams messages successfully.
-- [ ] Knowledge item mutations trigger optimistic UI updates without errors.
+- [x] Chat panel resizes correctly.
+- [x] Chat session connects and streams messages successfully.
+- [x] Knowledge item mutations trigger optimistic UI updates without errors.
