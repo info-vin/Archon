@@ -111,5 +111,9 @@ export const statsApi = {
         method: 'POST',
         body: JSON.stringify(data)
     });
+  },
+
+  async getConsolidatedNexusState(): Promise<any> {
+    return await callAPI<any>('/api/stats/consolidated');
   }
 };

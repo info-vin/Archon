@@ -159,3 +159,28 @@ async def get_agent_xp():
     except Exception as e:
         logger.error(f"Failed to get agent xp stats: {e}")
         return []
+
+
+@router.get("/consolidated", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_consolidated_stats():
+    """Consolidated Strategic Nexus dashboard state (Phase 5.5.7)."""
+    try:
+        from src.agents.nexus_oracle_agent import NexusOracleAgent, NexusDependencies
+        agent = NexusOracleAgent()
+        deps = NexusDependencies(request_id="nexus-consolidated-request")
+        result = await agent.run(
+            user_prompt="Analyze the gathered telemetry and operational details. Synthesize them into the ConsolidatedNexusState schema.",
+            deps=deps
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to compile consolidated stats: {e}")
+        return {
+            "system_status": "YELLOW",
+            "health_score": 50,
+            "short_term_kpis": {"error": str(e)},
+            "long_term_trends": {},
+            "main_bottleneck": "NexusOracleAgent run execution failed.",
+            "recommended_actions": []
+        }
+

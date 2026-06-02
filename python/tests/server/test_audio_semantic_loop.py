@@ -16,15 +16,15 @@ async def test_audio_semantic_loop_live(client):
     """
     from tests.conftest import _global_patches
     genai_patch = next((p for p in _global_patches if hasattr(p, "target") and getattr(p.target, "__name__", "") == "google.genai"), None)
-    
+
     if genai_patch:
         genai_patch.stop()
-        
+
     try:
         import respx
         # Allow pass-through for real API calls during live test
         respx.route(host__regex=r".*generativelanguage\.googleapis\.com").pass_through()
-        
+
         # 1. Fetch live API key
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:

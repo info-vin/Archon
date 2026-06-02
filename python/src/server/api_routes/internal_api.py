@@ -192,6 +192,7 @@ async def trigger_cron_jobs(
             "daily_executive_summary": scheduler_service._run_daily_executive_summary,
             "tech_debt_audit": scheduler_service._run_tech_debt_audit,
             "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
+            "meta_twin_audit": scheduler_service._run_meta_twin_audit,
         }
 
         if job_id:
@@ -200,11 +201,11 @@ async def trigger_cron_jobs(
             background_tasks.add_task(job_map[job_id])
             return {"status": "triggered", "jobs": 1, "job_id": job_id}
         else:
-            # Add all 13 jobs to FastAPI BackgroundTasks for manual concurrent triggering
+            # Add all jobs to FastAPI BackgroundTasks for manual concurrent triggering
             for func in job_map.values():
                 background_tasks.add_task(func)
 
-            return {"status": "triggered", "jobs": 13}
+            return {"status": "triggered", "jobs": len(job_map)}
     except Exception as e:
         logger.error(f"Error triggering cron jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

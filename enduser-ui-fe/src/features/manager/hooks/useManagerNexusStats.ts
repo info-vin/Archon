@@ -57,49 +57,72 @@ export const useManagerNexusStats = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const results = await Promise.allSettled([
-                api.getSystemOverview(),
+            const [consolidatedRes, employeesRes, settingsRes] = await Promise.all([
+                api.getConsolidatedNexusState(),
                 api.getEmployees(),
-                api.getPendingApprovals(),
-                api.getManagerAlerts(),
-                api.getAiUsage(),
-                api.getSystemSettings('marketing_scoring'),
-                api.getCommanderTrends(),
-                api.getForceReadiness(),
-                api.getBusinessRisks(),
-                api.getCollabSynergy(),
-                api.getSlaReliability(),
-                api.getEthicsAuditQueue(),
-                api.getKnowledgeRoi(),
-                api.getPendingChanges()
+                api.getSystemSettings('marketing_scoring')
             ]);
 
-            const getData = <T>(index: number, fallback: T): T => {
-                const res = results[index];
-                if (res.status === 'fulfilled' && res.value !== null && res.value !== undefined) {
-                    return res.value as T;
-                }
-                return fallback;
-            };
+            // Map consolidated properties to legacy states to maintain 100% UI backwards compatibility
+            const data = consolidatedRes.data || consolidatedRes;
+            
+            // Extract systems telemetry and metrics
+            const systemTelemetry = data.short_term_kpis?.system_telemetry || {};
+            setOverview({
+                status: (data.system_status || 'healthy').toLowerCase() as any,
+                integrity_score: data.health_score || 90,
+                errors_24h: systemTelemetry.errors_24h || 0,
+                cost_24h: systemTelemetry.cost_24h || 0,
+                active_agents: systemTelemetry.active_agents || [],
+                rag: systemTelemetry.rag || { status: 'healthy', score: 90, details: {} },
+                knowledge_stats: systemTelemetry.knowledge_stats || { total_nodes: 0 }
+            });
 
-            setOverview(getData(0, null));
-            setTeam(getData(1, []));
-            setApprovals(getData(2, { blogs: [], leads: [] }));
-            setAlerts(getData(3, []));
-            setAiStats(getData(4, null));
-            const settings = getData(5, []);
-            setCommanderTrends(getData(6, []));
-            setForceReadiness(getData(7, null));
-            setBusinessRisks(getData(8, []));
-            setCollabSynergy(getData(9, null));
-            setSlaReliability(getData(10, null));
-            setEthicsAudit(getData(11, { violations: [], status: 'clear' }));
-            setKnowledgeRoi(getData(12, { roi: 0, active_nodes: 0 }));
-            setCodeProposals(getData(13, []) || []);
+            setTeam(employeesRes || []);
+            
+            // Map AI Usage & ROI
+            setAiStats(data.long_term_trends?.ai_token_usage_30d || null);
+            setKnowledgeRoi(data.long_term_trends?.knowledge_base_roi || { roi: 0, active_nodes: 0 });
+            setCollabSynergy(data.long_term_trends?.collaboration_synergy || null);
+            setSlaReliability(data.long_term_trends?.sla_reliability || null);
+            setForceReadiness(data.short_term_kpis?.team_readiness || null);
+            setCommanderTrends(data.long_term_trends?.commander_trends || []);
+            setBusinessRisks(data.long_term_trends?.business_risks || []);
 
-            if (settings && (settings as any[]).length > 0) {
+            // Map Approvals & Code Proposals
+            const actions = data.recommended_actions || [];
+            
+            // Approvals structure expected: { blogs: [], leads: [] }
+            const pendingApprovals = data.short_term_kpis?.pending_approvals || [];
+            setApprovals({
+                blogs: pendingApprovals.filter((item: any) => item.type === 'blog' || item.category === 'blog'),
+                leads: pendingApprovals.filter((item: any) => item.type === 'lead' || item.category === 'lead')
+            });
+
+            // Map code proposals
+            setCodeProposals(actions.filter((action: any) => action.target.toLowerCase() === 'devbot').map((action: any) => ({
+                id: action.action_id,
+                file_path: action.reason.split("file: ").pop() || "system",
+                new_content: "",
+                summary: action.reason,
+                status: "pending"
+            })));
+
+            // Map Alerts & Ethics
+            const alertsList = data.short_term_kpis?.active_alerts || [];
+            setAlerts(alertsList.map((alert: any) => ({
+                id: alert.id || alert.action_id,
+                level: alert.level || "WARNING",
+                source: alert.source || "System",
+                message: alert.message || alert.reason,
+                created_at: alert.created_at || new Date().toISOString()
+            })));
+
+            setEthicsAudit(data.short_term_kpis?.ethics_audit || { violations: [], status: 'clear' });
+
+            if (settingsRes && (settingsRes as any[]).length > 0) {
                  try {
-                     const parsedRules = JSON.parse((settings as any[])[0].value);
+                     const parsedRules = JSON.parse((settingsRes as any[])[0].value);
                      if (parsedRules.weights) setRules(parsedRules.weights);
                      if (parsedRules.version) setRulesMeta(prev => ({ ...prev, version: parsedRules.version, updated_by: parsedRules.updated_by }));
                  } catch (e) {
@@ -108,8 +131,8 @@ export const useManagerNexusStats = () => {
             }
             
             // Separated for resilience
-            api.getHealthTrend().then(data => {
-                setHealthTrend(data);
+            api.getHealthTrend().then(trendData => {
+                setHealthTrend(trendData);
             }).catch(e => console.error("Trend Load Failed", e));
 
         } catch (e) {

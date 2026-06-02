@@ -204,6 +204,7 @@ class SchedulerService:
         self._schedule_stateless(self._run_log_patrol, "log_patrol", 2, 30)
         self._schedule_stateless(self._run_task_dispatcher, "task_dispatcher", 3, 30)
         self._schedule_stateless(self._run_model_verification, "model_verification", 4, 120)
+        self._schedule_stateless(self._run_meta_twin_audit, "meta_twin_audit", 4, 10)
 
         # --- Category 2: Stateful Daily Jobs (5-35 mins) ---
         await self._schedule_stateful_daily(self._cleanup_system_probes, "system_probe_cleanup", 5)
@@ -273,6 +274,10 @@ class SchedulerService:
 
     async def _run_task_dispatcher(self):
         await task_dispatcher.run_task_dispatcher()
+
+    async def _run_meta_twin_audit(self):
+        from .system.meta_twin_service import meta_twin_service
+        await meta_twin_service.run_telemetry_audit()
 
 
 scheduler_service = SchedulerService()

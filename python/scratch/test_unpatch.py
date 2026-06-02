@@ -1,8 +1,7 @@
 import asyncio
-import os
-import pytest
+
 from src.server.services.text_to_speech_service import text_to_speech_service
-from src.server.config.model_ssot import SYSTEM_MODELS
+
 
 async def main():
     try:
@@ -19,11 +18,10 @@ async def main():
         return
 
     # Check if we have API key
-    from src.server.services.credential_service import credential_service
     # Need to fake db mock if we use get_credential?
     # No, get_credential falls back to os.getenv if DB returns None.
     # But wait, credential_service uses cache. Let's just set os.environ["GEMINI_API_KEY"] if not set.
-    
+
     print("Testing generate_audio...")
     try:
         success, result = await text_to_speech_service.generate_audio("Hello world", "Puck")
@@ -31,7 +29,7 @@ async def main():
         print("Result length:", len(result) if success else result)
     except Exception as e:
         print("Exception:", e)
-        
+
     if genai_patch:
         genai_patch.start()
 

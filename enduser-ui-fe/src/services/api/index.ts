@@ -65,6 +65,7 @@ export const api = {
   getMarketingIntelligence: statsApi.getMarketingIntelligence.bind(statsApi),
   rejectSuggestion: statsApi.rejectSuggestion.bind(statsApi),
   nanaBananaProxy: statsApi.nanaBananaProxy.bind(statsApi),
+  getConsolidatedNexusState: statsApi.getConsolidatedNexusState.bind(statsApi),
 
   // Ops
   searchJobs: opsApi.searchJobs.bind(opsApi),
