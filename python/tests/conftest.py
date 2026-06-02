@@ -311,6 +311,9 @@ def mock_supabase_db():
     """Shared stateful Supabase database emulator that intercepts network requests."""
     client = StatefulMockSupabaseClient()
     with respx.mock(assert_all_called=False) as respx_mock:
+        # Allow pass-through for live AI requests in integration tests
+        respx_mock.route(host__regex=r".*googleapis\.com").pass_through()
+        
         respx_mock.route(host__regex=r".*supabase\.co").mock(
             side_effect=httpx.ConnectError("Blocked connection to Supabase during hermetic tests.")
         )

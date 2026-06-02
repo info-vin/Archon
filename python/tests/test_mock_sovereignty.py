@@ -4,7 +4,6 @@ import pytest
 from google import genai
 from pydantic_ai import Agent
 
-
 from src.server.config.model_ssot import SYSTEM_MODELS
 
 
