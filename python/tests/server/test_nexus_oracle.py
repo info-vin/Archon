@@ -1,6 +1,13 @@
 import pytest
-from src.agents.nexus_oracle_agent import NexusOracleAgent, NexusDependencies, ConsolidatedNexusState, ShortTermKPIs, LongTermTrends
 from fastapi.testclient import TestClient
+
+from src.agents.nexus_oracle_agent import (
+    ConsolidatedNexusState,
+    LongTermTrends,
+    NexusDependencies,
+    NexusOracleAgent,
+    ShortTermKPIs,
+)
 from src.server.main import app
 
 client = TestClient(app)
@@ -20,7 +27,7 @@ async def test_nexus_oracle_agent_mock_run(monkeypatch):
     """Verify that the agent returns structured output conforming to ConsolidatedNexusState."""
     agent = NexusOracleAgent()
     deps = NexusDependencies(request_id="test-nexus-oracle-run")
-    
+
     # We mock the _run_agent call since actual LLM requires live connectivity
     async def mock_run_agent(user_prompt: str, deps: NexusDependencies) -> ConsolidatedNexusState:
         return ConsolidatedNexusState(
@@ -48,14 +55,14 @@ async def test_nexus_oracle_agent_mock_run(monkeypatch):
             main_bottleneck="None - All systems optimal",
             recommended_actions=[]
         )
-        
+
     monkeypatch.setattr(agent, "_run_agent", mock_run_agent)
-    
+
     result = await agent.run(
         user_prompt="Analyze metrics",
         deps=deps
     )
-    
+
     assert isinstance(result, ConsolidatedNexusState)
     assert result.system_status == "GREEN"
     assert result.health_score == 95
@@ -68,7 +75,7 @@ def test_consolidated_api_endpoint(monkeypatch):
     """Verify that the GET /api/stats/consolidated endpoint functions and returns stats."""
     # Mock the agent run on route execution
     from src.agents.nexus_oracle_agent import NexusOracleAgent
-    
+
     async def mock_agent_run(self, user_prompt, deps):
         return ConsolidatedNexusState(
             system_status="GREEN",
@@ -95,17 +102,17 @@ def test_consolidated_api_endpoint(monkeypatch):
             main_bottleneck="None",
             recommended_actions=[]
         )
-        
+
     monkeypatch.setattr(NexusOracleAgent, "run", mock_agent_run)
-    
+
     # Use FastAPI dependency overrides for authentication bypass
     from src.server.auth.dependencies import get_current_user
-    
+
     async def mock_get_current_user():
         return {"id": "test-user-id", "email": "test@example.com", "role": "admin"}
-        
+
     app.dependency_overrides[get_current_user] = mock_get_current_user
-    
+
     try:
         response = client.get(
             "/api/stats/consolidated",

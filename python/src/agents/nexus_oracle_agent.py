@@ -6,7 +6,7 @@ import asyncio
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
@@ -37,8 +37,8 @@ class ShortTermKPIs(BaseModel):
     active_error_counts: int = Field(description="Total active system error log counts.")
     system_telemetry: dict = Field(description="System telemetry properties: errors_24h, cost_24h, active_agents, rag, knowledge_stats.")
     team_readiness: dict = Field(description="Team force readiness details.")
-    pending_approvals: List[dict] = Field(description="List of pending approval blog/lead records. Do NOT return a count, return the actual list of objects.")
-    active_alerts: List[dict] = Field(description="List of active system alerts.")
+    pending_approvals: list[dict] = Field(description="List of pending approval blog/lead records. Do NOT return a count, return the actual list of objects.")
+    active_alerts: list[dict] = Field(description="List of active system alerts.")
 
 
 class LongTermTrends(BaseModel):
@@ -50,21 +50,21 @@ class LongTermTrends(BaseModel):
     knowledge_base_roi: dict | None = Field(default=None, description="Knowledge base ROI analysis details.")
     collaboration_synergy: dict | None = Field(default=None, description="Team collaboration synergy metrics.")
     sla_reliability: dict | None = Field(default=None, description="SLA reliability metrics.")
-    commander_trends: List[dict] = Field(default_factory=list, description="Manager metrics trends list.")
-    business_risks: List[dict] = Field(default_factory=list, description="Business risks list.")
+    commander_trends: list[dict] = Field(default_factory=list, description="Manager metrics trends list.")
+    business_risks: list[dict] = Field(default_factory=list, description="Business risks list.")
 
 
 class ConsolidatedNexusState(BaseModel):
     """Consolidated state schema for the Manager Nexus dashboard."""
     system_status: str = Field(description="Overall system color code: RED, YELLOW, or GREEN.")
     health_score: int = Field(description="Integer health score from 0 to 100.")
-    
+
     # Split metrics into short-term vs long-term cycles
     short_term_kpis: ShortTermKPIs = Field(description="Structured key metrics for the last 24h.")
     long_term_trends: LongTermTrends = Field(description="Structured strategic metrics over 7d/30d.")
-    
+
     main_bottleneck: str = Field(description="The most critical bottleneck currently slowing down workflow operations.")
-    recommended_actions: List[PriorityAction] = Field(description="A prioritized list of alerts and approvals requiring Charlie's review.")
+    recommended_actions: list[PriorityAction] = Field(description="A prioritized list of alerts and approvals requiring Charlie's review.")
 
 
 class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
@@ -122,7 +122,6 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             Asynchronously queries all existing backend services for current system and operational metrics.
             """
             from src.server.services.stats import stats_service
-            from src.server.services.projects.task_service import task_service
             from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
@@ -158,13 +157,13 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             sla = results[4] if not isinstance(results[4], Exception) else {}
             synergy = results[5] if not isinstance(results[5], Exception) else {}
             biz_risks = results[6] if not isinstance(results[6], Exception) else []
-            alerts_res = results[7] if not isinstance(results[7], Exception) else None
-            approvals_res = results[8] if not isinstance(results[8], Exception) else None
-            blogs_res = results[9] if not isinstance(results[9], Exception) else None
+            alerts_res = results[7]
+            approvals_res = results[8]
+            blogs_res = results[9]
 
-            alerts = alerts_res.data if alerts_res else []
-            approvals = approvals_res.data if approvals_res else []
-            blogs = blogs_res.data if blogs_res else []
+            alerts = getattr(alerts_res, "data", []) if not isinstance(alerts_res, Exception) else []
+            approvals = getattr(approvals_res, "data", []) if not isinstance(approvals_res, Exception) else []
+            blogs = getattr(blogs_res, "data", []) if not isinstance(blogs_res, Exception) else []
 
             return {
                 "system_telemetry": telemetry,

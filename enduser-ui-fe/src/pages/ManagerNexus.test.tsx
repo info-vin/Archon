@@ -29,6 +29,18 @@ vi.mock('../services/api.ts', () => ({
     getEthicsAuditQueue: vi.fn().mockResolvedValue({ violations: [], pending_versions: [] }),
     getKnowledgeRoi: vi.fn().mockResolvedValue({ trend: [] }),
     getHealthTrend: vi.fn().mockResolvedValue({ trend: [] }), // MOCK CRASH: Missing 'audit' field
+    getConsolidatedNexusState: vi.fn().mockResolvedValue({
+      system_status: 'healthy',
+      health_score: 95,
+      short_term_kpis: {
+        system_telemetry: {
+          knowledge_stats: { total_nodes: 100 }
+        }
+      },
+      recommended_actions: [
+        { action_id: 'change-1', target: 'devbot', reason: 'Update API documentation', created_at: new Date().toISOString() }
+      ]
+    }),
     getPendingChanges: vi.fn().mockResolvedValue([
       { id: 'change-1', type: 'file', created_at: new Date().toISOString(), request_payload: { description: 'Update API' } }
     ]),

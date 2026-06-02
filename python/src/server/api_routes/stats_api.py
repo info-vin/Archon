@@ -165,7 +165,7 @@ async def get_agent_xp():
 async def get_consolidated_stats():
     """Consolidated Strategic Nexus dashboard state (Phase 5.5.7)."""
     try:
-        from src.agents.nexus_oracle_agent import NexusOracleAgent, NexusDependencies
+        from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
         agent = NexusOracleAgent()
         deps = NexusDependencies(request_id="nexus-consolidated-request")
         result = await agent.run(

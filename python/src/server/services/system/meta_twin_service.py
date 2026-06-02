@@ -2,7 +2,6 @@
 MetaTwinService - Dynamic internal monitoring and self-healing loop for AI Agents.
 """
 
-import logging
 from datetime import UTC, datetime, timedelta
 
 from ...config.logfire_config import get_logger
@@ -27,7 +26,7 @@ class MetaTwinService:
         """
         logger.info("MetaTwin: Starting system telemetry and agent-health audit...")
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
-        
+
         # 1. Fetch recent agent errors
         try:
             logs_res = (
@@ -55,7 +54,7 @@ class MetaTwinService:
         for agent_name, errors in agent_errors.items():
             error_count = len(errors)
             rate_limit_hits = sum(1 for e in errors if "429" in e.get("message", "") or "rate limit" in e.get("message", "").lower())
-            
+
             # Scenario A: Rate Limit Risk (Multiple 429 hits)
             if rate_limit_hits >= 3:
                 diagnoses.append({
@@ -63,7 +62,7 @@ class MetaTwinService:
                     "issue": "RATE_LIMIT_RISK",
                     "reason": f"Detected {rate_limit_hits} rate limit errors in the last hour."
                 })
-                
+
                 # Apply Actuator: Switch to fallback model
                 fallback_success = await self.switch_model_to_fallback(agent_name, "models/gemini-3.1-flash-lite")
                 if fallback_success:
@@ -72,7 +71,7 @@ class MetaTwinService:
                         "action": "MODEL_SWAP",
                         "details": "Swapped DEFAULT_PRO model to DEFAULT_TEXT (Lite) fallback."
                     })
-                    
+
             # Scenario B: Stuck in loop / Infinite calls (High error count)
             elif error_count >= 5:
                 diagnoses.append({
@@ -80,7 +79,7 @@ class MetaTwinService:
                     "issue": "STUCK_IN_LOOP",
                     "reason": f"Detected high error frequency ({error_count} errors) suggesting execution loop."
                 })
-                
+
                 # Apply Actuator: Throttle concurrency / Cooldown
                 throttle_success = await self.throttle_concurrency(agent_name, 1)
                 if throttle_success:
@@ -120,7 +119,7 @@ class MetaTwinService:
             from ...config.model_ssot import SYSTEM_MODELS
             # Update physical models mapping in memory
             SYSTEM_MODELS["DEFAULT_PRO"] = fallback_model
-            
+
             # Persist setting to DB so it propagates
             await self.supabase.table("archon_settings").upsert({
                 "key": f"MODEL_OVERRIDE_{agent_name.upper()}",

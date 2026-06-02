@@ -75,7 +75,8 @@ export const useManagerNexusStats = () => {
                 cost_24h: systemTelemetry.cost_24h || 0,
                 active_agents: systemTelemetry.active_agents || [],
                 rag: systemTelemetry.rag || { status: 'healthy', score: 90, details: {} },
-                knowledge_stats: systemTelemetry.knowledge_stats || { total_nodes: 0 }
+                knowledge_stats: systemTelemetry.knowledge_stats || { total_nodes: 0 },
+                timestamp: new Date().toISOString()
             });
 
             setTeam(employeesRes || []);
@@ -100,12 +101,14 @@ export const useManagerNexusStats = () => {
             });
 
             // Map code proposals
-            setCodeProposals(actions.filter((action: any) => action.target.toLowerCase() === 'devbot').map((action: any) => ({
-                id: action.action_id,
-                file_path: action.reason.split("file: ").pop() || "system",
+            setCodeProposals(actions.filter((action: any) => action.target?.toLowerCase() === 'devbot').map((action: any) => ({
+                id: action.action_id || action.id,
+                file_path: (action.reason || "").split("file: ").pop() || "system",
                 new_content: "",
                 summary: action.reason,
-                status: "pending"
+                status: "pending",
+                type: "code",
+                request_payload: { description: action.reason }
             })));
 
             // Map Alerts & Ethics
