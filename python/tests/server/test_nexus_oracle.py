@@ -1,5 +1,5 @@
 import pytest
-from src.agents.nexus_oracle_agent import NexusOracleAgent, NexusDependencies, ConsolidatedNexusState
+from src.agents.nexus_oracle_agent import NexusOracleAgent, NexusDependencies, ConsolidatedNexusState, ShortTermKPIs, LongTermTrends
 from fastapi.testclient import TestClient
 from src.server.main import app
 
@@ -26,16 +26,25 @@ async def test_nexus_oracle_agent_mock_run(monkeypatch):
         return ConsolidatedNexusState(
             system_status="GREEN",
             health_score=95,
-            short_term_kpis={
-                "daily_token_cost": 0.05,
-                "active_errors": 0,
-                "alerts_count": 0
-            },
-            long_term_trends={
-                "monthly_forecast_usd": 1.50,
-                "roi_index": 4.5,
-                "sla_percentage": 99.8
-            },
+            short_term_kpis=ShortTermKPIs(
+                daily_token_cost=0.05,
+                active_error_counts=0,
+                system_telemetry={"errors_24h": 0, "cost_24h": 0.05, "active_agents": [], "rag": {}, "knowledge_stats": {}},
+                team_readiness={"score": 100},
+                pending_approvals=[],
+                active_alerts=[]
+            ),
+            long_term_trends=LongTermTrends(
+                monthly_budget_forecast="Under budget forecast: $1.50",
+                roi_trend="Positive ROI: 4.5",
+                efficiency_trend="System efficiency optimal at 99.8%",
+                ai_token_usage_30d={},
+                knowledge_base_roi={},
+                collaboration_synergy={},
+                sla_reliability={},
+                commander_trends=[],
+                business_risks=[]
+            ),
             main_bottleneck="None - All systems optimal",
             recommended_actions=[]
         )
@@ -50,8 +59,8 @@ async def test_nexus_oracle_agent_mock_run(monkeypatch):
     assert isinstance(result, ConsolidatedNexusState)
     assert result.system_status == "GREEN"
     assert result.health_score == 95
-    assert "daily_token_cost" in result.short_term_kpis
-    assert result.long_term_trends["roi_index"] == 4.5
+    assert result.short_term_kpis.daily_token_cost == 0.05
+    assert result.long_term_trends.roi_trend == "Positive ROI: 4.5"
     assert len(result.recommended_actions) == 0
 
 
@@ -64,8 +73,25 @@ def test_consolidated_api_endpoint(monkeypatch):
         return ConsolidatedNexusState(
             system_status="GREEN",
             health_score=98,
-            short_term_kpis={"errors": 0},
-            long_term_trends={"roi": 5.0},
+            short_term_kpis=ShortTermKPIs(
+                daily_token_cost=0.0,
+                active_error_counts=0,
+                system_telemetry={},
+                team_readiness={},
+                pending_approvals=[],
+                active_alerts=[]
+            ),
+            long_term_trends=LongTermTrends(
+                monthly_budget_forecast="Good",
+                roi_trend="5.0",
+                efficiency_trend="Stable",
+                ai_token_usage_30d={},
+                knowledge_base_roi={},
+                collaboration_synergy={},
+                sla_reliability={},
+                commander_trends=[],
+                business_risks=[]
+            ),
             main_bottleneck="None",
             recommended_actions=[]
         )
@@ -89,8 +115,8 @@ def test_consolidated_api_endpoint(monkeypatch):
         json_data = response.json()
         assert json_data["system_status"] == "GREEN"
         assert json_data["health_score"] == 98
-        assert json_data["short_term_kpis"] == {"errors": 0}
-        assert json_data["long_term_trends"] == {"roi": 5.0}
+        assert json_data["short_term_kpis"]["daily_token_cost"] == 0.0
+        assert json_data["long_term_trends"]["roi_trend"] == "5.0"
     finally:
         # Clear dependency override
         app.dependency_overrides.pop(get_current_user, None)

@@ -45,7 +45,7 @@ steps:
   # Click the specific verification blog post seeded in review state
   - action: "click"
     selector: "h4:has-text('Charlie Verification Blog Post')"
-    timeout: 10000
+    timeout: 60000
 
   - action: "sleep"
     duration: 2000

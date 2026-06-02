@@ -31,14 +31,37 @@ class PriorityAction(BaseModel):
     one_click_tool: str = Field(description="Name of the action or tool button to resolve the issue.")
 
 
+class ShortTermKPIs(BaseModel):
+    """Structured short-term KPIs for the last 24h."""
+    daily_token_cost: float = Field(description="Total token cost over the last 24 hours in USD.")
+    active_error_counts: int = Field(description="Total active system error log counts.")
+    system_telemetry: dict = Field(description="System telemetry properties: errors_24h, cost_24h, active_agents, rag, knowledge_stats.")
+    team_readiness: dict = Field(description="Team force readiness details.")
+    pending_approvals: List[dict] = Field(description="List of pending approval blog/lead records. Do NOT return a count, return the actual list of objects.")
+    active_alerts: List[dict] = Field(description="List of active system alerts.")
+
+
+class LongTermTrends(BaseModel):
+    """Structured strategic trends over 7d/30d."""
+    monthly_budget_forecast: str = Field(description="Budget forecast summary string.")
+    roi_trend: str = Field(description="ROI trend description.")
+    efficiency_trend: str = Field(description="System efficiency trend summary.")
+    ai_token_usage_30d: dict | None = Field(default=None, description="Detailed 30d AI Usage stats.")
+    knowledge_base_roi: dict | None = Field(default=None, description="Knowledge base ROI analysis details.")
+    collaboration_synergy: dict | None = Field(default=None, description="Team collaboration synergy metrics.")
+    sla_reliability: dict | None = Field(default=None, description="SLA reliability metrics.")
+    commander_trends: List[dict] = Field(default_factory=list, description="Manager metrics trends list.")
+    business_risks: List[dict] = Field(default_factory=list, description="Business risks list.")
+
+
 class ConsolidatedNexusState(BaseModel):
     """Consolidated state schema for the Manager Nexus dashboard."""
     system_status: str = Field(description="Overall system color code: RED, YELLOW, or GREEN.")
     health_score: int = Field(description="Integer health score from 0 to 100.")
     
     # Split metrics into short-term vs long-term cycles
-    short_term_kpis: dict = Field(description="Key metrics for the last 24h: daily token cost, active error counts, and immediate alert indicators.")
-    long_term_trends: dict = Field(description="Strategic metrics over 7d/30d: monthly budget forecast, long-term ROI, and efficiency trend indices.")
+    short_term_kpis: ShortTermKPIs = Field(description="Structured key metrics for the last 24h.")
+    long_term_trends: LongTermTrends = Field(description="Structured strategic metrics over 7d/30d.")
     
     main_bottleneck: str = Field(description="The most critical bottleneck currently slowing down workflow operations.")
     recommended_actions: List[PriorityAction] = Field(description="A prioritized list of alerts and approvals requiring Charlie's review.")
@@ -71,8 +94,10 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
 
         default_prompt = (
             "You are Charlie's strategic dashboard orchestrator. Your objective is to digest multiple raw system metric sources "
-            "(health checks, token consumption logs, pending approvals, and team SLA status) and consolidate them into a simplified, "
-            "cohesive overview. Keep your descriptions concise. Identify the main bottleneck and prioritize actions requiring the manager's attention."
+            "(health checks, token consumption logs, pending approvals, pending blog drafts, and team SLA status) and consolidate them into a simplified, "
+            "cohesive overview. Keep your descriptions concise. Identify the main bottleneck and prioritize actions requiring the manager's attention. "
+            "IMPORTANT: You MUST include all items from the 'pending_blogs' list under short_term_kpis['pending_approvals'], ensuring you preserve their exact fields "
+            "(such as id, title, author_name, created_at, content, target_brand) and add the key-value pair 'type': 'blog' to each item so the frontend dashboard can render them."
         )
         system_prompt = prompt_service.get_prompt("nexus_oracle_agent_prompt", default_prompt)
 
@@ -98,10 +123,16 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             """
             from src.server.services.stats import stats_service
             from src.server.services.projects.task_service import task_service
-            from src.server.services.blog_service import blog_service
             from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
+
+            async def run_query(query):
+                try:
+                    return await asyncio.to_thread(query.execute)
+                except Exception as e:
+                    logger.warning(f"NexusOracleAgent query failed: {e}")
+                    return e
 
             # Execute gather tasks in parallel to avoid endpoint lag (Map-Reduce)
             results = await asyncio.gather(
@@ -113,8 +144,9 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                 stats_service.get_collab_synergy(),
                 stats_service.get_business_risks(),
                 # Fetch pending approvals & changes directly from DB/service layers
-                supabase.table("archon_logs").select("*").eq("level", "ALERT").limit(10).execute(),
-                supabase.table("archon_approvals").select("*").eq("status", "pending").execute(),
+                run_query(supabase.table("archon_logs").select("*").eq("level", "ALERT").limit(10)),
+                run_query(supabase.table("archon_approvals").select("*").eq("status", "pending")),
+                run_query(supabase.table("blog_posts").select("*").eq("status", "review")),
                 return_exceptions=True
             )
 
@@ -128,9 +160,11 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             biz_risks = results[6] if not isinstance(results[6], Exception) else []
             alerts_res = results[7] if not isinstance(results[7], Exception) else None
             approvals_res = results[8] if not isinstance(results[8], Exception) else None
+            blogs_res = results[9] if not isinstance(results[9], Exception) else None
 
             alerts = alerts_res.data if alerts_res else []
             approvals = approvals_res.data if approvals_res else []
+            blogs = blogs_res.data if blogs_res else []
 
             return {
                 "system_telemetry": telemetry,
@@ -141,11 +175,12 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                 "collaboration_synergy": synergy,
                 "business_risks": biz_risks,
                 "active_alerts": alerts,
-                "pending_approvals": approvals
+                "pending_approvals": approvals,
+                "pending_blogs": blogs
             }
 
         return agent
 
     def get_system_prompt(self) -> str:
         """Get the base system prompt."""
-        return "You are Charlie's strategic dashboard orchestrator. Your objective is to digest multiple raw system metric sources and consolidate them."
+        return "You are Charlie's strategic dashboard orchestrator. Your objective is to digest multiple raw system metric sources and consolidate them. Ensure pending blog drafts are formatted as type: 'blog' inside short_term_kpis['pending_approvals']."
