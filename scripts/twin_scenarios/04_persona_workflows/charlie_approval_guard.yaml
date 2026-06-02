@@ -26,6 +26,14 @@ steps:
   - action: "sleep"
     duration: 5000
 
+  # Click the Daily Briefing TTS audio player button to play the summary
+  - action: "click"
+    selector: "button[aria-label='Play Daily Briefing']"
+    timeout: 10000
+
+  - action: "sleep"
+    duration: 8000
+
   # Click the Op Load HUD Card to switch to the Operational Load tab
   - action: "click"
     selector: "span:has-text('Op Load')"

@@ -97,7 +97,7 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             Asynchronously queries all existing backend services for current system and operational metrics.
             """
             from src.server.services.stats import stats_service
-            from src.server.services.projects.tasks.services import task_service
+            from src.server.services.projects.task_service import task_service
             from src.server.services.blog_service import blog_service
             from src.server.utils import get_supabase_client
 
