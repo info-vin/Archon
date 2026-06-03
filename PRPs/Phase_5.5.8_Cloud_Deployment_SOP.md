@@ -126,15 +126,47 @@ Since Hugging Face Spaces builds automatically from its own repository, you need
    ```bash
    git remote add hf https://<your-hf-username>:<your-write-token>@huggingface.co/spaces/<your-hf-username>/<your-space-name>
    ```
-3. Create a symbolic link in the root folder so Hugging Face can locate the Dockerfile (Hugging Face expects the filename to be exactly `Dockerfile` in the root, whereas our file is named `Dockerfile.server`):
+3. Copy the Dockerfile to the root folder (Hugging Face expects the filename to be exactly `Dockerfile` in the root, whereas our template is named `Dockerfile.server`; **do not use symbolic links** as Hugging Face Spaces fails to resolve Git symlinks):
    ```bash
-   ln -s Dockerfile.server Dockerfile
+   cp Dockerfile.server Dockerfile
    git add Dockerfile
-   git commit -m "chore: link Dockerfile.server to Dockerfile for Hugging Face"
+   git commit -m "chore: copy Dockerfile.server to Dockerfile for Hugging Face"
    ```
-4. Push your release branch (e.g. `feat/twins`) to Hugging Face's `main` branch:
+4. Push only the necessary backend files using a clean **orphan branch** to bypass Hugging Face's 10MB file limit hook and prevent git history bloat from UI assets/videos:
    ```bash
-   git push hf feat/twins:main --force
+   # Create a clean orphan branch
+   git checkout --orphan deploy-hf
+   git rm -rf .
+   
+   # Restore only the required backend directories/files
+   git checkout feat/twins -- python/
+   git checkout feat/twins -- migration/
+   git checkout feat/twins -- scripts/
+   git checkout feat/twins -- Makefile
+   git checkout feat/twins -- Dockerfile
+   git checkout feat/twins -- Dockerfile.server
+
+   # Create metadata README.md
+   cat << 'EOF' > README.md
+   ---
+   title: Myrmidon
+   emoji: 🐳
+   colorFrom: blue
+   colorTo: pink
+   sdk: docker
+   app_port: 7860
+   pinned: false
+   ---
+   # Myrmidon Backend
+   EOF
+
+   git add python/ migration/ scripts/ Makefile Dockerfile Dockerfile.server README.md
+   git commit -m "chore(deploy): build monolithic server"
+   git push hf deploy-hf:main --force
+   
+   # Go back to your feature branch and delete temp deploy branch
+   git checkout feat/twins
+   git branch -D deploy-hf
    ```
 
 Hugging Face will automatically pull the Docker environment, build, and run it on port `7860`. The API URL to use in your Vercel frontend will be:
@@ -147,14 +179,32 @@ Hugging Face will automatically pull the Docker environment, build, and run it o
 When the Render container starts, it triggers the following launch sequence inside the container:
 
 ```bash
-# 1. Starts MCP Server in the background (Default Port: 8051)
-sh /app/docker-entrypoint-mcp.sh &
+# 1. Export local port parameters and host to ensure clean loopback routing inside monolith
+export ARCHON_SERVER_PORT=${PORT:-8181}
+export ARCHON_SERVER_HOST=${ARCHON_SERVER_HOST:-127.0.0.1}
 
-# 2. Starts Agents Service in the background (Default Port: 8052)
-sh /app/docker-entrypoint-agents.sh &
+# 2. Starts MCP Server in the background (Default Port: 8051)
+PORT=$ARCHON_MCP_PORT sh /app/docker-entrypoint-mcp.sh &
 
-# 3. Starts Main FastAPI Server in the foreground, binding to Render's dynamic $PORT
+# 3. Starts Agents Service in the background (Default Port: 8052)
+PORT=$ARCHON_AGENTS_PORT sh /app/docker-entrypoint-agents.sh &
+
+# 4. Starts Main FastAPI Server in the foreground, binding to the platform's dynamic $PORT
 python -m uvicorn src.server.main:app --host 0.0.0.0 --port ${PORT:-8181} --workers 1
 ```
 
-Services communicate internally via `localhost` (e.g., the FastAPI server routes requests to MCP via `localhost:8051`), providing an isolated, zero-cost network environment.
+---
+
+## Hugging Face Deployment Gotchas & Experiences (Added 2026-06-03)
+
+1. **Pre-receive Hook Failures (File Size Limits)**:
+   * *Problem*: Hugging Face Spaces rejects pushes containing files larger than 10MB (or matching test reports, `.webm` recordings, and build assets in frontend directories) even if they are in the historical commits.
+   * *Solution*: Deploy using a clean `git checkout --orphan deploy-hf` branch containing zero commit history. Selectively check out only backend directories (`python/`, `migration/`, `scripts/`) to ensure the push remains minimal and under limits.
+2. **Git Symbolic Link Resolution Failures**:
+   * *Problem*: Creating `ln -s Dockerfile.server Dockerfile` results in Hugging Face cloning a literal text file containing the path text, causing the docker build to crash.
+   * *Solution*: Physically copy the file using `cp Dockerfile.server Dockerfile`.
+3. **Internal Container DNS Name Collisions (`Name or service not known`)**:
+   * *Problem*: When running MCP, Agents, and Main FastAPI inside a single container (to bypass memory and billing constraints), Python's fallback address `"archon-server"` fails to resolve because there is no Compose-defined DNS.
+   * *Solution*:
+     * Modify client scripts to fallback to `127.0.0.1` or `localhost` when `ARCHON_SERVER_HOST` is unset.
+     * Configure `start_all.sh` to dynamically bind `ARCHON_SERVER_PORT` to `${PORT:-8181}` so internal loopback communicates through the actual mapped routing port.
