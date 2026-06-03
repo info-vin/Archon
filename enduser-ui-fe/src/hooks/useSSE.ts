@@ -4,12 +4,15 @@ import { useEffect, useRef } from 'react';
  * useSSE Hook (Phase 5.1.1)
  * Listens to real-time task updates from the backend and dispatches global window events.
  */
+import { getBaseUrl } from '../services/api/apiClient';
+
 export function useSSE() {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    // Determine SSE URL (proxy handles /api)
-    const sseUrl = '/api/sse/tasks';
+    // Determine SSE URL dynamically using getBaseUrl()
+    const envBase = getBaseUrl();
+    const sseUrl = envBase ? `${envBase}/api/sse/tasks` : '/api/sse/tasks';
 
     console.log('📡 Initializing SSE connection to:', sseUrl);
 
