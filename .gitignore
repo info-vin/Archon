@@ -32,3 +32,7 @@ node_modules/
 python/.twin/
 
 ollama_data/
+
+# Temp media
+*.wav
+failed_step.png

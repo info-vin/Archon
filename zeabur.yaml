@@ -1,0 +1,72 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+  name: Archon Project
+spec:
+  services:
+    # 1. Main Backend API (archon-server)
+    - name: archon-server
+      template: GIT
+      contextDir: /
+      dockerfilePath: Dockerfile.server
+      env:
+        - key: OPENAI_API_KEY
+        - key: LOG_LEVEL
+        - key: GEMINI_API_KEY
+        - key: SUPABASE_URL
+        - key: SUPABASE_SERVICE_KEY
+        - key: CORS_ORIGINS
+      ports:
+        - port: 8000
+          type: HTTP
+
+    # 2. Admin UI (archon-ui-main)
+    - name: archon-ui-main
+      template: GIT
+      contextDir: /archon-ui-main
+      # Zeabur usually auto-detects Node.js & Vite, but we specify to be safe
+      buildCommand: pnpm install --frozen-lockfile && pnpm run build
+      outputDir: dist
+      env:
+        - key: VITE_API_URL
+      ports:
+        - port: 80
+          type: HTTP
+
+    # 3. End-User UI (enduser-ui-fe)
+    - name: enduser-ui-fe
+      template: GIT
+      contextDir: /enduser-ui-fe
+      buildCommand: pnpm install --frozen-lockfile && pnpm run build
+      outputDir: dist
+      env:
+        - key: VITE_API_URL
+      ports:
+        - port: 80
+          type: HTTP
+
+    # 4. Master Control Program (archon-mcp)
+    - name: archon-mcp
+      template: GIT
+      contextDir: /python
+      dockerfilePath: Dockerfile.mcp
+      env:
+        - key: LOG_LEVEL
+        - key: ARCHON_SERVER_PORT
+        - key: ARCHON_SERVER_HOST
+        - key: SUPABASE_SERVICE_KEY
+        - key: SUPABASE_URL
+
+    # 5. AI Agents (archon-agents)
+    - name: archon-agents
+      template: GIT
+      contextDir: /python
+      dockerfilePath: Dockerfile.agents
+      env:
+        - key: LOG_LEVEL
+        - key: ARCHON_SERVER_PORT
+        - key: ARCHON_SERVER_HOST
+        - key: SUPABASE_SERVICE_KEY
+        - key: SUPABASE_URL
+        - key: GEMINI_API_KEY
+        - key: OPENAI_API_KEY

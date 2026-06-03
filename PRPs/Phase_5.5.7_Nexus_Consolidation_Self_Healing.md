@@ -30,12 +30,12 @@ description: |
 
 ### Success Criteria
 
-- [ ] Centralized `NexusOracleAgent` created and running successfully.
-- [ ] API endpoint `/internal/nexus/consolidated` registered and integrated with the agent.
-- [ ] `meta_twin_service.py` implemented with Clockwork cron orchestration.
-- [ ] Front-end `useManagerNexusStats.ts` refactored to fetch only the consolidated endpoint.
-- [ ] High-fidelity E2E Playwright test simulating Charlie's dashboard loading.
-- [ ] `make twin-scout` metric alignment scanner verification passes.
+- [x] Centralized `NexusOracleAgent` created and running successfully.
+- [x] API endpoint `/internal/nexus/consolidated` registered and integrated with the agent.
+- [x] `meta_twin_service.py` implemented with Clockwork cron orchestration.
+- [x] Front-end `useManagerNexusStats.ts` refactored to fetch only the consolidated endpoint.
+- [x] High-fidelity E2E Playwright test simulating Charlie's dashboard loading.
+- [x] `make twin-scout` metric alignment scanner verification passes.
 
 ## Implementation Blueprint
 

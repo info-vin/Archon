@@ -27,12 +27,12 @@ description: |
 
 ### Success Criteria
 
-- [ ] `ArchonChatPanel.tsx` logic extracted into `useChatSession.ts` and `usePanelResize.ts`.
-- [ ] `ArchonChatPanel.tsx` UI extracted into `ChatHeader.tsx`, `ChatMessageList.tsx`, and `ChatInput.tsx`.
-- [ ] `useKnowledgeMutations.ts` split into `useCrawlMutations.ts`, `useUploadMutations.ts`, and `useItemMutations.ts`.
-- [ ] Original `useKnowledgeMutations.ts` acts as a Facade exporting the split hooks.
-- [ ] Frontend builds successfully.
-- [ ] Frontend linter passes.
+- [x] `ArchonChatPanel.tsx` logic extracted into `useChatSession.ts` and `usePanelResize.ts`.
+- [x] `ArchonChatPanel.tsx` UI extracted into `ChatHeader.tsx`, `ChatMessageList.tsx`, and `ChatInput.tsx`.
+- [x] `useKnowledgeMutations.ts` split into `useCrawlMutations.ts`, `useUploadMutations.ts`, and `useItemMutations.ts`.
+- [x] Original `useKnowledgeMutations.ts` acts as a Facade exporting the split hooks.
+- [x] Frontend builds successfully.
+- [x] Frontend linter passes.
 
 ## Implementation Blueprint
 
