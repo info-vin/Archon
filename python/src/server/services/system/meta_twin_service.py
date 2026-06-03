@@ -125,7 +125,7 @@ class MetaTwinService:
                 "key": f"MODEL_OVERRIDE_{agent_name.upper()}",
                 "value": fallback_model,
                 "description": f"Auto-Healing Model Override by MetaTwin at {datetime.now(UTC).isoformat()}"
-            }).execute()
+            }, on_conflict="key").execute()
             return True
         except Exception as e:
             logger.error(f"MetaTwin: Model override failed for {agent_name}: {e}")
@@ -141,7 +141,7 @@ class MetaTwinService:
                 "key": f"CRAWL_CONCURRENT_MAX_{agent_name.upper()}",
                 "value": str(new_limit),
                 "description": f"Auto-Healing Concurrency Limit by MetaTwin at {datetime.now(UTC).isoformat()}"
-            }).execute()
+            }, on_conflict="key").execute()
             return True
         except Exception as e:
             logger.error(f"MetaTwin: Throttling failed for {agent_name}: {e}")
