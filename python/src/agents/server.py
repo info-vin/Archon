@@ -79,7 +79,7 @@ async def fetch_credentials_from_server():
                         "ARCHON_SERVER_PORT environment variable is required. "
                         "Please set it in your .env file or environment."
                     )
-                server_host = os.getenv("ARCHON_SERVER_HOST", "archon-server")
+                server_host = os.getenv("ARCHON_SERVER_HOST") or os.getenv("ARCHON_HOST") or "127.0.0.1"
                 response = await client.get(
                     f"http://{server_host}:{server_port}/internal/credentials/agents", timeout=10.0
                 )

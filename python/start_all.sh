@@ -4,6 +4,8 @@
 # 透過覆寫 PORT 變數，防止它們去搶 Render 配發給主伺服器的外部 PORT
 export ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
 export ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
+export ARCHON_SERVER_PORT=${PORT:-8181}
+export ARCHON_SERVER_HOST=${ARCHON_SERVER_HOST:-127.0.0.1}
 
 # 2. 記憶體優化 (Render 512MB 免費額度防禦)：
 # 預設不自動啟動背景的 MCP 與 Agents 服務，以節省記憶體。
