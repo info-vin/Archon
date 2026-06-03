@@ -50,15 +50,15 @@ Both frontends (`archon-ui-main` and `enduser-ui-fe`) are hosted on Vercel. Beca
 - **Framework Preset**: `Vite`
 - **Root Directory**: `enduser-ui-fe`
 - **Environment Variables**:
-  - Add `VITE_API_URL` pointing to your Render backend URL.
+  - Add `VITE_API_URL` pointing to your Render/Hugging Face backend URL.
+  - Add `VITE_SUPABASE_URL` pointing to your Supabase URL (e.g. `https://<ref>.supabase.co`).
+  - Add `VITE_SUPABASE_ANON_KEY` pointing to your Supabase public anon key (or service_role key).
 - **Git Branch Configuration (Settings > Git)**:
   - **Production Branch**: Set to `feat/twins`.
   - **Ignored Build Step**: Set to **Custom** and enter:
     ```bash
     [ "$VERCEL_GIT_COMMIT_REF" != "feat/twins" ]
-    ```
-
----
+    ```---
 
 ### 2. Backend Monolith Deployment (Render)
 
@@ -208,3 +208,13 @@ python -m uvicorn src.server.main:app --host 0.0.0.0 --port ${PORT:-8181} --work
    * *Solution*:
      * Modify client scripts to fallback to `127.0.0.1` or `localhost` when `ARCHON_SERVER_HOST` is unset.
      * Configure `start_all.sh` to dynamically bind `ARCHON_SERVER_PORT` to `${PORT:-8181}` so internal loopback communicates through the actual mapped routing port.
+4. **Hugging Face Private Space 404/401 Routing Blocks**:
+   * *Problem*: If the Hugging Face Space visibility is set to `Private`, Hugging Face's CDN intercepts all browser client-side JS requests (like Vercel frontend) that don't pass active Hugging Face authentication cookies, and returns `404 NOT FOUND` (or `401 Unauthorized`).
+   * *Solution*: Change the Hugging Face Space visibility setting under Settings from `Private` to `Public` (Secrets and env keys remain completely encrypted and invisible to the public).
+5. **Vercel Path Wildcard SPA Router 404s**:
+   * *Problem*: React Router's URL refresh routing returns 404 on Vercel when using regex patterns in `vercel.json` like `/(.*)`.
+   * *Solution*: Use standard Express-style wildcard route matcher `{ "source": "/:path*", "destination": "/index.html" }` in `vercel.json` to handle SPA route fallback properly.
+6. **Required Supabase Credentials for Enduser Frontend**:
+   * *Problem*: The enduser frontend (`enduser-ui-fe`) directly communicates with Supabase (via supabase-js SDK) to handle authentication, role authorization, and state mapping. In Vercel production, this fails if `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are not explicitly defined.
+   * *Solution*: Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to Vercel environment variables for the enduser project.
+
