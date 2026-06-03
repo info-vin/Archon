@@ -38,7 +38,7 @@ export const NexusHUD: React.FC<NexusHUDProps> = ({
                 value={overview?.integrity_score !== undefined ? `${overview.integrity_score}%` : "..."}
                 sub="System Health"
                 active={activeMetric === 'integrity'}
-                status={overview?.status === 'healthy' ? 'good' : 'bad'}
+                status={overview?.rag?.status === 'healthy' ? 'good' : 'bad'}
                 onClick={setActiveMetric}
                 tooltip="RAG Vector DB Health"
                 loading={loading}

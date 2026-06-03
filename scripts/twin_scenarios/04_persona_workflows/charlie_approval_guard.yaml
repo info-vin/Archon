@@ -74,6 +74,48 @@ steps:
   - action: "sleep"
     duration: 5000
 
+  # Click My Tasks and wait
+  - action: "click"
+    selector: "span:has-text('My Tasks')"
+    timeout: 10000
+  - action: "sleep"
+    duration: 3000
+
+  # Click Sales Intel and wait
+  - action: "click"
+    selector: "span:has-text('Sales Intel')"
+    timeout: 10000
+  - action: "sleep"
+    duration: 3000
+
+  # Click Brand Hub and wait
+  - action: "click"
+    selector: "span:has-text('Brand Hub')"
+    timeout: 10000
+  - action: "sleep"
+    duration: 3000
+
+  # Click Approvals and wait
+  - action: "click"
+    selector: "span:has-text('Approvals')"
+    timeout: 10000
+  - action: "sleep"
+    duration: 3000
+
+  # Click Team Management and wait
+  - action: "click"
+    selector: "span:has-text('Team Management')"
+    timeout: 10000
+  - action: "sleep"
+    duration: 3000
+
+  # Click back to Nexus Command
+  - action: "click"
+    selector: "span:has-text('Nexus Command')"
+    timeout: 10000
+  - action: "sleep"
+    duration: 5000
+
 analysis:
   type: "static"
   success_message: "WORKFLOW_SUCCESS"
