@@ -1,57 +1,57 @@
-# Nexus Metrics Specification (Phase 5.5.7)
+# Nexus 指標規格說明書 (Phase 5.5.7)
 
-The Nexus Command serves as the strategic orchestrator's central dashboard.
+Nexus 控制台是戰略協調官（Charlie）的中央決策儀表板。
 
-## Core Metrics Definition & Calculation
+## 核心指標定義與計算標準
 
-### 1. System Integrity Analysis (`integrity`)
-* **Goal**: Ensure the RAG Vector Database is healthy and all system nodes are aligned.
-* **Calculation & Source**: Checks RAG vector dimension parity and search functionality. Uses health checks from `HealthService` to generate a composite score.
-* **Colors**: Green (good/healthy) or Red (bad/critical failure).
+### 1. 系統完整性分析 (`integrity`)
+* **監控目標**：確保 RAG 向量資料庫健康度，以及所有系統節點正常對齊。
+* **計算與來源**：檢查向量維度一致性與檢索功能，透過 `HealthService` 進行綜合評估。
+* **燈號代表**：綠燈（健康/正常運行）或紅燈（關鍵連線或維度出錯）。
 
-### 2. Resource & Synergy Audit (`resources`)
-* **Goal**: Track daily token usage costs against monthly budget limits.
-* **Calculation & Source**: Accumulates OpenAI/Gemini token costs over the last 24 hours.
-* **Colors**: Neutral (standard operation).
+### 2. 算力資源與協作審計 (`resources`)
+* **監控目標**：監控每日 Token 消耗成本與每月預算上限的對比。
+* **計算與來源**：統計過去 24 小時內所有 AI 代理人產生的實體 Token 累計花費（USD）。
+* **燈號代表**：灰色（常規運作指標）。
 
-### 3. Operational Load (`op_load`)
-* **Goal**: Monitor the decision queue for pending approvals across Marketing (Bob) and Engineering (DevBot).
-* **Calculation & Source**: Total pending items in approvals (such as review blog posts) plus pending code change proposals.
-* **Colors**: Green (no pending actions) or Yellow/Warning (items awaiting review).
+### 3. 業務負載審批 (`op_load`)
+* **監控目標**：監督待 Charlie 核准的決策佇列，包含行銷部（Bob）的部落格草稿與工程部（DevBot）的程式碼變更。
+* **計算與來源**：待處理部落格、待開發線索，與 DevOps 提案的項目總和。
+* **燈號代表**：綠燈（無待辦項目）或黃燈/橘燈（有項目等待審批中）。
 
-### 4. Sentinel Risks (`sent_risks`)
-* **Goal**: Exceptions radar tracking stale leads, tasks blockages, or background process anomalies.
-* **Calculation & Source**: Active alerts logged by the `BusinessSentinel` background patrol daemon.
-* **Colors**: Green (no alerts/all systems nominal) or Red (active warnings/errors).
+### 4. 業務風險雷達 (`sent_risks`)
+* **監控目標**：捕捉業務邏輯異常，例如過期線索（Stale Leads）或任務阻塞。
+* **計算與來源**：由業務哨兵（BusinessSentinel）背景守護行程所記錄的即時警報。
+* **燈號代表**：綠燈（系統無風險）或紅燈（有警報需立即處理）。
 
-### 5. Active Force (`active_force`)
-* **Goal**: Status and availability roster for agents and team members.
-* **Calculation & Source**: Online count of registered agents and active members.
-* **Colors**: Green (active availability).
+### 5. 團隊與代理人在線狀態 (`active_force`)
+* **監控目標**：監控團隊成員與 AI 代理人的在線狀態與可用性。
+* **計算與來源**：統計當前處於 Active 狀態的成員與代理人總數。
+* **燈號代表**：綠燈（團隊狀態良好）。
 
-### 6. Ethics & Prompt Audit (`ethics`)
-* **Goal**: Centralized safety compliance and prompt versioning alignment.
-* **Calculation & Source**: Counts safety flags, content violations, and prompt change requests waiting for approval.
-* **Colors**: Green (system nominal) or Red (pending safety flags or version updates).
+### 6. 安全道德與 Prompt 審計 (`ethics`)
+* **監控目標**：集中管控 Prompt 版本變更與內容道德合規審查。
+* **計算與來源**：待核准的 Prompt 變更申請與安全合規例外事件總量。
+* **燈號代表**：綠燈（系統無合規風險）或紅燈（有未解決的安全警告或待審版本）。
 
-### 7. Collab Synergy (`collab`)
-* **Goal**: Tracks cross-department communication bridges and word count momentum.
-* **Calculation & Source**: Measures momentum percentage of shared team task completions over 7 days.
-* **Colors**: Green (positive momentum) or Yellow/Warning (declining or stagnant collaboration).
+### 7. 部門協作動能 (`collab`)
+* **監控目標**：評估跨部門通訊橋樑的健康度與任務推進動能。
+* **計算與來源**：計算 7 天內團隊各角色共同推進任務與對話的 Momentum 變化百分比。
+* **燈號代表**：綠燈（動能增長）或黃燈/橘燈（協作停滯或下降）。
 
-### 8. Intelligence ROI & Graph (`graph`)
-* **Goal**: Measures the efficiency and overall conversion ROI of the knowledge base.
-* **Calculation & Source**: Percentage of overall conversion based on seeded documents vs total nodes tracked.
-* **Colors**: Green (high conversion/ROI), Yellow/Warning (medium), or Red (poor conversion).
+### 8. 智慧資產 ROI 與知識圖譜 (`graph`)
+* **監控目標**：評估知識庫內容的利用效率與綜合轉換率。
+* **計算與來源**：以匯入的文件數與圖譜節點的點線關聯度，計算出 Overall Conversion ROI。
+* **燈號代表**：綠燈（高轉換率）、黃燈（中等）、紅燈（轉換效率過低）。
 
-### 9. SLA Reliability (`velocity`)
-* **Goal**: Strategic discipline index monitoring milestone completion pacing.
-* **Calculation & Source**: Tracks historical 6-month SLA achievement percentages.
-* **Colors**: Green (SLA >= 95%) or Yellow/Warning (SLA < 95%).
+### 9. SLA 可靠度 (`velocity`)
+* **監控目標**：里程碑與目標達成的戰略紀律指數。
+* **計算與來源**：統計過去 6 個月內任務按時完成的 SLA 達成率百分比。
+* **燈號代表**：綠燈（SLA >= 95%）或黃燈（SLA < 95%）。
 
-### 10. System Prompts (`prompts`)
-* **Goal**: Direct view and adjustments for AI agents' instruction profiles.
-* **Calculation & Source**: Direct query of prompts configuration settings.
-* **Colors**: Neutral.
+### 10. 系統核心 Prompt (`prompts`)
+* **監控目標**：直接檢視與微調各個 AI 代理人的基礎指令配置文件。
+* **計算與來源**：系統底層 Prompt 配置檔案。
+* **燈號代表**：灰色（系統設定維度）。
 
-*Documentation updated as of Phase 5.5.7 (2026-06-03).*
+*規格說明書更新日期：Phase 5.5.7 (2026-06-03)*
