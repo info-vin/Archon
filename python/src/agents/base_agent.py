@@ -272,7 +272,7 @@ class BaseAgent[DepsT, OutputT](ABC):
                             "context_type": f"agent_{self.name.lower()}",
                         }
                         is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
-                        server_host = "archon-server" if is_docker else "localhost"
+                        server_host = os.getenv("ARCHON_SERVER_HOST", "archon-server" if is_docker else "localhost")
                         await client.post(
                             f"http://{server_host}:{server_port}/internal/stats/token-usage",
                             json=payload,

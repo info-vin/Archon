@@ -14,7 +14,7 @@ async def propose_code_fix(file_path: str, new_content: str, summary: str) -> st
     """
     server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
     is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
-    server_host = "archon-server" if is_docker else "localhost"
+    server_host = os.getenv("ARCHON_SERVER_HOST", "archon-server" if is_docker else "localhost")
     url = f"http://{server_host}:{server_port}/internal/david/propose"
 
     payload = {"file_path": file_path, "new_content": new_content, "summary": summary}
@@ -38,7 +38,7 @@ async def read_code_file(file_path: str) -> str:
     """
     server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
     is_docker = os.getenv("DOCKER_CONTAINER") == "true" or os.path.exists("/.dockerenv")
-    server_host = "archon-server" if is_docker else "localhost"
+    server_host = os.getenv("ARCHON_SERVER_HOST", "archon-server" if is_docker else "localhost")
     # Reusing the existing internal proxy endpoint
     url = f"http://{server_host}:{server_port}/internal/david/read?path={file_path}"
 
