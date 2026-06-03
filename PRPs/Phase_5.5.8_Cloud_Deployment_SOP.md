@@ -154,7 +154,7 @@ Since Hugging Face Spaces builds automatically from its own repository, you need
    colorFrom: blue
    colorTo: pink
    sdk: docker
-   app_port: 7860
+   app_port: 8181
    pinned: false
    ---
    # Myrmidon Backend
