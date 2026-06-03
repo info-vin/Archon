@@ -21,11 +21,11 @@ import sys
 import traceback
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 # Add the project root to Python path for imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 # Import Core Infrastructure (Phase 4.6.20 Slimming)
 from src.mcp_server.core import (
@@ -35,10 +35,8 @@ from src.mcp_server.core import (
 from src.mcp_server.router import register_custom_routes
 from src.server.config.logfire_config import setup_logfire
 
-# Load environment variables from the project root .env file
-project_root = Path(__file__).resolve().parent.parent
-dotenv_path = project_root / ".env"
-load_dotenv(dotenv_path, override=True)
+# Load environment variables from the project root .env file by searching upwards
+load_dotenv(find_dotenv(), override=True)
 
 # Configure logging
 logging.basicConfig(
