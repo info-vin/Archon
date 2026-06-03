@@ -88,5 +88,11 @@ EXPOSE ${ARCHON_SERVER_PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD sh -c "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:${ARCHON_SERVER_PORT}/health')\""
 
-# Run the Server service
-CMD sh -c "python -m uvicorn src.server.main:socket_app --host 0.0.0.0 --port ${ARCHON_SERVER_PORT} --workers 1"
+# Copy start_all script and ensure entrypoints are executable
+COPY python/start_all.sh /app/start_all.sh
+COPY python/docker-entrypoint-mcp.sh /app/docker-entrypoint-mcp.sh
+COPY python/docker-entrypoint-agents.sh /app/docker-entrypoint-agents.sh
+RUN chmod +x /app/start_all.sh /app/docker-entrypoint-mcp.sh /app/docker-entrypoint-agents.sh
+
+# Run the Monolith service
+CMD ["/app/start_all.sh"]
