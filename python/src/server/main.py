@@ -15,6 +15,9 @@ Modules:
 import os
 import warnings
 
+from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv(), override=True)
+
 # Suppress the noisy transformers LambdaRuntimeClient deprecation warnings
 warnings.filterwarnings("ignore", message=".*LambdaRuntimeClient.*")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="transformers")
