@@ -10,9 +10,9 @@ interface KanbanViewProps {
   userMap: Record<string, any>;
 }
 
+const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
+
 export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, updateTaskStatus, setEditingTask, userMap }) => {
-  const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
-  
   const tasksByStatus = useMemo(() => {
     const grouped: { [key in TaskStatus]?: Task[] } = {};
     tasks.forEach(task => {
