@@ -25,7 +25,13 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
     const buttonClasses = className ?? "p-2 rounded-md hover:bg-secondary transition-colors";
 
     return (
-        <button onClick={() => setIsDarkMode(!isDarkMode)} className={buttonClasses} aria-label="Toggle theme">
+        <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={buttonClasses}
+            aria-label={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
+            title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
+            aria-pressed={isDarkMode}
+        >
             {isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
         </button>
     );
