@@ -218,3 +218,27 @@ python -m uvicorn src.server.main:app --host 0.0.0.0 --port ${PORT:-8181} --work
    * *Problem*: The enduser frontend (`enduser-ui-fe`) directly communicates with Supabase (via supabase-js SDK) to handle authentication, role authorization, and state mapping. In Vercel production, this fails if `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are not explicitly defined.
    * *Solution*: Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to Vercel environment variables for the enduser project.
 
+## Verification & Automation Summary (Added 2026-06-04)
+
+### 1. Default Branch Transition to `dev/twins`
+- The default repository branch on GitHub was successfully migrated from `feat/twins` to `dev/twins`.
+- Hugging Face Space `myrmidon` matches the snapshot of the latest `dev/twins` commit. Note that because Hugging Face deployments are pushed via `deploy_hf.sh` (which generates an orphan branch to bypass file size limit hooks), the HEAD commit SHA on Hugging Face differs from the repository, but the source file tree is verified to be identical.
+
+### 2. Hugging Face Space Auto-Scheduler
+- A GitHub Action workflow [hf-scheduler.yml](file:///.github/workflows/hf-scheduler.yml) was configured to automatically pause and restart the Hugging Face Space daily.
+  - **Automatic Pause**: 01:00 AM Taiwan Time (17:00 UTC).
+  - **Automatic Restart**: 06:00 AM Taiwan Time (22:00 UTC).
+  - **Dependency**: Requires configuring `HF_TOKEN` (a write-access token) in GitHub Repository Secrets.
+
+### 3. Vercel Project Configurations Validation
+Checked and confirmed programmatically via the Vercel API using a Personal Access Token (`vcp_...`):
+
+#### Vercel Admin UI (`archon`)
+- **Project ID**: `prj_3bTftk47rurZThvII0y36zOkTDhG`
+- **Production Branch**: `dev/twins` (Correct)
+- **Ignored Build Step Command** (`commandForIgnoringBuildStep`): `[ "$VERCEL_GIT_COMMIT_REF" != "dev/twins" ]` (Correct - skips preview builds to protect build minutes and DB constraints)
+
+#### Vercel End-User UI (`archon-enduser`)
+- **Project ID**: `prj_nGHU5bMOSBCefL2QP4E7XUVEJs5c`
+- **Production Branch**: `dev/twins` (Correct)
+- **Ignored Build Step Command** (`commandForIgnoringBuildStep`): `[ "$VERCEL_GIT_COMMIT_REF" != "dev/twins" ]` (Correct)
