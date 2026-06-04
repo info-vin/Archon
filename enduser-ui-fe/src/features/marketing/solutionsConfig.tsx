@@ -34,6 +34,7 @@ export const solutionsCategories: SolutionCategory[] = [
         items: [
             { id: 'sas-arch', label: 'SAS Viya Architecture', type: 'legacy', src: '/ai/original_files/sas_viya_arc.html', icon: <SettingsIcon className="w-4 h-4" /> },
             { id: 'rpa-flow', label: 'RPA Workflow', type: 'legacy', src: '/ai/original_files/RPA_canvas.html', icon: <ActivityIcon className="w-4 h-4" /> },
+            { id: 'myrmidon-vs-dify', label: 'Myrmidon vs Dify & Flowise', type: 'legacy', src: '/ai/myrmidon_vs_dify.html', icon: <BarChartIcon className="w-4 h-4" /> },
             { id: 'rpa-full', label: 'Full RPA Detail', type: 'legacy', src: '/ai/original_files/RPA_sas.html', icon: <DatabaseIcon className="w-4 h-4" /> },
         ]
     },

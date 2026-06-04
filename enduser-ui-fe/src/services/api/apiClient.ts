@@ -22,7 +22,10 @@ export class APIServiceError extends Error {
 export function getBaseUrl(): string {
   let envBase = import.meta.env.VITE_API_URL || '';
   if (typeof window !== 'undefined' && envBase.includes('archon-server')) {
-    envBase = envBase.replace('archon-server', 'localhost');
+    const isTestEnv = window.navigator ? (window.navigator as any).webdriver : false;
+    if (!isTestEnv) {
+      envBase = envBase.replace('archon-server', 'localhost');
+    }
   }
   return envBase;
 }

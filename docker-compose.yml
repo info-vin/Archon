@@ -58,6 +58,7 @@ services:
       - ./PRPs:/app/PRPs # Mount PRPs for Alice's SOP access
       - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Force mount developer guidelines
       - ./.git:/app/.git # Mount Git metadata for CodeModifier
+      - ./.twin:/app/.twin # Mount twin diagnostics directory
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -281,6 +282,8 @@ services:
       - ./.browser_data:/app/.browser_data
       - ./.twin:/app/.twin
       - ./scripts/twin_scout.py:/app/scout.py
+      - ./python/src:/app/src
+      - ./scripts:/app/scripts
 
   # Ollama Local 推論引擎 (HTTP API)
   ollama:

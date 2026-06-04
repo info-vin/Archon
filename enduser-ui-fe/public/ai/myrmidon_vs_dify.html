@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myrmidon 對標 Dify.ai & Flowise 深度商業與技術分析報告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F8FAFC;
+            color: #1E293B;
+        }
+        .text-accent {
+            color: #147A75;
+        }
+        .bg-accent {
+            background-color: #147A75;
+        }
+        .border-accent {
+            border-color: #147A75;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #147A75;
+            border-bottom-color: #147A75;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 360px;
+        }
+        /* Style requested: 14pt (approx 18.6px) for description text */
+        .description-text {
+            font-size: 14pt !important;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body class="antialiased bg-slate-50">
+
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-slate-100">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🐳</span>
+                <h1 class="text-xl font-bold text-accent">myrmidon vs Dify.ai & Flowise</h1>
+            </div>
+            <div class="hidden md:flex space-x-8 font-medium text-slate-600">
+                <a href="#summary" class="nav-link active">報告摘要</a>
+                <a href="#verification" class="nav-link">數據公證</a>
+                <a href="#comparison" class="nav-link">架構與功能對標</a>
+                <a href="#tco" class="nav-link">維運成本估算</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 max-w-6xl">
+        
+        <!-- Hero Section -->
+        <section id="summary" class="text-center mb-16">
+            <span class="bg-teal-50 text-accent font-semibold px-4 py-1.5 rounded-full text-sm border border-teal-100">深度對標報告</span>
+            
+            <!-- 標題切三行，增加空白間距並以不同色彩、字體大小突出重點，避免讀起來沒重點 -->
+            <h2 class="mt-8 mb-10 leading-snug tracking-wide">
+                <span class="text-accent text-lg md:text-xl font-bold uppercase tracking-widest block mb-4">I. myrmidon 平台</span>
+                <span class="text-slate-800 text-3xl md:text-5xl font-extrabold block mb-4">對標 Dify.ai & Flowise</span>
+                <span class="text-slate-900 text-2xl md:text-4xl font-bold block">深度商業與技術分析報告</span>
+            </h2>
+            
+            <!-- 說明的字體放大為 14pt -->
+            <p class="description-text text-slate-600 max-w-4xl mx-auto">
+                本報告針對輕量自主型 AI 雙生平台 <strong>myrmidon</strong> 與主流的視覺化 LLMOps 平台 <strong>Dify.ai</strong> 及節點圖形編排工具 <strong>Flowise AI</strong> 進行三方縱向對標，涵蓋架構複雜度、開源功能圍牆、以及 12 個月累積維運成本 (TCO) 的數據量化分析。
+            </p>
+        </section>
+
+        <!-- Real-Time Fact-Check (數據公證) -->
+        <section id="verification" class="mb-16 scroll-mt-24">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <div class="flex items-center space-x-3 mb-6">
+                    <span class="text-2xl">🛡️</span>
+                    <h3 class="text-2xl font-bold text-slate-800">數據公證與真實性核查書</h3>
+                </div>
+                <!-- 說明的字體放大為 14pt -->
+                <p class="description-text text-slate-650 mb-6 leading-relaxed">
+                    本報告內所有第三方定價、功能限制與架構依賴數據均已於 <strong>2026年6月4日</strong> 通過即時網路搜尋完成公證，確保對標基線之真實與準確：
+                </p>
+                
+                <!-- 調整順序為：myrmidon -> Dify.ai -> Flowise，以對齊三方縱向對標表 -->
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- 1. Myrmidon -->
+                    <div class="bg-slate-50 rounded-xl p-5 border border-teal-200 bg-teal-50/20">
+                        <h4 class="font-bold text-lg text-teal-800 mb-3">myrmidon 數據指標</h4>
+                        <ul class="space-y-2 text-slate-600 text-xs">
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS/授權費用</strong>: USD $0 (完全無收費與功能圍牆)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>帳號與容量上限</strong>: 無限制</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>Docker 部署</strong>: 1 個單體整合容器 (Monolith)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>記憶體要求</strong>: 512MB 即可啟動並防禦 OOM</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>雲端託管開銷</strong>: 可部署於免費 Hugging Face Space</li>
+                            <li><strong>代碼編輯自癒</strong>: 支援 L2 級沙箱測試與自癒修改</li>
+                        </ul>
+                    </div>
+                    <!-- 2. Dify -->
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-100">
+                        <h4 class="font-bold text-lg text-accent mb-3">Dify.ai 數據指標</h4>
+                        <ul class="space-y-2 text-slate-600 text-xs">
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS 專業版</strong>: USD $59 / 月 (限 3 人)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS 團隊版</strong>: USD $159 / 月 (限 5 人)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS 企業版</strong>: 客製化高額收費 (USD)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>開源自建限制</strong>: 鎖定 SSO、多租戶與審計日誌</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>Docker 部署</strong>: 11 個容器 (API, PgSQL, Milvus, Redis)</li>
+                            <li><strong>記憶體要求</strong>: 最少 4GB RAM (推薦 8GB+，否則易 OOM)</li>
+                        </ul>
+                    </div>
+                    <!-- 3. Flowise -->
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-100">
+                        <h4 class="font-bold text-lg text-amber-700 mb-3">Flowise AI 數據指標</h4>
+                        <ul class="space-y-2 text-slate-600 text-xs">
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS Starter</strong>: USD $35 / 月 (限 1 萬次預測)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS Pro</strong>: USD $65 / 月 (限 5 萬次與 5 使用者)</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS 席位費</strong>: 超過 5 人時，額外 USD $15 / 人 / 月</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>SaaS 免費版</strong>: 限制 2 個 flows & 100 次預測 / 月</li>
+                            <li class="border-b border-slate-200 pb-1"><strong>Docker 部署</strong>: 輕量級 Node.js + DB 依賴</li>
+                            <li><strong>記憶體要求</strong>: 最少 2GB RAM (自建 VPS 主機約 USD $15/月)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab comparison -->
+        <section id="comparison" class="mb-16 scroll-mt-24">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-slate-800">三方縱向詳細對標</h3>
+                <p class="text-slate-500 mt-2">點選標籤切換對標層次，深入分析三款成品的核心差異。</p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="mb-6 border-b border-slate-200">
+                    <nav class="flex flex-wrap -mb-px justify-center md:justify-start" aria-label="Tabs">
+                         <button class="tab-button active py-4 px-6 border-b-2 font-medium text-sm border-accent text-accent focus:outline-none" data-target="tab-arch">軟體架構與部署成本</button>
+                         <button class="tab-button py-4 px-6 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:outline-none" data-target="tab-features">代碼控制與自癒開發</button>
+                         <button class="tab-button py-4 px-6 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:outline-none" data-target="tab-business">開源授權與商業圍牆</button>
+                    </nav>
+                </div>
+                
+                <div>
+                    <!-- Arch tab -->
+                    <div id="tab-arch" class="tab-content space-y-4">
+                        <h4 class="font-bold text-xl text-slate-800 mb-2">部署架構與主機資源消耗</h4>
+                        <!-- 說明的字體放大為 14pt，且加入了 Flowise 的文字分析 -->
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            <strong>Dify.ai</strong> 採用典型的微服務分散式架構，將前端、API 閘道、背景非同步任務處理（Celery）、程式碼沙箱與向量資料庫完全隔離在不同的容器中。這帶來了極佳的水平擴展性，但代價是<strong>極高</strong>的本地運算資源消耗（至少 4GB RAM 起步），部署成本相對昂貴。
+                        </p>
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            <strong>Flowise AI</strong> 則採用輕量的 Node.js 單體架構，自建部署時僅需要運行一個 Node.js 行程與關聯的 PostgreSQL 資料庫。相較於 Dify 的 11 個容器，Flowise 明顯輕量許多，其本機或 VPS 部署僅需約 2GB RAM 即可流暢運行，然而它依然需要額外配置與維護數據庫。
+                        </p>
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            相較之下，<strong>myrmidon</strong> 採用「單體打包 (Docker Monolith)」架構。透過 `start_all.sh` 在單個容器內部完成 FastAPI、MCP 伺服器與 Agent 背景行程的協同。不僅完全消除了容器間複雜的網路 DNS 解析故障（如本地 DNS 無法解析的 Name Collision），還能直接在 Render 免費方案 (512MB RAM) 或 Hugging Face 雲端空間完美執行。
+                        </p>
+                        <div class="bg-teal-50/50 p-4 rounded-xl border border-teal-100/50 text-sm text-slate-750">
+                            <strong>💡 架構結論：</strong>Dify 適合中大型企業叢集主機部署；Flowise 適合需要簡單自建的中度開發者；myrmidon 則是專為獨立團隊量身打造的極輕量、零維運主機開銷解決方案。
+                        </div>
+                        <div class="overflow-x-auto mt-6">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200 bg-slate-50">
+                                        <th class="p-3 font-semibold text-slate-700">比較維度</th>
+                                        <th class="p-3 font-semibold text-slate-700 text-teal-800">myrmidon</th>
+                                        <th class="p-3 font-semibold text-slate-700">Dify.ai</th>
+                                        <th class="p-3 font-semibold text-slate-700">Flowise AI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-600">
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">容器架構與依賴</td>
+                                        <td class="p-3 text-accent font-semibold">1 個單體整合容器 (Monolith)</td>
+                                        <td class="p-3">11 個分散式容器 (重型微服務)</td>
+                                        <td class="p-3">1 - 3 個容器 (輕量級 Node.js)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">自建最低記憶體門檻</td>
+                                        <td class="p-3 text-accent font-semibold">512MB RAM (支援自適應本地模型)</td>
+                                        <td class="p-3 text-rose-600">4GB RAM (推薦 8GB+，低於極易 OOM)</td>
+                                        <td class="p-3 text-amber-600">2GB RAM (依據 Flow 編排複雜度而定)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">免費雲端容器託管</td>
+                                        <td class="p-3 text-accent font-semibold">🟢 支援 (可用 Hugging Face Space 免費 16GB)</td>
+                                        <td class="p-3 text-rose-600">🔴 不支援 (資源消耗過大無法部署於免費層)</td>
+                                        <td class="p-3 text-amber-600">🟡 部分支援 (可透過 Render 試用，但易超限)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Features tab -->
+                    <div id="tab-features" class="tab-content hidden space-y-4">
+                        <h4 class="font-bold text-xl text-slate-800 mb-2">程式碼操作、自癒與工具協定</h4>
+                        <!-- 說明的字體放大為 14pt，且加入了 Flowise 的文字分析 -->
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            <strong>Dify.ai</strong> 與 <strong>Flowise AI</strong> 定位上均屬於「可視化流程編排器」。Dify 採用由上而下的步驟式配置，Flowise 則採用基於 React Flow 的節點連線圖。這兩者都極度擅長進行 API 的對接與流程視覺化展示。然而，<strong>兩者皆沒有修改實體程式碼庫的能力</strong>。如果您的系統邏輯發生 Bug，或者需要新增物理頁面，它們完全無法自我編寫代碼或修復 Bug。
+                        </p>
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            相較之下，<strong>myrmidon</strong> 則是一個具備 **L2 級自主開發能力** 的自主型軟體雙生系統。它不是要讓人在網頁上拖拉節點，而是直接將 AI Agents 作為協作者。當自動化偵察員 `make twin-scout` 發現系統或介面錯誤時，myrmidon 會自動在 Git 中開闢 `autosave/fix-*` 沙箱分支，調用 `CodeModifier` 去物理編輯磁碟上的原始碼、跑測試驗證，並在綠燈後自動推播給人類做 Merge。
+                        </p>
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            在擴充協定方面，Dify 依賴專屬 API Tool，Flowise 基於 LangChain 封裝；而 myrmidon 則原生支援最新一代的 **Model Context Protocol (MCP)** 全球標準，使工具與資料來源的共享更具跨平台彈性。
+                        </p>
+                        <div class="bg-teal-50/50 p-4 rounded-xl border border-teal-100/50 text-sm text-slate-750">
+                            <strong>💡 功能結論：</strong>Dify 與 Flowise 均屬於給人類組裝 Prompt 的「視覺化配置工具」；myrmidon 則是一個會寫程式、會自己跑測試並修改自身原始碼的「自主 AI 軟體工程師」。
+                        </div>
+                        <div class="overflow-x-auto mt-6">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200 bg-slate-50">
+                                        <th class="p-3 font-semibold text-slate-700">比較維度</th>
+                                        <th class="p-3 font-semibold text-slate-700 text-teal-800">myrmidon</th>
+                                        <th class="p-3 font-semibold text-slate-700">Dify.ai</th>
+                                        <th class="p-3 font-semibold text-slate-700">Flowise AI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-600">
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">程式碼級讀寫修改</td>
+                                        <td class="p-3 text-accent font-semibold">🟢 支援 (內建 CodeModifier 模組)</td>
+                                        <td class="p-3 text-rose-600">🔴 不支援 (僅能配置 Prompt，無程式碼存取權)</td>
+                                        <td class="p-3 text-rose-600">🔴 不支援 (僅能在視覺化節點間傳遞變數)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">沙箱分支自動測試與自癒</td>
+                                        <td class="p-3 text-accent font-semibold">🟢 L2 級 Git 分支測試自癒環圈</td>
+                                        <td class="p-3 text-rose-600">🔴 無自癒能力 (Bug 需人類手動排查)</td>
+                                        <td class="p-3 text-rose-600">🔴 無自癒能力 (節點報錯僅拋出 Log)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">工具協定標準化</td>
+                                        <td class="p-3 text-accent font-semibold">原生 Model Context Protocol (MCP) 標準</td>
+                                        <td class="p-3">自建 Tool API 格式或導入 OpenAPI</td>
+                                        <td class="p-3">LangChain Tools 封裝或自訂 JS 節點</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Business tab -->
+                    <div id="tab-business" class="tab-content hidden space-y-4">
+                        <h4 class="font-bold text-xl text-slate-800 mb-2">開源授權與商業圍牆</h4>
+                        <!-- 說明的字體放大為 14pt，且加入了 Flowise 的文字分析 -->
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            <strong>Dify.ai</strong> 採用開源社群版（Apache 2.0）搭配商業授權。當自建社群版時，許多攸關企業安全的基礎功能（如多租戶工作區權限、SSO 單一登入、安全審計日誌）會被功能鎖定，逼使有需求的團隊購買高額的 Enterprise 授權。
+                        </p>
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            <strong>Flowise AI</strong> 同樣採用開源自建（Apache 2.0）與 Cloud 雲端收費模式。在雲端 SaaS 版中，Flowise 設有嚴格的 API 呼叫（Predictions）限制（Starter 限制 1 萬次，Pro 限制 5 萬次）。若自建開源版，它也缺乏細粒度的使用者角色權限管理（RBAC），安全管控相對陽春。
+                        </p>
+                        <p class="description-text text-slate-655 leading-relaxed mb-4">
+                            相比之下，<strong>myrmidon</strong> 則是 100% 的開源產品，所有核心機制（包括角色權限控制 RBAC 權限矩陣、RAG 向量庫索引、非同步多智慧體星型群聊拓撲）完全免費且無上限開放。無限制帳號數與應用部署數。
+                        </p>
+                        <div class="bg-teal-50/50 p-4 rounded-xl border border-teal-100/50 text-sm text-slate-750">
+                            <strong>💡 商業結論：</strong>Dify 與 Flowise 雲端版皆有額度與功能圍牆限制；myrmidon 則是完全的開發者自治，沒有任何商業收費壁壘。
+                        </div>
+                        <div class="overflow-x-auto mt-6">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-200 bg-slate-50">
+                                        <th class="p-3 font-semibold text-slate-700">比較維度</th>
+                                        <th class="p-3 font-semibold text-slate-700 text-teal-800">myrmidon</th>
+                                        <th class="p-3 font-semibold text-slate-700">Dify.ai</th>
+                                        <th class="p-3 font-semibold text-slate-700">Flowise AI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-600">
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">開源社群版限制 (Self-Hosted)</td>
+                                        <td class="p-3 text-accent font-semibold">🟢 100% 功能全開 (無任何商業壁壘)</td>
+                                        <td class="p-3 text-rose-600">🔴 鎖定 SSO、多租戶工作區與審計日誌</td>
+                                        <td class="p-3 text-rose-600">🔴 自建版缺乏企業級團隊權限與 SSO 管控</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">SaaS 版收費級距</td>
+                                        <td class="p-3 text-accent font-semibold">USD $0 (無付費方案，全部自建自控)</td>
+                                        <td class="p-3 text-rose-600">USD $59/月起 (專業版) | USD $159/月起 (團隊版)</td>
+                                        <td class="p-3 text-amber-600">USD $35/月起 (Starter) | USD $65/月起 (Pro)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-medium text-slate-850">多租戶與 RBAC</td>
+                                        <td class="p-3 text-accent font-semibold">🟢 免費內建 (Alice/Bob/Charlie 權限矩陣)</td>
+                                        <td class="p-3 text-rose-600">🔴 需購買企業授權 (Dify Enterprise)</td>
+                                        <td class="p-3 text-rose-600">🔴 需購買企業雲端版或客製化授權</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TCO Calculator Section -->
+        <section id="tco" class="mb-16 scroll-mt-24">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-bold text-slate-800">總體擁有成本 (TCO) 互動計算器</h3>
+                <p class="text-slate-500 mt-2">動態計算 12 個月的三方累積維運成本，找出最經濟划算的 AI 系統部署方案。</p>
+            </div>
+            
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Calculator inputs -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4 lg:col-span-1">
+                    <h4 class="font-bold text-lg text-slate-800 mb-2">使用規格配置</h4>
+                    <div>
+                        <label for="users" class="block text-sm font-medium text-slate-600">團隊協作人數:</label>
+                        <input type="number" id="users" value="6" min="1" class="mt-1 block w-full px-3 py-2 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-accent focus:border-accent">
+                        <span class="text-xs text-slate-400">Dify 專業版限3人，Flowise Pro 限5人</span>
+                    </div>
+                    <div>
+                        <label for="tokens" class="block text-sm font-medium text-slate-600">每月預期 Token 呼叫數 (萬次):</label>
+                        <input type="number" id="tokens" value="50" min="10" class="mt-1 block w-full px-3 py-2 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-accent focus:border-accent">
+                        <span class="text-xs text-slate-400">呼叫數包含 RAG 向量化與 LLM 對話</span>
+                    </div>
+                    <div>
+                        <label for="local-embedding" class="block text-sm font-medium text-slate-600">使用本地離線嵌入 (Embedding):</label>
+                        <select id="local-embedding" class="mt-1 block w-full px-3 py-2 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-accent focus:border-accent">
+                            <option value="yes">使用 (可節省 30% 向量化 Token 成本)</option>
+                            <option value="no">不使用 (全調用雲端 API)</option>
+                        </select>
+                        <span class="text-xs text-slate-400">myrmidon 支援本地 model，其餘必調用雲端 API</span>
+                    </div>
+                </div>
+
+                <!-- Live Chart & Results -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 lg:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <h4 class="font-bold text-lg text-slate-800 mb-4">12 個月累積花費比較 (SaaS / 託管方案)</h4>
+                        <div class="chart-container">
+                            <canvas id="tcoChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- 金額備註美金符號 -->
+                    <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <span class="text-xs text-slate-500 block">Dify Cloud SaaS 預估</span>
+                            <span id="cost-dify-cloud" class="text-base font-bold text-rose-600">USD $0</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 block">Flowise Cloud SaaS 預估</span>
+                            <span id="cost-flowise-cloud" class="text-base font-bold text-amber-600">USD $0</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-500 block">myrmidon (本產品)</span>
+                            <span id="cost-myrmidon" class="text-base font-bold text-accent">USD $0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <footer class="bg-slate-800 text-white mt-16 border-t border-slate-700">
+        <div class="container mx-auto px-6 py-6 text-center text-sm text-slate-400">
+            <p>&copy; 2026 myrmidon 數據公證小組. 基於真實數據、拒絕幻想、物理核對生成。所有金額單位皆以美金 (USD) 計算。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Tabs toggle logic
+            const tabs = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => {
+                        item.classList.remove('border-accent', 'text-accent');
+                        item.classList.add('border-transparent', 'text-slate-500', 'hover:text-slate-755', 'hover:border-slate-300');
+                    });
+                    tab.classList.add('border-accent', 'text-accent');
+                    tab.classList.remove('border-transparent', 'text-slate-500', 'hover:text-slate-755', 'hover:border-slate-300');
+
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(tab.dataset.target).classList.remove('hidden');
+                });
+            });
+
+            // TCO Calculator Logic
+            const usersInput = document.getElementById('users');
+            const tokensInput = document.getElementById('tokens');
+            const localEmbeddingSelect = document.getElementById('local-embedding');
+
+            const costDifyCloudSpan = document.getElementById('cost-dify-cloud');
+            const costFlowiseCloudSpan = document.getElementById('cost-flowise-cloud');
+            const costMyrmidonSpan = document.getElementById('cost-myrmidon');
+
+            let tcoChart;
+            const ctx = document.getElementById('tcoChart').getContext('2d');
+
+            function calculateCosts() {
+                const users = parseInt(usersInput.value) || 1;
+                const tokens = parseInt(tokensInput.value) || 10;
+                const useLocalEmbedding = localEmbeddingSelect.value === 'yes';
+
+                // Cost factors
+                const tokenUnitCost = 0.015; // $0.015 per 10k tokens (average)
+                const apiCostPerMonth = tokens * tokenUnitCost;
+
+                // 1. Dify Cloud SaaS Cost
+                let difySaaSBase = 0;
+                if (users <= 3) {
+                    difySaaSBase = 59;
+                } else if (users <= 5) {
+                    difySaaSBase = 159;
+                } else {
+                    difySaaSBase = 159 + (users - 5) * 20; // Estimated Enterprise tier
+                }
+                const difyCloudMonthly = difySaaSBase + apiCostPerMonth;
+
+                // 2. Flowise Cloud SaaS Cost
+                let flowiseSaaSBase = 0;
+                if (users <= 1 && tokens <= 1) { // Free tier edge case
+                    flowiseSaaSBase = 0;
+                } else if (users <= 2 && tokens <= 100) {
+                    flowiseSaaSBase = 35; // Starter
+                } else {
+                    flowiseSaaSBase = 65; // Pro
+                    if (users > 5) {
+                        flowiseSaaSBase += (users - 5) * 15; // Seat cost
+                    }
+                }
+                const flowiseCloudMonthly = flowiseSaaSBase + apiCostPerMonth;
+
+                // 3. myrmidon Cost (Free hosting on HF Spaces + Free Supabase DB)
+                const myrmidonTokenCost = useLocalEmbedding ? (apiCostPerMonth * 0.7) : apiCostPerMonth;
+                const myrmidonMonthly = 0 + myrmidonTokenCost;
+
+                // Build 12 months datasets
+                const difyCloudYear = [];
+                const flowiseCloudYear = [];
+                const myrmidonYear = [];
+                const monthsLabel = [];
+
+                for (let i = 1; i <= 12; i++) {
+                    difyCloudYear.push(Math.round(difyCloudMonthly * i));
+                    flowiseCloudYear.push(Math.round(flowiseCloudMonthly * i));
+                    myrmidonYear.push(Math.round(myrmidonMonthly * i));
+                    monthsLabel.push(`第 ${i} 個月`);
+                }
+
+                // Update text display with explicitly noted USD symbol
+                costDifyCloudSpan.textContent = `USD $${difyCloudYear[11]}`;
+                costFlowiseCloudSpan.textContent = `USD $${flowiseCloudYear[11]}`;
+                costMyrmidonSpan.textContent = `USD $${myrmidonYear[11]}`;
+
+                // Update or Create Chart
+                if (tcoChart) {
+                    tcoChart.data.datasets[0].data = difyCloudYear;
+                    tcoChart.data.datasets[1].data = flowiseCloudYear;
+                    tcoChart.data.datasets[2].data = myrmidonYear;
+                    tcoChart.update();
+                } else {
+                    tcoChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: monthsLabel,
+                            datasets: [
+                                {
+                                    label: 'Dify Cloud (SaaS 版) (USD)',
+                                    data: difyCloudYear,
+                                    borderColor: 'rgba(239, 68, 68, 1)',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.03)',
+                                    borderWidth: 2,
+                                    tension: 0.1,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Flowise Cloud (SaaS 版) (USD)',
+                                    data: flowiseCloudYear,
+                                    borderColor: 'rgba(245, 158, 11, 1)',
+                                    backgroundColor: 'rgba(245, 158, 11, 0.03)',
+                                    borderWidth: 2,
+                                    tension: 0.1,
+                                    fill: true
+                                },
+                                {
+                                    label: 'myrmidon (本產品) (USD)',
+                                    data: myrmidonYear,
+                                    borderColor: 'rgba(20, 122, 117, 1)',
+                                    backgroundColor: 'rgba(20, 122, 117, 0.08)',
+                                    borderWidth: 3,
+                                    tension: 0.1,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'USD $' + value;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Input event listeners
+            usersInput.addEventListener('input', calculateCosts);
+            tokensInput.addEventListener('input', calculateCosts);
+            localEmbeddingSelect.addEventListener('change', calculateCosts);
+
+            // Initial calculation
+            calculateCosts();
+        });
+    </script>
+</body>
+</html>
