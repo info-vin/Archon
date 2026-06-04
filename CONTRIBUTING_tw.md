@@ -375,7 +375,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 ### 4.2 Git 工作流程
 
 
-- **分支策略**: 所有工作都**必須**在 `feature/...` 分支上進行。部署也**必須**從 `feature/...` 分支進行。`main` 分支請勿使用。
+- **分支策略**: 所有工作都**必須**在 `feature/...` 分支上進行。完成後必須 Rebase/Merge 回 `dev/twins` 主幹分支，並由 `dev/twins` 觸發 Vercel/Render/Hugging Face 的生產部署。`main` 分支請勿使用。
 - **`cherry-pick` 卡住**: 若 `git cherry-pick --continue` 卡住，請改用 `git cherry-pick --continue --no-edit --no-gpg-sign`。
 
 ### 4.3 部署標準作業流程 (SOP)

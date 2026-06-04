@@ -71,6 +71,9 @@ The backend runs as a single monolithic Docker container on Render, launching th
 - **Docker Build Context Directory**: `.` (Project root directory)
 - **Instance Type / Plan**: `Free`
 
+> [!WARNING]
+> **Render Free Tier OOM Warning**: Render's Free Instance provides only **512MB RAM**. Running the FastAPI server, MCP server, and Agent background process concurrently inside a single container using `start_all.sh` consumes substantial memory. Under peak load or background agent execution, the container is highly likely to crash with **Out Of Memory (OOM)** errors and auto-restart. If stability is required, upgrade the Render instance plan or deploy to Hugging Face Spaces (which provides a generous 16GB RAM Free Tier).
+
 #### Step 2.2: Set Health Check Path
 - **Health Check Path**: `/api/health`
   *(FastAPI provides this endpoint to let Render check container health and manage traffic).*
@@ -120,7 +123,16 @@ Add the following key-value pairs under **Secrets** (similar to environment vari
 #### Step 3.3: Set Up Git Link & Build Link
 Since Hugging Face Spaces builds automatically from its own repository, you need to push code to Hugging Face or link GitHub.
 
-**Command Line Setup (Local workspace):**
+**Automated Deployment (Recommended):**
+We provide an automated script to handle the Hugging Face Spaces deployment pipeline, including branch checkout, Dockerfile copying, file exclusion filtering, force pushing, and local cleanup.
+
+1. Ensure the remote `hf` is added (see step below).
+2. Run the deployment target:
+   ```bash
+   make deploy-hf
+   ```
+
+**Manual Command Line Setup (Fallback):**
 1. Get a Write token from your Hugging Face settings: `https://huggingface.co/settings/tokens`.
 2. Add Hugging Face as a Git remote in your terminal:
    ```bash
@@ -217,6 +229,30 @@ python -m uvicorn src.server.main:app --host 0.0.0.0 --port ${PORT:-8181} --work
 6. **Required Supabase Credentials for Enduser Frontend**:
    * *Problem*: The enduser frontend (`enduser-ui-fe`) directly communicates with Supabase (via supabase-js SDK) to handle authentication, role authorization, and state mapping. In Vercel production, this fails if `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are not explicitly defined.
    * *Solution*: Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to Vercel environment variables for the enduser project.
+---
+
+### 4. Database Schema & Seeding Initialization (Supabase Cloud)
+
+Deploying the code logic is not sufficient. If the cloud database (Supabase) remains uninitialized, the backend services will fail to launch or throw database relation errors on startup.
+
+#### Step 4.1: Manual SQL Initialization (Supabase Console)
+If you do not have CLI database access configured:
+1. Log in to the [Supabase Console](https://supabase.com/dashboard) and navigate to your Project's **SQL Editor**.
+2. Run the schema migrations from the [migration/](file:///Users/vincenta/GoogleKwok022/Archon/migration) folder in numerical order:
+   - Base Schema: `01_foundation_types.sql` through `10_security_rls.sql`
+   - Seed Configurations & RBAC: `11_seed_config.sql`, `12_seed_rbac.sql`
+   - Business & Workflow Seeds: `18_seed_crawler_targets.sql`, `19_seed_marketing_group_chat_prompts.sql`, `20_seed_supervisor_agent.sql`, `21_seed_reports_workflow_prompts.sql`
+   - Mock UI Data: `seed_blog_posts.sql`, `seed_mock_data.sql`
+
+#### Step 4.2: Automated Migration via Local Script
+If your local `.env` is configured with `SUPABASE_DB_URL` pointing to your remote cloud instance:
+1. Temporarily spin up the local server or ensure container connectivity.
+2. Trigger the cloud migration manually using:
+   ```bash
+   make db-migrate
+   ```
+
+---
 
 ## Verification & Automation Summary (Added 2026-06-04)
 

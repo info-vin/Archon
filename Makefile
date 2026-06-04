@@ -7,7 +7,7 @@ SHELL := /bin/bash
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit audit-qa
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit audit-qa deploy-hf
 
 help:
 	@echo "Archon Development Commands"
@@ -349,3 +349,8 @@ tech-debt-audit:
 	fi
 	@echo "--- 3. Action Item ---"
 	@echo "💡 Charlie: If warnings exist, assign a cleanup task to DevBot."
+
+# Phase 5.5.8: Deploy backend monolith to Hugging Face Spaces
+deploy-hf:
+	@echo "🚀 Starting Hugging Face Spaces deployment..."
+	@bash scripts/deploy_to_hf.sh
