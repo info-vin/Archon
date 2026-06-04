@@ -38,12 +38,12 @@ Both frontends (`archon-ui-main` and `enduser-ui-fe`) are hosted on Vercel. Beca
 - **Environment Variables**:
   - Add `VITE_API_URL` pointing to your Render backend URL (e.g., `https://archon-backend.onrender.com`).
 - **Git Branch Configuration (Settings > Git)**:
-  - **Production Branch**: Set to `feat/twins` (or your active release branch).
+  - **Production Branch**: Set to `dev/twins` (or your active release branch).
   - **Ignored Build Step**: Set to **Custom** and enter:
     ```bash
-    [ "$VERCEL_GIT_COMMIT_REF" != "feat/twins" ]
+    [ "$VERCEL_GIT_COMMIT_REF" != "dev/twins" ]
     ```
-    *(This ensures Vercel only deploys when pushes are made to the `feat/twins` branch, ignoring `main`, `master`, or any other temporary branch to avoid unintended billing).*
+    *(This ensures Vercel only deploys when pushes are made to the `dev/twins` branch, ignoring `main`, `master`, or any other temporary branch to avoid unintended billing).*
 
 #### Step 1.2: Deploy End-User UI (`enduser-ui-fe`)
 - **Vercel Project Name**: `archon-enduser` (or custom)
@@ -54,10 +54,10 @@ Both frontends (`archon-ui-main` and `enduser-ui-fe`) are hosted on Vercel. Beca
   - Add `VITE_SUPABASE_URL` pointing to your Supabase URL (e.g. `https://<ref>.supabase.co`).
   - Add `VITE_SUPABASE_ANON_KEY` pointing to your Supabase public anon key (or service_role key).
 - **Git Branch Configuration (Settings > Git)**:
-  - **Production Branch**: Set to `feat/twins`.
+  - **Production Branch**: Set to `dev/twins`.
   - **Ignored Build Step**: Set to **Custom** and enter:
     ```bash
-    [ "$VERCEL_GIT_COMMIT_REF" != "feat/twins" ]
+    [ "$VERCEL_GIT_COMMIT_REF" != "dev/twins" ]
     ```---
 
 ### 2. Backend Monolith Deployment (Render)
@@ -139,12 +139,12 @@ Since Hugging Face Spaces builds automatically from its own repository, you need
    git rm -rf .
    
    # Restore only the required backend directories/files
-   git checkout feat/twins -- python/
-   git checkout feat/twins -- migration/
-   git checkout feat/twins -- scripts/
-   git checkout feat/twins -- Makefile
-   git checkout feat/twins -- Dockerfile
-   git checkout feat/twins -- Dockerfile.server
+   git checkout dev/twins -- python/
+   git checkout dev/twins -- migration/
+   git checkout dev/twins -- scripts/
+   git checkout dev/twins -- Makefile
+   git checkout dev/twins -- Dockerfile
+   git checkout dev/twins -- Dockerfile.server
 
    # Create metadata README.md
    cat << 'EOF' > README.md
@@ -165,7 +165,7 @@ Since Hugging Face Spaces builds automatically from its own repository, you need
    git push hf deploy-hf:main --force
    
    # Go back to your feature branch and delete temp deploy branch
-   git checkout feat/twins
+   git checkout dev/twins
    git branch -D deploy-hf
    ```
 
