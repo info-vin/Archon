@@ -110,6 +110,22 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月5日：Markdown 擴展升級與 GFM / Mermaid 霓虹美化落地
+
+今日我們針對前台部落格的 Markdown 渲染器進行了深度的功能擴展，完美支援原生 GFM 網格表格與 Mermaid 動態循序圖：
+
+1. **依賴擴展升級**：在 `enduser-ui-fe` 前端套件中安裝了 `remark-gfm` 與 `mermaid` 圖表引擎，徹底打破了 react-markdown 預設無法渲染表格與流程圖的限制。
+2. **實作霓虹美化元件 (`MermaidRenderer`)**：
+   - 封裝了 `MermaidRenderer.tsx` 元件，整合非同步渲染機制與 Tron 暗色霓虹主題設定。
+   - 註冊 `remarkGfm` 至 `<Markdown>` 的 `remarkPlugins` 中，並透過自訂 code 渲染元件，將 `language-mermaid` 代碼區塊無縫導向 Mermaid 渲染引擎。
+3. **資料庫與環境同步**：
+   - 將部落格 Post 9 的 SQL 種子資料還原為原生高精度的 ` ```mermaid ` 與 GFM 表格。
+   - 重新執行 `make db-init` 初始化以重載純淨的種子資料。
+4. **品質門禁公證**：
+   - 執行 `make lint` 確保代碼規範與強型別 100% 正確。
+   - 最終執行全系統 `make audit-qa` 品質公證網關，順利通過前後端全部 **582 項測試案例**，且多角色 (Alice, Bob, Charlie, David) Parity 物理審計全數亮起綠燈。
+5. **Git 自動化合併與推送**：完成了特徵變更的 add, commit, push，並將變更順利合併推送到遠端 `dev/twins` 分支，回復了乾淨無暇的工作區。
+
 ### 2026年6月2日：離線雙生模型換裝與品質門禁驗證 (Offline Twin Model Switch & QA Gate)
 
 今日我們專注於本地端離線大模型的測試與環境部署，並成功驗證了核心的品質門禁。
