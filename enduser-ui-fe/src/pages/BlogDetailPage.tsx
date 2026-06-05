@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
 import { RAGCitation } from '../features/marketing/components/RAGCitation';
+import { MermaidRenderer } from '../components/MermaidRenderer';
 
 const BlogDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -71,6 +73,7 @@ const BlogDetailPage: React.FC = () => {
 
                 <div className="markdown-content">
                     <Markdown
+                        remarkPlugins={[remarkGfm]}
                         components={{
                             a: ({ node, href, children, ...props }) => {
                                 if (href?.startsWith('#rag-citation-')) {
@@ -78,6 +81,18 @@ const BlogDetailPage: React.FC = () => {
                                     return <RAGCitation citationId={citationId} citations={citations} />;
                                 }
                                 return <a href={href} {...props}>{children}</a>;
+                            },
+                            code: ({ node, className, children, ...props }) => {
+                                const match = /language-(\w+)/.exec(className || '');
+                                const isMermaid = match && match[1] === 'mermaid';
+                                if (isMermaid) {
+                                    return <MermaidRenderer code={String(children).replace(/\n$/, '')} />;
+                                }
+                                return (
+                                    <code className={className} {...props}>
+                                        {children}
+                                    </code>
+                                );
                             }
                         }}
                     >
