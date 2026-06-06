@@ -464,7 +464,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
     >
     > 1. **基礎與核心結構**：`01_foundation_types.sql` -> `02_tables_core.sql` -> `03_tables_business.sql` -> `04_tables_ops.sql`
     > 2. **邏輯與約束**：`05_logic_functions.sql` -> `06_constraints_main.sql` -> `07_logic_indexes.sql` -> `08_logic_triggers.sql` -> `09_constraints_fkeys.sql`
-    > 3. **安全政策與種子資料**：`10_security_rls.sql` -> `11_seed_config.sql` -> `12_seed_rbac.sql`
+    > 3. **安全政策與種子資料**：`10_security_rls.sql` -> `11_seed_config.sql` -> `12_seed_rbac.sql` -> `18_seed_crawler_targets.sql` -> `19_seed_marketing_group_chat_prompts.sql` -> `20_seed_supervisor_agent.sql` -> `21_seed_reports_workflow_prompts.sql`
         
 3.  **階段三：執行部署**
 
