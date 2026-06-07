@@ -360,3 +360,8 @@ tech-debt-audit:
 deploy-hf:
 	@echo "🚀 Starting Hugging Face Spaces deployment..."
 	@bash scripts/deploy_to_hf.sh
+
+# Phase Audit Automation
+phase-audit:
+	@python scripts/phase_audit.py
+
