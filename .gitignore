@@ -36,3 +36,7 @@ ollama_data/
 # Temp media
 *.wav
 failed_step.png
+
+# Lean 4 dependencies
+lean_proofs/.lake/
+
