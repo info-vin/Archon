@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Task } from '../../../types';
 import { PriorityBadge } from './PriorityBadge';
 import UserAvatar from '../../../components/UserAvatar';
@@ -11,6 +11,14 @@ interface ListViewProps {
 }
 
 export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditingTask, userMap }) => {
+  const assigneeLowerMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    tasks.forEach(task => {
+      map[task.id] = task.assignee ? task.assignee.toLowerCase() : '';
+    });
+    return map;
+  }, [tasks]);
+
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 bg-white/50 backdrop-blur-md rounded-2xl border border-white/50 border-dashed">
@@ -56,7 +64,7 @@ export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditing
                                 <UserAvatar 
                                     name={userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee || 'Unassigned'} 
                                     size={24} 
-                                    isAI={task.assignee?.toLowerCase().includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
+                                    isAI={assigneeLowerMap[task.id]?.includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
                                     role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
                                 />
                                 <span className="text-sm font-medium text-gray-600">
