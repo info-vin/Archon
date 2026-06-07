@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.1.x 至 Phase 5.2.0 已全數結案並提交。
-*   **今日目標 (Today's Goal)**: 完成五月日誌歸檔，釐清最新進度狀態，等待人類指揮官給予下一階段的新指示。
+*   **當前狀態 (Current Context)**: Phase 5.5.9 三層容災降階系統、雙端 Fallback UI 面板及動態狀態指示燈已全部實作完成，並通過一鍵公證 (`make audit-qa`) 與雙生巡檢 (`make twin-scout`) 提交推播。
+*   **今日目標 (Today's Goal)**: 等待人類指揮官給予下一階段的新指令。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -109,6 +109,22 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026年6月7日：3-Tier 容災降階架構與雙端設定 UI 落地公證
+
+今日我們實作並驗證了具備「人類控制」與「狀態透明」的 3-Tier 容災降階備援系統 (Google Gemini -> Hugging Face -> 本地 Ollama)：
+
+1. **級聯路由與自癒重置**：在 `base.py` 中實作了 Auto-Failover 級聯降階。連線正常但 API Key 失效/429 時直降 Tier 2 (Hugging Face Serverless)；斷網時繞過 Tier 2 直降 Tier 3 (本地 Ollama)。當主要雲端呼叫成功時，自動觸發自癒將作用中層級重設為 Tier 1。支援人類手動 Override 指定 Tier 策略。
+2. **網路 socket 狀態 API**：在 `system_api.py` 中實作 `/api/system/fallback/status` 端點，回傳作用中層級與基於 8.8.8.8:53 TCP Socket 連線偵測的真實網路狀態。
+3. **雙端設定面板 (5173 & 3737) 與指示燈**：
+   - 在 5173 前端 (enduser-ui-fe) 啟用專屬的 `AdminFallbackConfig.tsx` 單選按鈕面板與安全密碼輸入，並修改 `AdminSystemConfig.tsx` 過濾排他設定，避免重複渲染。
+   - 在 3737 前端 (archon-ui-main) RAG 設定中擴充 `forced_fallback_tier` 與 `HF_TOKEN` 型別，並新增 **3-Tier Fallback Settings** 折疊面板。
+   - 在頂欄掛載 `<FallbackStatusBadge />` 狀態指示燈，每 10 秒動態輪詢狀態。
+4. **型別安全與測試通過**：
+   - 修復了 `test_llm_fallback.py` 中的 `MagicMock` 缺少 `close` await 引起的 TypeError 異常。
+   - 順利通過全系統靜態檢查 `make lint` 達 0 Errors / 0 Warnings。
+   - 通過 `make test-be` 全體 588 項後端測試。
+   - 通過 `make audit-qa` 整合品質公證與 `make twin-scout` 數位雙生角色對帳，達到 100% 物理對齊。
 
 ### 2026年6月5日：Markdown 擴展升級與 GFM / Mermaid 霓虹美化落地
 
