@@ -8,12 +8,14 @@ export const AdminSystemConfig: React.FC = () => {
     const { settings, loading, updateSetting } = useSystemSettings(['features', 'monitoring', 'api_keys', 'rag_strategy']);
 
     const groupedSettings = useMemo(() => {
-        return settings.reduce((acc: Record<string, any[]>, curr: any) => {
-            const cat = curr.category || 'general';
-            if (!acc[cat]) acc[cat] = [];
-            acc[cat].push(curr);
-            return acc;
-        }, {} as Record<string, any[]>);
+        return settings
+            .filter((curr: any) => curr.key !== 'HF_TOKEN' && curr.key !== 'forced_fallback_tier')
+            .reduce((acc: Record<string, any[]>, curr: any) => {
+                const cat = curr.category || 'general';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(curr);
+                return acc;
+            }, {} as Record<string, any[]>);
     }, [settings]);
 
     if (loading) return <div className="flex justify-center p-12"><RefreshCwIcon className="animate-spin w-8 h-8 text-indigo-600" /></div>;
@@ -38,18 +40,24 @@ export const AdminSystemConfig: React.FC = () => {
                             {category.replace('_', ' ')}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {catSettings.map((s: any) => (
-                                <ConfigDrivenInput 
-                                    key={s.key}
-                                    field={{ 
-                                        key: s.key, 
-                                        label: s.key.replace(/_/g, ' '), 
-                                        type: !isNaN(Number(s.value)) ? 'number' : 'text' 
-                                    }}
-                                    value={s.value}
-                                    onChange={(v: string) => updateSetting(s.key, v)}
-                                />
-                            ))}
+                            {catSettings
+                                .filter((s: any) => s.key !== 'HF_TOKEN' && s.key !== 'forced_fallback_tier')
+                                .map((s: any) => {
+                                let fieldConfig: any = { 
+                                    key: s.key, 
+                                    label: s.key.replace(/_/g, ' '), 
+                                    type: !isNaN(Number(s.value)) ? 'number' : 'text' 
+                                };
+
+                                return (
+                                    <ConfigDrivenInput 
+                                        key={s.key}
+                                        field={fieldConfig}
+                                        value={s.value}
+                                        onChange={(v: string) => updateSetting(s.key, v)}
+                                    />
+                                );
+                            })}
                         </div>
                     </div>
                 ))

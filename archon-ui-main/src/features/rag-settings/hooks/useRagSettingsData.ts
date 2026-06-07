@@ -30,6 +30,7 @@ export const useRagSettingsData = (
   const [saving, setSaving] = useState(false);
   const [showCrawlingSettings, setShowCrawlingSettings] = useState(false);
   const [showStorageSettings, setShowStorageSettings] = useState(false);
+  const [showFallbackSettings, setShowFallbackSettings] = useState(false);
   const [showModelDiscoveryModal, setShowModelDiscoveryModal] = useState(false);
   const [showOllamaConfig, setShowOllamaConfig] = useState(false);
   
@@ -196,10 +197,31 @@ export const useRagSettingsData = (
     { key: 'OLLAMA_EMBEDDING_URL', label: 'Embedding URL', type: 'text' }
   ];
 
+  const fallbackSettingsFields = [
+    { 
+      key: 'forced_fallback_tier', 
+      label: 'Routing Strategy Override', 
+      type: 'select', 
+      options: [
+        { value: '0', label: '自動容災 (Auto-Failover)' },
+        { value: '1', label: '強制主要雲端 (Tier 1 - Gemini)' },
+        { value: '2', label: '強制 HF 雲端運算 (Tier 2 - Hugging Face)' },
+        { value: '3', label: '強制本地離線 Ollama (Tier 3 - Ollama)' }
+      ] 
+    },
+    { 
+      key: 'HF_TOKEN', 
+      label: 'Hugging Face Access Token', 
+      type: 'password', 
+      placeholder: 'hf_...' 
+    }
+  ];
+
   return {
     saving, setSaving,
     showCrawlingSettings, setShowCrawlingSettings,
     showStorageSettings, setShowStorageSettings,
+    showFallbackSettings, setShowFallbackSettings,
     showModelDiscoveryModal, setShowModelDiscoveryModal,
     showOllamaConfig, setShowOllamaConfig,
     ...ollama,
@@ -217,7 +239,7 @@ export const useRagSettingsData = (
     shouldShowProviderAlert: !!providerAlertMessage,
     providerAlertClassName,
     providerAlertMessage,
-    crawlingSettingsFields, storageSettingsFields, coreModelFields,
+    crawlingSettingsFields, storageSettingsFields, coreModelFields, fallbackSettingsFields,
     getProviderStatus,
     showToast,
     getDisplayedChatModel,

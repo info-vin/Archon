@@ -39,6 +39,8 @@ export interface RagSettings {
   CODE_SUMMARY_MAX_WORKERS?: number;
   RAG_CONTEXTUAL_WINDOW?: number;
   RAG_CONTEXTUAL_PROMPT?: string;
+  forced_fallback_tier?: string;
+  HF_TOKEN?: string;
 }
 
 export interface CodeExtractionSettings {
@@ -140,6 +142,8 @@ class CredentialsService {
       CODE_SUMMARY_MAX_WORKERS: 3,
       RAG_CONTEXTUAL_WINDOW: 20000,
       RAG_CONTEXTUAL_PROMPT: "Please give a short succinct context to situate this chunk within the overall document.",
+      forced_fallback_tier: "0",
+      HF_TOKEN: "",
     };
     [...ragCredentials, ...apiKeysCredentials].forEach((cred) => {
       if (cred.key in settings) {
@@ -179,12 +183,15 @@ class CredentialsService {
   async updateRagSettings(settings: RagSettings): Promise<void> {
     const promises = Object.entries(settings)
       .filter(([_, value]) => value !== undefined)
-      .map(([key, value]) => this.updateCredential({
-        key,
-        value: value.toString(),
-        is_encrypted: false,
-        category: "rag_strategy",
-      }));
+      .map(([key, value]) => {
+        const isHF = key === "HF_TOKEN";
+        return this.updateCredential({
+          key,
+          value: value.toString(),
+          is_encrypted: isHF,
+          category: isHF ? "api_keys" : "rag_strategy",
+        });
+      });
     await Promise.all(promises);
   }
 

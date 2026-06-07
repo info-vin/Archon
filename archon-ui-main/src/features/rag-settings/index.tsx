@@ -1,4 +1,4 @@
-import { Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database } from 'lucide-react';
+import { Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database, ShieldAlert } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import OllamaModelDiscoveryModal from './components/OllamaModelDiscoveryModal';
@@ -42,7 +42,8 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
     showToast, setOllamaServerStatus,
     manualTestConnection, getProviderStatus,
     shouldShowProviderAlert, providerAlertClassName, providerAlertMessage,
-    crawlingSettingsFields, storageSettingsFields, coreModelFields,
+    crawlingSettingsFields, storageSettingsFields, coreModelFields, fallbackSettingsFields,
+    showFallbackSettings, setShowFallbackSettings,
     getDisplayedChatModel, getDisplayedEmbeddingModel, 
     getModelPlaceholder, getEmbeddingPlaceholder
   } = useRagSettingsData(ragSettings, setRagSettings);
@@ -302,6 +303,42 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
                 ))}
               </div>
               <CustomCheckbox id="parallelBatches" checked={ragSettings.ENABLE_PARALLEL_BATCHES !== false} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRagSettings({ ...ragSettings, ENABLE_PARALLEL_BATCHES: e.target.checked })} label="Enable Parallel Processing" description="Process multiple batches simultaneously" />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5" onClick={() => setShowFallbackSettings(!showFallbackSettings)}>
+            <div className="flex items-center">
+              <ShieldAlert className="mr-2 text-green-500" size={18} />
+              <h3 className="font-semibold text-gray-800 dark:text-white">3-Tier Fallback Settings</h3>
+            </div>
+            {showFallbackSettings ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </div>
+          {showFallbackSettings && (
+            <div className="mt-4 p-4 border border-green-500/10 rounded-lg bg-green-500/5 space-y-4">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                {fallbackSettingsFields.map(field => (
+                  <div key={field.key} className="space-y-1">
+                    <label className="block text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
+                      {field.label || field.key}
+                    </label>
+                    <ConfigDrivenInput 
+                      field={field} 
+                      value={ragSettings[field.key as keyof typeof ragSettings]} 
+                      onChange={(val, key) => key && setRagSettings({ ...ragSettings, [key]: val })} 
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-green-500/10 pt-3 leading-relaxed">
+                <p className="font-semibold text-gray-700 dark:text-zinc-300 mb-1">💡 3-Tier Multi-Agent Fallback Architecture Notes:</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li><strong>Tier 1 (主要雲端)</strong>: Google Gemini 等高精度雲端模型。正常運行時，將自動執行<strong>自我癒合 (Self-Healing)</strong> 重設為 Tier 1。</li>
+                  <li><strong>Tier 2 (HF 雲端備援)</strong>: 當主要雲端遭遇 429 頻率限制或 401 憑證失效時，自動切換至 Hugging Face 免費 API。需提供 HF Access Token (Read 權限即可)。</li>
+                  <li><strong>Tier 3 (本地 Ollama)</strong>: 當主要網路斷線或 Tier 2 連線失敗時，自動優雅降階至本地 Ollama，啟動 OFFLINE_MODE 運作。</li>
+                </ul>
+              </div>
             </div>
           )}
         </div>

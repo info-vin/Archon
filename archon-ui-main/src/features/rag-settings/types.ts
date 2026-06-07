@@ -45,4 +45,6 @@ export type RagSettingsType = {
   DISPATCHER_CHECK_INTERVAL?: number;
   CODE_EXTRACTION_BATCH_SIZE?: number;
   CODE_SUMMARY_MAX_WORKERS?: number;
+  forced_fallback_tier?: string;
+  HF_TOKEN?: string;
 };

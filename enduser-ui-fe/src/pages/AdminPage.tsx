@@ -5,6 +5,7 @@ import { SystemHealthDashboard } from '../features/admin/components/SystemHealth
 import { AdminCostDashboard } from '../features/admin/components/AdminCostDashboard';
 import { PromptManagement } from '../features/admin/components/PromptManagement.tsx';
 import { AdminSystemConfig } from '../features/admin/components/AdminSystemConfig';
+import { AdminFallbackConfig } from '../features/admin/components/AdminFallbackConfig';
 import { AdminExtractionConfig } from '../features/admin/components/AdminExtractionConfig';
 import { AdminCrawlerConfig } from '../features/admin/components/AdminCrawlerConfig';
 import { AdminAuditLogs } from '../features/admin/components/AdminAuditLogs';
@@ -55,7 +56,12 @@ const AdminPage: React.FC = () => {
           </div>
         )}
         {activeTab === 'analytics' && <AdminCorrectionAnalytics />}
-        {activeTab === 'settings' && <AdminSystemConfig />}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <AdminFallbackConfig />
+            <AdminSystemConfig />
+          </div>
+        )}
         {activeTab === 'extraction' && (
           <div className="space-y-8">
             <AdminCrawlerConfig />
