@@ -306,5 +306,9 @@ export const opsApi = {
         method: 'POST',
         body: JSON.stringify({ url, knowledge_type: knowledgeType, tags })
     });
+  },
+
+  async getFallbackStatus(): Promise<{ active_tier: number; internet_connected: boolean }> {
+    return await callAPI<{ active_tier: number; internet_connected: boolean }>('/api/system/fallback/status');
   }
 };

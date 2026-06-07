@@ -6,6 +6,7 @@ import UserAvatar from '../../components/UserAvatar.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '../../features/auth/hooks/usePermission.ts';
+import { FallbackStatusBadge } from '../FallbackStatusBadge.tsx';
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, logout, isAdmin } = useAuth();
@@ -187,12 +188,19 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 {/* Mobile Header */}
                 <header className="md:hidden flex items-center justify-between p-6 border-b border-border bg-background/80 backdrop-blur z-30 sticky top-0">
                     <LiveClock />
-                    <UserAvatar name={user?.name || ''} role={user?.role} className="w-10 h-10 ring-2 ring-primary/20" />
+                    <div className="flex items-center gap-4">
+                        <FallbackStatusBadge />
+                        <UserAvatar name={user?.name || ''} role={user?.role} className="w-10 h-10 ring-2 ring-primary/20" />
+                    </div>
                 </header>
 
                 {/* Desktop Top Bar */}
-                <header className="hidden md:flex items-center justify-end p-6 border-b border-border bg-background/60 backdrop-blur sticky top-0 z-30 h-20">
-                    <LiveClock />
+                <header className="hidden md:flex items-center justify-between p-6 border-b border-border bg-background/60 backdrop-blur sticky top-0 z-30 h-20">
+                    <div></div>
+                    <div className="flex items-center gap-6">
+                        <FallbackStatusBadge />
+                        <LiveClock />
+                    </div>
                 </header>
                 
                 <div className={`flex-1 ${location.pathname === '/brand' || location.pathname === '/approvals' ? 'p-0 overflow-hidden' : 'p-4 md:p-8'}`}>

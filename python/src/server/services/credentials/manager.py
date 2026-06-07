@@ -29,6 +29,15 @@ class CredentialManager:
         self._rag_settings_cache: dict[str, Any] | None = None
         self._rag_cache_timestamp: float | None = None
         self._rag_cache_ttl = 300  # 5 minutes TTL for RAG settings cache
+        self._active_tier = 1
+
+    def get_active_tier(self) -> int:
+        """Get the currently active model tier (1, 2, or 3)."""
+        return getattr(self, "_active_tier", 1)
+
+    def set_active_tier(self, tier: int) -> None:
+        """Set the active model tier (1, 2, or 3)."""
+        self._active_tier = tier
 
     def _get_repository(self) -> Any:
         """Get or create the CredentialRepository."""

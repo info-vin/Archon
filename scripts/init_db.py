@@ -136,6 +136,7 @@ def seed_data(cursor: PGCursor) -> None:
         ("GOOGLE_API_KEY", "GOOGLE_API_KEY", "api_keys", "Google AI API Key"),
         ("GEMINI_API_KEY", "GEMINI_API_KEY", "api_keys", "Gemini API Key"),
         ("LOGFIRE_TOKEN", "LOGFIRE_TOKEN", "observability", "Logfire Token"),
+        ("HF_TOKEN", "HF_TOKEN", "api_keys", "Hugging Face Access Token"),
     ]
     for env_var, db_key, category, desc in api_key_map:
         val = os.getenv(env_var)
@@ -182,7 +183,8 @@ def seed_data(cursor: PGCursor) -> None:
         ("SCHEDULER_PATROL_INTERVAL_MINS", "60", "system", "Frequency of log auto-repair scans (minutes)", False),
         ("SCHEDULER_SENTINEL_INTERVAL_HOURS", "12", "business", "Frequency of business risk scans (hours)", False),
         ("CRAWLER_104_SEARCH_API", "https://www.104.com.tw/jobs/search/list", "crawling", "104 Search API Endpoint", True),
-        ("CRAWLER_104_DETAIL_API", "https://www.104.com.tw/job/ajax/content", "crawling", "104 Job Detail AJAX Endpoint", True)
+        ("CRAWLER_104_DETAIL_API", "https://www.104.com.tw/job/ajax/content", "crawling", "104 Job Detail AJAX Endpoint", True),
+        ("forced_fallback_tier", "0", "rag_strategy", "Forced Fallback Tier (0=Auto, 1=Tier 1, 2=Tier 2, 3=Tier 3)", False)
     ]
     for key, val, category, desc, is_protected in bob_settings:
         cursor.execute("""

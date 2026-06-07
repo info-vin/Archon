@@ -90,15 +90,44 @@ class UsageTrackingCompletions:
     async def create(self, *args, **kwargs):
         import os
 
+        import openai
+
         from ...utils.retry_utils import retry_with_backoff
+        from ..credential_service import credential_service
+
+        forced_tier_str = await credential_service.get_credential("forced_fallback_tier")
+        try:
+            forced_tier = int(forced_tier_str) if forced_tier_str else 0
+        except Exception:
+            forced_tier = 0
+
+        async def _execute_on_hf(model_name: str):
+            hf_token = await credential_service.get_credential("HF_TOKEN")
+            if not hf_token:
+                raise ValueError("HF_TOKEN not configured for Tier 2 fallback")
+            hf_model = "google/gemma-1.1-2b-it"
+            client = openai.AsyncOpenAI(api_key=hf_token, base_url="https://api-inference.huggingface.co/v1/")
+            try:
+                kwargs_copy = kwargs.copy()
+                kwargs_copy["model"] = hf_model
+                return await client.chat.completions.create(*args, **kwargs_copy)
+            finally:
+                await client.close()
+
+        async def _execute_on_ollama():
+            from .clients import _get_optimal_ollama_instance
+            url = await _get_optimal_ollama_instance("chat", False, None)
+            client = openai.AsyncOpenAI(api_key="ollama", base_url=url)
+            try:
+                kwargs_copy = kwargs.copy()
+                kwargs_copy["model"] = "gemma3"
+                return await client.chat.completions.create(*args, **kwargs_copy)
+            finally:
+                await client.close()
 
         @retry_with_backoff(max_retries=5, initial_delay=2.0)
         async def _execute(override_key: str | None = None):
-            # If an override key is provided and we are using Google's endpoint via OpenAI SDK
-            # The API key is usually passed in default_headers['x-goog-api-key'] or as the bearer token
             original_client = self._original._client
-
-            # Temporary override of the client's API key for this request if needed
             original_api_key = original_client.api_key
             original_headers = getattr(original_client, "default_headers", {})
 
@@ -112,35 +141,74 @@ class UsageTrackingCompletions:
 
                 return await self._original.create(*args, **kwargs)
             finally:
-                # Restore original credentials
                 if override_key:
                     original_client.api_key = original_api_key
                     original_client.default_headers = original_headers
 
-        try:
-            response = await _execute()
-        except Exception as e:
-            err_msg = str(e)
-            if "429" in err_msg and ("Quota exceeded" in err_msg or "RESOURCE_EXHAUSTED" in err_msg):
+        if forced_tier == 2:
+            logger.info("Forced Tier 2 Fallback (Hugging Face) by Human Operator")
+            credential_service.set_active_tier(2)
+            response = await _execute_on_hf(kwargs.get("model", ""))
+        elif forced_tier == 3:
+            logger.info("Forced Tier 3 Fallback (Ollama) by Human Operator")
+            credential_service.set_active_tier(3)
+            response = await _execute_on_ollama()
+        else:
+            try:
+                response = await _execute()
+                credential_service.set_active_tier(1)
+            except Exception as e:
+                err_msg = str(e)
                 provider = self._context.get("provider", "unknown")
-                if provider == "google":
-                    primary_key = os.getenv("GEMINI_API_KEY")
-                    google_key_backup = os.getenv("GOOGLE_API_KEY")
-                    if google_key_backup and google_key_backup != primary_key:
-                        logger.warning(
-                            "⚠️ Primary GEMINI_API_KEY exhausted in archon-server. Rotating to backup GOOGLE_API_KEY..."
-                        )
-                        try:
-                            response = await _execute(override_key=google_key_backup)
-                        except Exception as fallback_e:
-                            logger.error(f"❌ Backup GOOGLE_API_KEY also failed: {fallback_e}")
-                            raise fallback_e
-                    else:
-                        raise e
-                else:
+                logger.warning(f"Tier 1 (Provider: {provider}) failed: {err_msg}")
+
+                if forced_tier == 1:
                     raise e
-            else:
-                raise e
+
+                # Connection Error -> Go straight to Tier 3
+                if isinstance(e, openai.APIConnectionError) or "connect" in err_msg.lower():
+                    logger.error("Connection error. Bypassing Tier 2, falling back directly to Tier 3 (Ollama)...")
+                    try:
+                        credential_service.set_active_tier(3)
+                        response = await _execute_on_ollama()
+                    except Exception as ollama_e:
+                        logger.error(f"Tier 3 (Ollama) fallback failed: {ollama_e}")
+                        raise ollama_e from e
+                # Authentication or Rate Limit Error -> Try Tier 2 (HF)
+                elif isinstance(e, (openai.AuthenticationError, openai.RateLimitError)) or "429" in err_msg or "401" in err_msg:
+                    try:
+                        if provider == "google":
+                            primary_key = os.getenv("GEMINI_API_KEY")
+                            google_key_backup = os.getenv("GOOGLE_API_KEY")
+                            if google_key_backup and google_key_backup != primary_key:
+                                logger.warning("⚠️ Primary GEMINI_API_KEY exhausted. Rotating to backup...")
+                                response = await _execute(override_key=google_key_backup)
+                                credential_service.set_active_tier(1)
+                                return response
+                    except Exception as backup_e:
+                        logger.error(f"Backup key failed: {backup_e}")
+                        e = backup_e
+
+                    logger.warning("Attempting Tier 2 (Hugging Face) fallback...")
+                    try:
+                        credential_service.set_active_tier(2)
+                        response = await _execute_on_hf(kwargs.get("model", ""))
+                    except Exception as hf_e:
+                        logger.error(f"Tier 2 (HF) failed: {hf_e}. Falling back to Tier 3 (Ollama)...")
+                        try:
+                            credential_service.set_active_tier(3)
+                            response = await _execute_on_ollama()
+                        except Exception as ollama_e:
+                            logger.error(f"Tier 3 (Ollama) failed: {ollama_e}")
+                            raise ollama_e from hf_e
+                else:
+                    logger.warning("Unhandled Tier 1 error. Trying Tier 3 (Ollama) fallback...")
+                    try:
+                        credential_service.set_active_tier(3)
+                        response = await _execute_on_ollama()
+                    except Exception as last_e:
+                        logger.error(f"Tier 3 fallback failed: {last_e}")
+                        raise e from None
 
         try:
             if hasattr(response, "usage") and response.usage:

@@ -120,6 +120,7 @@ export const api = {
   generateLogo: opsApi.generateLogo.bind(opsApi),
   diagnoseFile: opsApi.diagnoseFile.bind(opsApi),
   crawlKnowledgeItem: opsApi.crawlKnowledgeItem.bind(opsApi),
+  getFallbackStatus: opsApi.getFallbackStatus.bind(opsApi),
 };
 
 export { supabase } from './client';

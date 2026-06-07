@@ -131,6 +131,16 @@ async def get_llm_client(
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key, base_url=base_url or "https://api.anthropic.com/v1/messages"
             )
+        elif provider_name == "huggingface":
+            if not resolved_api_key:
+                from ..llm_provider_service import credential_service
+                resolved_api_key = await credential_service.get_credential("HF_TOKEN")
+            if not resolved_api_key:
+                raise ValueError("Hugging Face API token (HF_TOKEN) not found")
+            client = openai.AsyncOpenAI(
+                api_key=resolved_api_key,
+                base_url=base_url or "https://api-inference.huggingface.co/v1/"
+            )
         else:
             if not client:
                 client = openai.AsyncOpenAI(api_key=resolved_api_key or "unused", base_url=base_url)

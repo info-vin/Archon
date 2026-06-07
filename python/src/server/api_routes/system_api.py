@@ -216,3 +216,29 @@ async def update_system_setting(
         logger.warning(f"Audit logging failed for setting {key}: {audit_err}")
 
     return dict(response.data[0])
+
+
+@router.get("/fallback/status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_fallback_status() -> dict[str, Any]:
+    """
+    Returns the currently active fallback model tier and internet connectivity status.
+    Requires TASK_READ_TEAM permission.
+    """
+    from ..services.credential_service import credential_service
+    active_tier = credential_service.get_active_tier()
+
+    # Check internet connectivity
+    internet_connected = False
+    try:
+        import socket
+        # Attempt to establish a lightweight connection to a public DNS
+        socket.setdefaulttimeout(1.5)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("8.8.8.8", 53))
+        internet_connected = True
+    except Exception:
+        pass
+
+    return {
+        "active_tier": active_tier,
+        "internet_connected": internet_connected
+    }
