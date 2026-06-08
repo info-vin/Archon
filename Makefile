@@ -7,7 +7,7 @@ SHELL := /bin/bash
 # Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
 COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit audit-qa deploy-hf
+.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check install-ui db-init db-migrate tech-debt-audit audit-qa deploy-hf test-lean
 
 help:
 	@echo "Archon Development Commands"
@@ -113,6 +113,8 @@ audit-qa:
 	else \
 		echo "⚠️  WARNING: archon-server container not running. Skipping Persona Audit."; \
 	fi
+	@echo "Step 9: Running Lean 4 Proof Verification..."
+	@make test-lean
 	@echo "🎉 [AuditQA] ALL GATEWAYS PASSED SUCCESSFULLY!"
 
 # 獨立出會重置資料庫的 E2E 測試門禁
@@ -364,4 +366,13 @@ deploy-hf:
 # Phase Audit Automation
 phase-audit:
 	@python scripts/phase_audit.py
+
+test-lean:
+	@echo "--- Testing Lean 4 Subproject (lean_proofs) ---"
+	@if command -v lake >/dev/null 2>&1; then \
+		cd lean_proofs && lake test; \
+	else \
+		echo "⚠️  WARNING: 'lake' command not found. Skipping Lean 4 tests. Please refer to ### 2.5 in CONTRIBUTING_tw.md for setup."; \
+	fi
+
 
