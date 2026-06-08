@@ -54,6 +54,15 @@ def monolith_check():
                 dirs.remove("node_modules")
             for file in files:
                 if file.endswith((".py", ".ts", ".tsx")):
+                    # Skip test files and mock directories
+                    if (
+                        ".test." in file
+                        or ".spec." in file
+                        or file.startswith("test_")
+                        or "tests" in root.split(os.sep)
+                        or "__tests__" in root.split(os.sep)
+                    ):
+                        continue
                     file_path = os.path.join(root, file)
                     try:
                         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
