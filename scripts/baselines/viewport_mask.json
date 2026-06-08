@@ -1,0 +1,25 @@
+{
+  "masks": [
+    {
+      "name": "header_timestamp",
+      "x1": 650,
+      "y1": 0,
+      "x2": 800,
+      "y2": 60
+    },
+    {
+      "name": "console_logs_and_timestamps",
+      "x1": 0,
+      "y1": 500,
+      "x2": 800,
+      "y2": 600
+    },
+    {
+      "name": "session_tokens_or_uuid",
+      "x1": 150,
+      "y1": 100,
+      "x2": 350,
+      "y2": 150
+    }
+  ]
+}

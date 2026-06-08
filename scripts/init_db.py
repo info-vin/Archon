@@ -196,6 +196,25 @@ def seed_data(cursor: PGCursor) -> None:
                 updated_at = NOW();
         """, (key, val, category, desc, is_protected))
 
+    # Seed LEAN_4_DEVELOPER_ASSISTANT prompt
+    logger.info("🌱 Seeding LEAN_4_DEVELOPER_ASSISTANT prompt...")
+    cursor.execute("""
+        INSERT INTO public.archon_prompts (id, prompt_name, prompt, description, created_at, updated_at, is_system_protected)
+        VALUES (
+            '83a5dc1f-a20f-4846-81c9-fa19d53bd0d5',
+            'LEAN_4_DEVELOPER_ASSISTANT',
+            'You are a Lean 4 logic programming copilot. Your objective is to help write correct formal proofs, choose mathematical tactics (like intro, rfl, simp, induction), and repair compile failures. Ensure output is syntactically valid Lean 4 code.',
+            'System Lean 4 Proof Assistant prompt',
+            NOW(),
+            NOW(),
+            TRUE
+        )
+        ON CONFLICT (prompt_name) DO UPDATE SET
+            prompt = EXCLUDED.prompt,
+            description = EXCLUDED.description,
+            updated_at = NOW();
+    """)
+
 def sync_auth_users(cursor: PGCursor) -> None:
     if not HAS_SERVER_DEPS:
         logger.warning("⚠️ Skipping Auth Sync (Server dependencies missing)")

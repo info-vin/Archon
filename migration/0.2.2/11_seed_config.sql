@@ -157,3 +157,20 @@ ON CONFLICT (key) DO UPDATE SET
 
 -- Register migration
 INSERT INTO schema_migrations (version) VALUES ('0.2.1/08_seed_operational_configs') ON CONFLICT (version) DO NOTHING;
+
+-- Seed LEAN_4_DEVELOPER_ASSISTANT prompt
+INSERT INTO public.archon_prompts (id, prompt_name, prompt, description, created_at, updated_at, is_system_protected)
+VALUES (
+    '83a5dc1f-a20f-4846-81c9-fa19d53bd0d5',
+    'LEAN_4_DEVELOPER_ASSISTANT',
+    'You are a Lean 4 logic programming copilot. Your objective is to help write correct formal proofs, choose mathematical tactics (like intro, rfl, simp, induction), and repair compile failures. Ensure output is syntactically valid Lean 4 code.',
+    'System Lean 4 Proof Assistant prompt',
+    NOW(),
+    NOW(),
+    TRUE
+)
+ON CONFLICT (prompt_name) DO UPDATE SET
+    prompt = EXCLUDED.prompt,
+    description = EXCLUDED.description,
+    updated_at = NOW();
+
