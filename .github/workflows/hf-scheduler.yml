@@ -2,10 +2,10 @@ name: Hugging Face Space Scheduler
 
 on:
   schedule:
-    # 每天台灣時間凌晨 01:00 暫停 (UTC 17:00)
-    - cron: '0 17 * * *'
-    # 每天台灣時間早上 06:00 啟動 (UTC 22:00)
-    - cron: '0 22 * * *'
+    # 每天台灣時間凌晨 00:18 暫停 (UTC 16:18)
+    - cron: '18 16 * * *'
+    # 每天台灣時間早上 06:42 啟動 (UTC 22:42)
+    - cron: '42 22 * * *'
   # 允許手動觸發測試
   workflow_dispatch:
     inputs:
@@ -17,7 +17,7 @@ on:
         options:
           - restart
           - pause
-
+ 
 jobs:
   manage-space:
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
           # 如果是排程觸發，判斷當前小時來決定動作
           if [ "${{ github.event_name }}" == "schedule" ]; then
             HOUR=$(date -u +%H)
-            if [ "$HOUR" == "17" ]; then
+            if [ "$HOUR" == "16" ]; then
               ACTION="pause"
             elif [ "$HOUR" == "22" ]; then
               ACTION="restart"

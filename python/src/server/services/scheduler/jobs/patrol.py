@@ -204,10 +204,27 @@ async def run_model_verification():
     """Verifies that the system is using the safe Lite model to prevent 429 errors."""
     logger.info("🤖 Clockwork: Running Model Verification...")
     try:
-        from src.server.config.model_ssot import SYSTEM_MODELS
+        from src.server.services.scheduler_service import is_hf_awake
         from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
+
+        if not is_hf_awake():
+            logger.info("🤖 Clockwork: HF Sleep Mode active. Skipping verification probe.")
+            try:
+                supabase.table("archon_logs").insert(
+                    {
+                        "source": "clockwork-scheduler",
+                        "level": "INFO",
+                        "message": "Model Verification [Sleep Mode]",
+                        "details": {"status": "skipped_due_to_sleep_mode"},
+                    }
+                ).execute()
+            except Exception as db_err:
+                logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")
+            return
+
+        from src.server.config.model_ssot import SYSTEM_MODELS
 
         default_pro = SYSTEM_MODELS.get("DEFAULT_PRO", "")
         default_text = SYSTEM_MODELS.get("DEFAULT_TEXT", "")

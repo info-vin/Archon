@@ -9,18 +9,18 @@
 本階段的目標是：
 1. **消除晨間風暴**：將 `IntervalTrigger` 改為精確的 `CronTrigger`，將作業時間錯開，分散高負載。
 2. **提前作業時程**：將每日高負載作業提前至台灣時間 07:00 開始，以更貼近人類高管晨間查閱報表的需求。
-3. **引入節律感知 (Circadian Rhythm)**：讓 Clockwork 具備 HF 睡眠時間的感知能力，避免在 HF 關機期間 (台灣 01:00 ~ 06:00) 因模型驗證失敗而引發錯誤的系統警報。
+3. **引入節律感知 (Circadian Rhythm)**：讓 Clockwork 具備 HF 睡眠時間的感知能力，避免在 HF 關機期間 (台灣 00:18 ~ 06:41) 因模型驗證失敗而引發錯誤的系統警報。
 
 ## 系統作息時間軸 (System Circadian Rhythm)
 
 | 台灣時間 (CST) | UTC 時間 | 系統狀態區間 | HF Space 狀態 | 預期活動與負載分析 |
 | :--- | :--- | :--- | :--- | :--- |
-| **01:00 ~ 05:59** | 17:00 ~ 21:59 | 💤 **深度休眠期** | **暫停 (Paused)** | **絕對低峰。** 僅背景高頻探針運行。Clockwork 應啟用「睡眠感知」，略過對 Tier 2 (HF) 的非緊急健康檢查。 |
-| **06:00** | 22:00 | 🌅 **HF 喚醒期** | **重啟 (Restart)** | GitHub Actions 自動喚醒 HF 伺服器。 |
-| **06:00 ~ 06:59** | 22:00 ~ 22:59 | 🌅 **暖機完成** | **上線 (Online)** | HF 準備就緒。 |
+| **00:18 ~ 06:41** | 16:18 ~ 22:41 | 💤 **深度休眠期** | **暫停 (Paused)** | **絕對低峰。** 僅背景高頻探針運行。Clockwork 應啟用「睡眠感知」，略過對 Tier 2 (HF) 的非緊急健康檢查。 |
+| **06:42** | 22:42 | 🌅 **HF 喚醒期** | **重啟 (Restart)** | GitHub Actions 自動喚醒 HF 伺服器。 |
+| **06:42 ~ 06:59** | 22:42 ~ 22:59 | 🌅 **暖機完成** | **上線 (Online)** | HF 準備就緒。 |
 | **07:00 ~ 08:30** | 23:00 ~ 00:30 | 🚀 **晨間管線執行** | **上線 (Online)** | **依序排程 (CronTrigger)** 的每日高負載作業開始執行 (詳見下節)。 |
 | **09:00 ~ 18:00** | 01:00 ~ 10:00 | 🏢 **正常營業期** | **上線 (Online)** | 系統負載取決於人類使用者活動。 |
-| **18:00 ~ 00:59** | 10:00 ~ 16:59 | 🌆 **晚間收尾期** | **上線 (Online)** | 人類活動減少，系統回歸低峰。 |
+| **18:00 ~ 00:17** | 10:00 ~ 16:17 | 🌆 **晚間收尾期** | **上線 (Online)** | 人類活動減少，系統回歸低峰。 |
 
 ## 實作計畫 (Implementation Plan)
 
@@ -48,22 +48,28 @@
 
 如系統設計所述，排程優化不應只是靜態設定。應該在系統初始化 (`init_db.py`) 時，為 David (POBot) 建立一個隸屬於「內部架構專案 (Internal Architecture)」的預設**長效型任務 (Ongoing Task)**。
 *   **目標**：David 需定期（或透過探針觸發）檢視 Clockwork 的執行日誌與 HF 的上線狀態。
-*   **職責**：若發現 07:00 ~ 09:00 之間仍出現 API Rate Limit (429) 或排程碰撞，David 應主動提出「Phase 5.5.10 排程微調建議」，實現 AI 系統對自身效能的閉環優化。
+*   **職責**：若發現 07:00 ~ 09:00 之間仍出現 API Rate Limit (429) 或排程碰撞，David 應主動提出「Clockwork 排程微調建議 (基於當前日期)」，實現 AI 系統對自身效能的閉環優化。
 
 ### 2. 實作 HF 節律感知 (HF Sleep Awareness)
 
 在 `scheduler_service.py` 中新增時間判定邏輯：
 
 ```python
-from datetime import datetime, UTC
+from datetime import datetime, timezone, timedelta, time
 
 def is_hf_awake() -> bool:
     """
-    判斷當前 UTC 時間是否在 HF 的上線視窗內。
-    HF Space 睡眠時間為台灣 01:00 ~ 06:00 (UTC 17:00 ~ 21:59)。
+    判斷當前時間是否在 HF 的上線視窗內。
+    HF Space 睡眠時間為台灣 00:18 ~ 06:41 (CST)。
     """
-    current_hour = datetime.now(UTC).hour
-    if 17 <= current_hour < 22:
+    # 取得 CST (UTC+8) 時間
+    cst_now = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=8)))
+    current_time = cst_now.time()
+    
+    sleep_start = time(0, 18)
+    sleep_end = time(6, 41)
+    
+    if sleep_start <= current_time <= sleep_end:
         return False
     return True
 ```
@@ -77,10 +83,11 @@ def is_hf_awake() -> bool:
 
 ### 1. 單元測試：HF 節律邊界測試 (Unit Test)
 *   **目標檔案**：`python/tests/unit/services/test_scheduler_service.py` (需新建)
-*   **斷言目標**：使用 `unittest.mock.patch` 模擬 `datetime.now(UTC)`。
-    *   模擬 UTC 17:00 (台灣 01:00) -> 斷言 `is_hf_awake()` 為 `False`。
-    *   模擬 UTC 21:59 (台灣 05:59) -> 斷言 `is_hf_awake()` 為 `False`。
-    *   模擬 UTC 22:00 (台灣 06:00) -> 斷言 `is_hf_awake()` 為 `True`。
+*   **斷言目標**：使用 `unittest.mock.patch` 模擬 `datetime.now(timezone.utc)`。
+    *   模擬 CST 00:18 -> 斷言 `is_hf_awake()` 為 `False`。
+    *   模擬 CST 06:41 -> 斷言 `is_hf_awake()` 為 `False`。
+    *   模擬 CST 06:42 -> 斷言 `is_hf_awake()` 為 `True`。
+    *   模擬 CST 00:17 -> 斷言 `is_hf_awake()` 為 `True`。
 
 ### 2. 整合測試：休眠模式攔截 (Integration Test)
 *   **目標檔案**：`python/tests/integration/services/test_phase49_clockwork_patrol.py`

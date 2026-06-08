@@ -40,6 +40,10 @@ INSERT INTO archon_projects (id, title, description, pinned)
 VALUES ('00000000-0000-0000-0000-000000000000', 'Archon Core', 'System coordination and self-healing.', true)
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO archon_projects (id, title, description, pinned)
+VALUES ('00000000-0000-0000-0000-888888888888', 'Internal Architecture', 'Backend optimization and scheduling alignment.', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- 5. Standard System Prompts
 INSERT INTO archon_prompts (prompt_name, prompt, is_system_protected, description)
 VALUES 
@@ -168,5 +172,17 @@ VALUES (
     'Please analyze the Q4 campaign performance data, calculate the conversion rates, and provide a marketing strategy for the upcoming year.',
     'Archon Supervisor',
     'e1682371-0000-0000-0000-000000000000',
+    'todo'
+) ON CONFLICT DO NOTHING;
+
+-- 7. Add David POBot adaptive oversight task under Internal Architecture
+INSERT INTO archon_tasks (id, project_id, title, description, assignee, assignee_id, status)
+VALUES (
+    '00000000-0000-0000-0000-444444444444',
+    '00000000-0000-0000-0000-888888888888',
+    'Adaptive Oversight & Scheduling Analysis',
+    'POBot reviews Clockwork logs and HF Space status to dynamically suggest cron trigger optimizations and prevent API rate-limiting or scheduling overlap. Suggestion reports should be dynamically named: "Clockwork 排程微調建議 (基於 {date})".',
+    'Archon POBot',
+    'p0b00000-0000-0000-0000-000000000000',
     'todo'
 ) ON CONFLICT DO NOTHING;

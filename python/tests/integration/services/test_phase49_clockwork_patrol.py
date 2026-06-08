@@ -79,3 +79,29 @@ async def test_run_log_patrol_no_errors():
         await scheduler_service._run_log_patrol()
 
         mock_task_service.create_task.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_model_verification_sleep_mode():
+    """
+    Test that model verification probe skips verification and logs Sleep Mode when HF is asleep.
+    """
+    mock_supabase = MagicMock()
+    mock_logs_chain = MagicMock()
+    mock_supabase.table.return_value = mock_logs_chain
+
+    with (
+        patch("src.server.services.scheduler_service.is_hf_awake", return_value=False),
+        patch("src.server.utils.get_supabase_client", return_value=mock_supabase),
+    ):
+        await scheduler_service._run_model_verification()
+
+        # Check that we inserted a log
+        mock_supabase.table.assert_called_with("archon_logs")
+        mock_logs_chain.insert.assert_called_once()
+        args, _ = mock_logs_chain.insert.call_args
+        payload = args[0]
+        assert payload["source"] == "clockwork-scheduler"
+        assert payload["level"] == "INFO"
+        assert "[Sleep Mode]" in payload["message"]
+
