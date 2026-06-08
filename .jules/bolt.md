@@ -100,3 +100,6 @@
 ## 2024-05-24 - Expensive Hook Invocations
 **Learning:** Found a severe anti-pattern where a hook returned a function (`hasPermission`) that executed O(N) array transformations, string allocations, and Set creations *on every invocation* during render, rather than pre-calculating the state based on dependencies.
 **Action:** Always memoize derived state (like Set creation from arrays) outside of returned callback functions within hooks, ensuring expensive operations only run when underlying dependencies change.
+## 2026-06-08 - Parallelizing sequential API requests in React hooks
+**Learning:** Sequential network requests in React hooks (e.g., awaiting a blog post, then awaiting its context) create unnecessary network waterfalls that increase loading times for users, especially if the secondary request's inputs don't depend on the first request's output.
+**Action:** Use Promise.all() (or parallel promise initialization) to run independent API calls concurrently. When doing so without Promise.all, initiate the promises early and await them independently within their existing try/catch blocks to prevent single failures from breaking the entire feature.
