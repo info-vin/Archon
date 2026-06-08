@@ -130,6 +130,30 @@
 > 任何極度依賴「維持由 Host 本機建立的敏感登入狀態 (如 Google 帳號)」的自動化工具 (例如生圖工具 `ImageGenerationTool`)，都**不應該**被封裝成 Docker 內的微服務 API 給代理 (Agents) 呼叫。這會導致極度脆弱的架構。
 > **正確作法**: 這類腳本（如展示用的 `make twin-scout-action`）應該直接在宿主機本機終端機使用原生指令執行：`make twin-scout-action`，以確保它能 headed 運行、繼承 Session 並正確讀取本機的解密憑證。而一般容器內的無狀態安全對帳則執行 `make twin-scout`。
 
+### 2.5 Lean 4 本地開發環境安裝指南
+
+本專案使用 Lean 4 作為形式化驗證與定理證明的子模組（位於 `lean_proofs/`）。為了在本地端正常編譯、撰寫與驗證 Lean 證明，請遵循以下步驟：
+
+1. **安裝 Lean 版本管理器 (elan)**：
+   在宿主機終端機執行官方安裝指令：
+   ```bash
+   curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
+   ```
+   *安裝過程中依提示選取預設值即可。安裝後請重新啟動終端機，或載入環境變數（如 `source $HOME/.elan/env`）。*
+
+2. **確認編譯器與依賴建置**：
+   導航至 Lean 子專案目錄。`elan` 會自動偵測並下載 `lean-toolchain` 中設定的 Lean 4 版本（如 `v4.30.0`）：
+   ```bash
+   cd lean_proofs
+   lake build
+   ```
+   *若編譯成功且輸出 `Hello, world!` 等測試字串，代表本地 Lean 環境已就緒。*
+
+3. **編輯器支援與語法提示 (強烈建議)**：
+   * 推薦使用 **VS Code** 作為開發工具。
+   * 安裝 VS Code 官方擴充套件：**`Lean 4`** (由 `leanprover` 提供)。
+   * 開啟 `lean_proofs` 目錄，VS Code 會自動啟動 Lean 4 語言伺服器 (Infoview)，在您撰寫證明時提供即時的邏輯狀態與語法反饋。
+
 ---
 
 ## 第三章：測試指南 (Testing Guide)
