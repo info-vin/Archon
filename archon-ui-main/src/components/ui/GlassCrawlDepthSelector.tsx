@@ -73,6 +73,8 @@ export const GlassCrawlDepthSelector: React.FC<GlassCrawlDepthSelectorProps> = (
                 "hover:scale-110 active:scale-95"
               )}
               aria-label={`Select crawl depth level ${level}`}
+              aria-pressed={isSelected}
+              title={getLevelDescription(level)}
             >
               {/* Outer glass layer with glow */}
               <div className={cn(
