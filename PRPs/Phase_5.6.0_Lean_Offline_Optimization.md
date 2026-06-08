@@ -28,8 +28,9 @@ graph TD
 
     subgraph Frontend [既有前端與管理網域]
         FE1[Admin UI: archon-ui-main]:::existing
-        FE2[End-User UI: enduser-ui-fe]:::existing
-        PromptMgr[Prompt Manager UI]:::existing
+        subgraph FE2 [End-User UI: enduser-ui-fe / Port 5173]
+            PromptMgr[Prompt Manager Route]:::existing
+        end
     end
 
     subgraph Backend [單一容器後端服務]
