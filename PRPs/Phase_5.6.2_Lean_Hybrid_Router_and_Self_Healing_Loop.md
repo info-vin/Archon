@@ -46,3 +46,13 @@
 *   新增測試驗證 `compiler_service.py` 能正確捕獲並解析 `lake build` 的錯誤輸出。
 *   新增測試驗證 `HybridRouter` 能依據 AST 節點大小與 K 次限制，精準切換 Tier 1 與 Tier 3 分支。
 *   驗證修復成功後，`code_examples` 的向量寫入邏輯正常，且本地 RAG 能成功檢索到該案例。
+
+---
+
+## 實作結果與現狀 (Implementation Results - Status: Completed)
+
+所有任務已於 2026/06/08 順利完成：
+1. **Lean 4 編譯器封裝完成**：新增了 `LeanCompilerService`，能調用 `lake build` 並精確解析錯誤。
+2. **混合推理路由器落地**：新增 `HybridRouter` 並在 `base.py` 路由入口注入。可自動依據 AST 複雜度及重試次數進行本地與雲端的分流。
+3. **二階段自癒與數據沉澱閉環**：新增 `LeanSelfHealingService` 串接兩階段自癒。編譯成功後的證明程式碼會自動寫入 `code_examples` 以便日後 RAG 檢索。
+4. **單元測試全數通過**：通過 `test_lean_compiler.py` 與 `test_hybrid_router.py`，全數綠燈。

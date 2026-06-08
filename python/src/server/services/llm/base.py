@@ -145,6 +145,19 @@ class UsageTrackingCompletions:
                     original_client.api_key = original_api_key
                     original_client.default_headers = original_headers
 
+        # Scan for Lean 4 context
+        is_lean = False
+        proof_context = ""
+        for m in kwargs.get("messages", []):
+            content = m.get("content", "")
+            if "lean 4" in content.lower() or "lake build" in content.lower() or "theorem" in content.lower():
+                is_lean = True
+                proof_context += content + "\n"
+
+        retry_count = 0
+        if "extra_body" in kwargs and isinstance(kwargs["extra_body"], dict):
+            retry_count = kwargs["extra_body"].get("retry_count", 0)
+
         if forced_tier == 2:
             logger.info("Forced Tier 2 Fallback (Hugging Face) by Human Operator")
             credential_service.set_active_tier(2)
@@ -153,6 +166,26 @@ class UsageTrackingCompletions:
             logger.info("Forced Tier 3 Fallback (Ollama) by Human Operator")
             credential_service.set_active_tier(3)
             response = await _execute_on_ollama()
+        elif is_lean:
+            from .hybrid_router import hybrid_router
+            if hybrid_router.should_escalate_to_cloud(proof_context, retry_count):
+                logger.info("Hybrid Router: Escalating Lean proof task to Tier 1 Cloud")
+                try:
+                    response = await _execute()
+                    credential_service.set_active_tier(1)
+                except Exception:
+                    logger.warning("Tier 1 Cloud failed for escalated Lean task, trying Tier 3")
+                    credential_service.set_active_tier(3)
+                    response = await _execute_on_ollama()
+            else:
+                logger.info("Hybrid Router: Routing Lean proof task to Tier 3 Ollama (Local)")
+                try:
+                    credential_service.set_active_tier(3)
+                    response = await _execute_on_ollama()
+                except Exception:
+                    logger.warning("Local Tier 3 failed for Lean task, falling back to Tier 1")
+                    response = await _execute()
+                    credential_service.set_active_tier(1)
         else:
             try:
                 response = await _execute()

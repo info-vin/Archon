@@ -46,3 +46,12 @@
 
 ### 2. 自動化測試
 *   驗證 `LEAN_4_DEVELOPER_ASSISTANT` 在資料庫中存在且能被後端 `prompt_service` 正確提取。
+
+---
+
+## 實作結果與現狀 (Implementation Results - Status: Completed)
+
+所有任務已於 2026/06/08 順利完成：
+1. **本地算力基準測試完成**：產出了 `.twin/diagnostics/hardware_capability_matrix.json`。
+2. **模擬器遮罩與 Skip 機制落地**：實作了 `viewport_mask.json` 物理遮罩，過濾時間戳等動態區域。`simulator_runner.py` 通過 100% 視覺比對驗證。
+3. **資料庫 Prompt 種子寫入**：`LEAN_4_DEVELOPER_ASSISTANT` 提示詞成功寫入資料庫並能在 5173 UI 進行管理與編輯。
