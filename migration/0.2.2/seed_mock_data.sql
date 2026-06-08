@@ -35,6 +35,12 @@ VALUES (
     'b0b00000-0000-0000-0000-000000000000', 'BOT-003', 'Archon Librarian', 'archonlibrarian@archon.ai', 'Knowledge', 'AI Librarian', 'active', 'marketing', 'https://api.dicebear.com/7.x/bottts/svg?seed=Librarian'
 ) ON CONFLICT (id) DO UPDATE SET role = 'marketing', status = 'active';
 
+-- POBot
+INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
+VALUES (
+    'p0b00000-0000-0000-0000-000000000000', 'BOT-004', 'Archon POBot', 'pobot@archon.ai', 'Product', 'AI Product Owner', 'active', 'agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=POBot'
+) ON CONFLICT (id) DO UPDATE SET role = 'agent', status = 'active';
+
 -- 4. Base Project
 INSERT INTO archon_projects (id, title, description, pinned)
 VALUES ('00000000-0000-0000-0000-000000000000', 'Archon Core', 'System coordination and self-healing.', true)

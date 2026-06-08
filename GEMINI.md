@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.5.9 三層容災降階系統、雙端 Fallback UI 面板及動態狀態指示燈已全部實作完成，並通過一鍵公證 (`make audit-qa`) 與雙生巡檢 (`make twin-scout`) 提交推播。
+*   **當前狀態 (Current Context)**: Phase 5.5.11 Monolith Refactoring（對 manager.py、ollamaService.ts、BugReportModal.tsx 進行 L2 模組化與自訂 Hook 抽離）已全部完成，全系統單元與整合測試、靜態代碼檢查及行數門禁皆已順利通過。
 *   **今日目標 (Today's Goal)**: 等待人類指揮官給予下一階段的新指令。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -109,6 +109,28 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026年6月8日：L2 模組化代碼減重與 Monolith 行數門禁達成
+
+今日我們針對專案中三個行數超過 400 行的核心程式碼檔案完成了 L2 模組化拆分，以符合單一檔案行數低於 400 行的門禁標準：
+
+1. **後端 Credential 模組拆分**：
+   - 移除了 `manager.py` 內未被調用的 legacy 函數 `get_config_as_env_dict`。
+   - 將 `check_credentials_exist` 驗證邏輯移至新增的 `helpers.py` 中。
+   - 主要服務 `manager.py` 行數從 427 行順利降至 321 行。
+
+2. **前端 Ollama 服務型別抽離**：
+   - 新建 `ollamaTypes.ts`，並將所有 API 響應/請求強型別聲明全部自 `ollamaService.ts` 抽離。
+   - 於 `ollamaService.ts` 內使用 `export * from "./ollamaTypes"` 導出，完美保障對外別名與導入的向上相容性。主要服務行數從 436 行降至 277 行。
+
+3. **前端 Bug 報告彈窗邏輯 Hook 化**：
+   - 建立自訂 Hook `useBugReport.ts`，將 `BugReportModal.tsx` 內所有與表單 state、GitHub Issue 提交、剪貼簿格式化以及 toast 通知相關的非 UI 業務邏輯全數抽離。
+   - `BugReportModal.tsx` 僅保留 JSX 結構渲染，行數從 429 行降至 319 行。
+
+4. **品質門禁與測試驗證**：
+   - 通過 `make test-be` 全體 591 項後端單元與整合測試。
+   - 前端 TS 類型編譯與 `make lint` 檢查皆無任何報錯與警告。
+   - 執行 `make phase-audit` 驗證全系統除大檔案測試套件外，所有主程式碼檔案皆已降至 400 行以下。
 
 ### 2026年6月7日：3-Tier 容災降階架構與雙端設定 UI 落地公證
 

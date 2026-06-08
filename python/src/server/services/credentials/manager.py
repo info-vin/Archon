@@ -352,53 +352,9 @@ class CredentialManager:
             return []
 
     async def check_credentials_exist(self, keys: list[str]) -> dict[str, dict[str, Any]]:
-        """
-        Check if a list of credentials exist and have a value.
-        Returns a dictionary with the status for each key.
-        """
-        if not self._cache_initialized:
-            await self.load_all_credentials()
+        from .helpers import check_credentials_exist
 
-        statuses = {}
-        for key in keys:
-            value = self._cache.get(key)
-            has_value = False
-            if value:
-                if isinstance(value, dict) and value.get("is_encrypted"):
-                    if value.get("encrypted_value"):
-                        has_value = True
-                elif isinstance(value, str) and value:
-                    has_value = True
-
-            # Step 2: Environment variable fallback (Physical Hardening)
-            if not has_value:
-                env_value = os.getenv(key) or os.getenv(key.upper())
-                if not env_value and key == "GOOGLE_API_KEY":
-                    env_value = os.getenv("GEMINI_API_KEY")
-                if env_value and env_value.strip():
-                    has_value = True
-
-            statuses[key] = {"key": key, "has_value": has_value}
-
-        return statuses
-
-    def get_config_as_env_dict(self) -> dict[str, str]:
-        """
-        Get configuration as environment variable style dict.
-        Note: This returns plain text values only.
-        """
-        if not self._cache_initialized:
-            logger.warning("Credentials not loaded, returning empty config")
-            return {}
-
-        env_dict = {}
-        for key, value in self._cache.items():
-            if isinstance(value, dict) and value.get("is_encrypted"):
-                continue
-            else:
-                env_dict[key] = str(value) if value is not None else ""
-
-        return env_dict
+        return await check_credentials_exist(self, keys)
 
     async def get_active_provider(self, service_type: str = "llm") -> dict[str, Any]:
         from .provider_configs import get_active_provider
