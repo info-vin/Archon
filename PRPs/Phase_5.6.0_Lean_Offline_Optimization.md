@@ -100,9 +100,13 @@ graph TD
     *   $P_{success}$：產出之證明程式碼正確且通過編譯的機率。
 *   **數據匹配推論**：
     對於本地小型模型，$P_{success}$ 面對中高難度定理時趨近於 $0$，導致 $E[T_{total}]$ 趨向無限大（陷入死循環）；而雲端 Pro 模型（如 Gemini 1.5 Pro）具備極高的推理深度，$P_{success}$ 顯著提升，使總時間收斂。
-*   **實證對策 (Hybrid Reasoning Router)**：
-    *   **複雜度估算路由**：依據證明的抽象語意樹（AST）深度或目標 Tactic 數量評估難度。
-    *   **本地重試門檻**：若本地模型嘗試 $K$ 次（預設 $K=2$）仍編譯失敗，路由必須立即中斷本地迴圈，自動升級調用雲端 Pro模型，以防耗盡本地 CPU 資源。
+*   **實證對策 (Hybrid Reasoning Router - 借鑑 Lean 4 最佳實踐)**：
+    借鑑 **Lean Copilot**（將 LLM 內置於 Lean 作為 tactic 預測器）、**LeanDojo** 與 **APOLLO (Automated Proof Repair via LLM-Lean collaboration)** 的核心論文與工具鏈，我們的判定與外包機制如下：
+    1. **目標狀態複雜度評估 (Goal State Complexity Estimation)**：
+       利用 Lean 4 語言伺服器 (LSP) 提供的狀態數據，計算當前證明目標（Goal）的假設數量（Hypotheses）與目標表達式（Target Expression）的 AST（抽象語法樹）節點樹大小。若 AST 節點大於設定閾值 $S$（如 150），即判定為「高難度證明」，直接跳過本地推論，路由至雲端 Pro 模型。
+    2. **局部子定理拆分與外包 (Sub-lemma Decomposition & Offloading)**：
+       借鑑 APOLLO 框架的證明修復思路，當整體證明失敗時，不應將整篇代碼重寫。系統應透過 Lean 的錯誤定位，將編譯失敗的 sub-goals 或 sub-lemmas 進行物理隔離（Isolate），只將出錯的局部 tactic 區塊「外包（Offload）」給雲端 LLM 進行精準修復，其餘常規證明步驟則保留在本地 CPU 運算。
+    3. **本地重試門檻**：若本地模型嘗試 $K$ 次（預設 $K=2$）仍編譯失敗，路由必須立即中斷本地迴圈，自動升級調用雲端 Pro 模型，以防耗盡本地 CPU 資源。
 
 ### 3. 痛點三：百關挑戰（Digital Twin Simulator）的運行負擔與對策評估
 *   **現狀說明**：`simulator_runner.py` 執行 E2E 併發測試時，若因動態欄位或網絡混沌注入導致像素差異大於 5.0%，會觸發 `vision_judge.py`（多模態 VLM 判定）。在本地執行時，高頻呼叫 VLM 會給 CPU 帶來極大壓力，導致百關挑戰執行超時。
