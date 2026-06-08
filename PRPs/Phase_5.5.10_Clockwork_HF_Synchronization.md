@@ -37,6 +37,19 @@
 *   **08:20 CST (UTC 00:20)**：執行 Token 用量分析 (`token_analysis`)。在晨間大量 API 呼叫結束後，進行 24 小時成本結算與異常突增 (Cost Spike) 防護警報。
 *   **08:40 CST (UTC 00:40)**：執行商業哨兵監控 (`business_sentinel`)。掃描過期的潛在客戶與卡關的部落格文章，並自動指派逾期追蹤任務，確保人員上班時待辦清單已準備就緒。
 
+**週末與月度延伸管線 (Extended Pipeline)：**
+針對中長期的報表與巡檢，改為在低峰或週末特定時間點精確觸發：
+*   **每週一 06:00 CST (UTC 22:00)**：執行每週高階主管總結 (`weekly_executive_summary`)。
+*   **每月 1 號 06:30 CST (UTC 22:30)**：執行每月高階主管總結 (`monthly_executive_summary`)。
+*   **每週六 08:00 CST (UTC 00:00)**：執行 API 棄用掃描 (`api_deprecation_scan`)。
+*   **每週日 08:00 CST (UTC 00:00)**：執行技術債巡檢 (`tech_debt_audit`)。
+
+### 2. David (POBot) 的持續性監督 (Continuous Oversight)
+
+如系統設計所述，排程優化不應只是靜態設定。應該在系統初始化 (`init_db.py`) 時，為 David (POBot) 建立一個隸屬於「內部架構專案 (Internal Architecture)」的預設**長效型任務 (Ongoing Task)**。
+*   **目標**：David 需定期（或透過探針觸發）檢視 Clockwork 的執行日誌與 HF 的上線狀態。
+*   **職責**：若發現 07:00 ~ 09:00 之間仍出現 API Rate Limit (429) 或排程碰撞，David 應主動提出「Phase 5.5.10 排程微調建議」，實現 AI 系統對自身效能的閉環優化。
+
 ### 2. 實作 HF 節律感知 (HF Sleep Awareness)
 
 在 `scheduler_service.py` 中新增時間判定邏輯：
