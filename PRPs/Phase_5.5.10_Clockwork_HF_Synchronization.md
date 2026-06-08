@@ -71,8 +71,27 @@ def is_hf_awake() -> bool:
 **應用場景：**
 在 `patrol.py` 中的 `run_model_verification` (模型驗證探針) 內整合此邏輯。當 `is_hf_awake()` 為 `False` 時，探針應跳過對 Tier 2 (Hugging Face) 的連線測試，並在日誌中註記為 `[Sleep Mode]`，以防產生誤報並派發無效的自動修復任務給 DevBot。
 
-## 成功標準 (Acceptance Criteria)
+## 成功標準與自動化驗證 (Acceptance Criteria & Automated Verification)
 
-1.  確認 `scheduler_service.py` 中的每日任務已從隱性輪詢改為精確的 `CronTrigger`。
-2.  確認排程時間嚴格遵守 07:00 ~ 08:00 CST 的 20 分鐘間隔流水線。
-3.  確認 `model_verification` 在台灣時間 01:00 ~ 06:00 之間不會因為 HF 離線而產生錯誤日誌 (`archon_logs` 不會新增 ERROR 等級的 HF 連線失敗紀錄)。
+**【絕對鐵律】：拒絕樂觀路徑，所有排程邏輯與節律感知必須由 Pytest 物理斷言把關。**
+
+### 1. 單元測試：HF 節律邊界測試 (Unit Test)
+*   **目標檔案**：`python/tests/unit/services/test_scheduler_service.py` (需新建)
+*   **斷言目標**：使用 `unittest.mock.patch` 模擬 `datetime.now(UTC)`。
+    *   模擬 UTC 17:00 (台灣 01:00) -> 斷言 `is_hf_awake()` 為 `False`。
+    *   模擬 UTC 21:59 (台灣 05:59) -> 斷言 `is_hf_awake()` 為 `False`。
+    *   模擬 UTC 22:00 (台灣 06:00) -> 斷言 `is_hf_awake()` 為 `True`。
+
+### 2. 整合測試：休眠模式攔截 (Integration Test)
+*   **目標檔案**：`python/tests/integration/services/test_phase49_clockwork_patrol.py`
+*   **斷言目標**：新增 `test_model_verification_sleep_mode()`。
+    *   `patch` `is_hf_awake` 強制回傳 `False`。
+    *   執行 `run_model_verification()`。
+    *   **物理斷言**：檢查 `get_supabase_client().table("archon_logs").insert` 的呼叫參數，必須包含 `[Sleep Mode]` 字樣，並且 **嚴格斷言** 沒有拋出任何 Exception，也沒有發生 `ERROR` 級別的日誌寫入。
+
+### 3. 排程器組態驗證 (Scheduler Config Test)
+*   **目標檔案**：`python/tests/unit/services/test_scheduler_service.py`
+*   **斷言目標**：呼叫 `scheduler_service._schedule_jobs()` (不啟動 event loop)。
+    *   透過 `scheduler_service._scheduler.get_jobs()` 提取所有已註冊的任務。
+    *   **物理斷言**：`alice_auto_fetch` 的 Trigger 類型必須是 `CronTrigger`，且其 `hour` 屬性為 23，`minute` 屬性為 0。
+    *   **物理斷言**：`token_analysis` 的 Trigger 必須是 `CronTrigger`，且 `hour`=0, `minute`=20。確保 20 分鐘的間隔被物理寫入設定。
