@@ -169,6 +169,18 @@ graph TD
     2. 使用 `PIL.ImageDraw.Draw` 將座標中定義的動態區域（例如頂欄時間戳、日誌輸出框等）實體塗黑（填充 `#000000`）。
     3. 執行像素比對，確保動態渲染產生的偽隨機誤差不計入 5.0% 閾值。
 
+### 5. 雙端協同自癒與知識沉澱閉環 (Local-Cloud Collaborative Self-healing & Knowledge Seeding)
+*   **實作變更檔案**：
+    *   [NEW] `python/src/server/services/lean/self_healing_service.py`
+    *   [MODIFY] [knowledge_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/knowledge/knowledge_service.py) (或 RAG 向量寫入端點)
+*   **詳細步驟**：
+    1. **二階段自癒迴圈 (Two-stage Repair Loop)**：
+       * **本地自癒 (Stage 1)**：本地編譯失敗時，以 `compiler_service` 的錯誤 JSON 為 Context，結合 `LEAN_4_DEVELOPER_ASSISTANT` 提示詞，讓本地 Ollama 於沙盒內進行語法與 minor bugs 自我修正。
+       * **雲端升級自癒 (Stage 2)**：若本地嘗試 $K$ 次仍未通過，打包「嘗試歷史與編譯反饋」，升級發送至雲端 Pro 模型進行高精度修復。
+    2. **自適應進化沉澱 (Evolutionary Knowledge Seeding)**：
+       * 雲端修復成功的 Lean 4 證明程式碼，自動被轉化為向量 Embedding，存入資料庫的 `code_examples` 知識庫中。
+       * 下次本地執行類似的定理證明時，RAG 將自動檢索此案例作為 few-shot 範例餵給本地 Ollama，達成「雲端一次自癒，本地永久學習」的自我進化。
+
 ---
 
 ## 驗證計畫 (Verification Plan)
