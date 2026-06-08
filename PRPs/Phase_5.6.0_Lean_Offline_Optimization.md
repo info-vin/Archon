@@ -15,6 +15,66 @@
 
 ---
 
+## 系統架構對比圖 (Architecture Comparison)
+
+在本次優化計畫中，以下架構圖以不同顏色區分了**既有基礎設施**與**本階段（Phase 5.6.0）新增之組件與邏輯**：
+
+```mermaid
+graph TD
+    %% 定義既有組件樣式 (深灰色背景，青色邊框)
+    classDef existing fill:#222,stroke:#00cccc,stroke-width:2px,color:#fff;
+    %% 定義本階段新增/修改組件樣式 (暗綠色背景，鮮綠霓虹虛線邊框)
+    classDef newlyAdded fill:#1f3d3d,stroke:#00ffcc,stroke-width:3px,stroke-dasharray:5 5,color:#fff;
+
+    subgraph Frontend [既有前端與管理網域]
+        FE1[Admin UI: archon-ui-main]:::existing
+        FE2[End-User UI: enduser-ui-fe]:::existing
+        PromptMgr[Prompt Manager UI]:::existing
+    end
+
+    subgraph Backend [單一容器後端服務]
+        API[FastAPI Server: 8181]:::existing
+        Agents[Agents Service: 8052]:::existing
+        
+        %% 新增：混合推理路由器 (含 AST 分析與期望值計算)
+        Router[Hybrid Reasoning Router<br>AST Analysis & Expected Time]:::newlyAdded
+        
+        %% 新增：Lean 4 輔助編譯驗證模組
+        LeanComp[Lean 4 Compiler Wrapper<br>lake build & Tactic Checker]:::newlyAdded
+    end
+
+    subgraph LocalResource [宿主機 / 本地端資源]
+        OllamaGPU[Host Ollama GPU]:::existing
+        OllamaCPU[Host Ollama CPU Fallback]:::existing
+        
+        %% 新增：本地 Lean 4 實體專案
+        LeanProj[lean_proofs Subproject]:::newlyAdded
+    end
+
+    subgraph QA_Automation [品質自動化驗證]
+        Simulator[Simulator Runner]:::existing
+        
+        %% 新增：動態 DOM 像素遮罩過濾器
+        DOMMask[Dynamic DOM Mask Filter]:::newlyAdded
+    end
+
+    %% 連線關係
+    FE1 --> API
+    FE2 --> API
+    PromptMgr -.->|配置新 Prompt| Router
+    API --> Agents
+    Agents --> Router
+    Router -->|P_success 評估 / K 次嘗試| LeanComp
+    LeanComp -->|實體編譯與反饋| LeanProj
+    Router -->|Tier 3 / GPU| OllamaGPU
+    Router -->|Tier 3 / CPU Fallback| OllamaCPU
+    
+    Simulator --> DOMMask
+    DOMMask -->|像素對比篩選| QA_Automation
+```
+
+---
+
 ## 研發痛點與實證假設 (Hypothesis & Pain Points Analysis)
 
 > [!WARNING]
@@ -41,7 +101,7 @@
     對於本地小型模型，$P_{success}$ 面對中高難度定理時趨近於 $0$，導致 $E[T_{total}]$ 趨向無限大（陷入死循環）；而雲端 Pro 模型（如 Gemini 1.5 Pro）具備極高的推理深度，$P_{success}$ 顯著提升，使總時間收斂。
 *   **實證對策 (Hybrid Reasoning Router)**：
     *   **複雜度估算路由**：依據證明的抽象語意樹（AST）深度或目標 Tactic 數量評估難度。
-    *   **本地重試門檻**：若本地模型嘗試 $K$ 次（預設 $K=2$）仍編譯失敗，路由必須立即中斷本地迴圈，自動升級調用雲端 Pro 模型，以防耗盡本地 CPU 資源。
+    *   **本地重試門檻**：若本地模型嘗試 $K$ 次（預設 $K=2$）仍編譯失敗，路由必須立即中斷本地迴圈，自動升級調用雲端 Pro模型，以防耗盡本地 CPU 資源。
 
 ### 3. 痛點三：百關挑戰（Digital Twin Simulator）的運行負擔與對策評估
 *   **現狀說明**：`simulator_runner.py` 執行 E2E 併發測試時，若因動態欄位或網絡混沌注入導致像素差異大於 5.0%，會觸發 `vision_judge.py`（多模態 VLM 判定）。在本地執行時，高頻呼叫 VLM 會給 CPU 帶來極大壓力，導致百關挑戰執行超時。
@@ -68,18 +128,41 @@
 
 ---
 
-## 建議變更 (Proposed Changes)
+## 建議變更與詳細實作計畫 (Proposed Changes & Detailed Implementation Plan)
 
 ### 1. 資料庫 Prompt 治理整合 (Prompt Seeding & UI Sync)
-*   **資料庫種子**：在 `prompts` 表中注入 `LEAN_4_DEVELOPER_ASSISTANT`，預設寫入 Lean 4 的基礎語法、Tactics（如 `intro`, `rfl`, `simp`）與 JSON 輸出格式約束。
-*   **UI 串接**：確保該 Key 於 5173 的 Prompt Manager 中能被讀取、修改與儲存，實現人機協作控制。
+*   **實作變更檔案**：
+    *   [11_seed_config.sql](file:///Users/vincenta/GoogleKwok022/Archon/migration/0.2.2/11_seed_config.sql) (或新增對應的 SQL patch 檔案)
+    *   [init_db.py](file:///Users/vincenta/GoogleKwok022/Archon/scripts/init_db.py)
+*   **詳細步驟**：
+    1. 在 `prompts` 種子資料庫表格中注入新欄位：
+       * `key`: `'LEAN_4_DEVELOPER_ASSISTANT'`
+       * `prompt`: 包含 Lean 4 基本架構語法、tactics 強制指令、編譯反饋解析規則。
+    2. 更新 `init_db.py` 以確保升級數據庫時會自動 Append 此 Seed，且在 5173 前端 Prompt Manager 介面可以直接進行增刪改查。
 
-### 2. Hugging Face Serverless Fallback 架構優化
-*   **中繼層 (Tier 2) 評估**：
-    *   **運算資源**：使用免費的 HF Serverless Inference API 執行開源輕量模型（如 `Qwen/Qwen2.5-7B-Instruct`），不吃本機 CPU/記憶體。
-    *   **侷限性容災**：
-        *   **429 速率限制**：當 HF 發生 Too Many Requests 時，自動滑順降階至 Tier 3 (本地 Ollama)。
-        *   **冷啟動 (Cold Start)**：加入 10~30 秒的超時自癒與前端動態狀態指示，優化開發體驗。
+### 2. 混合推理路由器 (Hybrid Reasoning Router) 實作
+*   **實作變更檔案**：
+    *   [NEW] `python/src/server/services/llm/hybrid_router.py`
+    *   [MODIFY] [base.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/llm/base.py)
+*   **詳細步驟**：
+    1. 新建 `HybridRouter` 類別，實作基於 $E[T_{total}]$ 的決策演算法。
+    2. 提供 `evaluate_complexity(proof_context: str) -> int` 函式，解析當前 Lean 定理證明的 AST 複雜度。
+    3. 在 `base.py` 路由入口注入 `HybridRouter`。當檢測到目標為 Lean 4 證明生成時，若難度大於臨界值或本地重試計數器 $K \ge 2$，自動將請求發送至 Tier 1 雲端 API，否則指派給本地 Ollama。
+
+### 3. Lean 4 本地編譯驗證器 (Lean 4 Compiler Wrapper)
+*   **實作變更檔案**：
+    *   [NEW] `python/src/server/services/lean/compiler_service.py`
+*   **詳細步驟**：
+    1. 封裝 `LeanCompilerService` 類別，透過 `subprocess` 在隔離環境下調用 `lake build`。
+    2. 實作錯誤解析器 `parse_lake_errors(stdout: str) -> dict`，將編譯出錯的行數、tactic 失敗原因轉化為結構化的錯誤 JSON，供 Agent 或 LLM 作為自癒輸入。
+
+### 4. 百關模擬器動態遮罩 (Dynamic DOM Mask Filter)
+*   **實作變更檔案**：
+    *   [MODIFY] [simulator_runner.py](file:///Users/vincenta/GoogleKwok022/Archon/scripts/simulator_runner.py)
+*   **詳細步驟**：
+    1. 於 PIL 比對邏輯前，引入遮罩區域 JSON 配置檔 `baselines/viewport_mask.json`。
+    2. 使用 `PIL.ImageDraw.Draw` 將座標中定義的動態區域（例如頂欄時間戳、日誌輸出框等）實體塗黑（填充 `#000000`）。
+    3. 執行像素比對，確保動態渲染產生的偽隨機誤差不計入 5.0% 閾值。
 
 ---
 
