@@ -34,8 +34,8 @@
 *   **07:20 CST (UTC 23:20)**：執行系統清理作業。包含清理過期潛在客戶 (`prune_stale_leads`) 與清理過期探針日誌 (`system_probe_cleanup`)。
 *   **07:40 CST (UTC 23:40)**：Bob 根據 Alice 抓回來的最新資料，生成每日行銷報告 (`bob_market_report`)。
 *   **08:00 CST (UTC 00:00)**：生成高階主管總結 (`daily_executive_summary`)。此時所有部門的最新數據皆已齊備。
-
-*(註：`token_analysis` 與 `business_sentinel` 也可以安插在此排程管線之後，或維持較高頻率的狀態化輪詢。)*
+*   **08:20 CST (UTC 00:20)**：執行 Token 用量分析 (`token_analysis`)。在晨間大量 API 呼叫結束後，進行 24 小時成本結算與異常突增 (Cost Spike) 防護警報。
+*   **08:40 CST (UTC 00:40)**：執行商業哨兵監控 (`business_sentinel`)。掃描過期的潛在客戶與卡關的部落格文章，並自動指派逾期追蹤任務，確保人員上班時待辦清單已準備就緒。
 
 ### 2. 實作 HF 節律感知 (HF Sleep Awareness)
 
