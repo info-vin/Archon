@@ -105,6 +105,12 @@ export const useBrandLogic = () => {
         
         const sourceData = { ...source };
         
+        // PERFORMANCE: Initiate network requests in parallel to prevent waterfall
+        let contextPromise: Promise<any> | null = null;
+        if (!source.id.startsWith('blank-')) {
+             contextPromise = api.getContentContext(source.id, source.type);
+        }
+
         if (source.type === 'blog' && source.id && !source.id.startsWith('blank-')) {
             setIsLoadingContext(true);
             try {
@@ -135,10 +141,10 @@ export const useBrandLogic = () => {
         }
         
         setActiveSource(sourceData);
-        if (!source.id.startsWith('blank-')) {
+        if (contextPromise) {
             setIsLoadingContext(true);
             try {
-                const context = await api.getContentContext(source.id, source.type);
+                const context = await contextPromise;
                 setContextData(context);
             } catch (err) {
                 console.error("Failed to load context:", err);
