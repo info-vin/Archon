@@ -52,6 +52,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
                 value={keyword}
                 onChange={(e) => send({ type: 'UPDATE_KEYWORD', keyword: e.target.value })}
                 placeholder="Search high-quality images (e.g., 'business meeting')..."
+                aria-label="Search high-quality images"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 id="search-input"
               />
