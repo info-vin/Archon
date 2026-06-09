@@ -16,7 +16,7 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     # --- Setup Mocks ---
     # 1. RBAC service mock: Assume the permission check passes.
     mock_rbac_instance = mock_rbac_class.return_value
-    mock_rbac_instance.has_permission_to_assign.return_value = True
+    mock_rbac_instance.has_permission_to_assign = AsyncMock(return_value=True)
 
     # 2. Profile service mock: Assume we can get the assignee's role.
     mock_profile_instance = mock_profile_class.return_value
@@ -65,7 +65,7 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     # --- Setup Mocks ---
     # 1. RBAC service mock: This time, the permission check fails.
     mock_rbac_instance = mock_rbac_class.return_value
-    mock_rbac_instance.has_permission_to_assign.return_value = False
+    mock_rbac_instance.has_permission_to_assign = AsyncMock(return_value=False)
 
     # 2. Profile service mock: Return a user in a different department
     mock_profile_instance = mock_profile_class.return_value
@@ -111,7 +111,7 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
     """
     # --- Setup Mocks ---
     mock_rbac_instance = mock_rbac_class.return_value
-    mock_rbac_instance.has_permission_to_assign.return_value = True
+    mock_rbac_instance.has_permission_to_assign = AsyncMock(return_value=True)
 
     mock_task_service_instance = mock_task_service_class.return_value
     mock_task_service_instance.create_task = AsyncMock(return_value=(True, {"task": {"id": "new-task-id"}}))

@@ -143,7 +143,7 @@ class RBACService:
 
         return constraints
 
-    def has_permission_to_assign(self, current_user_role: str, assignee_role: str) -> bool:
+    async def has_permission_to_assign(self, current_user_role: str, assignee_role: str) -> bool:
         """Checks if the current user role has permission to assign tasks to the target role."""
         if not current_user_role or not assignee_role:
             return False
@@ -151,24 +151,48 @@ class RBACService:
         current_role = current_user_role.lower()
         target_role = assignee_role.lower()
 
+        # 1. Try dynamic permission matrix first
+        perms = await self.get_role_permissions(current_role)
+        if perms:
+            if f"assign:{target_role}" in perms:
+                return True
+            if "assign:all" in perms or current_role in ["admin", "system_admin"]:
+                return True
+
+        # 2. Fallback to static permissions mapping
         allowed_roles = self.permissions.get(current_role, [])
 
-        # 1. Direct role match
+        # Direct role match
         if target_role in allowed_roles:
             return True
 
-        # 2. Agent wildcard check
-        # If the target is an 'ai_agent' role, it should be allowed if 'ai_agent' is in the list.
+        # Agent wildcard check
         if target_role == "ai_agent" and "ai_agent" in allowed_roles:
             return True
 
         return False
 
-    def get_assignable_roles(self, current_user_role: str) -> list[str]:
+    async def get_assignable_roles(self, current_user_role: str) -> list[str]:
         """Returns a list of roles that the current user can assign tasks to."""
         if not current_user_role:
             return []
-        return self.permissions.get(current_user_role.lower(), [])
+        current_role = current_user_role.lower()
+
+        # 1. Try dynamic permission matrix first
+        perms = await self.get_role_permissions(current_role)
+        if perms:
+            assignable = []
+            for p in perms:
+                if p.startswith("assign:"):
+                    assignable.append(p.split(":")[1])
+            if assignable:
+                if "all" in assignable:
+                    matrix = await self.get_matrix()
+                    return list(matrix.keys())
+                return assignable
+
+        # 2. Fallback to static
+        return self.permissions.get(current_role, [])
 
     def can_manage_content(self, current_user_role: str) -> bool:
         """Checks if the current user role has permission to manage content."""

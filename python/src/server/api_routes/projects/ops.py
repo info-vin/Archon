@@ -185,7 +185,7 @@ async def update_task(task_id: str, req: UpdateTaskRequest, current_user: dict =
         name = fields.get("assignee")
         if name and name != "Unassigned":
             ok, r = ProfileService().get_user_role(str(name))
-            if ok and r and not RBACService().has_permission_to_assign(u_role, r):
+            if ok and r and not await RBACService().has_permission_to_assign(u_role, r):
                 _err("Forbidden: Cannot reassign to this role", 403)
 
     s, res = await TaskService().update_task(task_id, fields)

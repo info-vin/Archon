@@ -239,7 +239,7 @@ test-perf:
 	@cd python && $(UV) run python ../scripts/reproduce_blocking_token_usage.py
 
 # Run all linters
-lint: lint-fe lint-be
+lint: lint-fe lint-be test-lean
 
 # Run all frontend linters
 lint-fe:

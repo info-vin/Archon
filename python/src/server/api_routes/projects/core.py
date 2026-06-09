@@ -44,13 +44,17 @@ async def list_assignable_users(current_user: dict = Depends(get_current_user)):
     rbac = RBACService()
     user_list = users if isinstance(users, list) else []
 
-    return [
-        AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"]))
-        for u in user_list
-        if u.get("role") != "ai_agent"
-        and rbac.has_permission_to_assign(current_user_role, str(u.get("role", "User")))
-        and rbac.validate_project_access(u, current_user)
-    ]
+    filtered_users = []
+    for u in user_list:
+        if u.get("role") == "ai_agent":
+            continue
+        can_assign = await rbac.has_permission_to_assign(current_user_role, str(u.get("role", "User")))
+        if can_assign and rbac.validate_project_access(u, current_user):
+            filtered_users.append(
+                AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"]))
+            )
+
+    return filtered_users
 
 
 @router.get("/projects")
