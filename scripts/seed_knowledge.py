@@ -26,7 +26,10 @@ POSSIBLE_DIRS = [
     "enduser-ui-fe/public/aus/156_resource",         # Root relative
     "../enduser-ui-fe/public/assets/videos/auto_demos",
     "/app/frontend_public/assets/videos/auto_demos",
-    "enduser-ui-fe/public/assets/videos/auto_demos"
+    "enduser-ui-fe/public/assets/videos/auto_demos",
+    "../docs/docs/knowledge-journal",               # Host relative journal
+    "/app/docs/docs/knowledge-journal",             # Docker internal journal
+    "docs/docs/knowledge-journal"                   # Root relative journal
 ]
 
 SYSTEM_DOCS = [
@@ -100,7 +103,7 @@ async def seed_knowledge():
             content = ""
             k_type = "technical"
 
-            if file.endswith('.md') or file.endswith('.txt'):
+            if file.endswith('.md') or file.endswith('.mdx') or file.endswith('.txt'):
                 with open(file_path, encoding='utf-8') as f:
                     content = f.read()
             elif file.endswith('.mp4') or file.endswith('.webm'):
