@@ -8,7 +8,15 @@ interface GanttViewProps {
 
 export const GanttView: React.FC<GanttViewProps> = React.memo(({ tasks }) => {
   const svgRef = React.useRef<SVGSVGElement>(null);
-  const validTasks = useMemo(() => tasks.filter(d => d.due_date && d.created_at), [tasks]);
+  // PERFORMANCE: Pre-parse dates to avoid redundant string parsing allocations in the render loop.
+  // We apply this only to valid items to avoid computing values for skipped items.
+  const validTasks = useMemo(() => tasks
+    .filter(d => d.due_date && d.created_at)
+    .map(d => ({
+        ...d,
+        parsedCreatedAt: new Date(d.created_at!),
+        parsedDueDate: new Date(d.due_date!)
+    })), [tasks]);
 
   useEffect(() => {
     if (!svgRef.current || validTasks.length === 0) return;
@@ -24,7 +32,7 @@ export const GanttView: React.FC<GanttViewProps> = React.memo(({ tasks }) => {
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const x = scaleTime()
-      .domain(extent([...validTasks.map(d => new Date(d.created_at!)), ...validTasks.map(d => new Date(d.due_date!))]) as [Date, Date])
+      .domain(extent([...validTasks.map(d => d.parsedCreatedAt), ...validTasks.map(d => d.parsedDueDate)]) as [Date, Date])
       .range([0, width]);
 
     const y = scaleBand()
@@ -57,9 +65,9 @@ export const GanttView: React.FC<GanttViewProps> = React.memo(({ tasks }) => {
       .enter()
       .append("rect")
       .attr("class", "bar")
-      .attr("x", d => x(new Date(d.created_at!)))
+      .attr("x", d => x(d.parsedCreatedAt))
       .attr("y", d => y(d.title)!)
-      .attr("width", d => x(new Date(d.due_date!)) - x(new Date(d.created_at!)))
+      .attr("width", d => x(d.parsedDueDate) - x(d.parsedCreatedAt))
       .attr("height", y.bandwidth())
       .attr("rx", 4)
       .attr("fill", "#6366f1")
