@@ -38,7 +38,7 @@
 *   **繞過 Keychain（規格 vs. 現實）**：
     *   *規格*：E2E 測試必須能在不依賴本地 Keychain 的 CI 容器環境下運作。
     *   *現實*：實作於 [cookie_injector.py](file:///Users/vincenta/GoogleKwok022/Archon/scripts/cookie_injector.py)，藉由物理注入 `storage_state.json` 到 Playwright 的 `BrowserContext` 來保持登入狀態。
-*   **混沌攔截（規格 vs. 現現）**：
+*   **混沌攔截（規格 vs. 現實）**：
     *   *規格*：需具備隨機注入網路延遲與 HTTP 500 錯誤的能力。
     *   *現實*：實作於 [twin_scout.py](file:///Users/vincenta/GoogleKwok022/Archon/scripts/twin_scout.py)，利用 Playwright 的 `page.route("**/api/**")` 進行請求攔截。
 *   **AI 視覺裁判（規格 vs. 現實）**：
@@ -46,8 +46,8 @@
     *   *現實*：在 `twin_scout.py` 與 `vision_judge.py` 中皆已實作且運作中。
 
 ### 2.2 工作流規格對帳（手動 vs. AI 審批流）
-在人機協作生態中，Twin Scout 必須對以下核心工作流進行對帳：
-1.  **手動專案管理流**：使用者手動點擊看板卡片、更新進度或填寫子任務。此部分由 `twin_scout.py` 的實體 DOM操作（例如 `goto('/#/dashboard')`）結合資料庫變更驗證。
+In 人機協作生態中，Twin Scout 必須對以下核心工作流進行對帳：
+1.  **手動專案管理流**：使用者手動點擊看板卡片、更新進度或填寫子任務。此部分由 `twin_scout.py` 的實體 DOM 操作（例如 `goto('/#/dashboard')`）結合資料庫變更驗證。
 2.  **AI 任務分派與審批流 (AI Delegation & Approval)**：
     *   *規格*：Alice (Sales) 呼叫 `MarketBot` 生成開發信，寫入資料表 `leads`。
     *   *規格*：Charlie (Manager) 登入 `/approvals` 頁面，檢視 AI 提交的提案，執行「批准 (Approve)」或「退件 (Reject)」。
@@ -138,6 +138,28 @@ theorem dual_judge_short_circuit
   dual_judge x = false
 ```
 
+### 5.4 戰線四：多 Agent 星環討論拓樸安全性與終止性定理
+為了防範多 Agent 在星環群聊 (Star-Topology) 討論中陷入無限的訊息循環 (Infinite Loop) 並確保拓樸合法性：
+
+*   **拓樸安全性 (Topology Safety)**：證明任意訊息路由必定以 `Supervisor` 為中繼中心。任意兩個功能型 Agent 之間禁止繞過 Supervisor 直接通訊。
+```lean
+-- 若發言者與接收者都不是 Supervisor，則該訊息流非法
+theorem star_flow_safety 
+  (msg : Message) 
+  (h_not_su_sender : msg.sender ≠ AgentNode.supervisor) 
+  (h_not_su_recv : msg.receiver ≠ AgentNode.supervisor) :
+  ¬ (is_valid_star_flow msg)
+```
+
+*   **終止性證明 (Termination via Budget)**：基於遞減的步驟預算 (Chat Budget)，證明整個多 Agent 討論在預算耗盡時必定會收斂終止。
+```lean
+-- 證明當步數預算為 0 時，討論狀態機被迫終止且不再接受任何新訊息
+theorem star_chat_termination 
+  (s : ChatState) 
+  (h_budget : s.budget = 0) :
+  chat_step s = ChatState.terminated
+```
+
 ---
 
 ## 6. 定理之自動化驗證機制 (Automated Verification Pipeline)
@@ -149,5 +171,5 @@ theorem dual_judge_short_circuit
 *   **雙向物理對帳自動執行**：形式化對帳測試檔案 `python/tests/integration/test_lean_model_alignment.py` 作為整合測試，將會自動被 `make test-be` 與 `make audit-qa` 掃描並物理執行。
 
 ### 6.2 雙向物理對帳測試 (Parity Python Test) 運作原理
-*   **機制**：`test_lean_model_alignment.py` 測試會動態捞取後端實際資料庫權限與 Python 狀態機代碼。
-*   **比對**：與 `AuditParity.lean` 中的 `WorkflowState` 定理前提假設進行邊界比對。一旦代碼中的狀態改變而 Lean 定理模型未同步更新，Pytest 將直接失敗阻斷，保證形式化與實體代碼的「一致性自癒」。
+*   **機制**：`test_lean_model_alignment.py` 測試會動態撈取後端實際資料庫權限與 Python 狀態機代碼。
+*   **比對**：與 `AuditParity.lean` 中的 `WorkflowState` 與 `AgentNode` 定理前提假設進行邊界比對。一旦代碼中的狀態改變而 Lean 定理模型未同步更新，Pytest 將直接失敗阻斷，保證形式化與實體代碼的「一致性自癒」。

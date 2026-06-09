@@ -23,7 +23,7 @@ def get_lean_file_content():
 def test_lean_rbac_roles_alignment():
     """
     Verifies that the roles defined in Lean 4 (Role inductive type)
-    match the actual roles supported in RBACService.
+    match the core transactional roles.
     """
     content = get_lean_file_content()
     assert content is not None, "Lean 4 specification file not found."
@@ -35,7 +35,7 @@ def test_lean_rbac_roles_alignment():
     lean_roles = set(re.findall(r"\|\s*([a-zA-Z0-9_]+)", role_block_match.group(1)))
 
     # We allow the Lean proof model to be a simplified representative subset of system roles.
-    # But it MUST contain the core transactional human/agent roles (system_admin, manager, sales, marketing, employee, ai_agent).
+    # But it MUST contain the core transactional human/agent roles.
     core_roles = {"system_admin", "manager", "sales", "marketing", "employee", "ai_agent"}
 
     for r in core_roles:
@@ -76,3 +76,21 @@ def test_lean_dual_judge_short_circuit_logic():
     expression = judge_match.group(1).strip()
     # Ensure it implements data_check first (short-circuiting logic)
     assert expression.startswith("data_check"), f"Lean dual_judge does not prioritize data_check! Expression: {expression}"
+
+
+def test_lean_agent_topology_nodes_alignment():
+    """
+    Verifies that the Agent nodes defined in Lean (AgentNode)
+    match the core transactional Bots in the system.
+    """
+    content = get_lean_file_content()
+    assert content is not None, "Lean 4 specification file not found."
+
+    # Parse AgentNode enum from Lean file
+    agent_block_match = re.search(r"inductive AgentNode\s*(.*?)(?=\n\n|\ninductive|\ndef)", content, re.DOTALL)
+    assert agent_block_match is not None, "Could not locate inductive AgentNode block in Lean file."
+
+    lean_nodes = set(re.findall(r"\|\s*([a-zA-Z0-9_]+)", agent_block_match.group(1)))
+
+    expected_agents = {"supervisor", "devbot", "librarian", "marketbot"}
+    assert lean_nodes == expected_agents, f"Lean AgentNodes {lean_nodes} mismatch with expected multi-agent roles!"

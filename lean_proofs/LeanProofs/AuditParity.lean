@@ -1,5 +1,5 @@
 -- AuditParity.lean
--- Lean 4 Spec verification for Phase 5.6.4 RBAC, Workflow and Short-circuiting Dual Judge
+-- Lean 4 Spec verification for Phase 5.6.4 RBAC, Workflow, Short-circuiting Dual Judge and Star-Topology
 
 -- ==========================================
 -- 戰線一：RBAC 動態與靜態等價定理
@@ -119,3 +119,46 @@ theorem dual_judge_short_circuit (x : UISnapshot) (h_data : data_check x = false
   unfold dual_judge
   rw [h_data]
   rfl
+
+
+-- ==========================================
+-- 戰線四：多 Agent 星環討論拓樸安全性與終止性定理
+-- ==========================================
+
+inductive AgentNode
+  | supervisor
+  | devbot
+  | librarian
+  | marketbot
+
+structure Message where
+  sender : AgentNode
+  receiver : AgentNode
+
+def is_valid_star_flow (msg : Message) : Prop :=
+  msg.sender = AgentNode.supervisor ∨ msg.receiver = AgentNode.supervisor
+
+theorem star_flow_safety (msg : Message) (h_not_su_sender : msg.sender ≠ AgentNode.supervisor) (h_not_su_recv : msg.receiver ≠ AgentNode.supervisor) :
+  ¬ (is_valid_star_flow msg) := by
+  intro h_flow
+  cases h_flow with
+  | inl h1 => exact h_not_su_sender h1
+  | inr h2 => exact h_not_su_recv h2
+
+structure ChatState where
+  budget : Nat
+  is_terminated : Bool
+
+def chat_step (s : ChatState) : ChatState :=
+  match s.budget with
+  | 0 => { budget := 0, is_terminated := true }
+  | Nat.succ n => { budget := n, is_terminated := false }
+
+theorem star_chat_termination (s : ChatState) (h_budget : s.budget = 0) :
+  (chat_step s).is_terminated = true := by
+  unfold chat_step
+  split
+  · rfl
+  · rename_i n hn
+    rw [hn] at h_budget
+    contradiction
