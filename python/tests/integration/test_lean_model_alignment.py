@@ -94,3 +94,26 @@ def test_lean_agent_topology_nodes_alignment():
 
     expected_agents = {"supervisor", "devbot", "librarian", "marketbot"}
     assert lean_nodes == expected_agents, f"Lean AgentNodes {lean_nodes} mismatch with expected multi-agent roles!"
+
+
+def test_python_rag_threshold_alignment():
+    """
+    Ensures that the default RAG similarity threshold in python search strategy
+    is hardened to 0.30 as defined in the system specifications and Lean 4 model context.
+    """
+    from src.server.services.search.base_search_strategy import SIMILARITY_THRESHOLD
+    assert SIMILARITY_THRESHOLD == 0.30, f"Hardened RAG SIMILARITY_THRESHOLD should be 0.30, found {SIMILARITY_THRESHOLD}"
+
+
+def test_python_budget_limit_default_alignment():
+    """
+    Ensures that the default budget limit parameter matches system spec defaults.
+    """
+    # Verify the fallback budget limit is 10.0 USD
+    # Reading lines in budget_guard.py to verify fallback assignment budget_limit = 10.0
+    import inspect
+
+    from src.server.middleware.budget_guard import BudgetGuardMiddleware
+    source = inspect.getsource(BudgetGuardMiddleware)
+    assert "budget_limit = 10.0" in source, "Default budget limit fallback in middleware should be 10.0 USD"
+

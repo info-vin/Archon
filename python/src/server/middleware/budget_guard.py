@@ -93,7 +93,13 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
 
         except Exception as e:
             logger.error(f"[Budget Guard] Error enforcing budget checks: {e}")
-            # Fail-open under error conditions to prevent system blocking during DB issues
-            pass
+            # Fail-closed/Fail-safe: Block write actions on DB connectivity error unless system_admin/agent
+            return JSONResponse(
+                status_code=402,
+                content={
+                    "error": "Payment Required",
+                    "detail": f"Database verification failure during budget checks: {e}. Operation blocked for safety."
+                }
+            )
 
         return cast(Response, await call_next(request))

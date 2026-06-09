@@ -162,3 +162,80 @@ theorem star_chat_termination (s : ChatState) (h_budget : s.budget = 0) :
   · rename_i n hn
     rw [hn] at h_budget
     contradiction
+
+
+-- ==========================================
+-- 戰線五：Phase 5.6.5 形式化安全定理證明
+-- ==========================================
+
+-- 1. RAG 語意搜尋相似度臨界裁剪 (rag_semantic_safety)
+structure RAGDocument where
+  similarity : Nat
+  content : String
+
+def rag_filter (docs : List RAGDocument) (threshold : Nat) : List RAGDocument :=
+  docs.filter (fun d => d.similarity >= threshold)
+
+theorem rag_semantic_safety (docs : List RAGDocument) (threshold : Nat) (d : RAGDocument) :
+  d ∈ rag_filter docs threshold → d.similarity >= threshold := by
+  intro h
+  unfold rag_filter at h
+  rw [List.mem_filter] at h
+  have h_decide := h.right
+  exact of_decide_eq_true h_decide
+
+
+-- 2. 預算熔斷器單調阻斷 (budget_guard_monotonic_blocking)
+structure BudgetState where
+  total_cost : Nat
+  budget_limit : Nat
+  db_error : Bool
+
+def budget_guard_is_blocked (s : BudgetState) : Bool :=
+  (s.total_cost >= s.budget_limit) || s.db_error
+
+theorem budget_guard_monotonic_blocking (s1 s2 : BudgetState)
+  (h_blocked : budget_guard_is_blocked s1 = true)
+  (h_monotonic : s2.total_cost >= s1.total_cost ∧ s2.budget_limit = s1.budget_limit ∧ (s1.db_error = true → s2.db_error = true)) :
+  budget_guard_is_blocked s2 = true := by
+  unfold budget_guard_is_blocked at h_blocked
+  unfold budget_guard_is_blocked
+  rw [Bool.or_eq_true] at h_blocked
+  rw [Bool.or_eq_true]
+  cases h_blocked with
+  | inl h1 =>
+    left
+    have h_ge : s1.total_cost >= s1.budget_limit := of_decide_eq_true h1
+    have h2 : s2.total_cost >= s2.budget_limit := by
+      have h_trans : s1.budget_limit <= s2.total_cost := Nat.le_trans h_ge h_monotonic.left
+      rw [h_monotonic.right.left]
+      exact h_trans
+    exact decide_eq_true h2
+  | inr h1 =>
+    right
+    exact h_monotonic.right.right h1
+
+
+-- 3. 多租戶隔離零洩漏保證 (rls_zero_leakage_guarantee)
+structure DBRow where
+  tenant_id : Nat
+  payload : String
+
+def select_by_tenant (table : List DBRow) (t_id : Nat) : List DBRow :=
+  table.filter (fun row => decide (row.tenant_id = t_id))
+
+theorem rls_zero_leakage_guarantee (table : List DBRow) (t1 t2 : Nat) (h_neq : t1 ≠ t2) :
+  ∀ row ∈ select_by_tenant table t1, row ∉ select_by_tenant table t2 := by
+  intro row h1
+  unfold select_by_tenant at h1
+  rw [List.mem_filter] at h1
+  intro h2
+  unfold select_by_tenant at h2
+  rw [List.mem_filter] at h2
+  have h1_id : row.tenant_id = t1 := of_decide_eq_true h1.right
+  have h2_id : row.tenant_id = t2 := of_decide_eq_true h2.right
+  rw [h1_id] at h2_id
+  exact h_neq h2_id
+
+
+

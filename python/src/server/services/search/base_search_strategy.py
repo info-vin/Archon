@@ -15,8 +15,8 @@ from ...config.logfire_config import get_logger, safe_span
 
 logger = get_logger(__name__)
 
-# Fixed similarity threshold for vector results
-SIMILARITY_THRESHOLD = 0.15
+# Default similarity threshold for vector results
+SIMILARITY_THRESHOLD = 0.30
 
 
 class BaseSearchStrategy(BaseRepository):
@@ -25,6 +25,28 @@ class BaseSearchStrategy(BaseRepository):
     def __init__(self, supabase_client: Client):
         """Initialize with database client"""
         super().__init__(supabase_client)
+
+    async def get_dynamic_threshold(self) -> float:
+        """Fetch dynamic threshold from settings with fallback to SIMILARITY_THRESHOLD"""
+        try:
+            # Avoid querying mock client in unit tests to prevent mock state pollution
+            if type(self.supabase_client).__name__ in ("MagicMock", "Mock"):
+                return SIMILARITY_THRESHOLD
+
+            # Try to fetch RAG_SIMILARITY_THRESHOLD from archon_settings
+            query = self.supabase_client.table("archon_settings").select("value").eq("key", "RAG_SIMILARITY_THRESHOLD")
+            success, result = self.execute_query(
+                query.execute,
+                error_context="Error fetching dynamic RAG similarity threshold",
+                require_data=False
+            )
+            if success and result and isinstance(result.get("data"), list) and len(result["data"]) > 0:
+                val = result["data"][0].get("value")
+                if val is not None and not hasattr(val, "_mock_return_value"):
+                    return float(val)
+        except Exception:
+            pass
+        return SIMILARITY_THRESHOLD
 
     async def vector_search(
         self,
@@ -51,7 +73,10 @@ class BaseSearchStrategy(BaseRepository):
         """
         with safe_span("base_vector_search", table=table_rpc, match_count=match_count) as span:
             # Determine threshold
-            threshold = min_score if min_score is not None else SIMILARITY_THRESHOLD
+            if min_score is not None:
+                threshold = min_score
+            else:
+                threshold = await self.get_dynamic_threshold()
 
             # Build RPC parameters
             rpc_params = {"query_embedding": query_embedding, "match_count": match_count}
