@@ -58,6 +58,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
       <div className="flex border-b dark:border-slate-800">
         <button
           onClick={() => setPromptTab('config')}
+          aria-pressed={promptTab === 'config'}
           className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all ${promptTab === 'config' ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
         >
           <SettingsIcon className="w-3.5 h-3.5 inline mr-2" />
@@ -65,6 +66,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
         </button>
         <button
           onClick={() => setPromptTab('inspect')}
+          aria-pressed={promptTab === 'inspect'}
           className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all ${promptTab === 'inspect' ? 'border-indigo-600 text-indigo-600 bg-indigo-50/30' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
         >
           <EyeIcon className="w-3.5 h-3.5 inline mr-2" />
@@ -83,6 +85,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
                   <button
                     key={ind}
                     onClick={() => toggleItem('industry', ind)}
+                    aria-pressed={config.industry.includes(ind)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                       config.industry.includes(ind)
                         ? 'bg-indigo-600 border-indigo-600 text-white'
@@ -103,6 +106,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
                   <button
                     key={chart}
                     onClick={() => toggleItem('charts', chart)}
+                    aria-pressed={config.charts.includes(chart)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                       config.charts.includes(chart)
                         ? 'bg-amber-500 border-amber-500 text-white'
@@ -123,6 +127,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
                   <button
                     key={len.id}
                     onClick={() => setConfig({...config, length: len.id})}
+                    aria-pressed={config.length === len.id}
                     className={`px-4 py-3 rounded-xl text-xs font-bold transition-all border text-left flex justify-between items-center ${
                       config.length === len.id
                         ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
@@ -144,6 +149,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
                   <button
                     key={s}
                     onClick={() => toggleItem('style', s)}
+                    aria-pressed={config.style.includes(s)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                       config.style.includes(s)
                         ? 'bg-emerald-600 border-emerald-600 text-white'
@@ -168,7 +174,8 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
                 <button
                     onClick={() => setConfig({...config, enableWebSearch: !config.enableWebSearch})}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.enableWebSearch ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}
-                    aria-label="Toggle Google Search Grounding"
+                    aria-label={`Toggle Google Search Grounding. Currently ${config.enableWebSearch ? 'enabled' : 'disabled'}.`}
+                    aria-pressed={config.enableWebSearch}
                 >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.enableWebSearch ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
