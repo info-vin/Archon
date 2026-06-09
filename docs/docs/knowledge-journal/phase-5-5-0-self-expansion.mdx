@@ -1,0 +1,44 @@
+---
+id: phase-5-5-0-self-expansion
+title: Phase 5.5.x - 資料自癒救援與級聯降階架構
+sidebar_position: 3
+tags: [database, fallback, failover, refactoring, quality-gate]
+---
+
+# Phase 5.5.x: 資料自癒救援與 3-Tier 級聯降階架構
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 5.5 系列的核心任務是進行系統的「容災自癒」與「服務解耦」。隨著系統從純本地走向混合雲，我們面臨了雲端 Supabase 連線中斷、免費 LLM API Key 限流、以及 Docker 容器空間暴漲等物理瓶頸。本階段旨在透過實作 3-Tier LLM 自動降階容災、物理資料救援與資料庫 RLS 硬化，確保系統具備強大的環境適應與自癒能力，並徹底完成核心單體代碼的 L2 模組化拆分。
+
+## 🔍 實體架構與落地細節 (Architectural Deep Dive)
+
+### 1. 3-Tier LLM 級聯容災路由 (Auto-Failover Routing)
+- **自癒轉接機制**：在後端實作了具備「人類控制」與「狀態透明」的 LLM 自動級聯路由：
+  - **Tier 1 (主要)**：Google Gemini (Cloud)。
+  - **Tier 2 (雲端備援)**：Hugging Face Serverless (雲端 API 429 時轉接)。
+  - **Tier 3 (本地離線)**：本地 Ollama (斷網或雲端憑證失效時，直降離線運作)。
+- **自動復原與狀態 API**：當主要雲端呼叫成功時，自動觸發自癒將作用中層級重設為 Tier 1。實作 `/api/system/fallback/status` 端點，透過連線偵測真實網路狀態，並於 UI 配置狀態 BADGE 進行輪詢監控。
+
+### 2. 檔案與資料庫自癒救援 (Data Rescue & RLS Hardening)
+- **錯誤優雅降級**：修改 `storage_service.py` 使其能優雅攔截並記錄 `SupabaseException`（如 Invalid API Key），容許測試在 Supabase 連線受阻時仍能完成本地模擬，防止因外部依賴阻滯導致系統崩潰。
+- **動態白名單物理連動**：將白名單規則與 `archon_crawler_targets` 進行實體連動，實現了 David 在 Admin 介面設定的 Whitelist 與後端安全白名單的自動對齊。
+
+### 3. 核心單體 L2 模組化瘦身 (Monolith Refactoring)
+我們實施了單一源碼檔案低於 400 行的 E2E 品質門門禁，對三個 God Objects 進行了邏輯抽離：
+- **`manager.py` 瘦身 (427 行 → 321 行)**：移除了未被調用的 legacy 邏輯，並將憑證檢查剝離至 `helpers.py`。
+- **`ollamaService.ts` 瘦身 (436 行 → 277 行)**：抽離所有強型別聲明至 `ollamaTypes.ts`。
+- **`BugReportModal.tsx` 瘦身 (429 行 → 319 行)**：將 Toast 提示、表單狀態及 Issue 提交邏輯以自訂 Hook `useBugReport.ts` 進行物理隔離，僅保留純粹的 UI 渲染。
+
+---
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::warning[RLS 與雙端設定 UI 的排他衝突]
+在設定 5173 (enduser) 與 3737 (admin) 的降階容災開關時，若兩端 UI 對於同一個設定項目（如 `forced_fallback_tier`）進行無規則覆寫，會導致連鎖狀態混亂。
+**鐵律**: 必須在 Admin UI 中實施 `is_system_protected` 欄位物理過濾，排除全域性敏感設定，使其完全由 Admin 帳號單點控管。
+:::
+
+:::tip[離線模型的冷啟動與 OOM 瓶頸]
+在離線模式測試 `gemma4:e4b` 等巨型模型時，容易引發 Mac CPU 長達數分鐘的冷啟動載入延遲。
+**鐵律**: 應採用輕量且支援多模態的離線模型（如 `gemma3:4b`，約 3.3GB），在保障離線對帳裁判能力的同時，避免 OOM 崩潰。
+:::
