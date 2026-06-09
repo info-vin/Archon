@@ -103,3 +103,7 @@
 ## 2026-06-08 - Parallelizing sequential API requests in React hooks
 **Learning:** Sequential network requests in React hooks (e.g., awaiting a blog post, then awaiting its context) create unnecessary network waterfalls that increase loading times for users, especially if the secondary request's inputs don't depend on the first request's output.
 **Action:** Use Promise.all() (or parallel promise initialization) to run independent API calls concurrently. When doing so without Promise.all, initiate the promises early and await them independently within their existing try/catch blocks to prevent single failures from breaking the entire feature.
+
+## 2024-06-09 - D3 Render Loop Allocation Churn
+**Learning:** In React components that wrap D3 renderings (like `GanttView.tsx`), using inline object instantiations like `new Date(d.created_at)` inside `.map()` and `.attr()` callbacks during the D3 render phase causes massive redundant allocations on every React re-render. Since `d3.extent` and multiple `.attr` loops iterate over the data repeatedly, the same date strings are parsed multiple times per render.
+**Action:** Pre-parse strings into native `Date` objects during the `useMemo` data-filtering stage. Map them onto the data objects once (e.g., `parsedCreatedAt`, `parsedDueDate`), and reference those pre-computed values directly in the D3 loop to prevent N*M allocations during render cycles.
