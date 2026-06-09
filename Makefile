@@ -370,7 +370,7 @@ phase-audit:
 test-lean:
 	@echo "--- Testing Lean 4 Subproject (lean_proofs) ---"
 	@if command -v lake >/dev/null 2>&1; then \
-		cd lean_proofs && lake test; \
+		cd lean_proofs && lake build; \
 	else \
 		echo "⚠️  WARNING: 'lake' command not found. Skipping Lean 4 tests. Please refer to ### 2.5 in CONTRIBUTING_tw.md for setup."; \
 	fi

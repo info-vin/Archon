@@ -146,6 +146,7 @@ export const handlers = [
   })),
   
   // 5. Fallbacks
+  http.get('*/api/system/fallback/status', () => HttpResponse.json({ active_tier: 1, internet_connected: true })),
   http.get('*/api/ethics/events', () => HttpResponse.json([])),
   http.get('*/api/changes', () => HttpResponse.json([])),
   http.get('*/api/stats/ai-usage', () => HttpResponse.json({ total_budget: 1000, total_used: 150 })),
