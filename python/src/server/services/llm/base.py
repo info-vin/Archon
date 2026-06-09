@@ -149,7 +149,10 @@ class UsageTrackingCompletions:
         is_lean = False
         proof_context = ""
         for m in kwargs.get("messages", []):
-            content = m.get("content", "")
+            if isinstance(m, dict):
+                content = m.get("content", "") or ""
+            else:
+                content = getattr(m, "content", "") or ""
             if "lean 4" in content.lower() or "lake build" in content.lower() or "theorem" in content.lower():
                 is_lean = True
                 proof_context += content + "\n"
