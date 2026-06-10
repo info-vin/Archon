@@ -21,6 +21,6 @@
 3. 驗證畫面中是否存在關鍵 DOM 元素（例如：「登入按鈕」或「側邊欄」），若找不到代表 React 崩潰 (白畫面)，立即報錯。
 
 ## ✅ 成功定義 (Success Criteria)
-- [ ] 成功在 `.github/workflows/` 新增監控設定檔。
-- [ ] 觸發手動測試 (workflow_dispatch) 時，能正確辨識 200 與 400 錯誤。
-- [ ] 不依賴且不消耗任何額外的雲端機器資源（完全利用 GitHub Actions 免費額度）。
+- [x] 成功在 `.github/workflows/` 新增監控設定檔。
+- [x] 觸發手動測試 (workflow_dispatch) 時，能正確辨識 200 與 400 錯誤。
+- [x] 不依賴且不消耗任何額外的雲端機器資源（完全利用 GitHub Actions 免費額度）。

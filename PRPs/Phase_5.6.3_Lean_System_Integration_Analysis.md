@@ -16,7 +16,7 @@
 * **Python 落地 (對帳機制)**：
   在 [knowledge-journal](file:///Users/vincenta/GoogleKwok022/Archon/docs/docs/knowledge-journal/) 的實體規範下（知識庫已包含 `docs/docs/knowledge-journal/` 的歷史與狀態日誌），Python 的 `knowledge_item_service.py` 實作該 filter 演算法。Code Review 僅需核對 Python 程式碼是否忠實實作了 Lean 中已被證明的演算法前提。
 * **RAG 實體數據沉澱任務**：
-  在初始化時，新增 `scripts/seed_journal.py` 腳本，主動對 `docs/docs/knowledge-journal/` 目錄下的 10 份 `.mdx` 文件進行 RAG 切片與向量化寫入，使 LLM 能在進行定理證明或修復時，直接檢索到專案的歷史設計日誌。
+  在初始化時，我們將日誌寫入邏輯**合併整合至既有的 `scripts/seed_knowledge.py` 腳本中（支援 `.mdx` 解析與雙端路徑 `docs/docs/knowledge-journal/`）**，主動對知識庫目錄下的文件進行 RAG 切片與向量化寫入，使 LLM 能在進行定理證明或修復時，直接檢索到專案的歷史設計日誌。
 
 ---
 
