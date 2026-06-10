@@ -1,0 +1,44 @@
+name: Web UI Health Check
+
+on:
+  schedule:
+    # 每個整點執行一次 (台灣時間 +8 也是整點)
+    - cron: '0 * * * *'
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Admin UI Status
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-jet.vercel.app/)
+          echo "Admin UI HTTP Status: $STATUS"
+          if [ "$STATUS" -ne 200 ]; then
+            echo "🚨 Admin UI check failed! Status: $STATUS"
+            exit 1
+          fi
+
+      - name: Test End-user UI Status
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-enduser.vercel.app/)
+          echo "End-user UI HTTP Status: $STATUS"
+          if [ "$STATUS" -ne 200 ]; then
+            echo "🚨 End-user UI check failed! Status: $STATUS"
+            exit 1
+          fi
+
+      - name: Send Telegram Notification on Failure
+        if: failure() && secrets.TELEGRAM_TOKEN != '' && secrets.TELEGRAM_TO != ''
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            🚨 Archon Web UI Health Check Failed!
+
+            - Repository: ${{ github.repository }}
+            - Action Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Event: ${{ github.event_name }}
+            
+            Please check Vercel deployments and backend status immediately.
