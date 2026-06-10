@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { KanbanColumn } from "../components/KanbanColumn";
 import type { Task } from "../types";
 
@@ -11,6 +11,14 @@ interface BoardViewProps {
   onTaskDelete?: (task: Task) => void;
 }
 
+// PERFORMANCE: Move static columns array outside component to prevent recreation on every render.
+const columns: Array<{ status: Task["status"]; title: string }> = [
+  { status: "todo", title: "Todo" },
+  { status: "doing", title: "Doing" },
+  { status: "review", title: "Review" },
+  { status: "done", title: "Done" },
+];
+
 export const BoardView = ({
   tasks,
   projectId,
@@ -21,18 +29,25 @@ export const BoardView = ({
 }: BoardViewProps) => {
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
-  // Simple task filtering for board view
-  const getTasksByStatus = (status: Task["status"]) => {
-    return tasks.filter((task) => task.status === status).sort((a, b) => a.task_order - b.task_order);
-  };
+  // PERFORMANCE: Memoize task grouping and sorting to prevent O(N) array filtering and sorting on every render, especially during frequent hoveredTaskId state changes.
+  const groupedTasks = useMemo(() => {
+    const groups: Record<Task["status"], Task[]> = {
+      todo: [],
+      doing: [],
+      review: [],
+      done: [],
+    };
 
-  // Column configuration
-  const columns: Array<{ status: Task["status"]; title: string }> = [
-    { status: "todo", title: "Todo" },
-    { status: "doing", title: "Doing" },
-    { status: "review", title: "Review" },
-    { status: "done", title: "Done" },
-  ];
+    tasks.forEach((task) => {
+      groups[task.status].push(task);
+    });
+
+    Object.keys(groups).forEach((status) => {
+      groups[status as Task["status"]].sort((a, b) => a.task_order - b.task_order);
+    });
+
+    return groups;
+  }, [tasks]);
 
   return (
     <div className="flex flex-col h-full min-h-[70vh] relative">
@@ -42,7 +57,7 @@ export const BoardView = ({
           <KanbanColumn
             key={status}
             status={status}
-            tasks={getTasksByStatus(status)}
+            tasks={groupedTasks[status]}
             projectId={projectId}
             onTaskMove={onTaskMove}
             onTaskReorder={onTaskReorder}
