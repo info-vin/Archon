@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Test Admin UI Status
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-jet.vercel.app/)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-jet-trigger-fail-test.vercel.app/)
           echo "Admin UI HTTP Status: $STATUS"
           if [ "$STATUS" -ne 200 ]; then
             echo "🚨 Admin UI check failed! Status: $STATUS"
