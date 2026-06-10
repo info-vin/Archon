@@ -1,6 +1,8 @@
 name: Web UI Health Check
 
 on:
+  push:
+    branches: [ feat/twins ]
   schedule:
     # 每個整點執行一次 (台灣時間 +8 也是整點)
     - cron: '0 * * * *'
