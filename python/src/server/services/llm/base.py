@@ -191,12 +191,18 @@ class UsageTrackingCompletions:
                     credential_service.set_active_tier(1)
         else:
             try:
-                response = await _execute()
-                credential_service.set_active_tier(1)
+                from .hybrid_router import hybrid_router
+                if hybrid_router.is_query_simple_and_offline(kwargs.get("messages", [])):
+                    logger.info("Hybrid Router: Routing simple query to Tier 3 Ollama (Local)")
+                    credential_service.set_active_tier(3)
+                    response = await _execute_on_ollama()
+                else:
+                    response = await _execute()
+                    credential_service.set_active_tier(1)
             except Exception as e:
                 err_msg = str(e)
                 provider = self._context.get("provider", "unknown")
-                logger.warning(f"Tier 1 (Provider: {provider}) failed: {err_msg}")
+                logger.warning(f"Tier 1 (or simple query local) failed: {err_msg}")
 
                 if forced_tier == 1:
                     raise e

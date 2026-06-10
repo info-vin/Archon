@@ -71,4 +71,51 @@ class HybridRouter:
 
         return False
 
+    def is_query_simple_and_offline(self, messages: list) -> bool:
+        """Determines if a chat query is simple and offline-compatible.
+
+        Rules:
+        - Word count < 50
+        - Absence of online or complex task keywords (e.g. crawl, search, fetch, live, latest, realtime, google, news, code, 寫程式)
+        - The local model must be available in the hardware capability matrix.
+        """
+        # 1. Check if Ollama has available models
+        models_info = self.capability_matrix.get("models", {})
+        qwen_available = models_info.get("qwen2.5:0.5b", {}).get("available", False)
+        gemma_available = models_info.get("gemma3:4b", {}).get("available", False)
+        gemma_1b_available = models_info.get("gemma3:1b", {}).get("available", False)
+
+        # If no local model is available, we cannot route to Tier 3
+        if not (qwen_available or gemma_available or gemma_1b_available):
+            return False
+
+        # 2. Extract last user message
+        last_user_content = ""
+        for m in reversed(messages):
+            if isinstance(m, dict):
+                role = m.get("role", "")
+                content = m.get("content", "") or ""
+            else:
+                role = getattr(m, "role", "")
+                content = getattr(m, "content", "") or ""
+            if role == "user":
+                last_user_content = content
+                break
+
+        if not last_user_content:
+            return False
+
+        # 3. Check word count (Simple if < 50 words)
+        words = last_user_content.split()
+        if len(words) >= 50:
+            return False
+
+        # 4. Check offline keywords
+        online_keywords = ["crawl", "search", "fetch", "live", "latest", "realtime", "google", "news", "code", "寫程式", "程式碼"]
+        for kw in online_keywords:
+            if kw in last_user_content.lower():
+                return False
+
+        return True
+
 hybrid_router = HybridRouter()
