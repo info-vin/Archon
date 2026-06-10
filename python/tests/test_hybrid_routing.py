@@ -1,8 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
+
 from src.server.services.credential_service import credential_service
 from src.server.services.llm.clients import get_llm_client
 from src.server.services.llm.hybrid_router import hybrid_router
+
 
 def dummy_retry_decorator(*args, **kwargs):
     def decorator(func):
