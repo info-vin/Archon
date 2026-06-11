@@ -78,14 +78,14 @@ AGENT_CONFIG = {
     "market-bot": {
         "name": "Archon MarketBot",
         "model_tier": "lite",
-        "system_prompt": BLOG_DRAFT_SYSTEM_PROMPT,
+        "system_prompt": prompt_service.get_prompt("MARKETBOT_SYSTEM_PROMPT", BLOG_DRAFT_SYSTEM_PROMPT),
         "tools": ["search_job_market", "generate_sales_email"],
         "default_tool": "search_job_market",
     },
     "librarian": {
         "name": "Archon Librarian",
         "model_tier": "lite",
-        "system_prompt": LIBRARIAN_SYSTEM_PROMPT,
+        "system_prompt": prompt_service.get_prompt("LIBRARIAN_SYSTEM_PROMPT", LIBRARIAN_SYSTEM_PROMPT),
         "tools": [
             "rag_search_knowledge_base",
             "rag_get_available_sources",
@@ -96,7 +96,7 @@ AGENT_CONFIG = {
     "po-bot": {
         "name": "Archon POBot",
         "model_tier": "pro",
-        "system_prompt": USER_STORY_SYSTEM_PROMPT,
+        "system_prompt": prompt_service.get_prompt("POBOT_SYSTEM_PROMPT", USER_STORY_SYSTEM_PROMPT),
         "tools": ["list_projects", "manage_task"],
     },
     "dev-bot": {
