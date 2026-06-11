@@ -6,32 +6,8 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 from functools import lru_cache
 from typing import cast
 
-from ..prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
-from ..prompts.pm_prompts import USER_STORY_SYSTEM_PROMPT
-from ..prompts.rag_prompts import LIBRARIAN_SYSTEM_PROMPT
 from ..utils import get_supabase_client
 from .prompt_service import prompt_service
-
-DEVBOT_DEFAULT_PROMPT = """You are Archon DevBot, an expert software engineer equipped with an exceptionally strong mathematical mind and rigorous logical reasoning capabilities.
-When solving any coding, algorithmic, or architectural design problems, you must strictly adhere to the following thinking principles:
-
-1. [Chain of Thought (CoT) Deduction]:
-   - For any non-trivial logic or computational problem, you must explicitly break down your reasoning steps and perform boundary analysis in your thought process before producing the final code or conclusion.
-   - For critical algorithms, define inputs, outputs, invariants, and pre/post-conditions using mathematical notation or structured pseudocode.
-
-2. [Rigorous Mathematical Boundary Analysis & Defensive Constraints]:
-   - When reviewing numerical computations, explicitly guard against integer overflow, floating-point precision loss (e.g., NaN/Infinity), division by zero, and array out-of-bounds access.
-   - Provide clear derivations for time and space complexity (Big-O notation) and prove the optimality of your chosen algorithm for the given input size.
-
-3. [Lean-style Proof Reasoning style]:
-   - When writing code or designing core logic, approach it as if you are proving its correctness in a formal theorem prover like Lean 4. Ensure that every branch and edge case is supported by clear logical arguments.
-   - Avoid vague assumptions like "this usually works." You must cover all edge cases that could potentially trigger errors.
-
-4. [Tool Execution Guidelines]:
-   - Leverage your knowledge base and RAG tools (e.g., `rag_search_code_examples`) to consult correct, historical implementations.
-   - Ensure code modifications are precise, clean, and minimize any risk of regression.
-
-Maintain professional, logical rigor, and always solve problems with the highest standard of software engineering quality and mathematical correctness."""
 
 TOOL_CONFIG = {
     "apply_modification": {"min_xp_level": 2, "risk_level": "write"},
@@ -81,14 +57,20 @@ AGENT_CONFIG = {
     "market-bot": {
         "name": "Archon MarketBot",
         "model_tier": "lite",
-        "system_prompt": prompt_service.get_prompt("MARKETBOT_SYSTEM_PROMPT", BLOG_DRAFT_SYSTEM_PROMPT),
+        "system_prompt": prompt_service.get_prompt(
+            "MARKETBOT_SYSTEM_PROMPT",
+            "You are Archon MarketBot, an expert Marketing Content Writer and blog creator. Respond in Traditional Chinese (繁體中文).",
+        ),
         "tools": ["search_job_market", "generate_sales_email"],
         "default_tool": "search_job_market",
     },
     "librarian": {
         "name": "Archon Librarian",
         "model_tier": "lite",
-        "system_prompt": prompt_service.get_prompt("LIBRARIAN_SYSTEM_PROMPT", LIBRARIAN_SYSTEM_PROMPT),
+        "system_prompt": prompt_service.get_prompt(
+            "LIBRARIAN_SYSTEM_PROMPT",
+            "You are the Librarian of Archon. Manage knowledge and respond in Traditional Chinese (繁體中文).",
+        ),
         "tools": [
             "rag_search_knowledge_base",
             "rag_get_available_sources",
@@ -99,13 +81,19 @@ AGENT_CONFIG = {
     "po-bot": {
         "name": "Archon POBot",
         "model_tier": "pro",
-        "system_prompt": prompt_service.get_prompt("POBOT_SYSTEM_PROMPT", USER_STORY_SYSTEM_PROMPT),
+        "system_prompt": prompt_service.get_prompt(
+            "POBOT_SYSTEM_PROMPT",
+            "You are an expert Product Owner. Refine task descriptions into User Stories.",
+        ),
         "tools": ["list_projects", "manage_task"],
     },
     "dev-bot": {
         "name": "Archon DevBot",
         "model_tier": "pro",
-        "system_prompt": prompt_service.get_prompt("DEVBOT_SYSTEM_PROMPT", DEVBOT_DEFAULT_PROMPT),
+        "system_prompt": prompt_service.get_prompt(
+            "DEVBOT_SYSTEM_PROMPT",
+            "You are Archon DevBot, an expert software engineer. Solve tasks using tools.",
+        ),
         "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"],
     },
 }
