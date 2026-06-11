@@ -1,4 +1,5 @@
 {
   "python.terminal.useEnvFile": true,
-  "makefile.configureOnOpen": false
+  "makefile.configureOnOpen": false,
+  "godotTools.editorPath.godot4": "/Users/vincenta/GoogleKwok022/Archon/archon-card-battler/test_abc.gd"
 }
