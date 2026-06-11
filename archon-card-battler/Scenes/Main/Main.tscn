@@ -11,6 +11,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_abcde")
 
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.121569, 0.141176, 0.2, 1)
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 8
@@ -18,37 +27,54 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -150.0
-offset_right = 300.0
-offset_bottom = 150.0
+offset_left = -450.0
+offset_top = -300.0
+offset_right = 450.0
+offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 30
+theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 36
 text = "Archon: Agent Card Battler"
 horizontal_alignment = 1
 
-[node name="DeckLabel" type="Label" parent="VBoxContainer"]
+[node name="EnemyLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 28
+text = "👾 Memory Leak | HP: 50 | Intent: ⚔️ 8 DMG"
+horizontal_alignment = 1
+
+[node name="StatsLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
 theme_override_font_sizes/font_size = 24
-text = "Deck Size: 0"
+text = "👨‍💻 Tech Lead | HP: 30 | 🛡️ Block: 0 | 💎 Tokens: 3"
 horizontal_alignment = 1
 
-[node name="HandLabel" type="Label" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 100)
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "Hand: Empty"
-horizontal_alignment = 1
-autowrap_mode = 2
 
-[node name="DrawButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(250, 60)
+[node name="ActionLog" type="TextEdit" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+editable = false
+wrap_mode = 1
+
+[node name="CardButtons" type="HBoxContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="EndTurnButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(200, 60)
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
 theme_override_font_sizes/font_size = 24
-text = "Draw Card 🃏"
+text = "End Turn"
