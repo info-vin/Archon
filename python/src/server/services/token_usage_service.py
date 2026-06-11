@@ -75,9 +75,9 @@ class TokenUsageService:
                 # We use a simple check for now: Is it in our list of known Bot IDs or names?
                 # A more robust check would be querying profiles.role, but for speed we can use the context
                 try:
-                    from .agent_registry import AGENT_CONFIG
+                    from .agent_registry import FALLBACK_AGENT_CONFIG
 
-                    agent_names = [config["name"] for config in AGENT_CONFIG.values()]
+                    agent_names = [config["name"] for config in FALLBACK_AGENT_CONFIG.values()]
 
                     # We need the display name to award XP via StatsService
                     res = supabase.table("profiles").select("name").eq("id", user_id).execute()
@@ -147,12 +147,20 @@ class TokenUsageService:
                 u_id = row.get("user_id")
                 if u_id:
                     # Resolve ID to Display Name (Phase 4.6.45: Dynamic Registry Lookup)
-                    from .agent_registry import AGENT_CONFIG, get_agent_uuid
+                    from .agent_registry import FALLBACK_AGENT_CONFIG, get_agent_config, get_agent_uuid
 
                     agent_name = str(u_id)  # Default to UUID string
-                    for agent_key in AGENT_CONFIG.keys():
+                    for agent_key in FALLBACK_AGENT_CONFIG.keys():
                         if get_agent_uuid(agent_key) == str(u_id):
-                            agent_name = str(AGENT_CONFIG[agent_key]["name"])
+                            # Try to get the dynamic name, fallback to fallback config
+                            try:
+                                dyn_config = get_agent_config(agent_key)
+                                if dyn_config is not None:
+                                    agent_name = str(dyn_config["name"])
+                                else:
+                                    agent_name = str(FALLBACK_AGENT_CONFIG[agent_key]["name"])
+                            except Exception:
+                                agent_name = str(FALLBACK_AGENT_CONFIG[agent_key]["name"])
                             break
 
                     daily_stats[date_str]["agent_costs"][agent_name] = daily_stats[date_str]["agent_costs"].get(

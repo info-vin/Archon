@@ -225,13 +225,15 @@ class PerformanceManager:
             name_to_overrides = {r.get("name"): r.get("permission_overrides", {}) for r in overrides_res.data or []}
 
             cost_res = self.supabase.table("token_usage").select("user_id, cost_usd").execute()
-            from ..agent_registry import AGENT_CONFIG, get_agent_uuid
+            from ..agent_registry import FALLBACK_AGENT_CONFIG, get_agent_config, get_agent_uuid
 
             agent_id_to_name: dict[str, str] = {}
-            for config_key in AGENT_CONFIG:
+            for config_key in FALLBACK_AGENT_CONFIG:
                 u_id = get_agent_uuid(config_key)
                 if u_id:
-                    agent_id_to_name[u_id] = str(AGENT_CONFIG[config_key].get("name", "Unknown"))
+                    config = get_agent_config(config_key)
+                    if config:
+                        agent_id_to_name[u_id] = str(config.get("name", "Unknown"))
 
             cost_map: dict[str, float] = {}
             for row in cost_res.data or []:
@@ -241,7 +243,10 @@ class PerformanceManager:
                     cost_map[target_name] = cost_map.get(target_name, 0.0) + float(row.get("cost_usd", 0))
 
             result = []
-            for key, config in AGENT_CONFIG.items():
+            for key in FALLBACK_AGENT_CONFIG:
+                config = get_agent_config(key)
+                if not config:
+                    continue
                 name = str(config.get("name", "Unknown"))
                 slug = f"ai-{key}"
                 u_id = get_agent_uuid(key)

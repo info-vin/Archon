@@ -30,10 +30,36 @@ class AgentService:
                 {"id": agent_id, "name": role_name, "role": role_name, "tools": [], "description": "AI Agent"}
             )
 
+        from src.server.utils import get_supabase_client
+
         from .shared_constants import AgentUUIDs
 
         system_bots = [AgentUUIDs.PO_BOT, AgentUUIDs.CLOCKWORK]
 
+        # 1. Try to load role mapping dynamically from database
+        try:
+            supabase = get_supabase_client()
+            res = supabase.table("archon_role_agents").select("agent_key").eq("user_role", user_role or "").execute()
+            if res.data:
+                allowed_keys = {row["agent_key"] for row in res.data}
+
+                from .agent_registry import get_agent_uuid
+                allowed_ids = {get_agent_uuid(k) for k in allowed_keys if get_agent_uuid(k)}
+
+                filtered = []
+                for agent in all_agents:
+                    agent_id = str(agent["id"])
+                    if agent_id in allowed_ids:
+                        config = get_agent_config(agent_id)
+                        if config:
+                            agent["tools"] = config.get("tools", [])
+                            agent["description"] = config.get("system_prompt", "").split("\n")[0]
+                        filtered.append(agent)
+                return filtered
+        except Exception:
+            pass
+
+        # 2. Fallback to static mapping in case database is down or not seeded
         if not user_role or user_role in ["admin", "system_admin", "manager"]:
             for agent in all_agents:
                 agent_id = str(agent["id"])

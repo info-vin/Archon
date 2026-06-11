@@ -32,14 +32,29 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
             raise ValueError("❌ [SSOT Violation] SUPERVISOR_AGENT_MODEL missing.")
 
         from src.server.services.prompt_service import prompt_service
+        from src.server.utils import get_supabase_client
 
         task_type = ctx.state.task_type
-        if task_type == "Marketing Data Deep Dive":
-            prompt_key = "WORKFLOW_SUPERVISOR_MARKETING"
-        elif task_type == "Daily Executive Summary":
-            prompt_key = "WORKFLOW_SUPERVISOR_DAILY"
-        else:
-            prompt_key = "WORKFLOW_SUPERVISOR_GENERAL"
+
+        # 1. Try to load routing and prompt configuration from database dynamically
+        prompt_key = "WORKFLOW_SUPERVISOR_GENERAL"
+        node_routing = {
+            "marketbot": "MarketBotNode",
+            "librarian": "LibrarianNode",
+            "summary": "SummaryNode",
+            "devbot": "DevBotNode",
+            "david": "DavidNode"
+        }
+
+        try:
+            supabase = get_supabase_client()
+            res = supabase.table("archon_workflow_flows").select("*").eq("workflow_type", task_type).execute()
+            if res.data:
+                flow_data = res.data[0]
+                prompt_key = flow_data["supervisor_prompt_name"]
+                node_routing = flow_data["node_routing"]
+        except Exception:
+            pass
 
         default_supervisor_prompt = (
             "You are Charlie, the Supervisor. Review the conversation history. "
@@ -73,24 +88,29 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
             decision = _get_output(result)
             logger.info(f"🧠 [Supervisor] Decision: {decision.next_node} (Reason: {decision.reasoning})")
 
-            if decision.next_node == "end":
+            next_step = decision.next_node
+
+            if next_step == "end":
                 ctx.state.final_result = "Workflow completed successfully."
                 return End(ctx.state.final_result)
-            elif decision.next_node == "human":
+            elif next_step == "human":
                 ctx.state.final_result = "Escalated to human review."
                 return End(ctx.state.final_result)
-            elif decision.next_node == "marketbot":
+
+            # Map the next node routing name from database to static Class Node return signatures
+            target_node_name = node_routing.get(next_step)
+            if target_node_name == "MarketBotNode":
                 return MarketBotNode()
-            elif decision.next_node == "librarian":
+            elif target_node_name == "LibrarianNode":
                 return LibrarianNode()
-            elif decision.next_node == "summary":
+            elif target_node_name == "SummaryNode":
                 return SummaryNode()
-            elif decision.next_node == "devbot":
+            elif target_node_name == "DevBotNode":
                 return DevBotNode()
-            elif decision.next_node == "david":
+            elif target_node_name == "DavidNode":
                 return DavidNode()
             else:
-                ctx.state.final_result = f"Error: Unknown decision {decision.next_node}"
+                ctx.state.final_result = f"Error: Unknown decision {next_step} or unmapped node {target_node_name}"
                 return End(ctx.state.final_result)
 
         except Exception as e:
