@@ -40,9 +40,20 @@ test.describe('Dynamic Agent Architecture & Dynamic Task Assignment E2E Spec', (
                 json: {
                     profiles: [
                         { id: 'usr-111', name: 'David Howard', email: 'admin@archon.com', role: 'system_admin', status: 'active' },
-                        { id: 'usr-222', name: 'Sales Agent Mock', email: 'sales@archon.com', role: 'sales', status: 'active' }
+                        { id: 'usr-222', name: 'Sales User Mock', email: 'sales@archon.com', role: 'sales', status: 'active' }
                     ]
                 }
+            });
+        });
+
+        // Mock Assignable Users endpoint used inside Task Modal
+        await page.route('**/api/assignable-users*', async route => {
+            await route.fulfill({
+                status: 200,
+                json: [
+                    { id: 'usr-111', name: 'David Howard', email: 'admin@archon.com', role: 'system_admin', status: 'active' },
+                    { id: 'usr-222', name: 'Sales User Mock', email: 'sales@archon.com', role: 'sales', status: 'active' }
+                ]
             });
         });
 
@@ -58,29 +69,44 @@ test.describe('Dynamic Agent Architecture & Dynamic Task Assignment E2E Spec', (
         });
 
         // Mock Users & Assignable Agents (Dynamic RBAC Check)
-        // Sales role should dynamically only see MarketBot (Sales) based on DB seed
-        await page.route('**/api/agents/assignable?user_role=sales*', async route => {
+        // Must return role: 'ai_agent' so front-end correctly maps label with '(AI) ' prefix
+        await page.route('**/api/agents/assignable*', async route => {
             await route.fulfill({
                 status: 200,
                 json: [
-                    { id: 'a11ce000-0000-0000-0000-000000000000', name: 'MarketBot (Sales)', role: 'sales', tools: ['search_job_market'] }
+                    { id: 'a11ce000-0000-0000-0000-000000000000', name: 'MarketBot (Sales)', role: 'ai_agent', tools: ['search_job_market'] },
+                    { id: 'b0b00000-0000-0000-0000-000000000000', name: 'Librarian (Knowledge)', role: 'ai_agent', tools: [] }
                 ]
             });
         });
 
-        // Marketing role dynamically gets MarketBot (Sales) & Librarian (Knowledge)
-        await page.route('**/api/agents/assignable?user_role=marketing*', async route => {
+        // Mock Tasks list
+        await page.route('**/api/tasks?include_closed=true&include_unassigned=false&per_page=50*', async route => {
             await route.fulfill({
                 status: 200,
                 json: [
-                    { id: 'a11ce000-0000-0000-0000-000000000000', name: 'MarketBot (Sales)', role: 'marketing', tools: [] },
-                    { id: 'b0b00000-0000-0000-0000-000000000000', name: 'Librarian (Knowledge)', role: 'marketing', tools: [] }
+                    {
+                        id: 'task-777',
+                        title: 'Conduct Competitive Analysis',
+                        status: 'done',
+                        assignee_id: 'a11ce000-0000-0000-0000-000000000000',
+                        collaborator_agent_ids: ['b0b00000-0000-0000-0000-000000000000'],
+                        project_id: 'proj-999',
+                        created_by: 'usr-111',
+                        agent_output: {
+                            content: "Market research analysis completed.",
+                            messages: [
+                                { role: "supervisor", content: "Routing task to MarketBot for initial sales lookup." },
+                                { role: "marketbot", content: "Scanned market trends. Transferring to Librarian for knowledge grounding." },
+                                { role: "librarian", content: "Grounding research with internal knowledge indexes." }
+                            ]
+                        }
+                    }
                 ]
             });
         });
 
         // Mock default task detail with dynamic Multi-Agent Group Chat output
-        // Verifies the node routing outputs aligned with flow definitions
         await page.route('**/api/tasks/task-777*', async route => {
             await route.fulfill({
                 status: 200,
@@ -90,12 +116,14 @@ test.describe('Dynamic Agent Architecture & Dynamic Task Assignment E2E Spec', (
                     status: 'done',
                     assignee_id: 'a11ce000-0000-0000-0000-000000000000',
                     collaborator_agent_ids: ['b0b00000-0000-0000-0000-000000000000'],
+                    project_id: 'proj-999',
+                    created_by: 'usr-111',
                     agent_output: {
                         content: "Market research analysis completed.",
-                        chat_history: [
-                            { sender: "Charlie (Supervisor)", message: "Routing task to MarketBot for initial sales lookup." },
-                            { sender: "MarketBot (Sales)", message: "Scanned market trends. Transferring to Librarian for knowledge grounding." },
-                            { sender: "Librarian (Knowledge)", message: "Grounding research with internal knowledge indexes." }
+                        messages: [
+                            { role: "supervisor", content: "Routing task to MarketBot for initial sales lookup." },
+                            { role: "marketbot", content: "Scanned market trends. Transferring to Librarian for knowledge grounding." },
+                            { role: "librarian", content: "Grounding research with internal knowledge indexes." }
                         ]
                     }
                 }
@@ -104,23 +132,39 @@ test.describe('Dynamic Agent Architecture & Dynamic Task Assignment E2E Spec', (
     });
 
     test('should verify dynamic RBAC assignment and workflow group chat simulation', async ({ page }) => {
-        // 1. Go to dashboard and open Task Modal to check assignee list
-        await page.goto('/#/dashboard');
-        
-        // Wait for dashboard to load
-        await expect(page.getByText('My Tasks').first()).toBeVisible({ timeout: 10000 });
-
-        // Let's go to Admin Control to trigger the simulated flow
-        await page.goto('/#/admin');
-        await expect(page.getByRole('heading', { name: 'Admin Control Center' })).toBeVisible({ timeout: 10000 });
-        
-        // Navigate back to HR / Team tab to simulate dynamic personnel alignment
-        await page.goto('/#/team');
-        await expect(page.getByText('Team Management').first()).toBeVisible({ timeout: 10000 });
-        await expect(page.getByText('Sales Agent Mock').first()).toBeVisible({ timeout: 10000 });
-
-        // Navigate to check dashboard representation
+        // Go to dashboard
         await page.goto('/#/dashboard');
         await expect(page.getByText('My Tasks').first()).toBeVisible({ timeout: 10000 });
+        await page.waitForTimeout(1500); // Wait so it's clear in video
+
+        // 1. Click "NEW TASK" button to open modal
+        await page.getByRole('button', { name: 'NEW TASK' }).first().click();
+        await page.waitForTimeout(1500);
+
+        // Switch to 'Assignment & Automation' Tab inside Create New Task dialog
+        await page.getByRole('tab', { name: 'Assignment & Automation' }).click();
+        await page.waitForTimeout(1500);
+
+        // 2. Select Assignee Dropdown to show the dynamic AI agents list
+        const assigneeSelect = page.getByRole('combobox', { name: 'Assignee' }); // Locate by role and name
+        await assigneeSelect.selectOption({ label: '(AI) MarketBot (Sales)' });
+        await page.waitForTimeout(1500);
+
+        // Close the modal
+        await page.getByRole('button', { name: 'Cancel' }).click();
+        await page.waitForTimeout(1500);
+
+        // 3. Open completed task with Multi-Agent Group Chat
+        // Click on the existing Task 'Conduct Competitive Analysis'
+        await page.getByText('Conduct Competitive Analysis').click();
+        await page.waitForTimeout(1500);
+
+        // Click on "AI Report" tab to see the supervisor routing outputs
+        await page.getByRole('tab', { name: 'AI Report' }).click();
+        await page.waitForTimeout(4000); // Hold for 4s to let supervisor routing bubbles show clearly
+
+        // Verify route statements are visible
+        await expect(page.getByText('Routing task to MarketBot').first()).toBeVisible();
+        await expect(page.getByText('Scanned market trends.').first()).toBeVisible();
     });
 });
