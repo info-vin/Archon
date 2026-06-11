@@ -171,5 +171,11 @@ theorem star_chat_termination
 *   **雙向物理對帳自動執行**：形式化對帳測試檔案 `python/tests/integration/test_lean_model_alignment.py` 作為整合測試，將會自動被 `make test-be` 與 `make audit-qa` 掃描並物理執行。
 
 ### 6.2 雙向物理對帳測試 (Parity Python Test) 運作原理
-*   **機制**：`test_lean_model_alignment.py` 測試會動態撈取後端實際資料庫權限與 Python 狀態機代碼。
-*   **比對**：與 `AuditParity.lean` 中的 `WorkflowState` 與 `AgentNode` 定理前提假設進行邊界比對。一旦代碼中的狀態改變而 Lean 定理模型未同步更新，Pytest 將直接失敗阻斷，保證形式化與實體代碼的「一致性自癒」。
+*   **機制**：`test_lean_model_alignment.py` 測試會動態撈取後端實際資料庫權限與 Python 狀態 機代碼。
+*   **比對**：與 `AuditParity.lean` 中的 `WorkflowState` 與 `AgentNode` 定理前提假設進行邊界比對。一旦代碼中的狀態改變而 Lean 定理模型未同步更新，Pytest 將直接失敗阻斷，保證形式化與實 體代碼的「一致性自癒」。
+
+---
+
+## 7. 實作結果與現狀 (Implementation Results - Status: Completed)
+
+本階段定義的 RBAC 痛點與 Twin Scout 對帳機制，皆已透過代碼重構（消除靜態字典）、狀態機驗證（`AuditParity.lean`）以及雙軌裁判（資料 vs 視覺）的物理實作解決。所有變更皆已通過 `make audit-qa` 整合公證。

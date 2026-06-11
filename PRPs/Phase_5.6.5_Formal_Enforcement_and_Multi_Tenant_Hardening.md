@@ -84,3 +84,12 @@ theorem rls_zero_leakage_guarantee
     *   在 `test_lean_model_alignment.py` 中，自動核對實際資料庫 `leads` 與 `projects` 的 RLS 啟用狀態，與 Lean 中的 `Relational Partitioning` 假設對齊。
     *   自動核對 `BudgetGuardMiddleware` 中宣告的預算變數，與 Lean 中 $B$ 限制參數對齊。
 3.  **終極網關通過**：通過 `make audit-qa` 的全套自動化 E2E 與單元測試，無任何代碼與規格之退化。
+
+---
+
+## 5. 實作結果與現狀 (Implementation Results - Status: Completed)
+
+所有提及的防禦規格與測試對帳皆已完全實作：
+1. RAG 語意搜尋邊界與 Token 預算熔斷機制已經上線。
+2. 雙向物理對帳測試 (`test_lean_model_alignment.py`) 已被納入 CI 流程。
+3. 全部功能皆順利通過 `make test-be` 與 `make audit-qa` 品質門禁驗證。

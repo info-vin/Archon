@@ -35,3 +35,9 @@
 ### 2. 手動驗證 (Manual Verification)
 - 運行 `python scripts/benchmark_hardware.py` 產生算力矩陣。
 - 透過 Web UI 發送簡單對話，觀察後端日誌輸出 `Hybrid Router: Routing simple query to Tier 3 Ollama (Local)`。
+
+---
+
+## 實作結果與現狀 (Implementation Results - Status: Completed)
+
+基於複雜度（提示詞字數與關鍵字）與硬體約束的動態分發機制已在 `hybrid_router.py` 實作完畢，並注入於 `base.py` 內。測試檔案 `test_hybrid_routing.py` 已全數通過 `make test-be` 與 `make audit-qa` 品質門禁驗證。
