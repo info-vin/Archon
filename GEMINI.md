@@ -427,3 +427,17 @@
 
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
+
+### 2026年6月11日：Godot TDD 奠基與卡牌架構轉向 (Lean Pivot)
+
+今日我們啟動了 Archon 衍生遊戲專案的開發，並確立了以 TDD (測試驅動開發) 為核心的 Godot 引擎工作流，期間經歷了重要的架構轉向與踩坑學習：
+
+1. **從塔防到卡牌的 MVC 覺醒**：
+   - 原先規劃的「塔防遊戲」因高度依賴物理引擎 (`Area2D`, `Path2D`) 與空間時間，導致單元測試極難撰寫且容易產生 Race Condition。
+   - 果斷將企劃轉向**「AI 卡牌構築戰 (Agent Card Battler)」**。卡牌遊戲純粹的回合制與狀態機本質，能完美實現 **Model-View-Controller (MVC) 的極致解耦**，讓我們能在無 UI 的狀態下完成 100% 的邏輯單元測試。
+2. **Godot 與 VS Code 的雙劍合璧 (LSP 配置鐵律)**：
+   - 確立了「Godot 當大腦與視圖，VS Code 當打字機」的雙開工作流。
+   - **坑點記錄**：VS Code 的 `godot-tools` 設定中，`Editor Path` 絕對不能只填 `/Applications/Godot.app`，必須精確指向內部的終端執行檔 (`/Applications/Godot.app/Contents/MacOS/Godot`)。同時，Godot 的 Language Server Port 必須確認為 `6005`。
+3. **拒絕臃腫：自製 Lean Test Runner (MiniTest)**：
+   - 在導入業界標準的 GUT 測試框架時，遭遇了其內部腳本與 Godot 4.6 原生 API (`Logger` 類別) 衝突導致的 Parse Error 與 `MissingNode` UI 崩潰。
+   - 秉持 Lean 原則，果斷放棄重度依賴第三方框架，改用 Godot 原生的 `@tool extends EditorScript`，以不到 40 行的程式碼打造出 `MiniTest` 微型測試框架。這不僅徹底根除了相容性問題，更實現了「免按 Play 鍵即可在編輯器內秒速執行 TDD」的極致開發體驗。
