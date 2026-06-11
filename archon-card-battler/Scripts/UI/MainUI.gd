@@ -131,12 +131,14 @@ func update_ui() -> void:
 	for child in card_buttons_container.get_children():
 		child.queue_free()
 		
+	var card_scene = preload("res://Scenes/UI/CardUI.tscn")
 	for i in range(hand.size()):
 		var card = hand[i]
-		var btn = Button.new()
-		btn.text = "%s\nCost: %d\nDMG: %d BLK: %d" % [card.card_name, card.cost, card.damage, card.block]
-		btn.custom_minimum_size = Vector2(160, 100)
+		var card_ui = card_scene.instantiate()
+		card_buttons_container.add_child(card_ui)
+		
+		# Setup visual data
+		card_ui.setup(card, i)
 		
 		# Bind the index so the button knows which card to play
-		btn.pressed.connect(func(): play_card(i))
-		card_buttons_container.add_child(btn)
+		card_ui.pressed.connect(func(): play_card(card_ui.card_index))
