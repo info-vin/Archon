@@ -10,7 +10,7 @@ const MOCK_KNOWLEDGE_ITEMS = [
 ];
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
 
 test('User can select knowledge items when creating a task', async () => {
