@@ -72,7 +72,10 @@ AGENT_CONFIG = {
     "supervisor": {
         "name": "Archon Supervisor",
         "model_tier": "pro",
-        "system_prompt": "Routing Agent (Prompt injected dynamically via WorkflowEngine)",
+        "system_prompt": prompt_service.get_prompt(
+            "WORKFLOW_SUPERVISOR_GENERAL",
+            "You are Charlie, the Supervisor. Review the conversation history. Decide which worker should act next.",
+        ),
         "tools": [],
     },
     "market-bot": {
