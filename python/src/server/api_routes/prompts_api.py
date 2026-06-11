@@ -23,7 +23,7 @@ async def list_all_prompts(current_user: dict = Depends(get_current_user)):
     return res.get("prompts", [])
 
 
-@router.patch("/{prompt_name}")
+@router.post("/{prompt_name}")
 async def update_prompt(
     prompt_name: str, content: dict[str, str], current_user: dict = Depends(requires_permission(USER_MANAGE))
 ):

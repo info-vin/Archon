@@ -61,7 +61,7 @@ def test_update_prompt_admin_success(mock_admin_user, mock_prompt_service):
     mock_prompt_service.update_prompt.return_value = (True, {"data": "Updated"})
 
     # Act
-    response = client.patch("/api/system/prompts/agent-1", json={"content": "New Prompt", "description": "New Desc"})
+    response = client.post("/api/system/prompts/agent-1", json={"content": "New Prompt", "description": "New Desc"})
 
     # Assert
     assert response.status_code == 200
@@ -70,7 +70,7 @@ def test_update_prompt_admin_success(mock_admin_user, mock_prompt_service):
 
 def test_update_prompt_user_forbidden(mock_user, mock_prompt_service):
     # Act
-    response = client.patch("/api/system/prompts/agent-1", json={"content": "New Prompt"})
+    response = client.post("/api/system/prompts/agent-1", json={"content": "New Prompt"})
 
     # Assert
     assert response.status_code == 403
@@ -81,7 +81,7 @@ def test_update_prompt_admin_failure(mock_admin_user, mock_prompt_service):
     mock_prompt_service.update_prompt.return_value = (False, {"error": "DB Error"})
 
     # Act
-    response = client.patch("/api/system/prompts/agent-1", json={"content": "New Prompt"})
+    response = client.post("/api/system/prompts/agent-1", json={"content": "New Prompt"})
 
     # Assert
     assert response.status_code == 500
