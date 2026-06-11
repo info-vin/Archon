@@ -15,14 +15,6 @@ interface TableViewProps {
 }
 
 export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditingTask, requestSort, sortConfig, userMap, projectMap }) => {
-  const assigneeLowerMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    tasks.forEach(task => {
-      map[task.id] = task.assignee ? task.assignee.toLowerCase() : '';
-    });
-    return map;
-  }, [tasks]);
-
   const getSortIcon = (key: SortableTaskKeys) => {
     if (!sortConfig || sortConfig.key !== key) return <ChevronsUpDownIcon className="h-4 w-4" />;
     return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
@@ -65,7 +57,8 @@ export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditi
                         <UserAvatar 
                             name={userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee || 'Unassigned'} 
                             size={20} 
-                            isAI={assigneeLowerMap[task.id]?.includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
+                            // PERFORMANCE: Replaced O(N) assignee map allocation and .toLowerCase() calls with a fast inline case-insensitive regex test.
+                            isAI={/bot/i.test(task.assignee || '') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
                             role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
                         />
                         <span className="text-slate-600 dark:text-slate-400 font-medium">

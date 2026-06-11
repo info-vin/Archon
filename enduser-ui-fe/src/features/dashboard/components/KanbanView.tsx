@@ -22,14 +22,6 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
     return grouped;
   }, [tasks]);
 
-  const assigneeLowerMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    tasks.forEach(task => {
-      map[task.id] = task.assignee ? task.assignee.toLowerCase() : '';
-    });
-    return map;
-  }, [tasks]);
-
   const onDragStart = (e: React.DragEvent, taskId: string) => {
     e.dataTransfer.setData('taskId', taskId);
   };
@@ -82,7 +74,8 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
                                 <UserAvatar 
                                     name={userMap[task.assignee_id || '']?.name || userMap[task.assignee || '']?.name || task.assignee} 
                                     size={18} 
-                                    isAI={assigneeLowerMap[task.id]?.includes('bot') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
+                                    // PERFORMANCE: Replaced O(N) assignee map allocation and .toLowerCase() calls with a fast inline case-insensitive regex test.
+                                    isAI={/bot/i.test(task.assignee || '') || userMap[task.assignee_id || '']?.role === 'ai_agent'}
                                     role={userMap[task.assignee_id || '']?.role || userMap[task.assignee || '']?.role}
                                 />
                                 <span className="text-[11px] text-gray-500 font-medium truncate max-w-[80px]">
