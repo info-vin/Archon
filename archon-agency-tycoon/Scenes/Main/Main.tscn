@@ -20,21 +20,91 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.02, 0.05, 0.1, 1)
 
-[node name="TopBar" type="PanelContainer" parent="."]
+[node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 60.0
+anchor_bottom = 1.0
 grow_horizontal = 2
+grow_vertical = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TopBar"]
+[node name="TopBar" type="PanelContainer" parent="VBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="HBox" type="HBoxContainer" parent="VBox/TopBar"]
 layout_mode = 2
 alignment = 1
 
-[node name="FundsLabel" type="Label" parent="TopBar/HBoxContainer"]
+[node name="FundsLabel" type="Label" parent="VBox/TopBar/HBox"]
 layout_mode = 2
 text = "UI_FUNDS"
 
-[node name="FundsValue" type="Label" parent="TopBar/HBoxContainer"]
+[node name="FundsValue" type="Label" parent="VBox/TopBar/HBox"]
 layout_mode = 2
 text = "$500"
+
+[node name="Spacer" type="Control" parent="VBox/TopBar/HBox"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+
+[node name="RepLabel" type="Label" parent="VBox/TopBar/HBox"]
+layout_mode = 2
+text = "UI_REP"
+
+[node name="RepValue" type="Label" parent="VBox/TopBar/HBox"]
+layout_mode = 2
+text = "100"
+
+[node name="GameArea" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Building" type="VBoxContainer" parent="VBox/GameArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Floor1" type="HBoxContainer" parent="VBox/GameArea/Building"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="DevRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor1"]
+custom_minimum_size = Vector2(300, 200)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor1/DevRoom"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "ROOM_DEV"
+horizontal_alignment = 1
+
+[node name="BreakRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor1"]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor1/BreakRoom"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "ROOM_BREAK"
+horizontal_alignment = 1
+
+[node name="BottomBar" type="PanelContainer" parent="VBox"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="VBox/BottomBar"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/BottomBar/VBox"]
+layout_mode = 2
+text = "UI_BACKLOG"
+horizontal_alignment = 1
+
+[node name="TaskContainer" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1

@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://c6q8y7xxxxxx"]
+
+[ext_resource type="Script" path="res://Scripts/View/ModularAgent.gd" id="1_script"]
+
+[node name="ModularAgent" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="BaseBody" type="Sprite2D" parent="."]
+z_index = 0
+
+[node name="Eyes" type="Sprite2D" parent="."]
+z_index = 1
+
+[node name="Hair" type="Sprite2D" parent="."]
+z_index = 2
+
+[node name="Outfit" type="Sprite2D" parent="."]
+z_index = 3
+
+[node name="Tool" type="Sprite2D" parent="."]
+z_index = 4
