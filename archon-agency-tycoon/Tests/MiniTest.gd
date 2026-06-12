@@ -20,6 +20,22 @@ func assert_not_null(actual, message: String = "") -> void:
 		tests_failed += 1
 		push_error("  🔴 [FAIL] ", message, " | Expected not null")
 
+func assert_true(actual: bool, message: String = "") -> void:
+	if actual == true:
+		tests_passed += 1
+		print("  🟢 [PASS] ", message)
+	else:
+		tests_failed += 1
+		push_error("  🔴 [FAIL] ", message, " | Expected: true | Got: false")
+
+func assert_false(actual: bool, message: String = "") -> void:
+	if actual == false:
+		tests_passed += 1
+		print("  🟢 [PASS] ", message)
+	else:
+		tests_failed += 1
+		push_error("  🔴 [FAIL] ", message, " | Expected: false | Got: true")
+
 # 這個函數會在繼承此腳本的測試檔中被呼叫
 func run_test_suite() -> void:
 	print("\n========== RUNNING TESTS ==========")

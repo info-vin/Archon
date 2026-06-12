@@ -3,10 +3,8 @@ extends SceneTree
 func _init() -> void:
 	print("=== Running all tests headlessly ===")
 	var test_files = [
-		preload("res://Tests/Unit/test_card_stats.gd"),
-		preload("res://Tests/Unit/test_git_parser.gd"),
-		preload("res://Tests/Unit/test_combat_logic.gd"),
-		preload("res://Tests/Unit/test_deck_manager.gd")
+		preload("res://Tests/Unit/test_agent_manager.gd"),
+		preload("res://Tests/Unit/test_task_manager.gd")
 	]
 	
 	var total_passed = 0
