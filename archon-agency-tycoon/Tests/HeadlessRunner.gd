@@ -4,7 +4,8 @@ func _init() -> void:
 	print("=== Running all tests headlessly ===")
 	var test_files = [
 		preload("res://Tests/Unit/test_agent_manager.gd"),
-		preload("res://Tests/Unit/test_task_manager.gd")
+		preload("res://Tests/Unit/test_task_manager.gd"),
+		preload("res://Tests/Unit/test_save_system.gd")
 	]
 	
 	var total_passed = 0
