@@ -1,0 +1,19 @@
+keys,en,zh_TW,ja
+UI_FUNDS,Funds,資金,資金
+UI_REP,Reputation,信譽,名声
+UI_TICK,Time (Tick),時間 (回合),時間 (ターン)
+UI_BACKLOG,Task Backlog,待辦任務,バックログ
+BTN_ASSIGN,Assign Task,指派任務,タスクを割り当てる
+BTN_REST,Rest,休息,休憩する
+ROOM_DEV,Development Room,開發部,開発室
+ROOM_SALES,Sales & Marketing,行銷業務部,営業部
+ROOM_QA,Quality Assurance,品保部,QAルーム
+ROOM_BREAK,Break Room,休息室,休憩室
+ROLE_DEV,Developer,工程師,エンジニア
+ROLE_SALES,Sales,業務,営業
+ROLE_QA,QA,測試員,テスター
+STATE_IDLE,Idle,閒置,待機中
+STATE_WORKING,Working,工作中,作業中
+STATE_RESTING,Resting,休息中,休憩中
+MSG_WIN,Phase Complete!,階段完成！,フェーズ完了！
+MSG_LOSE,Bankrupt!,公司破產！,倒産！
