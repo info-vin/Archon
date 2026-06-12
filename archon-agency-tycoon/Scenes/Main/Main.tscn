@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8yq7qxyxxxx"]
+
+[ext_resource type="Theme" uid="uid://d3a4bxxxxxxx" path="res://Scripts/Resources/NeonTheme.tres" id="1_theme"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.05, 0.1, 1)
+
+[node name="TopBar" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 60.0
+grow_horizontal = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar"]
+layout_mode = 2
+alignment = 1
+
+[node name="FundsLabel" type="Label" parent="TopBar/HBoxContainer"]
+layout_mode = 2
+text = "UI_FUNDS"
+
+[node name="FundsValue" type="Label" parent="TopBar/HBoxContainer"]
+layout_mode = 2
+text = "$500"
