@@ -33,11 +33,8 @@ const getAssigneeIcon = (assigneeName: string, size: "sm" | "md" = "sm") => {
   if (assigneeName === "Archon") {
     return <img src="/logo-neon.png" alt="Archon" className={sizeClass} />;
   }
-  if (
-    assigneeName === "Coding Agent" ||
-    assigneeName.toLowerCase().includes("agent") ||
-    assigneeName.toLowerCase().includes("ai")
-  ) {
+  // PERFORMANCE: Replaced .toLowerCase().includes() with inline regex to prevent redundant string allocations during list renders.
+  if (assigneeName === "Coding Agent" || /agent/i.test(assigneeName) || /ai/i.test(assigneeName)) {
     return <Bot className={cn(sizeClass, "text-purple-400")} />;
   }
 
@@ -67,11 +64,8 @@ const getAssigneeStyles = (assigneeName: string) => {
       color: "text-cyan-600 dark:text-cyan-400",
     };
   }
-  if (
-    assigneeName === "Coding Agent" ||
-    assigneeName.toLowerCase().includes("agent") ||
-    assigneeName.toLowerCase().includes("ai")
-  ) {
+  // PERFORMANCE: Replaced .toLowerCase().includes() with inline regex to prevent redundant string allocations during list renders.
+  if (assigneeName === "Coding Agent" || /agent/i.test(assigneeName) || /ai/i.test(assigneeName)) {
     return {
       glow: "shadow-[0_0_10px_rgba(168,85,247,0.4)]",
       hoverGlow: "hover:shadow-[0_0_12px_rgba(168,85,247,0.5)]",
