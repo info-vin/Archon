@@ -84,23 +84,19 @@
 
 ## 🎨 素材生成與動畫策略 (Asset & Animation Strategy)
 
-堅守 Lean 原則，不依賴外部素材庫，採本地程式化生成圖形，並將**視覺靈魂交給 Godot 內建的動畫系統**。
+放棄純粹的程式化幾何圖形，改採**高質感預渲染靜態圖 (High-Quality Static Assets)**，以符合真實的角色設定。
 
-### 1. 靜態素材 (Procedural Assets)
-*   **場景與 UI**：極致利用 Godot 內建 `ColorRect` 與 `StyleBoxFlat`。定調為**深色科技霓虹風**。
-*   **圖示與角色**：撰寫 Python 腳本產生 SVG 向量圖形 (如金幣、警報 Icon)，以及極簡方塊像素人 (Minimalist Voxel Pixel Art) 的序列圖。
+### 1. 靜態素材 (Static Assets)
+*   **角色立繪 (Characters)**：使用 AI 生成的高質感 2D 插畫 (如：魔法少女工程師 `dev_magical_girl.png`)。這類素材細節豐富且符合角色性格 (Flavor)。
+*   **場景與 UI**：利用 Godot 內建 `ColorRect` 與 `StyleBoxFlat`。定調為**深色科技霓虹風**，以襯托色彩豐富的角色插畫。
+*   **圖示 (Icons)**：撰寫 Python 腳本產生 SVG 向量圖形 (如金幣、警報 Icon)。
 
 ### 2. 動畫驅動機制 (View Layer Animations)
 > ⚠️ **架構鐵律**：所有的動畫都屬於 View 層，透過監聽 Model 層發出的信號 (`Signals`) 來觸發。**動畫表現絕對不會、也不應該被納入 TDD 的自動化測試範圍。**
 
-*   **`Tween` (程式化補間動畫)**：負責物理打擊感與動態回饋。
-    *   例如：任務完成時，金幣數字 `+$400` 使用 Tween 做出拋物線彈出與淡出效果。
-    *   例如：拖曳卡片時，使用 Tween 讓卡片瞬間放大 1.1 倍並帶有彈性縮放 (Elastic/Bounce Easing)。
-*   **`AnimationPlayer` (時間軸動畫)**：負責場景級別的狀態演出。
-    *   例如：發生「突發危機 (Crisis)」時，控制房間的背景顏色在深灰與紅色間閃爍，並加入畫面震動 (Screen Shake)。
-    *   例如：重要 UI 按鈕的呼吸燈光暈效果 (Breathing Glow)。
-*   **`AnimatedSprite2D` (幀動畫)**：賦予極簡像素人生命力。
-    *   例如：透過 Python 生成的 2 張簡單幀 (手放下/手抬起)，設定每秒 4 次的切換，形成員工在電腦前敲擊鍵盤的「工作中」動畫。
+*   **`Tween` (程式化補間動畫)**：為高質感的靜態立繪注入靈魂。
+    *   例如：員工在工作時，使用 Tween 讓整張立繪進行微幅的上下浮動 (浮游感) 或傾斜。
+    *   例如：拖曳立繪卡片時，使用 Tween 讓圖片瞬間放大 1.1 倍。
 
 ## ⚙️ 進階系統與數學模型 (Advanced Systems & Math Model)
 
