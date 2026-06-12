@@ -84,19 +84,23 @@
 
 ## 🎨 素材生成與動畫策略 (Asset & Animation Strategy)
 
-放棄純粹的程式化幾何圖形，改採**高質感預渲染靜態圖 (High-Quality Static Assets)**，以符合真實的角色設定。
+放棄單一靜態圖，改採高擴充性的**模組化紙娃娃系統 (Modular Paper Doll System)**，以實現高復用性與未來裝備系統的擴充。
 
-### 1. 靜態素材 (Static Assets)
-*   **角色立繪 (Characters)**：使用 AI 生成的高質感 2D 插畫 (如：魔法少女工程師 `dev_magical_girl.png`)。這類素材細節豐富且符合角色性格 (Flavor)。
-*   **場景與 UI**：利用 Godot 內建 `ColorRect` 與 `StyleBoxFlat`。定調為**深色科技霓虹風**，以襯托色彩豐富的角色插畫。
-*   **圖示 (Icons)**：撰寫 Python 腳本產生 SVG 向量圖形 (如金幣、警報 Icon)。
+### 1. 模組化角色 (Modular Characters)
+*   **架構參考**：《Terraria》的圖層疊加設計。
+*   **實作方式**：在 Godot 中建立 `ModularAgent.tscn`，利用多個 `Sprite2D` 節點進行 Z-Index 疊加：
+    *   `Layer 0: BaseBody` (素體)
+    *   `Layer 1: Eyes/Face` (表情)
+    *   `Layer 2: Hair` (髮型)
+    *   `Layer 3: Outfit` (職業服裝，如：魔法袍、西裝)
+    *   `Layer 4: Tool/Accessory` (手持物，如：塔羅牌、咖啡杯、筆電)
+*   **優勢**：透過動態抽換 Texture，可以用極少的素材庫排列組合出無數種員工，未來也可輕易導入「裝備提升效率」的機制。
 
 ### 2. 動畫驅動機制 (View Layer Animations)
 > ⚠️ **架構鐵律**：所有的動畫都屬於 View 層，透過監聽 Model 層發出的信號 (`Signals`) 來觸發。**動畫表現絕對不會、也不應該被納入 TDD 的自動化測試範圍。**
 
-*   **`Tween` (程式化補間動畫)**：為高質感的靜態立繪注入靈魂。
-    *   例如：員工在工作時，使用 Tween 讓整張立繪進行微幅的上下浮動 (浮游感) 或傾斜。
-    *   例如：拖曳立繪卡片時，使用 Tween 讓圖片瞬間放大 1.1 倍。
+*   **`Tween` (程式化補間動畫)**：負責整體的動態回饋（如拖曳卡片時的彈性縮放、金幣彈出）。
+*   **`AnimationPlayer` (時間軸動畫)**：驅動紙娃娃圖層。我們可以針對 `ModularAgent` 製作簡單的「呼吸 (Breathing)」或「工作敲擊 (Working)」的骨骼/圖層位移動畫，所有套用該模組的角色都能共用同一套動畫邏輯。
 
 ## ⚙️ 進階系統與數學模型 (Advanced Systems & Math Model)
 
