@@ -58,22 +58,11 @@ func _ready() -> void:
 	start_player_turn()
 
 func _init_deck() -> void:
-	var mock_logs = [
-		"Refactor auth module\n 4 files changed, 120 insertions(+), 30 deletions(-)",
-		"Fix memory leak in parser\n 2 files changed, 15 insertions(+), 8 deletions(-)",
-		"Update README.md\n 1 file changed, 5 insertions(+)",
-		"Clean up dead CSS\n 3 files changed, 200 deletions(-)",
-		"Implement RLS rules\n 2 files changed, 45 insertions(+), 5 deletions(-)",
-		"Hotfix production crash\n 1 file changed, 2 insertions(+), 2 deletions(-)",
-		"Upgrade dependencies\n 5 files changed, 300 insertions(+), 150 deletions(-)"
-	]
-	
+	var logs = git_parser.get_local_git_logs()
 	for i in range(15):
-		var log_str = mock_logs[randi() % mock_logs.size()]
+		var log_str = logs[i % logs.size()]
 		var card = git_parser.generate_card_from_log(log_str)
-		card.cost = mini(card.cost, 2) 
-		card.damage = maxi(mini(card.damage / 10, 25), 0) 
-		card.block = maxi(mini(card.block / 10, 20), 0) 
+		# No manual overrides! Values are cleanly normalized by GitLogParser.gd
 		deck_manager.add_card(card)
 
 func start_player_turn() -> void:

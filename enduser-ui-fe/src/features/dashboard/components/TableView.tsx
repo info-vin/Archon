@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Task, SortableTaskKeys, SortDirection } from '../../../types';
 import { PriorityBadge } from './PriorityBadge';
 import { StatusBadge } from './StatusBadge';

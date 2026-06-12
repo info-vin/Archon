@@ -4,6 +4,7 @@ import { MenuIcon, XIcon } from '../../components/Icons.tsx';
 import ThemeToggle from '../../components/ThemeToggle.tsx';
 import { BrandLogo } from '../../components/BrandLogo.tsx';
 import { useAuth } from '@/hooks/useAuth';
+import { ROUTES } from '@/lib/routes';
 
 const PublicLayout: React.FC = () => {
   const location = useLocation();
@@ -22,9 +23,10 @@ const PublicLayout: React.FC = () => {
   }, [isMobileMenuOpen]);
 
   const navLinks = [
-    { name: 'Home', path: '/landing' },
-    { name: 'Solutions', path: '/solutions' },
-    { name: 'Blog', path: '/blog' },
+    { name: 'Home', path: ROUTES.LANDING },
+    { name: 'Solutions', path: ROUTES.SOLUTIONS },
+    { name: 'Blog', path: ROUTES.BLOG },
+    { name: 'AI Card Battler', path: ROUTES.GAME_CARD_BATTLER },
   ];
 
   return (
@@ -34,7 +36,7 @@ const PublicLayout: React.FC = () => {
       </a>
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4">
-          <Link to="/landing" className="mr-6 flex items-center space-x-2">
+          <Link to={ROUTES.LANDING} className="mr-6 flex items-center space-x-2">
             <BrandLogo className="w-8 h-8" />
           </Link>
           <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">

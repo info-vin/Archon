@@ -21,6 +21,8 @@ import MainLayout from './components/layout/MainLayout.tsx';
 import SolutionsPage from './features/marketing/SolutionsPage.tsx';
 import SalesCartPage from './pages/SalesCartPage.tsx';
 import BlogEditor from './pages/BlogEditor.tsx';
+import GamePage from './pages/GamePage.tsx';
+import { ROUTES } from '@/lib/routes';
 
 const App: React.FC = () => {
   return (
@@ -55,11 +57,12 @@ export const AppRoutes: React.FC = () => {
     <Routes>
       {/* Public Routes */}
       <Route element={<PublicLayout />}>
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/blog" element={<BlogPage />} />
-        <Route path="/blog/:id" element={<BlogDetailPage />} />
-        <Route path="/solutions" element={<SolutionsPage />} />
-        <Route path="/auth" element={<AuthPage />} />
+        <Route path={ROUTES.LANDING} element={<LandingPage />} />
+        <Route path={ROUTES.BLOG} element={<BlogPage />} />
+        <Route path={ROUTES.BLOG_DETAIL} element={<BlogDetailPage />} />
+        <Route path={ROUTES.SOLUTIONS} element={<SolutionsPage />} />
+        <Route path={ROUTES.AUTH} element={<AuthPage />} />
+        <Route path={ROUTES.GAME_CARD_BATTLER} element={<GamePage />} />
       </Route>
 
       {/* Protected Routes */}

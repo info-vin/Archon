@@ -1,5 +1,4 @@
-@tool
-extends EditorScript
+extends RefCounted
 class_name MiniTest
 
 var tests_passed: int = 0

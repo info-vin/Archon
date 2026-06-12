@@ -1,8 +1,4 @@
-@tool
 extends MiniTest
-
-func _run() -> void:
-	run_test_suite()
 
 func test_card_initialization():
 	# 嘗試實例化我們定義的 CardStats 資源

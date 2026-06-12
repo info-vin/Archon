@@ -1,9 +1,4 @@
-@tool
 extends MiniTest
-
-# Godot EditorScript 的進入點
-func _run() -> void:
-	run_test_suite()
 
 func test_add_and_draw_card() -> void:
 	# 1. Arrange (準備階段：實例化要測試的物件)

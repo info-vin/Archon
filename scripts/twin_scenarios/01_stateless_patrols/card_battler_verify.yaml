@@ -1,0 +1,25 @@
+name: "AI Card Battler E2E Verification"
+mode: "fanout"
+description: "Verify that the Card Battler WebAssembly game iframe loads and boots correctly on the public game page."
+
+resolution:
+  width: 1280
+  height: 720
+
+steps:
+  - action: "goto"
+    url: "/#/game/card-battler"
+    wait_until: "domcontentloaded"
+    timeout: 30000
+
+  - action: "wait_selector"
+    selector: "iframe[title='Archon AI Card Battler Game']"
+    timeout: 15000
+
+  - action: "sleep"
+    duration: 10000
+
+analysis:
+  type: "ai"
+  screenshot: true
+  system_prompt: "Verify if the game screen is loaded correctly or if it is just a black screen. Respond with WORKFLOW_SUCCESS if it is loaded, or WORKFLOW_FAILURE if it is blank or completely black."

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Task } from '../../../types';
 import { PriorityBadge } from './PriorityBadge';
 import UserAvatar from '../../../components/UserAvatar';
