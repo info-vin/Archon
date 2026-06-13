@@ -145,7 +145,7 @@ export const ManagerNexus: React.FC = () => {
             case 'graph':
                 return (
                     <DetailSection title="Intelligence ROI & Graph" subtitle="60-Day Conversion Analysis (Bi-weekly)" icon={<DatabaseIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <KnowledgeROI knowledgeRoi={knowledgeRoi} handleRebuildIndex={handleRebuildIndex} />
+                        <KnowledgeROI knowledgeRoi={knowledgeRoi} handleRebuildIndex={handleRebuildIndex} processingId={processingId} />
                     </DetailSection>
                 );
 

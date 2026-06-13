@@ -3,14 +3,15 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, 
     ResponsiveContainer 
 } from 'recharts';
-import { SparklesIcon } from '../../../components/Icons';
+import { SparklesIcon, RefreshCwIcon } from '../../../components/Icons';
 
 interface KnowledgeROIProps {
     knowledgeRoi: any;
     handleRebuildIndex: () => Promise<void>;
+    processingId: string | null;
 }
 
-export const KnowledgeROI: React.FC<KnowledgeROIProps> = ({ knowledgeRoi, handleRebuildIndex }) => {
+export const KnowledgeROI: React.FC<KnowledgeROIProps> = ({ knowledgeRoi, handleRebuildIndex, processingId }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
@@ -95,9 +96,18 @@ export const KnowledgeROI: React.FC<KnowledgeROIProps> = ({ knowledgeRoi, handle
                     </div>
                     <button 
                         onClick={handleRebuildIndex}
-                        className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 transition-all active:scale-95"
+                        disabled={processingId === 'rebuild_index'}
+                        className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        aria-label="Trigger full index rebuild"
                     >
-                        TRIGGER FULL RE-INDEX
+                        {processingId === 'rebuild_index' ? (
+                            <>
+                                <RefreshCwIcon className="w-4 h-4 animate-spin" />
+                                RE-INDEXING...
+                            </>
+                        ) : (
+                            'TRIGGER FULL RE-INDEX'
+                        )}
                     </button>
                 </div>
             </div>

@@ -424,6 +424,9 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `19_seed_marketing_group_chat_prompts.sql`
 > - `20_seed_supervisor_agent.sql`
 > - `21_seed_reports_workflow_prompts.sql`
+> - `22_seed_devbot_math_prompt.sql`
+> - `23_seed_agent_system_prompts.sql`
+> - `24_create_dynamic_agent_tables.sql`
 > - `99_rescue_live_data.sql`
 > - `RESET_DB.sql`
 > - `seed_blog_posts.sql`
