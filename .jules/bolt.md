@@ -113,3 +113,6 @@
 ## 2024-05-24 - Inline Regex vs O(N) Map Allocation
 **Learning:** In React components rendering lists (`KanbanView`, `ListView`), using a `useMemo` block to iterate over the entire array to create a dictionary of `.toLowerCase()` strings just for simple text matching (`includes('bot')`) is significantly slower than using an inline case-insensitive regular expression (`/bot/i.test()`). The map approach forces O(N) memory allocation and string mutations upfront on every state change.
 **Action:** When performing simple text matching (like checking roles or names) inside a `.map()` render loop, prefer inline `/pattern/i.test()` over building intermediate lowercased lookup maps.
+## 2025-05-18 - Replacing .toLowerCase().includes() with inline regex in list rendering loops
+**Learning:** Using `string.toLowerCase().includes()` inside render functions that are executed many times per render cycle (like list items in a Kanban or Table view) causes a new lowercased string to be allocated in memory on every invocation. This leads to high Garbage Collection (GC) overhead and performance degradation during rapid state updates like mouse hovering.
+**Action:** Replace `string.toLowerCase().includes(pattern)` with an inline case-insensitive regex test like `/pattern/i.test(string)` inside high-frequency render loops to prevent redundant string memory allocations.
