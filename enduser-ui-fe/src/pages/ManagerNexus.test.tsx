@@ -8,7 +8,8 @@ vi.mock('../components/Icons', async (importOriginal) => {
   const actual = await importOriginal() as any;
   return {
     ...actual,
-    XIcon: (props: any) => <svg data-testid="x-icon" {...props} />
+    XIcon: (props: any) => <svg data-testid="x-icon" {...props} />,
+    RefreshCwIcon: (props: any) => <svg data-testid="refresh-icon" {...props} />
   };
 });
 
