@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8yq7qxyxxxx"]
+[gd_scene load_steps=3 format=3 uid="uid://b8yq7qxyxxxx"]
 
 [ext_resource type="Theme" uid="uid://d3a4bxxxxxxx" path="res://Scripts/Resources/NeonTheme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://Scripts/Main.gd" id="2_script"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -10,6 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
+script = ExtResource("2_script")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -55,6 +57,15 @@ text = "UI_REP"
 [node name="RepValue" type="Label" parent="VBox/TopBar/HBox"]
 layout_mode = 2
 text = "100"
+
+[node name="Spacer2" type="Control" parent="VBox/TopBar/HBox"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+
+[node name="TickButton" type="Button" parent="VBox/TopBar/HBox"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Next Tick >>"
 
 [node name="GameArea" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
