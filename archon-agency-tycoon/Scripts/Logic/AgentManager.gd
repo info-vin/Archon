@@ -20,3 +20,21 @@ func get_available_agents_by_role(role: int) -> Array[int]:
         if agent.role == role and agent.state == 0 and agent.energy >= 10:
             available.append(i)
     return available
+
+func drain_agent_energy(agent_id: int, amount: int) -> void:
+    var agent = get_agent(agent_id)
+    if agent != null:
+        agent.energy -= amount
+        if agent.energy <= 0:
+            agent.energy = 0
+            agent.state = AgentResource.AgentState.EXHAUSTED
+
+func process_tick() -> void:
+    for agent in agents:
+        if agent.state == AgentResource.AgentState.RESTING:
+            agent.energy += 20
+            if agent.energy > 100:
+                agent.energy = 100
+        elif agent.energy <= 0:
+            agent.energy = 0
+            agent.state = AgentResource.AgentState.EXHAUSTED

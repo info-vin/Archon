@@ -2,7 +2,7 @@ extends Resource
 class_name AgentResource
 
 enum AgentRole { SALES, DEV, QA }
-enum AgentState { IDLE, WORKING, RESTING }
+enum AgentState { IDLE, WORKING, RESTING, EXHAUSTED }
 
 @export var agent_name: String = "New Agent"
 @export var role: AgentRole = AgentRole.DEV

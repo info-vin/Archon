@@ -58,3 +58,48 @@ func test_process_tick_and_task_completion() -> void:
     assert_true(task.is_completed, "Task should be completed now")
     assert_eq(agent.state, preload("res://Scripts/Resources/AgentResource.gd").AgentState.IDLE, "Agent should be IDLE again")
     assert_eq(agent.energy, 80, "Energy should drop by another 10")
+
+func test_failed_assignment_exhausted_agent() -> void:
+    var agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
+    var task_manager = preload("res://Scripts/Logic/TaskManager.gd").new()
+    task_manager.set_agent_manager(agent_manager)
+    
+    var agent = preload("res://Scripts/Resources/AgentResource.gd").new("Dave", 1) # DEV
+    agent.energy = 0
+    agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.EXHAUSTED
+    var agent_id = agent_manager.add_agent(agent)
+    
+    var task = preload("res://Scripts/Resources/TaskResource.gd").new("Crunch Time", 1, 3, 200) # DEV
+    var task_id = task_manager.add_task(task)
+    
+    var success = task_manager.assign_task(task_id, agent_id)
+    
+    assert_false(success, "Task assignment should fail for EXHAUSTED agents")
+    assert_eq(agent.state, preload("res://Scripts/Resources/AgentResource.gd").AgentState.EXHAUSTED, "Agent state should remain EXHAUSTED")
+
+func test_task_interrupted_by_exhaustion() -> void:
+    var agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
+    var task_manager = preload("res://Scripts/Logic/TaskManager.gd").new()
+    task_manager.set_agent_manager(agent_manager)
+    
+    var agent = preload("res://Scripts/Resources/AgentResource.gd").new("ExhaustedWorker", 1) # DEV
+    agent.energy = 10 # Start with 10 to pass assignment check, will be 0 after 1 tick
+    var agent_id = agent_manager.add_agent(agent)
+    
+    var task = preload("res://Scripts/Resources/TaskResource.gd").new("Big Feature", 1, 5, 500) # Requires 5 ticks
+    var task_id = task_manager.add_task(task)
+    
+    task_manager.assign_task(task_id, agent_id)
+    
+    # Tick 1: Agent works, but AgentManager process_tick will set them to EXHAUSTED
+    task_manager.process_tick() # This deducts 10 energy, energy becomes -5
+    agent_manager.process_tick() # This clamps energy to 0, state EXHAUSTED
+    
+    assert_eq(task.current_progress, 1, "Progress should be 1")
+    assert_eq(agent.state, preload("res://Scripts/Resources/AgentResource.gd").AgentState.EXHAUSTED, "Agent should be exhausted")
+    
+    # Tick 2: Agent is exhausted, should not work on task
+    task_manager.process_tick()
+    
+    assert_eq(task.current_progress, 1, "Progress should NOT increase because agent is exhausted")
+    assert_eq(agent.energy, 0, "Energy should remain 0")

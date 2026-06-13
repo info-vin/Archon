@@ -37,3 +37,11 @@ func load_game() -> bool:
     if data.has("current_phase"): current_phase = data["current_phase"]
     
     return true
+
+func setup_connections(task_manager) -> void:
+    if not task_manager.task_completed.is_connected(_on_task_completed):
+        task_manager.task_completed.connect(_on_task_completed)
+
+func _on_task_completed(task_id: int, reward: int) -> void:
+    funds += reward
+

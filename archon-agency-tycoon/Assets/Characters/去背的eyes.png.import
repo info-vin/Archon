@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bg0vmkp5mlr04"
-path="res://.godot/imported/tool_magic_cards.png-3aec66b20e2d0a275147d9bddb19b04c.ctex"
+uid="uid://djlt2y40mbutd"
+path="res://.godot/imported/去背的eyes.png-0a3a3895685064756591457837bf6fc4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Characters/tool_magic_cards.png"
-dest_files=["res://.godot/imported/tool_magic_cards.png-3aec66b20e2d0a275147d9bddb19b04c.ctex"]
+source_file="res://Assets/Characters/去背的eyes.png"
+dest_files=["res://.godot/imported/去背的eyes.png-0a3a3895685064756591457837bf6fc4.ctex"]
 
 [params]
 

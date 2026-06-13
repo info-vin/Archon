@@ -59,7 +59,7 @@ func process_tick() -> void:
             var agent = agent_manager.get_agent(task.assigned_agent_id)
             if agent != null and agent.state == 1: # 1 is WORKING
                 task.current_progress += 1
-                agent.energy -= 10
+                agent_manager.drain_agent_energy(task.assigned_agent_id, 10)
                 
                 if task.current_progress >= task.required_ticks:
                     task.is_completed = true
