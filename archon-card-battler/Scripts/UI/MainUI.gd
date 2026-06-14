@@ -254,6 +254,11 @@ func play_card(index: int) -> void:
 	elif card.category == "Merge":
 		player_hp = min(player_max_hp, player_hp + 10)
 		msg += " [color=#fbbf24]👑 Merge: Healed 10 HP![/color]"
+	elif card.category == "Refactor":
+		var bonus_block = int(float(final_damage) * 0.5)
+		player_block += bonus_block
+		msg += " [color=#60a5fa]🔵 Refactor: Gained %d Block from damage![/color]" % bonus_block
+		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(bonus_block) + "🛡️", Color(0.3, 0.6, 1.0))
 	elif card.category == "Test":
 		player_block += card.block # Adds another layer of block (doubling it)
 		msg += " [color=#c084fc]🧪 Test: Doubled Block (+%d Block)![/color]" % card.block
