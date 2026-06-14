@@ -10,11 +10,25 @@ func generate_card_from_log(log_output: String) -> CardStats:
 	card.card_name = lines[0].strip_edges()
 	
 	var title_lower = card.card_name.to_lower()
-	if title_lower.begins_with("fix") or title_lower.begins_with("bug") or title_lower.begins_with("hotfix"):
+	if title_lower.contains("merge") or title_lower.begins_with("merged"):
+		card.category = "Merge"
+	elif "🤖" in card.card_name or title_lower.begins_with("agent:") or title_lower.begins_with("ai:"):
+		card.category = "Agent"
+	elif title_lower.begins_with("feat") or "✨" in card.card_name:
+		card.category = "Feature"
+	elif title_lower.begins_with("docs") or title_lower.begins_with("doc") or title_lower.contains("readme"):
+		card.category = "Docs"
+	elif title_lower.begins_with("fix") or title_lower.begins_with("bug") or title_lower.begins_with("hotfix") or title_lower.contains("issue"):
 		card.category = "Fix"
 	elif title_lower.begins_with("refactor") or title_lower.begins_with("clean"):
 		card.category = "Refactor"
-	elif title_lower.begins_with("chore") or title_lower.begins_with("update") or title_lower.begins_with("upgrade"):
+	elif title_lower.begins_with("perf") or "⚡" in card.card_name or title_lower.contains("performance"):
+		card.category = "Performance"
+	elif title_lower.begins_with("test") or "🧪" in card.card_name or title_lower.contains("pytest") or title_lower.contains("vitest") or title_lower.contains("unittest"):
+		card.category = "Test"
+	elif title_lower.begins_with("style") or "🎨" in card.card_name or title_lower.contains("css") or title_lower.contains("theme") or title_lower.begins_with("ui:"):
+		card.category = "Style"
+	elif title_lower.begins_with("chore") or title_lower.begins_with("ci:") or title_lower.begins_with("build:") or title_lower.begins_with("deps:"):
 		card.category = "Chore"
 	else:
 		card.category = "Feature"
@@ -106,11 +120,14 @@ func parse_raw_git_output(raw_stdout: String) -> Array[String]:
 # Fallback logs for web build or non-git environments
 func get_fallback_logs() -> Array[String]:
 	return [
-		"重構驗證模組 (Refactor auth module)\n 4 files changed, 120 insertions(+), 30 deletions(-)",
-		"修復解析器記憶體洩漏 (Fix memory leak in parser)\n 2 files changed, 15 insertions(+), 8 deletions(-)",
-		"更新說明文件 (Update README.md)\n 1 file changed, 5 insertions(+)",
-		"清理冗餘 CSS 樣式 (Clean up dead CSS)\n 3 files changed, 200 deletions(-)",
-		"實作 RLS 權限規則 (Implement RLS rules)\n 2 files changed, 45 insertions(+), 5 deletions(-)",
-		"緊急修復線上當機 (Hotfix production crash)\n 1 file changed, 2 insertions(+), 2 deletions(-)",
-		"升級專案相依套件 (Upgrade dependencies)\n 5 files changed, 300 insertions(+), 150 deletions(-)"
+		"✨ 實作雙生模擬器核心 (feat: implement twin simulator core)\n 8 files changed, 250 insertions(+), 30 deletions(-)",
+		"🌐 撰寫 API 整合說明文件 (docs: document api integrations)\n 1 file changed, 45 insertions(+)",
+		"👑 合併分支 dev/twins 到 main (Merge branch dev/twins into main)\n 12 files changed, 500 insertions(+), 200 deletions(-)",
+		"🔴 修復 RAG 設置中的無窮重渲染 (fix: infinite re-render loop in RAGSettings)\n 2 files changed, 15 insertions(+), 8 deletions(-)",
+		"🔵 重構驗證與憑證模組 (refactor: restructure auth credentials module)\n 4 files changed, 120 insertions(+), 90 deletions(-)",
+		"⚡ 效能優化：減少冷啟動延遲 (perf: reduce cold start latency)\n 3 files changed, 60 insertions(+), 10 deletions(-)",
+		"🔘 升級前端相依套件與設定 (chore: upgrade packages)\n 5 files changed, 300 insertions(+), 150 deletions(-)",
+		"🧪 新增 TDD 戰鬥邏輯單元測試 (test: add unit tests for combat logic)\n 3 files changed, 85 insertions(+)",
+		"🎨 霓虹邊框樣式與毛玻璃特效優化 (style: adjust glow border and glassmorphism styling)\n 2 files changed, 40 insertions(+), 15 deletions(-)",
+		"🤖 實作自動化 UI 審計與視覺裁判 (agent: deploy visual UI audit agent)\n 6 files changed, 180 insertions(+), 25 deletions(-)"
 	]

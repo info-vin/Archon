@@ -246,10 +246,47 @@ func play_card(index: int) -> void:
 	if card.block > 0: 
 		msg += " gained " + str(card.block) + " Block."
 		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(card.block) + "🛡️", Color(0.2, 0.8, 1))
+	
+	# Play card effects based on category
+	if card.category == "Performance":
+		player_mana = min(player_max_mana, player_mana + 2)
+		msg += " [color=#facc15]⚡ Performance: Restored 2 Tokens![/color]"
+	elif card.category == "Merge":
+		player_hp = min(player_max_hp, player_hp + 10)
+		msg += " [color=#fbbf24]👑 Merge: Healed 10 HP![/color]"
+	elif card.category == "Test":
+		player_block += card.block # Adds another layer of block (doubling it)
+		msg += " [color=#c084fc]🧪 Test: Doubled Block (+%d Block)![/color]" % card.block
+	elif card.category == "Docs":
+		var drawn = deck_manager.draw_card()
+		if drawn != null:
+			hand.append(drawn)
+			msg += " [color=#22d3ee]🌐 Docs: Drew 1 card (%s).[/color]" % drawn.card_name
+	elif card.category == "Style":
+		player_block += 10
+		msg += " [color=#f472b6]🌸 Style: Gained 10 Block![/color]"
+	elif card.category == "Agent":
+		enemy_hp -= 20
+		msg += " [color=#a78bfa]🤖 Agent: Dealt 20 direct DMG (bypassed shields)![/color]"
+		spawn_floating_text(fighter_right.global_position + Vector2(100, 100), "-20🤖", Color(0.7, 0.4, 1.0))
+	elif card.category == "Chore":
+		var cards_to_discard = []
+		for h_card in hand:
+			if h_card != card:
+				cards_to_discard.append(h_card)
+		for h_card in cards_to_discard:
+			deck_manager.discard_card(h_card)
+			hand.erase(h_card)
+		msg += " [color=#9ca3af]🔘 Chore: Discarded hand and drew 2 cards.[/color]"
+		for i in range(2):
+			var drawn = deck_manager.draw_card()
+			if drawn != null:
+				hand.append(drawn)
+
 	log_action(msg)
 	
 	deck_manager.discard_card(card)
-	hand.remove_at(index)
+	hand.remove_at(hand.find(card)) # Safely find card position since Chore might have modified hand array
 	update_ui()
 	check_win_condition()
 

@@ -42,3 +42,22 @@ func test_parse_git_extreme_limits() -> void:
 	assert_eq(card_data.cost, 3, "Cost should be capped at max 3")
 	assert_eq(card_data.damage, 50, "Damage should be capped at max 50")
 	assert_eq(card_data.block, 30, "Block should be capped at max 30")
+
+func test_all_10_categories_parsing() -> void:
+	var parser = preload("res://Scripts/Logic/GitLogParser.gd").new()
+	var test_cases = {
+		"🤖 deploy visual UI audit agent\n 1 file changed, 10 insertions(+)": "Agent",
+		"✨ implement twin simulator core\n 1 file changed, 10 insertions(+)": "Feature",
+		"docs: document api integrations\n 1 file changed, 10 insertions(+)": "Docs",
+		"Merge branch dev/twins\n 1 file changed, 10 insertions(+)": "Merge",
+		"fix: memory leak\n 1 file changed, 10 insertions(+)": "Fix",
+		"refactor: restructure auth credentials module\n 1 file changed, 10 insertions(+)": "Refactor",
+		"⚡ reduce cold start latency\n 1 file changed, 10 insertions(+)": "Performance",
+		"test: add unit tests\n 1 file changed, 10 insertions(+)": "Test",
+		"style: adjust glow border styling\n 1 file changed, 10 insertions(+)": "Style",
+		"chore: upgrade packages\n 1 file changed, 10 insertions(+)": "Chore"
+	}
+	for log_str in test_cases:
+		var expected = test_cases[log_str]
+		var card: CardStats = parser.generate_card_from_log(log_str)
+		assert_eq(card.category, expected, "Log should map to " + expected)
