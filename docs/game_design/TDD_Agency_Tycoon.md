@@ -84,19 +84,29 @@
 
 ## 🎨 素材生成與動畫策略 (Asset & Animation Strategy)
 
-放棄單一靜態圖，改採高擴充性的**模組化紙娃娃系統 (Modular Paper Doll System)**，以實現高復用性與未來裝備系統的擴充。
+放棄單一靜態圖，改採高擴充性的**模組化紙娃娃系統 (Modular Paper Doll System)**，以實現高復用性與未來裝備系統的擴充，並滿足**遊戲狀態記憶與持久化 (Save & Load)** 的核心需求。
 
-### 1. 模組化角色 (Modular Characters)
-*   **架構參考**：《Terraria》的圖層疊加設計。
-*   **實作方式**：在 Godot 中建立 `ModularAgent.tscn`，利用多個 `Sprite2D` 節點進行 Z-Index 疊加：
-    *   `Layer 0: BaseBody` (素體)
-    *   `Layer 1: Eyes/Face` (表情)
-    *   `Layer 2: Hair` (髮型)
-    *   `Layer 3: Outfit` (職業服裝，如：魔法袍、西裝)
-    *   `Layer 4: Tool/Accessory` (手持物，如：塔羅牌、咖啡杯、筆電)
+### 1. 模組化角色與狀態記憶 (Modular Characters & State Persistence)
+*   **MVC 架構對齊**：
+    *   **Model (`AgentResource`)**: 新增 `equipped_hair`, `equipped_outfit`, `equipped_tool` 等字串或 ID 欄位，輕量化記憶角色的當下裝備狀態，確保存檔/讀檔能 100% 還原外觀。
+    *   **View (`ModularAgent.tscn`)**: 透過動態讀取 Model 狀態，利用多個 `Sprite2D` 節點進行 Z-Index 疊加：
+        *   `Layer 0: BaseBody` (素體)
+        *   `Layer 1: Eyes/Face` (表情)
+        *   `Layer 2: Hair` (髮型)
+        *   `Layer 3: Outfit` (職業服裝，如：魔法袍、西裝)
+        *   `Layer 4: Tool/Accessory` (手持物，如：塔羅牌、咖啡杯、筆電)
 *   **優勢**：透過動態抽換 Texture，可以用極少的素材庫排列組合出無數種員工，未來也可輕易導入「裝備提升效率」的機制。
 
-### 2. 動畫驅動機制 (View Layer Animations)
+### 2. Python 自動化資產管線 (Automated Asset Pipeline)
+*   為解決純 GDScript 處理影像效能過低的問題，確立 **方案 A：保持 Python 作為 Pipeline 工具**。
+*   **實作流程**：
+    1.  建立 `scripts/process_sprites.py`，使用 `scipy.ndimage` 與 `PIL`。
+    2.  將 AI 或美術生成的整張精靈圖 (Spritesheet) 放入 `raw_assets/`。
+    3.  執行腳本自動進行：硬邊去背 -> 物理連通域分析 -> **動態斷崖偵測 (排除雜訊)** -> 標準化置中為 `64x64` 透明小圖。
+    4.  直接輸出至 `Assets/Characters/Alice_Parts/` 供 Godot 直接引用。
+    *   **對位優勢**：由於所有部件皆被標準化置中於 `64x64` 畫布，Godot 內的 `Sprite2D` 節點座標皆可設定為 `(0, 0)` 完美重疊，實現「零偏移設定 (Zero-Offset Setup)」。
+
+### 3. 動畫驅動機制 (View Layer Animations)
 > ⚠️ **架構鐵律**：所有的動畫都屬於 View 層，透過監聽 Model 層發出的信號 (`Signals`) 來觸發。**動畫表現絕對不會、也不應該被納入 TDD 的自動化測試範圍。**
 
 *   **`Tween` (程式化補間動畫)**：負責整體的動態回饋（如拖曳卡片時的彈性縮放、金幣彈出）。
