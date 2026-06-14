@@ -106,11 +106,11 @@ func parse_raw_git_output(raw_stdout: String) -> Array[String]:
 # Fallback logs for web build or non-git environments
 func get_fallback_logs() -> Array[String]:
 	return [
-		"Refactor auth module\n 4 files changed, 120 insertions(+), 30 deletions(-)",
-		"Fix memory leak in parser\n 2 files changed, 15 insertions(+), 8 deletions(-)",
-		"Update README.md\n 1 file changed, 5 insertions(+)",
-		"Clean up dead CSS\n 3 files changed, 200 deletions(-)",
-		"Implement RLS rules\n 2 files changed, 45 insertions(+), 5 deletions(-)",
-		"Hotfix production crash\n 1 file changed, 2 insertions(+), 2 deletions(-)",
-		"Upgrade dependencies\n 5 files changed, 300 insertions(+), 150 deletions(-)"
+		"重構驗證模組 (Refactor auth module)\n 4 files changed, 120 insertions(+), 30 deletions(-)",
+		"修復解析器記憶體洩漏 (Fix memory leak in parser)\n 2 files changed, 15 insertions(+), 8 deletions(-)",
+		"更新說明文件 (Update README.md)\n 1 file changed, 5 insertions(+)",
+		"清理冗餘 CSS 樣式 (Clean up dead CSS)\n 3 files changed, 200 deletions(-)",
+		"實作 RLS 權限規則 (Implement RLS rules)\n 2 files changed, 45 insertions(+), 5 deletions(-)",
+		"緊急修復線上當機 (Hotfix production crash)\n 1 file changed, 2 insertions(+), 2 deletions(-)",
+		"升級專案相依套件 (Upgrade dependencies)\n 5 files changed, 300 insertions(+), 150 deletions(-)"
 	]

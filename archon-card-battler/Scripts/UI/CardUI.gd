@@ -24,15 +24,19 @@ func setup(card_stats: CardStats, index: int) -> void:
 	
 	type_label.text = card_stats.category
 	if card_stats.category == "Fix":
+		type_label.text = "修復 (Fix)"
 		bg_color = Color(0.23, 0.15, 0.15, 1)
 		border_color = Color(1.0, 0.4, 0.4, 0.8)
 	elif card_stats.category == "Feature":
+		type_label.text = "功能 (Feature)"
 		bg_color = Color(0.15, 0.23, 0.15, 1)
 		border_color = Color(0.4, 1.0, 0.4, 0.8)
 	elif card_stats.category == "Refactor":
+		type_label.text = "重構 (Refactor)"
 		bg_color = Color(0.15, 0.15, 0.23, 1)
 		border_color = Color(0.4, 0.4, 1.0, 0.8)
 	elif card_stats.category == "Chore":
+		type_label.text = "雜務 (Chore)"
 		bg_color = Color(0.2, 0.2, 0.2, 1)
 		border_color = Color(0.6, 0.6, 0.6, 0.8)
 		
@@ -48,14 +52,14 @@ func setup(card_stats: CardStats, index: int) -> void:
 	add_theme_stylebox_override("hover", style_hover)
 	add_theme_stylebox_override("pressed", style_hover)
 	
-	# BBCode formatting
+	# BBCode formatting (Traditional Chinese localization)
 	var bbcode_text = "[center]"
 	if card_stats.damage > 0:
-		bbcode_text += "[color=#4ade80]+%d Insertions[/color]\n" % card_stats.damage
+		bbcode_text += "[color=#4ade80]+%d 程式碼新增 (Insertions)[/color]\n" % card_stats.damage
 	if card_stats.block > 0:
-		bbcode_text += "[color=#f87171]-%d Deletions[/color]\n" % card_stats.block
+		bbcode_text += "[color=#f87171]-%d 程式碼刪除 (Deletions)[/color]\n" % card_stats.block
 	if card_stats.damage == 0 and card_stats.block == 0:
-		bbcode_text += "[color=#9ca3af]Metadata change...[/color]"
+		bbcode_text += "[color=#9ca3af]中繼資料變更 (Metadata)...[/color]"
 	bbcode_text += "[/center]"
 		
 	desc_label.text = bbcode_text
