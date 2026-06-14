@@ -5,9 +5,20 @@ var task_manager
 var tycoon_manager
 
 @onready var funds_label: Label = $VBox/TopBar/HBox/FundsValue
+@onready var funds_title: Label = $VBox/TopBar/HBox/FundsLabel
+@onready var rep_title: Label = $VBox/TopBar/HBox/RepLabel
+@onready var backlog_title: Label = $VBox/BottomBar/VBox/Label
+@onready var dev_room_label: Label = $VBox/GameArea/Building/Floor1/DevRoom/Label
+@onready var break_room_label: Label = $VBox/GameArea/Building/Floor1/BreakRoom/Label
+
 @onready var dev_room: Control = $VBox/GameArea/Building/Floor1/DevRoom
-@onready var tick_button: Button = $VBox/TopBar/HBox/TickButton
+@onready var lang_button: Button = $VBox/TopBar/HBox/LangButton
+@onready var game_tick_timer: Timer = $GameTickTimer
 @onready var task_container: HBoxContainer = $VBox/BottomBar/VBox/TaskContainer
+
+var current_lang_index = 0
+var langs = ["zh_TW", "en", "ja"]
+var lang_names = ["中文", "English", "日本語"]
 
 func _ready() -> void:
     agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
@@ -17,15 +28,41 @@ func _ready() -> void:
     task_manager.set_agent_manager(agent_manager)
     tycoon_manager.setup_connections(task_manager)
     
-    if tick_button:
-        tick_button.pressed.connect(_on_tick_button_pressed)
+    # 預設語言
+    TranslationServer.set_locale(langs[current_lang_index])
+    
+    if lang_button:
+        lang_button.pressed.connect(_on_lang_button_pressed)
+        
+    if game_tick_timer:
+        game_tick_timer.timeout.connect(_on_tick_timer_timeout)
         
     _setup_initial_game()
     _update_ui()
+    _update_static_labels()
+
+func _on_lang_button_pressed() -> void:
+    current_lang_index = (current_lang_index + 1) % langs.size()
+    TranslationServer.set_locale(langs[current_lang_index])
+    lang_button.text = "Language: " + lang_names[current_lang_index]
+    _update_static_labels()
+    _update_ui()
+    
+    # 更新現有卡片的語言
+    for child in task_container.get_children():
+        if child is TaskCard:
+            child._update_text()
+
+func _update_static_labels() -> void:
+    funds_title.text = tr("UI_FUNDS")
+    rep_title.text = tr("UI_REP")
+    backlog_title.text = tr("UI_BACKLOG")
+    dev_room_label.text = tr("ROOM_DEV")
+    break_room_label.text = tr("ROOM_BREAK")
 
 func _setup_initial_game() -> void:
     # 招募一位工程師 Alice
-    var agent = preload("res://Scripts/Resources/AgentResource.gd").new("Alice (DEV)", 1)
+    var agent = preload("res://Scripts/Resources/AgentResource.gd").new("Alice", 1)
     var agent_id = agent_manager.add_agent(agent)
     
     # 產生幾個任務放在 Backlog
@@ -33,12 +70,12 @@ func _setup_initial_game() -> void:
     _spawn_task_in_backlog("Update DB Schema", 2, 200)
     _spawn_task_in_backlog("Write Unit Tests", 4, 400)
     
-    # 紙娃娃實體化
+    # 紙娃娃實體化 (修正比例與位置，讓她好好待在框裡)
     var agent_view_scene = preload("res://Scenes/Main/ModularAgent.tscn")
     if agent_view_scene:
         var agent_view = agent_view_scene.instantiate()
-        agent_view.position = Vector2(150, 100)
-        agent_view.scale = Vector2(0.5, 0.5) 
+        agent_view.position = Vector2(150, 130) # 置中於 300x200 的 DevRoom
+        agent_view.scale = Vector2(0.2, 0.2) # 大幅縮小以符合框格
         dev_room.add_child(agent_view)
         
     # 掛載 Drop Zone 到 DevRoom
@@ -66,7 +103,7 @@ func _on_task_dropped_on_agent(task_id: int, agent_id: int) -> void:
                 break
         _update_ui()
     else:
-        print("無法指派！(可能體力不足或非閒置狀態)")
+        print("無法指派！")
 
 func _get_active_task_for_agent(agent_id: int) -> int:
     for i in range(task_manager.tasks.size()):
@@ -75,15 +112,10 @@ func _get_active_task_for_agent(agent_id: int) -> int:
             return i
     return -1
 
-func _on_tick_button_pressed() -> void:
-    # 讓時間單純流逝，玩家自己決定要不要派任務，或者讓員工休息
+func _on_tick_timer_timeout() -> void:
+    # 真實時間流逝 (1 Tick)
     task_manager.process_tick()
     agent_manager.process_tick()
-    
-    # 隨機產生新任務 (簡易版 SALES 邏輯)
-    if randf() < 0.2:
-        _spawn_task_in_backlog("Random Client Req", randi()%3 + 2, (randi()%3 + 1)*100)
-        
     _update_ui()
 
 func _update_ui() -> void:
@@ -93,24 +125,24 @@ func _update_ui() -> void:
     if not status_label:
         status_label = Label.new()
         status_label.name = "AgentStatus"
-        status_label.position = Vector2(10, 10)
+        status_label.position = Vector2(10, 30)
         status_label.add_theme_color_override("font_color", Color(1, 1, 1))
         dev_room.add_child(status_label)
         
     var alice = agent_manager.get_agent(0)
     var active_task_idx = _get_active_task_for_agent(0)
     
-    var state_str = "IDLE"
-    if alice.state == 1: state_str = "WORKING 💦"
-    elif alice.state == 2: state_str = "RESTING ☕"
-    elif alice.state == 3: state_str = "EXHAUSTED 💀"
+    var state_str = tr("STATE_IDLE")
+    if alice.state == 1: state_str = tr("STATE_WORKING")
+    elif alice.state == 2: state_str = tr("STATE_RESTING")
+    elif alice.state == 3: state_str = "EXHAUSTED"
     
-    var text = "Alice: %s\n體力: %d/100\n" % [state_str, alice.energy]
+    var text = "Alice: %s\nEnergy: %d/100\n" % [state_str, alice.energy]
     
     if active_task_idx != -1:
         var task = task_manager.tasks[active_task_idx]
-        text += "任務 [%s]: %d / %d" % [task.task_name, task.current_progress, task.required_ticks]
+        text += "[%s]: %d / %d %s" % [task.task_name, task.current_progress, task.required_ticks, tr("UI_TICK")]
     else:
-        text += "任務: [無]"
+        text += "[None]"
         
     status_label.text = text

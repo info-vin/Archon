@@ -16,10 +16,13 @@ func setup(id: int, t_name: String, ticks: int, reward: int) -> void:
     reward_funds = reward
     
 func _ready() -> void:
+    _update_text()
+
+func _update_text() -> void:
     if title_label:
         title_label.text = task_name
     if details_label:
-        details_label.text = "🕒 %d Ticks\n💰 $%d" % [required_ticks, reward_funds]
+        details_label.text = "🕒 %d %s\n💰 $%d" % [required_ticks, tr("UI_TICK"), reward_funds]
 
 # --- Drag and Drop Logic ---
 

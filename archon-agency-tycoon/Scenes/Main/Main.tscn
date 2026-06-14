@@ -62,10 +62,14 @@ text = "100"
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 
-[node name="TickButton" type="Button" parent="VBox/TopBar/HBox"]
+[node name="LangButton" type="Button" parent="VBox/TopBar/HBox"]
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
-text = "Next Tick >>"
+text = "Language: 中文"
+
+[node name="GameTickTimer" type="Timer" parent="."]
+wait_time = 1.0
+autostart = true
 
 [node name="GameArea" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
