@@ -51,6 +51,17 @@ var help_overlay: ColorRect = null
 
 var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
 
+# Dynamic vector icon HUD elements
+var hud_container: HBoxContainer
+var token_icon: VectorIcon
+var token_label: Label
+var block_icon: VectorIcon
+var block_label: Label
+var deck_icon: VectorIcon
+var deck_label: Label
+var discard_icon: VectorIcon
+var discard_label: Label
+
 func _ready() -> void:
 	hit_sound = AudioStreamPlayer.new()
 	hit_sound.stream = preload("res://Assets/Sounds/hit.wav")
@@ -78,6 +89,90 @@ func _ready() -> void:
 	
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
 	restart_button.pressed.connect(restart_game)
+	
+	# Hide legacy mana label
+	mana_label.visible = false
+	
+	# Dynamically assemble the premium Vector HUD layout
+	hud_container = HBoxContainer.new()
+	hud_container.add_theme_constant_override("separation", 12)
+	
+	var VectorIconScript = preload("res://Scripts/UI/VectorIcon.gd")
+	
+	# 1. Tokens
+	token_icon = VectorIconScript.new()
+	token_icon.type = VectorIcon.IconType.TOKEN
+	token_icon.color = Color(0.0, 0.8, 1.0)
+	token_icon.custom_minimum_size = Vector2(18, 18)
+	hud_container.add_child(token_icon)
+	
+	token_label = Label.new()
+	token_label.add_theme_font_override("font", cjk_font)
+	token_label.add_theme_font_size_override("font_size", 16)
+	hud_container.add_child(token_label)
+	
+	# Separator 1
+	var sep1 = Label.new()
+	sep1.text = "|"
+	sep1.add_theme_font_override("font", cjk_font)
+	sep1.add_theme_font_size_override("font_size", 16)
+	sep1.modulate = Color(0.3, 0.3, 0.3)
+	hud_container.add_child(sep1)
+	
+	# 2. Block
+	block_icon = VectorIconScript.new()
+	block_icon.type = VectorIcon.IconType.BLOCK
+	block_icon.color = Color(0.2, 0.9, 0.6)
+	block_icon.custom_minimum_size = Vector2(18, 18)
+	hud_container.add_child(block_icon)
+	
+	block_label = Label.new()
+	block_label.add_theme_font_override("font", cjk_font)
+	block_label.add_theme_font_size_override("font_size", 16)
+	hud_container.add_child(block_label)
+	
+	# Separator 2
+	var sep2 = Label.new()
+	sep2.text = "|"
+	sep2.add_theme_font_override("font", cjk_font)
+	sep2.add_theme_font_size_override("font_size", 16)
+	sep2.modulate = Color(0.3, 0.3, 0.3)
+	hud_container.add_child(sep2)
+	
+	# 3. Deck
+	deck_icon = VectorIconScript.new()
+	deck_icon.type = VectorIcon.IconType.DECK
+	deck_icon.color = Color(1.0, 0.8, 0.2)
+	deck_icon.custom_minimum_size = Vector2(18, 18)
+	hud_container.add_child(deck_icon)
+	
+	deck_label = Label.new()
+	deck_label.add_theme_font_override("font", cjk_font)
+	deck_label.add_theme_font_size_override("font_size", 16)
+	hud_container.add_child(deck_label)
+	
+	# Separator 3
+	var sep3 = Label.new()
+	sep3.text = "|"
+	sep3.add_theme_font_override("font", cjk_font)
+	sep3.add_theme_font_size_override("font_size", 16)
+	sep3.modulate = Color(0.3, 0.3, 0.3)
+	hud_container.add_child(sep3)
+	
+	# 4. Discard
+	discard_icon = VectorIconScript.new()
+	discard_icon.type = VectorIcon.IconType.DISCARD
+	discard_icon.color = Color(1.0, 0.4, 0.4)
+	discard_icon.custom_minimum_size = Vector2(18, 18)
+	hud_container.add_child(discard_icon)
+	
+	discard_label = Label.new()
+	discard_label.add_theme_font_override("font", cjk_font)
+	discard_label.add_theme_font_size_override("font_size", 16)
+	hud_container.add_child(discard_label)
+	
+	$UILayer/UIRoot/PlayerHUD.add_child(hud_container)
+
 	
 	# Hide the End Turn button as requested (shortcut Space/Enter and auto-timer will handle it)
 	end_turn_button.visible = false
@@ -594,10 +689,10 @@ func update_ui() -> void:
 		intent_text += " (+%d [Str])" % enemy_strength
 	enemy_intent.text = intent_text
 	
-	if OS.has_feature("web"):
-		mana_label.text = "◆ Tokens: %d/%d | [Block] %d | [Deck] %d | [Discard] %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
-	else:
-		mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | 🗑️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
+	token_label.text = "%d/%d" % [player_mana, player_max_mana]
+	block_label.text = str(player_block)
+	deck_label.text = str(deck_manager.get_deck_size())
+	discard_label.text = str(deck_manager.get_discard_size())
 	
 	for child in hand_area.get_children():
 		child.queue_free()
