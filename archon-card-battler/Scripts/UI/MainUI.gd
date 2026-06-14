@@ -1,5 +1,8 @@
 extends Node2D
 
+enum Difficulty { EASY, NORMAL, HARD, EXPERT }
+var difficulty: Difficulty = Difficulty.NORMAL
+
 var deck_manager: DeckManager
 var git_parser: GitLogParser
 var hand: Array[CardStats] = []
@@ -13,11 +16,15 @@ var player_block: int = 0
 var enemy_hp: int = 200
 var enemy_max_hp: int = 200
 var enemy_damage: int = 10
+var enemy_block: int = 0
+var enemy_strength: int = 0
+var game_turn_counter: int = 0
 
 # Combo System
 var current_combo_category: String = ""
 var combo_count: int = 0
 
+@onready var background_node = $Background
 @onready var action_log = $UILayer/UIRoot/LogArea/ActionLog
 @onready var enemy_hp_bar = $UILayer/UIRoot/EnemyHUD/EnemyHP
 @onready var enemy_intent = $UILayer/UIRoot/EnemyHUD/EnemyIntent
@@ -54,6 +61,110 @@ func _ready() -> void:
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
 	restart_button.pressed.connect(restart_game)
 	
+	# Scale characters down by 10% from center
+	fighter_left.pivot_offset = fighter_left.size / 2
+	fighter_left.scale = Vector2(0.9, 0.9)
+	fighter_right.pivot_offset = fighter_right.size / 2
+	fighter_right.scale = Vector2(0.9, 0.9)
+	
+	show_difficulty_selection()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_accept"): # Space or Enter
+		if not end_turn_button.disabled and end_turn_button.visible:
+			_on_end_turn_pressed()
+
+func show_difficulty_selection() -> void:
+	# Block interactions with gameplay behind
+	end_turn_button.disabled = true
+	
+	var overlay = ColorRect.new()
+	overlay.name = "DifficultyOverlay"
+	overlay.color = Color(0, 0, 0, 0.8)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	$UILayer.add_child(overlay)
+	
+	var v_box = VBoxContainer.new()
+	v_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_box.add_theme_constant_override("separation", 20)
+	overlay.add_child(v_box)
+	
+	var title = Label.new()
+	title.text = "SELECT DIFFICULTY / 選擇難度"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 40)
+	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
+	v_box.add_child(title)
+	
+	var desc = Label.new()
+	desc.text = "（難度將影響敵人的血量、每回合自動增加的護盾與隨時間成長的力量）"
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.add_theme_font_size_override("font_size", 16)
+	v_box.add_child(desc)
+	
+	var btn_easy = Button.new()
+	btn_easy.text = "簡單 (Easy) - Target: <5 Turns"
+	btn_easy.custom_minimum_size = Vector2(300, 50)
+	btn_easy.pressed.connect(func(): select_difficulty(Difficulty.EASY, overlay))
+	v_box.add_child(btn_easy)
+	
+	var btn_normal = Button.new()
+	btn_normal.text = "普通 (Normal) - Target: ~8 Turns"
+	btn_normal.custom_minimum_size = Vector2(300, 50)
+	btn_normal.pressed.connect(func(): select_difficulty(Difficulty.NORMAL, overlay))
+	v_box.add_child(btn_normal)
+	
+	var btn_hard = Button.new()
+	btn_hard.text = "困難 (Hard) - Target: 20-50 Turns"
+	btn_hard.custom_minimum_size = Vector2(300, 50)
+	btn_hard.pressed.connect(func(): select_difficulty(Difficulty.HARD, overlay))
+	v_box.add_child(btn_hard)
+	
+	var btn_expert = Button.new()
+	btn_expert.text = "超難 (Expert) - Target: 50+ Turns"
+	btn_expert.custom_minimum_size = Vector2(300, 50)
+	btn_expert.pressed.connect(func(): select_difficulty(Difficulty.EXPERT, overlay))
+	v_box.add_child(btn_expert)
+
+func select_difficulty(diff: Difficulty, overlay: Node) -> void:
+	difficulty = diff
+	overlay.queue_free()
+	
+	# Apply configuration based on difficulty
+	match difficulty:
+		Difficulty.EASY:
+			player_max_mana = 5
+			enemy_max_hp = 60
+			enemy_damage = 5
+			fighter_right.text = "🐛"
+			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
+		Difficulty.NORMAL:
+			player_max_mana = 5
+			enemy_max_hp = 200
+			enemy_damage = 10
+			fighter_right.text = "🐜"
+			background_node.texture = load("res://Assets/Background/landscape.jpg")
+		Difficulty.HARD:
+			player_max_mana = 5
+			enemy_max_hp = 400
+			enemy_damage = 12
+			fighter_right.text = "🕷️"
+			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
+		Difficulty.EXPERT:
+			player_max_mana = 4
+			enemy_max_hp = 600
+			enemy_damage = 15
+			fighter_right.text = "👾"
+			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
+			
+	player_hp = player_max_hp
+	enemy_hp = enemy_max_hp
+	enemy_block = 0
+	enemy_strength = 0
+	game_turn_counter = 0
+	
+	end_turn_button.disabled = false
 	update_ui()
 	start_player_turn()
 
@@ -107,8 +218,16 @@ func play_card(index: int) -> void:
 	var multiplier = 1.0 + (combo_count - 1) * 0.5
 	var final_damage = int(float(card.damage) * multiplier)
 	
-	# Apply effects
-	enemy_hp -= final_damage
+	# Apply damage taking enemy block into account
+	var damage_to_deal = final_damage
+	var absorbed_dmg = 0
+	if enemy_block > 0 and damage_to_deal > 0:
+		absorbed_dmg = min(damage_to_deal, enemy_block)
+		enemy_block -= absorbed_dmg
+		damage_to_deal -= absorbed_dmg
+		
+	if damage_to_deal > 0:
+		enemy_hp -= damage_to_deal
 	player_block += card.block
 	
 	var msg = "[color=#fde047]Played: " + card.card_name + "[/color]\n"
@@ -117,6 +236,8 @@ func play_card(index: int) -> void:
 			msg += " dealt " + str(final_damage) + " DMG. (" + str(multiplier) + "x COMBO!)"
 		else:
 			msg += " dealt " + str(final_damage) + " DMG."
+		if absorbed_dmg > 0:
+			msg += " [color=#9ca3af](Block absorbed " + str(absorbed_dmg) + " DMG)[/color]"
 		shake_camera(final_damage * 0.5)
 		hit_sound.play()
 		animate_fighter(fighter_left, 50)
@@ -165,14 +286,36 @@ func _on_end_turn_pressed() -> void:
 	enemy_turn()
 
 func enemy_turn() -> void:
-	log_action("\n[b][color=#ef4444]👾 Enemy attacks for " + str(enemy_damage) + " DMG![/color][/b]")
+	# Gain Block based on difficulty
+	var block_to_gain = 0
+	if difficulty == Difficulty.HARD:
+		block_to_gain = 5
+	elif difficulty == Difficulty.EXPERT:
+		block_to_gain = 10
+		
+	if block_to_gain > 0:
+		enemy_block += block_to_gain
+		log_action("[color=#a78bfa]👾 Enemy gained " + str(block_to_gain) + " Block.[/color]")
+
+	# Increase Strength
+	game_turn_counter += 1
+	var turn_interval = 3 if difficulty == Difficulty.HARD else 2
+	if difficulty == Difficulty.HARD or difficulty == Difficulty.EXPERT:
+		if game_turn_counter > 1 and (game_turn_counter - 1) % turn_interval == 0:
+			var strength_gain = 3 if difficulty == Difficulty.HARD else 4
+			enemy_strength += strength_gain
+			log_action("[color=#f87171]⚡ Enemy Strength increased! Attack permanently gains +" + str(strength_gain) + " DMG.[/color]")
+
+	var final_enemy_damage = enemy_damage + enemy_strength
+	log_action("\n[b][color=#ef4444]👾 Enemy attacks for " + str(final_enemy_damage) + " DMG![/color][/b]")
 	animate_fighter(fighter_right, -50)
 	
-	var actual_damage = max(0, enemy_damage - player_block)
+	var actual_damage = max(0, final_enemy_damage - player_block)
+	player_block = max(0, player_block - final_enemy_damage)
 	player_hp -= actual_damage
 	
 	if player_block > 0:
-		log_action("🛡️ Block absorbed " + str(min(enemy_damage, player_block)) + " DMG.")
+		log_action("🛡️ Block absorbed " + str(min(final_enemy_damage, player_block)) + " DMG.")
 		
 	if actual_damage > 0:
 		shake_camera(15.0)
@@ -214,7 +357,7 @@ func restart_game() -> void:
 	deck_manager = DeckManager.new()
 	_init_deck()
 	action_log.text = "[b]Combat Log[/b]\n"
-	start_player_turn()
+	show_difficulty_selection()
 
 func log_action(msg: String) -> void:
 	action_log.append_text(msg + "\n")
@@ -230,9 +373,21 @@ func shake_camera(intensity: float) -> void:
 	tween.tween_property(camera, "position", original_pos, 0.05)
 
 func update_ui() -> void:
+	player_hp_bar.max_value = float(player_max_hp)
+	enemy_hp_bar.max_value = float(enemy_max_hp)
+
 	var tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(player_hp_bar, "value", float(player_hp), 0.3)
 	tween.tween_property(enemy_hp_bar, "value", float(enemy_hp), 0.3)
+	
+	# Update Enemy Intent to show strength and block
+	var final_enemy_dmg = enemy_damage + enemy_strength
+	var intent_text = "Intent: ⚔️ %d DMG" % final_enemy_dmg
+	if enemy_block > 0:
+		intent_text += " | 🛡️ %d" % enemy_block
+	if enemy_strength > 0:
+		intent_text += " (+%d ⚡)" % enemy_strength
+	enemy_intent.text = intent_text
 	
 	mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | ♻️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
 	
@@ -244,7 +399,7 @@ func update_ui() -> void:
 	var card_width = 180.0
 	var total_cards = hand.size()
 	
-	var max_spacing = 100.0 # Tighter overlap
+	var max_spacing = 130.0 # Widen spacing for easier selection
 	var required_width = card_width + (total_cards - 1) * max_spacing
 	var spacing = max_spacing
 	if required_width > hand_width:
