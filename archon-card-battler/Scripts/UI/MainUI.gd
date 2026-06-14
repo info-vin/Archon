@@ -41,6 +41,9 @@ var combo_count: int = 0
 @onready var result_label = $TopLayer/GameOverOverlay/VBox/ResultLabel
 @onready var restart_button = $TopLayer/GameOverOverlay/VBox/RestartButton
 
+var hit_sound: AudioStreamPlayer
+var error_sound: AudioStreamPlayer
+
 # Turn Timer & Help system
 var turn_timer: float = 30.0
 var timer_label: Label
