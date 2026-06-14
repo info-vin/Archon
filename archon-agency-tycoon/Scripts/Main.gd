@@ -85,9 +85,10 @@ func _setup_initial_game() -> void:
     var drop_script = preload("res://Scripts/UI/DevRoomDropZone.gd")
     if drop_script:
         dev_room.set_script(drop_script)
+        sales_room.set_script(drop_script)
         # Note: We can expand this to other rooms later
 
-func _spawn_agent_view(room: Control, label_text: String) -> void:
+    func _spawn_agent_view(room: Control, label_text: String) -> void:
     var agent_view_scene = preload("res://Scenes/Main/ModularAgent.tscn")
     if agent_view_scene:
         var agent_view = agent_view_scene.instantiate()
@@ -95,27 +96,39 @@ func _spawn_agent_view(room: Control, label_text: String) -> void:
         agent_view.scale = Vector2(0.2, 0.2) # 大幅縮小以符合框格
         room.add_child(agent_view)
 
-func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int) -> void:
-    var task = preload("res://Scripts/Resources/TaskResource.gd").new(t_name, 1, ticks, reward)
+    func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: int = 1) -> void:
+    var task = preload("res://Scripts/Resources/TaskResource.gd").new(t_name, req_role, ticks, reward)
     var task_id = task_manager.add_task(task)
-    
+
     var card_scene = preload("res://Scenes/UI/TaskCard.tscn")
     if card_scene and task_container:
         var card = card_scene.instantiate()
         task_container.add_child(card)
         card.setup(task_id, t_name, ticks, reward)
 
-func _on_task_dropped_on_agent(task_id: int, agent_id: int) -> void:
-    var success = task_manager.assign_task(task_id, agent_id)
-    if success:
-        # 移除 UI 上的卡片
-        for child in task_container.get_children():
-            if child is TaskCard and child.task_id == task_id:
-                child.queue_free()
-                break
-        _update_ui()
+    func _on_task_dropped_on_agent(task_id: int, dropped_agent_id: int) -> void:
+    # MVP Hardcode mapping task's role to the specific agent index (Alice=0, Bob=1, Charlie=2)
+    var task = task_manager.tasks[task_id]
+    var target_agent = -1
+
+    if task.required_role == 1: target_agent = 0 # DEV -> Alice
+    elif task.required_role == 0: target_agent = 1 # SALES -> Bob
+    elif task.required_role == 2: target_agent = 2 # QA -> Charlie
+
+    if target_agent != -1:
+        var success = task_manager.assign_task(task_id, target_agent)
+        if success:
+            # 移除 UI 上的卡片 (如果是業務招攬，則不移除，讓它可以反覆拖曳或持續執行)
+            if task.required_role != 0:
+                for child in task_container.get_children():
+                    if child is TaskCard and child.task_id == task_id:
+                        child.queue_free()
+                        break
+            _update_ui()
+        else:
+            print("無法指派！(可能體力不足或非閒置狀態)")
     else:
-        print("無法指派！")
+        print("未知的任務角色需求")
 
 func _get_active_task_for_agent(agent_id: int) -> int:
     for i in range(task_manager.tasks.size()):
