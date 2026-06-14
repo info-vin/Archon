@@ -75,28 +75,28 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
     const optionsRef = React.useRef<HTMLDivElement>(null);
     const listboxId = React.useId();
 
-    // PERFORMANCE: Precalculate lowercased values to prevent O(N) string allocations during search filtering
-    const searchableLabels = React.useMemo(() => options.map((opt) => opt.label.toLowerCase()), [options]);
-    const searchableValues = React.useMemo(() => options.map((opt) => opt.value.toLowerCase()), [options]);
-
     // Memoized filtered options
     const filteredOptions = React.useMemo(() => {
       if (!search.trim()) return options;
 
-      const searchLower = search.toLowerCase().trim();
+      // PERFORMANCE: Replace O(N) pre-calculation of .toLowerCase() arrays with inline regex pattern matching.
+      // Escaping search string to prevent regex errors.
+      const searchPattern = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       return options.filter(
-        (_, i) => searchableLabels[i].includes(searchLower) || searchableValues[i].includes(searchLower),
+        (opt) => searchPattern.test(opt.label) || searchPattern.test(opt.value),
       );
-    }, [options, search, searchableLabels, searchableValues]);
+    }, [options, search]);
 
     // Derived state
     const selectedOption = React.useMemo(() => options.find((opt) => opt.value === value), [options, value]);
     const displayValue = selectedOption?.label || value || "";
 
-    // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
-    const searchLowerCheck = search.toLowerCase();
-    const hasCustomOption =
-      allowCustomValue && search.trim() && !filteredOptions.some((opt) => opt.label.toLowerCase() === searchLowerCheck);
+    // PERFORMANCE: Use regex for case-insensitive exact matching to prevent redundant string allocations
+    const hasCustomOption = React.useMemo(() => {
+      if (!allowCustomValue || !search.trim()) return false;
+      const exactMatchPattern = new RegExp('^' + search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i');
+      return !filteredOptions.some((opt) => exactMatchPattern.test(opt.label));
+    }, [allowCustomValue, search, filteredOptions]);
 
     // Event handlers
     const handleSelect = React.useCallback(
