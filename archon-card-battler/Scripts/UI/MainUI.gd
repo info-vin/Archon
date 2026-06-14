@@ -50,25 +50,26 @@ var timer_label: Label
 var help_overlay: ColorRect = null
 
 func _ready() -> void:
-	# Dynamic font fallback: keep browser native emojis visible while supporting Traditional Chinese characters
-	var default_font = ThemeDB.fallback_font
-	if default_font is FontFile:
-		while default_font.get_fallback_count() > 0:
-			default_font.remove_fallback(0)
-			
-		var emoji_font = SystemFont.new()
-		emoji_font.font_names = PackedStringArray([
-			"Apple Color Emoji",
-			"Segoe UI Emoji",
-			"Noto Color Emoji",
-			"Android Emoji",
-			"Emoji",
-			"Segoe UI Symbol"
-		])
-		default_font.add_fallback(emoji_font)
+	# Dynamic font configuration: prevent recursive fallback loop while keeping CJK and native emoji support
+	var font_stack = SystemFont.new()
+	font_stack.font_names = PackedStringArray([
+		"sans-serif",
+		"Apple Color Emoji",
+		"Segoe UI Emoji",
+		"Noto Color Emoji",
+		"PingFang TC",
+		"Microsoft JhengHei",
+		"Arial"
+	])
+	
+	var custom_font = load("res://Assets/Fonts/arial_unicode.ttf")
+	if custom_font is Font:
+		font_stack.add_fallback(custom_font)
 		
-		var custom_font = load("res://Assets/Fonts/arial_unicode.ttf")
-		default_font.add_fallback(custom_font)
+	var custom_theme = Theme.new()
+	custom_theme.default_font = font_stack
+	$UILayer/UIRoot.theme = custom_theme
+	$TopLayer/GameOverOverlay.theme = custom_theme
 		
 	hit_sound = AudioStreamPlayer.new()
 	hit_sound.stream = preload("res://Assets/Sounds/hit.wav")
