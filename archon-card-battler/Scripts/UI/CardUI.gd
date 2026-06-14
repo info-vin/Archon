@@ -15,7 +15,7 @@ var play_sound: AudioStreamPlayer
 
 func setup(card_stats: CardStats, index: int) -> void:
 	card_index = index
-	cost_label.text = "💎 " + str(card_stats.cost)
+	cost_label.text = "◆ " + str(card_stats.cost)
 	name_label.text = card_stats.card_name
 	
 	# Determine theme colors based on Category

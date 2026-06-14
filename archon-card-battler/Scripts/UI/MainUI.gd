@@ -41,8 +41,10 @@ var combo_count: int = 0
 @onready var result_label = $TopLayer/GameOverOverlay/VBox/ResultLabel
 @onready var restart_button = $TopLayer/GameOverOverlay/VBox/RestartButton
 
-var hit_sound: AudioStreamPlayer
-var error_sound: AudioStreamPlayer
+# Turn Timer & Help system
+var turn_timer: float = 30.0
+var timer_label: Label
+var help_overlay: ColorRect = null
 
 func _ready() -> void:
 	hit_sound = AudioStreamPlayer.new()
@@ -67,12 +69,102 @@ func _ready() -> void:
 	fighter_right.pivot_offset = fighter_right.size / 2
 	fighter_right.scale = Vector2(0.9, 0.9)
 	
+	# Fix unreadable giant emoji blocks with tech-style text representations
+	fighter_left.text = "[TECH LEAD]"
+	fighter_left.add_theme_font_size_override("font_size", 48)
+	fighter_right.text = "[BUG-V1]"
+	fighter_right.add_theme_font_size_override("font_size", 48)
+	
+	# Create turn timer label in the middle of health bars
+	timer_label = Label.new()
+	timer_label.text = "30s"
+	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	timer_label.add_theme_font_size_override("font_size", 24)
+	timer_label.position = Vector2(516, 25)
+	timer_label.size = Vector2(120, 40)
+	$UILayer/UIRoot.add_child(timer_label)
+	
 	show_difficulty_selection()
+
+func _process(delta: float) -> void:
+	if end_turn_button.disabled or game_over_overlay.visible:
+		timer_label.visible = false
+		return
+	
+	timer_label.visible = true
+	turn_timer -= delta
+	if turn_timer <= 0.0:
+		turn_timer = 30.0
+		_on_end_turn_pressed()
+	else:
+		var display_time = ceil(turn_timer)
+		timer_label.text = str(display_time) + "s"
+		if display_time <= 5:
+			# Enlarged font size for last 5 seconds and color red
+			timer_label.add_theme_font_size_override("font_size", 38)
+			timer_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
+		else:
+			timer_label.add_theme_font_size_override("font_size", 24)
+			timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept"): # Space or Enter
 		if not end_turn_button.disabled and end_turn_button.visible:
 			_on_end_turn_pressed()
+	elif event is InputEventKey and event.pressed:
+		if event.keycode == KEY_H:
+			show_help_overlay()
+		elif event.keycode == KEY_ESCAPE:
+			hide_help_overlay()
+
+func show_help_overlay() -> void:
+	if help_overlay != null:
+		help_overlay.queue_free()
+		
+	help_overlay = ColorRect.new()
+	help_overlay.name = "HelpOverlay"
+	help_overlay.color = Color(0, 0, 0, 0.9)
+	help_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	$UILayer.add_child(help_overlay)
+	
+	var v_box = VBoxContainer.new()
+	v_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_box.add_theme_constant_override("separation", 15)
+	help_overlay.add_child(v_box)
+	
+	var title = Label.new()
+	title.text = "🎮 遊戲說明 (GAME MANUAL)"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
+	v_box.add_child(title)
+	
+	var rules = Label.new()
+	rules.text = "【核心規則】\n" + \
+		"1. 玩家為 Tech Lead [TECH LEAD]，敵人為專案技術債 Bug。\n" + \
+		"2. 卡牌來自真實 Git commit，依照變更行數決定 Token 花費、攻擊與防禦。\n" + \
+		"3. 每次出牌會累積 COMBO，傷害會以乘數放大！\n" + \
+		"4. 重構自癒：打出 [重構] 卡牌時，可額外獲得傷害值 50% 的防禦護盾。\n" + \
+		"5. 回合時間：每回合有 30 秒限制，或當 Token 消耗完時會自動結束回合。\n\n" + \
+		"【快捷鍵說明】\n" + \
+		"• [H] 鍵：開啟此遊戲說明\n" + \
+		"• [ESC] 鍵：關閉遊戲說明\n" + \
+		"• [Space / Enter] 鍵：結束玩家回合"
+	rules.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	rules.add_theme_font_size_override("font_size", 16)
+	v_box.add_child(rules)
+	
+	var close_btn = Button.new()
+	close_btn.text = "關閉說明 (ESC)"
+	close_btn.custom_minimum_size = Vector2(200, 40)
+	close_btn.pressed.connect(hide_help_overlay)
+	v_box.add_child(close_btn)
+
+func hide_help_overlay() -> void:
+	if help_overlay != null:
+		help_overlay.queue_free()
+		help_overlay = null
 
 func show_difficulty_selection() -> void:
 	# Block interactions with gameplay behind
@@ -137,25 +229,25 @@ func select_difficulty(diff: Difficulty, overlay: Node) -> void:
 			player_max_mana = 5
 			enemy_max_hp = 60
 			enemy_damage = 5
-			fighter_right.text = "🐛"
+			fighter_right.text = "[程式缺陷-低]"
 			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
 		Difficulty.NORMAL:
 			player_max_mana = 5
 			enemy_max_hp = 200
 			enemy_damage = 10
-			fighter_right.text = "🐜"
+			fighter_right.text = "[程式錯誤-中]"
 			background_node.texture = load("res://Assets/Background/landscape.jpg")
 		Difficulty.HARD:
 			player_max_mana = 5
 			enemy_max_hp = 400
 			enemy_damage = 12
-			fighter_right.text = "🕷️"
+			fighter_right.text = "[系統漏洞-高]"
 			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
 		Difficulty.EXPERT:
 			player_max_mana = 4
 			enemy_max_hp = 600
 			enemy_damage = 15
-			fighter_right.text = "👾"
+			fighter_right.text = "[核心崩潰-極]"
 			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
 			
 	player_hp = player_max_hp
@@ -182,6 +274,7 @@ func start_player_turn() -> void:
 	current_combo_category = ""
 	combo_count = 0
 	combo_label.text = ""
+	turn_timer = 30.0 # Reset turn timer on player turn start
 	
 	for card in hand:
 		deck_manager.discard_card(card)
@@ -204,7 +297,7 @@ func play_card(index: int) -> void:
 	if player_mana < card.cost:
 		shake_camera(5.0)
 		error_sound.play()
-		log_action("[color=#ef4444]❌ Not enough Tokens to play " + card.card_name + "[/color]")
+		log_action("[color=#ef4444][ERR] Not enough Tokens to play " + card.card_name + "[/color]")
 		return
 		
 	# Pay cost
@@ -245,35 +338,35 @@ func play_card(index: int) -> void:
 		
 	if card.block > 0: 
 		msg += " gained " + str(card.block) + " Block."
-		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(card.block) + "🛡️", Color(0.2, 0.8, 1))
+		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(card.block) + " [Block]", Color(0.2, 0.8, 1))
 	
 	# Play card effects based on category
 	if card.category == "Performance":
 		player_mana = min(player_max_mana, player_mana + 2)
-		msg += " [color=#facc15]⚡ Performance: Restored 2 Tokens![/color]"
+		msg += " [color=#facc15][Str] Performance: Restored 2 Tokens![/color]"
 	elif card.category == "Merge":
 		player_hp = min(player_max_hp, player_hp + 10)
-		msg += " [color=#fbbf24]👑 Merge: Healed 10 HP![/color]"
+		msg += " [color=#fbbf24][Merge] Healed 10 HP![/color]"
 	elif card.category == "Refactor":
 		var bonus_block = int(float(final_damage) * 0.5)
 		player_block += bonus_block
-		msg += " [color=#60a5fa]🔵 Refactor: Gained %d Block from damage![/color]" % bonus_block
-		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(bonus_block) + "🛡️", Color(0.3, 0.6, 1.0))
+		msg += " [color=#60a5fa][Refactor] Gained %d Block from damage![/color]" % bonus_block
+		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(bonus_block) + " [Block]", Color(0.3, 0.6, 1.0))
 	elif card.category == "Test":
 		player_block += card.block # Adds another layer of block (doubling it)
-		msg += " [color=#c084fc]🧪 Test: Doubled Block (+%d Block)![/color]" % card.block
+		msg += " [color=#c084fc][Test] Doubled Block (+%d Block)![/color]" % card.block
 	elif card.category == "Docs":
 		var drawn = deck_manager.draw_card()
 		if drawn != null:
 			hand.append(drawn)
-			msg += " [color=#22d3ee]🌐 Docs: Drew 1 card (%s).[/color]" % drawn.card_name
+			msg += " [color=#22d3ee][Docs] Drew 1 card (%s).[/color]" % drawn.card_name
 	elif card.category == "Style":
 		player_block += 10
-		msg += " [color=#f472b6]🌸 Style: Gained 10 Block![/color]"
+		msg += " [color=#f472b6][Style] Gained 10 Block![/color]"
 	elif card.category == "Agent":
 		enemy_hp -= 20
-		msg += " [color=#a78bfa]🤖 Agent: Dealt 20 direct DMG (bypassed shields)![/color]"
-		spawn_floating_text(fighter_right.global_position + Vector2(100, 100), "-20🤖", Color(0.7, 0.4, 1.0))
+		msg += " [color=#a78bfa][Agent] Dealt 20 direct DMG (bypassed shields)![/color]"
+		spawn_floating_text(fighter_right.global_position + Vector2(100, 100), "-20 [Agent]", Color(0.7, 0.4, 1.0))
 	elif card.category == "Chore":
 		var cards_to_discard = []
 		for h_card in hand:
@@ -282,7 +375,7 @@ func play_card(index: int) -> void:
 		for h_card in cards_to_discard:
 			deck_manager.discard_card(h_card)
 			hand.erase(h_card)
-		msg += " [color=#9ca3af]🔘 Chore: Discarded hand and drew 2 cards.[/color]"
+		msg += " [color=#9ca3af][Chore] Discarded hand and drew 2 cards.[/color]"
 		for i in range(2):
 			var drawn = deck_manager.draw_card()
 			if drawn != null:
@@ -293,7 +386,14 @@ func play_card(index: int) -> void:
 	deck_manager.discard_card(card)
 	hand.remove_at(hand.find(card)) # Safely find card position since Chore might have modified hand array
 	update_ui()
-	check_win_condition()
+	
+	if !check_win_condition():
+		# Auto end turn if player mana is 0
+		if player_mana == 0:
+			# Delay slightly to allow player to see the log
+			await get_tree().create_timer(0.8).timeout
+			if player_mana == 0: # Double check in case of state change
+				_on_end_turn_pressed()
 
 func spawn_floating_text(pos: Vector2, text: String, color: Color):
 	var lbl = Label.new()
@@ -337,7 +437,7 @@ func enemy_turn() -> void:
 		
 	if block_to_gain > 0:
 		enemy_block += block_to_gain
-		log_action("[color=#a78bfa]👾 Enemy gained " + str(block_to_gain) + " Block.[/color]")
+		log_action("[color=#a78bfa][Bug] Enemy gained " + str(block_to_gain) + " Block.[/color]")
 
 	# Increase Strength
 	game_turn_counter += 1
@@ -346,10 +446,10 @@ func enemy_turn() -> void:
 		if game_turn_counter > 1 and (game_turn_counter - 1) % turn_interval == 0:
 			var strength_gain = 3 if difficulty == Difficulty.HARD else 4
 			enemy_strength += strength_gain
-			log_action("[color=#f87171]⚡ Enemy Strength increased! Attack permanently gains +" + str(strength_gain) + " DMG.[/color]")
+			log_action("[color=#f87171][Str+] Enemy Strength increased! Attack permanently gains +" + str(strength_gain) + " DMG.[/color]")
 
 	var final_enemy_damage = enemy_damage + enemy_strength
-	log_action("\n[b][color=#ef4444]👾 Enemy attacks for " + str(final_enemy_damage) + " DMG![/color][/b]")
+	log_action("\n[b][color=#ef4444][Bug] Enemy attacks for " + str(final_enemy_damage) + " DMG![/color][/b]")
 	animate_fighter(fighter_right, -50)
 	
 	var actual_damage = max(0, final_enemy_damage - player_block)
@@ -357,7 +457,7 @@ func enemy_turn() -> void:
 	player_hp -= actual_damage
 	
 	if player_block > 0:
-		log_action("🛡️ Block absorbed " + str(min(final_enemy_damage, player_block)) + " DMG.")
+		log_action("[Block] absorbed " + str(min(final_enemy_damage, player_block)) + " DMG.")
 		
 	if actual_damage > 0:
 		shake_camera(15.0)
@@ -385,10 +485,10 @@ func show_game_over(win: bool) -> void:
 	end_turn_button.disabled = true
 	game_over_overlay.visible = true
 	if win:
-		result_label.text = "🎉 DEPLOYMENT SUCCESS!"
+		result_label.text = "[SUCCESS] DEPLOYMENT SUCCESS!"
 		result_label.add_theme_color_override("font_color", Color(0.2, 1, 0.4))
 	else:
-		result_label.text = "💀 SYSTEM CRASH"
+		result_label.text = "[CRASH] SYSTEM CRASH"
 		result_label.add_theme_color_override("font_color", Color(1, 0.2, 0.2))
 
 func restart_game() -> void:
@@ -422,16 +522,16 @@ func update_ui() -> void:
 	tween.tween_property(player_hp_bar, "value", float(player_hp), 0.3)
 	tween.tween_property(enemy_hp_bar, "value", float(enemy_hp), 0.3)
 	
-	# Update Enemy Intent to show strength and block
+	# Update Enemy Intent to show strength and block (no emojis)
 	var final_enemy_dmg = enemy_damage + enemy_strength
-	var intent_text = "Intent: ⚔️ %d DMG" % final_enemy_dmg
+	var intent_text = "Intent: [Attack] %d DMG" % final_enemy_dmg
 	if enemy_block > 0:
-		intent_text += " | 🛡️ %d" % enemy_block
+		intent_text += " | [Block] %d" % enemy_block
 	if enemy_strength > 0:
-		intent_text += " (+%d ⚡)" % enemy_strength
+		intent_text += " (+%d [Str])" % enemy_strength
 	enemy_intent.text = intent_text
 	
-	mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | ♻️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
+	mana_label.text = "◆ Tokens: %d/%d | [Block] %d | [Deck] %d | [Discard] %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
 	
 	for child in hand_area.get_children():
 		child.queue_free()
@@ -463,7 +563,8 @@ func update_ui() -> void:
 		var curve_y = abs(t - 0.5) * abs(t - 0.5) * 150.0 # Parabola dropping in center
 		var rotation_deg = lerpf(-15.0, 15.0, t)
 		
-		card_ui.position = Vector2(target_x, 50 + curve_y)
+		# Shifted up to 10 + curve_y (was 50 + curve_y) to prevent card bottom cutoff
+		card_ui.position = Vector2(target_x, 10 + curve_y)
 		card_ui.rotation_degrees = rotation_deg
 		card_ui.original_y = card_ui.position.y # Save for hover tween
 		
