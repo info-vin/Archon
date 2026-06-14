@@ -22,6 +22,7 @@ func setup(card_stats: CardStats, index: int) -> void:
 		cost_label.text = "💎 " + str(card_stats.cost)
 	
 	var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
+	cost_label.add_theme_font_override("font", cjk_font)
 	name_label.add_theme_font_override("font", cjk_font)
 	desc_label.add_theme_font_override("normal_font", cjk_font)
 	desc_label.add_theme_font_override("bold_font", cjk_font)
@@ -31,10 +32,15 @@ func setup(card_stats: CardStats, index: int) -> void:
 	
 	var card_name = card_stats.card_name
 	if OS.has_feature("web"):
-		# Strip emojis from card title on web to prevent tofu blocks
-		var emoji_regex = RegEx.new()
-		emoji_regex.compile("[\\u{1F600}-\\u{1F64F}\\u{1F680}-\\u{1F6FF}\\u{2600}-\\u{26FF}\\u{2700}-\\u{27BF}\\u{1F900}-\\u{1F9FF}\\u{1F1E0}-\\u{1F1FF}]")
-		card_name = emoji_regex.sub(card_name, "", true).strip_edges()
+		# Strip emojis by removing characters outside the Basic Multilingual Plane (BMP) or in symbol ranges
+		var clean_name = ""
+		for char_idx in range(card_name.length()):
+			var c = card_name[char_idx]
+			var code = c.unicode_at(0)
+			# Filter out standard emoji ranges (U+2600 to U+27BF) and anything > U+FFFF
+			if code < 0x2600 or (code > 0x27BF and code <= 0xFFFF):
+				clean_name += c
+		card_name = clean_name.strip_edges()
 		
 	if card_name.contains(" ("):
 		card_name = card_name.replace(" (", "\n(")
