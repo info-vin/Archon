@@ -30,6 +30,12 @@ func setup(card_stats: CardStats, index: int) -> void:
 	type_label.add_theme_font_override("font", cjk_font)
 	
 	var card_name = card_stats.card_name
+	if OS.has_feature("web"):
+		# Strip emojis from card title on web to prevent tofu blocks
+		var emoji_regex = RegEx.new()
+		emoji_regex.compile("[\\u{1F600}-\\u{1F64F}\\u{1F680}-\\u{1F6FF}\\u{2600}-\\u{26FF}\\u{2700}-\\u{27BF}\\u{1F900}-\\u{1F9FF}\\u{1F1E0}-\\u{1F1FF}]")
+		card_name = emoji_regex.sub(card_name, "", true).strip_edges()
+		
 	if card_name.contains(" ("):
 		card_name = card_name.replace(" (", "\n(")
 	name_label.text = card_name
