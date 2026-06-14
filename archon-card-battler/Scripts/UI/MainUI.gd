@@ -72,6 +72,8 @@ func start_player_turn() -> void:
 	combo_count = 0
 	combo_label.text = ""
 	
+	for card in hand:
+		deck_manager.discard_card(card)
 	hand.clear()
 	for i in range(4): # Draw 4 cards to keep hand cleaner
 		var c = deck_manager.draw_card()
@@ -125,6 +127,7 @@ func play_card(index: int) -> void:
 		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(card.block) + "🛡️", Color(0.2, 0.8, 1))
 	log_action(msg)
 	
+	deck_manager.discard_card(card)
 	hand.remove_at(index)
 	update_ui()
 	check_win_condition()
@@ -231,7 +234,7 @@ func update_ui() -> void:
 	tween.tween_property(player_hp_bar, "value", float(player_hp), 0.3)
 	tween.tween_property(enemy_hp_bar, "value", float(enemy_hp), 0.3)
 	
-	mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size()]
+	mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | ♻️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
 	
 	for child in hand_area.get_children():
 		child.queue_free()
