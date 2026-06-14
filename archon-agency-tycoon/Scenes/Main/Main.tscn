@@ -97,11 +97,36 @@ size_flags_vertical = 0
 text = "ROOM_DEV"
 horizontal_alignment = 1
 
-[node name="BreakRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor1"]
-custom_minimum_size = Vector2(200, 200)
+[node name="SalesRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor1"]
+custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor1/BreakRoom"]
+[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor1/SalesRoom"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "ROOM_SALES"
+horizontal_alignment = 1
+
+[node name="Floor2" type="HBoxContainer" parent="VBox/GameArea/Building"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="QARoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor2"]
+custom_minimum_size = Vector2(300, 200)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor2/QARoom"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "ROOM_QA"
+horizontal_alignment = 1
+
+[node name="BreakRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor2"]
+custom_minimum_size = Vector2(300, 200)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor2/BreakRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_BREAK"
