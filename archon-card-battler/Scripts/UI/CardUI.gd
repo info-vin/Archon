@@ -15,8 +15,13 @@ var play_sound: AudioStreamPlayer
 
 func setup(card_stats: CardStats, index: int) -> void:
 	card_index = index
-	cost_label.text = "◆ " + str(card_stats.cost)
-	name_label.text = card_stats.card_name
+	cost_label.text = "💎 " + str(card_stats.cost)
+	
+	var card_name = card_stats.card_name
+	if card_name.contains(" ("):
+		card_name = card_name.replace(" (", "\n(")
+	name_label.text = card_name
+	name_label.add_theme_font_size_override("font_size", 14)
 	
 	# Determine theme colors based on Category
 	var bg_color = Color(0.15, 0.17, 0.23, 1)
@@ -79,14 +84,15 @@ func setup(card_stats: CardStats, index: int) -> void:
 	# BBCode formatting (Traditional Chinese localization)
 	var bbcode_text = "[center]"
 	if card_stats.damage > 0:
-		bbcode_text += "[color=#4ade80]+%d 程式碼新增 (Insertions)[/color]\n" % card_stats.damage
+		bbcode_text += "[color=#4ade80]+%d 行新增 (Additions)[/color]\n" % card_stats.damage
 	if card_stats.block > 0:
-		bbcode_text += "[color=#f87171]-%d 程式碼刪除 (Deletions)[/color]\n" % card_stats.block
+		bbcode_text += "[color=#f87171]-%d 行刪除 (Deletions)[/color]\n" % card_stats.block
 	if card_stats.damage == 0 and card_stats.block == 0:
-		bbcode_text += "[color=#9ca3af]中繼資料變更 (Metadata)...[/color]"
+		bbcode_text += "[color=#9ca3af]中繼資料變更 (Metadata)[/color]"
 	bbcode_text += "[/center]"
 		
 	desc_label.text = bbcode_text
+	desc_label.add_theme_font_size_override("normal_font_size", 13)
 
 func _ready():
 	original_y = position.y

@@ -50,6 +50,26 @@ var timer_label: Label
 var help_overlay: ColorRect = null
 
 func _ready() -> void:
+	# Dynamic font fallback: keep browser native emojis visible while supporting Traditional Chinese characters
+	var default_font = ThemeDB.fallback_font
+	if default_font is FontFile:
+		while default_font.get_fallback_count() > 0:
+			default_font.remove_fallback(0)
+			
+		var emoji_font = SystemFont.new()
+		emoji_font.font_names = PackedStringArray([
+			"Apple Color Emoji",
+			"Segoe UI Emoji",
+			"Noto Color Emoji",
+			"Android Emoji",
+			"Emoji",
+			"Segoe UI Symbol"
+		])
+		default_font.add_fallback(emoji_font)
+		
+		var custom_font = load("res://Assets/Fonts/arial_unicode.ttf")
+		default_font.add_fallback(custom_font)
+		
 	hit_sound = AudioStreamPlayer.new()
 	hit_sound.stream = preload("res://Assets/Sounds/hit.wav")
 	add_child(hit_sound)
@@ -66,25 +86,28 @@ func _ready() -> void:
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
 	restart_button.pressed.connect(restart_game)
 	
+	# Hide the End Turn button as requested (shortcut Space/Enter and auto-timer will handle it)
+	end_turn_button.visible = false
+	
 	# Scale characters down by 10% from center
 	fighter_left.pivot_offset = fighter_left.size / 2
 	fighter_left.scale = Vector2(0.9, 0.9)
 	fighter_right.pivot_offset = fighter_right.size / 2
 	fighter_right.scale = Vector2(0.9, 0.9)
 	
-	# Fix unreadable giant emoji blocks with tech-style text representations
-	fighter_left.text = "[TECH LEAD]"
-	fighter_left.add_theme_font_size_override("font_size", 48)
-	fighter_right.text = "[BUG-V1]"
-	fighter_right.add_theme_font_size_override("font_size", 48)
+	# Restore beautiful standard emojis (font size 120 keeps them elegant and avoids overlapping cards)
+	fighter_left.text = "🥷"
+	fighter_left.add_theme_font_size_override("font_size", 120)
+	fighter_right.text = "🐛"
+	fighter_right.add_theme_font_size_override("font_size", 120)
 	
-	# Create turn timer label in the middle of health bars
+	# Create turn timer label in the middle of health bars (size 32)
 	timer_label = Label.new()
 	timer_label.text = "30s"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", 24)
+	timer_label.add_theme_font_size_override("font_size", 32)
 	timer_label.position = Vector2(516, 25)
-	timer_label.size = Vector2(120, 40)
+	timer_label.size = Vector2(120, 60)
 	$UILayer/UIRoot.add_child(timer_label)
 	
 	show_difficulty_selection()
@@ -104,15 +127,15 @@ func _process(delta: float) -> void:
 		timer_label.text = str(display_time) + "s"
 		if display_time <= 5:
 			# Enlarged font size for last 5 seconds and color red
-			timer_label.add_theme_font_size_override("font_size", 38)
+			timer_label.add_theme_font_size_override("font_size", 44)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
 		else:
-			timer_label.add_theme_font_size_override("font_size", 24)
+			timer_label.add_theme_font_size_override("font_size", 32)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-
+			
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept"): # Space or Enter
-		if not end_turn_button.disabled and end_turn_button.visible:
+		if not end_turn_button.disabled:
 			_on_end_turn_pressed()
 	elif event is InputEventKey and event.pressed:
 		if event.keycode == KEY_H:
@@ -128,16 +151,20 @@ func show_help_overlay() -> void:
 	help_overlay.name = "HelpOverlay"
 	help_overlay.color = Color(0, 0, 0, 0.9)
 	help_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	$UILayer.add_child(help_overlay)
+	$UILayer/UIRoot.add_child(help_overlay)
+	
+	# Wrap in CenterContainer for perfect centering in browser WASM exports
+	var center_container = CenterContainer.new()
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	help_overlay.add_child(center_container)
 	
 	var v_box = VBoxContainer.new()
-	v_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	v_box.add_theme_constant_override("separation", 15)
-	help_overlay.add_child(v_box)
+	center_container.add_child(v_box)
 	
 	var title = Label.new()
-	title.text = "🎮 遊戲說明 (GAME MANUAL)"
+	title.text = "遊戲說明 (GAME MANUAL)"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
@@ -177,13 +204,17 @@ func show_difficulty_selection() -> void:
 	overlay.name = "DifficultyOverlay"
 	overlay.color = Color(0, 0, 0, 0.8)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	$UILayer.add_child(overlay)
+	$UILayer/UIRoot.add_child(overlay)
+	
+	# Wrap in CenterContainer for perfect centering in browser WASM exports
+	var center_container = CenterContainer.new()
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center_container)
 	
 	var v_box = VBoxContainer.new()
-	v_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	v_box.add_theme_constant_override("separation", 20)
-	overlay.add_child(v_box)
+	center_container.add_child(v_box)
 	
 	var title = Label.new()
 	title.text = "SELECT DIFFICULTY / 選擇難度"
@@ -232,25 +263,25 @@ func select_difficulty(diff: Difficulty, overlay: Node) -> void:
 			player_max_mana = 5
 			enemy_max_hp = 60
 			enemy_damage = 5
-			fighter_right.text = "[程式缺陷-低]"
+			fighter_right.text = "🐛"
 			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
 		Difficulty.NORMAL:
 			player_max_mana = 5
 			enemy_max_hp = 200
 			enemy_damage = 10
-			fighter_right.text = "[程式錯誤-中]"
+			fighter_right.text = "🐜"
 			background_node.texture = load("res://Assets/Background/landscape.jpg")
 		Difficulty.HARD:
 			player_max_mana = 5
 			enemy_max_hp = 400
 			enemy_damage = 12
-			fighter_right.text = "[系統漏洞-高]"
+			fighter_right.text = "🕷️"
 			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
 		Difficulty.EXPERT:
 			player_max_mana = 4
 			enemy_max_hp = 600
 			enemy_damage = 15
-			fighter_right.text = "[核心崩潰-極]"
+			fighter_right.text = "👾"
 			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
 			
 	player_hp = player_max_hp
@@ -534,7 +565,7 @@ func update_ui() -> void:
 		intent_text += " (+%d [Str])" % enemy_strength
 	enemy_intent.text = intent_text
 	
-	mana_label.text = "◆ Tokens: %d/%d | [Block] %d | [Deck] %d | [Discard] %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
+	mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | 🗑️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
 	
 	for child in hand_area.get_children():
 		child.queue_free()

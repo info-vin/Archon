@@ -120,14 +120,14 @@ func parse_raw_git_output(raw_stdout: String) -> Array[String]:
 # Fallback logs for web build or non-git environments
 func get_fallback_logs() -> Array[String]:
 	return [
-		"✨ 實作雙生模擬器核心 (feat: implement twin simulator core)\n 8 files changed, 250 insertions(+), 30 deletions(-)",
-		"🌐 撰寫 API 整合說明文件 (docs: document api integrations)\n 1 file changed, 45 insertions(+)",
-		"👑 合併分支 dev/twins 到 main (Merge branch dev/twins into main)\n 12 files changed, 500 insertions(+), 200 deletions(-)",
-		"🔴 修復 RAG 設置中的無窮重渲染 (fix: infinite re-render loop in RAGSettings)\n 2 files changed, 15 insertions(+), 8 deletions(-)",
-		"🔵 重構驗證與憑證模組 (refactor: restructure auth credentials module)\n 4 files changed, 120 insertions(+), 90 deletions(-)",
-		"⚡ 效能優化：減少冷啟動延遲 (perf: reduce cold start latency)\n 3 files changed, 60 insertions(+), 10 deletions(-)",
-		"🔘 升級前端相依套件與設定 (chore: upgrade packages)\n 5 files changed, 300 insertions(+), 150 deletions(-)",
-		"🧪 新增 TDD 戰鬥邏輯單元測試 (test: add unit tests for combat logic)\n 3 files changed, 85 insertions(+)",
-		"🎨 霓虹邊框樣式與毛玻璃特效優化 (style: adjust glow border and glassmorphism styling)\n 2 files changed, 40 insertions(+), 15 deletions(-)",
-		"🤖 實作自動化 UI 審計與視覺裁判 (agent: deploy visual UI audit agent)\n 6 files changed, 180 insertions(+), 25 deletions(-)"
+		"[Feature] 實作雙生模擬器核心 (feat: implement twin simulator core)\n 8 files changed, 250 insertions(+), 30 deletions(-)",
+		"[Docs] 撰寫 API 整合說明文件 (docs: document api integrations)\n 1 file changed, 45 insertions(+)",
+		"[Merge] 合併分支 dev/twins 到 main (Merge branch dev/twins into main)\n 12 files changed, 500 insertions(+), 200 deletions(-)",
+		"[Fix] 修復 RAG 設置中的無窮重渲染 (fix: infinite re-render loop in RAGSettings)\n 2 files changed, 15 insertions(+), 8 deletions(-)",
+		"[Refactor] 重構驗證與憑證模組 (refactor: restructure auth credentials module)\n 4 files changed, 120 insertions(+), 90 deletions(-)",
+		"[Performance] 效能優化：減少冷啟動延遲 (perf: reduce cold start latency)\n 3 files changed, 60 insertions(+), 10 deletions(-)",
+		"[Chore] 升級前端相依套件與設定 (chore: upgrade packages)\n 5 files changed, 300 insertions(+), 150 deletions(-)",
+		"[Test] 新增 TDD 戰鬥邏輯單元測試 (test: add unit tests for combat logic)\n 3 files changed, 85 insertions(+)",
+		"[Style] 霓虹邊框樣式與毛玻璃特效優化 (style: adjust glow border and glassmorphism styling)\n 2 files changed, 40 insertions(+), 15 deletions(-)",
+		"[Agent] 實作自動化 UI 審計與視覺裁判 (agent: deploy visual UI audit agent)\n 6 files changed, 180 insertions(+), 25 deletions(-)"
 	]

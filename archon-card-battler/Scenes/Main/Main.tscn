@@ -47,7 +47,7 @@ offset_bottom = 120.0
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
-text = "👨‍💻 TECH LEAD"
+text = "TECH LEAD"
 
 [node name="PlayerHP" type="ProgressBar" parent="UILayer/UIRoot/PlayerHUD" unique_id=360685678]
 modulate = Color(0.2, 0.8, 0.2, 1)
@@ -59,7 +59,7 @@ value = 50.0
 [node name="ManaLabel" type="Label" parent="UILayer/UIRoot/PlayerHUD" unique_id=595142933]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "💎 Tokens: 3 | 🛡️ Block: 0 | 🎴 Deck: 10"
+text = "◆ Tokens: 5/5 | [Block] 0 | [Deck] 10"
 
 [node name="EnemyHUD" type="VBoxContainer" parent="UILayer/UIRoot" unique_id=222876468]
 layout_mode = 0
@@ -72,7 +72,7 @@ offset_bottom = 120.0
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
-text = "👾 TECH DEBT"
+text = "TECH DEBT"
 horizontal_alignment = 2
 
 [node name="EnemyHP" type="ProgressBar" parent="UILayer/UIRoot/EnemyHUD" unique_id=1755442024]
