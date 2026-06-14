@@ -141,3 +141,20 @@
 *   **LEAN TDD 斷言**: 
     *   驗證無法將任務指派給不符合角色的 Agent。
     *   驗證指派任務後，Agent 與 Task 的狀態是否正確連動更新。
+
+---
+
+## 🚀 TDD 第二階段：多職業協作與資源循環 (Multi-Agent Synergy)
+
+我們的第二個目標是實現《play_mock.sh》中定義的三職業循環，確保 SALES 能夠獨立推動遊戲的任務產出，讓遊戲脫離「手動塞任務」的假象。
+
+*   **TDD 更新要點 (實作規格)**:
+    1.  **業務系統 (Sales Loop)**：
+        *   擴充 `TaskManager` 的邏輯：當有 `SALES` (Role=0) 處於 `WORKING` 狀態時，每經過一定的 Ticks，自動生成一個給 `DEV` (Role=1) 的新任務至 Backlog。
+    2.  **初始狀態對齊 (Initial State Parity)**：
+        *   遊戲初始化時，必須正確招募並實例化 Alice(DEV), Bob(SALES), Charlie(QA)。
+
+*   **LEAN TDD 斷言**: 
+    1.  **無業務不產出**：驗證當所有的 SALES 皆處於 `IDLE` 或 `RESTING` 狀態時，經過時間流逝，系統不會產生任何新任務。
+    2.  **業務工作產出**：驗證將 SALES 設為 `WORKING` 後，經過指定的 Ticks 流逝，系統會成功新增一個任務到 `TaskManager` 的未指派列表。
+    3.  **體力消耗獨立**：驗證 SALES 進行業務開發時，體力會正常消耗，且會在耗盡時進入 `EXHAUSTED` 並停止產出新任務。
