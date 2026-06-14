@@ -17,6 +17,14 @@ func setup(card_stats: CardStats, index: int) -> void:
 	card_index = index
 	cost_label.text = "💎 " + str(card_stats.cost)
 	
+	var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
+	name_label.add_theme_font_override("font", cjk_font)
+	desc_label.add_theme_font_override("normal_font", cjk_font)
+	desc_label.add_theme_font_override("bold_font", cjk_font)
+	desc_label.add_theme_font_override("italics_font", cjk_font)
+	desc_label.add_theme_font_override("bold_italics_font", cjk_font)
+	type_label.add_theme_font_override("font", cjk_font)
+	
 	var card_name = card_stats.card_name
 	if card_name.contains(" ("):
 		card_name = card_name.replace(" (", "\n(")

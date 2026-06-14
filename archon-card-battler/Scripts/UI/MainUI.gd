@@ -49,28 +49,9 @@ var turn_timer: float = 30.0
 var timer_label: Label
 var help_overlay: ColorRect = null
 
+var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
+
 func _ready() -> void:
-	# Dynamic font configuration: prevent recursive fallback loop while keeping CJK and native emoji support
-	var font_stack = SystemFont.new()
-	font_stack.font_names = PackedStringArray([
-		"sans-serif",
-		"Apple Color Emoji",
-		"Segoe UI Emoji",
-		"Noto Color Emoji",
-		"PingFang TC",
-		"Microsoft JhengHei",
-		"Arial"
-	])
-	
-	var custom_font = load("res://Assets/Fonts/arial_unicode.ttf")
-	if custom_font is Font:
-		font_stack.add_fallback(custom_font)
-		
-	var custom_theme = Theme.new()
-	custom_theme.default_font = font_stack
-	$UILayer/UIRoot.theme = custom_theme
-	$TopLayer/GameOverOverlay.theme = custom_theme
-		
 	hit_sound = AudioStreamPlayer.new()
 	hit_sound.stream = preload("res://Assets/Sounds/hit.wav")
 	add_child(hit_sound)
@@ -78,6 +59,17 @@ func _ready() -> void:
 	error_sound = AudioStreamPlayer.new()
 	error_sound.stream = preload("res://Assets/Sounds/error.wav")
 	add_child(error_sound)
+	
+	# Apply CJK font to all controls displaying Traditional Chinese
+	action_log.add_theme_font_override("normal_font", cjk_font)
+	action_log.add_theme_font_override("bold_font", cjk_font)
+	action_log.add_theme_font_override("italics_font", cjk_font)
+	action_log.add_theme_font_override("bold_italics_font", cjk_font)
+	
+	mana_label.add_theme_font_override("font", cjk_font)
+	enemy_intent.add_theme_font_override("font", cjk_font)
+	result_label.add_theme_font_override("font", cjk_font)
+	restart_button.add_theme_font_override("font", cjk_font)
 	
 	deck_manager = DeckManager.new()
 	git_parser = preload("res://Scripts/Logic/GitLogParser.gd").new()
@@ -151,13 +143,14 @@ func show_help_overlay() -> void:
 	help_overlay = ColorRect.new()
 	help_overlay.name = "HelpOverlay"
 	help_overlay.color = Color(0, 0, 0, 0.9)
-	help_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	$UILayer/UIRoot.add_child(help_overlay)
+	help_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
 	# Wrap in CenterContainer for perfect centering in browser WASM exports
 	var center_container = CenterContainer.new()
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	help_overlay.add_child(center_container)
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
 	var v_box = VBoxContainer.new()
 	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -169,6 +162,7 @@ func show_help_overlay() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
+	title.add_theme_font_override("font", cjk_font)
 	v_box.add_child(title)
 	
 	var rules = Label.new()
@@ -184,12 +178,14 @@ func show_help_overlay() -> void:
 		"• [Space / Enter] 鍵：結束玩家回合"
 	rules.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	rules.add_theme_font_size_override("font_size", 16)
+	rules.add_theme_font_override("font", cjk_font)
 	v_box.add_child(rules)
 	
 	var close_btn = Button.new()
 	close_btn.text = "關閉說明 (ESC)"
 	close_btn.custom_minimum_size = Vector2(200, 40)
 	close_btn.pressed.connect(hide_help_overlay)
+	close_btn.add_theme_font_override("font", cjk_font)
 	v_box.add_child(close_btn)
 
 func hide_help_overlay() -> void:
@@ -204,13 +200,14 @@ func show_difficulty_selection() -> void:
 	var overlay = ColorRect.new()
 	overlay.name = "DifficultyOverlay"
 	overlay.color = Color(0, 0, 0, 0.8)
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	$UILayer/UIRoot.add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
 	# Wrap in CenterContainer for perfect centering in browser WASM exports
 	var center_container = CenterContainer.new()
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(center_container)
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
 	var v_box = VBoxContainer.new()
 	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -222,36 +219,42 @@ func show_difficulty_selection() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 40)
 	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
+	title.add_theme_font_override("font", cjk_font)
 	v_box.add_child(title)
 	
 	var desc = Label.new()
 	desc.text = "（難度將影響敵人的血量、每回合自動增加的護盾與隨時間成長的力量）"
 	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc.add_theme_font_size_override("font_size", 16)
+	desc.add_theme_font_override("font", cjk_font)
 	v_box.add_child(desc)
 	
 	var btn_easy = Button.new()
 	btn_easy.text = "簡單 (Easy) - Target: <5 Turns"
 	btn_easy.custom_minimum_size = Vector2(300, 50)
 	btn_easy.pressed.connect(func(): select_difficulty(Difficulty.EASY, overlay))
+	btn_easy.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_easy)
 	
 	var btn_normal = Button.new()
 	btn_normal.text = "普通 (Normal) - Target: ~8 Turns"
 	btn_normal.custom_minimum_size = Vector2(300, 50)
 	btn_normal.pressed.connect(func(): select_difficulty(Difficulty.NORMAL, overlay))
+	btn_normal.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_normal)
 	
 	var btn_hard = Button.new()
 	btn_hard.text = "困難 (Hard) - Target: 20-50 Turns"
 	btn_hard.custom_minimum_size = Vector2(300, 50)
 	btn_hard.pressed.connect(func(): select_difficulty(Difficulty.HARD, overlay))
+	btn_hard.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_hard)
 	
 	var btn_expert = Button.new()
 	btn_expert.text = "超難 (Expert) - Target: 50+ Turns"
 	btn_expert.custom_minimum_size = Vector2(300, 50)
 	btn_expert.pressed.connect(func(): select_difficulty(Difficulty.EXPERT, overlay))
+	btn_expert.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_expert)
 
 func select_difficulty(diff: Difficulty, overlay: Node) -> void:
