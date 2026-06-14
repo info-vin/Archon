@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3 uid="uid://taskcardxxxx"]
+
+[ext_resource type="Script" path="res://Scripts/UI/TaskCard.gd" id="1_script"]
+
+[node name="TaskCard" type="PanelContainer"]
+custom_minimum_size = Vector2(150, 100)
+offset_right = 150.0
+offset_bottom = 100.0
+script = ExtResource("1_script")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+text = "Task Title"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="DetailsLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Details"
+horizontal_alignment = 1
