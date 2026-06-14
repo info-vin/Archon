@@ -88,11 +88,20 @@ func _ready() -> void:
 	fighter_right.pivot_offset = fighter_right.size / 2
 	fighter_right.scale = Vector2(0.9, 0.9)
 	
-	# Restore beautiful standard emojis (font size 120 keeps them elegant and avoids overlapping cards)
-	fighter_left.text = "🥷"
-	fighter_left.add_theme_font_size_override("font_size", 120)
-	fighter_right.text = "🐛"
-	fighter_right.add_theme_font_size_override("font_size", 120)
+	# Dynamic fallback for fighter representations to prevent tofu blocks in Wasm Web build
+	if OS.has_feature("web"):
+		fighter_left.text = "[專案主管 / Tech Lead]"
+		fighter_left.add_theme_font_size_override("font_size", 32)
+		fighter_left.add_theme_font_override("font", cjk_font)
+		
+		fighter_right.text = "[專案技術債 / Tech Debt]"
+		fighter_right.add_theme_font_size_override("font_size", 32)
+		fighter_right.add_theme_font_override("font", cjk_font)
+	else:
+		fighter_left.text = "🥷"
+		fighter_left.add_theme_font_size_override("font_size", 120)
+		fighter_right.text = "🐛"
+		fighter_right.add_theme_font_size_override("font_size", 120)
 	
 	# Create turn timer label in the middle of health bars (size 32)
 	timer_label = Label.new()
@@ -267,25 +276,41 @@ func select_difficulty(diff: Difficulty, overlay: Node) -> void:
 			player_max_mana = 5
 			enemy_max_hp = 60
 			enemy_damage = 5
-			fighter_right.text = "🐛"
+			if OS.has_feature("web"):
+				fighter_right.text = "[程式缺陷-低]"
+				fighter_right.add_theme_font_override("font", cjk_font)
+			else:
+				fighter_right.text = "🐛"
 			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
 		Difficulty.NORMAL:
 			player_max_mana = 5
 			enemy_max_hp = 200
 			enemy_damage = 10
-			fighter_right.text = "🐜"
+			if OS.has_feature("web"):
+				fighter_right.text = "[程式錯誤-中]"
+				fighter_right.add_theme_font_override("font", cjk_font)
+			else:
+				fighter_right.text = "🐜"
 			background_node.texture = load("res://Assets/Background/landscape.jpg")
 		Difficulty.HARD:
 			player_max_mana = 5
 			enemy_max_hp = 400
 			enemy_damage = 12
-			fighter_right.text = "🕷️"
+			if OS.has_feature("web"):
+				fighter_right.text = "[系統漏洞-高]"
+				fighter_right.add_theme_font_override("font", cjk_font)
+			else:
+				fighter_right.text = "🕷️"
 			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
 		Difficulty.EXPERT:
 			player_max_mana = 4
 			enemy_max_hp = 600
 			enemy_damage = 15
-			fighter_right.text = "👾"
+			if OS.has_feature("web"):
+				fighter_right.text = "[核心崩潰-極]"
+				fighter_right.add_theme_font_override("font", cjk_font)
+			else:
+				fighter_right.text = "👾"
 			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
 			
 	player_hp = player_max_hp
@@ -569,7 +594,10 @@ func update_ui() -> void:
 		intent_text += " (+%d [Str])" % enemy_strength
 	enemy_intent.text = intent_text
 	
-	mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | 🗑️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
+	if OS.has_feature("web"):
+		mana_label.text = "◆ Tokens: %d/%d | [Block] %d | [Deck] %d | [Discard] %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
+	else:
+		mana_label.text = "💎 Tokens: %d/%d | 🛡️ Block: %d | 🎴 Deck: %d | 🗑️ Discard: %d" % [player_mana, player_max_mana, player_block, deck_manager.get_deck_size(), deck_manager.get_discard_size()]
 	
 	for child in hand_area.get_children():
 		child.queue_free()

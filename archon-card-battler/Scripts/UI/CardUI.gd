@@ -15,7 +15,11 @@ var play_sound: AudioStreamPlayer
 
 func setup(card_stats: CardStats, index: int) -> void:
 	card_index = index
-	cost_label.text = "💎 " + str(card_stats.cost)
+	
+	if OS.has_feature("web"):
+		cost_label.text = "◆ " + str(card_stats.cost)
+	else:
+		cost_label.text = "💎 " + str(card_stats.cost)
 	
 	var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
 	name_label.add_theme_font_override("font", cjk_font)
@@ -30,6 +34,7 @@ func setup(card_stats: CardStats, index: int) -> void:
 		card_name = card_name.replace(" (", "\n(")
 	name_label.text = card_name
 	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	
 	# Determine theme colors based on Category
 	var bg_color = Color(0.15, 0.17, 0.23, 1)
