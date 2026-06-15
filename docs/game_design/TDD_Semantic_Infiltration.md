@@ -179,11 +179,25 @@ Level_01 (Node2D)
     *   在 Desktop 綁定 `Spacebar`。在 Mobile，於 HUD 右下角提供一個面積 `64x64` 以上的大按鈕，用於釋放壓縮彈或衝刺。
 
 ## 5. 素材管線與視覺紙娃娃 (Asset Pipeline & Visual Loadout)
+為了擺脫「程式設計師美術 (Programmer Art)」的廉價感，本專案嚴格規定必須使用高品質的開源 (CC0 / Free) 像素美術素材，並輔以 Shader 來提升科技感。
+
+### 5.1 美術風格與開源素材來源 (Art Direction & Sourcing)
+整體視覺定調為 **「Cyberpunk 伺服器內部 / 霓虹科幻 (Neon Sci-Fi)」**。
+以下為已選定之 itch.io 授權免版稅素材庫，後續開發需直接下載使用：
+
+*   **環境網格 (Vector Database Maze)**：
+    *   採用 **[Cosmic Lilac! Sci-Fi Tileset](https://petricakegames.itch.io/cosmic-lilac)** (by PetricakeGames)。其 16x16 的金屬、暗紫/霓虹藍色調非常適合隱喻「伺服器資料庫內部」。
+    *   或者使用 **[Neo Zero - Cyberpunk City](https://yanin.itch.io/neo-zero)** 來做外圍牆壁與背景裝飾。
+*   **敵人 (False Positives / KNN 檢索器)**：
+    *   採用 **[Military Incursion Bot Sprites](https://elthen.itch.io/2d-pixel-art-military-incursion-bot-sprites)** (by Elthen)。這些具備閒置 (Idle)、掃描 (Scan)、追擊 (Chase) 動畫的高品質機器人，完美契合「被喚醒的雜訊」的概念。
+*   **玩家飛船 (Query)**：
+    *   採用 **[Sci-Fi Character Packs (Freebies)](https://penusbmic.itch.io/)** (by Penusbmic) 中的無人機 (Drone) 或浮空小艇，搭配我們自製的尾焰粒子特效。
+
+### 5.2 裝備紙娃娃視覺化 (Visual Loadout Implementation)
 為了反映 `Modular RAG Loadout` 的差異，玩家的飛船在視覺上必須呈現出其裝備的武器。
 
 *   **Shader 驅動的外觀 (Shader-Based Variants)**：
-    *   有別於 Tycoon 的 Sprite 重疊，本遊戲採用 Tron-like 科技風格。
-    *   裝備的武器透過 **Shader 參數** 來表現。例如：裝備 BM25 時，飛船尾焰變成冷藍色短光束；裝備 HyDE 時，飛船會週期性發出波紋特效 (Ripple Effect)。
+    *   裝備的武器透過 **Shader 參數** 來表現。例如：裝備 BM25 時，飛船尾焰與主體高光變成冷藍色；裝備 HyDE 時，飛船會週期性發出空間波紋特效 (Ripple Effect)。
 *   **粒子系統 (GPUParticles2D)**：
     *   飄移過彎、彈開紅色幽靈、吃掉 Target Chunk 等，全部依賴 Godot 原生的 GPU 粒子系統，確保在 Web 端也能維持 60FPS 的 Juice 回饋。
 
