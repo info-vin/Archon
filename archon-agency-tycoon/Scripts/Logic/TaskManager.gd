@@ -3,6 +3,7 @@ class_name TaskManager
 
 var tasks: Array[TaskResource] = []
 var agent_manager: AgentManager = null
+var sales_progress: Dictionary = {}
 
 signal task_completed(task_id: int, reward: int)
 
@@ -52,6 +53,22 @@ func assign_task(task_id: int, agent_id: int) -> bool:
 func process_tick() -> void:
     if agent_manager == null:
         return
+        
+    # Process Sales Agents
+    for i in range(agent_manager.agents.size()):
+        var agent = agent_manager.agents[i]
+        if agent.role == AgentResource.AgentRole.SALES and agent.state == AgentResource.AgentState.WORKING:
+            if not sales_progress.has(i):
+                sales_progress[i] = 0
+            
+            sales_progress[i] += 1
+            agent_manager.drain_agent_energy(i, 10)
+            
+            if sales_progress[i] >= 3:
+                sales_progress[i] = 0
+                var new_task = preload("res://Scripts/Resources/TaskResource.gd").new("Client Project", AgentResource.AgentRole.DEV, 3, 300)
+                add_task(new_task)
+                # Sales agent stays WORKING to generate more tasks until exhausted or manually stopped
         
     for i in range(tasks.size()):
         var task = tasks[i]

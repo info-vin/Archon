@@ -6,7 +6,8 @@ func _init() -> void:
 		preload("res://Tests/Unit/test_card_stats.gd"),
 		preload("res://Tests/Unit/test_git_parser.gd"),
 		preload("res://Tests/Unit/test_combat_logic.gd"),
-		preload("res://Tests/Unit/test_deck_manager.gd")
+		preload("res://Tests/Unit/test_deck_manager.gd"),
+		preload("res://Tests/Unit/test_game_state.gd")
 	]
 	
 	var total_passed = 0

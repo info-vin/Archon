@@ -1,28 +1,8 @@
 extends Node2D
 
-enum Difficulty { EASY, NORMAL, HARD, EXPERT }
-var difficulty: Difficulty = Difficulty.NORMAL
-
 var deck_manager: DeckManager
 var git_parser: GitLogParser
-var hand: Array[CardStats] = []
-
-# Game State
-var player_hp: int = 100
-var player_max_hp: int = 100
-var player_mana: int = 5
-var player_max_mana: int = 5
-var player_block: int = 0
-var enemy_hp: int = 200
-var enemy_max_hp: int = 200
-var enemy_damage: int = 10
-var enemy_block: int = 0
-var enemy_strength: int = 0
-var game_turn_counter: int = 0
-
-# Combo System
-var current_combo_category: String = ""
-var combo_count: int = 0
+var game_state: GameState
 
 @onready var background_node = $Background
 @onready var action_log = $UILayer/UIRoot/LogArea/ActionLog
@@ -92,6 +72,28 @@ func _ready() -> void:
 	
 	deck_manager = DeckManager.new()
 	git_parser = preload("res://Scripts/Logic/GitLogParser.gd").new()
+	
+	# Initialize GameState
+	game_state = preload("res://Scripts/Logic/GameState.gd").new()
+	game_state.deck_manager = deck_manager
+	game_state.git_parser = git_parser
+	
+	# Connect signals
+	game_state.player_hp_changed.connect(_on_player_hp_changed)
+	game_state.enemy_hp_changed.connect(_on_enemy_hp_changed)
+	game_state.player_block_changed.connect(_on_player_block_changed)
+	game_state.enemy_block_changed.connect(_on_enemy_block_changed)
+	game_state.mana_changed.connect(_on_mana_changed)
+	game_state.combo_changed.connect(_on_combo_changed)
+	game_state.log_event.connect(log_action)
+	game_state.game_over_triggered.connect(show_game_over)
+	game_state.smart_end_turn_triggered.connect(_on_end_turn_pressed)
+	game_state.draw_finished.connect(update_hand_ui)
+	
+	# Connect juice signals
+	game_state.player_took_damage.connect(_on_player_took_damage)
+	game_state.enemy_took_damage.connect(_on_enemy_took_damage)
+	game_state.player_gained_block.connect(_on_player_gained_block)
 	
 	_init_deck()
 	
@@ -180,7 +182,6 @@ func _ready() -> void:
 	hud_container.add_child(discard_label)
 	
 	$UILayer/UIRoot/PlayerHUD.add_child(hud_container)
-
 	
 	# Hide the End Turn button as requested (shortcut Space/Enter and auto-timer will handle it)
 	end_turn_button.visible = false
@@ -203,7 +204,7 @@ func _ready() -> void:
 	player_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	player_avatar.texture = load("res://Assets/Images/player_lead.png")
 	$UILayer/UIRoot.add_child(player_avatar)
-	$UILayer/UIRoot.move_child(player_avatar, 0) # Render behind foreground UI components
+	$UILayer/UIRoot.move_child(player_avatar, 0)
 	
 	enemy_avatar = TextureRect.new()
 	enemy_avatar.custom_minimum_size = Vector2(216, 324)
@@ -212,7 +213,7 @@ func _ready() -> void:
 	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	$UILayer/UIRoot.add_child(enemy_avatar)
-	$UILayer/UIRoot.move_child(enemy_avatar, 0) # Render behind foreground UI components
+	$UILayer/UIRoot.move_child(enemy_avatar, 0)
 	
 	# Configure absolute numeric HP text overlays on progress bars
 	player_hp_bar.show_percentage = false
@@ -260,16 +261,14 @@ func _process(delta: float) -> void:
 		var display_time = ceil(turn_timer)
 		timer_label.text = str(display_time) + "s"
 		if display_time <= 5:
-			# Enlarged 2x font size for last 5 seconds and color red
 			timer_label.add_theme_font_size_override("font_size", 88)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
 		else:
-			# Normal 2x font size
 			timer_label.add_theme_font_size_override("font_size", 64)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 			
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_accept"): # Space or Enter
+	if event.is_action_pressed("ui_accept"):
 		if not end_turn_button.disabled:
 			_on_end_turn_pressed()
 	elif event is InputEventKey and event.pressed:
@@ -289,7 +288,6 @@ func show_help_overlay() -> void:
 	$UILayer/UIRoot.add_child(help_overlay)
 	help_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
-	# Wrap in CenterContainer for perfect centering in browser WASM exports
 	var center_container = CenterContainer.new()
 	help_overlay.add_child(center_container)
 	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -336,7 +334,6 @@ func hide_help_overlay() -> void:
 		help_overlay = null
 
 func show_difficulty_selection() -> void:
-	# Block interactions with gameplay behind
 	end_turn_button.disabled = true
 	
 	var overlay = ColorRect.new()
@@ -346,7 +343,6 @@ func show_difficulty_selection() -> void:
 	$UILayer/UIRoot.add_child(overlay)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
-	# Wrap in CenterContainer for perfect centering in browser WASM exports
 	var center_container = CenterContainer.new()
 	overlay.add_child(center_container)
 	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -374,206 +370,77 @@ func show_difficulty_selection() -> void:
 	var btn_easy = Button.new()
 	btn_easy.text = "簡單 (Easy) - Target: <5 Turns"
 	btn_easy.custom_minimum_size = Vector2(300, 50)
-	btn_easy.pressed.connect(func(): select_difficulty(Difficulty.EASY, overlay))
+	btn_easy.pressed.connect(func(): select_difficulty(0, overlay))
 	btn_easy.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_easy)
 	
 	var btn_normal = Button.new()
 	btn_normal.text = "普通 (Normal) - Target: ~8 Turns"
 	btn_normal.custom_minimum_size = Vector2(300, 50)
-	btn_normal.pressed.connect(func(): select_difficulty(Difficulty.NORMAL, overlay))
+	btn_normal.pressed.connect(func(): select_difficulty(1, overlay))
 	btn_normal.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_normal)
 	
 	var btn_hard = Button.new()
 	btn_hard.text = "困難 (Hard) - Target: 20-50 Turns"
 	btn_hard.custom_minimum_size = Vector2(300, 50)
-	btn_hard.pressed.connect(func(): select_difficulty(Difficulty.HARD, overlay))
+	btn_hard.pressed.connect(func(): select_difficulty(2, overlay))
 	btn_hard.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_hard)
 	
 	var btn_expert = Button.new()
 	btn_expert.text = "超難 (Expert) - Target: 50+ Turns"
 	btn_expert.custom_minimum_size = Vector2(300, 50)
-	btn_expert.pressed.connect(func(): select_difficulty(Difficulty.EXPERT, overlay))
+	btn_expert.pressed.connect(func(): select_difficulty(3, overlay))
 	btn_expert.add_theme_font_override("font", cjk_font)
 	v_box.add_child(btn_expert)
 
-func select_difficulty(diff: Difficulty, overlay: Node) -> void:
-	difficulty = diff
+func select_difficulty(diff: int, overlay: Node) -> void:
 	overlay.queue_free()
 	
-	# Apply configuration based on difficulty
-	match difficulty:
-		Difficulty.EASY:
-			player_max_mana = 5
-			enemy_max_hp = 60
-			enemy_damage = 5
+	match diff:
+		0: # EASY
 			enemy_name.text = "程式缺陷 (Bug - Easy)"
 			enemy_avatar.texture = load("res://Assets/Images/bug_easy.png")
 			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
-		Difficulty.NORMAL:
-			player_max_mana = 5
-			enemy_max_hp = 200
-			enemy_damage = 10
+		1: # NORMAL
 			enemy_name.text = "程式錯誤 (Bug - Normal)"
 			enemy_avatar.texture = load("res://Assets/Images/bug_normal.png")
 			background_node.texture = load("res://Assets/Background/landscape.jpg")
-		Difficulty.HARD:
-			player_max_mana = 5
-			enemy_max_hp = 400
-			enemy_damage = 12
+		2: # HARD
 			enemy_name.text = "系統漏洞 (Bug - Hard)"
 			enemy_avatar.texture = load("res://Assets/Images/bug_hard.png")
 			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
-		Difficulty.EXPERT:
-			player_max_mana = 4
-			enemy_max_hp = 600
-			enemy_damage = 15
+		3: # EXPERT
 			enemy_name.text = "核心崩潰 (Bug - Expert)"
 			enemy_avatar.texture = load("res://Assets/Images/bug_expert.png")
 			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
 			
-	player_hp = player_max_hp
-	enemy_hp = enemy_max_hp
-	enemy_block = 0
-	enemy_strength = 0
-	game_turn_counter = 0
-	
+	game_state.select_difficulty(diff)
 	end_turn_button.disabled = false
-	update_ui()
-	start_player_turn()
+	game_state.start_player_turn()
 
 func _init_deck() -> void:
 	var logs = git_parser.get_local_git_logs()
 	for i in range(15):
 		var log_str = logs[i % logs.size()]
 		var card = git_parser.generate_card_from_log(log_str)
-		# No manual overrides! Values are cleanly normalized by GitLogParser.gd
 		deck_manager.add_card(card)
 
-func start_player_turn() -> void:
-	player_mana = player_max_mana
-	player_block = 0
-	current_combo_category = ""
-	combo_count = 0
-	combo_label.text = ""
-	turn_timer = 30.0 # Reset turn timer on player turn start
-	
-	for card in hand:
-		deck_manager.discard_card(card)
-	hand.clear()
-	for i in range(4): # Draw 4 cards to keep hand cleaner
-		var c = deck_manager.draw_card()
-		if c != null:
-			hand.append(c)
-		else:
-			log_action("Deck is empty!")
-			break
-	
-	log_action("\n[b][color=#3b82f6]--- Player Turn Started ---[/color][/b]")
-	update_ui()
-
 func play_card(index: int) -> void:
-	if index >= hand.size(): return
-	var card = hand[index]
+	if index >= game_state.hand.size(): return
+	var card = game_state.hand[index]
 	
-	if player_mana < card.cost:
+	if game_state.player_mana < card.cost:
 		shake_camera(5.0)
 		error_sound.play()
 		log_action("[color=#ef4444][ERR] Not enough Tokens to play " + card.card_name + "[/color]")
 		return
 		
-	# Pay cost
-	player_mana -= card.cost
-	
-	# Combo Logic (Any card played builds the combo!)
-	combo_count += 1
-	if combo_count > 1:
-		show_combo_animation(card.category)
-	
-	var multiplier = 1.0 + (combo_count - 1) * 0.5
-	var final_damage = int(float(card.damage) * multiplier)
-	
-	# Apply damage taking enemy block into account
-	var damage_to_deal = final_damage
-	var absorbed_dmg = 0
-	if enemy_block > 0 and damage_to_deal > 0:
-		absorbed_dmg = min(damage_to_deal, enemy_block)
-		enemy_block -= absorbed_dmg
-		damage_to_deal -= absorbed_dmg
-		
-	if damage_to_deal > 0:
-		enemy_hp -= damage_to_deal
-	player_block += card.block
-	
-	var msg = "[color=#fde047]Played: " + card.card_name + "[/color]\n"
-	if final_damage > 0: 
-		if combo_count > 1:
-			msg += " dealt " + str(final_damage) + " DMG. (" + str(multiplier) + "x COMBO!)"
-		else:
-			msg += " dealt " + str(final_damage) + " DMG."
-		if absorbed_dmg > 0:
-			msg += " [color=#9ca3af](Block absorbed " + str(absorbed_dmg) + " DMG)[/color]"
-		shake_camera(final_damage * 0.5)
-		hit_sound.play()
+	if card.damage > 0:
 		animate_fighter(player_avatar, 50)
-		spawn_floating_text(enemy_avatar.global_position + Vector2(100, 100), "-" + str(final_damage), Color(1, 0.2, 0.2))
 		
-	if card.block > 0: 
-		msg += " gained " + str(card.block) + " Block."
-		spawn_floating_text(player_avatar.global_position + Vector2(100, 100), "+" + str(card.block) + " [Block]", Color(0.2, 0.8, 1))
-	
-	# Play card effects based on category
-	if card.category == "Performance":
-		player_mana = min(player_max_mana, player_mana + 2)
-		msg += " [color=#facc15][Str] Performance: Restored 2 Tokens![/color]"
-	elif card.category == "Merge":
-		player_hp = min(player_max_hp, player_hp + 10)
-		msg += " [color=#fbbf24][Merge] Healed 10 HP![/color]"
-	elif card.category == "Refactor":
-		var bonus_block = int(float(final_damage) * 0.5)
-		player_block += bonus_block
-		msg += " [color=#60a5fa][Refactor] Gained %d Block from damage![/color]" % bonus_block
-		spawn_floating_text(player_avatar.global_position + Vector2(100, 100), "+" + str(bonus_block) + " [Block]", Color(0.3, 0.6, 1.0))
-	elif card.category == "Test":
-		player_block += card.block # Adds another layer of block (doubling it)
-		msg += " [color=#c084fc][Test] Doubled Block (+%d Block)![/color]" % card.block
-	elif card.category == "Docs":
-		var drawn = deck_manager.draw_card()
-		if drawn != null:
-			hand.append(drawn)
-			msg += " [color=#22d3ee][Docs] Drew 1 card (%s).[/color]" % drawn.card_name
-	elif card.category == "Style":
-		player_block += 10
-		msg += " [color=#f472b6][Style] Gained 10 Block![/color]"
-	elif card.category == "Agent":
-		enemy_hp -= 20
-		msg += " [color=#a78bfa][Agent] Dealt 20 direct DMG (bypassed shields)![/color]"
-		spawn_floating_text(enemy_avatar.global_position + Vector2(100, 100), "-20 [Agent]", Color(0.7, 0.4, 1.0))
-	elif card.category == "Chore":
-		var cards_to_discard = []
-		for h_card in hand:
-			if h_card != card:
-				cards_to_discard.append(h_card)
-		for h_card in cards_to_discard:
-			deck_manager.discard_card(h_card)
-			hand.erase(h_card)
-		msg += " [color=#9ca3af][Chore] Discarded hand and drew 2 cards.[/color]"
-		for i in range(2):
-			var drawn = deck_manager.draw_card()
-			if drawn != null:
-				hand.append(drawn)
-
-	log_action(msg)
-	
-	deck_manager.discard_card(card)
-	hand.remove_at(hand.find(card)) # Safely find card position since Chore might have modified hand array
-	update_ui()
-	
-	if !check_win_condition():
-		# Smart auto end turn: if mana is lower than cost of any card in hand
-		check_smart_end_turn()
+	game_state.play_card(card)
 
 func spawn_floating_text(pos: Vector2, text: String, color: Color):
 	var lbl = Label.new()
@@ -589,14 +456,6 @@ func spawn_floating_text(pos: Vector2, text: String, color: Color):
 	tween.parallel().tween_property(lbl, "modulate:a", 0.0, 0.8)
 	tween.tween_callback(lbl.queue_free)
 
-func show_combo_animation(category: String):
-	var multiplier = 1.0 + (combo_count - 1) * 0.5
-	combo_label.text = str(multiplier) + "x COMBO!"
-	combo_label.pivot_offset = combo_label.size / 2
-	var tween = create_tween().set_trans(Tween.TRANS_SPRING)
-	tween.tween_property(combo_label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
-	tween.tween_property(combo_label, "scale", Vector2(1, 1), 0.2)
-
 func animate_fighter(fighter: Node, distance: float):
 	var tween = create_tween().set_trans(Tween.TRANS_ELASTIC)
 	var original_pos = fighter.position
@@ -607,93 +466,12 @@ func _on_end_turn_pressed() -> void:
 	if game_over_overlay.visible or end_turn_button.disabled:
 		return
 	log_action("Player ended turn.")
-	enemy_turn()
-
-func enemy_turn() -> void:
-	if game_over_overlay.visible or end_turn_button.disabled:
-		return
-		
-	# Gain Block based on difficulty
-	var block_to_gain = 0
-	if difficulty == Difficulty.HARD:
-		block_to_gain = 5
-	elif difficulty == Difficulty.EXPERT:
-		block_to_gain = 10
-		
-	if block_to_gain > 0:
-		enemy_block += block_to_gain
-		log_action("[color=#a78bfa][Bug] Enemy gained " + str(block_to_gain) + " Block.[/color]")
-
-	# Increase Strength
-	game_turn_counter += 1
-	var turn_interval = 3 if difficulty == Difficulty.HARD else 2
-	if difficulty == Difficulty.HARD or difficulty == Difficulty.EXPERT:
-		if game_turn_counter > 1 and (game_turn_counter - 1) % turn_interval == 0:
-			var strength_gain = 3 if difficulty == Difficulty.HARD else 4
-			enemy_strength += strength_gain
-			log_action("[color=#f87171][Str+] Enemy Strength increased! Attack permanently gains +" + str(strength_gain) + " DMG.[/color]")
-
-	var final_enemy_damage = enemy_damage + enemy_strength
-	log_action("\n[b][color=#ef4444][Bug] Enemy attacks for " + str(final_enemy_damage) + " DMG![/color][/b]")
-	animate_fighter(enemy_avatar, -50)
-	
-	var actual_damage = max(0, final_enemy_damage - player_block)
-	player_block = max(0, player_block - final_enemy_damage)
-	player_hp -= actual_damage
-	
-	if player_block > 0:
-		log_action("[Block] absorbed " + str(min(final_enemy_damage, player_block)) + " DMG.")
-		
-	if actual_damage > 0:
-		shake_camera(15.0)
-		hit_sound.play()
-		log_action("Player took " + str(actual_damage) + " DMG.")
-	
-	update_ui()
-	if !check_win_condition():
-		start_player_turn()
-
-# Helper for smart turn ending
-func check_smart_end_turn() -> void:
-	if hand.is_empty():
-		await get_tree().create_timer(0.8).timeout
-		if hand.is_empty():
-			_on_end_turn_pressed()
-		return
-		
-	var min_cost = 99
-	for card in hand:
-		if card.cost < min_cost:
-			min_cost = card.cost
-			
-	if player_mana < min_cost:
-		await get_tree().create_timer(0.8).timeout
-		# Recheck in case mana/hand altered during delay
-		var recheck_min_cost = 99
-		for card in hand:
-			if card.cost < recheck_min_cost:
-				recheck_min_cost = card.cost
-		if hand.is_empty() or player_mana < recheck_min_cost:
-			_on_end_turn_pressed()
-
-func check_win_condition() -> bool:
-	if enemy_hp <= 0:
-		enemy_hp = 0
-		update_ui()
-		show_game_over(true)
-		return true
-	if player_hp <= 0:
-		player_hp = 0
-		update_ui()
-		show_game_over(false)
-		return true
-	return false
+	game_state.enemy_turn()
 
 func show_game_over(win: bool) -> void:
 	end_turn_button.disabled = true
 	game_over_overlay.visible = true
 	
-	# Centering and widening the result VBox Container to span full width and height
 	var vbox = $TopLayer/GameOverOverlay/VBox
 	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vbox.offset_left = 0
@@ -718,10 +496,10 @@ func show_game_over(win: bool) -> void:
 func restart_game() -> void:
 	game_over_overlay.visible = false
 	end_turn_button.disabled = false
-	player_hp = player_max_hp
-	enemy_hp = enemy_max_hp
 	deck_manager = DeckManager.new()
 	_init_deck()
+	game_state.deck_manager = deck_manager
+	game_state.hand.clear()
 	action_log.text = "[b]Combat Log[/b]\n"
 	show_difficulty_selection()
 
@@ -738,32 +516,73 @@ func shake_camera(intensity: float) -> void:
 		tween.tween_property(camera, "position", original_pos + offset, 0.05)
 	tween.tween_property(camera, "position", original_pos, 0.05)
 
-func update_ui() -> void:
-	player_hp_bar.max_value = float(player_max_hp)
-	enemy_hp_bar.max_value = float(enemy_max_hp)
-
-	var tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(player_hp_bar, "value", float(player_hp), 0.3)
-	tween.tween_property(enemy_hp_bar, "value", float(enemy_hp), 0.3)
-	
+func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
+	player_hp_bar.max_value = float(max_hp)
+	var tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(player_hp_bar, "value", float(current_hp), 0.3)
 	if player_hp_text:
-		player_hp_text.text = "%d / %d HP" % [player_hp, player_max_hp]
+		player_hp_text.text = "%d / %d HP" % [current_hp, max_hp]
+
+func _on_enemy_hp_changed(current_hp: int, max_hp: int) -> void:
+	enemy_hp_bar.max_value = float(max_hp)
+	var tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(enemy_hp_bar, "value", float(current_hp), 0.3)
 	if enemy_hp_text:
-		enemy_hp_text.text = "%d / %d HP" % [enemy_hp, enemy_max_hp]
-	
-	# Update Enemy Intent to show strength and block (no emojis)
-	var final_enemy_dmg = enemy_damage + enemy_strength
+		enemy_hp_text.text = "%d / %d HP" % [current_hp, max_hp]
+
+func _on_player_block_changed(current_block: int) -> void:
+	block_label.text = str(current_block)
+
+func _on_enemy_block_changed(current_block: int) -> void:
+	_update_enemy_intent()
+
+func _on_mana_changed(current_mana: int, max_mana: int) -> void:
+	token_label.text = "%d/%d" % [current_mana, max_mana]
+
+func _on_combo_changed(combo_count: int, combo_category: String) -> void:
+	if combo_count > 1:
+		var multiplier = 1.0 + (combo_count - 1) * 0.5
+		combo_label.text = str(multiplier) + "x COMBO!"
+		combo_label.pivot_offset = combo_label.size / 2
+		var tween = create_tween().set_trans(Tween.TRANS_SPRING)
+		tween.tween_property(combo_label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
+		tween.tween_property(combo_label, "scale", Vector2(1, 1), 0.2)
+	else:
+		combo_label.text = ""
+
+func _on_player_took_damage(amount: int) -> void:
+	shake_camera(15.0)
+	hit_sound.play()
+	animate_fighter(player_avatar, -50)
+	spawn_floating_text(player_avatar.global_position + Vector2(100, 100), "-" + str(amount), Color(1, 0.2, 0.2))
+
+func _on_enemy_took_damage(amount: int) -> void:
+	shake_camera(amount * 0.5)
+	hit_sound.play()
+	spawn_floating_text(enemy_avatar.global_position + Vector2(100, 100), "-" + str(amount), Color(1, 0.2, 0.2))
+
+func _on_player_gained_block(amount: int) -> void:
+	spawn_floating_text(player_avatar.global_position + Vector2(100, 100), "+" + str(amount) + " [Block]", Color(0.2, 0.8, 1))
+
+func _update_enemy_intent() -> void:
+	var final_enemy_dmg = game_state.enemy_damage + game_state.enemy_strength
 	var intent_text = "Intent: [Attack] %d DMG" % final_enemy_dmg
-	if enemy_block > 0:
-		intent_text += " | [Block] %d" % enemy_block
-	if enemy_strength > 0:
-		intent_text += " (+%d [Str])" % enemy_strength
+	if game_state.enemy_block > 0:
+		intent_text += " | [Block] %d" % game_state.enemy_block
+	if game_state.enemy_strength > 0:
+		intent_text += " (+%d [Str])" % game_state.enemy_strength
 	enemy_intent.text = intent_text
-	
-	token_label.text = "%d/%d" % [player_mana, player_max_mana]
-	block_label.text = str(player_block)
+
+func update_hand_ui() -> void:
+	token_label.text = "%d/%d" % [game_state.player_mana, game_state.player_max_mana]
+	block_label.text = str(game_state.player_block)
 	deck_label.text = str(deck_manager.get_deck_size())
 	discard_label.text = str(deck_manager.get_discard_size())
+	
+	_update_enemy_intent()
+	
+	# Clean turn timer when player hand is updated (turn start)
+	turn_timer = 30.0
 	
 	for child in hand_area.get_children():
 		child.queue_free()
@@ -771,9 +590,9 @@ func update_ui() -> void:
 	var card_scene = preload("res://Scenes/UI/CardUI.tscn")
 	var hand_width = hand_area.size.x if hand_area.size.x > 0 else 650.0
 	var card_width = 180.0
-	var total_cards = hand.size()
+	var total_cards = game_state.hand.size()
 	
-	var max_spacing = 130.0 # Widen spacing for easier selection
+	var max_spacing = 130.0
 	var required_width = card_width + (total_cards - 1) * max_spacing
 	var spacing = max_spacing
 	if required_width > hand_width:
@@ -784,21 +603,19 @@ func update_ui() -> void:
 	var start_x = (hand_width - total_width) / 2.0
 	
 	for i in range(total_cards):
-		var card = hand[i]
+		var card = game_state.hand[i]
 		var card_ui = card_scene.instantiate()
 		hand_area.add_child(card_ui)
 		
 		var target_x = start_x + (i * spacing)
 		
-		# Radial Fanning Math
 		var t = 0.5 if total_cards <= 1 else float(i) / float(total_cards - 1)
-		var curve_y = abs(t - 0.5) * abs(t - 0.5) * 150.0 # Parabola dropping in center
+		var curve_y = abs(t - 0.5) * abs(t - 0.5) * 150.0
 		var rotation_deg = lerpf(-15.0, 15.0, t)
 		
-		# Shifted up to 10 + curve_y (was 50 + curve_y) to prevent card bottom cutoff
 		card_ui.position = Vector2(target_x, 10 + curve_y)
 		card_ui.rotation_degrees = rotation_deg
-		card_ui.original_y = card_ui.position.y # Save for hover tween
+		card_ui.original_y = card_ui.position.y
 		
 		card_ui.setup(card, i)
 		card_ui.pressed.connect(func(): play_card(card_ui.card_index))

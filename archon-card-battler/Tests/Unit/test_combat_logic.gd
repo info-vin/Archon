@@ -1,11 +1,11 @@
 extends MiniTest
 
 func test_play_card_reduces_mana_and_deals_damage() -> void:
-	var GameState = preload("res://Scripts/Logic/GameState.gd")
+	var GameStateClass = load("res://Scripts/Logic/GameState.gd")
 	var EnemyAgent = preload("res://Scripts/Logic/EnemyAgent.gd")
 	var CardStats = preload("res://Scripts/Resources/CardStats.gd")
 	
-	var game_state = GameState.new(10)
+	var game_state = GameStateClass.new(10)
 	var enemy = EnemyAgent.new(100)
 	var card = CardStats.new()
 	card.cost = 3
@@ -18,11 +18,11 @@ func test_play_card_reduces_mana_and_deals_damage() -> void:
 	assert_eq(enemy.current_hp, 55, "Enemy should take correct damage (100 - 45)")
 
 func test_cannot_play_card_without_enough_mana() -> void:
-	var GameState = preload("res://Scripts/Logic/GameState.gd")
+	var GameStateClass = load("res://Scripts/Logic/GameState.gd")
 	var EnemyAgent = preload("res://Scripts/Logic/EnemyAgent.gd")
 	var CardStats = preload("res://Scripts/Resources/CardStats.gd")
 	
-	var game_state = GameState.new(2)
+	var game_state = GameStateClass.new(2)
 	var enemy = EnemyAgent.new(100)
 	var card = CardStats.new()
 	card.cost = 3
@@ -35,11 +35,11 @@ func test_cannot_play_card_without_enough_mana() -> void:
 	assert_eq(enemy.current_hp, 100, "Enemy should not take damage")
 
 func test_play_card_adds_block() -> void:
-	var GameState = preload("res://Scripts/Logic/GameState.gd")
+	var GameStateClass = load("res://Scripts/Logic/GameState.gd")
 	var EnemyAgent = preload("res://Scripts/Logic/EnemyAgent.gd")
 	var CardStats = preload("res://Scripts/Resources/CardStats.gd")
 	
-	var game_state = GameState.new(10)
+	var game_state = GameStateClass.new(10)
 	var enemy = EnemyAgent.new(100)
 	var card = CardStats.new()
 	card.cost = 1
@@ -51,9 +51,9 @@ func test_play_card_adds_block() -> void:
 	assert_eq(game_state.player_block, 15, "Player block should increase by 15")
 
 func test_block_absorbs_damage_completely() -> void:
-	var GameState = preload("res://Scripts/Logic/GameState.gd")
+	var GameStateClass = load("res://Scripts/Logic/GameState.gd")
 	
-	var game_state = GameState.new(5, 100)
+	var game_state = GameStateClass.new(5, 100)
 	game_state.player_block = 20
 	
 	var actual_damage = game_state.enemy_attack(15)
@@ -63,9 +63,9 @@ func test_block_absorbs_damage_completely() -> void:
 	assert_eq(game_state.player_hp, 100, "Player HP should remain 100")
 
 func test_block_absorbs_damage_partially() -> void:
-	var GameState = preload("res://Scripts/Logic/GameState.gd")
+	var GameStateClass = load("res://Scripts/Logic/GameState.gd")
 	
-	var game_state = GameState.new(5, 100)
+	var game_state = GameStateClass.new(5, 100)
 	game_state.player_block = 10
 	
 	var actual_damage = game_state.enemy_attack(25)

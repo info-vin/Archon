@@ -1,6 +1,3 @@
-res://Scripts/Logic/AgentManager.gd
-res://Scripts/Resources/AgentResource.gd
-res://Tests/Unit/test_agent_manager.gd
+res://Scripts/Main.gd
+res://Scripts/Logic/TaskManager.gd
 res://Tests/Unit/test_task_manager.gd
-res://Scripts/Logic/TycoonManager.gd
-res://Tests/HeadlessRunner.gd
