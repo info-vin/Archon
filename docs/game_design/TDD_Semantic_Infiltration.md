@@ -62,49 +62,76 @@
 
 ## 2. 混合架構設計: 徹底的神經分離 (Decoupled Sync Architecture)
 為確保能夠實施 TDD 測試驅動開發，我們完全放棄依賴 Godot 物理引擎 (`CharacterBody2D`) 進行邏輯運算。
-採用 **"邏輯網格瞬間結算 + 視覺補間延遲表現"** 的雙層架構。
+採用 **"邏輯網格瞬間結算 + 視覺事件佇列 (Event Queue)"** 的雙層架構。
 
-### 2.1 [Model] 邏輯層 (瞬間發生，0 秒，100% 可單元測試)
-純 GDScript 類別，不依賴 SceneTree 或 Node。
+### 2.1 嚴格資料結構與 Enum 定義 (Data Structures)
+所有邏輯運算必須依賴以下強型別定義，嚴禁使用 Magic Numbers。
 
-*   `GridState.gd`: 負責二維陣列 `Array[Array[int]]` 管理牆壁、路徑。提供自製 A* 尋路 (曼哈頓距離)。
-*   `EntityLogic.gd`: 玩家與敵人的邏輯實體。只記錄 `grid_position (Vector2i)` 與狀態。
-*   **回合解析器 (Turn Resolver)**: 當玩家輸入方向，邏輯層「瞬間」將玩家移至下一格，並「瞬間」計算所有被喚醒幽靈的下一步路徑。
+```gdscript
+# Enums.gd (Global)
+enum Cell { EMPTY = 0, WALL = 1, PORTAL = 2 }
+enum EntityType { PLAYER, TARGET_CHUNK, FALSE_POSITIVE }
+enum EntityState { IDLE, AWAKE, ABSORBED }
 
-### 2.2 [View] 視覺層 (有慣性與延遲，負責 Juice)
-掛載於 Godot Node 上的控制器。負責「演戲」。
+# EntityData.gd (Model 實體)
+class_name EntityData extends RefCounted
+var id: String               # 唯一識別碼 (ex: "chunk_1", "enemy_2")
+var type: Enums.EntityType
+var grid_pos: Vector2i
+var state: Enums.EntityState = Enums.EntityState.IDLE
+```
 
-*   `ShipView.gd`: 監聽邏輯層的 `position_changed(new_grid_pos)` Signal。
-*   **動畫鎖定 (Animation Lock)**: 收到信號後，使用 Godot `Tween` 以具有彈性 (Elastic) 的曲線，將 `Sprite2D` 的像素座標平滑移動至目標網格。移動期間鎖定輸入（或存入 Input Queue）。
-*   **Cornering 飄移**: 如果 Input Queue 中有下一個方向，在轉角處會畫出弧線並產生粒子特效 (Sparks)。
+### 2.2 [Model] 邏輯層 (純 GDScript, 0 毫秒結算)
+`GridState.gd` 負責管理所有 `EntityData` 與二維陣列 `Array[Array[int]]`。
+當玩家輸入方向時，呼叫 `process_turn(direction: Vector2i) -> Array[Dictionary]`。
+
+**回合精確執行順序 (Strict Turn Resolution Flow)：**
+1. **玩家移動判定**：檢查 `player.grid_pos + direction` 是否為 `Cell.WALL`。若阻擋則中斷回合，回傳空陣列。
+2. **玩家位置更新**：更新玩家 `grid_pos`，產生 `{"event": "move", "id": "player", "to": new_pos}`。
+3. **物品拾取判定**：若玩家位置與 `TARGET_CHUNK` 重疊，將其加入 `ContextWindow`，標記為 `ABSORBED`，產生 `{"event": "absorb", "id": chunk_id, "type": "T"}`。
+4. **裝備邏輯介入 (RAG Loadout)**：根據玩家裝備（如 BM25 或 HyDE）修正下一步的搜尋半徑。
+5. **敵人 (KNN) 喚醒與追蹤判定**：
+   - 遍歷所有 `FALSE_POSITIVE`。若距離 $\le$ 裝備定義的半徑，狀態改為 `AWAKE`，產生 `{"event": "awake", "id": enemy_id}`。
+   - 對已 `AWAKE` 的敵人，使用 A* 尋路朝玩家移動 1 格，產生 `{"event": "move", "id": enemy_id, "to": next_pos}`。
+6. **敵人碰撞判定**：若敵人移動後與玩家重疊，將其加入 `ContextWindow`，標記為 `ABSORBED`，產生 `{"event": "absorb", "id": enemy_id, "type": "F"}`。
+7. **結算判定**：若玩家抵達 `Cell.PORTAL`，計算 ContextWindow 內的 T/F 比例，產生 `{"event": "game_over", "result": "hallucination" | "success"}`。
 
 ---
 
 ## 3. Godot 節點與信號架構 (Node Hierarchy & Signal Contracts)
-採用「資料與呈現嚴格分離」的架構。
+採用「事件佇列 (Event Queue) 模式」解決動畫與邏輯的時間差。
 
 ```text
  [ AUTOLOADS (Global) ]
- -----------------------------------------------------------
- | GameManager.gd       | SignalBus.gd                     |
- | - logic_tick()       | - [grid_state_changed]           |
- | - active_loadout     | - [entity_moved(id, new_pos)]    |
- | - game_state         | - [hallucination_triggered]      |
- -----------------------------------------------------------
-        ^ (Tick & Data)              | (Emit)
-        |                            v (Listen)
+ -----------------------------------------------------------------
+ | GameManager.gd                                                |
+ | - var logic_model: GridState = GridState.new()                |
+ | - var input_locked: bool = false                              |
+ | - func execute_player_input(dir: Vector2i):                   |
+ |     if input_locked: return                                   |
+ |     input_locked = true                                       |
+ |     var events = logic_model.process_turn(dir)                |
+ |     SignalBus.turn_events_generated.emit(events)              |
+ -----------------------------------------------------------------
+        | (Emit: Array[Dictionary])
+        v (Listen)
  [ VIEW LAYER (CanvasLayer / Node2D) ]
- -----------------------------------------------------------
- | MazeView (Node2D)                                       |
- | |- TileMapLayer (Grid visuals)                          |
- | |- EntityRenderer (Interpolates Sprite2D to grid pos)   |
- | |- Camera2D (Follows player with smooth drag)           |
- -----------------------------------------------------------
- | HUD_UI (CanvasLayer)                                    |
- | |- ContextTailPanel (Shows Token usage & F/T ratio)     |
- | |- LoadoutActiveSkillButton (For LLMLingua/Dash)        |
- -----------------------------------------------------------
+ -----------------------------------------------------------------
+ | MazeView.gd (繼承 Node2D)                                     |
+ | - func _on_turn_events_generated(events: Array):              |
+ |     for event in events:                                      |
+ |         await play_animation_for_event(event) # 依序或並行播放 |
+ |     GameManager.input_locked = false # 動畫播完才解鎖輸入      |
+ -----------------------------------------------------------------
+ | - TileMapLayer (Grid visuals)                                 |
+ | - EntityRenderer (負責執行 Tween，將 Sprite2D 移至目標座標)       |
+ -----------------------------------------------------------------
 ```
+
+**架構細節優勢**：
+透過 `process_turn` 回傳事件陣列，並由 `MazeView` 使用 `await` 逐一解析播放。這保證了：
+1. **Model** 可以瞬間跑完，100% 支援極速的單元測試 (TDD)。
+2. **View** 可以從容地播放 0.3 秒的飄移 Tween 動畫，且動畫播放期間 `input_locked = true`，徹底根絕玩家狂按鍵盤導致的畫面與邏輯狀態脫軌 (Race Condition)。
 
 ## 4. Web 輸出與跨裝置適配 (Web Export & Cross-Device Optimization)
 本遊戲必須支援無縫嵌入網頁版與行動裝置瀏覽器 (Mobile Safari/Chrome)。
