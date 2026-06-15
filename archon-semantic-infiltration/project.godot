@@ -1,0 +1,1 @@
+config_version=5\n\n[application]\n\nconfig/name="Archon: Semantic Infiltration"\nconfig/description="A Godot 4 MVP for Proposal 3 (RAG Stealth Game)"\nconfig/features=PackedStringArray("4.3", "Forward Plus")\n\n[rendering]\n\nenvironment/defaults/default_clear_color=Color(0.05, 0.05, 0.08, 1)\n
