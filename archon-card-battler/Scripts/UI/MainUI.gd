@@ -62,6 +62,14 @@ var deck_label: Label
 var discard_icon: VectorIcon
 var discard_label: Label
 
+# Dynamic textures and HP overlays
+@onready var player_name = $UILayer/UIRoot/PlayerHUD/PlayerName
+@onready var enemy_name = $UILayer/UIRoot/EnemyHUD/EnemyName
+var player_avatar: TextureRect
+var enemy_avatar: TextureRect
+var player_hp_text: Label
+var enemy_hp_text: Label
+
 func _ready() -> void:
 	hit_sound = AudioStreamPlayer.new()
 	hit_sound.stream = preload("res://Assets/Sounds/hit.wav")
@@ -177,34 +185,61 @@ func _ready() -> void:
 	# Hide the End Turn button as requested (shortcut Space/Enter and auto-timer will handle it)
 	end_turn_button.visible = false
 	
-	# Scale characters down by 10% from center
-	fighter_left.pivot_offset = fighter_left.size / 2
-	fighter_left.scale = Vector2(0.9, 0.9)
-	fighter_right.pivot_offset = fighter_right.size / 2
-	fighter_right.scale = Vector2(0.9, 0.9)
+	# Update HUD Names to CJK Traditional Chinese
+	player_name.text = "專案主管 (Tech Lead)"
+	player_name.add_theme_font_override("font", cjk_font)
+	enemy_name.add_theme_font_override("font", cjk_font)
 	
-	# Dynamic fallback for fighter representations to prevent tofu blocks in Wasm Web build
-	if OS.has_feature("web"):
-		fighter_left.text = "[專案主管 / Tech Lead]"
-		fighter_left.add_theme_font_size_override("font_size", 32)
-		fighter_left.add_theme_font_override("font", cjk_font)
-		
-		fighter_right.text = "[專案技術債 / Tech Debt]"
-		fighter_right.add_theme_font_size_override("font_size", 32)
-		fighter_right.add_theme_font_override("font", cjk_font)
-	else:
-		fighter_left.text = "🥷"
-		fighter_left.add_theme_font_size_override("font_size", 120)
-		fighter_right.text = "🐛"
-		fighter_right.add_theme_font_size_override("font_size", 120)
+	# Hide legacy text fighter labels
+	fighter_left.visible = false
+	fighter_right.visible = false
 	
-	# Create turn timer label in the middle of health bars (size 32)
+	# Initialize premium 9:16 character image TextureRect nodes dynamically
+	player_avatar = TextureRect.new()
+	player_avatar.custom_minimum_size = Vector2(216, 384)
+	player_avatar.size = Vector2(216, 384)
+	player_avatar.position = Vector2(122, 120)
+	player_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	player_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	player_avatar.texture = load("res://Assets/Images/player_lead.jpg")
+	$UILayer/UIRoot.add_child(player_avatar)
+	
+	enemy_avatar = TextureRect.new()
+	enemy_avatar.custom_minimum_size = Vector2(216, 384)
+	enemy_avatar.size = Vector2(216, 384)
+	enemy_avatar.position = Vector2(814, 120)
+	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	$UILayer/UIRoot.add_child(enemy_avatar)
+	
+	# Configure absolute numeric HP text overlays on progress bars
+	player_hp_bar.show_percentage = false
+	player_hp_text = Label.new()
+	player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	player_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	player_hp_text.add_theme_font_override("font", cjk_font)
+	player_hp_text.add_theme_font_size_override("font_size", 16)
+	player_hp_text.add_theme_color_override("font_color", Color(1, 1, 1))
+	player_hp_bar.add_child(player_hp_text)
+	player_hp_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	
+	enemy_hp_bar.show_percentage = false
+	enemy_hp_text = Label.new()
+	enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	enemy_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	enemy_hp_text.add_theme_font_override("font", cjk_font)
+	enemy_hp_text.add_theme_font_size_override("font_size", 16)
+	enemy_hp_text.add_theme_color_override("font_color", Color(1, 1, 1))
+	enemy_hp_bar.add_child(enemy_hp_text)
+	enemy_hp_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	
+	# Create turn timer label in the middle of health bars (size 64)
 	timer_label = Label.new()
 	timer_label.text = "30s"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", 32)
-	timer_label.position = Vector2(516, 25)
-	timer_label.size = Vector2(120, 60)
+	timer_label.add_theme_font_size_override("font_size", 64)
+	timer_label.position = Vector2(576 - 120, 15)
+	timer_label.size = Vector2(240, 120)
 	$UILayer/UIRoot.add_child(timer_label)
 	
 	show_difficulty_selection()
@@ -223,11 +258,12 @@ func _process(delta: float) -> void:
 		var display_time = ceil(turn_timer)
 		timer_label.text = str(display_time) + "s"
 		if display_time <= 5:
-			# Enlarged font size for last 5 seconds and color red
-			timer_label.add_theme_font_size_override("font_size", 44)
+			# Enlarged 2x font size for last 5 seconds and color red
+			timer_label.add_theme_font_size_override("font_size", 88)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
 		else:
-			timer_label.add_theme_font_size_override("font_size", 32)
+			# Normal 2x font size
+			timer_label.add_theme_font_size_override("font_size", 64)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 			
 func _unhandled_input(event: InputEvent) -> void:
@@ -371,41 +407,29 @@ func select_difficulty(diff: Difficulty, overlay: Node) -> void:
 			player_max_mana = 5
 			enemy_max_hp = 60
 			enemy_damage = 5
-			if OS.has_feature("web"):
-				fighter_right.text = "[程式缺陷-低]"
-				fighter_right.add_theme_font_override("font", cjk_font)
-			else:
-				fighter_right.text = "🐛"
+			enemy_name.text = "程式缺陷 (Bug - Easy)"
+			enemy_avatar.texture = load("res://Assets/Images/bug_easy.jpg")
 			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
 		Difficulty.NORMAL:
 			player_max_mana = 5
 			enemy_max_hp = 200
 			enemy_damage = 10
-			if OS.has_feature("web"):
-				fighter_right.text = "[程式錯誤-中]"
-				fighter_right.add_theme_font_override("font", cjk_font)
-			else:
-				fighter_right.text = "🐜"
+			enemy_name.text = "程式錯誤 (Bug - Normal)"
+			enemy_avatar.texture = load("res://Assets/Images/bug_normal.jpg")
 			background_node.texture = load("res://Assets/Background/landscape.jpg")
 		Difficulty.HARD:
 			player_max_mana = 5
 			enemy_max_hp = 400
 			enemy_damage = 12
-			if OS.has_feature("web"):
-				fighter_right.text = "[系統漏洞-高]"
-				fighter_right.add_theme_font_override("font", cjk_font)
-			else:
-				fighter_right.text = "🕷️"
+			enemy_name.text = "系統漏洞 (Bug - Hard)"
+			enemy_avatar.texture = load("res://Assets/Images/bug_hard.jpg")
 			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
 		Difficulty.EXPERT:
 			player_max_mana = 4
 			enemy_max_hp = 600
 			enemy_damage = 15
-			if OS.has_feature("web"):
-				fighter_right.text = "[核心崩潰-極]"
-				fighter_right.add_theme_font_override("font", cjk_font)
-			else:
-				fighter_right.text = "👾"
+			enemy_name.text = "核心崩潰 (Bug - Expert)"
+			enemy_avatar.texture = load("res://Assets/Images/bug_expert.jpg")
 			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
 			
 	player_hp = player_max_hp
@@ -491,12 +515,12 @@ func play_card(index: int) -> void:
 			msg += " [color=#9ca3af](Block absorbed " + str(absorbed_dmg) + " DMG)[/color]"
 		shake_camera(final_damage * 0.5)
 		hit_sound.play()
-		animate_fighter(fighter_left, 50)
-		spawn_floating_text(fighter_right.global_position + Vector2(100, 100), "-" + str(final_damage), Color(1, 0.2, 0.2))
+		animate_fighter(player_avatar, 50)
+		spawn_floating_text(enemy_avatar.global_position + Vector2(100, 100), "-" + str(final_damage), Color(1, 0.2, 0.2))
 		
 	if card.block > 0: 
 		msg += " gained " + str(card.block) + " Block."
-		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(card.block) + " [Block]", Color(0.2, 0.8, 1))
+		spawn_floating_text(player_avatar.global_position + Vector2(100, 100), "+" + str(card.block) + " [Block]", Color(0.2, 0.8, 1))
 	
 	# Play card effects based on category
 	if card.category == "Performance":
@@ -509,7 +533,7 @@ func play_card(index: int) -> void:
 		var bonus_block = int(float(final_damage) * 0.5)
 		player_block += bonus_block
 		msg += " [color=#60a5fa][Refactor] Gained %d Block from damage![/color]" % bonus_block
-		spawn_floating_text(fighter_left.global_position + Vector2(100, 100), "+" + str(bonus_block) + " [Block]", Color(0.3, 0.6, 1.0))
+		spawn_floating_text(player_avatar.global_position + Vector2(100, 100), "+" + str(bonus_block) + " [Block]", Color(0.3, 0.6, 1.0))
 	elif card.category == "Test":
 		player_block += card.block # Adds another layer of block (doubling it)
 		msg += " [color=#c084fc][Test] Doubled Block (+%d Block)![/color]" % card.block
@@ -524,7 +548,7 @@ func play_card(index: int) -> void:
 	elif card.category == "Agent":
 		enemy_hp -= 20
 		msg += " [color=#a78bfa][Agent] Dealt 20 direct DMG (bypassed shields)![/color]"
-		spawn_floating_text(fighter_right.global_position + Vector2(100, 100), "-20 [Agent]", Color(0.7, 0.4, 1.0))
+		spawn_floating_text(enemy_avatar.global_position + Vector2(100, 100), "-20 [Agent]", Color(0.7, 0.4, 1.0))
 	elif card.category == "Chore":
 		var cards_to_discard = []
 		for h_card in hand:
@@ -546,12 +570,8 @@ func play_card(index: int) -> void:
 	update_ui()
 	
 	if !check_win_condition():
-		# Auto end turn if player mana is 0
-		if player_mana == 0:
-			# Delay slightly to allow player to see the log
-			await get_tree().create_timer(0.8).timeout
-			if player_mana == 0: # Double check in case of state change
-				_on_end_turn_pressed()
+		# Smart auto end turn: if mana is lower than cost of any card in hand
+		check_smart_end_turn()
 
 func spawn_floating_text(pos: Vector2, text: String, color: Color):
 	var lbl = Label.new()
@@ -582,10 +602,15 @@ func animate_fighter(fighter: Node, distance: float):
 	tween.tween_property(fighter, "position:x", original_pos.x, 0.3)
 
 func _on_end_turn_pressed() -> void:
+	if game_over_overlay.visible or end_turn_button.disabled:
+		return
 	log_action("Player ended turn.")
 	enemy_turn()
 
 func enemy_turn() -> void:
+	if game_over_overlay.visible or end_turn_button.disabled:
+		return
+		
 	# Gain Block based on difficulty
 	var block_to_gain = 0
 	if difficulty == Difficulty.HARD:
@@ -608,7 +633,7 @@ func enemy_turn() -> void:
 
 	var final_enemy_damage = enemy_damage + enemy_strength
 	log_action("\n[b][color=#ef4444][Bug] Enemy attacks for " + str(final_enemy_damage) + " DMG![/color][/b]")
-	animate_fighter(fighter_right, -50)
+	animate_fighter(enemy_avatar, -50)
 	
 	var actual_damage = max(0, final_enemy_damage - player_block)
 	player_block = max(0, player_block - final_enemy_damage)
@@ -626,6 +651,29 @@ func enemy_turn() -> void:
 	if !check_win_condition():
 		start_player_turn()
 
+# Helper for smart turn ending
+func check_smart_end_turn() -> void:
+	if hand.is_empty():
+		await get_tree().create_timer(0.8).timeout
+		if hand.is_empty():
+			_on_end_turn_pressed()
+		return
+		
+	var min_cost = 99
+	for card in hand:
+		if card.cost < min_cost:
+			min_cost = card.cost
+			
+	if player_mana < min_cost:
+		await get_tree().create_timer(0.8).timeout
+		# Recheck in case mana/hand altered during delay
+		var recheck_min_cost = 99
+		for card in hand:
+			if card.cost < recheck_min_cost:
+				recheck_min_cost = card.cost
+		if hand.is_empty() or player_mana < recheck_min_cost:
+			_on_end_turn_pressed()
+
 func check_win_condition() -> bool:
 	if enemy_hp <= 0:
 		enemy_hp = 0
@@ -642,6 +690,13 @@ func check_win_condition() -> bool:
 func show_game_over(win: bool) -> void:
 	end_turn_button.disabled = true
 	game_over_overlay.visible = true
+	
+	# Centering and widening the result VBox Container
+	var vbox = $TopLayer/GameOverOverlay/VBox
+	vbox.custom_minimum_size = Vector2(800, 200)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+	result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
 	if win:
 		result_label.text = "[SUCCESS] DEPLOYMENT SUCCESS!"
 		result_label.add_theme_color_override("font_color", Color(0.2, 1, 0.4))
@@ -679,6 +734,11 @@ func update_ui() -> void:
 	var tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(player_hp_bar, "value", float(player_hp), 0.3)
 	tween.tween_property(enemy_hp_bar, "value", float(enemy_hp), 0.3)
+	
+	if player_hp_text:
+		player_hp_text.text = "%d / %d HP" % [player_hp, player_max_hp]
+	if enemy_hp_text:
+		enemy_hp_text.text = "%d / %d HP" % [enemy_hp, enemy_max_hp]
 	
 	# Update Enemy Intent to show strength and block (no emojis)
 	var final_enemy_dmg = enemy_damage + enemy_strength
