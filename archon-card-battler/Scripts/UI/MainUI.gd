@@ -196,21 +196,23 @@ func _ready() -> void:
 	
 	# Initialize premium 9:16 character image TextureRect nodes dynamically
 	player_avatar = TextureRect.new()
-	player_avatar.custom_minimum_size = Vector2(120, 180)
-	player_avatar.size = Vector2(120, 180)
-	player_avatar.position = Vector2(20, 130)
+	player_avatar.custom_minimum_size = Vector2(216, 324)
+	player_avatar.size = Vector2(216, 324)
+	player_avatar.position = Vector2(87, 150)
 	player_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	player_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	player_avatar.texture = load("res://Assets/Images/player_lead.png")
 	$UILayer/UIRoot.add_child(player_avatar)
+	$UILayer/UIRoot.move_child(player_avatar, 0) # Render behind foreground UI components
 	
 	enemy_avatar = TextureRect.new()
-	enemy_avatar.custom_minimum_size = Vector2(120, 180)
-	enemy_avatar.size = Vector2(120, 180)
-	enemy_avatar.position = Vector2(982, 130)
+	enemy_avatar.custom_minimum_size = Vector2(216, 324)
+	enemy_avatar.size = Vector2(216, 324)
+	enemy_avatar.position = Vector2(819, 150)
 	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	$UILayer/UIRoot.add_child(enemy_avatar)
+	$UILayer/UIRoot.move_child(enemy_avatar, 0) # Render behind foreground UI components
 	
 	# Configure absolute numeric HP text overlays on progress bars
 	player_hp_bar.show_percentage = false
