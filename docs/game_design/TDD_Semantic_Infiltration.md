@@ -100,39 +100,71 @@ var state: Enums.EntityState = Enums.EntityState.IDLE
 ---
 
 ## 3. Godot 節點與信號架構 (Node Hierarchy & Signal Contracts)
-採用「事件佇列 (Event Queue) 模式」解決動畫與邏輯的時間差。
+採用「事件佇列 (Event Queue) 模式」解決動畫與邏輯的時間差，並提供像素級的節點建構指南。
 
+### 3.1 關卡場景結構實體化 (Level Scene Node Tree)
+在 Godot 中，單一關卡 `Level_01.tscn` 的節點層級必須嚴格按照以下結構建構，以確保 Z-Index 遮擋關係與渲染效能：
+
+```text
+Level_01 (Node2D)
+ ├── Background (ColorRect) # 深色賽博龐克底色
+ ├── Environment (Node2D)
+ │    ├── FloorLayer (TileMapLayer) # 渲染基礎背景網格，Z-Index: 0
+ │    ├── DangerZoneLayer (TileMapLayer) # 渲染敵人視野覆蓋的危險區域 (紅色半透明)，Z-Index: 1
+ │    └── WallLayer (TileMapLayer) # 渲染不可通行的障礙物 (發光的實體牆)，Z-Index: 2
+ ├── Entities (Node2D - YSort Enabled) # 所有動態物件放置區，確保 Y 軸遮擋正確
+ │    ├── PlayerShip (Area2D) # 綁定 ShipView.gd
+ │    │    ├── Sprite2D (飛船主體)
+ │    │    └── GPUParticles2D (飄移尾焰，僅在移動狀態啟用)
+ │    ├── TargetChunks (Node2D) # 存放發光綠豆
+ │    │    └── Chunk_1 (Sprite2D + AnimationPlayer 呼吸燈效)
+ │    └── FalsePositives (Node2D) # 存放敵人
+ │         └── Enemy_1 (Sprite2D)
+ └── HUD (CanvasLayer) # 覆蓋於遊戲畫面之上的 UI 層
+      ├── TopPanel (MarginContainer)
+      │    └── AP_Bar (ProgressBar) # 顯示剩餘 Action Points (算力 Token)
+      ├── SidePanel (VBoxContainer)
+      │    └── Context_UI (VBoxContainer) # 視覺化 ContextWindow，顯示收集到的綠/紅比例
+      └── ActionMenu (HBoxContainer) # 底部技能列
+           ├── SkillBtn_Dash (Button) # 消耗 AP 的衝刺技
+           └── SkillBtn_Rerank (Button) # Reranker 推擠技
+```
+
+### 3.2 核心視覺機制實作細節 (Core Rendering Implementation)
+為了不依賴 Godot 物理引擎並維持 TDD 的可測試性，視覺呈現必須完全由邏輯層的資料驅動：
+
+*   **完全資訊視野錐 (Vision Cone) 渲染**：
+    *   **嚴禁使用** `RayCast2D` 或 `Area2D` 重疊檢測。
+    *   **實作法**：當 Model 更新敵人的面向時，Model 會計算出受影響的 `Vector2i` 陣列（例如扇形範圍內的格子）。`MazeView` 收到事件後，直接將這些座標送到 `DangerZoneLayer` (TileMapLayer)，呼叫 `set_cell()` 填上紅色的警告貼圖。這確保了玩家看到的危險區，100% 等同於邏輯層的判定區，實現《Into the Breach》等級的精準預判。
+*   **平滑移動與推擠 (Smooth Tweening)**：
+    *   **實作法**：當事件佇列彈出 `{"event": "move", "id": "player", "to": Vector2i(2, 3)}` 時，`EntityRenderer` 將網格座標轉換為像素座標 `map_to_local()`。
+    *   使用 `Tween`，以二次方曲線 (`Tween.TRANS_QUAD`) 將玩家的 `Sprite2D` 平滑滑動至目標點。若是使用 Reranker 被推擠的敵人，則加上 `Tween.TRANS_BOUNCE` 以產生被打擊的物理彈性回饋 (Juice)。
+
+### 3.3 Model-View 橋接合約 (Event Queue Contract)
 ```text
  [ AUTOLOADS (Global) ]
  -----------------------------------------------------------------
  | GameManager.gd                                                |
  | - var logic_model: GridState = GridState.new()                |
  | - var input_locked: bool = false                              |
- | - func execute_player_input(dir: Vector2i):                   |
+ | - func execute_player_action(action_type, target_dir):        |
  |     if input_locked: return                                   |
  |     input_locked = true                                       |
- |     var events = logic_model.process_turn(dir)                |
+ |     var events = logic_model.process_turn(action_type, dir)   |
  |     SignalBus.turn_events_generated.emit(events)              |
  -----------------------------------------------------------------
         | (Emit: Array[Dictionary])
         v (Listen)
- [ VIEW LAYER (CanvasLayer / Node2D) ]
+ [ VIEW LAYER: MazeView.gd ]
  -----------------------------------------------------------------
- | MazeView.gd (繼承 Node2D)                                     |
  | - func _on_turn_events_generated(events: Array):              |
  |     for event in events:                                      |
  |         await play_animation_for_event(event) # 依序或並行播放 |
  |     GameManager.input_locked = false # 動畫播完才解鎖輸入      |
  -----------------------------------------------------------------
- | - TileMapLayer (Grid visuals)                                 |
- | - EntityRenderer (負責執行 Tween，將 Sprite2D 移至目標座標)       |
- -----------------------------------------------------------------
 ```
-
 **架構細節優勢**：
-透過 `process_turn` 回傳事件陣列，並由 `MazeView` 使用 `await` 逐一解析播放。這保證了：
-1. **Model** 可以瞬間跑完，100% 支援極速的單元測試 (TDD)。
-2. **View** 可以從容地播放 0.3 秒的飄移 Tween 動畫，且動畫播放期間 `input_locked = true`，徹底根絕玩家狂按鍵盤導致的畫面與邏輯狀態脫軌 (Race Condition)。
+透過 `process_turn` 回傳事件陣列，並由 `MazeView` 使用 `await` 逐一解析播放。這保證了 Model 可以瞬間跑完支援極速 TDD，且動畫播放期間 `input_locked = true`，徹底根絕玩家狂按鍵盤導致的畫面與邏輯狀態脫軌 (Race Condition)。
 
 ## 4. Web 輸出與跨裝置適配 (Web Export & Cross-Device Optimization)
 本遊戲必須支援無縫嵌入網頁版與行動裝置瀏覽器 (Mobile Safari/Chrome)。
