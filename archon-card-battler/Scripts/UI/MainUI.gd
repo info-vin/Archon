@@ -43,13 +43,8 @@ var player_hp_text: Label
 var enemy_hp_text: Label
 
 func _ready() -> void:
-	hit_sound = AudioStreamPlayer.new()
-	hit_sound.stream = preload("res://Assets/Sounds/hit.wav")
-	add_child(hit_sound)
-	
-	error_sound = AudioStreamPlayer.new()
-	error_sound.stream = preload("res://Assets/Sounds/error.wav")
-	add_child(error_sound)
+	hit_sound = _create_sound("res://Assets/Sounds/hit.wav")
+	error_sound = _create_sound("res://Assets/Sounds/error.wav")
 	
 	# Apply CJK font to all controls displaying Traditional Chinese
 	action_log.add_theme_font_override("normal_font", cjk_font)
@@ -92,69 +87,31 @@ func _ready() -> void:
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
 	restart_button.pressed.connect(restart_game)
 	
-	# Hide legacy mana label
+	# Hide legacy components
 	mana_label.visible = false
+	end_turn_button.visible = false
+	fighter_left.visible = false
+	fighter_right.visible = false
 	
-	# Dynamically assemble the premium Vector HUD layout
+	# Dynamically assemble HUD
 	var TokenHudScript = preload("res://Scripts/UI/TokenHud.gd")
 	hud_container = TokenHudScript.new()
 	hud_container.setup_hud(cjk_font)
 	$UILayer/UIRoot/PlayerHUD.add_child(hud_container)
 	
-	# Hide the End Turn button as requested (shortcut Space/Enter and auto-timer will handle it)
-	end_turn_button.visible = false
-	
-	# Update HUD Names to CJK Traditional Chinese
 	player_name.text = "專案主管 (Tech Lead)"
 	player_name.add_theme_font_override("font", cjk_font)
 	enemy_name.add_theme_font_override("font", cjk_font)
 	
-	# Hide legacy text fighter labels
-	fighter_left.visible = false
-	fighter_right.visible = false
+	# Setup avatars
+	player_avatar = _create_avatar("res://Assets/Images/player_lead.png", Vector2(87, 150))
+	enemy_avatar = _create_avatar("", Vector2(819, 150))
 	
-	# Initialize premium 9:16 character image TextureRect nodes dynamically
-	player_avatar = TextureRect.new()
-	player_avatar.custom_minimum_size = Vector2(216, 324)
-	player_avatar.size = Vector2(216, 324)
-	player_avatar.position = Vector2(87, 150)
-	player_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	player_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	player_avatar.texture = load("res://Assets/Images/player_lead.png")
-	$UILayer/UIRoot.add_child(player_avatar)
-	$UILayer/UIRoot.move_child(player_avatar, 0)
+	# Configure HP texts
+	player_hp_text = _create_hp_text(player_hp_bar)
+	enemy_hp_text = _create_hp_text(enemy_hp_bar)
 	
-	enemy_avatar = TextureRect.new()
-	enemy_avatar.custom_minimum_size = Vector2(216, 324)
-	enemy_avatar.size = Vector2(216, 324)
-	enemy_avatar.position = Vector2(819, 150)
-	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	$UILayer/UIRoot.add_child(enemy_avatar)
-	$UILayer/UIRoot.move_child(enemy_avatar, 0)
-	
-	# Configure absolute numeric HP text overlays on progress bars
-	player_hp_bar.show_percentage = false
-	player_hp_text = Label.new()
-	player_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	player_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	player_hp_text.add_theme_font_override("font", cjk_font)
-	player_hp_text.add_theme_font_size_override("font_size", 16)
-	player_hp_text.add_theme_color_override("font_color", Color(1, 1, 1))
-	player_hp_bar.add_child(player_hp_text)
-	player_hp_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	enemy_hp_bar.show_percentage = false
-	enemy_hp_text = Label.new()
-	enemy_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	enemy_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	enemy_hp_text.add_theme_font_override("font", cjk_font)
-	enemy_hp_text.add_theme_font_size_override("font_size", 16)
-	enemy_hp_text.add_theme_color_override("font_color", Color(1, 1, 1))
-	enemy_hp_bar.add_child(enemy_hp_text)
-	enemy_hp_text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	# Create turn timer label in the middle of health bars (size 64)
+	# Create turn timer label
 	timer_label = Label.new()
 	timer_label.text = "30s"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -164,6 +121,37 @@ func _ready() -> void:
 	$UILayer/UIRoot.add_child(timer_label)
 	
 	show_difficulty_selection()
+
+func _create_sound(stream_path: String) -> AudioStreamPlayer:
+	var player = AudioStreamPlayer.new()
+	player.stream = load(stream_path)
+	add_child(player)
+	return player
+
+func _create_avatar(texture_path: String, pos: Vector2) -> TextureRect:
+	var avatar = TextureRect.new()
+	avatar.custom_minimum_size = Vector2(216, 324)
+	avatar.size = Vector2(216, 324)
+	avatar.position = pos
+	avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	if texture_path != "":
+		avatar.texture = load(texture_path)
+	$UILayer/UIRoot.add_child(avatar)
+	$UILayer/UIRoot.move_child(avatar, 0)
+	return avatar
+
+func _create_hp_text(hp_bar: ProgressBar) -> Label:
+	hp_bar.show_percentage = false
+	var lbl = Label.new()
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_override("font", cjk_font)
+	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1))
+	hp_bar.add_child(lbl)
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return lbl
 
 func _process(delta: float) -> void:
 	if end_turn_button.disabled or game_over_overlay.visible:
@@ -337,19 +325,18 @@ func shake_camera(intensity: float) -> void:
 		tween.tween_property(camera, "position", original_pos + offset, 0.05)
 	tween.tween_property(camera, "position", original_pos, 0.05)
 
-func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
-	player_hp_bar.max_value = float(max_hp)
+func _update_hp_bar(hp_bar: ProgressBar, label: Label, current_hp: int, max_hp: int) -> void:
+	hp_bar.max_value = float(max_hp)
 	var tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(player_hp_bar, "value", float(current_hp), 0.3)
-	if player_hp_text:
-		player_hp_text.text = "%d / %d HP" % [current_hp, max_hp]
+	tween.tween_property(hp_bar, "value", float(current_hp), 0.3)
+	if label:
+		label.text = "%d / %d HP" % [current_hp, max_hp]
+
+func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
+	_update_hp_bar(player_hp_bar, player_hp_text, current_hp, max_hp)
 
 func _on_enemy_hp_changed(current_hp: int, max_hp: int) -> void:
-	enemy_hp_bar.max_value = float(max_hp)
-	var tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(enemy_hp_bar, "value", float(current_hp), 0.3)
-	if enemy_hp_text:
-		enemy_hp_text.text = "%d / %d HP" % [current_hp, max_hp]
+	_update_hp_bar(enemy_hp_bar, enemy_hp_text, current_hp, max_hp)
 
 func _on_player_block_changed(current_block: int) -> void:
 	if hud_container and hud_container.block_label:
