@@ -8,17 +8,18 @@
 ```
 
 ## 1. 核心理念與 RAG 教育目標 (Core Vision & Educational Goals)
-本作旨在透過高速街機潛行玩法 (類似 Pac-Man CE DX 的霓虹飄移)，讓玩家直觀理解 RAG (檢索增強生成) 的核心挑戰：**如何在有限的上下文視窗 (Context Window) 中，最大化高價值資料 (Target Chunks)，並甩開語意假陽性 (False Positives) 的雜訊污染。**
+本作旨在透過**「完全資訊的網格戰術潛行 (Perfect Information Tactical Stealth)」**機制（靈感汲取自《Invisible, Inc.》與《Into the Breach》），讓玩家深刻體會 RAG 工程師在解決真實問題時的智力博弈：**如何在極度受限的算力資源 (Action Points) 下，操縱向量空間 (Spatial Manipulation)，避開語意假陽性的視線，精準提取目標資料。**
 
-### 1.1 RAG 機制映射表 (Metaphor Mapping)
-| 遊戲內元素 (Game Element) | RAG 專業術語 (RAG Concept) | 遊戲內行為與隱喻 (Behavior) |
+本作摒棄依賴反應速度的街機玩法，轉而強調「空間預判」、「資源管理」與「環境控制」。
+
+### 1.1 RAG 機制映射表 (Tactical Metaphor Mapping)
+| 戰術遊戲元素 (Tactical Element) | RAG 專業術語 (RAG Concept) | 遊戲內行為與隱喻 (Behavior) |
 | :--- | :--- | :--- |
-| **玩家飛船** | **Query (使用者提示詞)** | 在網格中移動。移動代表著在向量空間中進行相似度搜索。 |
-| **網格迷宮** | **Vector Database (向量資料庫)**| 存放所有切片資料的多維空間。 |
-| **發光綠豆** | **Target Chunk (目標資料)** | 玩家必須收集的正確上下文。收集後會連接在飛船尾巴上。 |
-| **紅色幽靈** | **False Positive (語意假陽性)** | 平時休眠。一旦 Query 靠近(相似度高)即被「喚醒檢索」，變紅並死命追逐玩家。 |
-| **飛船尾巴** | **Context Window (上下文視窗)** | 收集的綠豆與追逐的紅幽靈共同組成。長度代表 Token 消耗，越長飛船越重/越慢。 |
-| **終點傳送門** | **LLM Generation (大模型生成)** | 帶著尾巴衝入結算。若尾巴中紅大於綠，觸發 `Hallucination (幻覺)` 失敗。 |
+| **行動點數 (AP / Turn)** | **Compute Budget (算力/Token 預算)**| 每回合玩家有固定的 AP。移動或使用裝備皆消耗 AP，隱喻 API 的調用成本。 |
+| **敵人的視野錐 (Vision Cone)** | **Semantic Radius (語意相似度範圍)** | 敵人 (雜訊) 有明確的黃/紅視野範圍。玩家可預先看見。若停留在視野內，即被「檢索 (Retrieved)」並產生警告值。 |
+| **警報等級 (Alarm Level)** | **Context Pollution (上下文污染度)** | 被敵人發現不會立刻死亡，而是增加全域警報值。警報值過高會導致終點 LLM `Hallucination (幻覺)`。 |
+| **誘餌/推擠操作 (Push/Manipulate)**| **Prompt Engineering & Reranking** | 玩家不能「殺死」資料，但可透過發射誘餌改變敵人面向 (Prompt Injection)，或使用技能將敵人推開 (Reranking 降權)。 |
+| **發光綠豆** | **Target Chunk (目標資料)** | 玩家必須收集的核心情資，是解鎖 `LLM Portal` 的必要條件。 |
 
 ### 1.2 RAG 紙娃娃裝備系統 (Modular RAG Loadout)
 玩家在進入關卡前，必須透過組裝飛船的「武器與外掛模組」來建構自己的 RAG Pipeline。不同的模組會改變玩家在網格中的戰鬥與移動策略。
