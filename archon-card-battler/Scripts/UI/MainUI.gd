@@ -196,18 +196,18 @@ func _ready() -> void:
 	
 	# Initialize premium 9:16 character image TextureRect nodes dynamically
 	player_avatar = TextureRect.new()
-	player_avatar.custom_minimum_size = Vector2(216, 384)
-	player_avatar.size = Vector2(216, 384)
-	player_avatar.position = Vector2(122, 120)
+	player_avatar.custom_minimum_size = Vector2(135, 240)
+	player_avatar.size = Vector2(135, 240)
+	player_avatar.position = Vector2(128, 130)
 	player_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	player_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	player_avatar.texture = load("res://Assets/Images/player_lead.jpg")
+	player_avatar.texture = load("res://Assets/Images/player_lead.png")
 	$UILayer/UIRoot.add_child(player_avatar)
 	
 	enemy_avatar = TextureRect.new()
-	enemy_avatar.custom_minimum_size = Vector2(216, 384)
-	enemy_avatar.size = Vector2(216, 384)
-	enemy_avatar.position = Vector2(814, 120)
+	enemy_avatar.custom_minimum_size = Vector2(135, 240)
+	enemy_avatar.size = Vector2(135, 240)
+	enemy_avatar.position = Vector2(890, 130)
 	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	$UILayer/UIRoot.add_child(enemy_avatar)
@@ -408,28 +408,28 @@ func select_difficulty(diff: Difficulty, overlay: Node) -> void:
 			enemy_max_hp = 60
 			enemy_damage = 5
 			enemy_name.text = "程式缺陷 (Bug - Easy)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_easy.jpg")
+			enemy_avatar.texture = load("res://Assets/Images/bug_easy.png")
 			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
 		Difficulty.NORMAL:
 			player_max_mana = 5
 			enemy_max_hp = 200
 			enemy_damage = 10
 			enemy_name.text = "程式錯誤 (Bug - Normal)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_normal.jpg")
+			enemy_avatar.texture = load("res://Assets/Images/bug_normal.png")
 			background_node.texture = load("res://Assets/Background/landscape.jpg")
 		Difficulty.HARD:
 			player_max_mana = 5
 			enemy_max_hp = 400
 			enemy_damage = 12
 			enemy_name.text = "系統漏洞 (Bug - Hard)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_hard.jpg")
+			enemy_avatar.texture = load("res://Assets/Images/bug_hard.png")
 			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
 		Difficulty.EXPERT:
 			player_max_mana = 4
 			enemy_max_hp = 600
 			enemy_damage = 15
 			enemy_name.text = "核心崩潰 (Bug - Expert)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_expert.jpg")
+			enemy_avatar.texture = load("res://Assets/Images/bug_expert.png")
 			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
 			
 	player_hp = player_max_hp
@@ -691,11 +691,18 @@ func show_game_over(win: bool) -> void:
 	end_turn_button.disabled = true
 	game_over_overlay.visible = true
 	
-	# Centering and widening the result VBox Container
+	# Centering and widening the result VBox Container to span full width
 	var vbox = $TopLayer/GameOverOverlay/VBox
-	vbox.custom_minimum_size = Vector2(800, 200)
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_MINSIZE)
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = 0
+	vbox.offset_right = 0
+	vbox.offset_top = 224
+	vbox.offset_bottom = 500
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
 	result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	result_label.add_theme_font_size_override("font_size", 48)
 	
 	if win:
 		result_label.text = "[SUCCESS] DEPLOYMENT SUCCESS!"
