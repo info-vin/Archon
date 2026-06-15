@@ -1,7 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://b8yq7qxyxxxx"]
+[gd_scene load_steps=4 format=3 uid="uid://b8yq7qxyxxxx"]
 
 [ext_resource type="Theme" uid="uid://d3a4bxxxxxxx" path="res://Scripts/Resources/NeonTheme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://Scripts/Main.gd" id="2_script"]
+[ext_resource type="Script" path="res://Scripts/UI/PanZoomController.gd" id="3_panzoom"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/dev_room_bg.png" id="4_dev_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/sales_room_bg.png" id="5_sales_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/qa_room_bg.png" id="6_qa_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/break_room_bg.png" id="7_break_bg"]
+
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -74,63 +80,104 @@ autostart = true
 [node name="GameArea" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+script = ExtResource("3_panzoom")
 
-[node name="Building" type="VBoxContainer" parent="VBox/GameArea"]
+[node name="Building" type="CenterContainer" parent="VBox/GameArea"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 20
-alignment = 1
 
-[node name="Floor1" type="HBoxContainer" parent="VBox/GameArea/Building"]
+[node name="OfficeGrid" type="GridContainer" parent="VBox/GameArea/Building"]
 layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
+theme_override_constants/h_separation = 15
+theme_override_constants/v_separation = 15
+columns = 3
 
-[node name="DevRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor1"]
-custom_minimum_size = Vector2(300, 200)
+[node name="DevRoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(360, 390)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor1/DevRoom"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/DevRoom"]
+layout_mode = 2
+texture = ExtResource("4_dev_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/DevRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_DEV"
 horizontal_alignment = 1
 
-[node name="SalesRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor1"]
-custom_minimum_size = Vector2(300, 200)
+[node name="HallwayTop" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor1/SalesRoom"]
+[node name="SalesRoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(360, 390)
+layout_mode = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/SalesRoom"]
+layout_mode = 2
+texture = ExtResource("5_sales_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/SalesRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_SALES"
 horizontal_alignment = 1
 
-[node name="Floor2" type="HBoxContainer" parent="VBox/GameArea/Building"]
-layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
-
-[node name="QARoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor2"]
-custom_minimum_size = Vector2(300, 200)
+[node name="HallwayLeft" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor2/QARoom"]
+[node name="CentralLobby" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+
+[node name="HallwayRight" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(360, 120)
+layout_mode = 2
+
+[node name="QARoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(360, 390)
+layout_mode = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/QARoom"]
+layout_mode = 2
+texture = ExtResource("6_qa_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/QARoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_QA"
 horizontal_alignment = 1
 
-[node name="BreakRoom" type="PanelContainer" parent="VBox/GameArea/Building/Floor2"]
-custom_minimum_size = Vector2(300, 200)
+[node name="HallwayBottom" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/Floor2/BreakRoom"]
+[node name="BreakRoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+custom_minimum_size = Vector2(360, 390)
+layout_mode = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/BreakRoom"]
+layout_mode = 2
+texture = ExtResource("7_break_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/BreakRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_BREAK"
 horizontal_alignment = 1
+
+
 
 [node name="BottomBar" type="PanelContainer" parent="VBox"]
 custom_minimum_size = Vector2(0, 150)
@@ -148,3 +195,18 @@ horizontal_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
+
+[node name="ActionHBox" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "UI_CHARACTER_CREATOR"
+
+[node name="ExpandRoomBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "UI_EXPAND_ROOM"

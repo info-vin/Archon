@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://c87dsba21dsa"]
+
+[ext_resource type="Script" path="res://Scripts/UI/HelpMenu.gd" id="1_script"]
+
+[node name="HelpMenu" type="PanelContainer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -200.0
+offset_right = 250.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = null
+script = ExtResource("1_script")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.509804, 0.964706, 1)
+theme_override_font_sizes/font_size = 24
+text = "UI_HELP_TITLE"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="VBox"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Content" type="VBoxContainer" parent="VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="GoalLabel" type="Label" parent="VBox/Scroll/Content"]
+layout_mode = 2
+text = "HELP_GOAL"
+autowrap_mode = 2
+
+[node name="ControlsLabel" type="Label" parent="VBox/Scroll/Content"]
+layout_mode = 2
+text = "HELP_CONTROLS"
+autowrap_mode = 2
+
+[node name="TipsLabel" type="Label" parent="VBox/Scroll/Content"]
+layout_mode = 2
+text = "HELP_TIPS"
+autowrap_mode = 2
+
+[node name="CloseButton" type="Button" parent="VBox"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_CLOSE"

@@ -14,10 +14,12 @@ config/name="Archon Agency Tycoon"
 config/description="Agency Tycoon simulator built with TDD in Godot 4."
 run/main_scene="uid://b8yq7qxyxxxx"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-
-[display]
-
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
 
 [rendering]
 

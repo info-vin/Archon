@@ -38,3 +38,17 @@ z_index = 4
 position = Vector2(150, -50)
 scale = Vector2(0.4, 0.4)
 texture = ExtResource("6_tool")
+
+[node name="EnergyBar" type="ProgressBar" parent="."]
+offset_left = -80.0
+offset_top = -320.0
+offset_right = 80.0
+offset_bottom = -290.0
+theme_override_font_sizes/font_size = 20
+value = 100.0
+show_percentage = false
+
+[node name="StatusBubble" type="Sprite2D" parent="."]
+position = Vector2(0, -400)
+scale = Vector2(1.5, 1.5)
+

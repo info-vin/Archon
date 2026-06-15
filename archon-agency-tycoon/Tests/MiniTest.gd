@@ -3,6 +3,7 @@ class_name MiniTest
 
 var tests_passed: int = 0
 var tests_failed: int = 0
+var tree: SceneTree = null
 
 func assert_eq(actual, expected, message: String = "") -> void:
 	if actual == expected:
@@ -46,7 +47,7 @@ func run_test_suite() -> void:
 	for method in get_method_list():
 		if method.name.begins_with("test_"):
 			print("\n➡️ Running: ", method.name)
-			call(method.name)
+			await call(method.name)
 			
 	print("\n========== RESULTS ==========")
 	if tests_failed == 0:

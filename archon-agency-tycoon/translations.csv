@@ -17,3 +17,23 @@ STATE_WORKING,Working,工作中,作業中
 STATE_RESTING,Resting,休息中,休憩中
 MSG_WIN,Phase Complete!,階段完成！,フェーズ完了！
 MSG_LOSE,Bankrupt!,公司破產！,倒産！
+UI_HELP_TITLE,Game Guide,遊戲指南,ゲームガイド
+HELP_GOAL,"Goal: Complete tasks to earn funds. Keep energy above 0!","目標：完成工單賺取資金，避免員工體力耗盡！","目標：タスクを完了して資金を獲得し、エネルギーを保ちます！"
+HELP_CONTROLS,"Controls: Drag tasks to desks. Press [H] to toggle Help. Press [Esc] to close.","操作：將工單拖曳至辦公桌。按 [H] 開啟說明，[Esc] 鍵關閉。","操作：タスクをデスクにドラッグします。[H]で説明、[Esc]で閉じる。"
+HELP_TIPS,"Tip: Send tired agents to Break Room. Send QA to flashing server racks during crises!","提示：疲憊時拖至休息室。危機爆發時指派 QA 進入紅色閃爍房間！","ヒント：疲れたら休憩室へ。危機発生時はQAを赤い点滅の部屋へ！"
+UI_CLOSE,Close,關閉,閉じる
+UI_CHARACTER_CREATOR,Recruitment & Customizer,招募與紙娃娃自訂,採用とキャラクターカスタマイズ
+UI_ENTER_NAME,Enter name...,輸入名字...,名前を入力...
+UI_ROLE,Role,職位,役職
+UI_GENDER,Gender,性別,性別
+UI_GENDER_FEMALE,Female,女性,女性
+UI_GENDER_MALE,Male,男性,男性
+UI_HAIR_STYLE,Hair Style,髮型樣式,ヘアスタイル
+UI_OUTFIT,Outfit,服裝款式,衣装
+UI_TOOL,Tool,手持工具,ツール
+UI_HAIR_COLOR,Hair Color,頭髮顏色,髪の色
+UI_RECRUIT,Recruit Agent,招募員工,採用する
+UI_CANCEL,Cancel,取消,キャンセル
+UI_STYLE,Style,樣式,スタイル
+UI_EXPAND_ROOM,Build Room,擴建房間,部屋を拡張
+UI_BUILD_PANEL,Select room to expand...,選擇要擴建的房間類型...,拡張する部屋を選択...

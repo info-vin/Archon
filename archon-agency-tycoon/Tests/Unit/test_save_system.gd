@@ -13,7 +13,7 @@ func test_local_save_and_load() -> void:
     manager.current_phase = 2
     
     # 3. Save the game
-    var save_success = manager.save_game()
+    var save_success = await manager.save_game()
     assert_true(save_success, "Game should save successfully to local disk")
     
     # 4. Create a BRAND NEW manager to simulate restarting the game
@@ -24,7 +24,7 @@ func test_local_save_and_load() -> void:
     assert_eq(new_manager.funds, 500, "New manager should start with default 500 funds")
     
     # 6. Load the game
-    var load_success = new_manager.load_game()
+    var load_success = await new_manager.load_game()
     assert_true(load_success, "Game should load successfully from local disk")
     
     # 7. Assert state was restored
@@ -38,5 +38,5 @@ func test_local_save_and_load() -> void:
 func test_save_without_adapter_fails() -> void:
     var manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
     # No adapter set
-    var save_success = manager.save_game()
+    var save_success = await manager.save_game()
     assert_false(save_success, "Save should fail if no adapter is set")

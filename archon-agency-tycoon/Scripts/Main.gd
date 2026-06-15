@@ -3,19 +3,22 @@ extends Control
 var agent_manager
 var task_manager
 var tycoon_manager
+var agent_views = {}
+
 
 @onready var funds_label: Label = $VBox/TopBar/HBox/FundsValue
 @onready var funds_title: Label = $VBox/TopBar/HBox/FundsLabel
 @onready var rep_title: Label = $VBox/TopBar/HBox/RepLabel
 @onready var backlog_title: Label = $VBox/BottomBar/VBox/Label
-@onready var dev_room_label: Label = $VBox/GameArea/Building/Floor1/DevRoom/Label
-@onready var sales_room_label: Label = $VBox/GameArea/Building/Floor1/SalesRoom/Label
-@onready var qa_room_label: Label = $VBox/GameArea/Building/Floor2/QARoom/Label
-@onready var break_room_label: Label = $VBox/GameArea/Building/Floor2/BreakRoom/Label
+@onready var dev_room_label: Label = $VBox/GameArea/Building/OfficeGrid/DevRoom/Label
+@onready var sales_room_label: Label = $VBox/GameArea/Building/OfficeGrid/SalesRoom/Label
+@onready var qa_room_label: Label = $VBox/GameArea/Building/OfficeGrid/QARoom/Label
+@onready var break_room_label: Label = $VBox/GameArea/Building/OfficeGrid/BreakRoom/Label
 
-@onready var dev_room: Control = $VBox/GameArea/Building/Floor1/DevRoom
-@onready var sales_room: Control = $VBox/GameArea/Building/Floor1/SalesRoom
-@onready var qa_room: Control = $VBox/GameArea/Building/Floor2/QARoom
+@onready var dev_room: Control = $VBox/GameArea/Building/OfficeGrid/DevRoom
+@onready var sales_room: Control = $VBox/GameArea/Building/OfficeGrid/SalesRoom
+@onready var qa_room: Control = $VBox/GameArea/Building/OfficeGrid/QARoom
+@onready var break_room: Control = $VBox/GameArea/Building/OfficeGrid/BreakRoom
 @onready var lang_button: Button = $VBox/TopBar/HBox/LangButton
 @onready var game_tick_timer: Timer = $GameTickTimer
 @onready var task_container: HBoxContainer = $VBox/BottomBar/VBox/TaskContainer
@@ -23,6 +26,8 @@ var tycoon_manager
 var current_lang_index = 0
 var langs = ["zh_TW", "en", "ja"]
 var lang_names = ["中文", "English", "日本語"]
+
+var crisis_tweens = {}
 
 func _ready() -> void:
 	agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
@@ -32,11 +37,36 @@ func _ready() -> void:
 	task_manager.set_agent_manager(agent_manager)
 	tycoon_manager.setup_connections(task_manager)
 	
+	tycoon_manager.crisis_spawned.connect(_on_crisis_spawned)
+	tycoon_manager.crisis_resolved.connect(_on_crisis_resolved)
+	
+	# 初始化存檔介面並嘗試載入進度 (Initialize SaveAdapter and load)
+	var token = ""
+	if OS.has_feature("web"):
+		token = str(JavaScriptBridge.eval("window.getArchonToken ? window.getArchonToken() : ''"))
+		
+	var save_adapter
+	if not token.is_empty():
+		save_adapter = preload("res://Scripts/Logic/SaveSystems/SupabaseSaveAdapter.gd").new()
+	else:
+		save_adapter = preload("res://Scripts/Logic/SaveSystems/LocalSaveAdapter.gd").new()
+		
+	tycoon_manager.set_save_adapter(save_adapter)
+	await tycoon_manager.load_game()
+	
 	# 預設語言
 	TranslationServer.set_locale(langs[current_lang_index])
 	
 	if lang_button:
 		lang_button.pressed.connect(_on_lang_button_pressed)
+		
+	var recruit_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/RecruitBtn")
+	if recruit_btn:
+		recruit_btn.pressed.connect(_on_recruit_btn_pressed)
+		
+	var expand_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
+	if expand_btn:
+		expand_btn.pressed.connect(_on_expand_room_pressed)
 		
 	if game_tick_timer:
 		game_tick_timer.timeout.connect(_on_tick_timer_timeout)
@@ -44,6 +74,8 @@ func _ready() -> void:
 	_setup_initial_game()
 	_update_ui()
 	_update_static_labels()
+
+
 
 func _on_lang_button_pressed() -> void:
 	current_lang_index = (current_lang_index + 1) % langs.size()
@@ -77,29 +109,29 @@ func _setup_initial_game() -> void:
 	agent_manager.add_agent(charlie)
 	
 	# 紙娃娃實體化 Helper
-	_spawn_agent_view(dev_room, "Alice (DEV)")
-	_spawn_agent_view(sales_room, "Bob (SALES)")
-	_spawn_agent_view(qa_room, "Charlie (QA)")
+	_spawn_agent_view(0, dev_room)
+	_spawn_agent_view(1, sales_room)
+	_spawn_agent_view(2, qa_room)
 		
 	# 掛載 Drop Zone
 	var drop_script = preload("res://Scripts/UI/DevRoomDropZone.gd")
 	if drop_script:
 		dev_room.set_script(drop_script)
 		sales_room.set_script(drop_script)
-		# Note: We can expand this to other rooms later
 
 	# 產生幾個初始任務
 	_spawn_task_in_backlog("Fix Login Bug", 3, 300, 1) # DEV
 	_spawn_task_in_backlog("Update DB Schema", 2, 200, 1) # DEV
 	_spawn_task_in_backlog("Start Outreach", 999, 0, 0) # SALES
 
-func _spawn_agent_view(room: Control, label_text: String) -> void:
+func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	var agent_view_scene = preload("res://Scenes/Main/ModularAgent.tscn")
 	if agent_view_scene:
 		var agent_view = agent_view_scene.instantiate()
 		agent_view.position = Vector2(150, 130) # 置中
 		agent_view.scale = Vector2(0.2, 0.2) # 大幅縮小以符合框格
 		room.add_child(agent_view)
+		agent_views[agent_id] = agent_view
 
 func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: int = 1) -> void:
 	var task = preload("res://Scripts/Resources/TaskResource.gd").new(t_name, req_role, ticks, reward)
@@ -112,7 +144,6 @@ func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: i
 		card.setup(task_id, t_name, ticks, reward)
 
 func _on_task_dropped_on_agent(task_id: int, dropped_agent_id: int) -> void:
-	# MVP Hardcode mapping task's role to the specific agent index (Alice=0, Bob=1, Charlie=2)
 	var task = task_manager.tasks[task_id]
 	var target_agent = -1
 
@@ -123,7 +154,6 @@ func _on_task_dropped_on_agent(task_id: int, dropped_agent_id: int) -> void:
 	if target_agent != -1:
 		var success = task_manager.assign_task(task_id, target_agent)
 		if success:
-			# 移除 UI 上的卡片 (如果是業務招攬，則不移除，讓它可以反覆拖曳或持續執行)
 			if task.required_role != 0:
 				for child in task_container.get_children():
 					if child is TaskCard and child.task_id == task_id:
@@ -143,7 +173,6 @@ func _get_active_task_for_agent(agent_id: int) -> int:
 	return -1
 
 func _on_tick_timer_timeout() -> void:
-	# 真實時間流逝 (1 Tick)
 	task_manager.process_tick()
 	agent_manager.process_tick()
 	_update_ui()
@@ -151,33 +180,135 @@ func _on_tick_timer_timeout() -> void:
 func _update_ui() -> void:
 	funds_label.text = "$%d" % tycoon_manager.funds
 	
-	_update_agent_status_label(dev_room, 0, "Alice")
-	_update_agent_status_label(sales_room, 1, "Bob")
-	_update_agent_status_label(qa_room, 2, "Charlie")
+	# Update character positions and animations based on their state
+	for agent_id in agent_views.keys():
+		var agent = agent_manager.get_agent(agent_id)
+		var view = agent_views[agent_id]
+		if not agent or not view:
+			continue
+			
+		var target_room = null
+		var target_pos = Vector2(150, 130) # Default Center
+		
+		match agent.state:
+			1: # WORKING
+				if agent.role == 1: # DEV
+					target_room = dev_room
+					target_pos = Vector2(30 + 32, 80 + 32)
+				elif agent.role == 0: # SALES
+					target_room = sales_room
+					target_pos = Vector2(200 + 32, 80 + 32)
+				elif agent.role == 2: # QA
+					target_room = qa_room
+					target_pos = Vector2(140 + 32, 40 + 32)
+			2: # RESTING
+				target_room = break_room
+				target_pos = Vector2(120 + 32, 80 + 32)
+			_: # IDLE / EXHAUSTED
+				if agent.role == 1: target_room = dev_room
+				elif agent.role == 0: target_room = sales_room
+				elif agent.role == 2: target_room = qa_room
+				
+		if target_room and view.get_parent() != target_room:
+			view.get_parent().remove_child(view)
+			target_room.add_child(view)
+			
+		view.position = target_pos
+		view.apply_agent_data(agent)
 
-func _update_agent_status_label(room: Control, agent_id: int, agent_name: String) -> void:
-	var status_label = room.get_node_or_null("AgentStatus")
-	if not status_label:
-		status_label = Label.new()
-		status_label.name = "AgentStatus"
-		status_label.position = Vector2(10, 30)
-		status_label.add_theme_color_override("font_color", Color(1, 1, 1))
-		room.add_child(status_label)
+func _get_room_by_name(room_name: String) -> Control:
+	match room_name:
+		"DevRoom": return dev_room
+		"SalesRoom": return sales_room
+		"QARoom": return qa_room
+		"BreakRoom": return break_room
+	return null
+
+func _on_crisis_spawned(room_name: String) -> void:
+	var room = _get_room_by_name(room_name)
+	if room and not crisis_tweens.has(room_name):
+		var tween = create_tween().set_loops()
+		tween.tween_property(room, "modulate", Color(1, 0.4, 0.4), 0.5)
+		tween.tween_property(room, "modulate", Color.WHITE, 0.5)
+		crisis_tweens[room_name] = tween
+
+func _on_crisis_resolved(room_name: String) -> void:
+	if crisis_tweens.has(room_name):
+		var tween = crisis_tweens[room_name]
+		if tween and tween.is_valid():
+			tween.kill()
+		crisis_tweens.erase(room_name)
 		
-	var agent = agent_manager.get_agent(agent_id)
-	var active_task_idx = _get_active_task_for_agent(agent_id)
-	
-	var state_str = tr("STATE_IDLE")
-	if agent.state == 1: state_str = tr("STATE_WORKING")
-	elif agent.state == 2: state_str = tr("STATE_RESTING")
-	elif agent.state == 3: state_str = "EXHAUSTED"
-	
-	var text = "%s: %s\nEnergy: %d/100\n" % [agent_name, state_str, agent.energy]
-	
-	if active_task_idx != -1:
-		var task = task_manager.tasks[active_task_idx]
-		text += "[%s]: %d / %d %s" % [task.task_name, task.current_progress, task.required_ticks, tr("UI_TICK")]
+	var room = _get_room_by_name(room_name)
+	if room:
+		room.modulate = Color.WHITE
+
+var help_menu_instance = null
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_H:
+			_toggle_help_menu()
+
+func _toggle_help_menu() -> void:
+	if help_menu_instance and is_instance_valid(help_menu_instance):
+		help_menu_instance.close()
 	else:
-		text += "[None]"
-		
-	status_label.text = text
+		var scene = load("res://Scenes/UI/HelpMenu.tscn")
+		if scene:
+			help_menu_instance = scene.instantiate()
+			add_child(help_menu_instance)
+			
+			help_menu_instance.closed.connect(func(): help_menu_instance = null)
+			
+			# Translate it dynamically
+			help_menu_instance.get_node("VBox/Title").text = tr("UI_HELP_TITLE")
+			help_menu_instance.get_node("VBox/Scroll/Content/GoalLabel").text = tr("HELP_GOAL")
+			help_menu_instance.get_node("VBox/Scroll/Content/ControlsLabel").text = tr("HELP_CONTROLS")
+			help_menu_instance.get_node("VBox/Scroll/Content/TipsLabel").text = tr("HELP_TIPS")
+			help_menu_instance.get_node("VBox/CloseButton").text = tr("UI_CLOSE")
+
+func _on_recruit_btn_pressed() -> void:
+	var creator_scene = load("res://Scenes/UI/CharacterCreator.tscn")
+	if creator_scene:
+		var creator = creator_scene.instantiate()
+		add_child(creator)
+		creator.character_created.connect(func(agent_data):
+			var new_id = agent_manager.add_agent(agent_data)
+			# Spawn in correct room based on role
+			var target_room = dev_room
+			if agent_data.role == 0:
+				target_room = sales_room
+			elif agent_data.role == 2:
+				target_room = qa_room
+			_spawn_agent_view(new_id, target_room)
+			_update_ui()
+		)
+
+func _on_expand_room_pressed() -> void:
+	# Cost 500 to expand/duplicate QA room as a dynamic building proof
+	if tycoon_manager.funds >= 500:
+		tycoon_manager.funds -= 500
+		var office_grid = get_node_or_null("VBox/GameArea/Building/OfficeGrid")
+		if office_grid:
+			# Instantiate a duplicate QA Room
+			var new_room = PanelContainer.new()
+			new_room.custom_minimum_size = Vector2(360, 390)
+			
+			var bg_tex = TextureRect.new()
+			bg_tex.texture = preload("res://Assets/Rooms/qa_room_bg.png")
+			bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+			new_room.add_child(bg_tex)
+			
+			var lbl = Label.new()
+			lbl.text = tr("ROOM_QA") + " (Expansion)"
+			new_room.add_child(lbl)
+			
+			office_grid.add_child(new_room)
+		_update_ui()
+	else:
+		print("不夠資金擴建房間！")
+
+

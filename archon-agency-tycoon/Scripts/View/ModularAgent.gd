@@ -8,6 +8,28 @@ class_name ModularAgentView
 @onready var outfit_sprite: Sprite2D = $Outfit
 @onready var tool_sprite: Sprite2D = $Tool
 
+@onready var energy_bar: ProgressBar = $EnergyBar
+@onready var status_bubble: Sprite2D = $StatusBubble
+
+var active_tween: Tween
+var default_scale_x: float = 1.0
+
+# Force zero offset and standard scaling if using standard parts
+func reset_layout_for_option_a() -> void:
+    for sprite in [body_sprite, eyes_sprite, hair_sprite, outfit_sprite, tool_sprite]:
+        if sprite:
+            sprite.position = Vector2.ZERO
+            sprite.scale = Vector2.ONE
+            sprite.rotation = 0.0
+            sprite.modulate = Color.WHITE
+
+func _ready() -> void:
+    default_scale_x = scale.x
+    if tool_sprite:
+        tool_sprite.visible = true
+    if status_bubble:
+        status_bubble.visible = false
+
 # Function to equip or change a specific layer
 func equip_part(layer_name: String, texture: Texture2D) -> void:
     match layer_name:
@@ -26,19 +48,184 @@ func equip_part(layer_name: String, texture: Texture2D) -> void:
 
 # Helper function to configure the appearance based on an AgentResource
 func apply_agent_data(agent_data: AgentResource) -> void:
-    # This is where we would load specific textures based on the agent's role
-    # For example, if agent_data.role == AgentResource.AgentRole.DEV:
-    #     equip_part("outfit", preload("res://Assets/Outfits/magical_robe.png"))
-    #     equip_part("tool", preload("res://Assets/Tools/magic_cards.png"))
-    pass
+    if not is_inside_tree():
+        await ready
 
-# Animation hook (called by AnimationPlayer or Tween)
+    # Option A: Check if we have custom equipped items
+    var custom_used = false
+    if agent_data.equipped_hair != "":
+        var tex = load(agent_data.equipped_hair)
+        if tex:
+            equip_part("hair", tex)
+            custom_used = true
+    if agent_data.equipped_outfit != "":
+        var tex = load(agent_data.equipped_outfit)
+        if tex:
+            equip_part("outfit", tex)
+            custom_used = true
+    if agent_data.equipped_tool != "":
+        var tex = load(agent_data.equipped_tool)
+        if tex:
+            equip_part("tool", tex)
+            custom_used = true
+
+    if custom_used:
+        reset_layout_for_option_a()
+    else:
+        # 1. Base Skeleton Gender Assembly
+        if agent_data.gender == 0:
+            equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_006.png")) # Female skeleton
+        else:
+            equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png")) # Male skeleton
+            
+        # 2. Eye Style
+        equip_part("eyes", preload("res://Assets/Characters/Alice_Parts/part_016.png"))
+        
+        # 3. Hair Style Assembly
+        var hair_tex = null
+        match agent_data.hair_style:
+            1:
+                hair_tex = preload("res://Assets/Characters/Alice_Parts/part_001.png") # Long hair bow
+            2:
+                hair_tex = preload("res://Assets/Characters/Alice_Parts/part_015.png") # Short hair
+            3:
+                hair_tex = preload("res://Assets/Characters/Alice_Parts/part_017.png") # Medium pigtails
+            _:
+                hair_tex = preload("res://Assets/Characters/Alice_Parts/part_001.png")
+        equip_part("hair", hair_tex)
+        if hair_sprite:
+            hair_sprite.modulate = agent_data.hair_color
+            
+        # 4. Outfit Style Assembly
+        var outfit_tex = null
+        match agent_data.outfit_style:
+            1:
+                outfit_tex = preload("res://Assets/Characters/Alice_Parts/part_021.png") # Mage Robe
+            2:
+                outfit_tex = preload("res://Assets/Characters/Alice_Parts/part_020.png") # Formal Vest
+            _:
+                outfit_tex = preload("res://Assets/Characters/Alice_Parts/part_021.png")
+        equip_part("outfit", outfit_tex)
+        
+        # 5. Tool Style Assembly
+        var tool_tex = null
+        match agent_data.tool_style:
+            1:
+                tool_tex = preload("res://Assets/Characters/Alice_Parts/part_033.png") # DEV Wand
+            2:
+                tool_tex = preload("res://Assets/Characters/Alice_Parts/part_031.png") # SALES Cards
+            3:
+                tool_tex = preload("res://Assets/Characters/Alice_Parts/part_026.png") # QA Spell shield
+            _:
+                tool_tex = preload("res://Assets/Characters/Alice_Parts/part_033.png")
+        equip_part("tool", tool_tex)
+        
+        reset_layout_for_option_a()
+
+    # Update Energy Bar values & modulate color
+    if energy_bar:
+        energy_bar.value = agent_data.energy
+        if agent_data.energy > 50:
+            energy_bar.modulate = Color(0.2, 1, 0.2) # green
+        elif agent_data.energy > 25:
+            energy_bar.modulate = Color(1, 1, 0.2) # yellow
+        else:
+            energy_bar.modulate = Color(1, 0.2, 0.2) # red
+
+    # Update status bubbles (Icon representation)
+    if status_bubble:
+        match agent_data.state:
+            AgentResource.AgentState.WORKING:
+                status_bubble.visible = true
+                status_bubble.texture = preload("res://Assets/Icons/icon_coin.svg")
+            AgentResource.AgentState.RESTING:
+                status_bubble.visible = true
+                status_bubble.texture = preload("res://Assets/Icons/icon_star.svg")
+            AgentResource.AgentState.EXHAUSTED:
+                status_bubble.visible = true
+                status_bubble.texture = preload("res://Assets/Icons/icon_alert.svg")
+            _:
+                status_bubble.visible = false
+
+    # Alignment chair positioning & flipping
+    # If working, look at computer screen direction (DEV sits right of desk, so looks left. QA looks left. SALES sits left of desk, looks right)
+    if agent_data.state == AgentResource.AgentState.WORKING:
+        if agent_data.role == AgentResource.AgentRole.DEV:
+            scale.x = -default_scale_x
+        elif agent_data.role == AgentResource.AgentRole.QA:
+            scale.x = -default_scale_x
+        else:
+            scale.x = default_scale_x
+    else:
+        scale.x = default_scale_x
+
+    # Automatically play correct animation based on state
+    match agent_data.state:
+        AgentResource.AgentState.WORKING:
+            play_work_animation()
+        AgentResource.AgentState.RESTING:
+            play_rest_animation()
+        _:
+            stop_animation()
+
+# Animation hook for working state
 func play_work_animation() -> void:
-    # E.g., bob the tool sprite up and down
-    var tween = create_tween().set_loops(0) # Infinite loop
-    tween.tween_property(tool_sprite, "position:y", -5.0, 0.5).as_relative()
-    tween.tween_property(tool_sprite, "position:y", 5.0, 0.5).as_relative()
+    stop_animation()
+    
+    if tool_sprite:
+        tool_sprite.visible = true
+    
+    active_tween = create_tween().set_loops()
+    # Tool swings back and forth
+    active_tween.tween_property(tool_sprite, "position:y", -8.0, 0.2).set_trans(Tween.TRANS_SINE)
+    active_tween.parallel().tween_property(tool_sprite, "rotation_degrees", 15.0, 0.2)
+    active_tween.tween_property(tool_sprite, "position:y", 0.0, 0.2).set_trans(Tween.TRANS_SINE)
+    active_tween.parallel().tween_property(tool_sprite, "rotation_degrees", 0.0, 0.2)
+    # Body bobs slightly
+    active_tween.parallel().tween_property(body_sprite, "scale:y", 0.95, 0.2)
+    active_tween.tween_property(body_sprite, "scale:y", 1.0, 0.2)
+
+# Animation hook for resting state
+func play_rest_animation() -> void:
+    stop_animation()
+    
+    if tool_sprite:
+        tool_sprite.visible = false
+        
+    active_tween = create_tween().set_loops()
+    # Breathing effect: Body and Outfit scale up and down slowly
+    active_tween.tween_property(body_sprite, "scale:y", 0.95, 0.8).set_trans(Tween.TRANS_SINE)
+    if outfit_sprite:
+        active_tween.parallel().tween_property(outfit_sprite, "scale:y", 0.95, 0.8).set_trans(Tween.TRANS_SINE)
+    
+    active_tween.tween_property(body_sprite, "scale:y", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+    if outfit_sprite:
+        active_tween.parallel().tween_property(outfit_sprite, "scale:y", 1.0, 0.8).set_trans(Tween.TRANS_SINE)
+        
+    # Dim eyes (sleepy/eyes closed effect)
+    if eyes_sprite:
+        active_tween.parallel().tween_property(eyes_sprite, "modulate:a", 0.2, 0.8)
+        active_tween.tween_property(eyes_sprite, "modulate:a", 1.0, 0.8)
 
 func stop_animation() -> void:
-    # Logic to return to idle pose
-    pass
+    if active_tween and active_tween.is_valid():
+        active_tween.kill()
+        active_tween = null
+        
+    # Reset all transforms to default values
+    if body_sprite:
+        body_sprite.scale = Vector2.ONE
+        body_sprite.position = Vector2.ZERO
+        body_sprite.rotation = 0.0
+    if outfit_sprite:
+        outfit_sprite.scale = Vector2.ONE
+        outfit_sprite.position = Vector2.ZERO
+        outfit_sprite.rotation = 0.0
+    if tool_sprite:
+        tool_sprite.scale = Vector2.ONE
+        tool_sprite.position = Vector2.ZERO
+        tool_sprite.rotation = 0.0
+        tool_sprite.visible = true
+    if eyes_sprite:
+        eyes_sprite.modulate.a = 1.0
+

@@ -1,0 +1,199 @@
+[gd_scene load_steps=2 format=3 uid="uid://dd82hjas89ad"]
+
+[ext_resource type="Script" path="res://Scripts/UI/CharacterCreator.gd" id="1_creator"]
+
+[node name="CharacterCreator" type="PanelContainer"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -250.0
+offset_right = 380.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_creator")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="PreviewArea" type="Control" parent="HBox"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="Background" type="ColorRect" parent="HBox/PreviewArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.1, 1)
+
+[node name="DollContainer" type="Control" parent="HBox/PreviewArea"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(5, 5)
+
+[node name="Body" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
+[node name="Eyes" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
+[node name="Hair" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
+[node name="Outfit" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
+[node name="Tool" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
+[node name="ControlArea" type="VBoxContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 15
+
+[node name="Title" type="Label" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "UI_CHARACTER_CREATOR"
+horizontal_alignment = 1
+
+[node name="NameEdit" type="LineEdit" parent="HBox/ControlArea"]
+layout_mode = 2
+placeholder_text = "UI_ENTER_NAME"
+
+[node name="RoleHBox" type="HBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="HBox/ControlArea/RoleHBox"]
+layout_mode = 2
+text = "UI_ROLE"
+
+[node name="RoleOption" type="OptionButton" parent="HBox/ControlArea/RoleHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GenderHBox" type="HBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="HBox/ControlArea/GenderHBox"]
+layout_mode = 2
+text = "UI_GENDER"
+
+[node name="GenderBtn" type="Button" parent="HBox/ControlArea/GenderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_GENDER_FEMALE"
+
+[node name="HairHBox" type="HBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="HBox/ControlArea/HairHBox"]
+layout_mode = 2
+text = "UI_HAIR_STYLE"
+
+[node name="HairStyleBtn" type="Button" parent="HBox/ControlArea/HairHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Style 1"
+
+[node name="OutfitHBox" type="HBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="HBox/ControlArea/OutfitHBox"]
+layout_mode = 2
+text = "UI_OUTFIT"
+
+[node name="OutfitBtn" type="Button" parent="HBox/ControlArea/OutfitHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Outfit 1"
+
+[node name="ToolHBox" type="HBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="HBox/ControlArea/ToolHBox"]
+layout_mode = 2
+text = "UI_TOOL"
+
+[node name="ToolBtn" type="Button" parent="HBox/ControlArea/ToolHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Tool 1"
+
+[node name="ColorHBox" type="VBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Label" type="Label" parent="HBox/ControlArea/ColorHBox"]
+layout_mode = 2
+text = "UI_HAIR_COLOR"
+
+[node name="ColorSlider" type="HSlider" parent="HBox/ControlArea/ColorHBox"]
+layout_mode = 2
+max_value = 360.0
+
+[node name="Actions" type="HBoxContainer" parent="HBox/ControlArea"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="RecruitBtn" type="Button" parent="HBox/ControlArea/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_RECRUIT"
+
+[node name="CancelBtn" type="Button" parent="HBox/ControlArea/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_CANCEL"
