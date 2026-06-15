@@ -80,16 +80,75 @@
 
 ---
 
-## 3. 測試驅動開發策略 (TDD Strategy)
+## 3. Godot 節點與信號架構 (Node Hierarchy & Signal Contracts)
+採用「資料與呈現嚴格分離」的架構。
+
+```text
+ [ AUTOLOADS (Global) ]
+ -----------------------------------------------------------
+ | GameManager.gd       | SignalBus.gd                     |
+ | - logic_tick()       | - [grid_state_changed]           |
+ | - active_loadout     | - [entity_moved(id, new_pos)]    |
+ | - game_state         | - [hallucination_triggered]      |
+ -----------------------------------------------------------
+        ^ (Tick & Data)              | (Emit)
+        |                            v (Listen)
+ [ VIEW LAYER (CanvasLayer / Node2D) ]
+ -----------------------------------------------------------
+ | MazeView (Node2D)                                       |
+ | |- TileMapLayer (Grid visuals)                          |
+ | |- EntityRenderer (Interpolates Sprite2D to grid pos)   |
+ | |- Camera2D (Follows player with smooth drag)           |
+ -----------------------------------------------------------
+ | HUD_UI (CanvasLayer)                                    |
+ | |- ContextTailPanel (Shows Token usage & F/T ratio)     |
+ | |- LoadoutActiveSkillButton (For LLMLingua/Dash)        |
+ -----------------------------------------------------------
+```
+
+## 4. Web 輸出與跨裝置適配 (Web Export & Cross-Device Optimization)
+本遊戲必須支援無縫嵌入網頁版與行動裝置瀏覽器 (Mobile Safari/Chrome)。
+
+*   **觸控手勢驅動 (Swipe to Dash)**：
+    *   在手機版，隱藏螢幕虛擬搖桿 (D-Pad)。
+    *   實作 `SwipeDetector`，玩家在螢幕任何地方「滑動 (Swipe)」即可決定飛船下一次「飄移過彎」的方向。
+*   **響應式視角 (Responsive Camera)**：
+    *   Godot 視窗設定：`stretch/mode` = `canvas_items`, `stretch/aspect` = `expand`。
+    *   在手機版直式螢幕下，`Camera2D` 的 `zoom` 自動縮小，確保迷宮全貌不被嚴重裁切。
+*   **主動技觸發 (Active Skills)**：
+    *   在 Desktop 綁定 `Spacebar`。在 Mobile，於 HUD 右下角提供一個面積 `64x64` 以上的大按鈕，用於釋放壓縮彈或衝刺。
+
+## 5. 素材管線與視覺紙娃娃 (Asset Pipeline & Visual Loadout)
+為了反映 `Modular RAG Loadout` 的差異，玩家的飛船在視覺上必須呈現出其裝備的武器。
+
+*   **Shader 驅動的外觀 (Shader-Based Variants)**：
+    *   有別於 Tycoon 的 Sprite 重疊，本遊戲採用 Tron-like 科技風格。
+    *   裝備的武器透過 **Shader 參數** 來表現。例如：裝備 BM25 時，飛船尾焰變成冷藍色短光束；裝備 HyDE 時，飛船會週期性發出波紋特效 (Ripple Effect)。
+*   **粒子系統 (GPUParticles2D)**：
+    *   飄移過彎、彈開紅色幽靈、吃掉 Target Chunk 等，全部依賴 Godot 原生的 GPU 粒子系統，確保在 Web 端也能維持 60FPS 的 Juice 回饋。
+
+---
+
+## 6. 測試驅動開發策略 (TDD Strategy)
 依賴團隊自製的 `MiniTest.gd` 進行 Headless 測試。因為邏輯層完全無延遲，測試可瞬間跑完。
 
-### 3.1 核心測試案例 (Core Test Cases)
+### 6.1 核心測試案例 (Core Test Cases)
 1.  **`test_grid_movement`**: 測試 `EntityLogic` 無法將 `grid_position` 移入標記為 `WALL` 的網格。
 2.  **`test_knn_awakening`**: 測試當 Query 的 `grid_position` 與幽靈距離 <= `SIMILARITY_RADIUS` 時，幽靈狀態從 `SLEEP` 變為 `RETRIEVED`。
 3.  **`test_hallucination_check`**: 模擬回合結算，手動注入 1 個綠豆與 2 個紅幽靈到 `ContextWindow` 陣列，驗證進入終點時是否正確觸發 `Hallucination` 錯誤代碼。
 
-### 3.2 裝備模組測試 (Loadout Logic Tests)
+### 6.2 裝備模組測試 (Loadout Logic Tests)
 為了確保紙娃娃系統的平衡性，必須針對各個 RAG 模組進行獨立測試：
 1.  **`test_module_bm25`**: 裝備 BM25 實彈時，即使玩家 `grid_position` 與幽靈重疊，幽靈也絕對不可被喚醒 (`awake = false`)，除非完全命中。
 2.  **`test_module_reranker`**: 裝備 Reranker 護盾時，當幽靈的 `grid_position` 嘗試進入玩家所在的網格，會被反彈至相鄰網格，且不會加入 `ContextWindow`。
 3.  **`test_module_llmlingua`**: 當 `ContextWindow` 長度為 5 時，施放壓縮彈，長度必須瞬間減少至 `round(5 * 0.5)`，並觸發速度恢復 Signal。
+
+---
+
+## 7. 開發進度追蹤 (Progress Checklist)
+- [x] **Phase 0**: 數學模型與 ASCII 終端原型驗證 (`ascii_poc.py`)。
+- [ ] **Phase 1**: Godot 專案初始化與 TDD 基礎框架 (`MiniTest.gd` 導入)。
+- [ ] **Phase 2**: 核心邏輯層 (Model) 實作與 100% 測試覆蓋 (GridState, EntityLogic)。
+- [ ] **Phase 3**: 視覺層 (View) 綁定與補間動畫 (Tween) 飄移手感打磨。
+- [ ] **Phase 4**: RAG 武器紙娃娃系統 (Loadout UI) 與對應的 Shader 特效實作。
+- [ ] **Phase 5**: Web 輸出、觸控滑動適配 (SwipeDetector) 與 RWD 響應式優化。
