@@ -196,18 +196,18 @@ func _ready() -> void:
 	
 	# Initialize premium 9:16 character image TextureRect nodes dynamically
 	player_avatar = TextureRect.new()
-	player_avatar.custom_minimum_size = Vector2(135, 240)
-	player_avatar.size = Vector2(135, 240)
-	player_avatar.position = Vector2(128, 130)
+	player_avatar.custom_minimum_size = Vector2(120, 180)
+	player_avatar.size = Vector2(120, 180)
+	player_avatar.position = Vector2(20, 130)
 	player_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	player_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	player_avatar.texture = load("res://Assets/Images/player_lead.png")
 	$UILayer/UIRoot.add_child(player_avatar)
 	
 	enemy_avatar = TextureRect.new()
-	enemy_avatar.custom_minimum_size = Vector2(135, 240)
-	enemy_avatar.size = Vector2(135, 240)
-	enemy_avatar.position = Vector2(890, 130)
+	enemy_avatar.custom_minimum_size = Vector2(120, 180)
+	enemy_avatar.size = Vector2(120, 180)
+	enemy_avatar.position = Vector2(1012, 130)
 	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	$UILayer/UIRoot.add_child(enemy_avatar)
@@ -691,18 +691,20 @@ func show_game_over(win: bool) -> void:
 	end_turn_button.disabled = true
 	game_over_overlay.visible = true
 	
-	# Centering and widening the result VBox Container to span full width
+	# Centering and widening the result VBox Container to span full width and height
 	var vbox = $TopLayer/GameOverOverlay/VBox
 	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vbox.offset_left = 0
 	vbox.offset_right = 0
-	vbox.offset_top = 224
-	vbox.offset_bottom = 500
+	vbox.offset_top = 0
+	vbox.offset_bottom = 0
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	
 	result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	result_label.add_theme_font_size_override("font_size", 48)
+	
+	restart_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	
 	if win:
 		result_label.text = "[SUCCESS] DEPLOYMENT SUCCESS!"

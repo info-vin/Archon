@@ -132,3 +132,46 @@ View 層的作用是「聆聽」Model 變化，並利用 `create_tween()` 創造
 ```
 *   **EditorRunner.gd**：繼承自 `EditorScript`，方便在 Godot 編輯器內直接執行全部測試。
 *   **HeadlessRunner.gd**：繼承自 `SceneTree`，在無頭模式下回傳 exit code (0 代表 Pass，1 代表 Fail)，適合自動化門禁攔截。
+
+## 📈 L2 解耦與模組化重構計畫 (L2 Decoupling & Refactoring Plan)
+
+為避免主畫面單體腳本 `MainUI.gd` 淪為「上帝類別 (God Class)」而導致遊戲維護性崩潰，我們在此規劃 L2 解耦架構，並完全以 TDD (測試驅動開發) 流程實作：
+
+### 1. 單一職責拆分 (SRP)
+*   **Model (數據與狀態機)**:
+    *   將血量、Token、Combo計數、手牌陣列等狀態抽取至獨立的資源檔 `GameState.gd` 中。
+    *   `GameState.gd` 負責管理數值變更與發射相對應的 Godot 信號 (例如 `signal hp_changed(new_val)`)。
+*   **View (視覺元件解耦)**:
+    *   將倒數計時器 (Turn Timer)、血量進度條 (HP Bars)、遊戲結束結算 (GameOverOverlay) 拆分為獨立的子場景，掛載專屬小腳本。
+    *   這些小腳本只負責動畫更新與自身的排版渲染，例如 `TimerUI.gd` 專門負責倒數計時大字型渲染與紅色警告。
+*   **Controller (協調與接線)**:
+    *   `MainUI.gd` 將大幅簡化至 100 行內，唯一的職責是在 `_ready()` 內將 `GameState` 的狀態信號連接到對應的 `View` 子節點更新函數上。
+
+### 2. TDD 測試驅動重構流程 (L2 TDD Workflow)
+在實作解耦重構時，必須嚴格遵守以下三部曲，確保 100% 邏輯覆蓋率與零 UI 耦合：
+
+```text
+  [步驟 1: 紅燈階段] ──> [步驟 2: 綠燈階段] ──> [步驟 3: 重構階段]
+  撰寫無頭單元測試       實作 GameState         抽取輔助函式與最佳化
+  定義信號與數值邊界     使測試 100% 通過       確保介面 Mocking 物理隔離
+```
+
+*   **紅燈階段 (Red - 測試先行)**：
+    1. 在 `Tests/` 目錄下建立新單元測試檔案 `test_game_state.gd`。
+    2. 在無 UI 實體下，針對未完成的 `GameState` 設計測試斷言：
+       *   **狀態更新測試**：當 `damage` 施加時，`enemy_hp` 必須相應減少，且扣血信號 `signal enemy_hp_changed` 必須成功發射。
+       *   **智慧回合結束測試**：當手牌費用皆高於剩餘 mana 時，測試 `GameState.check_smart_end_turn()` 是否應回傳 `true`。
+       *   **Combo 倍率計算測試**：連續打出同類別卡牌時，測試數值乘積是否符合預期倍率。
+    3. 執行測試並確認其因為未實作功能而亮紅燈（Fail）。
+    
+*   **綠燈階段 (Green - 快速實作)**：
+    1. 實作最小限度的 `GameState.gd` 邏輯，僅滿足測試案例的要求。
+    2. 執行無頭測試 `HeadlessRunner.gd`，使所有測試案例全數通過，指示燈轉為綠色（Pass）。
+    
+*   **重構階段 (Refactor - 模組解耦)**：
+    1. 優化 `GameState.gd` 的程式碼結構，將複雜運算拆分成輔助函式。
+    2. 確保 `GameState.gd` 中沒有任何 `Node` 視圖元件或 `TextureRect` 等渲染邏輯的引進。
+    3. 再次執行單元測試，確保重構後功能未遭破壞（Regression Testing）。
+    
+*   **介面 Mocking 與 UI 連動**：
+    *   針對 `View` 元件（例如 `TimerUI.gd`），建立一個 Mock 的 GameState 介面，在不啟動真實回合時序的情況下，模擬 mana/時間變更的信號，藉此單獨測試 UI 的警告閃爍與霓虹特效更新。
