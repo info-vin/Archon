@@ -207,7 +207,7 @@ func _ready() -> void:
 	enemy_avatar = TextureRect.new()
 	enemy_avatar.custom_minimum_size = Vector2(120, 180)
 	enemy_avatar.size = Vector2(120, 180)
-	enemy_avatar.position = Vector2(1012, 130)
+	enemy_avatar.position = Vector2(982, 130)
 	enemy_avatar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	enemy_avatar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	$UILayer/UIRoot.add_child(enemy_avatar)

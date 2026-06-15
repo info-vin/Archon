@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://hf1u7ub2k5wo"
-valid=false
+uid="uid://c05vlwminoleo"
+path="res://.godot/imported/bug_normal.png-3180e03c5a6ffa00e74d618c8a6eb0a9.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://Assets/Images/bug_normal.png"
+dest_files=["res://.godot/imported/bug_normal.png-3180e03c5a6ffa00e74d618c8a6eb0a9.ctex"]
 
 [params]
 

@@ -63,9 +63,9 @@ text = "◆ Tokens: 5/5 | [Block] 0 | [Deck] 10"
 
 [node name="EnemyHUD" type="VBoxContainer" parent="UILayer/UIRoot" unique_id=222876468]
 layout_mode = 0
-offset_left = 782.0
+offset_left = 752.0
 offset_top = 20.0
-offset_right = 1132.0
+offset_right = 1102.0
 offset_bottom = 120.0
 
 [node name="EnemyName" type="Label" parent="UILayer/UIRoot/EnemyHUD" unique_id=1702632716]

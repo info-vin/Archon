@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ds0a8gbt3su2c"
-valid=false
+uid="uid://cflp7jc3kfn1o"
+path="res://.godot/imported/bug_easy.png-a3d544b99c8cae6f9e2012cba504d903.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://Assets/Images/bug_easy.png"
+dest_files=["res://.godot/imported/bug_easy.png-a3d544b99c8cae6f9e2012cba504d903.ctex"]
 
 [params]
 

@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://be1f3xj5qhn0o"
-valid=false
+uid="uid://ca10q4qis56vr"
+path="res://.godot/imported/player_lead.png-2ca76db1fb765defa36e5b6369e7f62c.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://Assets/Images/player_lead.png"
+dest_files=["res://.godot/imported/player_lead.png-2ca76db1fb765defa36e5b6369e7f62c.ctex"]
 
 [params]
 
