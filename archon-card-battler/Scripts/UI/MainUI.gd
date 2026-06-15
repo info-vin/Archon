@@ -27,20 +27,12 @@ var error_sound: AudioStreamPlayer
 # Turn Timer & Help system
 var turn_timer: float = 30.0
 var timer_label: Label
-var help_overlay: ColorRect = null
+var help_overlay: Control = null
 
 var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
 
 # Dynamic vector icon HUD elements
-var hud_container: HBoxContainer
-var token_icon: VectorIcon
-var token_label: Label
-var block_icon: VectorIcon
-var block_label: Label
-var deck_icon: VectorIcon
-var deck_label: Label
-var discard_icon: VectorIcon
-var discard_label: Label
+var hud_container: TokenHud
 
 # Dynamic textures and HP overlays
 @onready var player_name = $UILayer/UIRoot/PlayerHUD/PlayerName
@@ -104,83 +96,9 @@ func _ready() -> void:
 	mana_label.visible = false
 	
 	# Dynamically assemble the premium Vector HUD layout
-	hud_container = HBoxContainer.new()
-	hud_container.add_theme_constant_override("separation", 12)
-	
-	var VectorIconScript = preload("res://Scripts/UI/VectorIcon.gd")
-	
-	# 1. Tokens
-	token_icon = VectorIconScript.new()
-	token_icon.type = VectorIcon.IconType.TOKEN
-	token_icon.color = Color(0.0, 0.8, 1.0)
-	token_icon.custom_minimum_size = Vector2(18, 18)
-	hud_container.add_child(token_icon)
-	
-	token_label = Label.new()
-	token_label.add_theme_font_override("font", cjk_font)
-	token_label.add_theme_font_size_override("font_size", 16)
-	hud_container.add_child(token_label)
-	
-	# Separator 1
-	var sep1 = Label.new()
-	sep1.text = "|"
-	sep1.add_theme_font_override("font", cjk_font)
-	sep1.add_theme_font_size_override("font_size", 16)
-	sep1.modulate = Color(0.3, 0.3, 0.3)
-	hud_container.add_child(sep1)
-	
-	# 2. Block
-	block_icon = VectorIconScript.new()
-	block_icon.type = VectorIcon.IconType.BLOCK
-	block_icon.color = Color(0.2, 0.9, 0.6)
-	block_icon.custom_minimum_size = Vector2(18, 18)
-	hud_container.add_child(block_icon)
-	
-	block_label = Label.new()
-	block_label.add_theme_font_override("font", cjk_font)
-	block_label.add_theme_font_size_override("font_size", 16)
-	hud_container.add_child(block_label)
-	
-	# Separator 2
-	var sep2 = Label.new()
-	sep2.text = "|"
-	sep2.add_theme_font_override("font", cjk_font)
-	sep2.add_theme_font_size_override("font_size", 16)
-	sep2.modulate = Color(0.3, 0.3, 0.3)
-	hud_container.add_child(sep2)
-	
-	# 3. Deck
-	deck_icon = VectorIconScript.new()
-	deck_icon.type = VectorIcon.IconType.DECK
-	deck_icon.color = Color(1.0, 0.8, 0.2)
-	deck_icon.custom_minimum_size = Vector2(18, 18)
-	hud_container.add_child(deck_icon)
-	
-	deck_label = Label.new()
-	deck_label.add_theme_font_override("font", cjk_font)
-	deck_label.add_theme_font_size_override("font_size", 16)
-	hud_container.add_child(deck_label)
-	
-	# Separator 3
-	var sep3 = Label.new()
-	sep3.text = "|"
-	sep3.add_theme_font_override("font", cjk_font)
-	sep3.add_theme_font_size_override("font_size", 16)
-	sep3.modulate = Color(0.3, 0.3, 0.3)
-	hud_container.add_child(sep3)
-	
-	# 4. Discard
-	discard_icon = VectorIconScript.new()
-	discard_icon.type = VectorIcon.IconType.DISCARD
-	discard_icon.color = Color(1.0, 0.4, 0.4)
-	discard_icon.custom_minimum_size = Vector2(18, 18)
-	hud_container.add_child(discard_icon)
-	
-	discard_label = Label.new()
-	discard_label.add_theme_font_override("font", cjk_font)
-	discard_label.add_theme_font_size_override("font_size", 16)
-	hud_container.add_child(discard_label)
-	
+	var TokenHudScript = preload("res://Scripts/UI/TokenHud.gd")
+	hud_container = TokenHudScript.new()
+	hud_container.setup_hud(cjk_font)
 	$UILayer/UIRoot/PlayerHUD.add_child(hud_container)
 	
 	# Hide the End Turn button as requested (shortcut Space/Enter and auto-timer will handle it)
@@ -281,123 +199,26 @@ func show_help_overlay() -> void:
 	if help_overlay != null:
 		help_overlay.queue_free()
 		
-	help_overlay = ColorRect.new()
-	help_overlay.name = "HelpOverlay"
-	help_overlay.color = Color(0, 0, 0, 0.9)
-	help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var HelpOverlayScript = preload("res://Scripts/UI/HelpOverlay.gd")
+	help_overlay = HelpOverlayScript.new()
+	help_overlay.setup_overlay(cjk_font)
+	help_overlay.closed.connect(func(): help_overlay = null)
 	$UILayer/UIRoot.add_child(help_overlay)
-	help_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	var center_container = CenterContainer.new()
-	help_overlay.add_child(center_container)
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	var v_box = VBoxContainer.new()
-	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	v_box.add_theme_constant_override("separation", 15)
-	center_container.add_child(v_box)
-	
-	var title = Label.new()
-	title.text = "遊戲說明 (GAME MANUAL)"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
-	title.add_theme_font_override("font", cjk_font)
-	v_box.add_child(title)
-	
-	var rules = Label.new()
-	rules.text = "【核心規則】\n" + \
-		"1. 玩家為 Tech Lead [TECH LEAD]，敵人為專案技術債 Bug。\n" + \
-		"2. 卡牌來自真實 Git commit，依照變更行數決定 Token 花費、攻擊與防禦。\n" + \
-		"3. 每次出牌會累積 COMBO，傷害會以乘數放大！\n" + \
-		"4. 重構自癒：打出 [重構] 卡牌時，可額外獲得傷害值 50% 的防禦護盾。\n" + \
-		"5. 回合時間：每回合有 30 秒限制，或當 Token 消耗完時會自動結束回合。\n\n" + \
-		"【快捷鍵說明】\n" + \
-		"• [H] 鍵：開啟此遊戲說明\n" + \
-		"• [ESC] 鍵：關閉遊戲說明\n" + \
-		"• [Space / Enter] 鍵：結束玩家回合"
-	rules.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	rules.add_theme_font_size_override("font_size", 16)
-	rules.add_theme_font_override("font", cjk_font)
-	v_box.add_child(rules)
-	
-	var close_btn = Button.new()
-	close_btn.text = "關閉說明 (ESC)"
-	close_btn.custom_minimum_size = Vector2(200, 40)
-	close_btn.pressed.connect(hide_help_overlay)
-	close_btn.add_theme_font_override("font", cjk_font)
-	v_box.add_child(close_btn)
 
 func hide_help_overlay() -> void:
 	if help_overlay != null:
-		help_overlay.queue_free()
-		help_overlay = null
+		help_overlay.close()
 
 func show_difficulty_selection() -> void:
 	end_turn_button.disabled = true
 	
-	var overlay = ColorRect.new()
-	overlay.name = "DifficultyOverlay"
-	overlay.color = Color(0, 0, 0, 0.8)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var DifficultyOverlayScript = preload("res://Scripts/UI/DifficultyOverlay.gd")
+	var overlay = DifficultyOverlayScript.new()
+	overlay.setup_overlay(cjk_font)
+	overlay.difficulty_selected.connect(func(diff): select_difficulty(diff))
 	$UILayer/UIRoot.add_child(overlay)
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	var center_container = CenterContainer.new()
-	overlay.add_child(center_container)
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	var v_box = VBoxContainer.new()
-	v_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	v_box.add_theme_constant_override("separation", 20)
-	center_container.add_child(v_box)
-	
-	var title = Label.new()
-	title.text = "SELECT DIFFICULTY / 選擇難度"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 40)
-	title.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0))
-	title.add_theme_font_override("font", cjk_font)
-	v_box.add_child(title)
-	
-	var desc = Label.new()
-	desc.text = "（難度將影響敵人的血量、每回合自動增加的護盾與隨時間成長的力量）"
-	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc.add_theme_font_size_override("font_size", 16)
-	desc.add_theme_font_override("font", cjk_font)
-	v_box.add_child(desc)
-	
-	var btn_easy = Button.new()
-	btn_easy.text = "簡單 (Easy) - Target: <5 Turns"
-	btn_easy.custom_minimum_size = Vector2(300, 50)
-	btn_easy.pressed.connect(func(): select_difficulty(0, overlay))
-	btn_easy.add_theme_font_override("font", cjk_font)
-	v_box.add_child(btn_easy)
-	
-	var btn_normal = Button.new()
-	btn_normal.text = "普通 (Normal) - Target: ~8 Turns"
-	btn_normal.custom_minimum_size = Vector2(300, 50)
-	btn_normal.pressed.connect(func(): select_difficulty(1, overlay))
-	btn_normal.add_theme_font_override("font", cjk_font)
-	v_box.add_child(btn_normal)
-	
-	var btn_hard = Button.new()
-	btn_hard.text = "困難 (Hard) - Target: 20-50 Turns"
-	btn_hard.custom_minimum_size = Vector2(300, 50)
-	btn_hard.pressed.connect(func(): select_difficulty(2, overlay))
-	btn_hard.add_theme_font_override("font", cjk_font)
-	v_box.add_child(btn_hard)
-	
-	var btn_expert = Button.new()
-	btn_expert.text = "超難 (Expert) - Target: 50+ Turns"
-	btn_expert.custom_minimum_size = Vector2(300, 50)
-	btn_expert.pressed.connect(func(): select_difficulty(3, overlay))
-	btn_expert.add_theme_font_override("font", cjk_font)
-	v_box.add_child(btn_expert)
 
-func select_difficulty(diff: int, overlay: Node) -> void:
-	overlay.queue_free()
-	
+func select_difficulty(diff: int) -> void:
 	match diff:
 		0: # EASY
 			enemy_name.text = "程式缺陷 (Bug - Easy)"
@@ -531,13 +352,15 @@ func _on_enemy_hp_changed(current_hp: int, max_hp: int) -> void:
 		enemy_hp_text.text = "%d / %d HP" % [current_hp, max_hp]
 
 func _on_player_block_changed(current_block: int) -> void:
-	block_label.text = str(current_block)
+	if hud_container and hud_container.block_label:
+		hud_container.block_label.text = str(current_block)
 
 func _on_enemy_block_changed(current_block: int) -> void:
 	_update_enemy_intent()
 
 func _on_mana_changed(current_mana: int, max_mana: int) -> void:
-	token_label.text = "%d/%d" % [current_mana, max_mana]
+	if hud_container and hud_container.token_label:
+		hud_container.token_label.text = "%d/%d" % [current_mana, max_mana]
 
 func _on_combo_changed(combo_count: int, combo_category: String) -> void:
 	if combo_count > 1:
@@ -574,10 +397,14 @@ func _update_enemy_intent() -> void:
 	enemy_intent.text = intent_text
 
 func update_hand_ui() -> void:
-	token_label.text = "%d/%d" % [game_state.player_mana, game_state.player_max_mana]
-	block_label.text = str(game_state.player_block)
-	deck_label.text = str(deck_manager.get_deck_size())
-	discard_label.text = str(deck_manager.get_discard_size())
+	if hud_container:
+		hud_container.update_values(
+			game_state.player_mana,
+			game_state.player_max_mana,
+			game_state.player_block,
+			deck_manager.get_deck_size(),
+			deck_manager.get_discard_size()
+		)
 	
 	_update_enemy_intent()
 	
