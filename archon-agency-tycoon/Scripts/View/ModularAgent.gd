@@ -162,14 +162,14 @@ func apply_agent_data(agent_data: AgentResource) -> void:
     # Automatically play correct animation based on state
     match agent_data.state:
         AgentResource.AgentState.WORKING:
-            play_work_animation()
+            play_work_animation(agent_data)
         AgentResource.AgentState.RESTING:
-            play_rest_animation()
+            play_rest_animation(agent_data)
         _:
             stop_animation()
 
 # Animation hook for working state
-func play_work_animation() -> void:
+func play_work_animation(agent_data: AgentResource) -> void:
     stop_animation()
     
     if tool_sprite:
@@ -181,12 +181,26 @@ func play_work_animation() -> void:
     active_tween.parallel().tween_property(tool_sprite, "rotation_degrees", 15.0, 0.2)
     active_tween.tween_property(tool_sprite, "position:y", 0.0, 0.2).set_trans(Tween.TRANS_SINE)
     active_tween.parallel().tween_property(tool_sprite, "rotation_degrees", 0.0, 0.2)
+    
     # Body bobs slightly
     active_tween.parallel().tween_property(body_sprite, "scale:y", 0.95, 0.2)
     active_tween.tween_property(body_sprite, "scale:y", 1.0, 0.2)
+    
+    # 🏃 Sequence frame swapping step (Working action frames loop)
+    # We swap textures in parallel to simulate hands typing / working
+    if agent_data.gender == 0:
+        # Female action sequence (part_006: Stand, part_007: Move leg left, part_008: Move leg right)
+        active_tween.parallel().tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_007.png"))).set_delay(0.1)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_008.png"))).set_delay(0.2)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_006.png"))).set_delay(0.1)
+    else:
+        # Male action sequence (part_010: Stand, part_011: Move leg left, part_012: Move leg right)
+        active_tween.parallel().tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_011.png"))).set_delay(0.1)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_012.png"))).set_delay(0.2)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png"))).set_delay(0.1)
 
 # Animation hook for resting state
-func play_rest_animation() -> void:
+func play_rest_animation(agent_data: AgentResource) -> void:
     stop_animation()
     
     if tool_sprite:
@@ -228,4 +242,5 @@ func stop_animation() -> void:
         tool_sprite.visible = true
     if eyes_sprite:
         eyes_sprite.modulate.a = 1.0
+
 
