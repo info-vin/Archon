@@ -7,7 +7,6 @@ var agent_views = {}
 
 
 @onready var ticker: RichTextLabel = $VBox/TopBar/HBox/TickerLabel
-@onready var backlog_title: Label = $VBox/BottomBar/VBox/Label
 @onready var dev_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom/Label
 @onready var sales_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom/Label
 @onready var qa_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom/Label
@@ -73,14 +72,49 @@ func _ready() -> void:
 	_setup_initial_game()
 	_update_ui()
 	_update_static_labels()
+	_setup_room_styles()
 
 
+
+
+func _setup_room_styles() -> void:
+	var rooms = [
+		{"node": dev_room, "label": dev_room_label, "color": Color("#39ff14")},
+		{"node": sales_room, "label": sales_room_label, "color": Color("#fde910")},
+		{"node": qa_room, "label": qa_room_label, "color": Color("#ff003c")},
+		{"node": break_room, "label": break_room_label, "color": Color("#b026ff")}
+	]
+	
+	for data in rooms:
+		if data["node"] == null: continue
+		var panel: PanelContainer = data["node"]
+		var label: Label = data["label"]
+		var c: Color = data["color"]
+		
+		# Colorize the label font
+		label.add_theme_color_override("font_color", c)
+		
+		# Colorize the panel border
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0.0, 0.0, 0.0, 0.5)
+		style.border_width_left = 2
+		style.border_width_top = 2
+		style.border_width_right = 2
+		style.border_width_bottom = 2
+		style.border_color = c * 1.5 # Overbright for neon glow
+		style.corner_radius_top_left = 4
+		style.corner_radius_top_right = 4
+		style.corner_radius_bottom_right = 4
+		style.corner_radius_bottom_left = 4
+		
+		panel.add_theme_stylebox_override("panel", style)
 
 func _on_lang_button_pressed() -> void:
 	current_lang_index = (current_lang_index + 1) % langs.size()
 	TranslationServer.set_locale(langs[current_lang_index])
 	
 	_update_static_labels()
+	_setup_room_styles()
 	_update_ui()
 	
 	# 更新現有卡片的語言
@@ -89,7 +123,6 @@ func _on_lang_button_pressed() -> void:
 			child._update_text()
 
 func _update_static_labels() -> void:
-	backlog_title.text = tr("UI_BACKLOG")
 	dev_room_label.text = tr("ROOM_DEV")
 	sales_room_label.text = tr("ROOM_SALES")
 	qa_room_label.text = tr("ROOM_QA")
