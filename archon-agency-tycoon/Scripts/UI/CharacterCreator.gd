@@ -12,6 +12,7 @@ signal closed
 @onready var outfit_btn: Button = $HBox/ControlArea/OutfitHBox/OutfitBtn
 @onready var tool_btn: Button = $HBox/ControlArea/ToolHBox/ToolBtn
 @onready var color_slider: HSlider = $HBox/ControlArea/ColorHBox/ColorSlider
+@onready var randomize_btn: Button = $HBox/ControlArea/Actions/RandomizeBtn
 @onready var recruit_btn: Button = $HBox/ControlArea/Actions/RecruitBtn
 @onready var cancel_btn: Button = $HBox/ControlArea/Actions/CancelBtn
 
@@ -48,6 +49,7 @@ func _ready() -> void:
     if outfit_btn: outfit_btn.pressed.connect(_on_outfit_pressed)
     if tool_btn: tool_btn.pressed.connect(_on_tool_pressed)
     if color_slider: color_slider.value_changed.connect(_on_color_changed)
+    if randomize_btn: randomize_btn.pressed.connect(_on_randomize_pressed)
     if recruit_btn: recruit_btn.pressed.connect(_on_recruit_pressed)
     if cancel_btn: cancel_btn.pressed.connect(_on_cancel_pressed)
     
@@ -67,6 +69,7 @@ func _update_translations() -> void:
     $HBox/ControlArea/OutfitHBox/Label.text = tr("UI_OUTFIT")
     $HBox/ControlArea/ToolHBox/Label.text = tr("UI_TOOL")
     $HBox/ControlArea/ColorHBox/Label.text = tr("UI_HAIR_COLOR")
+    if randomize_btn: randomize_btn.text = tr("UI_RANDOMIZE")
     recruit_btn.text = tr("UI_RECRUIT")
     cancel_btn.text = tr("UI_CANCEL")
     
@@ -97,6 +100,21 @@ func _on_tool_pressed() -> void:
 
 func _on_color_changed(value: float) -> void:
     hair_hue = value
+    _update_preview()
+
+func _on_randomize_pressed() -> void:
+    gender = randi() % 2
+    hair_style = (randi() % 3) + 1
+    outfit_style = (randi() % 2) + 1
+    tool_style = (randi() % 3) + 1
+    hair_hue = randf() * 360.0
+    
+    gender_btn.text = tr("UI_GENDER_FEMALE") if gender == 0 else tr("UI_GENDER_MALE")
+    hair_style_btn.text = tr("UI_STYLE") + " " + str(hair_style)
+    outfit_btn.text = tr("UI_OUTFIT") + " " + str(outfit_style)
+    tool_btn.text = tr("UI_TOOL") + " " + str(tool_style)
+    color_slider.value = hair_hue
+    
     _update_preview()
     
 func _on_anim_idle() -> void:

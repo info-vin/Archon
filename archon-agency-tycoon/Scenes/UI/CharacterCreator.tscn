@@ -174,6 +174,11 @@ max_value = 360.0
 layout_mode = 2
 theme_override_constants/separation = 15
 
+[node name="RandomizeBtn" type="Button" parent="HBox/ControlArea/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_RANDOMIZE"
+
 [node name="RecruitBtn" type="Button" parent="HBox/ControlArea/Actions"]
 layout_mode = 2
 size_flags_horizontal = 3
