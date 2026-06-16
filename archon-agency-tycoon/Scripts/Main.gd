@@ -119,6 +119,7 @@ func _setup_room_styles() -> void:
 		style.corner_radius_bottom_left = 4
 		
 		panel.add_theme_stylebox_override("panel", style)
+		panel.set_meta("neon_color", c)
 
 func _on_lang_button_pressed() -> void:
 	current_lang_index = (current_lang_index + 1) % langs.size()
@@ -469,11 +470,12 @@ func _update_minimap() -> void:
 		if room == null: continue
 		var rect = ColorRect.new()
 		rect.color = Color(0.2, 0.2, 0.2, 0.5)
-		var style = room.get_theme_stylebox("panel")
-		if style and style is StyleBoxFlat:
-			rect.color = style.border_color
-			rect.color.a = 0.3
-
+		if room.has_meta("neon_color"):
+			rect.color = room.get_meta("neon_color")
+			rect.color.a = 0.5 # Make it semi-transparent but clearly visible
+			
+		# Add a subtle border by drawing a smaller rect inside? Or just keep it as a solid block.
+		# A solid block with 0.5 alpha is perfect for a radar map.
 		rect.position = offset + room.position * uniform_scale
 		rect.size = room.size * uniform_scale
 		minimap_container.add_child(rect)
