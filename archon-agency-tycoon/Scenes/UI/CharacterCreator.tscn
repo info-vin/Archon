@@ -21,7 +21,7 @@ layout_mode = 2
 theme_override_constants/separation = 30
 
 [node name="PreviewArea" type="Control" parent="HBox"]
-custom_minimum_size = Vector2(250, 0)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
 [node name="Background" type="ColorRect" parent="HBox/PreviewArea"]
@@ -46,7 +46,8 @@ offset_right = 16.0
 offset_bottom = 16.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(5, 5)
+scale = Vector2(3.5, 3.5)
+
 
 [node name="Body" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
 layout_mode = 1
