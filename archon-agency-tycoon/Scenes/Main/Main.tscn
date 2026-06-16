@@ -13,6 +13,8 @@
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_build.svg" id="icon_build"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_tasks.svg" id="icon_tasks"]
 
+[ext_resource type="Texture2D" path="res://Assets/Icons/icon_lang.svg" id="icon_lang"]
+
 [node name="Main" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -44,41 +46,28 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TopBar" type="PanelContainer" parent="VBox"]
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 
 [node name="HBox" type="HBoxContainer" parent="VBox/TopBar"]
 layout_mode = 2
 alignment = 1
 
-[node name="FundsLabel" type="Label" parent="VBox/TopBar/HBox"]
+[node name="TickerLabel" type="RichTextLabel" parent="VBox/TopBar/HBox"]
 layout_mode = 2
-text = "UI_FUNDS"
-
-[node name="FundsValue" type="Label" parent="VBox/TopBar/HBox"]
-layout_mode = 2
-text = "$500"
-
-[node name="Spacer" type="Control" parent="VBox/TopBar/HBox"]
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-
-[node name="RepLabel" type="Label" parent="VBox/TopBar/HBox"]
-layout_mode = 2
-text = "UI_REP"
-
-[node name="RepValue" type="Label" parent="VBox/TopBar/HBox"]
-layout_mode = 2
-text = "100"
-
-[node name="Spacer2" type="Control" parent="VBox/TopBar/HBox"]
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "[color=#888888]ARCHON CORP | DATE:[/color] [color=#ffffff]OCT 26[/color] [color=#888888]| FUNDS:[/color] [color=#39ff14]$500[/color] [color=#888888]| REP:[/color] [color=#39ff14]100[/color]"
+scroll_active = false
+autowrap_mode = 0
 
 [node name="LangButton" type="Button" parent="VBox/TopBar/HBox"]
-custom_minimum_size = Vector2(150, 40)
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-text = "Language: 中文"
+tooltip_text = "Language"
+icon = ExtResource("icon_lang")
+icon_alignment = 1
+expand_icon = true
 
 [node name="GameTickTimer" type="Timer" parent="."]
 wait_time = 1.0
@@ -244,6 +233,7 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="TasksBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
@@ -254,6 +244,7 @@ vertical_icon_alignment = 0
 expand_icon = true
 
 [node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
@@ -264,6 +255,7 @@ vertical_icon_alignment = 0
 expand_icon = true
 
 [node name="ExpandRoomBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12

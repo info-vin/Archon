@@ -6,9 +6,7 @@ var tycoon_manager
 var agent_views = {}
 
 
-@onready var funds_label: Label = $VBox/TopBar/HBox/FundsValue
-@onready var funds_title: Label = $VBox/TopBar/HBox/FundsLabel
-@onready var rep_title: Label = $VBox/TopBar/HBox/RepLabel
+@onready var ticker: RichTextLabel = $VBox/TopBar/HBox/TickerLabel
 @onready var backlog_title: Label = $VBox/BottomBar/VBox/Label
 @onready var dev_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom/Label
 @onready var sales_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom/Label
@@ -26,6 +24,7 @@ var agent_views = {}
 var current_lang_index = 0
 var langs = ["zh_TW", "en", "ja"]
 var lang_names = ["中文", "English", "日本語"]
+var tick_count: int = 0
 
 var crisis_tweens = {}
 
@@ -80,7 +79,7 @@ func _ready() -> void:
 func _on_lang_button_pressed() -> void:
 	current_lang_index = (current_lang_index + 1) % langs.size()
 	TranslationServer.set_locale(langs[current_lang_index])
-	lang_button.text = "Language: " + lang_names[current_lang_index]
+	
 	_update_static_labels()
 	_update_ui()
 	
@@ -90,8 +89,6 @@ func _on_lang_button_pressed() -> void:
 			child._update_text()
 
 func _update_static_labels() -> void:
-	funds_title.text = tr("UI_FUNDS")
-	rep_title.text = tr("UI_REP")
 	backlog_title.text = tr("UI_BACKLOG")
 	dev_room_label.text = tr("ROOM_DEV")
 	sales_room_label.text = tr("ROOM_SALES")
@@ -188,12 +185,20 @@ func _get_active_task_for_agent(agent_id: int) -> int:
 	return -1
 
 func _on_tick_timer_timeout() -> void:
+	tick_count += 1
 	task_manager.process_tick()
 	agent_manager.process_tick()
 	_update_ui()
 
 func _update_ui() -> void:
-	funds_label.text = "$%d" % tycoon_manager.funds
+	if ticker:
+		var f_color = "#39ff14" if tycoon_manager.funds > 0 else "#ff003c"
+		var r_color = "#39ff14" if tycoon_manager.reputation > 50 else "#ff003c"
+		ticker.text = "[color=#888888]ARCHON CORP | TICK:[/color] [color=#ffffff]%d[/color] [color=#888888]| %s:[/color] [color=%s]$%d[/color] [color=#888888]| %s:[/color] [color=%s]%d[/color]" % [
+			tick_count, 
+			tr("UI_FUNDS"), f_color, tycoon_manager.funds,
+			tr("UI_REP"), r_color, tycoon_manager.reputation
+		]
 	
 	# Update character positions and animations based on their state
 	for agent_id in agent_views.keys():
