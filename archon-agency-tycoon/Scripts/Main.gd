@@ -97,6 +97,18 @@ func _update_static_labels() -> void:
 	sales_room_label.text = tr("ROOM_SALES")
 	qa_room_label.text = tr("ROOM_QA")
 	break_room_label.text = tr("ROOM_BREAK")
+	
+	var right_panel_event_log = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLogLabel")
+	if right_panel_event_log: right_panel_event_log.text = tr("UI_EVENT_LOG")
+	
+	var right_panel_agent_status = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/AgentStatusLabel")
+	if right_panel_agent_status: right_panel_agent_status.text = tr("UI_AGENT_STATUS")
+	
+	var recruit_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/RecruitBtn")
+	if recruit_btn: recruit_btn.text = tr("UI_CHARACTER_CREATOR")
+	
+	var expand_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
+	if expand_btn: expand_btn.text = tr("UI_EXPAND_ROOM")
 
 func _setup_initial_game() -> void:
 	# 招募三位核心員工

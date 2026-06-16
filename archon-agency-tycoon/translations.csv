@@ -37,3 +37,6 @@ UI_CANCEL,Cancel,取消,キャンセル
 UI_STYLE,Style,樣式,スタイル
 UI_EXPAND_ROOM,Build Room,擴建房間,部屋を拡張
 UI_BUILD_PANEL,Select room to expand...,選擇要擴建的房間類型...,拡張する部屋を選択...
+UI_EVENT_LOG,Event Log,事件日誌,イベントログ
+UI_AGENT_STATUS,Agent Status,員工狀態,エージェント状態
+UI_RANDOMIZE,Randomize,隨機生成,ランダム化
