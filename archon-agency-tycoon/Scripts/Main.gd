@@ -171,7 +171,7 @@ func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	if agent_view_scene:
 		var agent_view = agent_view_scene.instantiate()
 		agent_view.position = Vector2(150, 130) # Center
-		agent_view.scale = Vector2(0.2, 0.2) # Scale down to fit rooms
+		agent_view.scale = Vector2(0.8, 0.8) # Scale to fit desks and match isometric dimensions
 		room.add_child(agent_view)
 		agent_views[agent_id] = agent_view
 
