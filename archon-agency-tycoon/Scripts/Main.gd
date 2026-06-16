@@ -57,7 +57,7 @@ func _ready() -> void:
 		save_adapter = preload("res://Scripts/Logic/SaveSystems/LocalSaveAdapter.gd").new()
 		
 	tycoon_manager.set_save_adapter(save_adapter)
-	await tycoon_manager.load_game()
+	var loaded = await tycoon_manager.load_game(agent_manager, task_manager)
 	
 	# 預設語言
 	TranslationServer.set_locale(langs[current_lang_index])
@@ -65,9 +65,14 @@ func _ready() -> void:
 	if lang_button:
 		lang_button.pressed.connect(_on_lang_button_pressed)
 		
+	
 	var recruit_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/RecruitBtn")
 	if recruit_btn:
 		recruit_btn.pressed.connect(_on_recruit_btn_pressed)
+	
+	var save_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/SaveBtn")
+	if save_btn:
+		save_btn.pressed.connect(_on_save_btn_pressed)
 		
 	var expand_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
 	if expand_btn:
@@ -76,7 +81,10 @@ func _ready() -> void:
 	if game_tick_timer:
 		game_tick_timer.timeout.connect(_on_tick_timer_timeout)
 		
-	_setup_initial_game()
+	if not loaded:
+		_setup_initial_game()
+	else:
+		_setup_loaded_game()
 	_update_ui()
 	_update_static_labels()
 	_setup_room_styles()
@@ -152,11 +160,45 @@ func _update_static_labels() -> void:
 	var tasks_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/TasksBtn")
 	if tasks_btn: tasks_btn.text = tr("UI_BACKLOG")
 	
+	
+	var save_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/SaveBtn")
+	if save_btn: save_btn.text = tr("UI_SAVE")
+
 	var recruit_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/RecruitBtn")
 	if recruit_btn: recruit_btn.text = tr("UI_CHARACTER_CREATOR")
 	
 	var expand_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
 	if expand_btn: expand_btn.text = tr("UI_EXPAND_ROOM")
+
+func _setup_loaded_game() -> void:
+	var drop_script = preload("res://Scripts/UI/DevRoomDropZone.gd")
+	if drop_script:
+		dev_room.set_script(drop_script)
+		sales_room.set_script(drop_script)
+	
+	for agent_id in range(agent_manager.agents.size()):
+		var agent = agent_manager.get_agent(agent_id)
+		var target_room = dev_room
+		if agent.role == 0: target_room = sales_room
+		elif agent.role == 2: target_room = qa_room
+		_spawn_agent_view(agent_id, target_room)
+	
+	var card_scene = preload("res://Scenes/UI/TaskCard.tscn")
+	for task_id in range(task_manager.tasks.size()):
+		var task = task_manager.tasks[task_id]
+		if not task.is_completed and task.assigned_agent_id == -1:
+			if card_scene and task_container:
+				var card = card_scene.instantiate()
+				task_container.add_child(card)
+				card.setup(task_id, task.task_name, task.required_ticks, task.reward_funds)
+
+func _on_save_btn_pressed() -> void:
+	_log_event("[color=#00ffff]Saving game...[/color]")
+	var result = await tycoon_manager.save_game(agent_manager, task_manager)
+	if result:
+		_log_event("[color=#39ff14]Game Saved Successfully![/color]")
+	else:
+		_log_event("[color=#ff003c]Save Failed![/color]")
 
 func _setup_initial_game() -> void:
 	# 招募三位核心員工

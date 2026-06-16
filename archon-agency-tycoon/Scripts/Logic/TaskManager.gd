@@ -117,3 +117,23 @@ func process_tick() -> void:
                     task.is_completed = true
                     agent.state = 0 # 0 is IDLE
                     task_completed.emit(i, task.reward_funds)
+
+func to_dict() -> Dictionary:
+    var arr = []
+    for t in tasks:
+        arr.append(t.to_dict())
+    return {
+        "tasks": arr,
+        "sales_progress": sales_progress
+    }
+
+func from_dict(data: Dictionary) -> void:
+    tasks.clear()
+    sales_progress.clear()
+    if data.has("tasks") and data["tasks"] is Array:
+        for t_data in data["tasks"]:
+            var task = preload("res://Scripts/Resources/TaskResource.gd").from_dict(t_data)
+            tasks.append(task)
+    if data.has("sales_progress") and data["sales_progress"] is Dictionary:
+        for key in data["sales_progress"].keys():
+            sales_progress[int(key)] = data["sales_progress"][key]

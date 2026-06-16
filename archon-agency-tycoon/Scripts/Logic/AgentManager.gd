@@ -38,3 +38,16 @@ func process_tick() -> void:
         elif agent.energy <= 0:
             agent.energy = 0
             agent.state = AgentResource.AgentState.EXHAUSTED
+
+func to_dict() -> Dictionary:
+    var arr = []
+    for a in agents:
+        arr.append(a.to_dict())
+    return {"agents": arr}
+
+func from_dict(data: Dictionary) -> void:
+    agents.clear()
+    if data.has("agents") and data["agents"] is Array:
+        for a_data in data["agents"]:
+            var agent = AgentResource.from_dict(a_data)
+            agents.append(agent)

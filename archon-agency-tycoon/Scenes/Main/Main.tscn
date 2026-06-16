@@ -263,6 +263,17 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
+[node name="SaveBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+modulate = Color(0, 1.5, 1.5, 1)
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "UI_SAVE"
+icon = ExtResource("icon_tasks")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
 [node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(60, 60)

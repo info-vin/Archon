@@ -17,16 +17,20 @@ signal crisis_resolved(room_name: String)
 func set_save_adapter(adapter: SaveAdapter) -> void:
     save_adapter = adapter
 
-func save_game() -> bool:
+func save_game(agent_manager: AgentManager, task_manager: TaskManager) -> bool:
     if save_adapter == null:
         push_error("Cannot save: No SaveAdapter provided.")
         return false
         
     var data = {
-        "funds": funds,
-        "reputation": reputation,
-        "current_phase": current_phase,
-        "active_crises": active_crises
+        "tycoon": {
+            "funds": funds,
+            "reputation": reputation,
+            "current_phase": current_phase,
+            "active_crises": active_crises
+        },
+        "agents": agent_manager.to_dict(),
+        "tasks": task_manager.to_dict()
     }
     
     var result = save_adapter.save_data(data)
@@ -34,7 +38,7 @@ func save_game() -> bool:
         return result
     return await result
 
-func load_game() -> bool:
+func load_game(agent_manager: AgentManager, task_manager: TaskManager) -> bool:
     if save_adapter == null:
         push_error("Cannot load: No SaveAdapter provided.")
         return false
@@ -43,20 +47,28 @@ func load_game() -> bool:
     if data is Dictionary:
         if data.is_empty():
             return false
-        _apply_save_data(data)
+        _apply_save_data(data, agent_manager, task_manager)
         return true
     
     var awaited_data = await data
     if awaited_data.is_empty():
         return false
-    _apply_save_data(awaited_data)
+    _apply_save_data(awaited_data, agent_manager, task_manager)
     return true
 
-func _apply_save_data(data: Dictionary) -> void:
-    if data.has("funds"): funds = int(data["funds"])
-    if data.has("reputation"): reputation = int(data["reputation"])
-    if data.has("current_phase"): current_phase = int(data["current_phase"])
-    if data.has("active_crises"): active_crises = data["active_crises"]
+func _apply_save_data(data: Dictionary, agent_manager: AgentManager, task_manager: TaskManager) -> void:
+    if data.has("tycoon"):
+        var tycoon_data = data["tycoon"]
+        if tycoon_data.has("funds"): funds = int(tycoon_data["funds"])
+        if tycoon_data.has("reputation"): reputation = int(tycoon_data["reputation"])
+        if tycoon_data.has("current_phase"): current_phase = int(tycoon_data["current_phase"])
+        if tycoon_data.has("active_crises"): active_crises = tycoon_data["active_crises"]
+        
+    if data.has("agents") and agent_manager != null:
+        agent_manager.from_dict(data["agents"])
+        
+    if data.has("tasks") and task_manager != null:
+        task_manager.from_dict(data["tasks"])
 
 func setup_connections(task_manager) -> void:
     if not task_manager.task_completed.is_connected(_on_task_completed):
