@@ -269,20 +269,50 @@ func _toggle_help_menu() -> void:
 			help_menu_instance.get_node("VBox/CloseButton").text = tr("UI_CLOSE")
 
 func _on_recruit_btn_pressed() -> void:
+	var recruit_cost = 500
+	if tycoon_manager.funds < recruit_cost:
+		print("Insufficient funds to recruit! Need $500.")
+		return
+		
+	# 1. Create Modal Overlay
+	var overlay = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7) # Dim background
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(overlay)
+	
+	# 2. Instantiate Character Creator
 	var creator_scene = load("res://Scenes/UI/CharacterCreator.tscn")
 	if creator_scene:
 		var creator = creator_scene.instantiate()
+		
+		# Popup animation
+		creator.scale = Vector2.ZERO
+		creator.pivot_offset = Vector2(380, 250) # Approximate center
+		var tween = create_tween()
+		tween.tween_property(creator, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
 		add_child(creator)
+		
+		# 3. Handle Successful Recruitment
 		creator.character_created.connect(func(agent_data):
+			tycoon_manager.funds -= recruit_cost # Deduct funds
 			var new_id = agent_manager.add_agent(agent_data)
+			
 			# Spawn in correct room based on role
 			var target_room = dev_room
 			if agent_data.role == 0:
 				target_room = sales_room
 			elif agent_data.role == 2:
 				target_room = qa_room
+			
 			_spawn_agent_view(new_id, target_room)
 			_update_ui()
+			overlay.queue_free() # Remove overlay
+		)
+		
+		# 4. Handle Cancellation
+		creator.closed.connect(func():
+			overlay.queue_free() # Remove overlay without deducting funds
 		)
 
 func _on_expand_room_pressed() -> void:

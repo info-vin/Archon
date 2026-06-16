@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://c6q8y7xxxxxx"]
 
 [ext_resource type="Script" path="res://Scripts/View/ModularAgent.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://c75dxid2eydxl" path="res://Assets/Characters/去背的body_base.png" id="2_body"]
-[ext_resource type="Texture2D" uid="uid://djlt2y40mbutd" path="res://Assets/Characters/去背的eyes.png" id="3_eyes"]
-[ext_resource type="Texture2D" uid="uid://dqnfd53ay2o48" path="res://Assets/Characters/去背的hair_white.png" id="4_hair"]
-[ext_resource type="Texture2D" uid="uid://qcfb5gnluklr" path="res://Assets/Characters/去背的outfit_magical_robe.png" id="5_outfit"]
-[ext_resource type="Texture2D" uid="uid://k6c76qnux810" path="res://Assets/Characters/去背的tool.png" id="6_tool"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Alice_Parts/part_006.png" id="2_body"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Alice_Parts/part_016.png" id="3_eyes"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Alice_Parts/part_001.png" id="4_hair"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Alice_Parts/part_021.png" id="5_outfit"]
+[ext_resource type="Texture2D" path="res://Assets/Characters/Alice_Parts/part_033.png" id="6_tool"]
 
 [node name="ModularAgent" type="Node2D"]
 script = ExtResource("1_script")
