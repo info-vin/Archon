@@ -1,9 +1,9 @@
 extends SceneTree
 
 func _init():
-	var main_scene = load("res://Scenes/UI/CharacterCreator.tscn")
+	var main_scene = load("res://Scenes/Main/Main.tscn")
 	if not main_scene:
-		print("Error: Could not load CharacterCreator.tscn")
+		print("Error: Could not load Main.tscn")
 		quit(1)
 		return
 		
@@ -18,7 +18,7 @@ func _on_frame():
 	frame_count += 1
 	if frame_count == 10:
 		var img = root.get_viewport().get_texture().get_image()
-		var dest_path = "/Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/char_creator_screenshot.png"
+		var dest_path = "/Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/ui_screenshot.png"
 		var err = img.save_png(dest_path)
 		if err == OK:
 			print("🟢 SUCCESSFULLY EXPORTED UI SCREENSHOT TO: ", dest_path)

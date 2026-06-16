@@ -43,12 +43,12 @@ func test_crisis_visual_pulse_active() -> void:
     await tree.process_frame
     
     # Trigger crisis spawned on DevRoom
-    view._on_crisis_spawned("DevRoom")
-    assert_true(view.crisis_tweens.has("DevRoom"), "Crisis tween should be registered for DevRoom")
+    view.tycoon_manager.crisis_spawned.emit("DevRoom")
+    assert_not_null(view.dev_room.crisis_tween, "Crisis tween should be active on DevRoom")
     
     # Trigger crisis resolved
-    view._on_crisis_resolved("DevRoom")
-    assert_false(view.crisis_tweens.has("DevRoom"), "Crisis tween should be cleared after resolution")
+    view.tycoon_manager.crisis_resolved.emit("DevRoom")
+    assert_eq(view.dev_room.crisis_tween, null, "Crisis tween should be cleared after resolution")
     assert_eq(view.dev_room.modulate, Color.WHITE, "DevRoom modulate should be reset to white")
     
     view.queue_free()

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="TycoonConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Resources/TycoonConfig.gd" id="1_config"]
+
+[resource]
+script = ExtResource("1_config")
+recruit_cost = 500
+expand_cost = 500
+initial_funds = 500
+initial_reputation = 100
+min_assign_energy = 10
+work_energy_drain = 10
+rest_energy_recovery = 20
+crisis_energy_drain = 5
+rush_base_chance = 0.5
+rush_luck_modifier = 0.03
+rush_fail_energy_penalty = 30
+rush_fail_rep_penalty = 10
+crisis_spread_duration = 3
+crisis_spread_chance = 0.2
+sales_task_ticks_needed = 3
+generated_task_ticks = 3
+generated_task_reward = 300
+max_hair_styles = 3
+max_outfit_styles = 2
+max_tool_styles = 3
+stat_divisor = 5

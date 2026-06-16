@@ -46,8 +46,15 @@ func run_test_suite() -> void:
 	# 尋找所有以 "test_" 開頭的函數並執行
 	for method in get_method_list():
 		if method.name.begins_with("test_"):
+			# 清理 savegame 防止跨測試狀態污染
+			if FileAccess.file_exists("user://savegame.save"):
+				DirAccess.remove_absolute("user://savegame.save")
+			
 			print("\n➡️ Running: ", method.name)
 			await call(method.name)
+			
+			if FileAccess.file_exists("user://savegame.save"):
+				DirAccess.remove_absolute("user://savegame.save")
 			
 	print("\n========== RESULTS ==========")
 	if tests_failed == 0:

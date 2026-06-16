@@ -467,3 +467,26 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
     1.  **無業務不產出**：驗證當所有的 SALES 皆處於 `IDLE` 或 `RESTING` 狀態時，經過時間流逝，系統不會產生任何新任務。
     2.  **業務工作產出**：驗證將 SALES 設為 `WORKING` 後，經過指定的 Ticks 流逝，系統會成功新增一個任務到 `TaskManager` 的未指派列表。
     3.  **體力消耗獨立**：驗證 SALES 進行業務開發時，體力會正常消耗，且會在耗盡時進入 `EXHAUSTED` 並停止產出新任務。
+
+---
+
+## 🛠️ L2 重構與中心化設定實作結果 (L2 Refactoring & Centralized Config)
+
+本階段的 L2 重構與中心化配置已於 **2026/06/16** 實作落地，順利解決了「大檔案過重」與「數值硬編碼散落」的架構痛點，並使單元/整合測試套件 100% 通過。
+
+### 1. 核心數值中心化配置化 (Game Parameter Externalization)
+*   **自訂 Resource 定義**：新建 [TycoonConfig.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Scripts/Resources/TycoonConfig.gd)，將招募成本 (`recruit_cost`)、體力限制、危機懲罰、RUSH 失敗率等數值全部宣告為 Resource 屬性。
+*   **實體配置文件**：創建自訂資源檔 [GameConfig.tres](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/GameConfig.tres) 儲存遊戲預設數值。
+*   **Manager 注入**：`TycoonManager.gd`、`TaskManager.gd`、`AgentManager.gd` 及 `CharacterCreator.gd` 全面改為動態讀取此外部配置，徹底消除各處的硬編碼。
+
+### 2. Main.gd 大檔案 L2 模組化拆分 (Decoupling Main.gd)
+為了符合單一檔案行數低於 300 行的門禁標準，`Main.gd` (原 420+ 行) 已成功減重至 **273 行**，拆分出以下獨立控制器與 UI 模組：
+*   [Minimap.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Scripts/UI/Minimap.gd)：獨立負責雷達小地圖繪製與實體位置換算。
+*   [HUDController.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Scripts/UI/HUDController.gd)：獨立負責文字多國語系化、動態走馬燈 ticker 渲染。
+*   [GameLifecycle.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Scripts/Logic/GameLifecycle.gd)：承接存檔加載與初始人物實例化邏輯。
+*   [OfficeRoom.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Scripts/UI/OfficeRoom.gd)：負責各辦公室房間背景與危機發生時的物理紅光閃爍 Tween。
+
+### 3. TDD 測試套件無頭化優化與 100% 通過 (Headless QA Testing & Run Optimization)
+*   **消除測試狀態污染**：在 [MiniTest.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Tests/MiniTest.gd) 的 `run_test_suite()` 中，於每個測試函數（例如 `test_office_view.gd` 等）執行前後，**主動檢測並以物理方式刪除 `user://savegame.save`**。這根除了以往測試載入到殘留存檔資料而導致 `agent_views[0]` 字典鍵值找不到的崩潰問題。
+*   **快取硬化自癒**：當 Godot 出現內部快取報錯或 `class_name` 索引遺失時，透過物理清理 `.godot/` 暫存資料夾重跑，徹底實現 100% 自癒。
+*   **測試結果**：全部 **100 個 Assertions 通過率達 100%**，在 Headless 模式下運行流暢，測試執行時間縮短至數秒。

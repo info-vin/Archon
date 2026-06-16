@@ -10,7 +10,9 @@ func _initialize() -> void:
 		preload("res://Tests/Unit/test_modular_agent.gd"),
 		preload("res://Tests/Unit/test_office_view.gd"),
 		preload("res://Tests/Unit/test_help_menu.gd"),
-		preload("res://Tests/Unit/test_character_creator.gd")
+		preload("res://Tests/Unit/test_character_creator.gd"),
+		preload("res://Tests/Unit/test_config_injection.gd"),
+		preload("res://Tests/Unit/test_l2_main_integration.gd")
 	]
 	
 	var total_passed = 0

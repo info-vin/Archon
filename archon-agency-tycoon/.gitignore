@@ -1,0 +1,19 @@
+# Godot 4.x gitignore
+.godot/
+*.translation
+
+# Ignore dynamically generated test captures
+game_screenshot.png
+game_screenshot.png.import
+game_screenshot.wav
+game_screenshot.wav.import
+
+# Ignore temporary screenshots and their imports
+*_screenshot.png
+*_screenshot.png.import
+flow_*.png
+flow_*.png.import
+parts_catalog.png
+parts_catalog.png.import
+glow_test.png
+glow_test.png.import

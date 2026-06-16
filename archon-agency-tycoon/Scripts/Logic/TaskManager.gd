@@ -4,12 +4,21 @@ class_name TaskManager
 var tasks: Array[TaskResource] = []
 var agent_manager: AgentManager = null
 var sales_progress: Dictionary = {}
+var config: Resource
 
 signal task_completed(task_id: int, reward: int)
 signal rush_failed(task_id: int, agent_id: int)
 
+func _init() -> void:
+    var res = load("res://GameConfig.tres")
+    if res:
+        set_config(res)
+
 func set_agent_manager(manager: AgentManager) -> void:
     agent_manager = manager
+
+func set_config(p_config: Resource) -> void:
+    config = p_config
 
 func add_task(task: TaskResource) -> int:
     tasks.append(task)
@@ -42,7 +51,8 @@ func assign_task(task_id: int, agent_id: int) -> bool:
         # push_warning("Role mismatch.")
         return false
         
-    if agent.energy < 10:
+    var min_energy = config.min_assign_energy if config else 10
+    if agent.energy < min_energy:
         # push_warning("Agent too tired.")
         return false
         
@@ -62,8 +72,12 @@ func rush_task(task_id: int) -> bool:
     if agent == null or agent.state != 1:
         return false
         
-    # Probability formula: 50% base + up to 30% from Luck adjusted by Energy
-    var success_prob = 0.5 + (agent.luck * 0.03) * (float(agent.energy) / 100.0)
+    var base_chance = config.rush_base_chance if config else 0.5
+    var luck_mod = config.rush_luck_modifier if config else 0.03
+    var energy_penalty = config.rush_fail_energy_penalty if config else 30
+    
+    # Probability formula: base + up to luck*luck_mod adjusted by Energy
+    var success_prob = base_chance + (agent.luck * luck_mod) * (float(agent.energy) / 100.0)
     
     if randf() <= success_prob:
         # Success: Instant completion
@@ -75,7 +89,7 @@ func rush_task(task_id: int) -> bool:
     else:
         # Failure: Energy drain, task reset, spawn crisis
         var agent_id = task.assigned_agent_id
-        agent_manager.drain_agent_energy(agent_id, 30)
+        agent_manager.drain_agent_energy(agent_id, energy_penalty)
         task.assigned_agent_id = -1
         task.current_progress = 0
         rush_failed.emit(task_id, agent_id)
@@ -85,6 +99,11 @@ func process_tick() -> void:
     if agent_manager == null:
         return
         
+    var work_drain = config.work_energy_drain if config else 10
+    var sales_ticks_needed = config.sales_task_ticks_needed if config else 3
+    var gen_ticks = config.generated_task_ticks if config else 3
+    var gen_reward = config.generated_task_reward if config else 300
+    
     # Process Sales Agents
     for i in range(agent_manager.agents.size()):
         var agent = agent_manager.agents[i]
@@ -93,13 +112,14 @@ func process_tick() -> void:
                 sales_progress[i] = 0
             
             # Charisma scales task generation speed
-            var scale = 1 + int(agent.charisma / 5)
+            var divisor = config.stat_divisor if config else 5
+            var scale = 1 + int(agent.charisma / divisor)
             sales_progress[i] += scale
-            agent_manager.drain_agent_energy(i, 10)
+            agent_manager.drain_agent_energy(i, work_drain)
             
-            if sales_progress[i] >= 3:
+            if sales_progress[i] >= sales_ticks_needed:
                 sales_progress[i] = 0
-                var new_task = preload("res://Scripts/Resources/TaskResource.gd").new("Client Project", AgentResource.AgentRole.DEV, 3, 300)
+                var new_task = preload("res://Scripts/Resources/TaskResource.gd").new("Client Project", AgentResource.AgentRole.DEV, gen_ticks, gen_reward)
                 add_task(new_task)
                 # Sales agent stays WORKING to generate more tasks until exhausted or manually stopped
         
@@ -109,9 +129,10 @@ func process_tick() -> void:
             var agent = agent_manager.get_agent(task.assigned_agent_id)
             if agent != null and agent.state == 1: # 1 is WORKING
                 # code_speed scales dev work speed
-                var work_increment = 1 + int(agent.code_speed / 5)
+                var divisor = config.stat_divisor if config else 5
+                var work_increment = 1 + int(agent.code_speed / divisor)
                 task.current_progress += work_increment
-                agent_manager.drain_agent_energy(task.assigned_agent_id, 10)
+                agent_manager.drain_agent_energy(task.assigned_agent_id, work_drain)
                 
                 if task.current_progress >= task.required_ticks:
                     task.is_completed = true
@@ -137,3 +158,4 @@ func from_dict(data: Dictionary) -> void:
     if data.has("sales_progress") and data["sales_progress"] is Dictionary:
         for key in data["sales_progress"].keys():
             sales_progress[int(key)] = data["sales_progress"][key]
+

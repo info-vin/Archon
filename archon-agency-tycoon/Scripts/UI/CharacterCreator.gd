@@ -30,9 +30,19 @@ var character_name: String = ""
 
 # The persistent data
 var current_agent_data: AgentResource
+var config: Resource
+
+func set_config(p_config: Resource) -> void:
+    config = p_config
 
 func _ready() -> void:
     current_agent_data = preload("res://Scripts/Resources/AgentResource.gd").new("New Employee", 1)
+    
+    # Try to load GameConfig automatically if not set
+    if config == null:
+        var config_path = "res://GameConfig.tres"
+        if ResourceLoader.exists(config_path):
+            config = load(config_path)
     
     # 1. Setup role options
     if role_option:
@@ -84,17 +94,20 @@ func _on_gender_pressed() -> void:
     _update_preview()
 
 func _on_hair_style_pressed() -> void:
-    hair_style = (hair_style % 3) + 1
+    var max_styles = config.max_hair_styles if config else 3
+    hair_style = (hair_style % max_styles) + 1
     hair_style_btn.text = tr("UI_STYLE") + " " + str(hair_style)
     _update_preview()
 
 func _on_outfit_pressed() -> void:
-    outfit_style = (outfit_style % 2) + 1
+    var max_styles = config.max_outfit_styles if config else 2
+    outfit_style = (outfit_style % max_styles) + 1
     outfit_btn.text = tr("UI_OUTFIT") + " " + str(outfit_style)
     _update_preview()
 
 func _on_tool_pressed() -> void:
-    tool_style = (tool_style % 3) + 1
+    var max_styles = config.max_tool_styles if config else 3
+    tool_style = (tool_style % max_styles) + 1
     tool_btn.text = tr("UI_TOOL") + " " + str(tool_style)
     _update_preview()
 
@@ -103,10 +116,14 @@ func _on_color_changed(value: float) -> void:
     _update_preview()
 
 func _on_randomize_pressed() -> void:
+    var max_hair = config.max_hair_styles if config else 3
+    var max_outfit = config.max_outfit_styles if config else 2
+    var max_tool = config.max_tool_styles if config else 3
+    
     gender = randi() % 2
-    hair_style = (randi() % 3) + 1
-    outfit_style = (randi() % 2) + 1
-    tool_style = (randi() % 3) + 1
+    hair_style = (randi() % max_hair) + 1
+    outfit_style = (randi() % max_outfit) + 1
+    tool_style = (randi() % max_tool) + 1
     hair_hue = randf() * 360.0
     
     gender_btn.text = tr("UI_GENDER_FEMALE") if gender == 0 else tr("UI_GENDER_MALE")
@@ -156,3 +173,4 @@ func _on_recruit_pressed() -> void:
 func _on_cancel_pressed() -> void:
     closed.emit()
     if is_inside_tree(): queue_free()
+
