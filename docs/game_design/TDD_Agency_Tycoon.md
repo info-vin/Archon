@@ -97,6 +97,26 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
     *   將下方待辦清單 (Backlog) 的「任務工單」拖曳至對應的「部門房間」以自動指派閒置員工。
     *   點擊並拖曳「員工實體」至休息室以恢復體力 (Energy)。
 
+### 🪟 介面架構與創角系統 (UI Architecture & Character Creator)
+
+為確保高品質的視覺表現與活體動畫，UI 系統捨棄靜態的 `TextureRect` 堆疊，採用 **SubViewport 虛擬攝影棚** 架構。
+
+1. **SubViewport 動態渲染 (Live Animation in UI)**
+   * **架構**：在 `CharacterCreator.tscn` 內使用 `SubViewportContainer` > `SubViewport` > `Camera2D` 的層級。
+   * **優勢**：將實體化的 `ModularAgent` 節點直接投入 UI 視窗中。這讓玩家在捏臉時，可以直接看到角色流暢地播放「呼吸 (Rest)」、「敲擊鍵盤 (Work)」、「閒置 (Idle)」等動態 `Tween` 補間動畫，而非死板的靜態圖。
+
+2. **創角進出流程與資源掛鉤 (Entry/Exit Flow & Costs)**
+   * **進入 (Entry)**：
+     * 玩家在 `Main.tscn` 點擊招募按鈕。
+     * 系統檢查資金是否滿足招募成本 (預設 $500)。若不足則阻擋。
+     * 生成半透明的模態遮罩 (Modal Overlay, 黑底 70% 透明度)，暫停主畫面互動。
+     * `CharacterCreator` 以 `Tween.TRANS_BACK` 的動畫從畫面中心彈出。
+   * **操作與預覽**：
+     * 提供 `UI_RANDOMIZE` 按鈕，利用 `randi()` 和 `randf()` 隨機改變角色的性別、髮型、衣服與 RGB 色相。
+   * **離開與實體化 (Exit & Instantiation)**：
+     * 若點擊 `UI_CANCEL`：關閉介面，清除遮罩，不扣資金。
+     * 若點擊 `UI_RECRUIT`：發出 `character_created` 信號 ➔ 主程式收到後扣除 $500 ➔ 將新的 `AgentResource` 送入 `AgentManager` ➔ 根據職位 (DEV/SALES/QA) 將這名新員工「實例化」到場景對應的辦公室房間內，並開始正常遊戲循環。
+
 ---
 
 ## 🎨 素材生成與動畫策略 (Asset & Animation Strategy)
