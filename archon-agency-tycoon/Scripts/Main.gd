@@ -464,21 +464,43 @@ func _update_minimap() -> void:
 	var offset_y = (minimap_size.y - content_y * uniform_scale) / 2.0
 	var offset = Vector2(offset_x, offset_y)
 	
-	# Draw rooms
-	var rooms = [dev_room, sales_room, qa_room, break_room]
-	for room in rooms:
-		if room == null: continue
-		var rect = ColorRect.new()
-		rect.color = Color(0.2, 0.2, 0.2, 0.5)
-		if room.has_meta("neon_color"):
-			rect.color = room.get_meta("neon_color")
-			rect.color.a = 0.5 # Make it semi-transparent but clearly visible
+	# Draw all rooms and hallways
+	for room in office_grid.get_children():
+		var final_node: Control
+		
+		# Find if this room has a background texture
+		var tex = null
+		for c in room.get_children():
+			if c is TextureRect:
+				tex = c.texture
+				break
+				
+		if tex != null:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = tex
+			tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			# Dim the texture a bit to make agents pop
+			tex_rect.modulate = Color(0.6, 0.6, 0.6, 1.0)
+			final_node = tex_rect
+		else:
+			var rect = ColorRect.new()
+			rect.color = Color(0.15, 0.15, 0.15, 1.0) # Dark gray for hallways
+			final_node = rect
 			
-		# Add a subtle border by drawing a smaller rect inside? Or just keep it as a solid block.
-		# A solid block with 0.5 alpha is perfect for a radar map.
-		rect.position = offset + room.position * uniform_scale
-		rect.size = room.size * uniform_scale
-		minimap_container.add_child(rect)
+		final_node.position = offset + room.position * uniform_scale
+		final_node.size = room.size * uniform_scale
+		minimap_container.add_child(final_node)
+		
+		# Draw neon border if it's a room
+		if room.has_meta("neon_color"):
+			var border = ReferenceRect.new()
+			border.editor_only = false
+			border.border_color = room.get_meta("neon_color")
+			border.border_width = 1.0
+			border.position = final_node.position
+			border.size = final_node.size
+			minimap_container.add_child(border)
 
 	# Draw agents
 	for agent_id in agent_views.keys():
