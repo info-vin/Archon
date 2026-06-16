@@ -106,12 +106,12 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
 ### 1. 模組化角色與狀態記憶 (Modular Characters & State Persistence)
 *   **MVC 架構對齊**：
     *   **Model (`AgentResource`)**: 新增 `equipped_hair`, `equipped_outfit`, `equipped_tool` 等字串或 ID 欄位，輕量化記憶角色的當下裝備狀態，確保存檔/讀檔能 100% 還原外觀。
-    *   **View (`ModularAgent.tscn`)**: 透過動態讀取 Model 狀態，利用多個 `Sprite2D` 節點進行 Z-Index 疊加：
-        *   `Layer 0: BaseBody` (素體)
-        *   `Layer 1: Eyes/Face` (表情)
-        *   `Layer 2: Hair` (髮型)
-        *   `Layer 3: Outfit` (職業服裝，如：魔法袍、西裝)
-        *   `Layer 4: Tool/Accessory` (手持物，如：塔羅牌、咖啡杯、筆電)
+    *   **View (`ModularAgent.tscn`)**: 透過動態讀取 Model 狀態，利用多個 `Sprite2D` 節點進 行 Z-Index 疊加：
+        *   `Layer 0: BaseBody` (素體，z_index=0)
+        *   `Layer 1: Outfit` (職業服裝，如：魔法袍、西裝，z_index=1)
+        *   `Layer 2: Hair` (髮型，z_index=2)
+        *   `Layer 3: Eyes/Face` (表情，z_index=3) ─ 強制渲染在頭髮之上，確保瀏海不會遮擋眼神。
+        *   `Layer 4: Tool/Accessory` (手持物，如：塔羅牌、咖啡杯、筆電，z_index=4)
 *   **優勢**：透過動態抽換 Texture，可以用極少的素材庫排列組合出無數種員工，未來也可輕易導入「裝備提升效率」的機制。
 
 ### 2. Python 自動化資產管線與紙娃娃對位 (Automated Asset Pipeline & Alignment)
@@ -130,7 +130,7 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
         *   髮型 (`Hair`)：`Vector2(0, -18)`，使後髮貼合頭部
         *   服裝 (`Outfit`)：`Vector2(0, 2)`
         *   道具 (`Tool`)：`Vector2(18, 6)`，縮放為 `0.8`
-    *   **圖層渲染順序 (Z-Index Layering)**：為了避免背面長髮遮蓋五官，場景與程式中的渲染順序必須正確覆蓋：`Hair` (z=0, 最底) ➔ `BaseBody` (z=1) ➔ `Outfit` (z=2) ➔ `Eyes` (z=3, 前臉與瀏海) ➔ `Tool` (z=4, 最頂)。這能確保後髮在後、前臉在最前、瀏海蓋在臉上，且面部從髮型的鏤空區域正確透出。
+    *   **圖層渲染順序 (Z-Index Layering)**：為了避免瀏海遮蓋五官表情，場景與程式中的渲染順序必須正確覆蓋：`BaseBody` (z=0, 最底) ➔ `Outfit` (z=1) ➔ `Hair` (z=2) ➔ `Eyes` (z=3, 強制渲染於頭髮之上) ➔ `Tool` (z=4, 最頂)。這能確保面部表情永遠從髮型之上正確透出，不會被瀏海像素覆蓋。
 
 ### 3. 動畫驅動機制 (View Layer Animations)
 > ⚠️ **架構鐵律**：所有的動畫都屬於 View 層，透過監聽 Model 層發出的信號 (`Signals`) 來觸發。**動畫表現絕對不會、也不應該被納入 TDD 的自動化測試範圍。**
