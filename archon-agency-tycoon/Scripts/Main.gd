@@ -104,6 +104,9 @@ func _update_static_labels() -> void:
 	var right_panel_agent_status = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/AgentStatusLabel")
 	if right_panel_agent_status: right_panel_agent_status.text = tr("UI_AGENT_STATUS")
 	
+	var tasks_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/TasksBtn")
+	if tasks_btn: tasks_btn.text = tr("UI_BACKLOG")
+	
 	var recruit_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/RecruitBtn")
 	if recruit_btn: recruit_btn.text = tr("UI_CHARACTER_CREATOR")
 	

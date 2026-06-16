@@ -9,6 +9,10 @@
 [ext_resource type="Texture2D" path="res://Assets/Rooms/break_room_bg.png" id="7_break_bg"]
 [ext_resource type="Environment" uid="uid://env_neon" path="res://env.tres" id="8_env"]
 
+[ext_resource type="Texture2D" path="res://Assets/Icons/icon_recruit.svg" id="icon_recruit"]
+[ext_resource type="Texture2D" path="res://Assets/Icons/icon_build.svg" id="icon_build"]
+[ext_resource type="Texture2D" path="res://Assets/Icons/icon_tasks.svg" id="icon_tasks"]
+
 [node name="Main" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -226,7 +230,6 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="VBox/BottomBar/VBox"]
 layout_mode = 2
-text = "UI_BACKLOG"
 horizontal_alignment = 1
 
 [node name="TaskContainer" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
@@ -240,12 +243,32 @@ layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
-custom_minimum_size = Vector2(180, 40)
+[node name="TasksBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "UI_BACKLOG"
+icon = ExtResource("icon_tasks")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
+
+[node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "UI_CHARACTER_CREATOR"
+icon = ExtResource("icon_recruit")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
 
 [node name="ExpandRoomBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
-custom_minimum_size = Vector2(180, 40)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "UI_EXPAND_ROOM"
+icon = ExtResource("icon_build")
+icon_alignment = 1
+vertical_icon_alignment = 0
+expand_icon = true
