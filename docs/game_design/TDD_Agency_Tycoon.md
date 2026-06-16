@@ -114,14 +114,23 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
         *   `Layer 4: Tool/Accessory` (手持物，如：塔羅牌、咖啡杯、筆電)
 *   **優勢**：透過動態抽換 Texture，可以用極少的素材庫排列組合出無數種員工，未來也可輕易導入「裝備提升效率」的機制。
 
-### 2. Python 自動化資產管線 (Automated Asset Pipeline)
+### 2. Python 自動化資產管線與紙娃娃對位 (Automated Asset Pipeline & Alignment)
 *   為解決純 GDScript 處理影像效能過低的問題，確立 **方案 A：保持 Python 作為 Pipeline 工具**。
 *   **實作流程**：
     1.  建立 `scripts/process_sprites.py`，使用 `scipy.ndimage` 與 `PIL`。
     2.  將 AI 或美術生成的整張精靈圖 (Spritesheet) 放入 `raw_assets/`。
-    3.  執行腳本自動進行：硬邊去背 -> 物理連通域分析 -> **動態斷崖偵測 (排除雜訊)** -> 標準化置中為 `64x64` 透明小圖。
+    3.  執行腳本自動進行：硬邊去背 -> 物理連通域分析 -> **動態斷崖偵測 (排除雜訊)** -> **全域等比例縮放 (Uniform Scaling)** -> 標準化置中為 `64x64` 透明小圖。
     4.  直接輸出至 `Assets/Characters/Alice_Parts/` 供 Godot 直接引用。
-    *   **對位優勢**：由於所有部件皆被標準化置中於 `64x64` 畫布，Godot 內的 `Sprite2D` 節點座標皆可設定為 `(0, 0)` 完美重疊，實現「零偏移設定 (Zero-Offset Setup)」。
+*   **對位與縮放校正優勢**：
+    *   **全域等比例縮放 (Uniform Scaling)**：為避免個別部件因高度不同被個別縮放為 60px 造成比例失衡（如頭部與身體一樣大），改以最大部件的最大維度（417px）計算出全域的單一縮放係數 (`0.14388`)，以保持各部件正確的原始比例關係。
+    *   **最近鄰縮放 (Nearest Neighbor)**：縮放時使用 nearest neighbor 插值法以防 Lanczos 造成的像素模糊，使導出的 pixel art 維持原生的銳利感。
+    *   **精確位移對位 (Precise Offsets)**：所有部件在 64x64 中皆為物理置中，因此在 `ModularAgent.gd` 和 `CharacterCreator.gd` 中必須套用精確偏移量：
+        *   素體 (`BaseBody`)：`Vector2(0, 0)`
+        *   臉部/頭部 (`Eyes`)：`Vector2(0, -27)`，使其完美卡在脖子上方
+        *   髮型 (`Hair`)：`Vector2(0, -18)`，使後髮貼合頭部
+        *   服裝 (`Outfit`)：`Vector2(0, 2)`
+        *   道具 (`Tool`)：`Vector2(18, 6)`，縮放為 `0.8`
+    *   **圖層渲染順序 (Z-Index Layering)**：為了避免背面長髮遮蓋五官，場景與程式中的渲染順序必須正確覆蓋：`Hair` (z=0, 最底) ➔ `BaseBody` (z=1) ➔ `Outfit` (z=2) ➔ `Eyes` (z=3, 前臉與瀏海) ➔ `Tool` (z=4, 最頂)。這能確保後髮在後、前臉在最前、瀏海蓋在臉上，且面部從髮型的鏤空區域正確透出。
 
 ### 3. 動畫驅動機制 (View Layer Animations)
 > ⚠️ **架構鐵律**：所有的動畫都屬於 View 層，透過監聽 Model 層發出的信號 (`Signals`) 來觸發。**動畫表現絕對不會、也不應該被納入 TDD 的自動化測試範圍。**
@@ -171,6 +180,59 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
 *   **[UI 狂熱者] (UI Enthusiast)** 特質：DEV 結案時，`FRONTEND_UI` 解決方式的機率加權 $+30\%$。
 *   **[重構強迫症] (Refactor Obsessive)** 特質：DEV 結案時，`REFACTOR_MODULARIZATION` 解決方式的機率加權 $+40\%$。
 *   **[效能狂人] (Performance Freak)** 特質：QA 結案時，`PERFORMANCE_AUDIT` 解決方式的機率加權 $+30\%$。
+
+---
+
+## 🚀 TDD 第二階段：多職業協作與資源循環 (Multi-Agent Synergy)
+
+我們的第二個目標是實現《play_mock.sh》中定義的三職業循環，確保 SALES 能夠獨立推動遊戲的任務產出，讓遊戲脫離「手動塞任務」的假象。
+
+*   **TDD 更新要點 (實作規格)**:
+    1.  **業務系統 (Sales Loop)**：
+        *   擴充 `TaskManager` 的邏輯：當有 `SALES` (Role=0) 處於 `WORKING` 狀態時，每經過一定的 Ticks，自動生成一個給 `DEV` (Role=1) 的新任務至 Backlog。
+    2.  **初始狀態對齊 (Initial State Parity)**：
+        *   遊戲初始化時，必須正確招募並實例化 Alice(DEV), Bob(SALES), Charlie(QA)。
+
+*   **LEAN TDD 斷言**: 
+    1.  **無業務不產出**：驗證當所有的 SALES 皆處於 `IDLE` 或 `RESTING` 狀態時，經過時間流逝，系統不會產生任何新任務。
+    2.  **業務工作產出**：驗證將 SALES 設為 `WORKING` 後，經過指定的 Ticks 流逝，系統會成功新增一個任務到 `TaskManager` 的未指派列表。
+    3.  **體力消耗獨立**：驗證 SALES 進行業務開發時，體力會正常消耗，且會在耗盡時進入 `EXHAUSTED` 並停止產出新任務。
+
+---
+
+## 🚀 TDD 第六階段：紙娃娃模組化系統 (Modular Paper Doll & Sprite Pipeline)
+
+為了保證遊戲角色的視覺對位、正確比例與遮擋順序，我們在 Phase 6 實作了自動化管線與 Z-Index 控制：
+
+*   **痛點與問題**：
+    1.  **比例失衡**：各部件在匯出時被獨立強制縮放為 60px 邊界，導致頭部和身體一樣大。且使用了 `LANCZOS` 降採樣造成模糊。
+    2.  **圖層遮擋**：`Hair`（包含後髮）節點位於 `Eyes` 之後或 Z-Index 相同，導致面部五官被厚重的後髮完全遮蓋。
+    3.  **位置對齊**：無統一偏移量基準，導致創角預覽 (`CharacterCreator`) 與關卡內 (`ModularAgent`) 出現不同步的「鬼圖」拼接。
+
+*   **實作規格與解決方案**：
+    1.  **全域等比例縮放 (Uniform Scale Factor)**：
+        *   修改 `scripts/process_sprites.py`，以最大部件（417px）計算單一縮放係數 `0.14388`，對所有 34 個 Alice 部件進行全域等比例縮放。
+        *   採用 `NEAREST` 最近鄰插值法，保留像素藝術的銳利邊緣。
+    2.  **圖層 Z-Index 重構規格**：
+        *   `Hair`：`z_index = 0` (最底，後髮渲染在身體後方，而面部可以透過髮型鏤空處透出)
+        *   `BaseBody`：`z_index = 1`
+        *   `Outfit`：`z_index = 2`
+        *   `Eyes`：`z_index = 3` (臉部與前髮/瀏海渲染在最前)
+        *   `Tool`：`z_index = 4` (道具最頂)
+    3.  **精確偏移對位 (Precise Offsets)**：
+        *   修改 `ModularAgent.gd` 和 `CharacterCreator.gd`：
+            *   `BaseBody`：`Vector2(0, 0)`
+            *   `Eyes` (Face)：`Vector2(0, -27)`
+            *   `Hair`：`Vector2(0, -18)`
+            *   `Outfit`：`Vector2(0, 2)`
+            *   `Tool`：`Vector2(18, 6)`，縮放 `0.8`
+    4.  **場景與創角 UI 預覽樹同步**：
+        *   調整 `CharacterCreator.tscn` 中的 Preview 節點順序，使其圖層渲染效果與關卡場景中的實體 `ModularAgent.tscn` 達到 100% 物理對齊。
+
+*   **LEAN TDD 斷言與驗證**:
+    1.  **Z-Index 斷言**：驗證 `ModularAgent` 中各子圖層的 `z_index` 是否符合規格（`Hair` 為 0，`Eyes` 為 3）。
+    2.  **Offset 偏移斷言**：驗證程式運行時 `Eyes` 的 offset 確實被強制對齊為 `Vector2(0, -27)`。
+    3.  **視覺裁判 (game_screenshot.png)**：執行實體渲染測試 `test_capture.gd`，獲取包含正確五官比例與分層的外觀截圖，成功完成視覺對帳。
 
 ---
 

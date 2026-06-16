@@ -38,3 +38,43 @@ theorem energy_drain_upper_bound (e : Int) (h : e <= 100) : drain_energy e <= 10
   split
   · omega
   · omega
+
+-- Define simplified GameState for formal verification
+structure GameState where
+  funds : Int
+  reputation : Int
+  backlog : Int
+  cost : Int  -- constant maintenance cost per tick (e.g. rent/salaries)
+  reward : Int -- reward per completed dev task
+
+-- Define transition under "No Sales, No Active Tasks" condition (Income = 0)
+def tick_no_income (s : GameState) : GameState :=
+  { s with funds := s.funds - s.cost }
+
+-- Theorem 5: Under no income, funds strictly decrease if cost > 0
+theorem funds_strictly_decreases (s : GameState) (h_cost : s.cost > 0) :
+  (tick_no_income s).funds < s.funds := by
+  dsimp [tick_no_income]
+  omega
+
+-- Theorem 6: Funds will eventually drop below 0 if they start below cost
+theorem funds_falls_below_zero_near_limit (s : GameState) (h_funds : s.funds < s.cost) :
+  (tick_no_income s).funds < 0 := by
+  dsimp [tick_no_income]
+  omega
+
+-- Define task backlog transition with Sales (s_active) and Dev (d_active)
+-- If s_active = true, 1 task is produced.
+-- If d_active = true and backlog > 0, 1 task is consumed.
+def transition_backlog (backlog : Int) (s_active : Bool) (d_active : Bool) : Int :=
+  let produced := if s_active then 1 else 0
+  let consumed := if d_active && backlog > 0 then 1 else 0
+  backlog + produced - consumed
+
+-- Theorem 7: If Sales is inactive (s_active = false) and backlog is 0, backlog remains 0 regardless of Dev
+theorem backlog_remains_zero_without_sales (d_active : Bool) :
+  transition_backlog 0 false d_active = 0 := by
+  dsimp [transition_backlog]
+  simp
+
+

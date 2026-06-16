@@ -11,24 +11,24 @@
 script = ExtResource("1_script")
 
 [node name="BaseBody" type="Sprite2D" parent="."]
-z_index = 0
+z_index = 1
 position = Vector2(0, 0)
 texture = ExtResource("2_body")
 
 [node name="Eyes" type="Sprite2D" parent="."]
-z_index = 1
+z_index = 3
 position = Vector2(0, -180)
 scale = Vector2(0.12, 0.12)
 texture = ExtResource("3_eyes")
 
 [node name="Hair" type="Sprite2D" parent="."]
-z_index = 2
+z_index = 0
 position = Vector2(0, -220)
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("4_hair")
 
 [node name="Outfit" type="Sprite2D" parent="."]
-z_index = 3
+z_index = 2
 position = Vector2(0, 10)
 scale = Vector2(0.75, 0.75)
 texture = ExtResource("5_outfit")

@@ -96,9 +96,14 @@ func _update_preview() -> void:
             preview_body.texture = preload("res://Assets/Characters/Alice_Parts/part_006.png")
         else:
             preview_body.texture = preload("res://Assets/Characters/Alice_Parts/part_010.png")
+        preview_body.position = Vector2.ZERO
+        preview_body.scale = Vector2.ONE
         
     if preview_eyes:
         preview_eyes.texture = preload("res://Assets/Characters/Alice_Parts/part_016.png")
+        # Y-offset for head alignment
+        preview_eyes.position = Vector2(0, -27)
+        preview_eyes.scale = Vector2.ONE
     
     # 2. Hair Style
     if preview_hair:
@@ -113,6 +118,9 @@ func _update_preview() -> void:
         # Apply Hue Modulation to Hair
         var hair_color = Color.from_hsv(hair_hue / 360.0, 0.8, 1.0)
         preview_hair.modulate = hair_color
+        # Y-offset for head top coverage
+        preview_hair.position = Vector2(0, -18)
+        preview_hair.scale = Vector2.ONE
     
     # 3. Outfit Style
     if preview_outfit:
@@ -121,6 +129,9 @@ func _update_preview() -> void:
                 preview_outfit.texture = preload("res://Assets/Characters/Alice_Parts/part_021.png")
             2:
                 preview_outfit.texture = preload("res://Assets/Characters/Alice_Parts/part_020.png")
+        # Torso wrap
+        preview_outfit.position = Vector2(0, 2)
+        preview_outfit.scale = Vector2.ONE
             
     # 4. Tool Style
     if preview_tool:
@@ -131,6 +142,10 @@ func _update_preview() -> void:
                 preview_tool.texture = preload("res://Assets/Characters/Alice_Parts/part_031.png")
             3:
                 preview_tool.texture = preload("res://Assets/Characters/Alice_Parts/part_026.png")
+        # Hand alignment
+        preview_tool.position = Vector2(18, 6)
+        preview_tool.scale = Vector2(0.8, 0.8)
+
 
 func _on_recruit_pressed() -> void:
     var name_val = "New Agent"

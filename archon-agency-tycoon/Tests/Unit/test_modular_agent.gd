@@ -1,6 +1,6 @@
 extends MiniTest
 
-func test_zero_offset_positioning() -> void:
+func test_option_a_positioning() -> void:
     var scene = load("res://Scenes/Main/ModularAgent.tscn")
     assert_not_null(scene, "ModularAgent scene should be loadable")
     
@@ -15,10 +15,10 @@ func test_zero_offset_positioning() -> void:
     view.reset_layout_for_option_a()
     
     assert_eq(view.body_sprite.position, Vector2.ZERO, "Body position should be zero")
-    assert_eq(view.eyes_sprite.position, Vector2.ZERO, "Eyes position should be zero")
-    assert_eq(view.hair_sprite.position, Vector2.ZERO, "Hair position should be zero")
-    assert_eq(view.outfit_sprite.position, Vector2.ZERO, "Outfit position should be zero")
-    assert_eq(view.tool_sprite.position, Vector2.ZERO, "Tool position should be zero")
+    assert_eq(view.eyes_sprite.position, Vector2(0, -27), "Eyes position should be aligned")
+    assert_eq(view.hair_sprite.position, Vector2(0, -18), "Hair position should be aligned")
+    assert_eq(view.outfit_sprite.position, Vector2(0, 2), "Outfit position should be aligned")
+    assert_eq(view.tool_sprite.position, Vector2(18, 6), "Tool position should be aligned")
     
     view.queue_free()
 

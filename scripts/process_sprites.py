@@ -72,6 +72,11 @@ def process_spritesheet(image_path, output_dir, target_size=(64, 64)):
     print(f"✂️ 正在執行標準化導出至 {output_dir}...")
     final_selection = all_detected[:final_count]
 
+    # Calculate uniform scale factor based on the largest dimension of any component
+    max_dim_all = max(max(item['size']) for item in final_selection)
+    scale = 60.0 / max_dim_all
+    print(f"📏 Using uniform scale factor: {scale:.5f} (max dim: {max_dim_all})")
+
     for idx, item in enumerate(final_selection):
         min_y, max_y, min_x, max_x = item['bbox']
         obj_w, obj_h = item['size']
@@ -82,15 +87,11 @@ def process_spritesheet(image_path, output_dir, target_size=(64, 64)):
 
         sprite_pil = Image.fromarray(raw_crop)
 
-        # 縮放處理 (稍微縮小留邊，例如最大 60x60)
-        max_dim = 60
-        if obj_w > max_dim or obj_h > max_dim:
-            scale = min(max_dim / obj_w, max_dim / obj_h)
-            new_w, new_h = int(obj_w * scale), int(obj_h * scale)
-            # Ensure dimensions are at least 1x1 to prevent ValueError
-            new_w = max(1, new_w)
-            new_h = max(1, new_h)
-            sprite_pil = sprite_pil.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        # Apply uniform scale factor
+        new_w, new_h = int(obj_w * scale), int(obj_h * scale)
+        new_w = max(1, new_w)
+        new_h = max(1, new_h)
+        sprite_pil = sprite_pil.resize((new_w, new_h), Image.Resampling.NEAREST)
 
         final_w, final_h = sprite_pil.size
         canvas = Image.new("RGBA", target_size, (0, 0, 0, 0))

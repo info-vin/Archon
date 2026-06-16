@@ -16,12 +16,39 @@ var default_scale_x: float = 1.0
 
 # Force zero offset and standard scaling if using standard parts
 func reset_layout_for_option_a() -> void:
-    for sprite in [body_sprite, eyes_sprite, hair_sprite, outfit_sprite, tool_sprite]:
-        if sprite:
-            sprite.position = Vector2.ZERO
-            sprite.scale = Vector2.ONE
-            sprite.rotation = 0.0
-            sprite.modulate = Color.WHITE
+    # 1. Base skeleton positioning
+    if body_sprite:
+        body_sprite.position = Vector2.ZERO
+        body_sprite.scale = Vector2.ONE
+        body_sprite.rotation = 0.0
+        body_sprite.modulate = Color.WHITE
+        
+    # 2. Eyes reside on head: Y-offset is -27
+    if eyes_sprite:
+        eyes_sprite.position = Vector2(0, -27)
+        eyes_sprite.scale = Vector2.ONE
+        eyes_sprite.rotation = 0.0
+        
+    # 3. Hair sits on top of skull: Y-offset is -18
+    if hair_sprite:
+        hair_sprite.position = Vector2(0, -18)
+        hair_sprite.scale = Vector2.ONE
+        hair_sprite.rotation = 0.0
+        
+    # 4. Outfit covers torso: Y-offset is 2
+    if outfit_sprite:
+        outfit_sprite.position = Vector2(0, 2)
+        outfit_sprite.scale = Vector2.ONE
+        outfit_sprite.rotation = 0.0
+        outfit_sprite.modulate = Color.WHITE
+        
+    # 5. Tool held in hand: X-offset is 18, Y-offset is 6, scaled to 0.8
+    if tool_sprite:
+        tool_sprite.position = Vector2(18, 6)
+        tool_sprite.scale = Vector2(0.8, 0.8)
+        tool_sprite.rotation = 0.0
+        tool_sprite.modulate = Color.WHITE
+
 
 func _ready() -> void:
     default_scale_x = scale.x

@@ -49,6 +49,7 @@ from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.agents_api import router as agents_router  # MISSING
 from .api_routes.audio_api import router as audio_router
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
+from .api_routes.game_api import router as game_router
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
 from .api_routes.changes_api import router as changes_router  # NEW IMPORT
@@ -157,6 +158,7 @@ app.include_router(prompts_router)
 # Group 2: Routers that NEED an "/api" prefix (defined without prefix internally)
 app.include_router(auth_router, prefix="/api")
 app.include_router(settings_router, prefix="/api")
+app.include_router(game_router, prefix="/api")
 app.include_router(internal_router)  # Already defines /internal
 
 app.include_router(test_api_router)

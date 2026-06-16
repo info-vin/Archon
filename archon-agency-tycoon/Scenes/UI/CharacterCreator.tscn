@@ -49,24 +49,6 @@ grow_vertical = 2
 scale = Vector2(3.5, 3.5)
 
 
-[node name="Body" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_width = 1.0
-anchor_height = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 3
-
-[node name="Eyes" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_width = 1.0
-anchor_height = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 3
-
 [node name="Hair" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
 layout_mode = 1
 anchors_preset = 15
@@ -76,7 +58,25 @@ grow_horizontal = 2
 grow_vertical = 2
 stretch_mode = 3
 
+[node name="Body" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
 [node name="Outfit" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_width = 1.0
+anchor_height = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 3
+
+[node name="Eyes" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
 layout_mode = 1
 anchors_preset = 15
 anchor_width = 1.0
