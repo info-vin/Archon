@@ -52,9 +52,9 @@ func _initialize() -> void:
 				scaled_tool.set_pixel(x, y, tool_img.get_pixel(src_x, src_y))
 
 	combined_img.blend_rect(body_img, Rect2i(0, 0, 64, 64), Vector2i.ZERO)
-	combined_img.blend_rect(eyes_img, Rect2i(0, 0, 64, 64), Vector2i(0, -14))
-	combined_img.blend_rect(hair_img, Rect2i(0, 0, 64, 64), Vector2i(0, -18))
 	combined_img.blend_rect(outfit_img, Rect2i(0, 0, 64, 64), Vector2i(0, 2))
+	combined_img.blend_rect(hair_img, Rect2i(0, 0, 64, 64), Vector2i(0, -18))
+	combined_img.blend_rect(eyes_img, Rect2i(0, 0, 64, 64), Vector2i(0, -14))
 	combined_img.blend_rect(scaled_tool, Rect2i(0, 0, 64, 64), Vector2i(18, 6))
 
 	# Upscale 8x so it's a clear pixel art artifact (512x512)
