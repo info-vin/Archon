@@ -449,8 +449,14 @@ func _update_minimap() -> void:
 		if child.name != "BG":
 			child.queue_free()
 			
-	var scale_x = minimap_size.x / max(office_grid.size.x, 800.0)
-	var scale_y = minimap_size.y / max(office_grid.size.y, 600.0)
+	var content_x = max(office_grid.size.x, 800.0)
+	var content_y = max(office_grid.size.y, 600.0)
+	var scale_x = minimap_size.x / content_x
+	var scale_y = minimap_size.y / content_y
+	var uniform_scale = min(scale_x, scale_y)
+	var offset_x = (minimap_size.x - content_x * uniform_scale) / 2.0
+	var offset_y = (minimap_size.y - content_y * uniform_scale) / 2.0
+	var offset = Vector2(offset_x, offset_y)
 	
 	# Draw rooms
 	var rooms = [dev_room, sales_room, qa_room, break_room]
@@ -463,8 +469,8 @@ func _update_minimap() -> void:
 			rect.color = style.border_color
 			rect.color.a = 0.3
 			
-		rect.position = room.position * Vector2(scale_x, scale_y)
-		rect.size = room.size * Vector2(scale_x, scale_y)
+		rect.position = offset + room.position * uniform_scale
+		rect.size = room.size * uniform_scale
 		minimap_container.add_child(rect)
 		
 	# Draw agents
@@ -484,6 +490,6 @@ func _update_minimap() -> void:
 		
 		var room_pos = view.get_parent().position
 		var global_pos = room_pos + view.position
-		dot.position = global_pos * Vector2(scale_x, scale_y)
+		dot.position = offset + global_pos * uniform_scale
 		
 		minimap_container.add_child(dot)
