@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" path="res://Assets/Rooms/sales_room_bg.png" id="5_sales_bg"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/qa_room_bg.png" id="6_qa_bg"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/break_room_bg.png" id="7_break_bg"]
-
+[ext_resource type="Environment" uid="uid://env_neon" path="res://env.tres" id="8_env"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -18,6 +18,9 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
 script = ExtResource("2_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("8_env")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -77,101 +80,106 @@ text = "Language: 中文"
 wait_time = 1.0
 autostart = true
 
-[node name="GameArea" type="ScrollContainer" parent="VBox"]
+[node name="HBoxMain" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GameArea" type="ScrollContainer" parent="VBox/HBoxMain"]
+layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("3_panzoom")
 
-[node name="Building" type="CenterContainer" parent="VBox/GameArea"]
+[node name="Building" type="CenterContainer" parent="VBox/HBoxMain/GameArea"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="OfficeGrid" type="GridContainer" parent="VBox/GameArea/Building"]
+[node name="OfficeGrid" type="GridContainer" parent="VBox/HBoxMain/GameArea/Building"]
 layout_mode = 2
 theme_override_constants/h_separation = 15
 theme_override_constants/v_separation = 15
 columns = 3
 
-[node name="DevRoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="DevRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
 layout_mode = 2
 
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/DevRoom"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
 layout_mode = 2
 texture = ExtResource("4_dev_bg")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/DevRoom"]
+[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_DEV"
 horizontal_alignment = 1
 
-[node name="HallwayTop" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="HallwayTop" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
 
-[node name="SalesRoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="SalesRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
 layout_mode = 2
 
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/SalesRoom"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
 layout_mode = 2
 texture = ExtResource("5_sales_bg")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/SalesRoom"]
+[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_SALES"
 horizontal_alignment = 1
 
-[node name="HallwayLeft" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="HallwayLeft" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
 
-[node name="CentralLobby" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="CentralLobby" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(120, 120)
 layout_mode = 2
 
-[node name="HallwayRight" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="HallwayRight" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
 
-[node name="QARoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="QARoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
 layout_mode = 2
 
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/QARoom"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
 layout_mode = 2
 texture = ExtResource("6_qa_bg")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/QARoom"]
+[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_QA"
 horizontal_alignment = 1
 
-[node name="HallwayBottom" type="Panel" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="HallwayBottom" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
 
-[node name="BreakRoom" type="PanelContainer" parent="VBox/GameArea/Building/OfficeGrid"]
+[node name="BreakRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
 layout_mode = 2
 
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/GameArea/Building/OfficeGrid/BreakRoom"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
 layout_mode = 2
 texture = ExtResource("7_break_bg")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Label" type="Label" parent="VBox/GameArea/Building/OfficeGrid/BreakRoom"]
+[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_BREAK"
@@ -179,8 +187,38 @@ horizontal_alignment = 1
 
 
 
+[node name="RightPanel" type="PanelContainer" parent="VBox/HBoxMain"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="VBox/HBoxMain/RightPanel"]
+layout_mode = 2
+
+[node name="EventLogLabel" type="Label" parent="VBox/HBoxMain/RightPanel/VBox"]
+layout_mode = 2
+text = "EVENT LOG"
+horizontal_alignment = 1
+
+[node name="EventLog" type="RichTextLabel" parent="VBox/HBoxMain/RightPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
+
+[node name="HSeparator" type="HSeparator" parent="VBox/HBoxMain/RightPanel/VBox"]
+layout_mode = 2
+
+[node name="AgentStatusLabel" type="Label" parent="VBox/HBoxMain/RightPanel/VBox"]
+layout_mode = 2
+text = "AGENT STATUS"
+horizontal_alignment = 1
+
+[node name="AgentStatusList" type="VBoxContainer" parent="VBox/HBoxMain/RightPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
 [node name="BottomBar" type="PanelContainer" parent="VBox"]
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="VBox/BottomBar"]
@@ -192,6 +230,7 @@ text = "UI_BACKLOG"
 horizontal_alignment = 1
 
 [node name="TaskContainer" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
