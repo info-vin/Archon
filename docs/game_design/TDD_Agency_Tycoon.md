@@ -99,13 +99,24 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
 
 ### 🪟 介面架構與創角系統 (UI Architecture & Character Creator)
 
-為確保高品質的視覺表現與活體動畫，UI 系統捨棄靜態的 `TextureRect` 堆疊，採用 **SubViewport 虛擬攝影棚** 架構。
+為確保高品質的視覺表現與活體動畫，UI 系統捨棄靜態的 `TextureRect` 堆疊，採用 **SubViewport 虛擬攝影棚** 架構，並嚴格遵守 MVC 資料流向（如架構圖所示）。
 
-1. **SubViewport 動態渲染 (Live Animation in UI)**
+1. **MVC 核心資料流向 (Data Flow based on Architecture Diagram)**
+   * **Controller/Logic 互動**：
+     * `CharacterCreatorUI` 不會直接去修改 `ModularAgentView` 的貼圖。
+     * 當玩家拖曳滑桿 (Slider) 或點擊下拉選單 (Dropdown) 時，`CharacterCreatorUI` 會先更新底層的 **Data Layer (Model)** ── 即 `AgentResource` 中的 `Gender`, `HairStyle`, `Color`, `Outfit`, `Tool` 屬性。
+   * **View 的被動渲染 (Passive View Rendering)**：
+     * `ModularAgentView` (像素小人節點) 會被安插在 UI 的 `SubViewport` 中以及主畫面的房間內。
+     * 它只負責一件事：接收 `AgentResource` 資料，並**「依資料渲染動態 Part 圖層與調色」**。這保證了創角預覽與遊戲內實體的 100% 外觀一致性。
+   * **管理與分派流 (Management Flow)**：
+     * 當玩家在 `CharacterCreatorUI` 按下確認招募後，產生好的 `AgentResource` 會被送交給 `AgentManager` 進行「狀態管理」。
+     * `MainView` (主畫面) 會展示房間底圖，並根據 `AgentManager` 的狀態與 `TaskManager` 的「Tick 分派任務」結果，決定 `ModularAgentView` 要在哪個房間播放什麼動畫。
+
+2. **SubViewport 動態渲染細節 (Live Animation in UI)**
    * **架構**：在 `CharacterCreator.tscn` 內使用 `SubViewportContainer` > `SubViewport` > `Camera2D` 的層級。
    * **優勢**：將實體化的 `ModularAgent` 節點直接投入 UI 視窗中。這讓玩家在捏臉時，可以直接看到角色流暢地播放「呼吸 (Rest)」、「敲擊鍵盤 (Work)」、「閒置 (Idle)」等動態 `Tween` 補間動畫，而非死板的靜態圖。
 
-2. **創角進出流程與資源掛鉤 (Entry/Exit Flow & Costs)**
+3. **創角進出流程與資源掛鉤 (Entry/Exit Flow & Costs)**
    * **進入 (Entry)**：
      * 玩家在 `Main.tscn` 點擊招募按鈕。
      * 系統檢查資金是否滿足招募成本 (預設 $500)。若不足則阻擋。
