@@ -490,3 +490,30 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
 *   **消除測試狀態污染**：在 [MiniTest.gd](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Tests/MiniTest.gd) 的 `run_test_suite()` 中，於每個測試函數（例如 `test_office_view.gd` 等）執行前後，**主動檢測並以物理方式刪除 `user://savegame.save`**。這根除了以往測試載入到殘留存檔資料而導致 `agent_views[0]` 字典鍵值找不到的崩潰問題。
 *   **快取硬化自癒**：當 Godot 出現內部快取報錯或 `class_name` 索引遺失時，透過物理清理 `.godot/` 暫存資料夾重跑，徹底實現 100% 自癒。
 *   **測試結果**：全部 **100 個 Assertions 通過率達 100%**，在 Headless 模式下運行流暢，測試執行時間縮短至數秒。
+
+---
+
+## 🧭 下一階段實作計畫：物理行走、假人提取與背景修補 (Next Phase Action Items)
+
+為了徹底解決「畫面人物由背景假冒」以及「角色瞬間移動」的視覺硬傷，並確保「文件承諾與代碼 100% 物理對齊」，本章節明列下一階段的開發計畫（當前皆為 `[ ] 未實作`）：
+
+### 1. [ ] 背景假人提取與修補管線 (Background Inpainting & Asset Extraction Pipeline)
+*   **目標**：將 `dev_room_bg.png` 和 `sales_room_bg.png` 上的靜態背景人物挖出，並修補空缺，釋出真實的辦公座位。
+*   **作法**：
+    *   撰寫 [extract_and_inpaint_rooms.py](file:///Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/tools/extract_and_inpaint_rooms.py) 腳本，使用 Python OpenCV 與貼圖混合（Patch Matching）算法。
+    *   將挖出的人物裁剪成獨立的像素 Parts PNG，並存入 `Assets/Characters/` 作為新的紙娃娃服裝與工具資源。
+    *   修補背景圖空洞，還原出乾淨的空房間底圖：`dev_room_bg_clean.png` 與 `sales_room_bg_clean.png`。
+
+### 2. [ ] 紙娃娃物理行走與工作定位 (Dynamic Pathfinding & Visual Seating)
+*   **目標**：取消瞬移，讓員工在切換狀態時（例如從休息室到開發部）以物理方式在房間之間移動。
+*   **作法**：
+    *   在 `Main.gd` 或是 `GameLifecycle` 中實作 `walk_to_room(agent_view, target_room_name)` 邏輯。
+    *   使用 `Tween` 進行平滑的 `position` 移動插值。移動時小人微幅上下擺動以模擬走路動作（或配合走路幀貼圖）。
+    *   移動到達目的地後，將紙娃娃精確定位在我們挖空的辦公椅與辦公桌座標上。
+
+### 3. [ ] 數位雙生角色渲染驗證 (Visual QA Verification Gate)
+*   **目標**：杜絕「截圖中看不見小人」的問題。
+*   **作法**：
+    *   更新 E2E 測試，確保在截圖前，無頭模擬器已給予 Viewport 足夠的幀數（Frames）渲染時間。
+    *   在測試斷言中，以物理方式驗證 `agent_views[i]` 節點的 `global_position` 位於對應 Room 的 Bound 矩形內部，以防小人偏移到畫面邊緣外。
+
