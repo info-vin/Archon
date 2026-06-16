@@ -40,3 +40,4 @@ UI_BUILD_PANEL,Select room to expand...,選擇要擴建的房間類型...,拡張
 UI_EVENT_LOG,Event Log,事件日誌,イベントログ
 UI_AGENT_STATUS,Agent Status,員工狀態,エージェント状態
 UI_RANDOMIZE,Randomize,隨機生成,ランダム化
+UI_MINIMAP,Minimap,小地圖,ミニマップ

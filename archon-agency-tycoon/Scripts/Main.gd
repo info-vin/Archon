@@ -6,6 +6,8 @@ var tycoon_manager
 var agent_views = {}
 
 
+@onready var minimap_container: Control = $VBox/HBoxMain/RightPanel/VBox/MinimapContainer
+@onready var office_grid: GridContainer = $VBox/HBoxMain/GameArea/Building/OfficeGrid
 @onready var ticker: RichTextLabel = $VBox/TopBar/HBox/TickerLabel
 @onready var dev_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom/Label
 @onready var sales_room_label: Label = $VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom/Label
@@ -37,6 +39,11 @@ func _ready() -> void:
 	
 	tycoon_manager.crisis_spawned.connect(_on_crisis_spawned)
 	tycoon_manager.crisis_resolved.connect(_on_crisis_resolved)
+	tycoon_manager.crisis_spawned.connect(func(room_name): _log_event("[color=#ff003c]Crisis spawned in %s![/color]" % room_name))
+	tycoon_manager.crisis_resolved.connect(func(room_name): _log_event("[color=#39ff14]Crisis resolved in %s![/color]" % room_name))
+	tycoon_manager.crisis_spread.connect(func(from_r, to_r): _log_event("[color=#ff003c]Crisis spread from %s to %s![/color]" % [from_r, to_r]))
+	task_manager.task_completed.connect(func(t_id, reward): _log_event("[color=#39ff14]Task completed! +$%d[/color]" % reward))
+	task_manager.rush_failed.connect(func(t_id, a_id): _log_event("[color=#ff003c]Task rush failed![/color]"))
 	
 	# 初始化存檔介面並嘗試載入進度 (Initialize SaveAdapter and load)
 	var token = ""
@@ -133,6 +140,9 @@ func _update_static_labels() -> void:
 	
 	var right_panel_agent_status = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/AgentStatusLabel")
 	if right_panel_agent_status: right_panel_agent_status.text = tr("UI_AGENT_STATUS")
+
+	var right_panel_minimap = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/MinimapLabel")
+	if right_panel_minimap: right_panel_minimap.text = tr("UI_MINIMAP")
 	
 	var tasks_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/TasksBtn")
 	if tasks_btn: tasks_btn.text = tr("UI_BACKLOG")
@@ -224,6 +234,32 @@ func _on_tick_timer_timeout() -> void:
 	_update_ui()
 
 func _update_ui() -> void:
+
+	# Update Agent Status List
+	var status_list = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/AgentStatusList")
+	if status_list:
+		for child in status_list.get_children():
+			child.queue_free()
+		for i in range(agent_manager.agents.size()):
+			var agent = agent_manager.agents[i]
+			var state_str = "IDLE"
+			var state_color = "#888888"
+			match agent.state:
+				1:
+					state_str = "WORKING"
+					state_color = "#39ff14"
+				2:
+					state_str = "RESTING"
+					state_color = "#b026ff"
+				3:
+					state_str = "EXHAUSTED"
+					state_color = "#ff003c"
+			var lbl = RichTextLabel.new()
+			lbl.bbcode_enabled = true
+			lbl.text = "[color=#ffffff]%s[/color] - [color=%s]%s[/color] (E:%d)" % [agent.agent_name, state_color, state_str, agent.energy]
+			lbl.fit_content = true
+			status_list.add_child(lbl)
+
 	if ticker:
 		var f_color = "#39ff14" if tycoon_manager.funds > 0 else "#ff003c"
 		var r_color = "#39ff14" if tycoon_manager.reputation > 50 else "#ff003c"
@@ -395,3 +431,59 @@ func _on_expand_room_pressed() -> void:
 		print("不夠資金擴建房間！")
 
 
+
+func _log_event(msg: String) -> void:
+	var event_log = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLog")
+	if event_log and event_log is RichTextLabel:
+		var time_str = "[color=#888888][%d][/color] " % tick_count
+		event_log.append_text(time_str + msg + "\n")
+
+func _update_minimap() -> void:
+	if not minimap_container or not office_grid: return
+	
+	var minimap_size = minimap_container.size
+	if minimap_size.x == 0 or minimap_size.y == 0: return
+	
+	# Clear old dots
+	for child in minimap_container.get_children():
+		if child.name != "BG":
+			child.queue_free()
+			
+	var scale_x = minimap_size.x / max(office_grid.size.x, 800.0)
+	var scale_y = minimap_size.y / max(office_grid.size.y, 600.0)
+	
+	# Draw rooms
+	var rooms = [dev_room, sales_room, qa_room, break_room]
+	for room in rooms:
+		if room == null: continue
+		var rect = ColorRect.new()
+		rect.color = Color(0.2, 0.2, 0.2, 0.5)
+		var style = room.get_theme_stylebox("panel")
+		if style and style is StyleBoxFlat:
+			rect.color = style.border_color
+			rect.color.a = 0.3
+			
+		rect.position = room.position * Vector2(scale_x, scale_y)
+		rect.size = room.size * Vector2(scale_x, scale_y)
+		minimap_container.add_child(rect)
+		
+	# Draw agents
+	for agent_id in agent_views.keys():
+		var agent = agent_manager.get_agent(agent_id)
+		var view = agent_views[agent_id]
+		if not agent or not view or not view.get_parent(): continue
+		
+		var dot = ColorRect.new()
+		var color = Color.WHITE
+		if agent.role == 1: color = Color("#39ff14")
+		elif agent.role == 0: color = Color("#fde910")
+		elif agent.role == 2: color = Color("#ff003c")
+		
+		dot.color = color
+		dot.size = Vector2(4, 4)
+		
+		var room_pos = view.get_parent().position
+		var global_pos = room_pos + view.position
+		dot.position = global_pos * Vector2(scale_x, scale_y)
+		
+		minimap_container.add_child(dot)
