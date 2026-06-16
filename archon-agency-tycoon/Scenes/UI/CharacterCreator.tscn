@@ -1,6 +1,7 @@
 [gd_scene load_steps=2 format=3 uid="uid://dd82hjas89ad"]
 
 [ext_resource type="Script" path="res://Scripts/UI/CharacterCreator.gd" id="1_creator"]
+[ext_resource type="PackedScene" uid="uid://c6q8y7xxxxxx" path="res://Scenes/Main/ModularAgent.tscn" id="2_agent"]
 
 [node name="CharacterCreator" type="PanelContainer"]
 anchors_preset = 8
@@ -33,66 +34,50 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.05, 0.05, 0.1, 1)
 
-[node name="DollContainer" type="Control" parent="HBox/PreviewArea"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -16.0
-offset_top = -16.0
-offset_right = 16.0
-offset_bottom = 16.0
-grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(3.5, 3.5)
-
-
-[node name="Hair" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+[node name="ViewportContainer" type="SubViewportContainer" parent="HBox/PreviewArea"]
 layout_mode = 1
 anchors_preset = 15
 anchor_width = 1.0
 anchor_height = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-stretch_mode = 3
+stretch = true
 
-[node name="Body" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_width = 1.0
-anchor_height = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 3
+[node name="SubViewport" type="SubViewport" parent="HBox/PreviewArea/ViewportContainer"]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2(300, 500)
+render_target_update_mode = 4
 
-[node name="Outfit" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_width = 1.0
-anchor_height = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 3
+[node name="Camera2D" type="Camera2D" parent="HBox/PreviewArea/ViewportContainer/SubViewport"]
+position = Vector2(0, 30)
+zoom = Vector2(3, 3)
 
-[node name="Eyes" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_width = 1.0
-anchor_height = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 3
+[node name="ModularAgent" parent="HBox/PreviewArea/ViewportContainer/SubViewport" instance=ExtResource("2_agent")]
+position = Vector2(0, 0)
 
-[node name="Tool" type="TextureRect" parent="HBox/PreviewArea/DollContainer"]
+[node name="AnimButtons" type="HBoxContainer" parent="HBox/PreviewArea"]
 layout_mode = 1
-anchors_preset = 15
-anchor_width = 1.0
-anchor_height = 1.0
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -40.0
 grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 3
+grow_vertical = 0
+alignment = 1
+
+[node name="BtnIdle" type="Button" parent="HBox/PreviewArea/AnimButtons"]
+layout_mode = 2
+text = "Idle"
+
+[node name="BtnWork" type="Button" parent="HBox/PreviewArea/AnimButtons"]
+layout_mode = 2
+text = "Work"
+
+[node name="BtnRest" type="Button" parent="HBox/PreviewArea/AnimButtons"]
+layout_mode = 2
+text = "Rest"
 
 [node name="ControlArea" type="VBoxContainer" parent="HBox"]
 layout_mode = 2

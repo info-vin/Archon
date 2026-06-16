@@ -3,11 +3,7 @@ extends PanelContainer
 signal character_created(agent_data)
 signal closed
 
-@onready var preview_body: TextureRect = $HBox/PreviewArea/DollContainer/Body
-@onready var preview_eyes: TextureRect = $HBox/PreviewArea/DollContainer/Eyes
-@onready var preview_hair: TextureRect = $HBox/PreviewArea/DollContainer/Hair
-@onready var preview_outfit: TextureRect = $HBox/PreviewArea/DollContainer/Outfit
-@onready var preview_tool: TextureRect = $HBox/PreviewArea/DollContainer/Tool
+@onready var agent_view: ModularAgentView = $HBox/PreviewArea/ViewportContainer/SubViewport/ModularAgent
 
 @onready var name_edit: LineEdit = $HBox/ControlArea/NameEdit
 @onready var role_option: OptionButton = $HBox/ControlArea/RoleHBox/RoleOption
@@ -19,6 +15,10 @@ signal closed
 @onready var recruit_btn: Button = $HBox/ControlArea/Actions/RecruitBtn
 @onready var cancel_btn: Button = $HBox/ControlArea/Actions/CancelBtn
 
+@onready var btn_idle: Button = $HBox/PreviewArea/AnimButtons/BtnIdle
+@onready var btn_work: Button = $HBox/PreviewArea/AnimButtons/BtnWork
+@onready var btn_rest: Button = $HBox/PreviewArea/AnimButtons/BtnRest
+
 # Current selected states
 var gender: int = 0
 var hair_style: int = 1
@@ -27,7 +27,12 @@ var tool_style: int = 1
 var hair_hue: float = 0.0 # 0-360 range
 var character_name: String = ""
 
+# The persistent data
+var current_agent_data: AgentResource
+
 func _ready() -> void:
+    current_agent_data = preload("res://Scripts/Resources/AgentResource.gd").new("New Employee", 1)
+    
     # 1. Setup role options
     if role_option:
         role_option.add_item("DEV", 1)
@@ -46,6 +51,11 @@ func _ready() -> void:
     if recruit_btn: recruit_btn.pressed.connect(_on_recruit_pressed)
     if cancel_btn: cancel_btn.pressed.connect(_on_cancel_pressed)
     
+    if btn_idle: btn_idle.pressed.connect(_on_anim_idle)
+    if btn_work: btn_work.pressed.connect(_on_anim_work)
+    if btn_rest: btn_rest.pressed.connect(_on_anim_rest)
+    
+    # Initial Update
     _update_preview()
 
 func _update_translations() -> void:
@@ -88,94 +98,43 @@ func _on_tool_pressed() -> void:
 func _on_color_changed(value: float) -> void:
     hair_hue = value
     _update_preview()
+    
+func _on_anim_idle() -> void:
+    current_agent_data.state = AgentResource.AgentState.IDLE
+    agent_view.apply_agent_data(current_agent_data)
+
+func _on_anim_work() -> void:
+    current_agent_data.state = AgentResource.AgentState.WORKING
+    agent_view.apply_agent_data(current_agent_data)
+
+func _on_anim_rest() -> void:
+    current_agent_data.state = AgentResource.AgentState.RESTING
+    agent_view.apply_agent_data(current_agent_data)
 
 func _update_preview() -> void:
-    # 1. Base Skeleton Gender
-    if preview_body:
-        if gender == 0:
-            preview_body.texture = preload("res://Assets/Characters/Alice_Parts/part_006.png")
-        else:
-            preview_body.texture = preload("res://Assets/Characters/Alice_Parts/part_010.png")
-        preview_body.position = Vector2.ZERO
-        preview_body.scale = Vector2.ONE
-        
-    if preview_eyes:
-        preview_eyes.texture = preload("res://Assets/Characters/Alice_Parts/part_016.png")
-        # Y-offset for head alignment
-        preview_eyes.position = Vector2(0, -27)
-        preview_eyes.scale = Vector2.ONE
+    if not agent_view: return
     
-    # 2. Hair Style
-    if preview_hair:
-        match hair_style:
-            1:
-                preview_hair.texture = preload("res://Assets/Characters/Alice_Parts/part_001.png")
-            2:
-                preview_hair.texture = preload("res://Assets/Characters/Alice_Parts/part_015.png")
-            3:
-                preview_hair.texture = preload("res://Assets/Characters/Alice_Parts/part_017.png")
-            
-        # Apply Hue Modulation to Hair
-        var hair_color = Color.from_hsv(hair_hue / 360.0, 0.8, 1.0)
-        preview_hair.modulate = hair_color
-        # Y-offset for head top coverage
-        preview_hair.position = Vector2(0, -18)
-        preview_hair.scale = Vector2.ONE
+    current_agent_data.gender = gender
+    current_agent_data.hair_style = hair_style
+    # In Alice_Parts, hair often includes skin outline. Modulating it turns skin red.
+    # We will pass white to prevent the red face issue until we swap to full modular assets.
+    current_agent_data.hair_color = Color.WHITE
+    current_agent_data.outfit_style = outfit_style
+    current_agent_data.tool_style = tool_style
     
-    # 3. Outfit Style
-    if preview_outfit:
-        match outfit_style:
-            1:
-                preview_outfit.texture = preload("res://Assets/Characters/Alice_Parts/part_021.png")
-            2:
-                preview_outfit.texture = preload("res://Assets/Characters/Alice_Parts/part_020.png")
-        # Torso wrap
-        preview_outfit.position = Vector2(0, 2)
-        preview_outfit.scale = Vector2.ONE
-            
-    # 4. Tool Style
-    if preview_tool:
-        match tool_style:
-            1:
-                preview_tool.texture = preload("res://Assets/Characters/Alice_Parts/part_033.png")
-            2:
-                preview_tool.texture = preload("res://Assets/Characters/Alice_Parts/part_031.png")
-            3:
-                preview_tool.texture = preload("res://Assets/Characters/Alice_Parts/part_026.png")
-        # Hand alignment
-        preview_tool.position = Vector2(18, 6)
-        preview_tool.scale = Vector2(0.8, 0.8)
-
+    agent_view.apply_agent_data(current_agent_data)
 
 func _on_recruit_pressed() -> void:
-    var name_val = "New Agent"
-    if character_name != "":
-        name_val = character_name
-    elif name_edit:
-        var text_strip = name_edit.text.strip_edges()
-        if text_strip != "":
-            name_val = text_strip
-        
-    var selected_role = 1
-    if role_option and role_option.get_item_count() > 0:
-        selected_role = role_option.get_selected_id()
+    var name_val = name_edit.text.strip_edges()
+    if name_val == "":
+        name_val = "Agent " + str(randi() % 1000)
+    current_agent_data.agent_name = name_val
+    current_agent_data.role = role_option.get_selected_id()
     
-    # Create the AgentResource using customization properties
-    var agent = preload("res://Scripts/Resources/AgentResource.gd").new(name_val, selected_role)
-    agent.gender = gender
-    agent.hair_style = hair_style
-    agent.hair_color = Color.from_hsv(hair_hue / 360.0, 0.8, 1.0)
-    agent.outfit_style = outfit_style
-    agent.tool_style = tool_style
-    
-    # Emit first so handlers can read the resource before this node gets queue_free'd
-    character_created.emit(agent)
+    character_created.emit(current_agent_data)
     closed.emit()
-    
-    # Check if we are inside the scene tree before freeing
-    if is_inside_tree():
-        queue_free()
+    if is_inside_tree(): queue_free()
 
 func _on_cancel_pressed() -> void:
     closed.emit()
-    queue_free()
+    if is_inside_tree(): queue_free()
