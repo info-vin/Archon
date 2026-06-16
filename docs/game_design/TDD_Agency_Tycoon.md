@@ -342,7 +342,7 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
   - [x] 力竭狀態切換 (EXHAUSTED)
 - [x] **Phase 2**: 多職業協作與資源循環 (Sales 自動產生任務機制)
 - [ ] **Phase 3**: RWD 佈局與 iPad `PanZoomCamera2D` (Godot 畫布自適應)
-- [ ] **Phase 4**: 登入同步與 Supabase 雲端存檔 (JavaScriptBridge 橋接)
+- [x] **Phase 4**: 登入同步與 Supabase 雲端存檔 (JavaScriptBridge 橋接)
 - [x] **Phase 5**: 《Fallout Shelter》機制 (SPECIAL 屬性、Rush 衝刺、危機蔓延)
 - [x] **Phase 6**: 《Terraria》紙娃娃系統與工作/休息動畫 (動態精靈)
 - [x] **Phase 7**: 俯視霓虹辦公室與視覺重構 (Mad Games Tycoon 2 風格)
@@ -385,7 +385,27 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
 
 ---
 
-## 🚀 TDD 第一階段：基礎資源與任務管理
+## 🚀 TDD 第四階段：持久化存檔系統 (Save & Load System)
+
+為了確保玩家的經營進度（資金、信譽、員工、任務）能夠在不同裝置與會話間延續，我們實作了高可擴充性的序列化架構。
+
+*   **實作規格與架構設計**：
+    1.  **資料序列化 (Serialization)**：
+        *   為 `AgentResource` 與 `TaskResource` 實作 `to_dict()` 導出純 JSON 相容格式。
+        *   為 `AgentManager` 與 `TaskManager` 實作狀態快照功能，完整記錄所有物件陣列。
+    2.  **雙軌存檔適配器 (Adapter Pattern)**：
+        *   **`LocalSaveAdapter`**：針對桌面版與開發測試，使用 `user://savegame.json` 進行實體檔案寫入。
+        *   **`SupabaseSaveAdapter`**：針對 Web 版本，透過 `JavaScriptBridge` 獲取 Auth Token，並與 FastAPI/Supabase 雲端資料庫同步。
+    3.  **條件初始化流程**：
+        *   啟動時自動偵測存檔存在性。
+        *   若 `load_game()` 成功，則呼叫 `_setup_loaded_game()` 進行人員與任務的「場景實例化 (Instantiation)」，而非執行 `_setup_initial_game()` 的初始範例。
+
+*   **LEAN TDD 斷言與驗證**:
+    1.  **無損序列化斷言**：驗證 `AgentResource` 導出為字典後，再透過 `from_dict()` 導入得到的物件，其 `energy` 與 `hair_color` 屬性與原始物件完全一致。
+    2.  **存檔反饋斷言**：驗證按下存檔按鈕後，`RightPanel` 的事件日誌確實收到 `Game Saved Successfully!` 的訊號通知。
+    3.  **多裝置同步驗證**：在 Web 環境下，驗證存檔動作確實觸發了對 `/api/game/save` 的 POST 請求並附帶了正確的 Authorization Bearer 頭像。
+
+---
     1. **資源定義**：
         *   建立 `AgentResource.gd` 定義代理人（角色：Sales, Dev, QA, 等；狀態：Idle, Working）。
         *   建立 `TaskResource.gd` 定義任務（類型、所需時間、獎勵資金、所需角色）。
