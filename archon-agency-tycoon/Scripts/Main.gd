@@ -256,7 +256,7 @@ func _update_ui() -> void:
 					state_color = "#ff003c"
 			var lbl = RichTextLabel.new()
 			lbl.bbcode_enabled = true
-			lbl.text = "[color=#ffffff]%s[/color] - [color=%s]%s[/color] (E:%d)" % [agent.agent_name, state_color, state_str, agent.energy]
+			lbl.text = "[font_size=12][color=#ffffff]%s[/color] - [color=%s]%s[/color] (E:%d)[/font_size]" % [agent.agent_name, state_color, state_str, agent.energy]
 			lbl.fit_content = true
 			status_list.add_child(lbl)
 
@@ -436,7 +436,7 @@ func _log_event(msg: String) -> void:
 	var event_log = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLog")
 	if event_log and event_log is RichTextLabel:
 		var time_str = "[color=#888888][%d][/color] " % tick_count
-		event_log.append_text(time_str + msg + "\n")
+		event_log.append_text("[font_size=12]" + time_str + msg + "[/font_size]\n")
 
 func _update_minimap() -> void:
 	if not minimap_container or not office_grid: return

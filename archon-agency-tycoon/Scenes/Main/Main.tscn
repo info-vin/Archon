@@ -195,7 +195,7 @@ horizontal_alignment = 1
 [node name="EventLog" type="RichTextLabel" parent="VBox/HBoxMain/RightPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
+size_flags_stretch_ratio = 3.0
 bbcode_enabled = true
 scroll_following = true
 
@@ -210,21 +210,16 @@ horizontal_alignment = 1
 [node name="AgentStatusList" type="VBoxContainer" parent="VBox/HBoxMain/RightPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 2.0
+size_flags_stretch_ratio = 3.0
 
 
 [node name="HSeparatorMinimap" type="HSeparator" parent="VBox/HBoxMain/RightPanel/VBox"]
 layout_mode = 2
 
-[node name="MinimapLabel" type="Label" parent="VBox/HBoxMain/RightPanel/VBox"]
-layout_mode = 2
-text = "MINIMAP"
-horizontal_alignment = 1
-
 [node name="MinimapContainer" type="Control" parent="VBox/HBoxMain/RightPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-size_flags_stretch_ratio = 1.0
+size_flags_stretch_ratio = 4.0
 
 [node name="BG" type="ColorRect" parent="VBox/HBoxMain/RightPanel/VBox/MinimapContainer"]
 layout_mode = 1
@@ -236,7 +231,7 @@ grow_vertical = 2
 color = Color(0.05, 0.05, 0.05, 1.0)
 
 [node name="BottomBar" type="PanelContainer" parent="VBox"]
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 
 [node name="VBox" type="VBoxContainer" parent="VBox/BottomBar"]
@@ -254,14 +249,14 @@ alignment = 1
 
 [node name="ActionHBox" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="TasksBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "UI_BACKLOG"
 icon = ExtResource("icon_tasks")
 icon_alignment = 1
@@ -270,9 +265,9 @@ expand_icon = true
 
 [node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "UI_CHARACTER_CREATOR"
 icon = ExtResource("icon_recruit")
 icon_alignment = 1
@@ -281,9 +276,9 @@ expand_icon = true
 
 [node name="ExpandRoomBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "UI_EXPAND_ROOM"
 icon = ExtResource("icon_build")
 icon_alignment = 1
