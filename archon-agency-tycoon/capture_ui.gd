@@ -8,6 +8,7 @@ func _init():
 		return
 		
 	var root_node = main_scene.instantiate()
+	root_node.instant_positioning = true
 	root.add_child(root_node)
 	
 	# Wait a few frames for the UI to layout and Sprites to position
@@ -18,7 +19,7 @@ func _on_frame():
 	frame_count += 1
 	if frame_count == 10:
 		var img = root.get_viewport().get_texture().get_image()
-		var dest_path = "/Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/ui_screenshot.png"
+		var dest_path = "/Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/screenshots/ui_screenshot.png"
 		var err = img.save_png(dest_path)
 		if err == OK:
 			print("🟢 SUCCESSFULLY EXPORTED UI SCREENSHOT TO: ", dest_path)

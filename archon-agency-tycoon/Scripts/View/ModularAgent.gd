@@ -226,6 +226,28 @@ func play_work_animation(agent_data: AgentResource) -> void:
         active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_012.png"))).set_delay(0.2)
         active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png"))).set_delay(0.1)
 
+# Animation hook for walking state
+func play_walk_animation(agent_data: AgentResource) -> void:
+    stop_animation()
+    
+    if tool_sprite:
+        tool_sprite.visible = false
+        
+    active_tween = create_tween().set_loops()
+    # Body bobs up and down quickly
+    active_tween.tween_property(body_sprite, "position:y", -4.0, 0.15).set_trans(Tween.TRANS_SINE)
+    active_tween.tween_property(body_sprite, "position:y", 0.0, 0.15).set_trans(Tween.TRANS_SINE)
+    
+    # Swap leg textures
+    if agent_data.gender == 0:
+        active_tween.parallel().tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_007.png"))).set_delay(0.07)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_008.png"))).set_delay(0.15)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_006.png"))).set_delay(0.07)
+    else:
+        active_tween.parallel().tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_011.png"))).set_delay(0.07)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_012.png"))).set_delay(0.15)
+        active_tween.tween_callback(func(): equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png"))).set_delay(0.07)
+
 # Animation hook for resting state
 func play_rest_animation(agent_data: AgentResource) -> void:
     stop_animation()

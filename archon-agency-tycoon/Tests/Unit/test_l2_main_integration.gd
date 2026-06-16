@@ -6,6 +6,7 @@ func test_l2_modules_initialization() -> void:
 	
 	var view = scene.instantiate()
 	assert_not_null(view, "Main view should instantiate")
+	view.instant_positioning = true
 	
 	var root = tree.root
 	root.add_child(view)

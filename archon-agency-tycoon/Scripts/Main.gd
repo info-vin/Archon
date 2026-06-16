@@ -31,6 +31,30 @@ var langs = ["zh_TW", "en", "ja"]
 var lang_names = ["中文", "English", "日本語"]
 var tick_count: int = 0
 
+var dev_desks = [
+	Vector2(65, 230),
+	Vector2(180, 120),
+	Vector2(280, 130),
+	Vector2(280, 240)
+]
+var sales_desks = [
+	Vector2(110, 130),
+	Vector2(250, 120),
+	Vector2(180, 230),
+	Vector2(290, 220)
+]
+var qa_desks = [
+	Vector2(140 + 32, 40 + 32),
+	Vector2(200, 150)
+]
+var break_desks = [
+	Vector2(120 + 32, 80 + 32),
+	Vector2(80, 150),
+	Vector2(220, 150)
+]
+
+var instant_positioning: bool = false
+
 func _ready() -> void:
 	# Load centralized config
 	config = load("res://GameConfig.tres")
@@ -219,6 +243,16 @@ func _update_ui() -> void:
 		hud_controller.update_ticker(tick_count, tycoon_manager.funds, tycoon_manager.reputation)
 	
 	# Update character positions and animations based on their state
+	var room_agent_counts = {
+		"dev": 0,
+		"sales": 0,
+		"qa": 0,
+		"break": 0
+	}
+	
+	var walk_speed = 180.0
+	var door_pos = Vector2(180, 300)
+	
 	for agent_id in agent_views.keys():
 		var agent = agent_manager.get_agent(agent_id)
 		var view = agent_views[agent_id]
@@ -231,27 +265,93 @@ func _update_ui() -> void:
 			1: # WORKING
 				if agent.role == 1: # DEV
 					target_room = dev_room
-					target_pos = Vector2(30 + 32, 80 + 32)
+					var slot = room_agent_counts["dev"]
+					target_pos = dev_desks[slot % dev_desks.size()]
+					room_agent_counts["dev"] = slot + 1
 				elif agent.role == 0: # SALES
 					target_room = sales_room
-					target_pos = Vector2(200 + 32, 80 + 32)
+					var slot = room_agent_counts["sales"]
+					target_pos = sales_desks[slot % sales_desks.size()]
+					room_agent_counts["sales"] = slot + 1
 				elif agent.role == 2: # QA
 					target_room = qa_room
-					target_pos = Vector2(140 + 32, 40 + 32)
+					var slot = room_agent_counts["qa"]
+					target_pos = qa_desks[slot % qa_desks.size()]
+					room_agent_counts["qa"] = slot + 1
 			2: # RESTING
 				target_room = break_room
-				target_pos = Vector2(120 + 32, 80 + 32)
+				var slot = room_agent_counts["break"]
+				target_pos = break_desks[slot % break_desks.size()]
+				room_agent_counts["break"] = slot + 1
 			_: # IDLE / EXHAUSTED
-				if agent.role == 1: target_room = dev_room
-				elif agent.role == 0: target_room = sales_room
-				elif agent.role == 2: target_room = qa_room
+				if agent.role == 1:
+					target_room = dev_room
+					target_pos = Vector2(180, 280)
+				elif agent.role == 0:
+					target_room = sales_room
+					target_pos = Vector2(180, 280)
+				elif agent.role == 2:
+					target_room = qa_room
+					target_pos = Vector2(180, 280)
 				
-		if target_room and view.get_parent() != target_room:
-			view.get_parent().remove_child(view)
-			target_room.add_child(view)
+		if target_room:
+			var old_parent = view.get_parent()
 			
-		view.position = target_pos
-		view.apply_agent_data(agent)
+			if instant_positioning:
+				if old_parent != target_room:
+					if is_instance_valid(view) and is_instance_valid(old_parent) and is_instance_valid(target_room):
+						old_parent.remove_child(view)
+						target_room.add_child(view)
+				view.position = target_pos
+				view.apply_agent_data(agent)
+			else:
+				# Kill any running walk tween for this view to avoid conflicts
+				if view.has_meta("walk_tween"):
+					var old_tween = view.get_meta("walk_tween")
+					if old_tween and old_tween.is_valid():
+						old_tween.kill()
+				
+				if old_parent != target_room:
+					# Walk to current room's door, then switch room, then walk to desk
+					view.play_walk_animation(agent)
+					
+					var dist1 = view.position.distance_to(door_pos)
+					var time1 = dist1 / walk_speed if dist1 > 0 else 0.05
+					
+					var walk_tween = create_tween()
+					view.set_meta("walk_tween", walk_tween)
+					
+					walk_tween.tween_property(view, "position", door_pos, time1)
+					walk_tween.tween_callback(func():
+						if is_instance_valid(view) and is_instance_valid(old_parent) and is_instance_valid(target_room):
+							if view.get_parent() == old_parent:
+								old_parent.remove_child(view)
+								target_room.add_child(view)
+							view.position = door_pos
+					)
+					var dist2 = door_pos.distance_to(target_pos)
+					var time2 = dist2 / walk_speed if dist2 > 0 else 0.05
+					walk_tween.tween_property(view, "position", target_pos, time2)
+					walk_tween.tween_callback(func():
+						if is_instance_valid(view):
+							view.apply_agent_data(agent)
+					)
+				else:
+					# Within same room, walk if distance is far, otherwise snap
+					var dist = view.position.distance_to(target_pos)
+					if dist > 10:
+						view.play_walk_animation(agent)
+						var time = dist / walk_speed
+						var walk_tween = create_tween()
+						view.set_meta("walk_tween", walk_tween)
+						walk_tween.tween_property(view, "position", target_pos, time)
+						walk_tween.tween_callback(func():
+							if is_instance_valid(view):
+								view.apply_agent_data(agent)
+						)
+					else:
+						view.position = target_pos
+						view.apply_agent_data(agent)
 	_update_minimap()
 
 func _update_minimap() -> void:

@@ -3,6 +3,7 @@ extends MiniTest
 func test_help_menu_popup_and_close() -> void:
     var scene = load("res://Scenes/Main/Main.tscn")
     var view = scene.instantiate()
+    view.instant_positioning = true
     var root = tree.root
     root.add_child(view)
     await tree.process_frame
@@ -38,10 +39,17 @@ func test_help_menu_popup_and_close() -> void:
 func test_agent_energy_and_bubble_visuals() -> void:
     var scene = load("res://Scenes/Main/Main.tscn")
     var view = scene.instantiate()
+    view.instant_positioning = true
     var root = tree.root
     root.add_child(view)
-    await tree.process_frame
     
+    # Wait until views are fully spawned to prevent async race conditions
+    var timeout = 50
+    while not view.agent_views.has(0) and timeout > 0:
+        await tree.process_frame
+        timeout -= 1
+        
+    assert_true(view.agent_views.has(0), "Alice view should be spawned")
     # Alice (DEV) is agent_id 0
     var alice_view = view.agent_views[0]
     var alice_agent = view.agent_manager.get_agent(0)

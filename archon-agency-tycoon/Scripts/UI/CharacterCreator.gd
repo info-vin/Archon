@@ -151,9 +151,8 @@ func _update_preview() -> void:
     
     current_agent_data.gender = gender
     current_agent_data.hair_style = hair_style
-    # In Alice_Parts, hair often includes skin outline. Modulating it turns skin red.
-    # We will pass white to prevent the red face issue until we swap to full modular assets.
-    current_agent_data.hair_color = Color.WHITE
+    # Use HSV to modulate hair color correctly
+    current_agent_data.hair_color = Color.from_hsv(hair_hue / 360.0, 1.0, 1.0)
     current_agent_data.outfit_style = outfit_style
     current_agent_data.tool_style = tool_style
     
@@ -161,6 +160,8 @@ func _update_preview() -> void:
 
 func _on_recruit_pressed() -> void:
     var name_val = name_edit.text.strip_edges()
+    if name_val == "":
+        name_val = character_name
     if name_val == "":
         name_val = "Agent " + str(randi() % 1000)
     current_agent_data.agent_name = name_val

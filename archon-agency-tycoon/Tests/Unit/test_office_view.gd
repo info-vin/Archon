@@ -6,13 +6,18 @@ func test_agent_visual_room_relocation() -> void:
     
     var view = scene.instantiate()
     assert_not_null(view, "Main view should be instantiable")
+    view.instant_positioning = true
     
     var root = tree.root
     root.add_child(view)
-    await tree.process_frame
     
-    # Alice (DEV) has agent_id 0.
-    # Initial state should be DEV room
+    # Wait until views are fully spawned to prevent async race conditions
+    var timeout = 50
+    while not view.agent_views.has(0) and timeout > 0:
+        await tree.process_frame
+        timeout -= 1
+        
+    assert_true(view.agent_views.has(0), "Alice view should be spawned")
     var alice_view = view.agent_views[0]
     assert_eq(alice_view.get_parent(), view.dev_room, "Alice should start in DevRoom")
     
@@ -23,7 +28,8 @@ func test_agent_visual_room_relocation() -> void:
     
     # Should still be in DevRoom but position shifted to desk
     assert_eq(alice_view.get_parent(), view.dev_room, "Alice should remain in DevRoom when WORKING")
-    assert_eq(alice_view.position, Vector2(30 + 32, 80 + 32), "Alice position should be at DEV desk")
+    # First DEV working -> Vector2(65, 230)
+    assert_eq(alice_view.position, Vector2(65, 230), "Alice position should be at DEV desk")
     
     # Change Alice state to RESTING
     alice_agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.RESTING
@@ -31,6 +37,7 @@ func test_agent_visual_room_relocation() -> void:
     
     # Should be in BreakRoom
     assert_eq(alice_view.get_parent(), view.break_room, "Alice should be in BreakRoom when RESTING")
+    # First BREAK room occupant -> Vector2(152, 112)
     assert_eq(alice_view.position, Vector2(120 + 32, 80 + 32), "Alice position should be at Sofa")
     
     view.queue_free()
@@ -38,6 +45,7 @@ func test_agent_visual_room_relocation() -> void:
 func test_crisis_visual_pulse_active() -> void:
     var scene = load("res://Scenes/Main/Main.tscn")
     var view = scene.instantiate()
+    view.instant_positioning = true
     var root = tree.root
     root.add_child(view)
     await tree.process_frame

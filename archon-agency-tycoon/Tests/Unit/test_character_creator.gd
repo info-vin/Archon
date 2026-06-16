@@ -30,11 +30,11 @@ func test_character_creation_and_customization() -> void:
     # Update preview texture configurations
     creator._update_preview()
     
-    assert_eq(creator.preview_body.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_010.png", "Should preview male base skeleton")
-    assert_eq(creator.preview_hair.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_015.png", "Should preview short hair style")
-    assert_eq(creator.preview_hair.modulate.h, 0.5, "Modulated color hue should match 180.0 degrees (0.5 normalized)")
-    assert_eq(creator.preview_outfit.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_020.png", "Should preview formal vest")
-    assert_eq(creator.preview_tool.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_031.png", "Should preview cards tool")
+    assert_eq(creator.agent_view.body_sprite.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_010.png", "Should preview male base skeleton")
+    assert_eq(creator.agent_view.hair_sprite.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_015.png", "Should preview short hair style")
+    assert_eq(creator.agent_view.hair_sprite.modulate.h, 0.5, "Modulated color hue should match 180.0 degrees (0.5 normalized)")
+    assert_eq(creator.agent_view.outfit_sprite.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_020.png", "Should preview formal vest")
+    assert_eq(creator.agent_view.tool_sprite.texture.resource_path, "res://Assets/Characters/Alice_Parts/part_031.png", "Should preview cards tool")
     
     
     creator._on_recruit_pressed()
