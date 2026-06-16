@@ -279,9 +279,16 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
     *   `QA` (品保部)：警示紅 (#ff003c)
 
 ### Step 2: 資訊架構與佈局重構 (Layout & Information Architecture)
-放棄原本佔用大量畫面的 VBox 排版，改用 `Anchor-based` 滿版佈局，將畫面空間還給「娃娃屋房間」。
-*   **頂部戰情 HUD (Top Bar)**：高度壓縮至 40px。並排顯示 `DATE (Tick)`、`FUNDS (資金)`、`REP (信譽)` 等精華指標，風格仿造股市跑馬燈。
-*   **底部動作列 (Bottom Action Bar)**：將原本佔據 30% 畫面的巨大 Backlog 列表刪除！改為高度 80px 的「正方形 Icon 按鈕列」（如 `[🔨 擴建]`, `[👤 招募]`, `[📋 任務]`, `[⚙️ 設定]`）。點擊 `[任務]` 才會彈出局部的 Backlog 視窗。
+放棄原本佔用大量畫面的 VBox 排版，改用 `Anchor-based` 滿版佈局，將畫面空間還給「娃娃屋房間」。嚴格遵守以下由商業競品分析得出的排版鐵律：
+
+*   **頂部戰情 HUD (Top Bar Ticker)**：
+    *   **極致壓縮**：高度壓縮至 30px 以內。
+    *   **跑馬燈排版 (Ticker Style)**：所有關鍵指標 (DATE, FUNDS, REP) 必須串在**單一行**內，並使用垂直線 `|` (Pipe) 分隔，禁止使用鬆散的 `Spacer`。
+    *   **雙色編碼 (BBCode)**：強制使用 `RichTextLabel` 的 BBCode 實作。標籤名 (如 `FUNDS:`) 必須為暗灰色/低調色，數值 (如 `$500`) 必須為高亮綠色/白色。利用對比度引導玩家視覺。
+    *   **微型系統列**：將右側的「語言/設定」功能壓縮為 24x24 的小型 Icon，貼齊最右側。
+*   **底部動作列 (Bottom Action Bar - Icon+Text)**：
+    *   將原本佔據 30% 畫面的巨大 Backlog 列表刪除，改為高度 80px 的正方形動作區。
+    *   **按鈕排版鐵律 (Top Icon, Bottom Text)**：絕對禁止純文字或純大圖示按鈕。按鈕必須保留 `text` 屬性，並將 `icon_alignment` 設為 `TOP`。上半部 50% 顯示高辨識度 SVG Icon，最底部顯示微小字級 (Size 12-14) 的全大寫說明文字 (如 `BUILD`, `HIRE`)，以降低玩家認知負擔。
 
 ### Step 3: 右側戰情日誌與動態回饋 (Event Logger & Juice)
 補齊參考圖中最關鍵的「全局掌控感」。
