@@ -80,6 +80,10 @@ func _ready() -> void:
 	_update_ui()
 	_update_static_labels()
 	_setup_room_styles()
+	
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_update_minimap()
 
 
 
@@ -304,6 +308,7 @@ func _update_ui() -> void:
 			
 		view.position = target_pos
 		view.apply_agent_data(agent)
+	_update_minimap()
 
 func _get_room_by_name(room_name: String) -> Control:
 	match room_name:
@@ -468,11 +473,11 @@ func _update_minimap() -> void:
 		if style and style is StyleBoxFlat:
 			rect.color = style.border_color
 			rect.color.a = 0.3
-			
+
 		rect.position = offset + room.position * uniform_scale
 		rect.size = room.size * uniform_scale
 		minimap_container.add_child(rect)
-		
+
 	# Draw agents
 	for agent_id in agent_views.keys():
 		var agent = agent_manager.get_agent(agent_id)
