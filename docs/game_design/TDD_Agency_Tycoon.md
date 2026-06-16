@@ -290,11 +290,12 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
     *   將原本佔據 30% 畫面的巨大 Backlog 列表刪除，改為高度 80px 的正方形動作區。
     *   **按鈕排版鐵律 (Top Icon, Bottom Text)**：絕對禁止純文字或純大圖示按鈕。按鈕必須保留 `text` 屬性，並將 `icon_alignment` 設為 `TOP`。上半部 50% 顯示高辨識度 SVG Icon，最底部顯示微小字級 (Size 12-14) 的全大寫說明文字 (如 `BUILD`, `HIRE`)，以降低玩家認知負擔。
 
-### Step 3: 右側戰情日誌與動態回饋 (Event Logger & Juice)
+### Step 3: 右側戰情日誌與動態回饋 (Event Logger, Status & Minimap)
 補齊參考圖中最關鍵的「全局掌控感」。
 *   **右側面板 (Right Panel)**：寬度設定為 250px。
-    *   **上半部：事件廣播 (Event Feed)**：使用 `RichTextLabel` 實作由下往上滾動的日誌。當發生「招募員工」、「危機爆發」、「任務完成」時，印出帶有顏色標記的文字。
-    *   **下半部：員工監控 (Agent Status)**：條列顯示所有員工目前的狀態（如 `Alice: WORKING`, `Bob: EXHAUSTED`），讓玩家不用肉眼在房間裡找人。
+    *   **上半部：事件廣播 (Event Feed, 佔 30%)**：使用 `RichTextLabel` 實作由下往上滾動的日誌。當發生「招募員工」、「危機爆發」、「任務完成」時，印出帶有顏色標記與微小字型 (`[font_size=12]`) 的文字，使用對比色彩增強易讀性。
+    *   **中半部：員工監控 (Agent Status, 佔 30%)**：條列顯示所有員工目前的狀態（如 `Alice: WORKING`, `Bob: EXHAUSTED`），並用狀態對應的顏色區分，讓玩家不用肉眼在房間裡找人。
+    *   **底部：房間縮小雷達圖 (Minimap, 佔 40%)**：揚棄單純的色塊，改以掃描 `OfficeGrid` 動態抓取真實房間的像素背景貼圖，進行全域等比例縮小渲染。加上動態讀取的霓虹 Metadata 顏色外框，並將人員用各部門對應色之像素光點同步投射於其上。
 *   **背景底圖**：將最底層的純黑色替換為帶有科技感的暗色電路板紋理 (Circuit Board Pattern)。
 
 ---
@@ -344,7 +345,7 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
 - [ ] **Phase 4**: 登入同步與 Supabase 雲端存檔 (JavaScriptBridge 橋接)
 - [x] **Phase 5**: 《Fallout Shelter》機制 (SPECIAL 屬性、Rush 衝刺、危機蔓延)
 - [x] **Phase 6**: 《Terraria》紙娃娃系統與工作/休息動畫 (動態精靈)
-- [ ] **Phase 7**: 俯視霓虹辦公室與視覺重構 (Mad Games Tycoon 2 風格)
+- [x] **Phase 7**: 俯視霓虹辦公室與視覺重構 (Mad Games Tycoon 2 風格)
 - [x] **Phase 8**: 模擬與玩三遍對比、動態幀動畫設計 & 創角 UI 霓虹美化
 
 ---
