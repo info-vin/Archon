@@ -318,18 +318,14 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
   * 拋棄絕對座標，全面改用 Godot 的 `Container`（如 `MarginContainer`、`BoxContainer`）搭配 **Anchors (錨點)**。
   * 手機版 (寬度 < 600px) 自動切換成垂直緊湊佈局，折疊部分非必要面板，部門房間改為「單房滑動」切換。
 
-### 3. iPad 裝置規格最佳化 (iPad Optimization Specs)
-由於 iPad 與平板裝置具備獨特的 4:3 / 16:11 螢幕比例與觸控操作習慣，我們進行以下專屬設計：
-* **比例防裁切 (Aspect Ratio Handling)**：
-  * 由於 4:3 畫面較高，2D 橫向剖面（Ant Farm View）的兩側可能會被裁切。
-  * **解法**：實作 `PanZoomCamera2D`。允許 iPad 玩家使用「單指滑動」在房間之間平移畫面，「雙指捏合 (Pinch to Zoom)」來放大/縮小視角。
-* **觸控操作優化 (Touch Targets & Gestures)**：
-  * 所有 UI 按鈕（例如 ActionMenu、Rush 按鈕）的物理點擊區域 (Touch Target) 至少為 `48x48` 像素，並在四周加入防誤觸間距。
-  * **拖曳強化**：任務工單拖曳至房間時，工單碰撞範圍 (Collision Shape) 物理放大 1.5 倍，確保手指粗細操作也能精準判定。
-* **觸控鍵盤防禦**：
-  * 存檔與玩家名稱命名改用「預設清單/隨機產生器」，避免在 iPad 上彈出 iOS 虛擬鍵盤，進而擠壓或損壞網頁 Layout。
-* **Safari 效能最佳化**：
-  * WebGL2 於 iPad Safari 記憶體限制極嚴格。精靈圖尺寸嚴格控制在 `2048x2048` 以內，且在 Web 匯出設定中啟用 `Thread Support: Disabled` 以避免部分 iOS 瀏覽器多線程崩潰問題。
+### 4. RWD 佈局防擠壓與 UI 強制規範 (Layout Constraints)
+為防止在不同長寬比（如 iPad 直式或 Web 窄視窗）下畫面淪為「剪貼簿」般的錯位與擠壓，我們實施了嚴格的 UI 容器防護：
+* **彈性錨點與限制 (Anchors & Size Flags)**：
+  * `RightPanel` (右側戰情室)：設定 `size_flags_horizontal = SHRINK_END` 並綁定 `custom_minimum_size = (260, 0)`，確保在小視窗下不會被壓扁，保留完整的日誌閱讀體驗。
+  * 動作按鈕：強制放大至 `80x80`，確保觸控面積。
+* **分離式渲染與 Marker2D 實體定位 (Decoupled Spawning)**：
+  * 揚棄了舊版透過程式碼寫死 `Vector2` 陣列的生成方式。全面導入在編輯器層面可視化配置的 `Marker2D` (`DeskPoint`, `StandPoint`) 作為實體角色的生成錨點。
+  * 確保角色必定生成在真正的「空地」上，並透過動態按名稱排序 (`sort_custom`) 確保派位邏輯具備 100% 決定性 (Deterministic)，完美解決了 2D 俯視角中缺乏原生 Y-Sort 的圖層遮擋破綻。
 
 ---
 
@@ -341,7 +337,7 @@ $$Funds_t < 0 \lor Reputation_t \le 0$$
   - [x] 休息與體力恢復 (RESTING)
   - [x] 力竭狀態切換 (EXHAUSTED)
 - [x] **Phase 2**: 多職業協作與資源循環 (Sales 自動產生任務機制)
-- [ ] **Phase 3**: RWD 佈局與 iPad `PanZoomCamera2D` (Godot 畫布自適應)
+- [x] **Phase 3**: RWD 佈局與 iPad `PanZoomCamera2D` (Godot 畫布自適應)
 - [x] **Phase 4**: 登入同步與 Supabase 雲端存檔 (JavaScriptBridge 橋接)
 - [x] **Phase 5**: 《Fallout Shelter》機制 (SPECIAL 屬性、Rush 衝刺、危機蔓延)
 - [x] **Phase 6**: 《Terraria》紙娃娃系統與工作/休息動畫 (動態精靈)
