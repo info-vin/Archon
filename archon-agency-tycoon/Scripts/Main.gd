@@ -171,7 +171,7 @@ func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	if agent_view_scene:
 		var agent_view = agent_view_scene.instantiate()
 		agent_view.position = Vector2(150, 130) # Center
-		agent_view.scale = Vector2(0.8, 0.8) # Scale to fit desks and match isometric dimensions
+		agent_view.scale = Vector2(0.9, 0.9) # Scale to fit desks and match isometric dimensions
 		room.add_child(agent_view)
 		agent_views[agent_id] = agent_view
 
@@ -286,13 +286,13 @@ func _update_ui() -> void:
 			_: # IDLE / EXHAUSTED
 				if agent.role == 1:
 					target_room = dev_room
-					target_pos = Vector2(180, 280)
+					target_pos = Vector2(180, 200)
 				elif agent.role == 0:
 					target_room = sales_room
-					target_pos = Vector2(180, 280)
+					target_pos = Vector2(180, 200)
 				elif agent.role == 2:
 					target_room = qa_room
-					target_pos = Vector2(180, 280)
+					target_pos = Vector2(180, 200)
 				
 		if target_room:
 			var old_parent = view.get_parent()
