@@ -32,6 +32,7 @@ var lang_names = ["中文", "English", "日本語"]
 var tick_count: int = 0
 
 var instant_positioning: bool = false
+var help_menu_instance = null
 
 func _ready() -> void:
 	# Load centralized config
