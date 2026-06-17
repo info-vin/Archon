@@ -17,6 +17,10 @@ func setup_room(p_name: String, p_color: Color, tycoon_manager) -> void:
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
+	style.expand_margin_left = -2
+	style.expand_margin_top = -2
+	style.expand_margin_right = -2
+	style.expand_margin_bottom = -2
 	style.border_color = neon_color * 1.5 # Overbright for neon glow
 	style.corner_radius_top_left = 4
 	style.corner_radius_top_right = 4

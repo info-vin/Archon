@@ -20,6 +20,8 @@
 
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_lang.svg" id="icon_lang"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hallway"]
+
 [node name="Main" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -116,6 +118,7 @@ text = "ROOM_DEV"
 horizontal_alignment = 1
 
 [node name="HallwayTop" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
 custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
 
@@ -142,6 +145,7 @@ text = "ROOM_SALES"
 horizontal_alignment = 1
 
 [node name="HallwayLeft" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
 
@@ -152,6 +156,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="CentralLobby" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
 custom_minimum_size = Vector2(120, 120)
 layout_mode = 2
 
@@ -162,6 +167,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="HallwayRight" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
 
@@ -188,6 +194,7 @@ text = "ROOM_QA"
 horizontal_alignment = 1
 
 [node name="HallwayBottom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
 custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
 
@@ -279,7 +286,7 @@ size_flags_vertical = 3
 alignment = 1
 
 [node name="Spacer" type="Control" parent="VBox/BottomBar/VBox"]
-custom_minimum_size = Vector2(0, 10)
+custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
 [node name="ActionHBox" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
