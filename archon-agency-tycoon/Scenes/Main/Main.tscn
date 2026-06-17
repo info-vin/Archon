@@ -7,6 +7,11 @@
 [ext_resource type="Texture2D" path="res://Assets/Rooms/sales_room_bg.png" id="5_sales_bg"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/qa_room_bg.png" id="6_qa_bg"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/break_room_bg.png" id="7_break_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_top_bg.png" id="hallway_top_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_left_bg.png" id="hallway_left_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/central_lobby_bg.png" id="central_lobby_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_right_bg.png" id="hallway_right_bg"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_bottom_bg.png" id="hallway_bottom_bg"]
 [ext_resource type="Environment" uid="uid://env_neon" path="res://env.tres" id="8_env"]
 
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_recruit.svg" id="icon_recruit"]
@@ -90,8 +95,8 @@ size_flags_vertical = 3
 
 [node name="OfficeGrid" type="GridContainer" parent="VBox/HBoxMain/GameArea/Building"]
 layout_mode = 2
-theme_override_constants/h_separation = 15
-theme_override_constants/v_separation = 15
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
 columns = 3
 
 [node name="DevRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
@@ -110,9 +115,15 @@ size_flags_vertical = 0
 text = "ROOM_DEV"
 horizontal_alignment = 1
 
-[node name="HallwayTop" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+[node name="HallwayTop" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayTop"]
+layout_mode = 2
+texture = ExtResource("hallway_top_bg")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="SalesRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
@@ -130,17 +141,35 @@ size_flags_vertical = 0
 text = "ROOM_SALES"
 horizontal_alignment = 1
 
-[node name="HallwayLeft" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+[node name="HallwayLeft" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
 
-[node name="CentralLobby" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayLeft"]
+layout_mode = 2
+texture = ExtResource("hallway_left_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CentralLobby" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(120, 120)
 layout_mode = 2
 
-[node name="HallwayRight" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/CentralLobby"]
+layout_mode = 2
+texture = ExtResource("central_lobby_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HallwayRight" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayRight"]
+layout_mode = 2
+texture = ExtResource("hallway_right_bg")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="QARoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
@@ -158,9 +187,15 @@ size_flags_vertical = 0
 text = "ROOM_QA"
 horizontal_alignment = 1
 
-[node name="HallwayBottom" type="Panel" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
+[node name="HallwayBottom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(120, 390)
 layout_mode = 2
+
+[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayBottom"]
+layout_mode = 2
+texture = ExtResource("hallway_bottom_bg")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="BreakRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
 custom_minimum_size = Vector2(360, 390)
@@ -242,6 +277,10 @@ visible = false
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
+
+[node name="Spacer" type="Control" parent="VBox/BottomBar/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
 
 [node name="ActionHBox" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
 layout_mode = 2
