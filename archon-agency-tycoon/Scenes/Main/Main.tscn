@@ -237,10 +237,6 @@ layout_mode = 2
 [node name="VBox" type="VBoxContainer" parent="VBox/BottomBar"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBox/BottomBar/VBox"]
-layout_mode = 2
-horizontal_alignment = 1
-
 [node name="TaskContainer" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
 visible = false
 layout_mode = 2
