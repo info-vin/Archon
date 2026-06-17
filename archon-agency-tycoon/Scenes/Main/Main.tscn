@@ -53,7 +53,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TopBar" type="PanelContainer" parent="VBox"]
-custom_minimum_size = Vector2(0, 30)
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 
 [node name="HBox" type="HBoxContainer" parent="VBox/TopBar"]
@@ -229,6 +229,7 @@ horizontal_alignment = 1
 [node name="RightPanel" type="PanelContainer" parent="VBox/HBoxMain"]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
+size_flags_horizontal = 8
 
 [node name="VBox" type="VBoxContainer" parent="VBox/HBoxMain/RightPanel"]
 layout_mode = 2
@@ -272,6 +273,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.05, 0.05, 0.05, 1.0)
@@ -300,7 +305,7 @@ alignment = 1
 
 [node name="TasksBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "UI_BACKLOG"
@@ -311,7 +316,7 @@ expand_icon = true
 
 [node name="SaveBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "UI_SAVE"
@@ -322,7 +327,7 @@ expand_icon = true
 
 [node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "UI_CHARACTER_CREATOR"
@@ -333,7 +338,7 @@ expand_icon = true
 
 [node name="ExpandRoomBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
-custom_minimum_size = Vector2(60, 60)
+custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "UI_EXPAND_ROOM"
