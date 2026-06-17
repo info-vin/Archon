@@ -112,6 +112,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_DEV"
@@ -139,6 +140,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_SALES"
@@ -188,6 +190,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_QA"
@@ -215,6 +218,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 0
 text = "ROOM_BREAK"

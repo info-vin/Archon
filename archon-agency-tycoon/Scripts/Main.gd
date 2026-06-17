@@ -136,6 +136,28 @@ func _ready() -> void:
 	_update_ui()
 	hud_controller.update_static_labels()
 	
+	# Load and play background music
+	var music_player = AudioStreamPlayer.new()
+	var bgm_path = "res://Assets/Sound/bgm.wav"
+	if FileAccess.file_exists(bgm_path):
+		var file = FileAccess.open(bgm_path, FileAccess.READ)
+		if file:
+			var bytes = file.get_buffer(file.get_length())
+			# Simple WAV parser: PCM data starts after the 44-byte WAV header
+			if bytes.size() > 44:
+				var stream = AudioStreamWAV.new()
+				stream.data = bytes.slice(44)
+				stream.format = AudioStreamWAV.FORMAT_16_BITS
+				stream.mix_rate = 22050
+				stream.stereo = false
+				stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+				stream.loop_end = stream.data.size() / 2
+				
+				music_player.stream = stream
+				music_player.volume_db = -12.0 # Comfortable background volume
+				add_child(music_player)
+				music_player.play()
+	
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_update_minimap()
@@ -171,7 +193,7 @@ func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	if agent_view_scene:
 		var agent_view = agent_view_scene.instantiate()
 		agent_view.position = Vector2(150, 130) # Center
-		agent_view.scale = Vector2(0.9, 0.9) # Scale to fit desks and match isometric dimensions
+		agent_view.scale = Vector2(1.0, 1.0) # Reset scale to 1.0 for true pixel size
 		room.add_child(agent_view)
 		agent_views[agent_id] = agent_view
 
