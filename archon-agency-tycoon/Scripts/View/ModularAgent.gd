@@ -292,4 +292,60 @@ func stop_animation() -> void:
     if eyes_sprite:
         eyes_sprite.modulate.a = 1.0
 
+# --- Entity Autonomy (Locomotion & Routing) ---
+
+func walk_to(agent_data: AgentResource, target_room: Control, target_pos: Vector2, is_instant: bool = false, walk_speed: float = 180.0) -> void:
+    var old_parent = get_parent()
+    
+    if is_instant:
+        if old_parent != target_room and is_instance_valid(old_parent) and is_instance_valid(target_room):
+            old_parent.remove_child(self)
+            target_room.add_child(self)
+        position = target_pos
+        apply_agent_data(agent_data)
+        return
+        
+    if has_meta("walk_tween"):
+        var old_tween = get_meta("walk_tween")
+        if old_tween and old_tween.is_valid():
+            old_tween.kill()
+
+    if old_parent != target_room:
+        play_walk_animation(agent_data)
+        var door_pos = Vector2(180, 300)
+        var dist1 = position.distance_to(door_pos)
+        var time1 = dist1 / walk_speed if dist1 > 0 else 0.05
+        
+        var walk_tween = create_tween()
+        set_meta("walk_tween", walk_tween)
+        
+        walk_tween.tween_property(self, "position", door_pos, time1)
+        walk_tween.tween_callback(func():
+            if is_instance_valid(self) and is_instance_valid(old_parent) and is_instance_valid(target_room):
+                if get_parent() == old_parent:
+                    old_parent.remove_child(self)
+                    target_room.add_child(self)
+                position = door_pos
+        )
+        
+        var dist2 = door_pos.distance_to(target_pos)
+        var time2 = dist2 / walk_speed if dist2 > 0 else 0.05
+        walk_tween.tween_property(self, "position", target_pos, time2)
+        walk_tween.tween_callback(func():
+            if is_instance_valid(self): apply_agent_data(agent_data)
+        )
+    else:
+        var dist = position.distance_to(target_pos)
+        if dist > 10:
+            play_walk_animation(agent_data)
+            var walk_tween = create_tween()
+            set_meta("walk_tween", walk_tween)
+            walk_tween.tween_property(self, "position", target_pos, dist / walk_speed)
+            walk_tween.tween_callback(func():
+                if is_instance_valid(self): apply_agent_data(agent_data)
+            )
+        else:
+            position = target_pos
+            apply_agent_data(agent_data)
+
 

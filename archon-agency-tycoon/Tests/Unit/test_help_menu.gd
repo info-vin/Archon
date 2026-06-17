@@ -3,13 +3,13 @@ extends MiniTest
 func test_help_menu_popup_and_close() -> void:
     var scene = load("res://Scenes/Main/Main.tscn")
     var view = scene.instantiate()
-    view.instant_positioning = true
     var root = tree.root
     root.add_child(view)
     await tree.process_frame
+    await tree.process_frame # Ensure Main.gd _ready() completed
     
     # 1. Initially HelpMenu should not exist
-    assert_eq(view.help_menu_instance, null, "HelpMenu should start as null")
+    assert_eq(view.hud_controller.main_node.help_menu_instance, null, "HelpMenu should start as null")
     
     # 2. Simulate pressing H
     var ev_h = InputEventKey.new()
@@ -17,28 +17,29 @@ func test_help_menu_popup_and_close() -> void:
     ev_h.pressed = true
     view._unhandled_input(ev_h)
     
-    assert_not_null(view.help_menu_instance, "HelpMenu should open when H is pressed")
-    assert_eq(view.help_menu_instance.get_parent(), view, "HelpMenu parent should be the Main view")
+    assert_not_null(view.hud_controller.main_node.help_menu_instance, "HelpMenu should open when H is pressed")
+    assert_eq(view.hud_controller.main_node.help_menu_instance.get_parent(), view, "HelpMenu parent should be the Main view")
     
     # 3. Simulate pressing ESC on HelpMenu
     var ev_esc = InputEventKey.new()
     ev_esc.keycode = KEY_ESCAPE
     ev_esc.pressed = true
     
-    var menu = view.help_menu_instance
+    var menu = view.hud_controller.main_node.help_menu_instance
     menu._unhandled_input(ev_esc)
     
     # Wait for the closed signal of the HelpMenu
     await menu.closed
     await tree.process_frame
     
-    assert_eq(view.help_menu_instance, null, "HelpMenu reference should be cleared after close")
+    assert_eq(view.hud_controller.main_node.help_menu_instance, null, "HelpMenu reference should be cleared after close")
     
     view.queue_free()
 
 func test_agent_energy_and_bubble_visuals() -> void:
     var scene = load("res://Scenes/Main/Main.tscn")
     var view = scene.instantiate()
+    if view.get_script() == null: view.set_script(load('res://Scripts/Main.gd'))
     view.instant_positioning = true
     var root = tree.root
     root.add_child(view)

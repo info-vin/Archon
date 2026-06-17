@@ -4,6 +4,8 @@ var agent_manager
 var task_manager
 var tycoon_manager
 var agent_views = {}
+const AgentRouterClass = preload("res://Scripts/Logic/AgentRouter.gd")
+var agent_router = AgentRouterClass.new()
 
 @onready var minimap_container: Control = $VBox/HBoxMain/RightPanel/VBox/MinimapContainer
 @onready var office_grid: GridContainer = $VBox/HBoxMain/GameArea/Building/OfficeGrid
@@ -30,6 +32,7 @@ var current_lang_index = 0
 var langs = ["zh_TW", "en", "ja"]
 var lang_names = ["中文", "English", "日本語"]
 var tick_count: int = 0
+var room_agent_counts = {"dev": 0, "sales": 0, "qa": 0, "break": 0}
 
 var instant_positioning: bool = false
 var help_menu_instance = null
@@ -38,134 +41,83 @@ func _ready() -> void:
 	# Load centralized config
 	config = load("res://GameConfig.tres")
 	
+	# Initialize L2 modules
+	hud_controller = HUDController.new()
+	hud_controller.initialize(self)
+	lifecycle = preload("res://Scripts/Logic/GameLifecycle.gd").new()
+	lifecycle.initialize(self)
+	
 	# Instantiate Managers
 	agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
 	task_manager = preload("res://Scripts/Logic/TaskManager.gd").new()
 	tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
 	
-	agent_manager.set_config(config)
-	task_manager.set_config(config)
-	tycoon_manager.set_config(config)
-	
-	task_manager.set_agent_manager(agent_manager)
-	tycoon_manager.setup_connections(task_manager)
-	
-	# Connect submodules
-	hud_controller = preload("res://Scripts/UI/HUDController.gd").new()
-	hud_controller.initialize(self)
-	add_child(hud_controller)
-	
-	lifecycle = preload("res://Scripts/Logic/GameLifecycle.gd").new()
-	lifecycle.initialize(self)
-	add_child(lifecycle)
-	
-	# Setup scripts for Minimap
+	# Setup UI scripts
 	minimap_container.set_script(preload("res://Scripts/UI/Minimap.gd"))
-	
-	# Attach OfficeRoom script to rooms that don't have custom drop scripts attached yet
-	# (Note: DevRoom and SalesRoom drop zones inherit from OfficeRoom and are set up in lifecycle)
+	dev_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
+	sales_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
 	qa_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
 	break_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
-	
-	qa_room.setup_room("QARoom", Color("#ff003c"), tycoon_manager)
-	break_room.setup_room("BreakRoom", Color("#b026ff"), tycoon_manager)
-	
-	# Logger mappings
-	tycoon_manager.crisis_spawned.connect(func(room_name): _log_event("[color=#ff003c]Crisis spawned in %s![/color]" % room_name))
-	tycoon_manager.crisis_resolved.connect(func(room_name): _log_event("[color=#39ff14]Crisis resolved in %s![/color]" % room_name))
-	tycoon_manager.crisis_spread.connect(func(from_r, to_r): _log_event("[color=#ff003c]Crisis spread from %s to %s![/color]" % [from_r, to_r]))
-	task_manager.task_completed.connect(func(t_id, reward): _log_event("[color=#39ff14]Task completed! +$%d[/color]" % reward))
-	task_manager.rush_failed.connect(func(t_id, a_id): _log_event("[color=#ff003c]Task rush failed![/color]"))
-	
-	# Initialize SaveSystem progress
-	var token = ""
-	if OS.has_feature("web"):
-		token = str(JavaScriptBridge.eval("window.getArchonToken ? window.getArchonToken() : ''"))
-		
-	var save_adapter
-	if not token.is_empty():
-		save_adapter = preload("res://Scripts/Logic/SaveSystems/SupabaseSaveAdapter.gd").new()
-	else:
-		save_adapter = preload("res://Scripts/Logic/SaveSystems/LocalSaveAdapter.gd").new()
-		
-	tycoon_manager.set_save_adapter(save_adapter)
-	var loaded = await tycoon_manager.load_game(agent_manager, task_manager)
-	
-	# Default locale
-	TranslationServer.set_locale(langs[current_lang_index])
-	
-	if lang_button: lang_button.pressed.connect(_on_lang_button_pressed)
-	
-	var recruit_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/RecruitBtn")
-	if recruit_btn: recruit_btn.pressed.connect(_on_recruit_btn_pressed)
-	
-	var save_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/SaveBtn")
-	if save_btn: save_btn.pressed.connect(_on_save_btn_pressed)
-		
-	var expand_btn = get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
-	if expand_btn: expand_btn.pressed.connect(_on_expand_room_pressed)
-		
-	if game_tick_timer: game_tick_timer.timeout.connect(_on_tick_timer_timeout)
-		
-	if not loaded:
-		lifecycle.setup_initial_game(agent_manager)
-	else:
-		lifecycle.setup_loaded_game(agent_manager, task_manager)
-		
-	_update_ui()
-	hud_controller.update_static_labels()
-	
-	# Load and play background music
-	var music_player = AudioStreamPlayer.new()
-	var bgm_path = "res://Assets/Sound/bgm.wav"
-	if FileAccess.file_exists(bgm_path):
-		var file = FileAccess.open(bgm_path, FileAccess.READ)
-		if file:
-			var bytes = file.get_buffer(file.get_length())
-			# Simple WAV parser: PCM data starts after the 44-byte WAV header
-			if bytes.size() > 44:
-				var stream = AudioStreamWAV.new()
-				stream.data = bytes.slice(44)
-				stream.format = AudioStreamWAV.FORMAT_16_BITS
-				stream.mix_rate = 22050
-				stream.stereo = false
-				stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-				stream.loop_end = stream.data.size() / 2
-				
-				music_player.stream = stream
-				music_player.volume_db = -12.0 # Comfortable background volume
-				add_child(music_player)
-				music_player.play()
-	
-	await get_tree().process_frame
-	await get_tree().process_frame
-	_update_minimap()
-
-func _on_lang_button_pressed() -> void:
-	current_lang_index = (current_lang_index + 1) % langs.size()
-	TranslationServer.set_locale(langs[current_lang_index])
-	
-	hud_controller.update_static_labels()
-	
-	# Re-setup styles for rooms dynamically
 	dev_room.setup_room("DevRoom", Color("#39ff14"), tycoon_manager)
 	sales_room.setup_room("SalesRoom", Color("#fde910"), tycoon_manager)
 	qa_room.setup_room("QARoom", Color("#ff003c"), tycoon_manager)
 	break_room.setup_room("BreakRoom", Color("#b026ff"), tycoon_manager)
 	
-	_update_ui()
-	
-	for child in task_container.get_children():
-		if child is TaskCard:
-			child._update_text()
-
-func _on_save_btn_pressed() -> void:
-	_log_event("[color=#00ffff]Saving game...[/color]")
-	var result = await tycoon_manager.save_game(agent_manager, task_manager)
-	if result:
-		_log_event("[color=#39ff14]Game Saved Successfully![/color]")
+	# Setup initial game if no save
+	if not FileAccess.file_exists("user://savegame.save"):
+		_setup_initial_game()
 	else:
-		_log_event("[color=#ff003c]Save Failed![/color]")
+		_load_game()
+
+	game_tick_timer.timeout.connect(_on_tick_timer_timeout)
+
+func _load_game() -> void:
+	var loaded = await tycoon_manager.load_game(agent_manager, task_manager)
+	if loaded:
+		lifecycle.setup_loaded_game(agent_manager, task_manager)
+	else:
+		_setup_initial_game()
+func _setup_initial_game() -> void:
+	# Recruit initial staff (Alice DEV, Bob SALES, Charlie QA)
+	var AgentResource = preload("res://Scripts/Resources/AgentResource.gd")
+	# Init params: name, role, code, charisma, debug, luck, hair, outfit, tool
+	var alice = AgentResource.new("Alice", AgentResource.AgentRole.DEV, 10, 5, 5, 5)
+	var bob = AgentResource.new("Bob", AgentResource.AgentRole.SALES, 5, 10, 5, 5)
+	var charlie = AgentResource.new("Charlie", AgentResource.AgentRole.QA, 5, 5, 10, 5)
+
+	for agent in [alice, bob, charlie]:
+		var id = agent_manager.add_agent(agent)
+		var target_room = dev_room
+		if agent.role == AgentResource.AgentRole.SALES: target_room = sales_room
+		elif agent.role == AgentResource.AgentRole.QA: target_room = qa_room
+		_spawn_agent_view(id, target_room)
+	_update_ui()
+
+func _update_ui() -> void:
+	room_agent_counts = {"dev": 0, "sales": 0, "qa": 0, "break": 0}
+	
+	# Update HUD Labels
+	hud_controller.update_static_labels()
+	hud_controller.update_ticker(tick_count, tycoon_manager.funds, tycoon_manager.reputation)
+	
+	# Update Agent Positions
+	var walk_speed = 180.0
+	var rooms_dict = {"dev": dev_room, "sales": sales_room, "qa": qa_room, "break": break_room}
+	
+	for agent_id in agent_views.keys():
+		var agent = agent_manager.get_agent(agent_id)
+		var view = agent_views[agent_id]
+		if not agent or not view: continue
+			
+		var target_info = agent_router.calculate_route(agent, rooms_dict)
+		if target_info.room:
+			view.walk_to(agent, target_info.room, target_info.pos, instant_positioning, walk_speed)
+
+	_update_minimap()
+
+func _update_minimap() -> void:
+	if minimap_container and minimap_container.has_method("update_minimap"):
+		minimap_container.update_minimap(office_grid, agent_manager, agent_views)
 
 func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	var agent_view_scene = preload("res://Scenes/Main/ModularAgent.tscn")
@@ -178,247 +130,25 @@ func _spawn_agent_view(agent_id: int, room: Control) -> void:
 
 func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: int = 1) -> void:
 	var task = preload("res://Scripts/Resources/TaskResource.gd").new(t_name, req_role, ticks, reward)
-	var task_id = task_manager.add_task(task)
-
-	var card_scene = preload("res://Scenes/UI/TaskCard.tscn")
-	if card_scene and task_container:
-		var card = card_scene.instantiate()
-		task_container.add_child(card)
-		card.setup(task_id, t_name, ticks, reward)
+	task_container.add_child(task.to_node())
 
 func _on_task_dropped_on_agent(task_id: int, dropped_agent_id: int) -> void:
-	var task = task_manager.tasks[task_id]
-	var target_agent = -1
-
-	if task.required_role == 1: target_agent = 0 # DEV -> Alice
-	elif task.required_role == 0: target_agent = 1 # SALES -> Bob
-	elif task.required_role == 2: target_agent = 2 # QA -> Charlie
-
-	if target_agent != -1:
-		var success = task_manager.assign_task(task_id, target_agent)
-		if success:
-			if task.required_role != 0:
-				for child in task_container.get_children():
-					if child is TaskCard and child.task_id == task_id:
-						child.queue_free()
-						break
-			_update_ui()
-		else:
-			print("無法指派！(可能體力不足或非閒置狀態)")
-	else:
-		print("未知的任務角色需求")
+	task_manager.assign_task(task_id, dropped_agent_id)
 
 func _on_tick_timer_timeout() -> void:
 	tick_count += 1
-	task_manager.process_tick()
-	agent_manager.process_tick()
+	tycoon_manager.process_tick(agent_manager, task_manager)
 	_update_ui()
 
-func _update_ui() -> void:
-	# Update Agent Status List
-	var status_list = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/AgentStatusList")
-	if status_list:
-		for child in status_list.get_children():
-			child.queue_free()
-		for i in range(agent_manager.agents.size()):
-			var agent = agent_manager.agents[i]
-			var state_str = "IDLE"
-			var state_color = "#888888"
-			match agent.state:
-				1:
-					state_str = "WORKING"
-					state_color = "#39ff14"
-				2:
-					state_str = "RESTING"
-					state_color = "#b026ff"
-				3:
-					state_str = "EXHAUSTED"
-					state_color = "#ff003c"
-			var lbl = RichTextLabel.new()
-			lbl.bbcode_enabled = true
-			lbl.text = "[font_size=12][color=#ffffff]%s[/color] - [color=%s]%s[/color] (E:%d)[/font_size]" % [agent.agent_name, state_color, state_str, agent.energy]
-			lbl.fit_content = true
-			status_list.add_child(lbl)
+func _on_lang_button_pressed() -> void:
+	current_lang_index = (current_lang_index + 1) % langs.size()
+	TranslationServer.set_locale(langs[current_lang_index])
+	lang_button.text = lang_names[current_lang_index]
+	_update_ui()
 
-	if hud_controller:
-		hud_controller.update_ticker(tick_count, tycoon_manager.funds, tycoon_manager.reputation)
-	
-	# Update character positions and animations based on their state
-	var room_agent_counts = {
-		"dev": 0,
-		"sales": 0,
-		"qa": 0,
-		"break": 0
-	}
-	
-	var walk_speed = 180.0
-	var door_pos = Vector2(180, 300)
-	
-	for agent_id in agent_views.keys():
-		var agent = agent_manager.get_agent(agent_id)
-		var view = agent_views[agent_id]
-		if not agent or not view: continue
-			
-		var target_info = _get_agent_target(agent, room_agent_counts)
-		var target_room = target_info.room
-		var target_pos = target_info.pos
-				
-		if target_room:
-			if instant_positioning:
-				var old_parent = view.get_parent()
-				if old_parent != target_room and is_instance_valid(old_parent) and is_instance_valid(target_room):
-					old_parent.remove_child(view)
-					target_room.add_child(view)
-				view.position = target_pos
-				view.apply_agent_data(agent)
-			else:
-				_move_agent(view, agent, target_room, target_pos, door_pos, walk_speed)
-
-	_update_minimap()
-
-func _get_agent_target(agent, counts: Dictionary) -> Dictionary:
-	var room = null
-	var pos = Vector2(150, 130)
-	var role_keys = {1: "dev", 0: "sales", 2: "qa"}
-	var rooms = {1: dev_room, 0: sales_room, 2: qa_room}
-	
-	if agent.state == 1: # WORKING
-		var key = role_keys.get(agent.role, "dev")
-		room = rooms.get(agent.role, dev_room)
-		var slot = counts[key]
-		pos = _get_marker_pos(room, slot, "DeskPoint", Vector2(180, 200))
-		counts[key] = slot + 1
-	elif agent.state == 2: # RESTING
-		room = break_room
-		var slot = counts["break"]
-		pos = _get_marker_pos(room, slot, "DeskPoint", Vector2(180, 200))
-		counts["break"] = slot + 1
-	else: # IDLE
-		var key = role_keys.get(agent.role, "dev")
-		room = rooms.get(agent.role, dev_room)
-		var slot = counts[key]
-		pos = _get_marker_pos(room, slot, "StandPoint", Vector2(180, 200))
-		counts[key] = slot + 1
-	
-	return {"room": room, "pos": pos}
-
-func _move_agent(view, agent, target_room, target_pos, door_pos, walk_speed) -> void:
-	var old_parent = view.get_parent()
-	if view.has_meta("walk_tween"):
-		var old_tween = view.get_meta("walk_tween")
-		if old_tween and old_tween.is_valid():
-			old_tween.kill()
-			
-	if old_parent != target_room:
-		view.play_walk_animation(agent)
-		var dist1 = view.position.distance_to(door_pos)
-		var time1 = dist1 / walk_speed if dist1 > 0 else 0.05
-		var walk_tween = create_tween()
-		view.set_meta("walk_tween", walk_tween)
-		
-		walk_tween.tween_property(view, "position", door_pos, time1)
-		walk_tween.tween_callback(func():
-			if is_instance_valid(view) and is_instance_valid(old_parent) and is_instance_valid(target_room):
-				if view.get_parent() == old_parent:
-					old_parent.remove_child(view)
-					target_room.add_child(view)
-				view.position = door_pos
-		)
-		var dist2 = door_pos.distance_to(target_pos)
-		var time2 = dist2 / walk_speed if dist2 > 0 else 0.05
-		walk_tween.tween_property(view, "position", target_pos, time2)
-		walk_tween.tween_callback(func():
-			if is_instance_valid(view): view.apply_agent_data(agent)
-		)
-	else:
-		var dist = view.position.distance_to(target_pos)
-		if dist > 10:
-			view.play_walk_animation(agent)
-			var walk_tween = create_tween()
-			view.set_meta("walk_tween", walk_tween)
-			walk_tween.tween_property(view, "position", target_pos, dist / walk_speed)
-			walk_tween.tween_callback(func():
-				if is_instance_valid(view): view.apply_agent_data(agent)
-			)
-		else:
-			view.position = target_pos
-			view.apply_agent_data(agent)
-
-func _update_minimap() -> void:
-	if minimap_container and minimap_container.has_method("update_minimap"):
-		minimap_container.update_minimap(office_grid, agent_manager, agent_views)
-
-func _get_marker_pos(room: Control, slot: int, prefix: String, fallback: Vector2) -> Vector2:
-	var markers = []
-	for child in room.get_children():
-		if child is Marker2D and child.name.begins_with(prefix):
-			markers.append(child)
-	if markers.size() > 0:
-		markers.sort_custom(func(a, b): return String(a.name) < String(b.name))
-		return markers[slot % markers.size()].position
-	return fallback
-
-
-	if help_menu_instance and is_instance_valid(help_menu_instance):
-		help_menu_instance.close()
-	else:
-		var scene = load("res://Scenes/UI/HelpMenu.tscn")
-		if scene:
-			help_menu_instance = scene.instantiate()
-			add_child(help_menu_instance)
-			help_menu_instance.closed.connect(func(): help_menu_instance = null)
-			help_menu_instance.get_node("VBox/Title").text = tr("UI_HELP_TITLE")
-			help_menu_instance.get_node("VBox/Scroll/Content/GoalLabel").text = tr("HELP_GOAL")
-			help_menu_instance.get_node("VBox/Scroll/Content/ControlsLabel").text = tr("HELP_CONTROLS")
-			help_menu_instance.get_node("VBox/Scroll/Content/TipsLabel").text = tr("HELP_TIPS")
-			help_menu_instance.get_node("VBox/CloseButton").text = tr("UI_CLOSE")
-
-	var expand_cost = config.expand_cost if config else 500
-	if tycoon_manager.funds >= expand_cost:
-		tycoon_manager.funds -= expand_cost
-		var office_grid = get_node_or_null("VBox/GameArea/Building/OfficeGrid")
-		if office_grid:
-			var new_room = PanelContainer.new()
-			new_room.custom_minimum_size = Vector2(360, 390)
-			
-			var bg_tex = TextureRect.new()
-			bg_tex.texture = preload("res://Assets/Rooms/qa_room_bg.png")
-			bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
-			new_room.add_child(bg_tex)
-			
-			var lbl = Label.new()
-			lbl.text = tr("ROOM_QA") + " (Expansion)"
-			lbl.visible = false # Hide text to match other rooms
-			new_room.add_child(lbl)
-			
-			var desk1 = Marker2D.new()
-			desk1.name = "DeskPoint_1"
-			desk1.position = Vector2(172, 72)
-			new_room.add_child(desk1)
-			
-			var desk2 = Marker2D.new()
-			desk2.name = "DeskPoint_2"
-			desk2.position = Vector2(200, 150)
-			new_room.add_child(desk2)
-			
-			var stand1 = Marker2D.new()
-			stand1.name = "StandPoint_1"
-			stand1.position = Vector2(100, 250)
-			new_room.add_child(stand1)
-			
-			var stand2 = Marker2D.new()
-			stand2.name = "StandPoint_2"
-			stand2.position = Vector2(200, 250)
-			new_room.add_child(stand2)
-			
-			new_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
-			office_grid.add_child(new_room)
-			new_room.setup_room("QARoom", Color("#ff003c"), tycoon_manager)
-		_update_ui()
-	else:
-		print("不夠資金擴建房間！")
+func _on_save_btn_pressed() -> void:
+	tycoon_manager.save_game(agent_manager, task_manager)
+	_log_event("Game Saved Successfully!")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
@@ -430,6 +160,7 @@ func _on_recruit_btn_pressed() -> void:
 
 func _on_expand_room_pressed() -> void:
 	hud_controller.show_expand_room()
+
 func _log_event(msg: String) -> void:
 	var event_log = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLog")
 	if event_log and event_log is RichTextLabel:
