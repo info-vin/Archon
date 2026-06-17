@@ -341,3 +341,72 @@ icon = ExtResource("icon_build")
 icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
+
+[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(100, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(200, 250)
+
+[node name="StandPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(280, 250)
+
+[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(100, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(200, 250)
+
+[node name="StandPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(280, 250)
+
+[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
+position = Vector2(100, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
+position = Vector2(200, 250)
+
+[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
+position = Vector2(180, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
+position = Vector2(250, 250)
+
+[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(65, 230)
+
+[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(180, 120)
+
+[node name="DeskPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(280, 130)
+
+[node name="DeskPoint_4" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
+position = Vector2(280, 240)
+
+[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(110, 130)
+
+[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(250, 120)
+
+[node name="DeskPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(180, 230)
+
+[node name="DeskPoint_4" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
+position = Vector2(290, 220)
+
+[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
+position = Vector2(172, 72)
+
+[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
+position = Vector2(200, 150)
+
+[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
+position = Vector2(152, 112)
+
+[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
+position = Vector2(80, 150)
+
+[node name="DeskPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
+position = Vector2(220, 150)

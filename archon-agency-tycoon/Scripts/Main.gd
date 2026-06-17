@@ -31,28 +31,6 @@ var langs = ["zh_TW", "en", "ja"]
 var lang_names = ["中文", "English", "日本語"]
 var tick_count: int = 0
 
-var dev_desks = [
-	Vector2(65, 230),
-	Vector2(180, 120),
-	Vector2(280, 130),
-	Vector2(280, 240)
-]
-var sales_desks = [
-	Vector2(110, 130),
-	Vector2(250, 120),
-	Vector2(180, 230),
-	Vector2(290, 220)
-]
-var qa_desks = [
-	Vector2(140 + 32, 40 + 32),
-	Vector2(200, 150)
-]
-var break_desks = [
-	Vector2(120 + 32, 80 + 32),
-	Vector2(80, 150),
-	Vector2(220, 150)
-]
-
 var instant_positioning: bool = false
 
 func _ready() -> void:
@@ -280,114 +258,106 @@ func _update_ui() -> void:
 		var view = agent_views[agent_id]
 		if not agent or not view: continue
 			
-		var target_room = null
-		var target_pos = Vector2(150, 130) # Default Center
-		
-		match agent.state:
-			1: # WORKING
-				if agent.role == 1: # DEV
-					target_room = dev_room
-					var slot = room_agent_counts["dev"]
-					target_pos = dev_desks[slot % dev_desks.size()]
-					room_agent_counts["dev"] = slot + 1
-				elif agent.role == 0: # SALES
-					target_room = sales_room
-					var slot = room_agent_counts["sales"]
-					target_pos = sales_desks[slot % sales_desks.size()]
-					room_agent_counts["sales"] = slot + 1
-				elif agent.role == 2: # QA
-					target_room = qa_room
-					var slot = room_agent_counts["qa"]
-					target_pos = qa_desks[slot % qa_desks.size()]
-					room_agent_counts["qa"] = slot + 1
-			2: # RESTING
-				target_room = break_room
-				var slot = room_agent_counts["break"]
-				target_pos = break_desks[slot % break_desks.size()]
-				room_agent_counts["break"] = slot + 1
-			_: # IDLE / EXHAUSTED
-				if agent.role == 1:
-					target_room = dev_room
-					target_pos = Vector2(180, 200)
-				elif agent.role == 0:
-					target_room = sales_room
-					target_pos = Vector2(180, 200)
-				elif agent.role == 2:
-					target_room = qa_room
-					target_pos = Vector2(180, 200)
+		var target_info = _get_agent_target(agent, room_agent_counts)
+		var target_room = target_info.room
+		var target_pos = target_info.pos
 				
 		if target_room:
-			var old_parent = view.get_parent()
-			
 			if instant_positioning:
-				if old_parent != target_room:
-					if is_instance_valid(view) and is_instance_valid(old_parent) and is_instance_valid(target_room):
-						old_parent.remove_child(view)
-						target_room.add_child(view)
+				var old_parent = view.get_parent()
+				if old_parent != target_room and is_instance_valid(old_parent) and is_instance_valid(target_room):
+					old_parent.remove_child(view)
+					target_room.add_child(view)
 				view.position = target_pos
 				view.apply_agent_data(agent)
 			else:
-				# Kill any running walk tween for this view to avoid conflicts
-				if view.has_meta("walk_tween"):
-					var old_tween = view.get_meta("walk_tween")
-					if old_tween and old_tween.is_valid():
-						old_tween.kill()
-				
-				if old_parent != target_room:
-					# Walk to current room's door, then switch room, then walk to desk
-					view.play_walk_animation(agent)
-					
-					var dist1 = view.position.distance_to(door_pos)
-					var time1 = dist1 / walk_speed if dist1 > 0 else 0.05
-					
-					var walk_tween = create_tween()
-					view.set_meta("walk_tween", walk_tween)
-					
-					walk_tween.tween_property(view, "position", door_pos, time1)
-					walk_tween.tween_callback(func():
-						if is_instance_valid(view) and is_instance_valid(old_parent) and is_instance_valid(target_room):
-							if view.get_parent() == old_parent:
-								old_parent.remove_child(view)
-								target_room.add_child(view)
-							view.position = door_pos
-					)
-					var dist2 = door_pos.distance_to(target_pos)
-					var time2 = dist2 / walk_speed if dist2 > 0 else 0.05
-					walk_tween.tween_property(view, "position", target_pos, time2)
-					walk_tween.tween_callback(func():
-						if is_instance_valid(view):
-							view.apply_agent_data(agent)
-					)
-				else:
-					# Within same room, walk if distance is far, otherwise snap
-					var dist = view.position.distance_to(target_pos)
-					if dist > 10:
-						view.play_walk_animation(agent)
-						var time = dist / walk_speed
-						var walk_tween = create_tween()
-						view.set_meta("walk_tween", walk_tween)
-						walk_tween.tween_property(view, "position", target_pos, time)
-						walk_tween.tween_callback(func():
-							if is_instance_valid(view):
-								view.apply_agent_data(agent)
-						)
-					else:
-						view.position = target_pos
-						view.apply_agent_data(agent)
+				_move_agent(view, agent, target_room, target_pos, door_pos, walk_speed)
+
 	_update_minimap()
+
+func _get_agent_target(agent, counts: Dictionary) -> Dictionary:
+	var room = null
+	var pos = Vector2(150, 130)
+	var role_keys = {1: "dev", 0: "sales", 2: "qa"}
+	var rooms = {1: dev_room, 0: sales_room, 2: qa_room}
+	
+	if agent.state == 1: # WORKING
+		var key = role_keys.get(agent.role, "dev")
+		room = rooms.get(agent.role, dev_room)
+		var slot = counts[key]
+		pos = _get_marker_pos(room, slot, "DeskPoint", Vector2(180, 200))
+		counts[key] = slot + 1
+	elif agent.state == 2: # RESTING
+		room = break_room
+		var slot = counts["break"]
+		pos = _get_marker_pos(room, slot, "DeskPoint", Vector2(180, 200))
+		counts["break"] = slot + 1
+	else: # IDLE
+		var key = role_keys.get(agent.role, "dev")
+		room = rooms.get(agent.role, dev_room)
+		var slot = counts[key]
+		pos = _get_marker_pos(room, slot, "StandPoint", Vector2(180, 200))
+		counts[key] = slot + 1
+	
+	return {"room": room, "pos": pos}
+
+func _move_agent(view, agent, target_room, target_pos, door_pos, walk_speed) -> void:
+	var old_parent = view.get_parent()
+	if view.has_meta("walk_tween"):
+		var old_tween = view.get_meta("walk_tween")
+		if old_tween and old_tween.is_valid():
+			old_tween.kill()
+			
+	if old_parent != target_room:
+		view.play_walk_animation(agent)
+		var dist1 = view.position.distance_to(door_pos)
+		var time1 = dist1 / walk_speed if dist1 > 0 else 0.05
+		var walk_tween = create_tween()
+		view.set_meta("walk_tween", walk_tween)
+		
+		walk_tween.tween_property(view, "position", door_pos, time1)
+		walk_tween.tween_callback(func():
+			if is_instance_valid(view) and is_instance_valid(old_parent) and is_instance_valid(target_room):
+				if view.get_parent() == old_parent:
+					old_parent.remove_child(view)
+					target_room.add_child(view)
+				view.position = door_pos
+		)
+		var dist2 = door_pos.distance_to(target_pos)
+		var time2 = dist2 / walk_speed if dist2 > 0 else 0.05
+		walk_tween.tween_property(view, "position", target_pos, time2)
+		walk_tween.tween_callback(func():
+			if is_instance_valid(view): view.apply_agent_data(agent)
+		)
+	else:
+		var dist = view.position.distance_to(target_pos)
+		if dist > 10:
+			view.play_walk_animation(agent)
+			var walk_tween = create_tween()
+			view.set_meta("walk_tween", walk_tween)
+			walk_tween.tween_property(view, "position", target_pos, dist / walk_speed)
+			walk_tween.tween_callback(func():
+				if is_instance_valid(view): view.apply_agent_data(agent)
+			)
+		else:
+			view.position = target_pos
+			view.apply_agent_data(agent)
 
 func _update_minimap() -> void:
 	if minimap_container and minimap_container.has_method("update_minimap"):
 		minimap_container.update_minimap(office_grid, agent_manager, agent_views)
 
-var help_menu_instance = null
+func _get_marker_pos(room: Control, slot: int, prefix: String, fallback: Vector2) -> Vector2:
+	var markers = []
+	for child in room.get_children():
+		if child is Marker2D and child.name.begins_with(prefix):
+			markers.append(child)
+	if markers.size() > 0:
+		markers.sort_custom(func(a, b): return String(a.name) < String(b.name))
+		return markers[slot % markers.size()].position
+	return fallback
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_H:
-			_toggle_help_menu()
 
-func _toggle_help_menu() -> void:
 	if help_menu_instance and is_instance_valid(help_menu_instance):
 		help_menu_instance.close()
 	else:
@@ -402,45 +372,6 @@ func _toggle_help_menu() -> void:
 			help_menu_instance.get_node("VBox/Scroll/Content/TipsLabel").text = tr("HELP_TIPS")
 			help_menu_instance.get_node("VBox/CloseButton").text = tr("UI_CLOSE")
 
-func _on_recruit_btn_pressed() -> void:
-	var recruit_cost = config.recruit_cost if config else 500
-	if tycoon_manager.funds < recruit_cost:
-		print("Insufficient funds to recruit!")
-		return
-		
-	var overlay = ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.7)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(overlay)
-	
-	var creator_scene = load("res://Scenes/UI/CharacterCreator.tscn")
-	if creator_scene:
-		var creator = creator_scene.instantiate()
-		creator.scale = Vector2.ZERO
-		creator.pivot_offset = Vector2(380, 250)
-		var tween = create_tween()
-		tween.tween_property(creator, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		
-		add_child(creator)
-		creator.set_config(config)
-		
-		creator.character_created.connect(func(agent_data):
-			tycoon_manager.funds -= recruit_cost
-			var new_id = agent_manager.add_agent(agent_data)
-			var target_room = dev_room
-			if agent_data.role == 0: target_room = sales_room
-			elif agent_data.role == 2: target_room = qa_room
-			
-			_spawn_agent_view(new_id, target_room)
-			_update_ui()
-			overlay.queue_free()
-		)
-		
-		creator.closed.connect(func():
-			overlay.queue_free()
-		)
-
-func _on_expand_room_pressed() -> void:
 	var expand_cost = config.expand_cost if config else 500
 	if tycoon_manager.funds >= expand_cost:
 		tycoon_manager.funds -= expand_cost
@@ -458,7 +389,28 @@ func _on_expand_room_pressed() -> void:
 			
 			var lbl = Label.new()
 			lbl.text = tr("ROOM_QA") + " (Expansion)"
+			lbl.visible = false # Hide text to match other rooms
 			new_room.add_child(lbl)
+			
+			var desk1 = Marker2D.new()
+			desk1.name = "DeskPoint_1"
+			desk1.position = Vector2(172, 72)
+			new_room.add_child(desk1)
+			
+			var desk2 = Marker2D.new()
+			desk2.name = "DeskPoint_2"
+			desk2.position = Vector2(200, 150)
+			new_room.add_child(desk2)
+			
+			var stand1 = Marker2D.new()
+			stand1.name = "StandPoint_1"
+			stand1.position = Vector2(100, 250)
+			new_room.add_child(stand1)
+			
+			var stand2 = Marker2D.new()
+			stand2.name = "StandPoint_2"
+			stand2.position = Vector2(200, 250)
+			new_room.add_child(stand2)
 			
 			new_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
 			office_grid.add_child(new_room)
@@ -467,6 +419,16 @@ func _on_expand_room_pressed() -> void:
 	else:
 		print("不夠資金擴建房間！")
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_H:
+			hud_controller.toggle_help_menu()
+
+func _on_recruit_btn_pressed() -> void:
+	hud_controller.show_recruit_overlay()
+
+func _on_expand_room_pressed() -> void:
+	hud_controller.show_expand_room()
 func _log_event(msg: String) -> void:
 	var event_log = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLog")
 	if event_log and event_log is RichTextLabel:

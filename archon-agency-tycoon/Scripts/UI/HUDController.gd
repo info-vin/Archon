@@ -38,6 +38,91 @@ func update_static_labels() -> void:
 	var expand_btn = main_node.get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
 	if expand_btn: expand_btn.text = tr("UI_EXPAND_ROOM")
 
+func show_recruit_overlay() -> void:
+	var recruit_cost = main_node.config.recruit_cost if main_node.config else 500
+	if main_node.tycoon_manager.funds < recruit_cost:
+		print("Insufficient funds to recruit!")
+		return
+		
+	var overlay = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	main_node.add_child(overlay)
+	
+	var creator_scene = load("res://Scenes/UI/CharacterCreator.tscn")
+	if creator_scene:
+		var creator = creator_scene.instantiate()
+		creator.scale = Vector2.ZERO
+		creator.pivot_offset = Vector2(380, 250)
+		var tween = main_node.create_tween()
+		tween.tween_property(creator, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+		main_node.add_child(creator)
+		creator.set_config(main_node.config)
+		
+		creator.character_created.connect(func(agent_data):
+			main_node.tycoon_manager.funds -= recruit_cost
+			var new_id = main_node.agent_manager.add_agent(agent_data)
+			var target_room = main_node.dev_room
+			if agent_data.role == 0: target_room = main_node.sales_room
+			elif agent_data.role == 2: target_room = main_node.qa_room
+			
+			main_node._spawn_agent_view(new_id, target_room)
+			main_node._update_ui()
+			overlay.queue_free()
+		)
+		
+		creator.closed.connect(func():
+			overlay.queue_free()
+		)
+
+func show_expand_room() -> void:
+	var expand_cost = main_node.config.expand_cost if main_node.config else 500
+	if main_node.tycoon_manager.funds >= expand_cost:
+		main_node.tycoon_manager.funds -= expand_cost
+		var office_grid = main_node.get_node_or_null("VBox/GameArea/Building/OfficeGrid")
+		if office_grid:
+			var new_room = PanelContainer.new()
+			new_room.custom_minimum_size = Vector2(360, 390)
+			
+			var bg_tex = TextureRect.new()
+			bg_tex.texture = preload("res://Assets/Rooms/qa_room_bg.png")
+			bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+			new_room.add_child(bg_tex)
+			
+			var lbl = Label.new()
+			lbl.text = tr("ROOM_QA") + " (Expansion)"
+			lbl.visible = false
+			new_room.add_child(lbl)
+			
+			# Add Marker2D spawners (Desk and Stand)
+			var desk1 = Marker2D.new(); desk1.name = "DeskPoint_1"; desk1.position = Vector2(172, 72); new_room.add_child(desk1)
+			var stand1 = Marker2D.new(); stand1.name = "StandPoint_1"; stand1.position = Vector2(100, 250); new_room.add_child(stand1)
+			
+			new_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
+			office_grid.add_child(new_room)
+			new_room.setup_room("QARoom", Color("#ff003c"), main_node.tycoon_manager)
+		main_node._update_ui()
+	else:
+		print("不夠資金擴建房間！")
+
+func toggle_help_menu() -> void:
+	if main_node.help_menu_instance and is_instance_valid(main_node.help_menu_instance):
+		main_node.help_menu_instance.close()
+	else:
+		var scene = load("res://Scenes/UI/HelpMenu.tscn")
+		if scene:
+			main_node.help_menu_instance = scene.instantiate()
+			main_node.add_child(main_node.help_menu_instance)
+			main_node.help_menu_instance.closed.connect(func(): main_node.help_menu_instance = null)
+			main_node.help_menu_instance.get_node("VBox/Title").text = tr("UI_HELP_TITLE")
+			main_node.help_menu_instance.get_node("VBox/Scroll/Content/GoalLabel").text = tr("HELP_GOAL")
+			main_node.help_menu_instance.get_node("VBox/Scroll/Content/ControlsLabel").text = tr("HELP_CONTROLS")
+			main_node.help_menu_instance.get_node("VBox/Scroll/Content/TipsLabel").text = tr("HELP_TIPS")
+			main_node.help_menu_instance.get_node("VBox/CloseButton").text = tr("UI_CLOSE")
+
 func update_ticker(tick_count: int, funds: int, reputation: int) -> void:
 	if not main_node or not main_node.ticker: return
 	
