@@ -32,7 +32,7 @@ jobs:
             HOUR=$(date -u +%H)
             if [ "$HOUR" == "16" ]; then
               ACTION="pause"
-            elif [ "$HOUR" == "22" ]; then
+            elif [ "$HOUR" == "22" ] || [ "$HOUR" == "00" ]; then
               ACTION="restart"
             else
               echo "Unexpected scheduled time: $HOUR. Exiting."
