@@ -49,12 +49,12 @@ from .api_routes.agent_chat_api import router as agent_chat_router
 from .api_routes.agents_api import router as agents_router  # MISSING
 from .api_routes.audio_api import router as audio_router
 from .api_routes.auth_api import router as auth_router  # NEW IMPORT
-from .api_routes.game_api import router as game_router
 from .api_routes.blog_api import router as blog_router
 from .api_routes.bug_report_api import router as bug_report_router
 from .api_routes.changes_api import router as changes_router  # NEW IMPORT
 from .api_routes.ethics_api import router as ethics_router  # NEW IMPORT
 from .api_routes.extraction_api import router as extraction_router  # NEW IMPORT (GAP-018)
+from .api_routes.game_api import router as game_router
 from .api_routes.internal_api import router as internal_router
 from .api_routes.internal_llm_api import router as internal_llm_router  # NEW IMPORT
 from .api_routes.knowledge_api import router as knowledge_router

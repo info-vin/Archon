@@ -31,7 +31,7 @@ def test_save_game_success(mock_user, mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_upsert = MagicMock()
     mock_table.upsert.return_value = mock_upsert
-    
+
     mock_result = MagicMock()
     mock_result.data = [{"user_id": "user-uuid-1234"}]
     mock_upsert.execute.return_value = mock_result
@@ -74,7 +74,7 @@ def test_load_game_success(mock_user, mock_supabase):
     mock_table.select.return_value = mock_select
     mock_eq = MagicMock()
     mock_select.eq.return_value = mock_eq
-    
+
     mock_result = MagicMock()
     mock_result.data = [{"save_data": {"funds": 2500, "reputation": 88}}]
     mock_eq.execute.return_value = mock_result
@@ -98,7 +98,7 @@ def test_load_game_not_found(mock_user, mock_supabase):
     mock_table.select.return_value = mock_select
     mock_eq = MagicMock()
     mock_select.eq.return_value = mock_eq
-    
+
     mock_result = MagicMock()
     mock_result.data = [] # No save game
     mock_eq.execute.return_value = mock_result
