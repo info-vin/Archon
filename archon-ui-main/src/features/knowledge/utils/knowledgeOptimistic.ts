@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { ActiveOperation, ActiveOperationsResponse } from "../../progress/types";
 import { progressKeys } from "../../progress/hooks/useProgressQueries";
 import type { KnowledgeItem, KnowledgeItemsFilter, KnowledgeItemsResponse } from "../types";
+import { escapeRegExp } from "../../../lib/utils";
 import { knowledgeKeys } from "../hooks/knowledgeKeys";
 
 /**
@@ -25,12 +26,13 @@ export function matchKnowledgeFilter(item: KnowledgeItem, filter?: KnowledgeItem
 
   // Filter by search query (simple fuzzy match)
   if (filter.search) {
-    const query = filter.search.toLowerCase();
-    const title = item.title?.toLowerCase() || "";
-    const url = item.url?.toLowerCase() || "";
-    const description = item.metadata?.description?.toLowerCase() || "";
+    // PERFORMANCE: Use inline regex to prevent redundant string memory allocations from .toLowerCase()
+    const searchRegex = new RegExp(escapeRegExp(filter.search), 'i');
+    const title = item.title || "";
+    const url = item.url || "";
+    const description = item.metadata?.description || "";
 
-    if (!title.includes(query) && !url.includes(query) && !description.includes(query)) {
+    if (!searchRegex.test(title) && !searchRegex.test(url) && !searchRegex.test(description)) {
       return false;
     }
   }
