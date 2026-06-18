@@ -28,7 +28,7 @@ const GamePage: React.FC = () => {
         <p className="font-semibold text-foreground mb-1">💡 如何在本機啟動遊戲？</p>
         <ol className="list-decimal pl-4 space-y-1">
           <li>
-            使用 Godot 4.x 開啟目錄下的 <code className="text-primary font-mono">archon-card-battler</code> 專案。
+            使用 Godot 4.x 開啟目錄下的 <code className="text-primary font-mono">arena</code> 專案。
           </li>
           <li>
             至選單選取 <strong>Project &gt; Export...</strong>，新增 <strong>Web</strong> 預設。

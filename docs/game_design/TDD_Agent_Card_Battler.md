@@ -127,7 +127,7 @@ View 層的作用是「聆聽」Model 變化，並利用 `create_tween()` 創造
 ### 3. 無頭 (Headless) TDD 測試自動化
 我們重構了 `MiniTest` 繼承自 `RefCounted`，使其脫離編輯器 GUI。現在可以在 CI/CD 或命令列中一鍵運行 100% 的無頭邏輯測試：
 ```bash
-# 在 archon-card-battler 目錄下執行：
+# 在 arena 目錄下執行：
 "/Applications/Godot.app/Contents/MacOS/Godot" --headless -s Tests/HeadlessRunner.gd
 ```
 *   **EditorRunner.gd**：繼承自 `EditorScript`，方便在 Godot 編輯器內直接執行全部測試。
