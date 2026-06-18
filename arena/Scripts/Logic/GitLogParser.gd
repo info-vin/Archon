@@ -73,7 +73,7 @@ func generate_card_from_log(log_output: String) -> CardStats:
 # OS.execute() to retrieve git logs dynamically
 func get_local_git_logs() -> Array[String]:
 	var output = []
-	var args = ["log", "-n", "20", "--shortstat", "--no-merges", "--pretty=format:%s"]
+	var args = ["log", "-n", "50", "--shortstat", "--no-merges", "--pretty=format:%s"]
 	var exit_code = OS.execute("git", args, output, true)
 	if exit_code != 0 or output.is_empty():
 		return get_fallback_logs()

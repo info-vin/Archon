@@ -44,3 +44,8 @@
 - [x] 導入 Github Actions CI 流程 (`chickensoft-games/setup-godot` 搭配自製 `HeadlessRunner.gd` 實作完畢)
 - [x] 100% 通過的單元測試日誌。
 - [x] 一張證明 UI 渲染正常的公證截圖。
+
+## ⚠️ 潛在技術債追蹤 (Tech Debt Backlog)
+1. **MainUI.gd 上帝類別風險 (God Class Risk)**：
+   - 儘管本次修復已遵循 MVC 原則解耦了 `GameState` 狀態機，但 `MainUI.gd` 仍承載了 340+ 行的邏輯，包含倒數計時器控制、HP/Mana/Combo 的直接 UI 綁定、以及鍵盤快捷鍵攔截 (`KEY_R`)。
+   - **後續建議 (Phase 5.7.2)**：必須啟動 **L2 視圖解耦 (L2 View Decoupling)**，將各類 HUD 的更新邏輯抽離到專屬的 Controller (例如 `HUDController.gd`, `TimerUI.gd`)，讓 `MainUI.gd` 僅保留初始化與跨元件協調的功能，徹底兌現「主腳本低於 100 行」的 TDD 承諾。

@@ -448,6 +448,23 @@
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
 
+### 2026年6月18日 (Part 2)：卡牌機制修復與 MVC 架構驗證 (Card Battler Bug Fixes)
+
+今日我們針對 Agent Card Battler 進行了深度除錯，解決了玩家回報的「無 Combo 特效、角色未顯示、卡牌殘影、無回合顯示」以及「極少抽到低機率卡」的問題。這次除錯深刻驗證了我們堅持的 MVC 與 TDD 原則：
+
+1. **MVC 單向資料流的落實**：
+   - 卡牌殘影問題源自 `GameState` (Model) 忘記發射更新訊號。我們堅持不讓 Model 直接呼叫 UI 函數，而是補上 `emit_signal("draw_finished")`，讓 `MainUI` (View) 監聽並自動重繪，完美保持了低耦合。
+   - 回合數 (Turn Count) 也透過新增 `current_round` 與 `turn_changed` 訊號實作，而非在 UI 內維護狀態。
+2. **終結 Determinism Bug (隨機性修復)**：
+   - 發現「抽不到低機率卡」並非機率公式錯誤，而是牌庫建立的盲點：舊程式碼死板地讀取前 20 筆 Git Commit 且開局未洗牌。
+   - 我們將 Git 樣本池擴大至 50 筆，並在 `_init_deck` 導入了 `logs.shuffle()` 與 `deck_manager.shuffle_deck()` 雙重隨機，徹底實現了 Slay the Spire 般的 Roguelike 首抽體驗。
+3. **Godot 縮排紀律血淚史**：
+   - 在嘗試使用 Python 腳本快速替換 `.gd` 檔案縮排時，因未完全掌握 Godot 嚴苛的 Tab/Space 混用禁令，導致了多次 `Parse Error`。
+   - **教訓**：絕不抱持「快樂路徑」的幻想，必須透過實體工具精準定位空白字元，並理解 GDScript 對於層級退縮的嚴格要求。
+4. **實體公證與發佈**：
+   - 使用 `capture_proof.py` 繞過 Headless 限制，成功截取了修復後的畫面。
+   - 重新執行 `Godot --export-release`，將最新的 `index.wasm` 與 `index.pck` 覆蓋至前端目錄，完成真正的全端更新交付。
+
 ### 2026年6月18日：Git 考古還原真相與 Phase 5.6 歷史歸檔
 
 今日我們專注於排程除錯、分支整理與技術債歸檔，強化了「以實體日誌為準」的考古精神：

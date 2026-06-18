@@ -13,6 +13,7 @@ signal log_event(message)
 signal game_over_triggered(win)
 signal smart_end_turn_triggered()
 signal draw_finished()
+signal turn_changed(turn)
 
 # Juice signals
 signal player_took_damage(amount)
@@ -37,6 +38,7 @@ var enemy_damage: int = 10
 var enemy_block: int = 0
 var enemy_strength: int = 0
 var game_turn_counter: int = 0
+var current_round: int = 0
 
 # Combo System
 var current_combo_category: String = ""
@@ -84,6 +86,7 @@ func select_difficulty(diff: int) -> void:
 	enemy_block = 0
 	enemy_strength = 0
 	game_turn_counter = 0
+	current_round = 0
 	combo_count = 0
 	current_combo_category = ""
 	
@@ -211,7 +214,9 @@ func play_card(card: CardStats, _enemy: RefCounted = null) -> bool:
 		deck_manager.discard_card(card)
 	if hand.find(card) != -1:
 		hand.remove_at(hand.find(card))
-		
+
+	emit_signal("draw_finished")
+
 	if check_win_condition():
 		return true
 		
@@ -272,6 +277,9 @@ func enemy_turn() -> void:
 		start_player_turn()
 
 func start_player_turn() -> void:
+	current_round += 1
+	emit_signal("turn_changed", current_round)
+
 	player_mana = player_max_mana
 	player_block = 0
 	combo_count = 0

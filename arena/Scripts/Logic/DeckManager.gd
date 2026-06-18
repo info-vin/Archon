@@ -25,6 +25,9 @@ func draw_card() -> CardStats:
 func discard_card(card: CardStats) -> void:
 	discard_pile.append(card)
 
+func shuffle_deck() -> void:
+	draw_pile.shuffle()
+
 func reshuffle() -> void:
 	draw_pile = discard_pile.duplicate()
 	discard_pile.clear()

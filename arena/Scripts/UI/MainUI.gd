@@ -29,6 +29,7 @@ var config: Resource = preload("res://Scripts/Resources/GameConfig.tres")
 # Turn Timer & Help system
 var turn_timer: float
 var timer_label: Label
+var turn_label: Label
 var help_overlay: Control = null
 
 var cjk_font: Font
@@ -57,6 +58,7 @@ func _ready() -> void:
 	action_log.add_theme_font_override("bold_italics_font", cjk_font)
 	
 	mana_label.add_theme_font_override("font", cjk_font)
+	combo_label.add_theme_font_override("font", cjk_font)
 	enemy_intent.add_theme_font_override("font", cjk_font)
 	result_label.add_theme_font_override("font", cjk_font)
 	restart_button.add_theme_font_override("font", cjk_font)
@@ -80,7 +82,8 @@ func _ready() -> void:
 	game_state.game_over_triggered.connect(show_game_over)
 	game_state.smart_end_turn_triggered.connect(_on_end_turn_pressed)
 	game_state.draw_finished.connect(update_hand_ui)
-	
+	game_state.turn_changed.connect(_on_turn_changed)
+
 	# Connect juice signals
 	game_state.player_took_damage.connect(_on_player_took_damage)
 	game_state.enemy_took_damage.connect(_on_enemy_took_damage)
@@ -106,11 +109,11 @@ func _ready() -> void:
 	player_name.text = "專案主管 (Tech Lead)"
 	player_name.add_theme_font_override("font", cjk_font)
 	enemy_name.add_theme_font_override("font", cjk_font)
-	
+
 	# Setup avatars
-	player_avatar = MainUIHelpers.create_avatar(self, config.player_avatar_path, Vector2(87, 150))
-	enemy_avatar = MainUIHelpers.create_avatar(self, "", Vector2(819, 150))
-	
+	player_avatar = MainUIHelpers.create_avatar($UILayer/UIRoot, config.player_avatar_path, Vector2(87, 150))
+	enemy_avatar = MainUIHelpers.create_avatar($UILayer/UIRoot, "", Vector2(819, 150))
+
 	# Configure HP texts
 	player_hp_text = MainUIHelpers.create_hp_text(player_hp_bar, cjk_font)
 	enemy_hp_text = MainUIHelpers.create_hp_text(enemy_hp_bar, cjk_font)
@@ -123,15 +126,27 @@ func _ready() -> void:
 	timer_label.position = Vector2(576 - 120, 15)
 	timer_label.size = Vector2(240, 120)
 	$UILayer/UIRoot.add_child(timer_label)
-	
+
+	# Create turn count label
+	turn_label = Label.new()
+	turn_label.text = "第 1 回合 (Turn 1)"
+	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	turn_label.add_theme_font_override("font", cjk_font)
+	turn_label.add_theme_font_size_override("font_size", 24)
+	turn_label.position = Vector2(576 - 120, 40) # Under timer
+	turn_label.size = Vector2(240, 40)
+	$UILayer/UIRoot.add_child(turn_label)
+
 	show_difficulty_selection()
 
 func _process(delta: float) -> void:
 	if end_turn_button.disabled or game_over_overlay.visible:
 		timer_label.visible = false
+		turn_label.visible = false
 		return
-	
+
 	timer_label.visible = true
+	turn_label.visible = true
 	turn_timer -= delta
 	if turn_timer <= 0.0:
 		turn_timer = config.turn_timer_seconds
@@ -153,6 +168,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed:
 		if event.keycode == KEY_H:
 			show_help_overlay()
+		elif event.keycode == KEY_R:
+			restart_game()
 		elif event.keycode == KEY_ESCAPE:
 			hide_help_overlay()
 
@@ -198,10 +215,12 @@ func select_difficulty(diff: int) -> void:
 
 func _init_deck() -> void:
 	var logs = git_parser.get_local_git_logs()
+	logs.shuffle() # Shuffle the logs so we don't always pick the most recent ones
 	for i in range(15):
 		var log_str = logs[i % logs.size()]
 		var card = git_parser.generate_card_from_log(log_str)
 		deck_manager.add_card(card)
+	deck_manager.shuffle_deck() # Initial shuffle so hand isn't deterministic
 
 func play_card(index: int) -> void:
 	if index >= game_state.hand.size(): return
@@ -260,14 +279,18 @@ func _on_mana_changed(current_mana: int, max_mana: int) -> void:
 	if hud_container and hud_container.token_label:
 		hud_container.token_label.text = "%d/%d" % [current_mana, max_mana]
 
+var combo_tween: Tween
+
 func _on_combo_changed(combo_count: int, combo_category: String) -> void:
 	if combo_count > 1:
 		var multiplier = 1.0 + (combo_count - 1) * 0.5
 		combo_label.text = str(multiplier) + "x COMBO!"
 		combo_label.pivot_offset = combo_label.size / 2
-		var tween = create_tween().set_trans(Tween.TRANS_SPRING)
-		tween.tween_property(combo_label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
-		tween.tween_property(combo_label, "scale", Vector2(1, 1), 0.2)
+		if combo_tween:
+			combo_tween.kill()
+		combo_tween = create_tween().set_trans(Tween.TRANS_SPRING)
+		combo_tween.tween_property(combo_label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
+		combo_tween.tween_property(combo_label, "scale", Vector2(1, 1), 0.2)
 	else:
 		combo_label.text = ""
 
@@ -314,3 +337,7 @@ func update_hand_ui() -> void:
 	
 	var hand_controller = load("res://Scripts/UI/HandController.gd")
 	hand_controller.render_hand(hand_area, game_state, config, Callable(self, "play_card"))
+
+func _on_turn_changed(turn: int) -> void:
+	if turn_label:
+		turn_label.text = "第 %d 回合 (Turn %d)" % [turn, turn]
