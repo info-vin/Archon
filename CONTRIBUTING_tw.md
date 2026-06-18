@@ -675,10 +675,10 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-> **結算日期**: 2026-05-31 (Phase 5.5.0 Hardening Baseline)
-> **狀態**: 🟢 **全系統巨型檔案清零已落實**。目前不存在任何超過 1000 行的原始碼檔案。
+> **結算日期**: 2026-06-18 (Phase 5.6.x Lean Optimization Archive)
+> **狀態**: 🟢 **專案計畫文件 (PRPs) 瘦身完成**。Phase 5.6 系列文件已壓縮至 `archive/` 並提煉至 `docs/` 知識庫。目前全系統巨型檔案持續清零（無超過 400 行之 God Object）。
 > 
-* **長效機制**：技術債改由自動化工具監控。每次提交前或定期運行 `make tech-debt-audit`，自動掃描過期腳本與 PRPs 雜亂檔案，確保無程式碼腐化。
+* **長效機制**：技術債改由自動化工具監控。每次提交前或定期運行 `make phase-audit` 與 `make tech-debt-audit`，自動掃描過期腳本與 PRPs 雜亂檔案，確保工作區極簡無雜訊。
 
 ---
 

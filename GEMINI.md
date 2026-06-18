@@ -428,6 +428,21 @@
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
 
+### 2026年6月18日：Git 考古還原真相與 Phase 5.6 歷史歸檔
+
+今日我們專注於排程除錯、分支整理與技術債歸檔，強化了「以實體日誌為準」的考古精神：
+
+1. **Git 考古與排程真相還原**：
+   - 針對 Hugging Face 自動排程器在 UTC 00 時中斷的問題，我們拒絕盲猜，透過 `git log` 與 `git branch -a --contains` 進行實體交叉比對。
+   - 成功證實排程修復程式碼已於昨日寫入，但被滯留於 `feat/twins` 分支未合併，導致 GitHub Actions 讀取到舊版 `dev/twins` 設定。
+   - 完成了包含 API Lint `B904` 修復、Godot MVC 卡牌重構在內的大型分支合併與遠端同步。
+2. **分支瘦身與清理**：
+   - 刪除了完成階段性任務的 `feat/tycoon-config-refactor` 與 `fix/tycoon-paper-doll-zindex` 本地分支。
+   - 清理了雲端自動生成的 UI 與 Jules AI 殘留分支，並透過 `git remote prune origin` 確保本地追蹤狀態極簡。
+3. **Phase 5.6 歷史歸檔與知識提煉 (SOP 落實)**：
+   - 依據 `CONTRIBUTING_tw.md` 規範，啟動 `make phase-audit` 確認無幽靈任務後，執行了 Phase 5.6.x (Lean 整合與離線工作流優化) 史詩級文件的歷史封存。
+   - 成功將 9 份 `.md` 計畫壓縮至 `PRPs/archive/`，並提煉其精華至 Docusaurus 知識庫的 `knowledge-journal/phase-5-6-0-lean-optimization.mdx`，維持專案根目錄乾淨且知識不流失。
+
 ### 2026年6月11日：Godot TDD 奠基與卡牌架構轉向 (Lean Pivot)
 
 今日我們啟動了 Archon 衍生遊戲專案的開發，並確立了以 TDD (測試驅動開發) 為核心的 Godot 引擎工作流，期間經歷了重要的架構轉向與踩坑學習：
