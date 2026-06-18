@@ -110,6 +110,26 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月18日：Card Battler 重構、消除硬編碼與 Headless 限制突破 (Phase 5.7.1)
+
+今日我們針對 Godot 遊戲專案完成了 Phase 5.7.1 (Card Battler Pivot, Rename, and L2 Refactoring) 的核心任務：
+
+1. **全面消除魔法數字與硬編碼 (Hardcoding Remediation)**：
+   - 使用自製的 Python `scan_gd_scripts.py` 掃描專案，定位了 `MainUI.gd` 與 `GameState.gd` 中大量寫死的 `res://` 路徑、UI 尺寸 (`Vector2`) 以及延遲常數。
+   - 將所有數值抽離至 `GameConfig.gd` 與其對應的 `.tres` 資源檔，讓企劃能透過 Inspector 直接調整，實現邏輯與資料的徹底分離。
+2. **L2 模組化與巨型檔案減重 (L2 Modularization)**：
+   - 針對 Godot 專案的 `MainUI.gd` 進行預防性拆分，成功剝離出 `HandController.gd` (專司卡牌弧線渲染與拖曳) 以及 `OverlayManager.gd` (掌管難度、教學與結算畫面)。
+   - 拆分後，全 Godot 專案再無任何 `.gd` 檔案超過 400 行門檻 (MainUI 降至 313 行)。
+3. **CI/CD 現代化與 Lean 測試哲學**：
+   - 在 `.github/workflows/ci.yml` 中導入業界標準 `chickensoft-games/setup-godot` 引擎配置。
+   - 堅持 **Lean 原則**，拒絕盲目跟風導入臃腫的第三方 GUT 框架，改以原生 Headless 模式搭配自製的 `HeadlessRunner.gd`，成功在本地通過了 76 項戰鬥與邏輯測試。
+4. **突破 Godot Headless 渲染限制 (UI Capture Proof)**：
+   - 在執行 `capture_ui.gd` 公證截圖時，遭遇 `--headless` 模式下 `dummy` 渲染器無法擷取 Viewport 影像的底層限制 (回傳 null)。
+   - 撰寫 Python 腳本 `capture_proof.py` 繞過限制，以帶有 GUI 視窗的模式自動啟動 Godot，成功產出 517KB 的實體驗證截圖，證明 L2 拆分與資源抽離未破壞任何 UI 錨點與圖層 (Z-Index)。
+5. **Web (WASM) 發佈與整合**：
+   - 使用 Godot headless 指令將遊戲匯出為 Web 格式 (`index.wasm`, `index.pck`)。
+   - 避開靜默匯出失敗的路徑陷阱，成功將編譯成品部署至 `enduser-ui-fe/public/games/card-battler/` 目錄，使遊戲能被 5173 Port 的前端網頁順利載入。
+
 ### 2026年6月8日：L2 模組化代碼減重與 Monolith 行數門禁達成
 
 今日我們針對專案中三個行數超過 400 行的核心程式碼檔案完成了 L2 模組化拆分，以符合單一檔案行數低於 400 行的門禁標準：
