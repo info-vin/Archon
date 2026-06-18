@@ -1,7 +1,7 @@
 # Phase 5.7.1: Card Battler Pivot, Rename, and L2 Refactoring
 
 ## 核心目標 (Goal)
-本階段目標為優化原 `archon-card-battler` 遊戲專案的專案結構與可維護性。包含將冗長的專案資料夾更名為簡潔的單一單字，並將行數超出門檻（目前 MainUI.gd 已超標，後續預期 Main.gd 也將增長）的核心腳本進行 L2 模組化拆分，最終透過自動化測試與 UI 截圖物理公證來確保重構後的功能完全正常。
+本階段目標為優化原 `archon-card-battler` (現為 `arena`) 遊戲專案的專案結構與可維護性。根據最新 Code Review 掃描結果，目前雖然尚未有檔案超過 400 行門檻 (最大為 `MainUI.gd` 349 行)，但存在嚴重的「硬編碼」(Hardcoding) 問題（包含路徑、UI 尺寸與魔法數字）。本階段將進行 L2 模組化拆分、消除硬編碼、導入現代 Godot CI/CD，並最終透過自動化測試與 UI 截圖物理公證來確保功能完全正常。
 
 ## 執行步驟 (Execution Plan)
 
@@ -9,23 +9,26 @@
 - **行動**: 建立並切換至新分支 `feature/phase5-7-1-card-battler-refactor`。
 - **目的**: 確保改名與模組化過程在隔離的沙箱中進行，避免影響主幹的穩定性。
 
-### Step 2: 專案更名與依賴修正 (Renaming & Dependency Fixes)
-- **行動**:
-  1. 將 `archon-card-battler` 目錄重新命名為使用者選定的單一名稱（例如 `deck` 或 `nexus`）。
-  2. 使用全域搜尋替換前端文件 (`GamePage.tsx`) 與其他可能引用的開發腳本中的舊名稱字串。
+### Step 2: 消除硬編碼與抽離設定檔 (Hardcoding Remediation)
+- **行動**: 
+  1. 盤點 `MainUI.gd`, `HelpOverlay.gd`, `DifficultyOverlay.gd`, `CardUI.gd`, `CombatVFX.gd` 內的魔法數字 (如字體大小 `font_size`, 元件尺寸 `Vector2(...)`, 延遲秒數等)。
+  2. 移除 `MainUI.gd` 中直接使用 `preload` 或 `load` 載入 `res://` 路徑的寫法。
+  3. 建立統一的 `GameConfig.gd` 或在節點上開放 `@export` 變數供 Inspector 注入，以利後續統一調整。
 
 ### Step 3: L2 模組化重構 (L2 Modularization)
 - **行動**:
-  1. 鎖定目前的巨型檔案（如掃描報告指出的 `MainUI.gd`，以及預期會膨脹的 `Main.gd` 或 `GameState.gd`）。
+  1. 針對日漸膨脹的檔案 (如 `MainUI.gd`, `GameState.gd`) 提早進行預防性拆分。
   2. **實施拆分**: 將 UI 邏輯、動畫控制、訊號綁定（Signal Bindings）與核心商業邏輯物理分離。
-     - 例如：將 `HUD` 相關邏輯抽出為 `HUDController.gd`。
-     - 例如：將 `Card` 特效與拖曳邏輯抽出至單獨的 `CardInteraction.gd` 組件。
+     - 將 `HUD` 相關邏輯抽出為獨立 Controller。
+     - 將 `Card` 特效與拖曳邏輯抽出至單獨的 `CardInteraction.gd` 組件。
 - **約束**: 確保拆分後，**沒有任何單一 `.gd` 檔案超過 400 行**。
 
-### Step 4: 測試驅動驗證 (TDD Verification)
-- **行動**: 執行在 `Phase 5.6` 奠定的 MiniTest 框架。
+### Step 4: 測試驅動驗證與 CI/CD 導入 (TDD Verification & CI/CD)
+- **行動**:
+  1. 執行在 `Phase 5.6` 奠定的 MiniTest 框架驗證核心邏輯。
+  2. 導入現代化的 Github Actions 流程。根據 2025 年的 Best Practice，採用 `chickensoft-games/setup-godot` 進行 Godot 引擎配置，並以 Headless 模式執行 `GUT (Godot Unit Test)`。
 - **指令**: 透過命令列執行 Headless 測試。
-- **目的**: 確保核心的「卡牌消耗」、「傷害計算」與「回合流轉」在 L2 拆分後依然能通過全部單元測試，無退化 (Regression)。
+- **目的**: 確保核心的「卡牌消耗」、「傷害計算」與「回合流轉」在 L2 拆分後無退化 (Regression)，並具備雲端自動化公證能力。
 
 ### Step 5: UI 截圖物理公證 (Visual Proof & Audit)
 - **行動**:
@@ -35,7 +38,9 @@
 - **目的**: 遵守「物理穿透驗證」鐵律，透過視覺證據證明重構並未破壞任何 UI 錨點 (Anchors) 或渲染層級 (Z-Index)。
 
 ## 預期產出 (Deliverables)
-- [ ] 乾淨的單一單字遊戲目錄。
-- [ ] 所有 `.gd` 檔案均 < 400 行。
-- [ ] 100% 通過的單元測試日誌。
-- [ ] 一張證明 UI 渲染正常的公證截圖。
+- [x] 乾淨的單一單字遊戲目錄。
+- [x] 所有 `.gd` 檔案均 < 400 行。
+- [x] 將路徑、UI 尺寸與魔法數字從主腳本中剝離。 (`GameConfig.tres` 實作完畢)
+- [x] 導入 Github Actions CI 流程 (`chickensoft-games/setup-godot` 搭配自製 `HeadlessRunner.gd` 實作完畢)
+- [x] 100% 通過的單元測試日誌。
+- [x] 一張證明 UI 渲染正常的公證截圖。

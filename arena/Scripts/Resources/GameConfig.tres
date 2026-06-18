@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Resources/GameConfig.gd" id="1_gc"]
+
+[resource]
+script = ExtResource("1_gc")
+turn_timer_seconds = 30.0
+easy_mana = 5
+easy_hp = 60
+easy_dmg = 5
+normal_mana = 5
+normal_hp = 200
+normal_dmg = 10
+hard_mana = 5
+hard_hp = 400
+hard_dmg = 12
+expert_mana = 4
+expert_hp = 600
+expert_dmg = 15
+card_base_size = Vector2(216, 324)
+avatar_size = Vector2(216, 324)
+timer_font_size_normal = 64
+timer_font_size_alert = 88
+combat_text_font_size = 48
+cjk_font_path = "res://Assets/Fonts/arial_unicode.ttf"
+hit_sound_path = "res://Assets/Sounds/hit.wav"
+error_sound_path = "res://Assets/Sounds/error.wav"
+hover_sound_path = "res://Assets/Sounds/hover.wav"
+play_sound_path = "res://Assets/Sounds/play.wav"
+player_avatar_path = "res://Assets/Images/player_lead.png"
+bug_easy_path = "res://Assets/Images/bug_easy.png"
+bug_normal_path = "res://Assets/Images/bug_normal.png"
+bug_hard_path = "res://Assets/Images/bug_hard.png"
+bug_expert_path = "res://Assets/Images/bug_expert.png"
+bg_easy_path = "res://Assets/Background/easy_bg.jpg"
+bg_normal_path = "res://Assets/Background/landscape.jpg"
+bg_hard_path = "res://Assets/Background/hard_bg.jpg"
+bg_expert_path = "res://Assets/Background/expert_bg.jpg"
+card_scene_path = "res://Scenes/UI/CardUI.tscn"

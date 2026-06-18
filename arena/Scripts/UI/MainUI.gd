@@ -24,12 +24,14 @@ var game_state: GameState
 var hit_sound: AudioStreamPlayer
 var error_sound: AudioStreamPlayer
 
+var config: Resource = preload("res://Scripts/Resources/GameConfig.tres")
+
 # Turn Timer & Help system
-var turn_timer: float = 30.0
+var turn_timer: float
 var timer_label: Label
 var help_overlay: Control = null
 
-var cjk_font = preload("res://Assets/Fonts/arial_unicode.ttf")
+var cjk_font: Font
 
 # Dynamic vector icon HUD elements
 var hud_container: TokenHud
@@ -43,8 +45,10 @@ var player_hp_text: Label
 var enemy_hp_text: Label
 
 func _ready() -> void:
-	hit_sound = MainUIHelpers.create_sound(self, ("res://Assets/Sounds/hit.wav"))
-	error_sound = MainUIHelpers.create_sound(self, ("res://Assets/Sounds/error.wav"))
+	cjk_font = load(config.cjk_font_path)
+	hit_sound = MainUIHelpers.create_sound(self, config.hit_sound_path)
+	error_sound = MainUIHelpers.create_sound(self, config.error_sound_path)
+	turn_timer = config.turn_timer_seconds
 	
 	# Apply CJK font to all controls displaying Traditional Chinese
 	action_log.add_theme_font_override("normal_font", cjk_font)
@@ -104,7 +108,7 @@ func _ready() -> void:
 	enemy_name.add_theme_font_override("font", cjk_font)
 	
 	# Setup avatars
-	player_avatar = MainUIHelpers.create_avatar(self, "res://Assets/Images/player_lead.png", Vector2(87, 150))
+	player_avatar = MainUIHelpers.create_avatar(self, config.player_avatar_path, Vector2(87, 150))
 	enemy_avatar = MainUIHelpers.create_avatar(self, "", Vector2(819, 150))
 	
 	# Configure HP texts
@@ -113,9 +117,9 @@ func _ready() -> void:
 	
 	# Create turn timer label
 	timer_label = Label.new()
-	timer_label.text = "30s"
+	timer_label.text = str(int(config.turn_timer_seconds)) + "s"
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", 64)
+	timer_label.add_theme_font_size_override("font_size", config.timer_font_size_normal)
 	timer_label.position = Vector2(576 - 120, 15)
 	timer_label.size = Vector2(240, 120)
 	$UILayer/UIRoot.add_child(timer_label)
@@ -130,16 +134,16 @@ func _process(delta: float) -> void:
 	timer_label.visible = true
 	turn_timer -= delta
 	if turn_timer <= 0.0:
-		turn_timer = 30.0
+		turn_timer = config.turn_timer_seconds
 		_on_end_turn_pressed()
 	else:
 		var display_time = ceil(turn_timer)
 		timer_label.text = str(display_time) + "s"
 		if display_time <= 5:
-			timer_label.add_theme_font_size_override("font_size", 88)
+			timer_label.add_theme_font_size_override("font_size", config.timer_font_size_alert)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
 		else:
-			timer_label.add_theme_font_size_override("font_size", 64)
+			timer_label.add_theme_font_size_override("font_size", config.timer_font_size_normal)
 			timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 			
 func _unhandled_input(event: InputEvent) -> void:
@@ -155,44 +159,38 @@ func _unhandled_input(event: InputEvent) -> void:
 func show_help_overlay() -> void:
 	if help_overlay != null:
 		help_overlay.queue_free()
-		
-	var HelpOverlayScript = preload("res://Scripts/UI/HelpOverlay.gd")
-	help_overlay = HelpOverlayScript.new()
-	help_overlay.setup_overlay(cjk_font)
+	var overlay_mgr = load("res://Scripts/UI/OverlayManager.gd")
+	help_overlay = overlay_mgr.show_help_overlay(self, cjk_font)
 	help_overlay.closed.connect(func(): help_overlay = null)
-	$UILayer/UIRoot.add_child(help_overlay)
 
 func hide_help_overlay() -> void:
-	if help_overlay != null:
-		help_overlay.close()
+	var overlay_mgr = load("res://Scripts/UI/OverlayManager.gd")
+	overlay_mgr.hide_help_overlay(help_overlay)
+	help_overlay = null
 
 func show_difficulty_selection() -> void:
 	end_turn_button.disabled = true
-	
-	var DifficultyOverlayScript = preload("res://Scripts/UI/DifficultyOverlay.gd")
-	var overlay = DifficultyOverlayScript.new()
-	overlay.setup_overlay(cjk_font)
-	overlay.difficulty_selected.connect(func(diff): select_difficulty(diff))
-	$UILayer/UIRoot.add_child(overlay)
+	var overlay_mgr = load("res://Scripts/UI/OverlayManager.gd")
+	overlay_mgr.show_difficulty_selection(self, cjk_font, Callable(self, "select_difficulty"))
 
 func select_difficulty(diff: int) -> void:
 	match diff:
 		0: # EASY
 			enemy_name.text = "程式缺陷 (Bug - Easy)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_easy.png")
-			background_node.texture = load("res://Assets/Background/easy_bg.jpg")
+			enemy_avatar.texture = load(config.bug_easy_path)
+			background_node.texture = load(config.bg_easy_path)
 		1: # NORMAL
 			enemy_name.text = "程式錯誤 (Bug - Normal)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_normal.png")
-			background_node.texture = load("res://Assets/Background/landscape.jpg")
+			enemy_avatar.texture = load(config.bug_normal_path)
+			background_node.texture = load(config.bg_normal_path)
 		2: # HARD
 			enemy_name.text = "系統漏洞 (Bug - Hard)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_hard.png")
-			background_node.texture = load("res://Assets/Background/hard_bg.jpg")
+			enemy_avatar.texture = load(config.bug_hard_path)
+			background_node.texture = load(config.bg_hard_path)
 		3: # EXPERT
 			enemy_name.text = "核心崩潰 (Bug - Expert)"
-			enemy_avatar.texture = load("res://Assets/Images/bug_expert.png")
-			background_node.texture = load("res://Assets/Background/expert_bg.jpg")
+			enemy_avatar.texture = load(config.bug_expert_path)
+			background_node.texture = load(config.bg_expert_path)
 			
 	game_state.select_difficulty(diff)
 	end_turn_button.disabled = false
@@ -309,41 +307,10 @@ func update_hand_ui() -> void:
 	_update_enemy_intent()
 	
 	# Clean turn timer when player hand is updated (turn start)
-	turn_timer = 30.0
+	if config and config.get("turn_timer_seconds") != null:
+		turn_timer = config.get("turn_timer_seconds")
+	else:
+		turn_timer = 30.0
 	
-	for child in hand_area.get_children():
-		child.queue_free()
-		
-	var card_scene = preload("res://Scenes/UI/CardUI.tscn")
-	var hand_width = hand_area.size.x if hand_area.size.x > 0 else 650.0
-	var card_width = 180.0
-	var total_cards = game_state.hand.size()
-	
-	var max_spacing = 130.0
-	var required_width = card_width + (total_cards - 1) * max_spacing
-	var spacing = max_spacing
-	if required_width > hand_width:
-		spacing = (hand_width - card_width) / max(1, total_cards - 1)
-	if total_cards <= 1: spacing = 0
-	
-	var total_width = card_width + (total_cards - 1) * spacing
-	var start_x = (hand_width - total_width) / 2.0
-	
-	for i in range(total_cards):
-		var card = game_state.hand[i]
-		var card_ui = card_scene.instantiate()
-		hand_area.add_child(card_ui)
-		
-		var target_x = start_x + (i * spacing)
-		
-		var t = 0.5 if total_cards <= 1 else float(i) / float(total_cards - 1)
-		var curve_y = abs(t - 0.5) * abs(t - 0.5) * 150.0
-		var rotation_deg = lerpf(-15.0, 15.0, t)
-		
-		card_ui.position = Vector2(target_x, 10 + curve_y)
-		card_ui.rotation_degrees = rotation_deg
-		card_ui.original_y = card_ui.position.y
-		
-		card_ui.setup(card, i)
-		card_ui.pressed.connect(func(): play_card(card_ui.card_index))
-		card_ui.animate_draw(card_ui.position)
+	var hand_controller = load("res://Scripts/UI/HandController.gd")
+	hand_controller.render_hand(hand_area, game_state, config, Callable(self, "play_card"))

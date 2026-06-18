@@ -46,7 +46,11 @@ var hand: Array = []
 var deck_manager: RefCounted
 var git_parser: RefCounted
 
+var config: Resource
+
 func _init(mana: int = 5, hp: int = 100):
+	config = load("res://Scripts/Resources/GameConfig.tres")
+	if not config: config = load("res://Scripts/Resources/GameConfig.gd").new() # Fallback
 	self.player_max_mana = mana
 	self.player_mana = mana
 	self.player_max_hp = hp
@@ -57,21 +61,21 @@ func select_difficulty(diff: int) -> void:
 	difficulty = diff
 	match difficulty:
 		Difficulty.EASY:
-			player_max_mana = 5
-			enemy_max_hp = 60
-			enemy_damage = 5
+			player_max_mana = config.easy_mana
+			enemy_max_hp = config.easy_hp
+			enemy_damage = config.easy_dmg
 		Difficulty.NORMAL:
-			player_max_mana = 5
-			enemy_max_hp = 200
-			enemy_damage = 10
+			player_max_mana = config.normal_mana
+			enemy_max_hp = config.normal_hp
+			enemy_damage = config.normal_dmg
 		Difficulty.HARD:
-			player_max_mana = 5
-			enemy_max_hp = 400
-			enemy_damage = 12
+			player_max_mana = config.hard_mana
+			enemy_max_hp = config.hard_hp
+			enemy_damage = config.hard_dmg
 		Difficulty.EXPERT:
-			player_max_mana = 4
-			enemy_max_hp = 600
-			enemy_damage = 15
+			player_max_mana = config.expert_mana
+			enemy_max_hp = config.expert_hp
+			enemy_damage = config.expert_dmg
 			
 	player_hp = player_max_hp
 	enemy_hp = enemy_max_hp
