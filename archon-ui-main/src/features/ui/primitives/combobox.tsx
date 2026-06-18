@@ -9,6 +9,7 @@
 import * as Popover from "@radix-ui/react-popover";
 import { Check, Loader2 } from "lucide-react";
 import * as React from "react";
+import { escapeRegExp } from "../../../lib/utils";
 import { Button } from "./button";
 import { cn } from "./styles";
 
@@ -94,9 +95,10 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
     const displayValue = selectedOption?.label || value || "";
 
     // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
-    const searchLowerCheck = search.toLowerCase();
+    // PERFORMANCE: Use inline regex test instead of opt.label.toLowerCase() to prevent per-render string allocations
+    const searchLowerRegex = new RegExp(`^${escapeRegExp(search)}$`, 'i');
     const hasCustomOption =
-      allowCustomValue && search.trim() && !filteredOptions.some((opt) => opt.label.toLowerCase() === searchLowerCheck);
+      allowCustomValue && search.trim() && !filteredOptions.some((opt) => searchLowerRegex.test(opt.label));
 
     // Event handlers
     const handleSelect = React.useCallback(
