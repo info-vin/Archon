@@ -1,0 +1,39 @@
+---
+id: phase-5-6-0-lean-optimization
+title: Phase 5.6.x - Lean 整合與離線工作流優化
+sidebar_position: 4
+tags: [lean4, offline, dynamic-registry, formal-verification, simulation]
+---
+
+# Phase 5.6.x: Lean 整合、離線與自動化工作流優化
+
+## 📝 脈絡與目標 (Context & Objective)
+Phase 5.6 系列的研發背景，源自於系統在 Phase 5.5（3-Tier 降階容災與 Docker 瘦身）落地後，所面臨的「本地算力」與「雲端成本」之間的摩擦力。隨著 `lean_proofs`（Lean 4 形式化驗證）子專案的引入，本階段的核心目標在於：**整合 Lean 4 本地輔助證明**、**量化本地/雲端算力效益**、優化 **Digital Twin 百關模擬器的運行負擔**，以及**徹底消滅 Agent Prompt 的硬編碼，實現動態治理**。
+
+## 🔍 核心架構與落地細節 (Architectural Deep Dive)
+
+### 1. Lean 4 形式化驗證整合 (Formal Verification)
+- **環境與基礎設施**：成功將 Lean 4 語言整合進本地開發流中，並為未來嚴謹的定理證明（如 RLS 權限正確性、工作流狀態機轉換）打下數學驗證基礎。
+- **DevBot 數學大腦升級**：為 `DevBot` 注入了嚴格的「思維鏈 (CoT)」與「形式化驗證」約束提示詞，大幅提升其處理複雜演算法與邏輯推導的嚴密性。
+
+### 2. 動態 Agent 註冊與治理 (Dynamic Agent Registry)
+- **消滅硬編碼**：徹底解耦了 `agent_registry.py`，將 `market-bot`、`librarian`、`po-bot`、`dev-bot` 等 Agent 的系統提示詞 (System Prompt) 從原始碼中移除。
+- **資料庫驅動 (Prompt Governance)**：實作 `prompt_service` 動態加載，所有 Agent 提示詞全面寫入 `public.archon_prompts` 表。這使得 5173 前台 Admin UI 的 Prompt Manager 面板能與後端達到 100% 的業務數據對齊。
+
+### 3. Digital Twin 模擬器效能決策 (Simulator & Hardware Benchmarks)
+- **混沌模擬 (Chaos Testing)**：針對百關動態模擬，建立了量化的硬體開銷評估（Empirical Benchmarks）。
+- **視覺對帳分流**：確立了「何時留在本地、何時上雲端」的成本效益邊界，避免巨型的 E2E 視覺對帳 (Vision Judge) 拖垮開發機（如 Intel Mac）的 CPU 效能。
+
+---
+
+## ⚠️ 核心教訓與實戰鐵律 (The "Iron Laws")
+
+:::tip[動態 Prompt 的單一事實來源 (SSOT)]
+**教訓**: 將 Agent 提示詞硬編碼在代碼中會導致 UI 設定與後端行為脫節。
+**鐵律**: 所有 Agent 的人格定義與工作指引必須遵循「設定即資料 (Config as Data)」原則。UI 介面只能有一份唯一的 Prompt 來源，並透過資料庫與快取機制來派發給後端 Agent，落實絕對的資料對齊。
+:::
+
+:::warning[本地算力與離線推論的陷阱]
+**教訓**: 在沒有外部網路的環境下，盲目將複雜的邏輯推導（如 Vision Judge）交給本地模型，極易導致開發機癱瘓 (OOM 或長時間阻塞)。
+**鐵律**: 離線功能 (Offline Mode) 的設計重點在於「優雅降級」與「基本連通性」，而非「全功能鏡像」。在處理形式化證明或重度 RAG 分析時，必須依據硬體基準測試 (Benchmarks) 設定嚴格的超時閥值與 Token 上限。
+:::
