@@ -46,6 +46,6 @@
 - [x] 一張證明 UI 渲染正常的公證截圖。
 
 ## ⚠️ 潛在技術債追蹤 (Tech Debt Backlog)
-1. **MainUI.gd 上帝類別風險 (God Class Risk) [已於 Phase 5.7.2 解決]**：
-   - **完成狀態**：已成功實施 L2 視圖解耦，抽離出 `CombatJuice.gd`（視覺特效與音效）與 `DeckController.gd`（牌組載入）。`MainUI.gd` 降低至 306 行，結構非常單一且職責分離。已通過全部 76 項單元測試與 UI 截圖物理公證。
-   - **後續防禦**：持續監控 `MainUI.gd`（306 行）與 `GameState.gd`（329 行），確保兩大核心主腳本行數在後續疊代中不超過 400 行門檻。
+1. **MainUI.gd & GameState.gd 上帝類別風險 (God Class Risk) [已於 Phase 5.7.1 解決]**：
+   - **完成狀態**：已成功實施 L2 視圖與邏輯解耦，抽離出 `CombatJuice.gd`（視覺特效與音效）、`DeckController.gd`（牌組載入）、`CardEffectResolver.gd`（卡牌技能效果解耦）與 `GitTranslator.gd`（動態翻譯）。`MainUI.gd` 降低至 304 行，`GameState.gd` 降低至 281 行，結構非常單一且職責分離。已通過全部 76 項單元測試與 UI 截圖物理公證。
+   - **後續防禦**：持續監控所有核心主腳本，確保單一檔案行數在後續疊代中不超過 400 行門檻。

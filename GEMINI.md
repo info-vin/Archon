@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.5.11 Monolith Refactoring（對 manager.py、ollamaService.ts、BugReportModal.tsx 進行 L2 模組化與自訂 Hook 抽離）已全部完成，全系統單元與整合測試、靜態代碼檢查及行數門禁皆已順利通過。
+*   **當前狀態 (Current Context)**: Phase 5.7.1 Card Battler Pivot, Rename, and L2 Refactoring (包含 MainUI/GameState 解耦、卡牌 UI 特效與動態翻譯、Web 部署與自動化公證) 已全部完成，所有 76 項單元與整合測試、靜態檢查及行數門禁皆已順利通過。
 *   **今日目標 (Today's Goal)**: 等待人類指揮官給予下一階段的新指令。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -110,20 +110,25 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026年6月19日：MainUI.gd L2 模組化重構與 L2 視圖解耦 (Phase 5.7.2)
+### 2026年6月19日：Card Battler L2 重構與動態翻譯解耦 (Phase 5.7.1)
 
-今日我們針對 Godot 遊戲專案（arena）完成了 `MainUI.gd` 的 L2 模組化重構與 L2 視圖解耦：
+今日我們針對 Godot 遊戲專案（arena）完成了 `MainUI.gd` 與 `GameState.gd` 的 L2 重構，並將靜態翻譯字典改為動態加載：
 
 1. **解耦音效與視覺特效 (CombatJuice)**：
    - 建立 [CombatJuice.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/UI/CombatJuice.gd) 專職處理相機震動、受擊動畫、回復 Block 與漂浮文字等動畫與音效反饋，移除了 `MainUI.gd` 中重複的視覺與音訊細節邏輯。
 2. **解耦牌庫初始化 (DeckController)**：
    - 建立 [DeckController.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/DeckController.gd) 負責從 Git log 檔案讀取、洗牌並載入初始玩家牌組，徹底分離資料載入與 UI 主循環。
-3. **主框架瘦身與 Godot 靜態載入修正**：
-   - 重構 [MainUI.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/UI/MainUI.gd)，利用 `preload` 取代直寫 `class_name` 靜態類型的宣告，避免在 Godot headless 模式下尚未掃描 ClassDB Registry 時產生的編譯與解析錯誤。
-   - 完成重構後，`MainUI.gd` 行數從 326 行降至 304 行，程式碼職責更為單一、乾淨。
-4. **全測試與 UI 物理公證驗證**：
+3. **解耦 GameState 卡牌效果 (CardEffectResolver)**：
+   - 建立 [CardEffectResolver.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/CardEffectResolver.gd) 將卡牌類別（Performance, Merge 等）具體特殊技能效果移出，簡化狀態機管理。
+4. **GitLogParser 動態翻譯 (GitTranslator)**：
+   - 將原本硬編碼在 parser 內的翻譯字典提取至外部設定檔 [git_dict.json](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Resources/git_dict.json)，並以 [GitTranslator.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/GitTranslator.gd) 在執行期動態加載與替換。
+5. **主框架瘦身與 Godot 靜態載入修正**：
+   - 使用 `preload` 取代直寫 `class_name` 靜態類型的宣告，避免在 Godot headless 模式下尚未掃描 ClassDB Registry 時產生的編譯與解析錯誤。
+   - 重構後，`MainUI.gd` 行數降至 304 行，`GameState.gd` 降至 281 行，全數符合 400 行門禁限制。
+6. **全測試與 UI 物理公證驗證**：
    - 通過 `HeadlessRunner.gd` 全數 76 項單元與整合測試。
    - 執行 `capture_proof.py` 繞過 headless 限制完成 UI 截圖物理公證，證實重構並未破壞任何 UI 錨點與 Z-Index 渲染階層。
+   - 順利匯出 Web Release WASM 檔案，並合併推送到遠端分支。
 
 ### 2026年6月18日：Card Battler 重構、消除硬編碼與 Headless 限制突破 (Phase 5.7.1)
 
