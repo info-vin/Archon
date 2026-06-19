@@ -46,6 +46,6 @@
 - [x] 一張證明 UI 渲染正常的公證截圖。
 
 ## ⚠️ 潛在技術債追蹤 (Tech Debt Backlog)
-1. **MainUI.gd 上帝類別風險 (God Class Risk)**：
-   - 儘管本次修復已遵循 MVC 原則解耦了 `GameState` 狀態機，但 `MainUI.gd` 仍承載了 340+ 行的邏輯，包含倒數計時器控制、HP/Mana/Combo 的直接 UI 綁定、以及鍵盤快捷鍵攔截 (`KEY_R`)。
-   - **後續建議 (Phase 5.7.2)**：必須啟動 **L2 視圖解耦 (L2 View Decoupling)**，將各類 HUD 的更新邏輯抽離到專屬的 Controller (例如 `HUDController.gd`, `TimerUI.gd`)，讓 `MainUI.gd` 僅保留初始化與跨元件協調的功能，徹底兌現「主腳本低於 100 行」的 TDD 承諾。
+1. **MainUI.gd 上帝類別風險 (God Class Risk) [已於 Phase 5.7.2 解決]**：
+   - **完成狀態**：已成功實施 L2 視圖解耦，抽離出 `CombatJuice.gd`（視覺特效與音效）與 `DeckController.gd`（牌組載入）。`MainUI.gd` 降低至 306 行，結構非常單一且職責分離。已通過全部 76 項單元測試與 UI 截圖物理公證。
+   - **後續防禦**：持續監控 `MainUI.gd`（306 行）與 `GameState.gd`（329 行），確保兩大核心主腳本行數在後續疊代中不超過 400 行門檻。

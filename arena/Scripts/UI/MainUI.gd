@@ -26,32 +26,36 @@ var error_sound: AudioStreamPlayer
 
 var config: Resource = preload("res://Scripts/Resources/GameConfig.tres")
 
-# Turn Timer & Help system
-var turn_timer: float
-var timer_label: Label
-var turn_label: Label
+# Decoupled Controllers
+var timer_ui
+var hud_controller
+var combat_juice: Node
 var help_overlay: Control = null
 
 var cjk_font: Font
-
-# Dynamic vector icon HUD elements
 var hud_container: TokenHud
 
-# Dynamic textures and HP overlays
 @onready var player_name = $UILayer/UIRoot/PlayerHUD/PlayerName
 @onready var enemy_name = $UILayer/UIRoot/EnemyHUD/EnemyName
 var player_avatar: TextureRect
 var enemy_avatar: TextureRect
 var player_hp_text: Label
 var enemy_hp_text: Label
+var turn_label: Label
 
 func _ready() -> void:
 	cjk_font = load(config.cjk_font_path)
+	_setup_audio()
+	_setup_ui_overrides()
+	_setup_game_controllers()
+	_setup_hud_and_avatars()
+	show_difficulty_selection()
+
+func _setup_audio() -> void:
 	hit_sound = MainUIHelpers.create_sound(self, config.hit_sound_path)
 	error_sound = MainUIHelpers.create_sound(self, config.error_sound_path)
-	turn_timer = config.turn_timer_seconds
-	
-	# Apply CJK font to all controls displaying Traditional Chinese
+
+func _setup_ui_overrides() -> void:
 	action_log.add_theme_font_override("normal_font", cjk_font)
 	action_log.add_theme_font_override("bold_font", cjk_font)
 	action_log.add_theme_font_override("italics_font", cjk_font)
@@ -63,15 +67,20 @@ func _ready() -> void:
 	result_label.add_theme_font_override("font", cjk_font)
 	restart_button.add_theme_font_override("font", cjk_font)
 	
+	mana_label.visible = false
+	end_turn_button.visible = false
+	fighter_left.visible = false
+	fighter_right.visible = false
+
+func _setup_game_controllers() -> void:
 	deck_manager = DeckManager.new()
 	git_parser = preload("res://Scripts/Logic/GitLogParser.gd").new()
 	
-	# Initialize GameState
 	game_state = preload("res://Scripts/Logic/GameState.gd").new()
 	game_state.deck_manager = deck_manager
 	game_state.git_parser = git_parser
 	
-	# Connect signals
+	# Connect Model flow signals
 	game_state.player_hp_changed.connect(_on_player_hp_changed)
 	game_state.enemy_hp_changed.connect(_on_enemy_hp_changed)
 	game_state.player_block_changed.connect(_on_player_block_changed)
@@ -84,23 +93,24 @@ func _ready() -> void:
 	game_state.draw_finished.connect(update_hand_ui)
 	game_state.turn_changed.connect(_on_turn_changed)
 
+	# Instantiate and setup CombatJuice
+	var CombatJuiceScript = preload("res://Scripts/UI/CombatJuice.gd")
+	combat_juice = CombatJuiceScript.new()
+	add_child(combat_juice)
+	combat_juice.setup(self, hit_sound, error_sound)
+
 	# Connect juice signals
-	game_state.player_took_damage.connect(_on_player_took_damage)
-	game_state.enemy_took_damage.connect(_on_enemy_took_damage)
-	game_state.player_gained_block.connect(_on_player_gained_block)
-	
-	_init_deck()
+	game_state.player_took_damage.connect(combat_juice.handle_player_damaged)
+	game_state.enemy_took_damage.connect(combat_juice.handle_enemy_damaged)
+	game_state.player_gained_block.connect(combat_juice.handle_player_gained_block)
+
+	var DeckControllerScript = preload("res://Scripts/Logic/DeckController.gd")
+	DeckControllerScript.initialize_deck(deck_manager, git_parser)
 	
 	end_turn_button.pressed.connect(_on_end_turn_pressed)
 	restart_button.pressed.connect(restart_game)
-	
-	# Hide legacy components
-	mana_label.visible = false
-	end_turn_button.visible = false
-	fighter_left.visible = false
-	fighter_right.visible = false
-	
-	# Dynamically assemble HUD
+
+func _setup_hud_and_avatars() -> void:
 	var TokenHudScript = preload("res://Scripts/UI/TokenHud.gd")
 	hud_container = TokenHudScript.new()
 	hud_container.setup_hud(cjk_font)
@@ -110,56 +120,40 @@ func _ready() -> void:
 	player_name.add_theme_font_override("font", cjk_font)
 	enemy_name.add_theme_font_override("font", cjk_font)
 
-	# Setup avatars
 	player_avatar = MainUIHelpers.create_avatar($UILayer/UIRoot, config.player_avatar_path, Vector2(87, 150))
 	enemy_avatar = MainUIHelpers.create_avatar($UILayer/UIRoot, "", Vector2(819, 150))
 
-	# Configure HP texts
 	player_hp_text = MainUIHelpers.create_hp_text(player_hp_bar, cjk_font)
 	enemy_hp_text = MainUIHelpers.create_hp_text(enemy_hp_bar, cjk_font)
 	
-	# Create turn timer label
-	timer_label = Label.new()
-	timer_label.text = str(int(config.turn_timer_seconds)) + "s"
-	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", config.timer_font_size_normal)
-	timer_label.position = Vector2(576 - 120, 15)
-	timer_label.size = Vector2(240, 120)
-	$UILayer/UIRoot.add_child(timer_label)
-
-	# Create turn count label
 	turn_label = Label.new()
 	turn_label.text = "第 1 回合 (Turn 1)"
 	turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	turn_label.add_theme_font_override("font", cjk_font)
 	turn_label.add_theme_font_size_override("font_size", 24)
-	turn_label.position = Vector2(576 - 120, 40) # Under timer
+	turn_label.position = Vector2(576 - 120, 80) 
 	turn_label.size = Vector2(240, 40)
 	$UILayer/UIRoot.add_child(turn_label)
-
-	show_difficulty_selection()
+	
+	timer_ui = preload("res://Scripts/UI/TimerUI.gd").new()
+	timer_ui.setup(config, config.turn_timer_seconds)
+	$UILayer/UIRoot.add_child(timer_ui)
+	
+	hud_controller = preload("res://Scripts/UI/HUDController.gd").new()
+	hud_controller.setup(player_hp_bar, enemy_hp_bar, player_hp_text, enemy_hp_text, turn_label, enemy_intent, hud_container)
 
 func _process(delta: float) -> void:
 	if end_turn_button.disabled or game_over_overlay.visible:
-		timer_label.visible = false
+		timer_ui.visible = false
 		turn_label.visible = false
 		return
 
-	timer_label.visible = true
+	timer_ui.visible = true
 	turn_label.visible = true
-	turn_timer -= delta
-	if turn_timer <= 0.0:
-		turn_timer = config.turn_timer_seconds
+	
+	if timer_ui.tick(delta):
+		timer_ui.reset(config.turn_timer_seconds)
 		_on_end_turn_pressed()
-	else:
-		var display_time = ceil(turn_timer)
-		timer_label.text = str(display_time) + "s"
-		if display_time <= 5:
-			timer_label.add_theme_font_size_override("font_size", config.timer_font_size_alert)
-			timer_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
-		else:
-			timer_label.add_theme_font_size_override("font_size", config.timer_font_size_normal)
-			timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 			
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept"):
@@ -192,19 +186,19 @@ func show_difficulty_selection() -> void:
 
 func select_difficulty(diff: int) -> void:
 	match diff:
-		0: # EASY
+		0:
 			enemy_name.text = "程式缺陷 (Bug - Easy)"
 			enemy_avatar.texture = load(config.bug_easy_path)
 			background_node.texture = load(config.bg_easy_path)
-		1: # NORMAL
+		1:
 			enemy_name.text = "程式錯誤 (Bug - Normal)"
 			enemy_avatar.texture = load(config.bug_normal_path)
 			background_node.texture = load(config.bg_normal_path)
-		2: # HARD
+		2:
 			enemy_name.text = "系統漏洞 (Bug - Hard)"
 			enemy_avatar.texture = load(config.bug_hard_path)
 			background_node.texture = load(config.bg_hard_path)
-		3: # EXPERT
+		3:
 			enemy_name.text = "核心崩潰 (Bug - Expert)"
 			enemy_avatar.texture = load(config.bug_expert_path)
 			background_node.texture = load(config.bg_expert_path)
@@ -213,22 +207,12 @@ func select_difficulty(diff: int) -> void:
 	end_turn_button.disabled = false
 	game_state.start_player_turn()
 
-func _init_deck() -> void:
-	var logs = git_parser.get_local_git_logs()
-	logs.shuffle() # Shuffle the logs so we don't always pick the most recent ones
-	for i in range(15):
-		var log_str = logs[i % logs.size()]
-		var card = git_parser.generate_card_from_log(log_str)
-		deck_manager.add_card(card)
-	deck_manager.shuffle_deck() # Initial shuffle so hand isn't deterministic
-
 func play_card(index: int) -> void:
 	if index >= game_state.hand.size(): return
 	var card = game_state.hand[index]
 	
 	if game_state.player_mana < card.cost:
-		CombatVFX.shake_camera(self, camera, 5.0)
-		error_sound.play()
+		combat_juice.play_error()
 		log_action("[color=#ef4444][ERR] Not enough Tokens to play " + card.card_name + "[/color]")
 		return
 		
@@ -251,7 +235,8 @@ func restart_game() -> void:
 	game_over_overlay.visible = false
 	end_turn_button.disabled = false
 	deck_manager = DeckManager.new()
-	_init_deck()
+	var DeckControllerScript = preload("res://Scripts/Logic/DeckController.gd")
+	DeckControllerScript.initialize_deck(deck_manager, git_parser)
 	game_state.deck_manager = deck_manager
 	game_state.hand.clear()
 	action_log.text = "[b]Combat Log[/b]\n"
@@ -263,21 +248,20 @@ func log_action(msg: String) -> void:
 	scrollbar.value = scrollbar.max_value
 
 func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
-	MainUIHelpers.update_hp_bar(self, player_hp_bar, player_hp_text, current_hp, max_hp)
+	hud_controller.update_hp(true, current_hp, max_hp)
 
 func _on_enemy_hp_changed(current_hp: int, max_hp: int) -> void:
-	MainUIHelpers.update_hp_bar(self, enemy_hp_bar, enemy_hp_text, current_hp, max_hp)
+	hud_controller.update_hp(false, current_hp, max_hp)
 
 func _on_player_block_changed(current_block: int) -> void:
-	if hud_container and hud_container.block_label:
-		hud_container.block_label.text = str(current_block)
+	hud_controller.update_block(true, current_block)
 
 func _on_enemy_block_changed(current_block: int) -> void:
-	_update_enemy_intent()
+	var final_enemy_dmg = game_state.enemy_damage + game_state.enemy_strength
+	hud_controller.update_intent(final_enemy_dmg, game_state.enemy_block, game_state.enemy_strength)
 
 func _on_mana_changed(current_mana: int, max_mana: int) -> void:
-	if hud_container and hud_container.token_label:
-		hud_container.token_label.text = "%d/%d" % [current_mana, max_mana]
+	hud_controller.update_mana(current_mana, max_mana)
 
 var combo_tween: Tween
 
@@ -288,34 +272,15 @@ func _on_combo_changed(combo_count: int, combo_category: String) -> void:
 		combo_label.pivot_offset = combo_label.size / 2
 		if combo_tween:
 			combo_tween.kill()
-		combo_tween = create_tween().set_trans(Tween.TRANS_SPRING)
+		combo_tween = self.create_tween().set_trans(Tween.TRANS_SPRING)
 		combo_tween.tween_property(combo_label, "scale", Vector2(1.5, 1.5), 0.2).from(Vector2(0.5, 0.5))
 		combo_tween.tween_property(combo_label, "scale", Vector2(1, 1), 0.2)
 	else:
 		combo_label.text = ""
 
-func _on_player_took_damage(amount: int) -> void:
-	CombatVFX.shake_camera(self, camera, 15.0)
-	hit_sound.play()
-	CombatVFX.animate_fighter(self, player_avatar, -50)
-	CombatVFX.spawn_floating_text(self, $UILayer, player_avatar.global_position + Vector2(100, 100), "-" + str(amount), Color(1, 0.2, 0.2))
-
-func _on_enemy_took_damage(amount: int) -> void:
-	CombatVFX.shake_camera(self, camera, amount * 0.5)
-	hit_sound.play()
-	CombatVFX.spawn_floating_text(self, $UILayer, enemy_avatar.global_position + Vector2(100, 100), "-" + str(amount), Color(1, 0.2, 0.2))
-
-func _on_player_gained_block(amount: int) -> void:
-	CombatVFX.spawn_floating_text(self, $UILayer, player_avatar.global_position + Vector2(100, 100), "+" + str(amount) + " [Block]", Color(0.2, 0.8, 1))
-
 func _update_enemy_intent() -> void:
 	var final_enemy_dmg = game_state.enemy_damage + game_state.enemy_strength
-	var intent_text = "Intent: [Attack] %d DMG" % final_enemy_dmg
-	if game_state.enemy_block > 0:
-		intent_text += " | [Block] %d" % game_state.enemy_block
-	if game_state.enemy_strength > 0:
-		intent_text += " (+%d [Str])" % game_state.enemy_strength
-	enemy_intent.text = intent_text
+	hud_controller.update_intent(final_enemy_dmg, game_state.enemy_block, game_state.enemy_strength)
 
 func update_hand_ui() -> void:
 	if hud_container:
@@ -329,15 +294,13 @@ func update_hand_ui() -> void:
 	
 	_update_enemy_intent()
 	
-	# Clean turn timer when player hand is updated (turn start)
 	if config and config.get("turn_timer_seconds") != null:
-		turn_timer = config.get("turn_timer_seconds")
+		timer_ui.reset(config.get("turn_timer_seconds"))
 	else:
-		turn_timer = 30.0
+		timer_ui.reset(30.0)
 	
 	var hand_controller = load("res://Scripts/UI/HandController.gd")
 	hand_controller.render_hand(hand_area, game_state, config, Callable(self, "play_card"))
 
 func _on_turn_changed(turn: int) -> void:
-	if turn_label:
-		turn_label.text = "第 %d 回合 (Turn %d)" % [turn, turn]
+	hud_controller.update_turn(turn)

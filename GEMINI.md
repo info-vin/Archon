@@ -110,6 +110,21 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月19日：MainUI.gd L2 模組化重構與 L2 視圖解耦 (Phase 5.7.2)
+
+今日我們針對 Godot 遊戲專案（arena）完成了 `MainUI.gd` 的 L2 模組化重構與 L2 視圖解耦：
+
+1. **解耦音效與視覺特效 (CombatJuice)**：
+   - 建立 [CombatJuice.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/UI/CombatJuice.gd) 專職處理相機震動、受擊動畫、回復 Block 與漂浮文字等動畫與音效反饋，移除了 `MainUI.gd` 中重複的視覺與音訊細節邏輯。
+2. **解耦牌庫初始化 (DeckController)**：
+   - 建立 [DeckController.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/DeckController.gd) 負責從 Git log 檔案讀取、洗牌並載入初始玩家牌組，徹底分離資料載入與 UI 主循環。
+3. **主框架瘦身與 Godot 靜態載入修正**：
+   - 重構 [MainUI.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/UI/MainUI.gd)，利用 `preload` 取代直寫 `class_name` 靜態類型的宣告，避免在 Godot headless 模式下尚未掃描 ClassDB Registry 時產生的編譯與解析錯誤。
+   - 完成重構後，`MainUI.gd` 行數從 326 行降至 304 行，程式碼職責更為單一、乾淨。
+4. **全測試與 UI 物理公證驗證**：
+   - 通過 `HeadlessRunner.gd` 全數 76 項單元與整合測試。
+   - 執行 `capture_proof.py` 繞過 headless 限制完成 UI 截圖物理公證，證實重構並未破壞任何 UI 錨點與 Z-Index 渲染階層。
+
 ### 2026年6月18日：Card Battler 重構、消除硬編碼與 Headless 限制突破 (Phase 5.7.1)
 
 今日我們針對 Godot 遊戲專案完成了 Phase 5.7.1 (Card Battler Pivot, Rename, and L2 Refactoring) 的核心任務：
