@@ -116,3 +116,6 @@
 ## 2025-05-18 - Replacing .toLowerCase().includes() with inline regex in list rendering loops
 **Learning:** Using `string.toLowerCase().includes()` inside render functions that are executed many times per render cycle (like list items in a Kanban or Table view) causes a new lowercased string to be allocated in memory on every invocation. This leads to high Garbage Collection (GC) overhead and performance degradation during rapid state updates like mouse hovering.
 **Action:** Replace `string.toLowerCase().includes(pattern)` with an inline case-insensitive regex test like `/pattern/i.test(string)` inside high-frequency render loops to prevent redundant string memory allocations.
+## 2026-06-19 - Promise.all Optimization for RAG Settings
+**Learning:** In frontend configuration services, sequentially fetching independent data endpoints (like different credential categories) creates unnecessary waterfall delays. Decoupling them with `Promise.all` is a highly effective, safe optimization that reduces the total execution time to the duration of the longest request, significantly improving UI responsiveness when loading configuration pages.
+**Action:** When auditing data fetching functions, specifically look for sequential `await` calls that do not depend on each other's results, and refactor them into a single `Promise.all` block.

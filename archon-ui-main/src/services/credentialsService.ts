@@ -115,8 +115,11 @@ class CredentialsService {
   }
 
   async getRagSettings(): Promise<RagSettings> {
-    const ragCredentials = await this.getCredentialsByCategory("rag_strategy");
-    const apiKeysCredentials = await this.getCredentialsByCategory("api_keys");
+    // PERFORMANCE: Execute independent network requests concurrently to eliminate waterfall delays
+    const [ragCredentials, apiKeysCredentials] = await Promise.all([
+      this.getCredentialsByCategory("rag_strategy"),
+      this.getCredentialsByCategory("api_keys")
+    ]);
     const settings: RagSettings = {
       USE_CONTEXTUAL_EMBEDDINGS: false,
       CONTEXTUAL_EMBEDDINGS_MAX_WORKERS: 3,
