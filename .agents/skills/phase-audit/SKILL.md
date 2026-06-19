@@ -41,6 +41,16 @@ description: 階段目標完整性稽核 (Phase Audit)。當啟動新階段、�
 - 若發現 **Code Gaps**：提議優先實作這些遺漏的功能。
 - 若發現 **環境髒亂**：提議將垃圾檔案加入 `.gitignore` 並清除。
 
+### Step 5: 雲端與排程健康稽核 (Cloud & Scheduler Health Audit)
+在具備 Hugging Face Spaces 部署或排程任務的專案中，必須稽核雲端狀態以防地端與雲端脫節。
+- **雲端狀態檢索**: 透過 Hugging Face API 查詢 Space 狀態：
+  - *呼叫 API*: `GET https://huggingface.co/api/spaces/<username>/<space_name>`
+  - *目標*: 驗證 `runtime.stage` 是否為 `RUNNING`。
+- **日誌健康稽核 (Log Audit)**: 讀取最新的執行期容器日誌以驗證背景排程健康度：
+  - *呼叫 API*: `GET https://huggingface.co/api/spaces/<username>/<space_name>/logs/run`
+  - *驗證指標*: 檢查背景排程器（如 `apscheduler`, `Clockwork`）是否成功啟動，且無 Python 未捕獲 Exception 或 RAG 斷層。
+- **排程合理性對帳 (Cron Alignment)**: 比對當前 UTC 時間與 `.github/workflows/hf-scheduler.yml` 中定義的 `cron` 設定，確保目前 Space 狀態（如 PAUSED 或 RUNNING）與時間軸完全吻合。
+
 ## 稽核鐵律 (Golden Rules)
 
 1. **證據至上**: 嚴禁在未執行 `grep_search` 或 `read_file` 的情況下，宣稱「一切已對齊」。
