@@ -1,20 +1,22 @@
 extends RefCounted
 class_name GitLogParser
 
+var git_translator = preload("res://Scripts/Logic/GitTranslator.gd").new()
+
 func generate_card_from_log(log_output: String) -> CardStats:
 	var lines = log_output.split("\n", false)
 	if lines.size() < 2:
 		return null
 		
 	var card = CardStats.new()
-	card.card_name = lines[0].strip_edges()
+	var raw_title = lines[0].strip_edges()
 	
-	var title_lower = card.card_name.to_lower()
+	var title_lower = raw_title.to_lower()
 	if title_lower.contains("merge") or title_lower.begins_with("merged"):
 		card.category = "Merge"
-	elif "🤖" in card.card_name or title_lower.begins_with("agent:") or title_lower.begins_with("ai:"):
+	elif "🤖" in raw_title or title_lower.begins_with("agent:") or title_lower.begins_with("ai:"):
 		card.category = "Agent"
-	elif title_lower.begins_with("feat") or "✨" in card.card_name:
+	elif title_lower.begins_with("feat") or "✨" in raw_title:
 		card.category = "Feature"
 	elif title_lower.begins_with("docs") or title_lower.begins_with("doc") or title_lower.contains("readme"):
 		card.category = "Docs"
@@ -22,17 +24,18 @@ func generate_card_from_log(log_output: String) -> CardStats:
 		card.category = "Fix"
 	elif title_lower.begins_with("refactor") or title_lower.begins_with("clean"):
 		card.category = "Refactor"
-	elif title_lower.begins_with("perf") or "⚡" in card.card_name or title_lower.contains("performance"):
+	elif title_lower.begins_with("perf") or "⚡" in raw_title or title_lower.contains("performance"):
 		card.category = "Performance"
-	elif title_lower.begins_with("test") or "🧪" in card.card_name or title_lower.contains("pytest") or title_lower.contains("vitest") or title_lower.contains("unittest"):
+	elif title_lower.begins_with("test") or "🧪" in raw_title or title_lower.contains("pytest") or title_lower.contains("vitest") or title_lower.contains("unittest"):
 		card.category = "Test"
-	elif title_lower.begins_with("style") or "🎨" in card.card_name or title_lower.contains("css") or title_lower.contains("theme") or title_lower.begins_with("ui:"):
+	elif title_lower.begins_with("style") or "🎨" in raw_title or title_lower.contains("css") or title_lower.contains("theme") or title_lower.begins_with("ui:"):
 		card.category = "Style"
 	elif title_lower.begins_with("chore") or title_lower.begins_with("ci:") or title_lower.begins_with("build:") or title_lower.begins_with("deps:"):
 		card.category = "Chore"
 	else:
 		card.category = "Feature"
 	
+	card.card_name = git_translator.translate_message(raw_title)
 	var stat_line = lines[1].strip_edges()
 	
 	# Parse files changed
@@ -131,3 +134,4 @@ func get_fallback_logs() -> Array[String]:
 		"[Style] 霓虹邊框樣式與毛玻璃特效優化 (style: adjust glow border and glassmorphism styling)\n 2 files changed, 40 insertions(+), 15 deletions(-)",
 		"[Agent] 實作自動化 UI 審計與視覺裁判 (agent: deploy visual UI audit agent)\n 6 files changed, 180 insertions(+), 25 deletions(-)"
 	]
+

@@ -36,6 +36,7 @@ static func render_hand(hand_area: Control, game_state: RefCounted, config: Reso
 		card_ui.rotation_degrees = rotation_deg
 		card_ui.original_y = card_ui.position.y
 		
-		card_ui.setup(card, i)
+		var is_combo = (game_state.current_combo_category == card.category and game_state.combo_count >= 1)
+		card_ui.setup(card, i, is_combo)
 		card_ui.pressed.connect(func(): play_callback.call(card_ui.card_index))
 		card_ui.animate_draw(card_ui.position)

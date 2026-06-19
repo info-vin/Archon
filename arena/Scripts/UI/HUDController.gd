@@ -32,11 +32,11 @@ func update_turn(turn: int) -> void:
 		turn_label.text = "第 %d 回合 (Turn %d)" % [turn, turn]
 
 func update_intent(dmg: int, block: int, strength: int) -> void:
-	var intent_text = "Intent: [Attack] %d DMG" % dmg
+	var intent_text = "下步意圖：⚔️ %d 傷害" % dmg
 	if block > 0:
-		intent_text += " | [Block] %d" % block
+		intent_text += " | 🛡️ %d 格擋" % block
 	if strength > 0:
-		intent_text += " (+%d [Str])" % strength
+		intent_text += " (+💪 %d 力量)" % strength
 	enemy_intent.text = intent_text
 
 func update_mana(current: int, max_mana: int) -> void:

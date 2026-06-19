@@ -8,13 +8,16 @@ extends Button
 var card_index: int = -1
 var original_y: float = 0.0
 var original_scale: Vector2 = Vector2.ONE
+var is_combo_card: bool = false
+var combo_glow_tween: Tween
 
 # Sound effect nodes (to be assigned by MainUI or auto-created)
 var hover_sound: AudioStreamPlayer
 var play_sound: AudioStreamPlayer
 
-func setup(card_stats: CardStats, index: int) -> void:
+func setup(card_stats: CardStats, index: int, is_combo_active: bool = false) -> void:
 	card_index = index
+	is_combo_card = is_combo_active
 	
 	if OS.has_feature("web"):
 		cost_label.text = "◆ " + str(card_stats.cost)
@@ -110,15 +113,54 @@ func setup(card_stats: CardStats, index: int) -> void:
 	# BBCode formatting (Traditional Chinese localization)
 	var bbcode_text = "[center]"
 	if card_stats.damage > 0:
-		bbcode_text += "[color=#4ade80]+%d 行新增 (Additions)[/color]\n" % card_stats.damage
+		bbcode_text += "[color=#4ade80]新增 +%d 行[/color]\n" % card_stats.damage
 	if card_stats.block > 0:
-		bbcode_text += "[color=#f87171]-%d 行刪除 (Deletions)[/color]\n" % card_stats.block
+		bbcode_text += "[color=#f87171]刪除 -%d 行[/color]\n" % card_stats.block
 	if card_stats.damage == 0 and card_stats.block == 0:
-		bbcode_text += "[color=#9ca3af]中繼資料變更 (Metadata)[/color]"
+		bbcode_text += "[color=#9ca3af]中繼資料變更[/color]"
 	bbcode_text += "[/center]"
 		
 	desc_label.text = bbcode_text
 	desc_label.add_theme_font_size_override("normal_font_size", 13)
+	
+	# Setup combo highlight if active
+	if is_combo_card:
+		type_label.text = "[COMBO] " + type_label.text
+		type_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+		# Delay start combo glow slightly to prevent race conditions during draw animation
+		get_tree().create_timer(0.4).timeout.connect(func():
+			if is_inside_tree() and is_combo_card:
+				start_combo_glow()
+		)
+	else:
+		stop_combo_glow()
+
+func start_combo_glow() -> void:
+	stop_combo_glow()
+	
+	var style_normal = get_theme_stylebox("normal").duplicate() as StyleBoxFlat
+	add_theme_stylebox_override("normal", style_normal)
+	
+	combo_glow_tween = create_tween().set_loops()
+	
+	var base_border = Color(1.0, 0.85, 0.2, 0.9) # Glowing gold border
+	var dim_border = Color(1.0, 0.85, 0.2, 0.35)
+	
+	combo_glow_tween.tween_property(self, "scale", original_scale * 1.04, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	combo_glow_tween.parallel().tween_property(style_normal, "border_color", base_border, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	combo_glow_tween.parallel().tween_property(style_normal, "shadow_color", Color(1.0, 0.85, 0.2, 0.6), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	combo_glow_tween.parallel().tween_property(style_normal, "shadow_size", 16, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	
+	combo_glow_tween.tween_property(self, "scale", original_scale, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	combo_glow_tween.parallel().tween_property(style_normal, "border_color", dim_border, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	combo_glow_tween.parallel().tween_property(style_normal, "shadow_color", Color(1.0, 0.85, 0.2, 0.2), 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	combo_glow_tween.parallel().tween_property(style_normal, "shadow_size", 6, 0.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func stop_combo_glow() -> void:
+	if combo_glow_tween:
+		combo_glow_tween.kill()
+		combo_glow_tween = null
+	scale = original_scale
 
 func _ready():
 	original_y = position.y
@@ -138,6 +180,8 @@ var original_rotation: float = 0.0
 
 func _on_hover():
 	original_rotation = rotation_degrees
+	stop_combo_glow() # Pause combo glow during hover
+	scale = original_scale
 	var tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	# Cancel scale animation to keep text crisp, increase vertical displacement
 	tween.tween_property(self, "position:y", original_y - 45.0, 0.15)
@@ -151,9 +195,14 @@ func _on_unhover():
 	tween.tween_property(self, "position:y", original_y, 0.15)
 	tween.parallel().tween_property(self, "rotation_degrees", original_rotation, 0.15)
 	z_index = 0
+	if is_combo_card:
+		start_combo_glow() # Resume combo glow
 
 func animate_draw(target_position: Vector2):
 	var tween = create_tween().set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "scale", original_scale, 0.4).from(Vector2.ZERO)
 	tween.parallel().tween_property(self, "position", target_position, 0.4)
 	tween.parallel().tween_property(self, "rotation_degrees", 0.0, 0.4).from(-180.0)
+
+func _exit_tree() -> void:
+	stop_combo_glow()
