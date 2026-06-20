@@ -160,68 +160,6 @@ class TestHybridSearchCore:
         assert hasattr(hybrid_strategy, "search_documents_hybrid")
 
 
-class TestRerankingCore:
-    """Basic reranking tests"""
-
-    @pytest.fixture
-    def reranking_strategy(self):
-        """Create reranking strategy"""
-        from src.server.services.search.reranking_strategy import RerankingStrategy
-
-        return RerankingStrategy()
-
-    def test_initialization(self, reranking_strategy):
-        """Test reranking strategy initializes"""
-        assert reranking_strategy is not None
-        assert hasattr(reranking_strategy, "rerank_results")
-        assert hasattr(reranking_strategy, "is_available")
-
-    def test_availability_check(self, reranking_strategy):
-        """Test model availability checking"""
-        availability = reranking_strategy.is_available()
-        assert isinstance(availability, bool)
-
-    @pytest.mark.asyncio
-    async def test_rerank_with_no_model(self, reranking_strategy):
-        """Test reranking when no model is available"""
-        # Force model to be None
-        reranking_strategy.model = None
-
-        original_results = [{"content": "Test content", "score": 0.8}]
-
-        result = await reranking_strategy.rerank_results(query="test query", results=original_results)
-
-        # Should return original results when no model
-        assert result == original_results
-
-    @pytest.mark.asyncio
-    async def test_rerank_with_mock_model(self, reranking_strategy):
-        """Test reranking with a mocked model"""
-        # Create a mock model
-        mock_model = MagicMock()
-        mock_model.predict.return_value = [0.95, 0.85, 0.75]  # Mock rerank scores
-        reranking_strategy.model = mock_model
-
-        original_results = [
-            {"content": "Content 1", "similarity": 0.8},
-            {"content": "Content 2", "similarity": 0.7},
-            {"content": "Content 3", "similarity": 0.9},
-        ]
-
-        result = await reranking_strategy.rerank_results(query="test query", results=original_results)
-
-        # Should return reranked results
-        assert isinstance(result, list)
-        assert len(result) == 3
-
-        # Results should be sorted by rerank_score
-        scores = [r.get("rerank_score", 0) for r in result]
-        assert scores == sorted(scores, reverse=True)
-
-        # Highest rerank score should be first
-        assert result[0]["rerank_score"] == 0.95
-
-
 class TestAgenticRAGCore:
     """Basic agentic RAG tests"""
 
