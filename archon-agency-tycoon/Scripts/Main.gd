@@ -130,11 +130,13 @@ func _update_minimap() -> void:
 
 func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	var agent_view_scene = preload("res://Scenes/Main/ModularAgent.tscn")
-	if agent_view_scene:
+	var agent = agent_manager.get_agent(agent_id)
+	if agent_view_scene and agent:
 		var agent_view = agent_view_scene.instantiate()
 		agent_view.position = Vector2(150, 130) # Center
 		agent_view.scale = Vector2(1.0, 1.0) # Reset scale to 1.0 for true pixel size
 		room.add_child(agent_view)
+		agent_view.apply_agent_data(agent)
 		agent_views[agent_id] = agent_view
 
 func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: int = 1) -> void:

@@ -189,8 +189,8 @@ func apply_agent_data(agent_data: AgentResource) -> void:
         else:
             equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png")) # Male skeleton
             
-        # 2. Eye Style - Disabled to prevent part_016.png (Alice's default head) from overlapping with custom hair
-        equip_part("eyes", null)
+        # 2. Eye Style - Use part_000.png (pure face elements: eyes, eyebrows, mouth) to ensure the face is visible without double-hair overlap
+        equip_part("eyes", preload("res://Assets/Characters/Alice_Parts/part_000.png"))
         
         # 3. Hair Style Assembly
         var hair_tex = null
