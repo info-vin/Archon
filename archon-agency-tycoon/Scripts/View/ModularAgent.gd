@@ -16,44 +16,69 @@ var default_scale_x: float = 1.0
 var current_gender: int = 0
 var is_custom_equipped: bool = false
 
-# Force zero offset and standard scaling if using standard parts
+# Data-driven default layout parameters loaded dynamically from the editor node properties
+var default_body_pos: Vector2
+var default_body_scale: Vector2
+var default_eyes_pos: Vector2
+var default_eyes_scale: Vector2
+var default_hair_pos: Vector2
+var default_hair_scale: Vector2
+var default_outfit_pos: Vector2
+var default_outfit_scale: Vector2
+var default_tool_pos: Vector2
+var default_tool_scale: Vector2
+
+# Force default styling offsets and scaling dynamically using editor presets
 func reset_layout_for_option_a() -> void:
-    # 1. Base skeleton positioning
     if body_sprite:
-        body_sprite.position = Vector2.ZERO
-        body_sprite.scale = Vector2.ONE
+        body_sprite.position = default_body_pos
+        body_sprite.scale = default_body_scale
         body_sprite.rotation = 0.0
         body_sprite.modulate = Color.WHITE
         
-    # 2. Eyes reside on head: position (0, -180), scale 0.12
     if eyes_sprite:
-        eyes_sprite.position = Vector2(0, -180)
-        eyes_sprite.scale = Vector2(0.12, 0.12)
+        eyes_sprite.position = default_eyes_pos
+        eyes_sprite.scale = default_eyes_scale
         eyes_sprite.rotation = 0.0
         
-    # 3. Hair sits on top of skull: position (0, -220), scale 0.7
     if hair_sprite:
-        hair_sprite.position = Vector2(0, -220)
-        hair_sprite.scale = Vector2(0.7, 0.7)
+        hair_sprite.position = default_hair_pos
+        hair_sprite.scale = default_hair_scale
         hair_sprite.rotation = 0.0
         
-    # 4. Outfit covers torso: position (0, 10), scale 0.75
     if outfit_sprite:
-        outfit_sprite.position = Vector2(0, 10)
-        outfit_sprite.scale = Vector2(0.75, 0.75)
+        outfit_sprite.position = default_outfit_pos
+        outfit_sprite.scale = default_outfit_scale
         outfit_sprite.rotation = 0.0
         outfit_sprite.modulate = Color.WHITE
         
-    # 5. Tool held in hand: position (150, -50), scale 0.4
     if tool_sprite:
-        tool_sprite.position = Vector2(150, -50)
-        tool_sprite.scale = Vector2(0.4, 0.4)
+        tool_sprite.position = default_tool_pos
+        tool_sprite.scale = default_tool_scale
         tool_sprite.rotation = 0.0
         tool_sprite.modulate = Color.WHITE
 
 
 func _ready() -> void:
     default_scale_x = scale.x
+    
+    # Dynamically record editor layout configurations
+    if body_sprite:
+        default_body_pos = body_sprite.position
+        default_body_scale = body_sprite.scale
+    if eyes_sprite:
+        default_eyes_pos = eyes_sprite.position
+        default_eyes_scale = eyes_sprite.scale
+    if hair_sprite:
+        default_hair_pos = hair_sprite.position
+        default_hair_scale = hair_sprite.scale
+    if outfit_sprite:
+        default_outfit_pos = outfit_sprite.position
+        default_outfit_scale = outfit_sprite.scale
+    if tool_sprite:
+        default_tool_pos = tool_sprite.position
+        default_tool_scale = tool_sprite.scale
+        
     if tool_sprite:
         tool_sprite.visible = true
     if status_bubble:
