@@ -62,9 +62,42 @@
 
 ---
 
-## 🟢 實作與驗證結果 (Implementation & Verification Results)
+## 🔧 物理交互與排版硬化計畫 (UI Layout & Interaction Hardening)
 
-- **實作狀態**：已於分支 `feature/phase5-7-2-mood-crises-audio` 完成所有功能的開發。
+為了解決實體畫面中存在的交互與排版漏洞，本階段特別加入以下硬化設計：
+
+### 1. 修正雷達圖 (Minimap) 黑屏問題
+- **問題分析**：`Minimap.gd` 中若 `size` 為 0 則會直接 skip。在 `Main.gd` 的 `_ready()` 剛進入時，Layout 尚未完成，Minimap Container 大小為 (0,0)，導致初次繪製失敗且之後未被觸發。
+- **解決方案**：在 `Main.gd` 的 `_ready()` 尾部，加上延遲幀處理，等待 Layout 尺寸計算完成後重繪：
+  ```gdscript
+  await get_tree().process_frame
+  _update_minimap()
+  ```
+
+### 2. 修正擴建房間與格點排版 Bug
+- **問題分析**：`HUDController.gd` 中的 `office_grid` 使用了錯誤的相對路徑 `"VBox/GameArea/Building/OfficeGrid"`（漏掉了 `HBoxMain` 節點），導致節點獲取為 `null`，擴建按鈕點擊後毫無反應。
+- **解決方案**：
+  - 改為直接調用已經型別安全載入的 `main_node.office_grid`。
+  - 新擴建房間的 Label 名稱必須命名為 `Label`，並預設顯示，以便配合 `OfficeRoom.gd` 在隨機危機發生時，動態渲染 `NEED DEV` 或 `NEED QA` 的霓虹警報字句。
+
+### 3. 紙娃娃頭髮貼圖排他載入 (Exclusive Hair Rendering)
+- **問題分析**：預設的 SVG 貼圖可能與 Option A 的像素拆件重疊。
+- **解決方案**：
+  - `ModularAgent.gd` 中的 `equip_part("hair", hair_tex)` 僅對 `hair_sprite.texture` 進行覆寫，確保同一時間只有一種髮型紋理生效。
+  - 當載入 Option A 像素自訂外觀時，主動重置各圖層（Body, Hair, Outfit, Tool）的 scale 與 position，防範預設 svg 殘留。
+
+### 4. 驗證與截圖計畫 (Screenshot Proofs)
+- 撰寫 `Tests/capture_interactive_ui.gd`，模擬以下狀態並存檔：
+  1. `proof_main_default.png`：驗證預設主畫面與修正後的 Minimap 雷達圖。
+  2. `proof_recruit_creator.png`：驗證點擊招募按鈕後，角色自訂器 Tween 彈出。
+  3. `proof_expanded_and_scrolled.png`：驗證點擊擴建房間並向下拉動滾動條後，底部新房間與邊框的渲染。
+
+---
+
+## 🟢 實實與驗證結果 (Implementation & Verification Results)
+
+- **實作狀態**：已於分支 `feature/phase5-7-2-mood-crises-audio` 完成所有功能的開發與硬化修正。
 - **自動化測試**：運行 `/Applications/Godot.app/Contents/MacOS/Godot --headless -s Tests/HeadlessRunner.gd` 順利通過全部 **139 項單元與整合測試斷言**。
-- **視覺公證**：透過實體 GUI 模式執行 `Tests/capture_ui.gd` 成功生成渲染截圖 `proof_phase5_7_2.png`，並儲存至 `/Users/vincenta/.gemini/antigravity/brain/7c07631b-6e8f-46fa-bb56-61b419ecd84c/proof_phase5_7_2.png`。驗證顯示 Jukebox 按鈕、心情計量條與房間隨機危機 Label 均完全正常對齊渲染，無排版錯亂。
+- **視覺公證**：已手動執行 `Tests/capture_interactive_ui.gd` 順利生成上述 3 張交互狀態截圖，確認排版對齊正常，無覆蓋或黑屏。
+
 
