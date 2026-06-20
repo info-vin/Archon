@@ -15,6 +15,7 @@ var active_tween: Tween
 var default_scale_x: float = 1.0
 var current_gender: int = 0
 var is_custom_equipped: bool = false
+var is_bob: bool = false
 
 # Data-driven default layout parameters loaded dynamically from the editor node properties
 var default_body_pos: Vector2
@@ -45,8 +46,33 @@ const SVG_LAYOUT = {
     "tool": {"pos": Vector2(150, -50), "scale": Vector2(0.4, 0.4)}
 }
 
+const BOB_LAYOUT = {
+    "body": {"pos": Vector2(0, -18), "scale": Vector2(0.35, 0.35)},
+    "outfit": {"pos": Vector2(0, 0), "scale": Vector2(0.35, 0.35)},
+    "hair": {"pos": Vector2(0, 21), "scale": Vector2(0.35, 0.35)},
+    "tool": {"pos": Vector2(6, 2), "scale": Vector2(0.3, 0.3)}
+}
+
 # Force default styling offsets and scaling dynamically using editor presets
 func reset_layout_for_option_a() -> void:
+    if is_bob:
+        if body_sprite:
+            body_sprite.position = Vector2(0, -18)
+            body_sprite.scale = Vector2(0.35, 0.35)
+            body_sprite.region_enabled = true
+        if outfit_sprite:
+            outfit_sprite.position = Vector2(0, 0)
+            outfit_sprite.scale = Vector2(0.35, 0.35)
+            outfit_sprite.region_enabled = true
+        if hair_sprite:
+            hair_sprite.position = Vector2(0, 21)
+            hair_sprite.scale = Vector2(0.35, 0.35)
+            hair_sprite.region_enabled = true
+        if tool_sprite:
+            tool_sprite.position = Vector2(6, 2)
+            tool_sprite.scale = Vector2(0.3, 0.3)
+        return
+
     if body_sprite:
         body_sprite.position = PIXEL_LAYOUT.body.pos
         body_sprite.scale = PIXEL_LAYOUT.body.scale
@@ -144,6 +170,35 @@ func _swap_walk_texture(frame: int) -> void:
     # Disable texture swapping to keep base body head visible and prevent walk flickering
     return
 
+func _apply_custom_layout(layout: Dictionary) -> void:
+    if body_sprite:
+        body_sprite.position = layout.body.pos
+        body_sprite.scale = layout.body.scale
+        body_sprite.rotation = 0.0
+    if outfit_sprite:
+        outfit_sprite.position = layout.outfit.pos
+        outfit_sprite.scale = layout.outfit.scale
+        outfit_sprite.rotation = 0.0
+    if hair_sprite:
+        hair_sprite.position = layout.hair.pos
+        hair_sprite.scale = layout.hair.scale
+        hair_sprite.rotation = 0.0
+    if tool_sprite:
+        tool_sprite.position = layout.tool.pos
+        tool_sprite.scale = layout.tool.scale
+        tool_sprite.rotation = 0.0
+
+func _play_agent_animation(state: int, agent_data: AgentResource) -> void:
+    match state:
+        AgentResource.AgentState.WORKING:
+            play_work_animation(agent_data)
+        AgentResource.AgentState.RESTING:
+            play_rest_animation(agent_data)
+        AgentResource.AgentState.STRIKE:
+            play_strike_animation(agent_data)
+        _:
+            play_idle_animation(agent_data)
+
 # Function to equip or change a specific layer
 func equip_part(layer_name: String, texture: Texture2D) -> void:
     match layer_name:
@@ -165,6 +220,35 @@ func apply_agent_data(agent_data: AgentResource) -> void:
     if not is_inside_tree():
         await ready
 
+    if agent_data.agent_name == "Bob":
+        is_bob = true
+        var sheet_tex = load("res://Assets/Characters/char_sheet_v2.png")
+        body_sprite.texture = sheet_tex
+        body_sprite.region_enabled = true
+        body_sprite.region_rect = Rect2(404, 16, 56, 68)
+        
+        outfit_sprite.texture = sheet_tex
+        outfit_sprite.region_enabled = true
+        outfit_sprite.region_rect = Rect2(117, 102, 70, 78)
+        
+        hair_sprite.texture = sheet_tex
+        hair_sprite.region_enabled = true
+        hair_sprite.region_rect = Rect2(312, 368, 64, 72)
+        hair_sprite.modulate = Color.WHITE
+        
+        eyes_sprite.texture = null
+        eyes_sprite.region_enabled = false
+        
+        equip_part("tool", preload("res://Assets/Characters/Alice_Parts/part_033.png"))
+        
+        is_custom_equipped = false
+        current_gender = agent_data.gender
+        
+        reset_layout_for_option_a()
+        _play_agent_animation(agent_data.state, agent_data)
+        return
+
+    is_bob = false
     # Option A: Check if we have custom equipped items
     var custom_used = false
     if agent_data.equipped_hair != "":
@@ -277,75 +361,26 @@ func apply_agent_data(agent_data: AgentResource) -> void:
     is_custom_equipped = custom_used
     current_gender = agent_data.gender
 
-    # Automatically play correct animation based on state
-    match agent_data.state:
-        AgentResource.AgentState.WORKING:
-            play_work_animation(agent_data)
-        AgentResource.AgentState.RESTING:
-            play_rest_animation(agent_data)
-        AgentResource.AgentState.STRIKE:
-            play_strike_animation(agent_data)
-        _:
-            play_idle_animation(agent_data)
+    _play_agent_animation(agent_data.state, agent_data)
 
-# Animation hook for working state
-func play_work_animation(_agent_data: AgentResource) -> void:
+func _play_anim(anim_name: String, show_tool: bool = false) -> void:
     if tool_sprite:
-        tool_sprite.visible = true
+        tool_sprite.visible = show_tool
     var anim_player: AnimationPlayer = $AnimationPlayer
     if anim_player:
-        anim_player.play("work")
+        anim_player.play(anim_name)
 
-# Animation hook for walking state
-func play_walk_animation(_agent_data: AgentResource) -> void:
-    if tool_sprite:
-        tool_sprite.visible = false
-    var anim_player: AnimationPlayer = $AnimationPlayer
-    if anim_player:
-        anim_player.play("walk")
-
-# Animation hook for resting state
-func play_rest_animation(_agent_data: AgentResource) -> void:
-    if tool_sprite:
-        tool_sprite.visible = false
-    var anim_player: AnimationPlayer = $AnimationPlayer
-    if anim_player:
-        anim_player.play("rest")
-
-# Animation hook for strike state
-func play_strike_animation(_agent_data: AgentResource) -> void:
-    if tool_sprite:
-        tool_sprite.visible = false
-    var anim_player: AnimationPlayer = $AnimationPlayer
-    if anim_player:
-        anim_player.play("strike")
-
-# Animation hook for idle state
-func play_idle_animation(_agent_data: AgentResource) -> void:
-    var anim_player: AnimationPlayer = $AnimationPlayer
-    if anim_player:
-        anim_player.play("idle")
+func play_work_animation(_agent_data: AgentResource) -> void: _play_anim("work", true)
+func play_walk_animation(_agent_data: AgentResource) -> void: _play_anim("walk", false)
+func play_rest_animation(_agent_data: AgentResource) -> void: _play_anim("rest", false)
+func play_strike_animation(_agent_data: AgentResource) -> void: _play_anim("strike", false)
+func play_idle_animation(_agent_data: AgentResource) -> void: _play_anim("idle", false)
 
 func stop_animation() -> void:
     var anim_player: AnimationPlayer = $AnimationPlayer
     if anim_player:
         anim_player.stop()
-        
-    # Reset all transforms to default values
-    if body_sprite:
-        body_sprite.scale = Vector2.ONE
-        body_sprite.position = Vector2.ZERO
-        body_sprite.rotation = 0.0
-        body_sprite.modulate = Color.WHITE
-    if outfit_sprite:
-        outfit_sprite.scale = Vector2.ONE
-        outfit_sprite.position = Vector2.ZERO
-        outfit_sprite.rotation = 0.0
-    if tool_sprite:
-        tool_sprite.scale = Vector2(0.8, 0.8)
-        tool_sprite.position = Vector2(18, 6)
-        tool_sprite.rotation = 0.0
-        tool_sprite.visible = true
+    reset_layout_for_option_a()
     if eyes_sprite:
         eyes_sprite.modulate.a = 1.0
 
