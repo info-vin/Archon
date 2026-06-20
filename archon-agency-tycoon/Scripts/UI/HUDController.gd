@@ -80,7 +80,7 @@ func show_expand_room() -> void:
 	var expand_cost = main_node.config.expand_cost if main_node.config else 500
 	if main_node.tycoon_manager.funds >= expand_cost:
 		main_node.tycoon_manager.funds -= expand_cost
-		var office_grid = main_node.get_node_or_null("VBox/GameArea/Building/OfficeGrid")
+		var office_grid = main_node.office_grid
 		if office_grid:
 			var new_room = PanelContainer.new()
 			new_room.custom_minimum_size = Vector2(360, 390)
@@ -93,8 +93,8 @@ func show_expand_room() -> void:
 			new_room.add_child(bg_tex)
 			
 			var lbl = Label.new()
+			lbl.name = "Label"
 			lbl.text = tr("ROOM_QA") + " (Expansion)"
-			lbl.visible = false
 			new_room.add_child(lbl)
 			
 			# Add Marker2D spawners (Desk and Stand)

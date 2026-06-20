@@ -50,8 +50,8 @@ size = Vector2(300, 500)
 render_target_update_mode = 4
 
 [node name="Camera2D" type="Camera2D" parent="HBox/PreviewArea/ViewportContainer/SubViewport"]
-position = Vector2(0, 30)
-zoom = Vector2(3, 3)
+position = Vector2(0, -120)
+zoom = Vector2(1.2, 1.2)
 
 [node name="ModularAgent" parent="HBox/PreviewArea/ViewportContainer/SubViewport" instance=ExtResource("2_agent")]
 position = Vector2(0, 0)
