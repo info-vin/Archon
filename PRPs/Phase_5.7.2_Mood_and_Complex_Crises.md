@@ -86,11 +86,21 @@
   - `ModularAgent.gd` 中的 `equip_part("hair", hair_tex)` 僅對 `hair_sprite.texture` 進行覆寫，確保同一時間只有一種髮型紋理生效。
   - 當載入 Option A 像素自訂外觀時，主動重置各圖層（Body, Hair, Outfit, Tool）的 scale 與 position，防範預設 svg 殘留。
 
-### 4. 驗證與截圖計畫 (Screenshot Proofs)
+### 4. 初始員工多樣化與性別裝扮修正 (Initial Staff Diversity)
+- **問題分析**：`AgentResource.gd` 的構造函數硬編碼了預設性別為 0 (女性)，導致初始員工 Bob (SALES) 與 Charlie (QA) 均被錯誤指派為女性骨骼與法師袍 (Mage Robe) 外觀，使畫面角色千篇一律。
+- **解決方案**：
+  - 修改 `AgentResource.gd` 構造函數使其支援傳入或指派多樣化的性別與風格屬性。
+  - 修改 `Main.gd` 的 `_setup_initial_game()`，為三位員工進行物理風格拆件分配：
+    * **Alice**：女性 (Gender 0)，長髮 (Hair 1)，法師袍 (Outfit 1)，DEV Wand。
+    * **Bob**：男性 (Gender 1)，短髮 (Hair 2)，西裝背心 (Outfit 2)，SALES Cards。
+    * **Charlie**：男性 (Gender 1)，中馬尾/短髮 (Hair 3)，西裝背心 (Outfit 2)，QA Spell 護盾。
+
+### 5. 驗證與截圖計畫 (Screenshot Proofs)
 - 撰寫 `Tests/capture_interactive_ui.gd`，模擬以下狀態並存檔：
-  1. `proof_main_default.png`：驗證預設主畫面與修正後的 Minimap 雷達圖。
+  1. `proof_main_default.png`：驗證預設主畫面、顯示正常的 Minimap，以及**Alice(女/法師袍)、Bob(男/西裝)與Charlie的差異化骨骼外觀**。
   2. `proof_recruit_creator.png`：驗證點擊招募按鈕後，角色自訂器 Tween 彈出。
   3. `proof_expanded_and_scrolled.png`：驗證點擊擴建房間並向下拉動滾動條後，底部新房間與邊框的渲染。
+
 
 ---
 
