@@ -87,13 +87,14 @@
   - 當載入 Option A 像素自訂外觀時，主動重置各圖層（Body, Hair, Outfit, Tool）的 scale 與 position，防範預設 svg 殘留。
 
 ### 4. 初始員工多樣化與性別裝扮修正 (Initial Staff Diversity)
-- **問題分析**：`AgentResource.gd` 的構造函數硬編碼了預設性別為 0 (女性)，導致初始員工 Bob (SALES) 與 Charlie (QA) 均被錯誤指派為女性骨骼與法師袍 (Mage Robe) 外觀，使畫面角色千篇一律。
+- **問題分析**：初始員工性別與裝扮混亂（如男性 Charlie 被硬塞女性雙馬尾與法師袍），且髮色全部呈單調白色，完全沒有發揮髮色調製功能，且與雷達圖顏色不符。
 - **解決方案**：
-  - 修改 `AgentResource.gd` 構造函數使其支援傳入或指派多樣化的性別與風格屬性。
-  - 修改 `Main.gd` 的 `_setup_initial_game()`，為三位員工進行物理風格拆件分配：
-    * **Alice**：女性 (Gender 0)，長髮 (Hair 1)，法師袍 (Outfit 1)，DEV Wand。
-    * **Bob**：男性 (Gender 1)，短髮 (Hair 2)，西裝背心 (Outfit 2)，SALES Cards。
-    * **Charlie**：男性 (Gender 1)，中馬尾/短髮 (Hair 3)，西裝背心 (Outfit 2)，QA Spell 護盾。
+  - 修改 `AgentResource.gd` 構造函數使其支援傳入或指派多樣化的性別、風格及髮色。
+  - 在 `Main.gd` 的 `_setup_initial_game()` 中，為三位員工進行 **Tron 霓虹主題** 外觀物理拆件與顏色對齊分配：
+    * **Alice (DEV)**：女性 (Gender 0)，長髮 (Hair 1)，**綠色霓虹髮色 (Color("#39ff14"))**，法師袍 (Outfit 1)，DEV Wand。
+    * **Bob (SALES)**：男性 (Gender 1)，俐落短髮 (Hair 2)，**黃色霓虹髮色 (Color("#fde910"))**，西裝背心 (Outfit 2)，SALES Cards。
+    * **Charlie (QA)**：男性 (Gender 1)，短髮 (Hair 2)，**桃紅霓虹髮色 (Color("#ff003c"))**，西裝背心 (Outfit 2)，QA Spell 護盾。
+  - 此設定使員工在辦公室的**髮色、手持工具類型**與**雷達圖上的點位顏色（DEV=綠, SALES=黃, QA=紅）**實現 100% 物理對齊，大幅提升畫面美感。
 
 ### 5. 驗證與截圖計畫 (Screenshot Proofs)
 - 撰寫 `Tests/capture_interactive_ui.gd`，模擬以下狀態並存檔：
