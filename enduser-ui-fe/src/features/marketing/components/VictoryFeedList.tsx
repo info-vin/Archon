@@ -21,6 +21,15 @@ interface VictoryFeedListProps {
   isLoading?: boolean;
 }
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations
+// during render cycles, especially when formatting multiple items in the list.
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
 export const VictoryFeedList: React.FC<VictoryFeedListProps> = ({
   sources,
   activeId,
@@ -29,12 +38,7 @@ export const VictoryFeedList: React.FC<VictoryFeedListProps> = ({
 }) => {
   const formatDate = (dateStr: string) => {
     try {
-      return new Intl.DateTimeFormat('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      }).format(new Date(dateStr));
+      return dateFormatter.format(new Date(dateStr));
     } catch (e) {
       return dateStr;
     }
