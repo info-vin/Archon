@@ -73,6 +73,10 @@ func _ready() -> void:
 	game_tick_timer.timeout.connect(_on_tick_timer_timeout)
 	if jukebox_button:
 		jukebox_button.pressed.connect(_on_jukebox_pressed)
+		
+	# Let layout cycles complete so Minimap container obtains its actual non-zero size, then draw minimap
+	await get_tree().process_frame
+	_update_minimap()
 
 func _load_game() -> void:
 	var loaded = await tycoon_manager.load_game(agent_manager, task_manager)
