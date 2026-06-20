@@ -88,6 +88,7 @@
   - **消除魔術數字**：在 `ModularAgent.gd` 的 `_ready()` 階段，主動將編輯器中各圖層（Body, Hair, Outfit, Tool）的初始 Position 和 Scale 存入對應的 default 變數中。
   - **動態自適應重置**：在 `reset_layout_for_option_a()` 內直接套用這組 default 變數，完全由場景數據驅動，徹底消除代碼硬編碼。
   - 將 `CharacterCreator.tscn` 裡的預覽相機 `Camera2D` 位置重置為 `Vector2(0, -120)`，將 `zoom` 設定為 `Vector2(1.2, 1.2)`，使人物置中渲染。
+  - **L2 模組化減重合規**：為防止程式碼膨脹超過 400 行門禁限制，將尋路移動邏輯移出至 `AgentLocomotion.gd`，並將 130 行動態動畫加載邏輯移出至 `AgentAnimationHelper.gd`，使 `ModularAgent.gd` 順利降為 **363 行**，達成完全合規。
 
 ### 4. 初始員工多樣化與性別裝扮修正 (Initial Staff Diversity)
 - **問題分析**：初始員工性別與裝扮混亂（如男性 Charlie 被硬塞女性雙馬尾與法師袍），且髮色全部呈單調白色，完全沒有發揮髮色調製功能，且與雷達圖顏色不符。
