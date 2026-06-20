@@ -31,7 +31,7 @@ var default_tool_scale: Vector2
 # Layout data configurations mapping for the two paper doll asset styles (Pixel Art vs Legacy SVG)
 const PIXEL_LAYOUT = {
     "body": {"pos": Vector2.ZERO, "scale": Vector2.ONE},
-    "eyes": {"pos": Vector2(0, -27), "scale": Vector2.ONE},
+    "eyes": {"pos": Vector2(3.5, -19.5), "scale": Vector2.ONE},
     "hair": {"pos": Vector2(0, -18), "scale": Vector2.ONE},
     "outfit": {"pos": Vector2(0, 2), "scale": Vector2.ONE},
     "tool": {"pos": Vector2(18, 6), "scale": Vector2(0.8, 0.8)}
@@ -57,6 +57,8 @@ func reset_layout_for_option_a() -> void:
         eyes_sprite.position = PIXEL_LAYOUT.eyes.pos
         eyes_sprite.scale = PIXEL_LAYOUT.eyes.scale
         eyes_sprite.rotation = 0.0
+        eyes_sprite.region_enabled = true
+        eyes_sprite.region_rect = Rect2(29, 34, 13, 11)
         
     if hair_sprite:
         hair_sprite.position = PIXEL_LAYOUT.hair.pos
@@ -86,6 +88,7 @@ func reset_layout_for_option_b() -> void:
         eyes_sprite.position = SVG_LAYOUT.eyes.pos
         eyes_sprite.scale = SVG_LAYOUT.eyes.scale
         eyes_sprite.rotation = 0.0
+        eyes_sprite.region_enabled = false
         
     if hair_sprite:
         hair_sprite.position = SVG_LAYOUT.hair.pos
@@ -189,8 +192,8 @@ func apply_agent_data(agent_data: AgentResource) -> void:
         else:
             equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png")) # Male skeleton
             
-        # 2. Eye Style - Use part_000.png (pure face elements: eyes, eyebrows, mouth) to ensure the face is visible without double-hair overlap
-        equip_part("eyes", preload("res://Assets/Characters/Alice_Parts/part_000.png"))
+        # 2. Eye Style - Use part_016.png (pure face elements: eyes, eyebrows, mouth) to ensure the face is visible without double-hair overlap
+        equip_part("eyes", preload("res://Assets/Characters/Alice_Parts/part_016.png"))
         
         # 3. Hair Style Assembly
         var hair_tex = null
