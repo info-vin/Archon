@@ -15,6 +15,15 @@ interface TableViewProps {
 }
 
 export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditingTask, requestSort, sortConfig, userMap, projectMap }) => {
+  // PERFORMANCE: Hoisted expensive date parsing out of the render loop to prevent O(N) allocations
+  const formattedDates = React.useMemo(() => {
+    const dates: Record<string, string> = {};
+    tasks.forEach(t => {
+      if (t.due_date) dates[t.id] = new Date(t.due_date).toLocaleDateString();
+    });
+    return dates;
+  }, [tasks]);
+
   const getSortIcon = (key: SortableTaskKeys) => {
     if (!sortConfig || sortConfig.key !== key) return <ChevronsUpDownIcon className="h-4 w-4" />;
     return sortConfig.direction === 'ascending' ? '🔼' : '🔽';
@@ -68,7 +77,7 @@ export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditi
                 </td>
                 <td className="px-6 py-4"><PriorityBadge priority={task.priority} /></td>
                 <td className="px-6 py-4 font-mono text-slate-400">
-                    {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
+                    {formattedDates[task.id] || '-'}
                 </td>
               </tr>
             ))}

@@ -11,6 +11,15 @@ interface ListViewProps {
 }
 
 export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditingTask, userMap }) => {
+  // PERFORMANCE: Hoisted expensive date parsing out of the render loop to prevent O(N) allocations
+  const formattedDates = React.useMemo(() => {
+    const dates: Record<string, string> = {};
+    tasks.forEach(t => {
+      if (t.due_date) dates[t.id] = new Date(t.due_date).toLocaleDateString();
+    });
+    return dates;
+  }, [tasks]);
+
   if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 bg-white/50 backdrop-blur-md rounded-2xl border border-white/50 border-dashed">
@@ -66,7 +75,7 @@ export const ListView: React.FC<ListViewProps> = React.memo(({ tasks, setEditing
                             </div>
                             {task.due_date && (
                                 <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
-                                    Due: {new Date(task.due_date).toLocaleDateString()}
+                                    Due: {formattedDates[task.id]}
                                 </span>
                             )}
                         </div>
