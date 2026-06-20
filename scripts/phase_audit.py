@@ -1,17 +1,19 @@
 import os
-import re
 import subprocess
+import requests
 import sys
 
+def print_header(title):
+    print(f"\n{'='*20} {title} {'='*20}")
+
 def scan_prps():
-    print("📋 [PhaseAudit] Step 1: Scanning PRPs for pending tasks...")
+    print_header("Step 1: Scanning PRPs for pending tasks")
     prp_dir = "PRPs"
     if not os.path.exists(prp_dir):
         print(f"❌ PRPs directory '{prp_dir}' not found.")
         return
     
     pending_tasks = []
-    # Only scan markdown files directly in PRPs/
     for entry in os.listdir(prp_dir):
         full_path = os.path.join(prp_dir, entry)
         if os.path.isfile(full_path) and entry.endswith(".md"):
@@ -27,61 +29,80 @@ def scan_prps():
     else:
         print("✅ No pending tasks found in active PRPs!")
 
-def check_git_status():
-    print("\n🌿 [PhaseAudit] Step 2: Checking Git Status...")
+def git_sync_check():
+    print_header("Step 3: Git Sync & Tech Debt Scan")
     try:
+        print("🔗 Fetching from origin...")
+        subprocess.run(["git", "fetch", "origin"], check=True)
+        
+        print("🔍 Checking status...")
         res = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, check=True)
-        status_output = res.stdout.strip()
-        if status_output:
-            print("⚠️  Working directory has uncommitted or untracked changes:")
-            print(status_output)
+        if res.stdout.strip():
+            print("⚠️  Working directory has changes:")
+            print(res.stdout.strip())
         else:
-            print("✅ Working directory is clean!")
+            print("✅ Working directory clean.")
+            
+        print("📝 Last 5 commits:")
+        subprocess.run(["git", "log", "-n", "5", "--oneline"], check=True)
+        
     except Exception as e:
-        print(f"❌ Failed to run git status: {e}")
+        print(f"❌ Git check failed: {e}")
 
 def monolith_check():
-    print("\n🔍 [PhaseAudit] Step 3: Running Monolith Check (Files > 400 lines)...")
+    print_header("Monolith Check (> 400 lines)")
     target_dirs = ["python/src", "enduser-ui-fe/src", "archon-ui-main/src"]
     large_files = []
     
     for base_dir in target_dirs:
-        if not os.path.exists(base_dir):
-            continue
-        for root, dirs, files in os.walk(base_dir):
-            # Avoid node_modules or other hidden directories if any
-            if "node_modules" in dirs:
-                dirs.remove("node_modules")
+        if not os.path.exists(base_dir): continue
+        for root, _, files in os.walk(base_dir):
             for file in files:
-                if file.endswith((".py", ".ts", ".tsx")):
-                    # Skip test files and mock directories
-                    if (
-                        ".test." in file
-                        or ".spec." in file
-                        or file.startswith("test_")
-                        or "tests" in root.split(os.sep)
-                        or "__tests__" in root.split(os.sep)
-                    ):
-                        continue
+                if file.endswith((".py", ".ts", ".tsx")) and not any(x in root for x in ["tests", "__tests__", "node_modules"]):
                     file_path = os.path.join(root, file)
                     try:
                         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                             lines = sum(1 for _ in f)
-                        if lines > 400:
-                            large_files.append((file_path, lines))
-                    except Exception:
-                        pass
+                        if lines > 400: large_files.append((file_path, lines))
+                    except: pass
                         
     if large_files:
-        print(f"⚠️  Found {len(large_files)} files exceeding 400 lines (potential monoliths):")
-        # Sort by line count descending
-        large_files.sort(key=lambda x: x[1], reverse=True)
-        for path, count in large_files:
+        print(f"⚠️  Found {len(large_files)} monoliths:")
+        for path, count in sorted(large_files, key=lambda x: x[1], reverse=True):
             print(f"   - {path}: {count} lines")
     else:
-        print("✅ No monolith files (> 400 lines) found!")
+        print("✅ No monolith files found!")
+
+def cloud_audit():
+    print_header("Step 5: Cloud & Scheduler Audit (Hugging Face)")
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        print("ℹ️  HF_TOKEN not set, skipping Cloud Audit.")
+        return
+        
+    username = "chiawei6"
+    space_name = "myrmidon"
+    url = f"https://huggingface.co/api/spaces/{username}/{space_name}"
+    
+    try:
+        headers = {"Authorization": f"Bearer {hf_token}"}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        runtime = data.get("runtime", {})
+        stage = runtime.get("stage", "UNKNOWN")
+        print(f"✅ Space {username}/{space_name} is currently: {stage}")
+        
+        if stage != "RUNNING":
+            print(f"⚠️  Space is not RUNNING! Current status: {stage}")
+            
+    except Exception as e:
+        print(f"❌ Cloud audit failed: {e}")
 
 if __name__ == "__main__":
     scan_prps()
-    check_git_status()
+    git_sync_check()
     monolith_check()
+    cloud_audit()
+    print_header("Audit Complete")

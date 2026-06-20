@@ -1,5 +1,8 @@
 from ...config.logfire_config import get_logger
 
+# Default reranking model
+DEFAULT_RERANKING_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
 logger = get_logger(__name__)
 
 
