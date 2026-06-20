@@ -25,29 +25,29 @@ func reset_layout_for_option_a() -> void:
         body_sprite.rotation = 0.0
         body_sprite.modulate = Color.WHITE
         
-    # 2. Eyes reside on head: Y-offset is -27
+    # 2. Eyes reside on head: position (0, -180), scale 0.12
     if eyes_sprite:
-        eyes_sprite.position = Vector2(0, -27)
-        eyes_sprite.scale = Vector2.ONE
+        eyes_sprite.position = Vector2(0, -180)
+        eyes_sprite.scale = Vector2(0.12, 0.12)
         eyes_sprite.rotation = 0.0
         
-    # 3. Hair sits on top of skull: Y-offset is -18
+    # 3. Hair sits on top of skull: position (0, -220), scale 0.7
     if hair_sprite:
-        hair_sprite.position = Vector2(0, -18)
-        hair_sprite.scale = Vector2.ONE
+        hair_sprite.position = Vector2(0, -220)
+        hair_sprite.scale = Vector2(0.7, 0.7)
         hair_sprite.rotation = 0.0
         
-    # 4. Outfit covers torso: Y-offset is 2
+    # 4. Outfit covers torso: position (0, 10), scale 0.75
     if outfit_sprite:
-        outfit_sprite.position = Vector2(0, 2)
-        outfit_sprite.scale = Vector2.ONE
+        outfit_sprite.position = Vector2(0, 10)
+        outfit_sprite.scale = Vector2(0.75, 0.75)
         outfit_sprite.rotation = 0.0
         outfit_sprite.modulate = Color.WHITE
         
-    # 5. Tool held in hand: X-offset is 18, Y-offset is 6, scaled to 0.8
+    # 5. Tool held in hand: position (150, -50), scale 0.4
     if tool_sprite:
-        tool_sprite.position = Vector2(18, 6)
-        tool_sprite.scale = Vector2(0.8, 0.8)
+        tool_sprite.position = Vector2(150, -50)
+        tool_sprite.scale = Vector2(0.4, 0.4)
         tool_sprite.rotation = 0.0
         tool_sprite.modulate = Color.WHITE
 
