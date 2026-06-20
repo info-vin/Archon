@@ -13,6 +13,15 @@ interface KanbanViewProps {
 const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
 
 export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, updateTaskStatus, setEditingTask, userMap }) => {
+  // PERFORMANCE: Hoisted expensive date parsing out of the render loop to prevent O(N) allocations
+  const formattedDates = React.useMemo(() => {
+    const dates: Record<string, string> = {};
+    tasks.forEach(t => {
+      if (t.due_date) dates[t.id] = new Date(t.due_date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+    });
+    return dates;
+  }, [tasks]);
+
   const tasksByStatus = useMemo(() => {
     const grouped: { [key in TaskStatus]?: Task[] } = {};
     tasks.forEach(task => {
@@ -86,7 +95,7 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
                             <span className="text-[11px] text-gray-400 italic">Unassigned</span>
                          )}
                          {task.due_date && (
-                            <span className="text-[10px] text-gray-400 font-mono">{new Date(task.due_date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span>
+                            <span className="text-[10px] text-gray-400 font-mono">{formattedDates[task.id]}</span>
                          )}
                     </div>
                   </div>
