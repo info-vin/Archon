@@ -194,9 +194,56 @@ def generate_track_3_hacking(sample_rate=22050):
         
     write_wav("bgm_hacking.wav", samples, sample_rate)
 
+def generate_sfx_coin(sample_rate=22050):
+    duration = 0.25
+    total_samples = int(sample_rate * duration)
+    samples = []
+    phase = 0.0
+    for i in range(total_samples):
+        t = i / sample_rate
+        freq = 523.25 if t < 0.08 else 659.25
+        decay = math.exp(-6.0 * t)
+        phase += 2.0 * math.pi * freq / sample_rate
+        val = 0.15 * decay if (phase % (2.0 * math.pi)) < math.pi else -0.15 * decay
+        samples.append(val)
+    write_wav("sfx_coin.wav", samples, sample_rate)
+
+def generate_sfx_alarm(sample_rate=22050):
+    duration = 1.0
+    total_samples = int(sample_rate * duration)
+    samples = []
+    phase = 0.0
+    for i in range(total_samples):
+        t = i / sample_rate
+        mod = 0.5 + 0.5 * math.sin(2.0 * math.pi * 5.0 * t)
+        freq = 500.0 + 400.0 * mod
+        phase += 2.0 * math.pi * freq / sample_rate
+        val = 0.12 if (phase % (2.0 * math.pi)) < math.pi else -0.12
+        samples.append(val)
+    write_wav("sfx_alarm.wav", samples, sample_rate)
+
+def generate_sfx_sigh(sample_rate=22050):
+    duration = 0.5
+    total_samples = int(sample_rate * duration)
+    samples = []
+    phase = 0.0
+    for i in range(total_samples):
+        t = i / sample_rate
+        freq = 300.0 - 200.0 * (t / duration)
+        decay = math.exp(-3.0 * t)
+        phase += 2.0 * math.pi * freq / sample_rate
+        mod_p = (phase % (2.0 * math.pi)) / (2.0 * math.pi)
+        val = (4.0 * mod_p - 1.0) if mod_p < 0.5 else (3.0 - 4.0 * mod_p)
+        val *= 0.15 * decay
+        samples.append(val)
+    write_wav("sfx_sigh.wav", samples, sample_rate)
+
 if __name__ == "__main__":
     generate_track_1_cyberpunk()
     generate_track_2_neon_city()
     generate_track_3_hacking()
+    generate_sfx_coin()
+    generate_sfx_alarm()
+    generate_sfx_sigh()
     # Copy cyberpunk to default bgm.wav as well
     os.system("cp /Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Assets/Sound/bgm_cyberpunk.wav /Users/vincenta/GoogleKwok022/Archon/archon-agency-tycoon/Assets/Sound/bgm.wav")

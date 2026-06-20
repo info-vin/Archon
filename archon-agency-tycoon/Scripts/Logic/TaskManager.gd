@@ -68,6 +68,9 @@ func rush_task(task_id: int) -> bool:
     if task.is_completed or task.assigned_agent_id == -1:
         return false
         
+    if task.is_hell_client:
+        return false
+        
     var agent = agent_manager.get_agent(task.assigned_agent_id)
     if agent == null or agent.state != 1:
         return false
@@ -132,7 +135,11 @@ func process_tick() -> void:
                 var divisor = config.stat_divisor if config else 5
                 var work_increment = 1 + int(agent.code_speed / divisor)
                 task.current_progress += work_increment
-                agent_manager.drain_agent_energy(task.assigned_agent_id, work_drain)
+                var actual_drain = work_drain
+                if task.is_hell_client:
+                    actual_drain *= 2
+                    agent.happiness = clamp(agent.happiness - 10.0, 0.0, 100.0)
+                agent_manager.drain_agent_energy(task.assigned_agent_id, actual_drain)
                 
                 if task.current_progress >= task.required_ticks:
                     task.is_completed = true

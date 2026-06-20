@@ -81,18 +81,18 @@ func test_state_animation_triggers() -> void:
     # Test Working state triggers work animation
     agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.WORKING
     view.apply_agent_data(agent)
-    assert_not_null(view.active_tween, "Tween should be active for WORKING state")
+    assert_eq(view.get_node("AnimationPlayer").current_animation, "work", "Animation should be work for WORKING state")
     assert_true(view.tool_sprite.visible, "Tool should be visible during working")
     
     # Test Resting state triggers rest animation
     agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.RESTING
     view.apply_agent_data(agent)
-    assert_not_null(view.active_tween, "Tween should be active for RESTING state")
+    assert_eq(view.get_node("AnimationPlayer").current_animation, "rest", "Animation should be rest for RESTING state")
     assert_false(view.tool_sprite.visible, "Tool should be hidden during resting")
     
     # Test Idle state stops animation
     agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.IDLE
     view.apply_agent_data(agent)
-    assert_eq(view.active_tween, null, "Tween should be null/stopped for IDLE state")
+    assert_eq(view.get_node("AnimationPlayer").current_animation, "idle", "Animation should be idle for IDLE state")
     
     view.queue_free()

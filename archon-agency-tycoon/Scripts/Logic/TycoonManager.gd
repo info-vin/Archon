@@ -1,7 +1,10 @@
 extends Node
 class_name TycoonManager
 
-var save_adapter: SaveAdapter
+const AgentResourceClass = preload("res://Scripts/Resources/AgentResource.gd")
+
+var save_adapter
+
 var config: Resource
 
 var funds: int = 500
@@ -10,8 +13,10 @@ var current_phase: int = 1
 
 # Crisis management: dictionary of room_name -> tick_duration
 var active_crises: Dictionary = {}
+var crisis_stages: Dictionary = {} # room_name -> int (0: NEED_DEV, 1: NEED_QA)
 
 signal crisis_spawned(room_name: String)
+signal crisis_stage_changed(room_name: String, stage_name: String)
 signal crisis_spread(from_room: String, to_room: String)
 signal crisis_resolved(room_name: String)
 
@@ -20,7 +25,7 @@ func _init() -> void:
     if res:
         set_config(res)
 
-func set_save_adapter(adapter: SaveAdapter) -> void:
+func set_save_adapter(adapter) -> void:
     save_adapter = adapter
 
 func set_config(p_config: Resource) -> void:
@@ -94,6 +99,7 @@ func setup_connections(task_manager) -> void:
 func spawn_crisis(room_name: String) -> void:
     if not active_crises.has(room_name):
         active_crises[room_name] = 0
+        crisis_stages[room_name] = 0
         crisis_spawned.emit(room_name)
 
 func _on_task_completed(task_id: int, reward: int) -> void:
@@ -106,8 +112,16 @@ func _on_rush_failed(task_id: int, agent_id: int) -> void:
     var room_name = "DevRoom"
     spawn_crisis(room_name)
 
+func process_tick(agent_manager = null, task_manager = null) -> void:
+    if agent_manager:
+        agent_manager.process_tick(funds)
+    if task_manager:
+        task_manager.process_tick()
+    if agent_manager:
+        process_crisis_tick(agent_manager)
+
 # Process crisis spreading and energy drain
-func process_crisis_tick(agent_manager: AgentManager) -> void:
+func process_crisis_tick(agent_manager) -> void:
     var rooms_to_drain = active_crises.keys()
     
     # Adjacency map for room spreading
@@ -125,19 +139,43 @@ func process_crisis_tick(agent_manager: AgentManager) -> void:
     for room in rooms_to_drain:
         active_crises[room] += 1
         var duration = active_crises[room]
+        var current_stage = crisis_stages.get(room, 0)
         
         # 1. Drain energy from agents in this room dynamically by role mapping
         for i in range(agent_manager.agents.size()):
             var agent = agent_manager.agents[i]
             var matches_room = false
-            if room == "DevRoom" and agent.role == AgentResource.AgentRole.DEV: matches_room = true
-            elif room == "SalesRoom" and agent.role == AgentResource.AgentRole.SALES: matches_room = true
-            elif room == "QARoom" and agent.role == AgentResource.AgentRole.QA: matches_room = true
+            if room == "DevRoom" and agent.role == AgentResourceClass.AgentRole.DEV: matches_room = true
+            elif room == "SalesRoom" and agent.role == AgentResourceClass.AgentRole.SALES: matches_room = true
+            elif room == "QARoom" and agent.role == AgentResourceClass.AgentRole.QA: matches_room = true
             
             if matches_room:
                 agent_manager.drain_agent_energy(i, drain_amount)
+                agent.happiness = clamp(agent.happiness - 4.0, 0.0, 100.0)
+                
+        # 2. Check if working agents resolve or progress the crisis
+        if current_stage == 0:
+            var has_working_dev = false
+            for agent in agent_manager.agents:
+                if agent.role == AgentResourceClass.AgentRole.DEV and agent.state == AgentResourceClass.AgentState.WORKING:
+                    has_working_dev = true
+                    break
+            if has_working_dev:
+                crisis_stages[room] = 1
+                crisis_stage_changed.emit(room, "NEED QA")
+                var main_loop = Engine.get_main_loop()
+                if main_loop and main_loop.root.has_node("AudioManager"):
+                    main_loop.root.get_node("AudioManager").play_sfx("alarm")
+        elif current_stage == 1:
+            var working_qa = null
+            for agent in agent_manager.agents:
+                if agent.role == AgentResourceClass.AgentRole.QA and agent.state == AgentResourceClass.AgentState.WORKING:
+                    working_qa = agent
+                    break
+            if working_qa != null:
+                resolve_crisis(room, working_qa)
             
-        # 2. Spread crisis if it has lasted > spread_duration
+        # 3. Spread crisis if it has lasted > spread_duration
         if duration > spread_duration and randf() <= spread_chance:
             var adj_list = adjacencies.get(room, [])
             if adj_list.size() > 0:
@@ -150,12 +188,8 @@ func resolve_crisis(room_name: String, qa_agent) -> void:
     if not active_crises.has(room_name):
         return
         
-    # Crisis resolves faster with high debug_logic
-    var divisor = config.stat_divisor if config else 5
-    var resolution_power = 1 + int(qa_agent.debug_logic / divisor)
-    
-    # We reduce the duration or directly resolve it if it's worked on
     active_crises.erase(room_name)
+    crisis_stages.erase(room_name)
     crisis_resolved.emit(room_name)
 
 

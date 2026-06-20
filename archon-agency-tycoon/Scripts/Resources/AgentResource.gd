@@ -2,12 +2,13 @@ extends Resource
 class_name AgentResource
 
 enum AgentRole { SALES, DEV, QA }
-enum AgentState { IDLE, WORKING, RESTING, EXHAUSTED }
+enum AgentState { IDLE, WORKING, RESTING, EXHAUSTED, STRIKE }
 
 @export var agent_name: String = "New Agent"
 @export var role: AgentRole = AgentRole.DEV
 @export var state: AgentState = AgentState.IDLE
 @export var energy: int = 100
+@export var happiness: float = 100.0
 
 # SPECIAL Attributes
 @export var code_speed: int = 0
@@ -32,6 +33,7 @@ func _init(p_name: String = "New Agent", p_role: AgentRole = AgentRole.DEV, p_co
 	role = p_role
 	state = AgentState.IDLE
 	energy = 100
+	happiness = 100.0
 	code_speed = p_code
 	charisma = p_char
 	debug_logic = p_debug
@@ -51,6 +53,7 @@ func to_dict() -> Dictionary:
 		"role": role,
 		"state": state,
 		"energy": energy,
+		"happiness": happiness,
 		"code_speed": code_speed,
 		"charisma": charisma,
 		"debug_logic": debug_logic,
@@ -71,6 +74,7 @@ static func from_dict(data: Dictionary) -> AgentResource:
 	if data.has("role"): a.role = data["role"]
 	if data.has("state"): a.state = data["state"]
 	if data.has("energy"): a.energy = data["energy"]
+	if data.has("happiness"): a.happiness = data["happiness"]
 	if data.has("code_speed"): a.code_speed = data["code_speed"]
 	if data.has("charisma"): a.charisma = data["charisma"]
 	if data.has("debug_logic"): a.debug_logic = data["debug_logic"]

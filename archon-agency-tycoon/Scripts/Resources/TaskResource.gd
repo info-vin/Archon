@@ -8,8 +8,9 @@ class_name TaskResource
 @export var current_progress: int = 0
 @export var is_completed: bool = false
 @export var assigned_agent_id: int = -1
+@export var is_hell_client: bool = false
 
-func _init(p_name: String = "New Task", p_role: int = 1, p_ticks: int = 5, p_reward: int = 100):
+func _init(p_name: String = "New Task", p_role: int = 1, p_ticks: int = 5, p_reward: int = 100, p_hell: bool = false):
 	task_name = p_name
 	required_role = p_role
 	required_ticks = p_ticks
@@ -17,6 +18,7 @@ func _init(p_name: String = "New Task", p_role: int = 1, p_ticks: int = 5, p_rew
 	current_progress = 0
 	is_completed = false
 	assigned_agent_id = -1
+	is_hell_client = p_hell
 
 func to_dict() -> Dictionary:
 	return {
@@ -26,7 +28,8 @@ func to_dict() -> Dictionary:
 		"reward_funds": reward_funds,
 		"current_progress": current_progress,
 		"is_completed": is_completed,
-		"assigned_agent_id": assigned_agent_id
+		"assigned_agent_id": assigned_agent_id,
+		"is_hell_client": is_hell_client
 	}
 
 static func from_dict(data: Dictionary) -> TaskResource:
@@ -38,4 +41,5 @@ static func from_dict(data: Dictionary) -> TaskResource:
 	if data.has("current_progress"): t.current_progress = data["current_progress"]
 	if data.has("is_completed"): t.is_completed = data["is_completed"]
 	if data.has("assigned_agent_id"): t.assigned_agent_id = data["assigned_agent_id"]
+	if data.has("is_hell_client"): t.is_hell_client = data["is_hell_client"]
 	return t

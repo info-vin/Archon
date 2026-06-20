@@ -76,6 +76,14 @@ icon = ExtResource("icon_lang")
 icon_alignment = 1
 expand_icon = true
 
+[node name="JukeboxButton" type="Button" parent="VBox/TopBar/HBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+tooltip_text = "Jukebox"
+icon = ExtResource("icon_tasks")
+icon_alignment = 1
+expand_icon = true
+
 [node name="GameTickTimer" type="Timer" parent="."]
 wait_time = 1.0
 autostart = true

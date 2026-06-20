@@ -114,3 +114,30 @@ func test_crisis_drains_energy_and_spreads() -> void:
     assert_eq(charlie.energy, 95, "Charlie energy should drop by 5 due to crisis in QARoom")
     assert_eq(tycoon_manager.active_crises["QARoom"], 1, "Crisis duration should be 1 tick")
 
+func test_multistage_crisis() -> void:
+    var agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
+    var tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
+    
+    var dev = preload("res://Scripts/Resources/AgentResource.gd").new("Dave", 1)
+    var qa = preload("res://Scripts/Resources/AgentResource.gd").new("Quincy", 2)
+    agent_manager.add_agent(dev)
+    agent_manager.add_agent(qa)
+    
+    tycoon_manager.spawn_crisis("DevRoom")
+    assert_eq(tycoon_manager.crisis_stages["DevRoom"], 0, "Crisis should start at stage 0 (NEED DEV)")
+    
+    tycoon_manager.process_crisis_tick(agent_manager)
+    assert_eq(tycoon_manager.crisis_stages["DevRoom"], 0, "Crisis stage remains 0")
+    
+    dev.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.WORKING
+    tycoon_manager.process_crisis_tick(agent_manager)
+    assert_eq(tycoon_manager.crisis_stages["DevRoom"], 1, "Crisis stage advances to 1 (NEED QA)")
+    
+    tycoon_manager.process_crisis_tick(agent_manager)
+    assert_eq(tycoon_manager.crisis_stages["DevRoom"], 1, "Crisis stage remains 1")
+    
+    qa.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.WORKING
+    tycoon_manager.process_crisis_tick(agent_manager)
+    assert_false(tycoon_manager.active_crises.has("DevRoom"), "Crisis should be resolved completely")
+
+

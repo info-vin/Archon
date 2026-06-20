@@ -65,3 +65,23 @@ func test_agent_exhaustion() -> void:
     
     assert_eq(agent.energy, 0, "Energy should not drop below 0")
     assert_eq(agent.state, preload("res://Scripts/Resources/AgentResource.gd").AgentState.EXHAUSTED, "Agent should be EXHAUSTED")
+
+func test_agent_mood_decay_and_strike() -> void:
+    var manager = preload("res://Scripts/Logic/AgentManager.gd").new()
+    var agent = preload("res://Scripts/Resources/AgentResource.gd").new("Alice", 1)
+    agent.happiness = 30.0
+    agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.WORKING
+    manager.add_agent(agent)
+    
+    manager.process_tick(500)
+    assert_eq(agent.happiness, 28.0, "Working should decay mood by 2.0")
+    
+    manager.process_tick(-100)
+    assert_eq(agent.happiness, 21.0, "Red funds should decay mood by additional 5.0")
+    
+    manager.process_tick(-100)
+    assert_eq(agent.state, preload("res://Scripts/Resources/AgentResource.gd").AgentState.STRIKE, "Agent should trigger STRIKE when happiness <= 20.0")
+    
+    agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.RESTING
+    manager.process_tick(500)
+    assert_eq(agent.happiness, 22.0, "Resting recovers mood")

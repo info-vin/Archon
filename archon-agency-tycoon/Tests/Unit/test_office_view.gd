@@ -6,17 +6,21 @@ func test_agent_visual_room_relocation() -> void:
 
     var view = scene.instantiate()
     view.set_script(load("res://Scripts/Main.gd"))
-    view.dev_room.set_script(load("res://Scripts/UI/OfficeRoom.gd"))
-    view.break_room.set_script(load("res://Scripts/UI/OfficeRoom.gd"))
-    # 初始化必要的管理器
-    view.tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
-    view.dev_room.setup_room("DevRoom", Color("#39ff14"), view.tycoon_manager)
+    
+    var dev_room_node = view.get_node("VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom")
+    dev_room_node.set_script(load("res://Scripts/UI/OfficeRoom.gd"))
+    var break_room_node = view.get_node("VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom")
+    break_room_node.set_script(load("res://Scripts/UI/OfficeRoom.gd"))
 
     view.instant_positioning = true
     var root = tree.root
     root.add_child(view)
     await tree.process_frame
     await tree.process_frame 
+
+    # Now that the node is inside the tree, `@onready` variables are resolved
+    view.tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
+    view.dev_room.setup_room("DevRoom", Color("#39ff14"), view.tycoon_manager)
 
     # Wait until views are fully spawned
     var timeout = 50
@@ -40,10 +44,9 @@ func test_agent_visual_room_relocation() -> void:
     alice_agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.RESTING
     view._update_ui()
 
-    # Should be in BreakRoom - StandPoint_1 is (180, 250) (Wait, StandPoint_1 is (180, 250) per my append_markers.py)
-    # The original test expected (152, 144) (120+32, 80+32)
+    # Should be in BreakRoom - DeskPoint_1 is (152, 112)
     assert_eq(alice_view.get_parent(), view.break_room, "Alice should be in BreakRoom when RESTING")
-    assert_eq(alice_view.position, Vector2(180, 250), "Alice position should be at StandPoint_1")
+    assert_eq(alice_view.position, Vector2(152, 112), "Alice position should be at DeskPoint_1")
 
     view.queue_free()
     

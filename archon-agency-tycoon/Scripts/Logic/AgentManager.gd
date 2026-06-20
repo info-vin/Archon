@@ -39,16 +39,46 @@ func drain_agent_energy(agent_id: int, amount: int) -> void:
             agent.energy = 0
             agent.state = AgentResource.AgentState.EXHAUSTED
 
-func process_tick() -> void:
+func process_tick(funds: int = 500) -> void:
     var recovery = config.rest_energy_recovery if config else 20
     for agent in agents:
+        var mood_decay: float = 0.0
+        if agent.state == AgentResource.AgentState.WORKING:
+            mood_decay = 2.0
+        elif agent.state == AgentResource.AgentState.IDLE:
+            mood_decay = 0.5
+            
+        if funds < 0:
+            mood_decay += 5.0
+            
+        var mood_recovery: float = 0.0
+        if agent.state == AgentResource.AgentState.RESTING:
+            mood_recovery = 8.0
+        elif agent.state == AgentResource.AgentState.EXHAUSTED:
+            mood_decay += 1.0
+            
+        agent.happiness = clamp(agent.happiness - mood_decay + mood_recovery, 0.0, 100.0)
+        
+        if agent.happiness <= 20.0 and agent.state != AgentResource.AgentState.STRIKE:
+            agent.state = AgentResource.AgentState.STRIKE
+            var main_loop = Engine.get_main_loop()
+            if main_loop and main_loop.root.has_node("AudioManager"):
+                main_loop.root.get_node("AudioManager").play_sfx("sigh")
+                
+        if agent.state == AgentResource.AgentState.STRIKE and agent.happiness >= 50.0:
+            agent.state = AgentResource.AgentState.IDLE
+            
         if agent.state == AgentResource.AgentState.RESTING:
             agent.energy += recovery
             if agent.energy > 100:
                 agent.energy = 100
-        elif agent.energy <= 0:
-            agent.energy = 0
-            agent.state = AgentResource.AgentState.EXHAUSTED
+        elif agent.state == AgentResource.AgentState.STRIKE:
+            agent.energy = min(100, agent.energy + 5)
+        else:
+            if agent.energy <= 0:
+                agent.energy = 0
+                if agent.state != AgentResource.AgentState.STRIKE:
+                    agent.state = AgentResource.AgentState.EXHAUSTED
 
 func to_dict() -> Dictionary:
     var arr = []

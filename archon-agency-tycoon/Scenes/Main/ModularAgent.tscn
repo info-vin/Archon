@@ -52,3 +52,6 @@ show_percentage = false
 position = Vector2(0, -400)
 scale = Vector2(1.5, 1.5)
 
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+

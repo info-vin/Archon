@@ -164,3 +164,28 @@ func test_sales_loop_interrupted_by_exhaustion() -> void:
         
     assert_eq(bob.state, AgentResource.AgentState.EXHAUSTED, "Bob should be exhausted")
     assert_eq(task_manager.tasks.size(), initial_task_count, "No task should be generated because Bob fainted before finishing the pitch")
+
+func test_hell_client_task() -> void:
+    var agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
+    var task_manager = preload("res://Scripts/Logic/TaskManager.gd").new()
+    task_manager.set_agent_manager(agent_manager)
+    
+    var dev = AgentResource.new("Dave", AgentResource.AgentRole.DEV)
+    agent_manager.add_agent(dev)
+    
+    var task = preload("res://Scripts/Resources/TaskResource.gd").new("Hell Client Task", 1, 10, 500, true)
+    task_manager.add_task(task)
+    
+    var assigned = task_manager.assign_task(0, 0)
+    assert_true(assigned, "Task should be assigned to Dave")
+    
+    var rush_ok = task_manager.rush_task(0)
+    assert_false(rush_ok, "Rushing a Hell Client task should fail/be blocked")
+    
+    var initial_energy = dev.energy
+    var initial_happiness = dev.happiness
+    task_manager.process_tick()
+    
+    assert_eq(dev.energy, initial_energy - 20, "Should drain double energy (20)")
+    assert_eq(dev.happiness, initial_happiness - 10.0, "Should drain 10.0 happiness")
+

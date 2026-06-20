@@ -20,6 +20,7 @@ var agent_router = AgentRouterClass.new()
 @onready var qa_room: PanelContainer = $VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom
 @onready var break_room: PanelContainer = $VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom
 @onready var lang_button: Button = $VBox/TopBar/HBox/LangButton
+@onready var jukebox_button: Button = $VBox/TopBar/HBox/JukeboxButton
 @onready var game_tick_timer: Timer = $GameTickTimer
 @onready var task_container: HBoxContainer = $VBox/BottomBar/VBox/TaskContainer
 
@@ -70,6 +71,8 @@ func _ready() -> void:
 		_load_game()
 
 	game_tick_timer.timeout.connect(_on_tick_timer_timeout)
+	if jukebox_button:
+		jukebox_button.pressed.connect(_on_jukebox_pressed)
 
 func _load_game() -> void:
 	var loaded = await tycoon_manager.load_game(agent_manager, task_manager)
@@ -94,6 +97,8 @@ func _setup_initial_game() -> void:
 	_update_ui()
 
 func _update_ui() -> void:
+	if agent_router:
+		agent_router.reset_counts()
 	room_agent_counts = {"dev": 0, "sales": 0, "qa": 0, "break": 0}
 	
 	# Update HUD Labels
@@ -145,6 +150,12 @@ func _on_lang_button_pressed() -> void:
 	TranslationServer.set_locale(langs[current_lang_index])
 	lang_button.text = lang_names[current_lang_index]
 	_update_ui()
+
+func _on_jukebox_pressed() -> void:
+	if has_node("/root/AudioManager"):
+		var audio_mgr = get_node("/root/AudioManager")
+		var next_track = audio_mgr.cycle_bgm()
+		_log_event("Jukebox BGM track changed to: [color=#39ff14]%s[/color]" % next_track.to_upper())
 
 func _on_save_btn_pressed() -> void:
 	tycoon_manager.save_game(agent_manager, task_manager)

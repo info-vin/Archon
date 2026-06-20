@@ -21,6 +21,10 @@ window/stretch/aspect="expand"
 
 pointing/emulate_touch_from_mouse=true
 
+[autoload]
+
+AudioManager="*res://Scripts/Autoloads/AudioManager.gd"
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://translations.en.translation", "res://translations.ja.translation", "res://translations.zh_TW.translation")
