@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useMachine } from '@xstate/react';
 import { api } from '../services/api';
-import { SparklesIcon, TrashIcon, XIcon } from '../components/Icons';
+import { SparklesIcon, TrashIcon, XIcon, RefreshCwIcon } from '../components/Icons';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { EmptyState } from '../components/common/EmptyState';
 import { salesCartMachine } from '../features/manager/machines/salesCartMachine';
@@ -56,7 +56,16 @@ const SalesCartPage: React.FC = () => {
                             </button>
                          )}
                     </div>
-                    <button onClick={fetchCart} className="text-sm text-primary hover:underline">Refresh</button>
+                    <button
+                        onClick={fetchCart}
+                        className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1 disabled:opacity-50"
+                        disabled={loading}
+                        aria-label="Refresh cart"
+                        title="Refresh cart"
+                    >
+                        <RefreshCwIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
                 </header>
 
                 {loading ? (
