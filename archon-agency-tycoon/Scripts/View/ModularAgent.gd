@@ -138,16 +138,8 @@ func _setup_animations() -> void:
         helper.setup_animations(anim_player)
 
 func _swap_walk_texture(frame: int) -> void:
-    if is_custom_equipped:
-        return
-    if current_gender == 0:
-        if frame == 0: equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_006.png"))
-        elif frame == 1: equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_007.png"))
-        elif frame == 2: equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_008.png"))
-    else:
-        if frame == 0: equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png"))
-        elif frame == 1: equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_011.png"))
-        elif frame == 2: equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_012.png"))
+    # Disable texture swapping to keep base body head visible and prevent walk flickering
+    return
 
 # Function to equip or change a specific layer
 func equip_part(layer_name: String, texture: Texture2D) -> void:
@@ -197,8 +189,8 @@ func apply_agent_data(agent_data: AgentResource) -> void:
         else:
             equip_part("body", preload("res://Assets/Characters/Alice_Parts/part_010.png")) # Male skeleton
             
-        # 2. Eye Style
-        equip_part("eyes", preload("res://Assets/Characters/Alice_Parts/part_016.png"))
+        # 2. Eye Style - Disabled to prevent part_016.png (Alice's default head) from overlapping with custom hair
+        equip_part("eyes", null)
         
         # 3. Hair Style Assembly
         var hair_tex = null
