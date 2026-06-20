@@ -87,11 +87,11 @@ func _load_game() -> void:
 func _setup_initial_game() -> void:
 	# Recruit initial staff (Alice DEV, Bob SALES, Charlie QA)
 	var AgentResource = preload("res://Scripts/Resources/AgentResource.gd")
-	# Init params: name, role, code, charisma, debug, luck, hair, outfit, tool
-	var alice = AgentResource.new("Alice", AgentResource.AgentRole.DEV, 10, 5, 5, 5)
-	var bob = AgentResource.new("Bob", AgentResource.AgentRole.SALES, 5, 10, 5, 5)
-	var charlie = AgentResource.new("Charlie", AgentResource.AgentRole.QA, 5, 5, 10, 5)
-
+	# Init parameters: name, role, code, charisma, debug, luck, hair, outfit, tool, gender, hair_style, hair_color, outfit_style, tool_style
+	var alice = AgentResource.new("Alice", AgentResource.AgentRole.DEV, 10, 5, 5, 5, "", "", "", 0, 1, Color("#39ff14"), 1, 1) # Female, green hair, mage robe, DEV Wand
+	var bob = AgentResource.new("Bob", AgentResource.AgentRole.SALES, 5, 10, 5, 5, "", "", "", 1, 2, Color("#fde910"), 2, 2) # Male, yellow hair, vest, Cards
+	var charlie = AgentResource.new("Charlie", AgentResource.AgentRole.QA, 5, 5, 10, 5, "", "", "", 1, 2, Color("#ff003c"), 2, 3) # Male, red hair, vest, QA Spell
+	
 	for agent in [alice, bob, charlie]:
 		var id = agent_manager.add_agent(agent)
 		var target_room = dev_room

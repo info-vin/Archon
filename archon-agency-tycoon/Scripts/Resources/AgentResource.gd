@@ -28,7 +28,7 @@ enum AgentState { IDLE, WORKING, RESTING, EXHAUSTED, STRIKE }
 @export var equipped_outfit: String = ""
 @export var equipped_tool: String = ""
 
-func _init(p_name: String = "New Agent", p_role: AgentRole = AgentRole.DEV, p_code: int = 0, p_char: int = 0, p_debug: int = 0, p_luck: int = 0, p_hair: String = "", p_outfit: String = "", p_tool: String = ""):
+func _init(p_name: String = "New Agent", p_role: AgentRole = AgentRole.DEV, p_code: int = 0, p_char: int = 0, p_debug: int = 0, p_luck: int = 0, p_hair: String = "", p_outfit: String = "", p_tool: String = "", p_gender: int = 0, p_hair_style: int = 1, p_hair_color: Color = Color.WHITE, p_outfit_style: int = 1, p_tool_style: int = 1):
 	agent_name = p_name
 	role = p_role
 	state = AgentState.IDLE
@@ -41,11 +41,11 @@ func _init(p_name: String = "New Agent", p_role: AgentRole = AgentRole.DEV, p_co
 	equipped_hair = p_hair
 	equipped_outfit = p_outfit
 	equipped_tool = p_tool
-	gender = 0
-	hair_style = 1
-	hair_color = Color.WHITE
-	outfit_style = 1
-	tool_style = 1
+	gender = p_gender
+	hair_style = p_hair_style
+	hair_color = p_hair_color
+	outfit_style = p_outfit_style
+	tool_style = p_tool_style
 
 func to_dict() -> Dictionary:
 	return {
