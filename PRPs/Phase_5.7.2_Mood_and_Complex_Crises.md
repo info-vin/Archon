@@ -80,11 +80,14 @@
   - 改為直接調用已經型別安全載入的 `main_node.office_grid`。
   - 新擴建房間的 Label 名稱必須命名為 `Label`，並預設顯示，以便配合 `OfficeRoom.gd` 在隨機危機發生時，動態渲染 `NEED DEV` 或 `NEED QA` 的霓虹警報字句。
 
-### 3. 紙娃娃頭髮貼圖排他載入 (Exclusive Hair Rendering)
-- **問題分析**：預設的 SVG 貼圖可能與 Option A 的像素拆件重疊。
+### 3. 紙娃娃頭髮貼圖排他載入與相機對位 (Exclusive Hair & Camera Alignment)
+- **問題分析**：
+  - 預設的 SVG 貼圖可能與 Option A 的像素拆件重疊。
+  - 在 `CharacterCreator.tscn` 中，預覽 `Camera2D` 的位置被誤設為 `(0, 30)` 且 zoom 為 3，這會將鏡頭失焦聚焦於角色腳底，導致預覽視窗內頭部、眼睛、西裝與頭髮完全出鏡被切斷，玩家無法看見捏臉結果。
 - **解決方案**：
   - `ModularAgent.gd` 中的 `equip_part("hair", hair_tex)` 僅對 `hair_sprite.texture` 進行覆寫，確保同一時間只有一種髮型紋理生效。
   - 當載入 Option A 像素自訂外觀時，主動重置各圖層（Body, Hair, Outfit, Tool）的 scale 與 position，防範預設 svg 殘留。
+  - 將 `CharacterCreator.tscn` 裡的預覽相機 `Camera2D` 位置重置為 **`Vector2(0, -120)`** 且 `zoom` 設定為 **`Vector2(1.2, 1.2)`**。這能讓整個人物精確置中於 SubViewport 預覽面板中央，確保頭部、西裝與五官能完美被玩家審視。
 
 ### 4. 初始員工多樣化與性別裝扮修正 (Initial Staff Diversity)
 - **問題分析**：初始員工性別與裝扮混亂（如男性 Charlie 被硬塞女性雙馬尾與法師袍），且髮色全部呈單調白色，完全沒有發揮髮色調製功能，且與雷達圖顏色不符。
