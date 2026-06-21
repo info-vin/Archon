@@ -110,6 +110,21 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月21日：Phase 5.7.3 AI Spritesheet 與 Prompt Manager 整合落地
+
+今日我們針對 Godot 遊戲專案（archon-agency-tycoon）完成了 Phase 5.7.3 (32x32 AI Spritesheet Integration and in-game Prompt Manager UI) 的核心任務：
+
+1. **32x32 一體化精靈圖集成 (Spritesheet Integration)**：
+   - 於 `AgentResource.gd` 新增 `spritesheet_path`，並在 `ModularAgent.gd` 與 `AgentAnimationHelper.gd` 中實作動態圖集攔截與影格重置。當配置精靈圖時，會自動隱藏原有的紙娃娃子圖層，改用 `hframes=26` 橫向序列排版。
+2. **AI Prompt Manager 招募介面實作**：
+   - 在 `CharacterCreator.gd` 內以程式化方法動態生成 AI Prompt Manager。提供角色 Prompt 模板填寫、剪貼簿複製，以及 1~7 步的順序上傳防呆機制。
+3. **圖片後處理自動化 (bake_spritesheet.py)**：
+   - 實作 Python 精靈圖規格化工具，支援去背 (#FF00FF)、32x32 縮放、Foot Y=30 對齊與單格橫向拼裝。
+4. **測試自癒與門禁校驗**：
+   - 修復了 `test_modular_agent.gd` 中因使用非存在之 `assert_null` 導致的編譯錯誤，將其轉換為 `assert_eq(..., null)`，並使用 Python 腳本將其轉換為統一的 Tab 縮排。
+   - 成功通過全數 146 項 Godot 單元與整合測試，無任何失敗。
+   - 所有變更已推送至 GitHub `feat/twins` 分支。
+
 ### 2026年6月19日：Card Battler L2 重構與動態翻譯解耦 (Phase 5.7.1)
 
 今日我們針對 Godot 遊戲專案（arena）完成了 `MainUI.gd` 與 `GameState.gd` 的 L2 重構，並將靜態翻譯字典改為動態加載：
