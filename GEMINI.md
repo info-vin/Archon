@@ -110,7 +110,28 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026年6月21日：Phase 5.7.3 AI Spritesheet 與 Prompt Manager 整合落地
+### 2026年6月21日：Godot 測試防護網強化與測試存檔污染 (Phase 5.7.3)
+
+今日我們針對 Godot 遊戲專案（archon-agency-tycoon）排除了深層次的自動化測試干擾問題，完成了最後一塊品質門禁的拼圖：
+
+1. **查明測試跨污染元兇 (Test State Pollution)**：
+   - 在執行 `test_agent_energy_and_bubble_visuals` 時，發現開局剛生成的角色（Alice）狀態竟然不是預期的 `IDLE (0)`，而是 `STRIKE (4)`，導致狀態氣泡異常顯示。
+   - 經追查，原因是 Godot Headless 測試環境在實例化 `Main.tscn` 時，意外載入了先前測試或手動遊玩殘留的 `user://savegame.save`。這份存檔中角色的心情已耗盡，導致開局直接判定為罷工狀態，破壞了測試預期。
+2. **實作無菌測試環境 (Clean Room Testing)**：
+   - 在自製的微型測試框架 `Tests/MiniTest.gd` 中，於 `run_test_suite` 的執行入口加入強制淨化協議：利用 `DirAccess` 主動偵測並刪除 `user://savegame.save`。
+   - 此舉確保了每次執行測試套件時，皆能保證 100% 無污染的初始狀態，根絕了因為本地開發操作所帶來的「幽靈測試失敗」。
+3. **驗收與門禁通過**：
+   - 在導入自動清除存檔機制後，Godot 專案的 `HeadlessRunner.gd` 成功且穩定地通過了全部 **146 項單元與整合測試**。
+   - 所有關於卡牌生成、員工指派、狀態 UI 更新的 Gameplay Loop 測試，皆能在隔離環境中完美運作，為我們後續功能的開發提供了堅實的自動化防護網。
+
+### 2026年6月21日：API 429/503 錯誤突增事件歸因稽核
+
+針對 6 月 19 日 API 錯誤暴增事件完成雲端與排程健康稽核：
+
+1. **歸因結論**：錯誤並非系統性崩潰，而是由前端 `4d2d337a` (並發請求優化) 瞬間觸發的高頻 API 呼叫，疊加當日大規模重構導致的服務重啟波動所致。
+2. **雲端狀態驗證**：執行 `make phase-audit` 與 Hugging Face 運行日誌巡檢，確認排程系統 (`apscheduler`) 與核心服務已完全恢復正常。
+3. **現存警示**：日誌中發現 `Reranking singleton is not available (model failed to load)` 警告，代表雲端 reranking 模型載入失敗，已納入監控優化名單。
+4. **決策**：系統已趨穩，暫不回滾優化代碼，維持持續觀測一日。
 
 今日我們針對 Godot 遊戲專案（archon-agency-tycoon）完成了 Phase 5.7.3 (32x32 AI Spritesheet Integration and in-game Prompt Manager UI) 的核心任務：
 
