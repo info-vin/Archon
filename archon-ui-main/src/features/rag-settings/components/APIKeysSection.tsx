@@ -275,6 +275,8 @@ export const APIKeysSection = () => {
                       type="button"
                       onClick={() => toggleValueVisibility(index)}
                       disabled={cred.isFromBackend && cred.is_encrypted && cred.value === '[ENCRYPTED]'}
+                      aria-label="Toggle value visibility"
+                      aria-pressed={!!cred.showValue}
                       className={`absolute right-10 top-1/2 -translate-y-1/2 p-1.5 rounded transition-colors ${
                         cred.isFromBackend && cred.is_encrypted && cred.value === '[ENCRYPTED]'
                           ? 'cursor-not-allowed opacity-50'
@@ -298,6 +300,8 @@ export const APIKeysSection = () => {
                       type="button"
                       onClick={() => toggleEncryption(index)}
                       disabled={cred.isFromBackend && cred.is_encrypted && cred.value === '[ENCRYPTED]'}
+                      aria-label="Toggle encryption"
+                      aria-pressed={!!cred.is_encrypted}
                       className={`
                         absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded transition-colors
                         ${
@@ -329,6 +333,7 @@ export const APIKeysSection = () => {
                     onClick={() => deleteCredential(index)}
                     className="p-1 rounded text-gray-400 hover:text-red-600 transition-colors"
                     title="Delete credential"
+                    aria-label="Delete credential"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
