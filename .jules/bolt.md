@@ -119,3 +119,6 @@
 ## 2026-06-19 - Promise.all Optimization for RAG Settings
 **Learning:** In frontend configuration services, sequentially fetching independent data endpoints (like different credential categories) creates unnecessary waterfall delays. Decoupling them with `Promise.all` is a highly effective, safe optimization that reduces the total execution time to the duration of the longest request, significantly improving UI responsiveness when loading configuration pages.
 **Action:** When auditing data fetching functions, specifically look for sequential `await` calls that do not depend on each other's results, and refactor them into a single `Promise.all` block.
+## 2026-06-20 - Expensive Intl.DateTimeFormat Instantiations
+**Learning:** The `Intl.DateTimeFormat` constructor is a known slow operation in JavaScript. Instantiating it repeatedly inside render loops, like in `VictoryFeedList`'s map or `LiveClock`'s 1-second interval, causes massive CPU overhead and memory churn.
+**Action:** Always hoist `Intl.DateTimeFormat` (and similarly expensive constructors like `Intl.NumberFormat` or `RegExp`) outside of React components and loop iterations to instantiate them exactly once upon module load.
