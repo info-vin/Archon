@@ -11,7 +11,11 @@ func _can_drop_data(at_position: Vector2, data: Variant) -> bool:
 func _drop_data(at_position: Vector2, data: Variant) -> void:
 	if typeof(data) == TYPE_DICTIONARY and data.has("type") and data["type"] == "task":
 		var task_id = data["task_id"]
-		# We need to tell Main to assign this task to Alice (Agent 0)
-		# We can send a signal up or call a method on owner (Main)
-		if owner.has_method("_on_task_dropped_on_agent"):
-			owner._on_task_dropped_on_agent(task_id, 0) # Assuming agent 0 is Alice
+		var role = 1 # DEV by default
+		if "Sales" in room_name:
+			role = 0
+		elif "QA" in room_name:
+			role = 2
+		
+		if owner.has_method("_assign_task_to_free_agent_in_role"):
+			owner._assign_task_to_free_agent_in_role(task_id, role)

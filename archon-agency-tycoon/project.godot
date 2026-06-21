@@ -17,13 +17,13 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
-[input_devices]
-
-pointing/emulate_touch_from_mouse=true
-
 [autoload]
 
 AudioManager="*res://Scripts/Autoloads/AudioManager.gd"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
 
 [internationalization]
 

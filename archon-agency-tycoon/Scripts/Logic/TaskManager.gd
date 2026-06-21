@@ -8,6 +8,7 @@ var config: Resource
 
 signal task_completed(task_id: int, reward: int)
 signal rush_failed(task_id: int, agent_id: int)
+signal task_generated(task_id: int)
 
 func _init() -> void:
     var res = load("res://GameConfig.tres")
@@ -123,7 +124,8 @@ func process_tick() -> void:
             if sales_progress[i] >= sales_ticks_needed:
                 sales_progress[i] = 0
                 var new_task = preload("res://Scripts/Resources/TaskResource.gd").new("Client Project", AgentResource.AgentRole.DEV, gen_ticks, gen_reward)
-                add_task(new_task)
+                var new_task_id = add_task(new_task)
+                task_generated.emit(new_task_id)
                 # Sales agent stays WORKING to generate more tasks until exhausted or manually stopped
         
     for i in range(tasks.size()):

@@ -1,6 +1,8 @@
 extends Node2D
 class_name ModularAgentView
 
+signal agent_clicked(agent_id: int)
+
 # References to the Sprite2D layers
 @onready var body_sprite: Sprite2D = $BaseBody
 @onready var eyes_sprite: Sprite2D = $Eyes
@@ -16,6 +18,14 @@ var default_scale_x: float = 1.0
 var current_gender: int = 0
 var is_custom_equipped: bool = false
 var is_bob: bool = false
+var agent_id: int = -1
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var local_pos = get_local_mouse_position()
+		if abs(local_pos.x) < 40 and local_pos.y > -50 and local_pos.y < 50:
+			agent_clicked.emit(agent_id)
+			get_viewport().set_input_as_handled()
 
 # Data-driven default layout parameters loaded dynamically from the editor node properties
 var default_body_pos: Vector2
@@ -165,8 +175,23 @@ func equip_part(layer_name: String, texture: Texture2D) -> void:
 
 # Helper function to configure the appearance based on an AgentResource
 func apply_agent_data(agent_data: AgentResource) -> void:
-	if not is_inside_tree():
+	if not is_node_ready():
 		await ready
+
+	# Update status bubbles (Icon representation)
+	if status_bubble:
+		match agent_data.state:
+			AgentResource.AgentState.WORKING:
+				status_bubble.visible = true
+				status_bubble.texture = preload("res://Assets/Icons/icon_coin.svg")
+			AgentResource.AgentState.RESTING:
+				status_bubble.visible = true
+				status_bubble.texture = preload("res://Assets/Icons/icon_star.svg")
+			AgentResource.AgentState.EXHAUSTED, AgentResource.AgentState.STRIKE:
+				status_bubble.visible = true
+				status_bubble.texture = preload("res://Assets/Icons/icon_alert.svg")
+			_:
+				status_bubble.visible = false
 
 	# Option C: AI Spritesheet Mode
 	if agent_data.spritesheet_path != "":
@@ -207,9 +232,6 @@ func apply_agent_data(agent_data: AgentResource) -> void:
 				else:
 					energy_bar.modulate = Color(1, 0.2, 0.2)
 			
-			if status_bubble:
-				status_bubble.visible = false
-				
 			scale.x = default_scale_x
 			is_custom_equipped = true
 			current_gender = agent_data.gender
@@ -331,21 +353,6 @@ func apply_agent_data(agent_data: AgentResource) -> void:
 			energy_bar.modulate = Color(1, 1, 0.2) # yellow
 		else:
 			energy_bar.modulate = Color(1, 0.2, 0.2) # red
-
-	# Update status bubbles (Icon representation)
-	if status_bubble:
-		match agent_data.state:
-			AgentResource.AgentState.WORKING:
-				status_bubble.visible = true
-				status_bubble.texture = preload("res://Assets/Icons/icon_coin.svg")
-			AgentResource.AgentState.RESTING:
-				status_bubble.visible = true
-				status_bubble.texture = preload("res://Assets/Icons/icon_star.svg")
-			AgentResource.AgentState.EXHAUSTED, AgentResource.AgentState.STRIKE:
-				status_bubble.visible = true
-				status_bubble.texture = preload("res://Assets/Icons/icon_alert.svg")
-			_:
-				status_bubble.visible = false
 
 	# Alignment chair positioning & flipping
 	# If working, look at computer screen direction (DEV sits right of desk, so looks left. QA looks left. SALES sits left of desk, looks right)

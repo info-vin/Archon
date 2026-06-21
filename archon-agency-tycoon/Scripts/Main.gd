@@ -53,6 +53,9 @@ func _ready() -> void:
 	task_manager = preload("res://Scripts/Logic/TaskManager.gd").new()
 	tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
 	
+	var local_save_adapter = preload("res://Scripts/Logic/SaveSystems/LocalSaveAdapter.gd").new("user://savegame.save")
+	tycoon_manager.set_save_adapter(local_save_adapter)
+	
 	# Setup UI scripts
 	minimap_container.set_script(preload("res://Scripts/UI/Minimap.gd"))
 	dev_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
@@ -70,6 +73,7 @@ func _ready() -> void:
 	else:
 		_load_game()
 
+	task_manager.task_generated.connect(_on_task_generated)
 	game_tick_timer.timeout.connect(_on_tick_timer_timeout)
 	if jukebox_button:
 		jukebox_button.pressed.connect(_on_jukebox_pressed)
@@ -146,16 +150,39 @@ func _spawn_agent_view(agent_id: int, room: Control) -> void:
 		var agent_view = agent_view_scene.instantiate()
 		agent_view.position = Vector2(150, 130) # Center
 		agent_view.scale = Vector2(1.0, 1.0) # Reset scale to 1.0 for true pixel size
+		agent_view.agent_id = agent_id
 		room.add_child(agent_view)
 		agent_view.apply_agent_data(agent)
+		if not agent_view.is_connected("agent_clicked", _on_agent_clicked):
+			agent_view.agent_clicked.connect(_on_agent_clicked)
 		agent_views[agent_id] = agent_view
 
 func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: int = 1) -> void:
 	var task = preload("res://Scripts/Resources/TaskResource.gd").new(t_name, req_role, ticks, reward)
-	task_container.add_child(task.to_node())
+	var task_id = task_manager.add_task(task)
+	_on_task_generated(task_id)
+
+func _on_task_generated(task_id: int) -> void:
+	var task = task_manager.tasks[task_id]
+	var task_card = preload("res://Scenes/UI/TaskCard.tscn").instantiate()
+	task_container.add_child(task_card)
+	task_card.setup(task_id, task.task_name, task.required_ticks, task.reward_funds)
 
 func _on_task_dropped_on_agent(task_id: int, dropped_agent_id: int) -> void:
 	task_manager.assign_task(task_id, dropped_agent_id)
+
+func _assign_task_to_free_agent_in_role(task_id: int, role: int) -> void:
+	var available = agent_manager.get_available_agents_by_role(role)
+	if available.size() > 0:
+		task_manager.assign_task(task_id, available[0])
+		_log_event("Task assigned to Agent ID " + str(available[0]))
+	else:
+		_log_event("[color=#ff003c]No available/rested agents in this department![/color]")
+
+func _on_agent_clicked(agent_id: int) -> void:
+	var agent = agent_manager.get_agent(agent_id)
+	if agent:
+		_log_event("Clicked on Agent: [color=#39ff14]" + agent.agent_name + "[/color] (" + str(agent.energy) + " Energy, " + str(int(agent.happiness)) + " Happiness)")
 
 func _on_tick_timer_timeout() -> void:
 	tick_count += 1

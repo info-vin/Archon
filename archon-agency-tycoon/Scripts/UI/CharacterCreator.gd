@@ -39,18 +39,19 @@ var slot_paths: Array = ["", "", "", "", "", "", ""]
 var current_step_select: int = 0
 var mode_btn: Button
 var ai_area: VBoxContainer
-var step_option: OptionButton
-var prompt_text: TextEdit
-var path_edit: LineEdit
-var browse_btn: Button
+var path_edits: Array = []
 var lock_label: Label
-var slots_grid: GridContainer
 var file_dialog: FileDialog
 
 func set_config(p_config: Resource) -> void:
 	config = p_config
 
 func _ready() -> void:
+	z_index = 100
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.02, 0.02, 0.05, 1.0)
+	add_theme_stylebox_override("panel", style)
+
 	current_agent_data = preload("res://Scripts/Resources/AgentResource.gd").new("New Employee", 1)
 	if config == null and ResourceLoader.exists("res://GameConfig.tres"):
 		config = load("res://GameConfig.tres")
@@ -182,7 +183,9 @@ func _run_bake(name_val: String, output_res_path: String) -> int:
 		args.append("--slot" + str(i+1))
 		args.append(ProjectSettings.globalize_path(slot_paths[i]))
 	var output = []
-	var exit_code = OS.execute("python3", [script_path] + args, output, true)
+	var exit_code = OS.execute("uv", ["run", "python", script_path] + args, output, true)
+	if exit_code != 0:
+		exit_code = OS.execute("python", [script_path] + args, output, true)
 	if exit_code != 0:
 		exit_code = OS.execute("python", [script_path] + args, output, true)
 	return exit_code
@@ -221,92 +224,174 @@ func _setup_ai_prompt_manager_ui() -> void:
 	ai_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ai_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	ai_area.add_theme_constant_override("separation", 10)
+	
+	var actions_node = get_node_or_null("HBox/ControlArea/Actions")
+	$HBox/ControlArea.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	$HBox/ControlArea.add_child(ai_area)
+	if actions_node:
+		$HBox/ControlArea.move_child(ai_area, actions_node.get_index())
+		
 	ai_area.visible = false
 	
-	var selector_hbox = HBoxContainer.new()
-	var sel_label = Label.new()
-	sel_label.text = "Select Step:"
-	selector_hbox.add_child(sel_label)
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	ai_area.add_child(scroll)
 	
-	step_option = OptionButton.new()
-	step_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var steps = ["Box Art", "South Anchor", "Neutral Reset", "Directions", "Walk Video", "Work Sheet", "Idle Sheet"]
-	for i in range(len(steps)):
-		step_option.add_item("Step 0" + str(i+1) + " - " + steps[i], i)
-	step_option.item_selected.connect(_on_step_selected)
-	selector_hbox.add_child(step_option)
-	ai_area.add_child(selector_hbox)
+	var steps_vbox = VBoxContainer.new()
+	steps_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	steps_vbox.add_theme_constant_override("separation", 15)
+	scroll.add_child(steps_vbox)
 	
-	prompt_text = TextEdit.new()
-	prompt_text.custom_minimum_size = Vector2(0, 100)
-	prompt_text.editable = false
-	prompt_text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	ai_area.add_child(prompt_text)
+	var steps_data = ["Box Art (Full Body)", "South Anchor (32x32 Head to Toes)", "Neutral Reset (Remove gear)", "Directions (SE, E, NE, N)", "Walk Video (South walking)", "Work Sheet", "Idle Sheet"]
 	
-	var copy_btn = Button.new()
-	copy_btn.text = "Copy Prompt"
-	copy_btn.pressed.connect(_on_copy_prompt_pressed)
-	ai_area.add_child(copy_btn)
+	path_edits = []
 	
-	var path_hbox = HBoxContainer.new()
-	path_edit = LineEdit.new()
-	path_edit.placeholder_text = "No file selected"
-	path_edit.editable = false
-	path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	path_hbox.add_child(path_edit)
-	
-	browse_btn = Button.new()
-	browse_btn.text = "Browse..."
-	browse_btn.pressed.connect(_on_browse_pressed)
-	path_hbox.add_child(browse_btn)
-	ai_area.add_child(path_hbox)
-	
+	for i in range(len(steps_data)):
+		var step_card = PanelContainer.new()
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0.05, 0.05, 0.15, 0.8)
+		style.border_width_left = 2
+		style.border_width_right = 2
+		style.border_color = Color(0, 0.8, 1, 1) # Neon Cyan
+		style.set_corner_radius_all(5)
+		step_card.add_theme_stylebox_override("panel", style)
+		
+		var margin = MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 15)
+		margin.add_theme_constant_override("margin_right", 15)
+		margin.add_theme_constant_override("margin_top", 15)
+		margin.add_theme_constant_override("margin_bottom", 15)
+		step_card.add_child(margin)
+		
+		var card_vbox = VBoxContainer.new()
+		card_vbox.add_theme_constant_override("separation", 8)
+		margin.add_child(card_vbox)
+		
+		var title = Label.new()
+		title.text = "Step 0" + str(i+1) + " - " + steps_data[i]
+		title.add_theme_color_override("font_color", Color(0, 1, 1, 1)) # Cyan text
+		card_vbox.add_child(title)
+		
+		var prompt_rt = RichTextLabel.new()
+		prompt_rt.bbcode_enabled = true
+		prompt_rt.text = _get_prompt_text_for_step(i)
+		prompt_rt.custom_minimum_size = Vector2(0, 160)
+		prompt_rt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		prompt_rt.add_theme_color_override("default_color", Color(0.8, 0.8, 0.8, 1))
+		card_vbox.add_child(prompt_rt)
+		
+		var actions_hbox = HBoxContainer.new()
+		actions_hbox.add_theme_constant_override("separation", 10)
+		card_vbox.add_child(actions_hbox)
+		
+		var copy_btn = Button.new()
+		copy_btn.text = "Copy Prompt"
+		var copy_style = StyleBoxFlat.new()
+		copy_style.bg_color = Color(0.1, 0.3, 0.5, 1)
+		copy_style.border_width_left = 1
+		copy_style.border_width_right = 1
+		copy_style.border_width_top = 1
+		copy_style.border_width_bottom = 1
+		copy_style.border_color = Color(0, 1, 1, 1)
+		copy_btn.add_theme_stylebox_override("normal", copy_style)
+		copy_btn.pressed.connect(_on_copy_prompt_pressed_for_step.bind(i))
+		actions_hbox.add_child(copy_btn)
+		
+		var path_edit = LineEdit.new()
+		path_edit.placeholder_text = "No image selected..."
+		path_edit.editable = false
+		path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		path_edits.append(path_edit)
+		actions_hbox.add_child(path_edit)
+		
+		var browse_btn = Button.new()
+		browse_btn.text = "Browse..."
+		browse_btn.pressed.connect(_on_browse_pressed_for_step.bind(i))
+		actions_hbox.add_child(browse_btn)
+		
+		steps_vbox.add_child(step_card)
+		
 	lock_label = Label.new()
-	lock_label.text = ""
 	lock_label.modulate = Color(1, 0.4, 0.4)
 	ai_area.add_child(lock_label)
-	
-	slots_grid = GridContainer.new()
-	slots_grid.columns = 4
-	slots_grid.add_theme_constant_override("h_separation", 10)
-	slots_grid.add_theme_constant_override("v_separation", 5)
-	for i in range(7):
-		var lbl = Label.new()
-		lbl.text = "[Slot " + str(i+1) + "]"
-		slots_grid.add_child(lbl)
-	ai_area.add_child(slots_grid)
 
-func _on_mode_toggle_pressed() -> void:
-	is_spritesheet_mode = not is_spritesheet_mode
-	mode_btn.text = "Mode: AI Spritesheet" if is_spritesheet_mode else "Mode: Classic Creator"
+func _get_prompt_text_for_step(idx: int) -> String:
+	if not templates_dict.has("templates"): return ""
+	var prompts = templates_dict["templates"]
+	var step_keys = ["01_box_art", "02_south_anchor", "03_neutral_anchor", "04_directional_anchors", "05_walk_cycle", "06_attack_spritesheet", "07_idle_spritesheet"]
+	if idx < 0 or idx >= len(step_keys): return ""
+	var key = step_keys[idx]
+	if not prompts.has(key): return ""
 	
-	var paperdoll_nodes = ["GenderHBox", "HairHBox", "OutfitHBox", "ToolHBox", "ColorHBox", "Actions/RandomizeBtn"]
-	for n_name in paperdoll_nodes:
-		var n = $HBox/ControlArea.get_node(n_name)
-		if n: n.visible = not is_spritesheet_mode
+	var text = prompts[key]
+	var role_name = "DEV"
+	if role_option:
+		role_name = role_option.get_item_text(role_option.get_selected_id())
 		
-	ai_area.visible = is_spritesheet_mode
-	recruit_btn.text = "Bake & Recruit" if is_spritesheet_mode else tr("UI_RECRUIT")
+	var agent_name = name_edit.text if name_edit and name_edit.text != "" else "New Employee"
+	var replacements = {
+		"{CHARACTER_NAME}": agent_name,
+		"{CHARACTER_ARCHETYPE}": role_name,
+		"{ARCHETYPE}": role_name,
+		"{CORE_IDENTITY}": "cyborg hacker with neon accents",
+		"{COSTUME_AND_COLOR_PALETTE}": "dark suit, neon green tie",
+		"{SIGNATURE_PROP}": "holographic datapad",
+		"{PERSONALITY_OR_POSE}": "confident and professional",
+		"{CHARACTER_SPECIFIC_BIOME}": "cyberpunk office",
+		"{LOGICAL_FRAME_SIZE}": "32x32",
+		"{OUTPUT_SIZE}": "1024x1024",
+		"{DIRECTION}": "SOUTH",
+		"{DIRECTION_DESCRIPTION}": "directly toward the camera",
+		"{CHROMA_COLOR}": "#FF00FF",
+		"{SILHOUETTE_NOTES}": "readable silhouette",
+		"{COSTUME_DETAILS}": "detailed vest",
+		"{PROP_DETAILS}": "datapad in hand",
+		"{DYNAMIC_EFFECT}": "none",
+		"{DYNAMIC_EFFECT_HAND}": "empty",
+		"{DIRECTIONAL_SILHOUETTE_DETAILS}": "clean profile",
+		"{SHEET_SIZE}": "5x2 spritesheet",
+		"{CELL_SIZE}": "32x32 cells",
+		"{ATTACK_OR_WORK_NAME}": "typing on keyboard",
+		"{EFFECT_COLOR}": "neon green",
+		"{PROJECTILE_OR_EFFECT}": "hologram",
+		"{EFFECT_TRAVEL_DIRECTION}": "forward"
+	}
 	
-	if not is_spritesheet_mode:
-		recruit_btn.disabled = false
-		current_agent_data.spritesheet_path = ""
-		_update_preview()
-	else:
-		_update_ai_ui()
+	for r_key in replacements:
+		text = text.replace(r_key, "[color=#39ff14]" + replacements[r_key] + "[/color]")
+		
+	return text
 
-func _on_role_selected(_idx: int) -> void:
-	_update_ai_ui()
+func _update_ai_ui() -> void:
+	if not is_spritesheet_mode: return
+			
+	var all_filled = true
+	var current_index = -1
+	for i in range(len(slot_paths)):
+		if slot_paths[i] != "":
+			path_edits[i].text = slot_paths[i]
+		else:
+			path_edits[i].text = ""
+			all_filled = false
+			if current_index == -1:
+				current_index = i
+				
+	if current_index == -1: current_index = 6
+	
+	if lock_label:
+		if all_filled:
+			lock_label.text = "All assets ready. You can now Bake & Recruit!"
+			lock_label.modulate = Color(0, 1, 0, 1)
+			recruit_btn.disabled = false
+		else:
+			lock_label.text = "Please upload Step 0" + str(current_index+1) + " image."
+			lock_label.modulate = Color(1, 0.4, 0.4)
+			recruit_btn.disabled = true
 
-func _on_step_selected(idx: int) -> void:
+func _on_browse_pressed_for_step(idx: int) -> void:
 	current_step_select = idx
-	_update_ai_ui()
-
-func _on_copy_prompt_pressed() -> void:
-	DisplayServer.clipboard_set(prompt_text.text)
-
-func _on_browse_pressed() -> void:
 	file_dialog.popup_centered(Vector2(600, 400))
 
 func _on_file_selected(path: String) -> void:
@@ -318,50 +403,13 @@ func _on_file_selected(path: String) -> void:
 	if all_filled:
 		_bake_preview()
 
-func _is_step_unlocked(step_idx: int) -> bool:
-	if step_idx == 0: return true
-	return slot_paths[step_idx - 1] != ""
-
-func _format_prompt(template: String, role_key: String) -> String:
-	var formatted = template
-	var name_val = name_edit.text.strip_edges()
-	if name_val == "":
-		name_val = "Neon-Hacker" if role_key == "dev" else "Safety-Inspector"
-	formatted = formatted.replace("{CHARACTER_NAME}", name_val)
-	if templates_dict.has("roles") and templates_dict["roles"].has(role_key):
-		var role_data = templates_dict["roles"][role_key]
-		for key in role_data:
-			formatted = formatted.replace("{" + key.to_upper() + "}", str(role_data[key]))
-	return formatted
-
-func _update_ai_ui() -> void:
-	if not is_spritesheet_mode: return
-	var role_key = "qa" if role_option.get_selected_id() == 2 else "dev"
-	var step_keys = ["01_box_art", "02_south_anchor", "03_neutral_anchor", "04_directional_anchors", "05_walk_cycle", "06_attack_spritesheet", "07_idle_spritesheet"]
-	var step_key = step_keys[current_step_select]
-	var template = templates_dict.get("templates", {}).get(step_key, "")
-	prompt_text.text = _format_prompt(template, role_key)
+func _on_copy_prompt_pressed_for_step(idx: int) -> void:
+	var text = _get_prompt_text_for_step(idx)
+	var regex = RegEx.new()
+	regex.compile("\\[.*?\\]")
+	text = regex.sub(text, "", true)
+	DisplayServer.clipboard_set(text)
 	
-	path_edit.text = slot_paths[current_step_select] if slot_paths[current_step_select] != "" else "No file selected"
-	var is_unlocked = _is_step_unlocked(current_step_select)
-	browse_btn.disabled = not is_unlocked
-	lock_label.text = "" if is_unlocked else "Locked: Please complete Step " + str(current_step_select) + " first."
-	
-	var step_names = ["Box Art", "South", "Neutral", "Directions", "Walk Video", "Work Sheet", "Idle Sheet"]
-	for i in range(7):
-		var lbl = slots_grid.get_child(i) as Label
-		if slot_paths[i] != "":
-			lbl.text = "✓ " + str(i+1) + ". " + step_names[i]
-			lbl.modulate = Color(0.2, 1.0, 0.2)
-		else:
-			lbl.text = ("○ " if _is_step_unlocked(i) else "✗ ") + str(i+1) + ". " + step_names[i]
-			lbl.modulate = Color.WHITE if _is_step_unlocked(i) else Color(0.5, 0.5, 0.5)
-			
-	var all_filled = true
-	for p in slot_paths:
-		if p == "": all_filled = false
-	recruit_btn.disabled = not all_filled
-
 func _bake_preview() -> void:
 	var name_val = name_edit.text.strip_edges()
 	if name_val == "": name_val = "PreviewAgent"
@@ -369,3 +417,39 @@ func _bake_preview() -> void:
 	_run_bake(name_val, output_res_path)
 	current_agent_data.spritesheet_path = output_res_path
 	_update_preview()
+	agent_view.visible = true
+
+func _on_role_selected(index: int) -> void:
+	current_agent_data.role = role_option.get_selected_id()
+	_update_translations()
+	_update_preview()
+	_update_ai_ui()
+
+func _on_mode_toggle_pressed() -> void:
+	is_spritesheet_mode = not is_spritesheet_mode
+	
+	var paperdoll_nodes = ["GenderHBox", "HairHBox", "OutfitHBox", "ToolHBox", "ColorHBox", "Actions/RandomizeBtn"]
+	for n in paperdoll_nodes:
+		var node = get_node_or_null("HBox/ControlArea/" + n)
+		if node: node.visible = not is_spritesheet_mode
+		
+	if ai_area:
+		ai_area.visible = is_spritesheet_mode
+		
+	var title = get_node_or_null("HBox/ControlArea/Title")
+	if title:
+		title.text = "AI Spritesheet Mode" if is_spritesheet_mode else "UI_CHARACTER_CREATOR"
+		
+	var mode_btn_node = get_node_or_null("HBox/ControlArea/ModeToggle")
+	if mode_btn_node:
+		mode_btn_node.text = "Switch to Paperdoll" if is_spritesheet_mode else "Switch to AI Mode"
+		
+	if agent_view:
+		if is_spritesheet_mode and current_agent_data.spritesheet_path == "":
+			agent_view.visible = false
+		else:
+			agent_view.visible = true
+			
+	if not is_spritesheet_mode:
+		recruit_btn.disabled = false
+	recruit_btn.text = "Bake & Recruit" if is_spritesheet_mode else tr("UI_RECRUIT")

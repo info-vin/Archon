@@ -61,15 +61,15 @@ func _initialize() -> void:
 			
 	# 3. Partially fill slots (e.g. Slot 1 and Slot 2)
 	print("👉 模擬點擊 Slot 1 (Box Art) 並選擇路徑...")
-	creator._on_step_selected(0)
+	creator._on_browse_pressed_for_step(0)
 	creator._on_file_selected("res://Assets/Characters/char_sheet_v2.png")
 	
 	print("👉 模擬點擊 Slot 2 (South) 並選擇路徑...")
-	creator._on_step_selected(1)
+	creator._on_browse_pressed_for_step(1)
 	creator._on_file_selected("res://Assets/Characters/char_sheet_v2.png")
 	
 	# Select Step 3 to display its status
-	creator._on_step_selected(2)
+	creator._on_browse_pressed_for_step(2)
 	
 	for i in range(10):
 		await process_frame

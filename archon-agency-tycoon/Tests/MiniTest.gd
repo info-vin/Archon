@@ -39,6 +39,10 @@ func assert_false(actual: bool, message: String = "") -> void:
 
 # 這個函數會在繼承此腳本的測試檔中被呼叫
 func run_test_suite() -> void:
+	var dir = DirAccess.open("user://")
+	if dir and dir.file_exists("savegame.save"):
+		dir.remove("savegame.save")
+		
 	print("\n========== RUNNING TESTS ==========")
 	tests_passed = 0
 	tests_failed = 0

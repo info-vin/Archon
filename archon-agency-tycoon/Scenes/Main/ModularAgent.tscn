@@ -49,6 +49,7 @@ value = 100.0
 show_percentage = false
 
 [node name="StatusBubble" type="Sprite2D" parent="."]
+visible = false
 position = Vector2(0, -400)
 scale = Vector2(1.5, 1.5)
 
