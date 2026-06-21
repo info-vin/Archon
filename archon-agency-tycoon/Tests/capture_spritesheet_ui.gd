@@ -45,10 +45,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 		
-	# 2. Toggle AI Spritesheet Mode
-	print("👉 點擊 Toggle AI Spritesheet Mode...")
-	creator.mode_btn.pressed.emit()
-	
+	# AI Spritesheet Mode is now default. We wait for layout to settle.
 	for i in range(10):
 		await process_frame
 		

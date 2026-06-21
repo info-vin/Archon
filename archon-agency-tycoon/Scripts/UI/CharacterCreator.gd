@@ -33,7 +33,7 @@ var current_agent_data: AgentResource
 var config: Resource
 
 # AI Spritesheet Mode variables
-var is_spritesheet_mode: bool = false
+var is_spritesheet_mode: bool = true
 var templates_dict: Dictionary = {}
 var slot_paths: Array = ["", "", "", "", "", "", ""]
 var current_step_select: int = 0
@@ -75,13 +75,22 @@ func _ready() -> void:
 	add_child(file_dialog)
 	
 	mode_btn = Button.new()
-	mode_btn.text = "Toggle AI Spritesheet Mode"
+	mode_btn.text = "Mode: AI Spritesheet"
 	mode_btn.pressed.connect(_on_mode_toggle_pressed)
 	$HBox/ControlArea.add_child(mode_btn)
 	$HBox/ControlArea.move_child(mode_btn, 1)
 	
 	_setup_ai_prompt_manager_ui()
-	_update_preview()
+	
+	var paperdoll_nodes = ["GenderHBox", "HairHBox", "OutfitHBox", "ToolHBox", "ColorHBox", "Actions/RandomizeBtn"]
+	for n_name in paperdoll_nodes:
+		var n = $HBox/ControlArea.get_node(n_name)
+		if n: n.visible = false
+		
+	ai_area.visible = true
+	recruit_btn.text = "Bake & Recruit"
+	recruit_btn.disabled = true
+	_update_ai_ui()
 
 func _update_translations() -> void:
 	$HBox/ControlArea/Title.text = tr("UI_CHARACTER_CREATOR")

@@ -73,6 +73,17 @@ func _ready() -> void:
 	game_tick_timer.timeout.connect(_on_tick_timer_timeout)
 	if jukebox_button:
 		jukebox_button.pressed.connect(_on_jukebox_pressed)
+	var recruit_btn = $VBox/BottomBar/VBox/ActionHBox/RecruitBtn
+	if recruit_btn:
+		recruit_btn.pressed.connect(_on_recruit_btn_pressed)
+	var expand_btn = $VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn
+	if expand_btn:
+		expand_btn.pressed.connect(_on_expand_room_pressed)
+	var save_btn = $VBox/BottomBar/VBox/ActionHBox/SaveBtn
+	if save_btn:
+		save_btn.pressed.connect(_on_save_btn_pressed)
+	if lang_button:
+		lang_button.pressed.connect(_on_lang_button_pressed)
 		
 	# Let layout cycles complete so Minimap container obtains its actual non-zero size, then draw minimap
 	await get_tree().process_frame
