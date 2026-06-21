@@ -28,6 +28,9 @@ enum AgentState { IDLE, WORKING, RESTING, EXHAUSTED, STRIKE }
 @export var equipped_outfit: String = ""
 @export var equipped_tool: String = ""
 
+# Appearance settings (Option C / AI Spritesheet)
+@export var spritesheet_path: String = ""
+
 func _init(p_name: String = "New Agent", p_role: AgentRole = AgentRole.DEV, p_code: int = 0, p_char: int = 0, p_debug: int = 0, p_luck: int = 0, p_hair: String = "", p_outfit: String = "", p_tool: String = "", p_gender: int = 0, p_hair_style: int = 1, p_hair_color: Color = Color.WHITE, p_outfit_style: int = 1, p_tool_style: int = 1):
 	agent_name = p_name
 	role = p_role
@@ -65,7 +68,8 @@ func to_dict() -> Dictionary:
 		"tool_style": tool_style,
 		"equipped_hair": equipped_hair,
 		"equipped_outfit": equipped_outfit,
-		"equipped_tool": equipped_tool
+		"equipped_tool": equipped_tool,
+		"spritesheet_path": spritesheet_path
 	}
 
 static func from_dict(data: Dictionary) -> AgentResource:
@@ -87,4 +91,5 @@ static func from_dict(data: Dictionary) -> AgentResource:
 	if data.has("equipped_hair"): a.equipped_hair = data["equipped_hair"]
 	if data.has("equipped_outfit"): a.equipped_outfit = data["equipped_outfit"]
 	if data.has("equipped_tool"): a.equipped_tool = data["equipped_tool"]
+	if data.has("spritesheet_path"): a.spritesheet_path = data["spritesheet_path"]
 	return a

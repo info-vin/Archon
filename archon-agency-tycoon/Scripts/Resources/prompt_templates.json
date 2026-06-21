@@ -1,0 +1,62 @@
+{
+  "templates": {
+    "01_box_art": "Create a high-resolution character box-art portrait for {CHARACTER_NAME}, a {CHARACTER_ARCHETYPE}, for a top-down 2D battle game.\nFormat:\n- 1024x1536 PNG, 2:3 portrait\n- full-body or near full-body 3/4 hero composition\n- painterly illustration with strong silhouette logic that can later translate into pixel/game sprites\nCharacter:\n- {CORE_IDENTITY}\n- {COSTUME_AND_COLOR_PALETTE}\n- {SIGNATURE_PROP}\n- {PERSONALITY_OR_POSE}\nWorld/background:\n- {CHARACTER_SPECIFIC_BIOME}\n- same world language as the rest of the roster\n- background supports the character, but does not overpower them\nAvoid:\n- text, logos, UI, watermark, symbols/runes/glyphs unless explicitly part of the design",
+    "02_south_anchor": "Intended use: a single south-facing idle sprite frame for a top-down 2D action game. Final artwork should behave like one logical {LOGICAL_FRAME_SIZE} in-game frame, delivered at {OUTPUT_SIZE} so each sprite pixel reads as a clean block.\nImage 1 role: pixel-grid anchor. Use it only to enforce chunky pixel-art block discipline and a centered single-frame composition. Do not copy its content.\nSubject:\n- {CHARACTER_NAME}, {ARCHETYPE}, facing SOUTH directly toward the camera in 3/4 top-down game perspective.\n- This is the canonical idle frame.\n- {SILHOUETTE_NOTES}\n- {COSTUME_DETAILS}\n- {PROP_DETAILS}\n- calm readable idle expression/pose.\nFrame rules:\n- One character only, centered. Full body visible.\n- Visible body fits within the intended logical sprite box.\n- Anchor/foot plant at bottom-center.\n- Preserve idle readability, not an attack pose.\nStyle:\n- polished SNES-era / high-resolution pixelated game sprite\n- chunky readable silhouette, crisp edges\n- limited surface shading plus small highlight pixels\n- consistent top-left light source\nBackground:\n- solid removable chroma color, preferably {CHROMA_COLOR}, outside the sprite silhouette\n- no scenery, props, borders, UI, text, logo, or watermark\nAvoid:\n- photorealism, painterly blending, anti-aliased halos, extra characters, complex background",
+    "03_neutral_anchor": "Intended use: corrected reusable SOUTH-facing neutral idle anchor sprite for {CHARACTER_NAME}, a {ARCHETYPE} character in a top-down 2D game.\nImage 1 role: pixel/grid anchor. Use it to preserve output discipline and pixelated sprite feel.\nImage 2 role: identity anchor. Preserve this exact character identity, detail level, face, outfit, palette, prop, proportions, silhouette, and sprite scale.\nPrimary request:\nCreate 4 candidate variants of the same SOUTH-facing neutral idle anchor.\nThe only intended design correction from Image 2 is removing {DYNAMIC_EFFECT}.\nSubject:\n- {CHARACTER_NAME}, {ARCHETYPE}.\n- Facing SOUTH, directly toward the camera.\n- Same silhouette, outfit, palette, prop, face readability, and body scale as Image 2.\n- {DYNAMIC_EFFECT_HAND} should be neutral and empty/resting naturally.\nChange from Image 2:\n- remove {DYNAMIC_EFFECT}\n- remove glow, particles, smoke, aura, projectile, and charged action pose\n- make the pose read as neutral idle\nBackground:\n- solid uniform chroma background outside the character, preferably {CHROMA_COLOR}\n- no gradients, noise, shadows, scenery, text, border, or UI",
+    "04_directional_anchors": "Intended use: directional anchor sprite for a top-down 2D game character.\nInput images:\nImage 1 is the approved south-facing identity anchor for {CHARACTER_NAME}. Preserve the same character identity, outfit, palette, proportions, silhouette, accessories, and high-resolution pixelated game-sprite style.\nImage 2 is an alternating black/white pixel reference.\nPrimary request:\nCreate a new {OUTPUT_SIZE} {DIRECTION}-facing full-body anchor frame of the same character, facing {DIRECTION_DESCRIPTION}, in a neutral idle stance.\nPose and direction: \n- The character should face {DIRECTION_DESCRIPTION} in a game-ready top-down view.\n- Keep both feet visible and stable on the same baseline. Keep hands neutral.\n- No magic/effects/action pose.\n- Preserve readable direction-specific silhouette: {DIRECTIONAL_SILHOUETTE_DETAILS}.\nComposition:\n- Single centered character, full body visible, flat chroma background matching source-anchor style.\n- No shadow, props, other characters, UI, or text.\nCritical constraints:\n- No dynamic attack effects, no glow, particles, projectile, aura, or flame.\n- No weapon/staff/projectile unless it is part of the neutral identity.",
+    "05_walk_cycle": "Animate this single character into a simple {DIRECTION}-facing in-place walk cycle for a top-down 2D game.\nThe character must face {DIRECTION_DESCRIPTION} for the entire clip.\nPreserve the exact identity, sprite-like pixelated look, proportions, palette, costume, and silhouette from the input image.\nDo not turn toward any other direction. Do not pivot, rotate, or show a quarter-turn view.\nKeep the camera fixed and centered. Keep the framing unchanged.\nKeep the character centered on the same flat neutral background.\nMotion:\n- low-fidelity readable game-sprite reference motion, small looping in-place walk\n- subtle vertical bobbing, alternating leg steps\n- light clothing/equipment sway, minimal arm swing, feet remain visible\n- character does not translate across the frame\nConstraints:\n- One character only, no scenery, no extra props, no camera movement.\n- No attack animation, no weapon swing, no magic, spell effects, particles, or glow.",
+    "06_attack_spritesheet": "Intended use: Create a 10-frame 5x2 spritesheet for a top-down 2D game character attack/work animation.\nInput images:\nImage 1 is the identity anchor for {CHARACTER_NAME}. Preserve the exact character identity, outfit, proportions, prop placement, silhouette, palette, and {DIRECTION}-facing direction.\nImage 2 is the 5x2 spritesheet layout/style guide.\nPrimary request:\nGenerate {CHARACTER_NAME} performing a {DIRECTION}-facing {ATTACK_OR_WORK_NAME}. The character faces {DIRECTION_DESCRIPTION} for every frame. The effect is dynamic, but the character remains on a stable foot baseline.\nCanvas and layout:\n- {SHEET_SIZE} PNG spritesheet, 5 columns by 2 rows, ten equal {CELL_SIZE} cells\n- frame order left to right across top row, then left to right across bottom row\n- character fully visible in each cell, including both feet\n- consistent character scale, camera, and ground baseline across all frames\nFrame sequence:\nFrame 1: neutral ready stance, feet planted, no large active effect.\nFrame 2: begins the action, body still facing {DIRECTION}.\nFrame 3: anticipation pose, hands rise.\nFrame 4: small {EFFECT_COLOR} spark/charge appears.\nFrame 5: compact {PROJECTILE_OR_EFFECT} forms.\nFrame 6: release frame, effect launches or flares toward {EFFECT_TRAVEL_DIRECTION}.\nFrame 7: follow-through, effect moves farther with a short trail; character recoils slightly.\nFrame 8: recoil peak, residual particles fade.\nFrame 9: settles back toward neutral, only faint pixels remain.\nFrame 10: return to calm ready stance.\nStyle: SNES-era pixel-art-inspired game sprite, crisp edges, consistent lighting and palette.",
+    "07_idle_spritesheet": "Intended use: {DIRECTION}-facing idle animation spritesheet for a top-down 2D game character.\nInput images:\nImage 1 is the approved {DIRECTION}-facing identity anchor.\nImage 2 is the 5 columns x 2 rows sheet guide.\nPrimary request:\nCreate a single {SHEET_SIZE} spritesheet with 10 frames arranged 5 columns x 2 rows. The character faces {DIRECTION_DESCRIPTION} in every frame and performs a subtle idle loop.\nFrame sequence:\nFrame 1: neutral relaxed stance.\nFrame 2: slight inhale, shoulders/robe rise by a few pixels.\nFrame 3: hair/cloth settles with tiny sway.\nFrame 4: tiny facial/cloth movement while body stays grounded.\nFrame 5: slight exhale, shoulders lower.\nFrame 6: subtle hand/accessory sway.\nFrame 7: return toward neutral.\nFrame 8: tiny cloth sway in opposite direction.\nFrame 9: settle.\nFrame 10: match frame 1 closely for a clean loop.\nComposition constraints:\n- one full-body character per frame, consistent size, consistent foot baseline, centered position.\n- no attack effect, no glow, particles, or aura. No walking step. No turning.\nStyle: high-resolution pixelated 2D game sprite, crisp readable silhouette, flat chroma background.",
+    "08_normalization": "Before promoting an animation to your game's assets:\n1. Split/recover frames into exact cells (using alpha bounds, not nominal grid).\n2. Remove background (Bria / remove.bg / chroma key).\n3. Compare alpha bounds against this character's approved idle/walk sheets.\n4. Normalize visible body scale and foot baseline inside each cell.\n5. Preserve atlas dimensions and frame count.\n6. Create contact sheet and GIF preview using the real frame size.\n7. Only then integrate into game code."
+  },
+  "roles": {
+    "dev": {
+      "character_name": "Neon-Hacker",
+      "character_archetype": "software developer",
+      "core_identity": "young male cyberpunk programmer, wearing a black techwear hoodie with neon green digital glyphs, holding a holographic glowing green tablet, standing in a smug pose",
+      "costume_and_color_palette": "black fabric with bright neon green highlights",
+      "signature_prop": "glowing visor and green hacker tablet",
+      "personality_or_pose": "smug, confident stance",
+      "character_specific_biome": "sector 7 dark cyberpunk alleyway with rain",
+      "logical_frame_size": "256x256",
+      "output_size": "1024x1024",
+      "chroma_color": "#FF00FF",
+      "silhouette_notes": "slim techwear hoodie outline",
+      "costume_details": "neon green accents on black fabric, dark cargo pants",
+      "prop_details": "small green glowing visor over eyes",
+      "dynamic_effect": "green screen-glare and active visor beams",
+      "dynamic_effect_hand": "Right hand",
+      "direction": "WEST",
+      "direction_description": "facing left in profile, body in 3/4 left turn",
+      "directional_silhouette_details": "show green visor profile on face, black techwear hoodie hood up",
+      "attack_or_work_name": "code-injection typing action",
+      "effect_color": "green",
+      "projectile_or_effect": "holographic neon green keyboard outline",
+      "effect_travel_direction": "upwards"
+    },
+    "qa": {
+      "character_name": "Safety-Inspector",
+      "character_archetype": "quality assurance engineer",
+      "core_identity": "young female cybersecurity inspector, neon pink hair in double buns, wearing an oversized pink cybernetic bomber jacket, waving a scanning tablet, serious alert pose",
+      "costume_and_color_palette": "neon pink bomber jacket, grey trousers",
+      "signature_prop": "cybersecurity tablet and scanner wand",
+      "personality_or_pose": "alert, focused pose",
+      "character_specific_biome": "server room with racks of blinking magenta lights",
+      "logical_frame_size": "256x256",
+      "output_size": "1024x1024",
+      "chroma_color": "#FF00FF",
+      "silhouette_notes": "oversized puffy bomber jacket outline",
+      "costume_details": "neon pink highlights on dark grey trousers",
+      "prop_details": "none, hands relaxed",
+      "dynamic_effect": "magenta warning pulses and glowing scanner tablet",
+      "dynamic_effect_hand": "Hands",
+      "direction": "WEST",
+      "direction_description": "facing left in profile, body in 3/4 left turn",
+      "directional_silhouette_details": "show pink hair buns profile, puffy bomber jacket side view",
+      "attack_or_work_name": "security scanning action",
+      "effect_color": "pink",
+      "projectile_or_effect": "circular pink pixel pulses rippling outwards",
+      "effect_travel_direction": "outwards"
+    }
+  }
+}

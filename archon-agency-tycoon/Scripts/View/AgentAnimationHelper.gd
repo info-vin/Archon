@@ -124,3 +124,69 @@ func setup_animations(anim_player: AnimationPlayer) -> void:
 	lib.add_animation("strike", strike_anim)
 	
 	anim_player.add_animation_library("", lib)
+
+func setup_spritesheet_animations(anim_player: AnimationPlayer) -> void:
+	if not anim_player:
+		return
+	if anim_player.has_animation_library(""):
+		anim_player.remove_animation_library("")
+	
+	var lib := AnimationLibrary.new()
+	
+	# 1. idle (frames 0 to 9)
+	var idle_anim := Animation.new()
+	idle_anim.loop_mode = Animation.LOOP_LINEAR
+	idle_anim.length = 1.0
+	var track_idle = idle_anim.add_track(Animation.TYPE_VALUE)
+	idle_anim.track_set_path(track_idle, "BaseBody:frame")
+	for i in range(10):
+		idle_anim.track_insert_key(track_idle, i * 0.1, i)
+	lib.add_animation("idle", idle_anim)
+	
+	# 2. walk (frames 10 to 15)
+	var walk_anim := Animation.new()
+	walk_anim.loop_mode = Animation.LOOP_LINEAR
+	walk_anim.length = 0.6
+	var track_walk = walk_anim.add_track(Animation.TYPE_VALUE)
+	walk_anim.track_set_path(track_walk, "BaseBody:frame")
+	for i in range(6):
+		walk_anim.track_insert_key(track_walk, i * 0.1, 10 + i)
+	lib.add_animation("walk", walk_anim)
+	
+	# 3. work (frames 16 to 25)
+	var work_anim := Animation.new()
+	work_anim.loop_mode = Animation.LOOP_LINEAR
+	work_anim.length = 1.0
+	var track_work = work_anim.add_track(Animation.TYPE_VALUE)
+	work_anim.track_set_path(track_work, "BaseBody:frame")
+	for i in range(10):
+		work_anim.track_insert_key(track_work, i * 0.1, 16 + i)
+	lib.add_animation("work", work_anim)
+	
+	# 4. rest (same as idle)
+	var rest_anim := Animation.new()
+	rest_anim.loop_mode = Animation.LOOP_LINEAR
+	rest_anim.length = 1.0
+	var track_rest = rest_anim.add_track(Animation.TYPE_VALUE)
+	rest_anim.track_set_path(track_rest, "BaseBody:frame")
+	for i in range(10):
+		rest_anim.track_insert_key(track_rest, i * 0.1, i)
+	lib.add_animation("rest", rest_anim)
+	
+	# 5. strike
+	var strike_anim := Animation.new()
+	strike_anim.loop_mode = Animation.LOOP_LINEAR
+	strike_anim.length = 0.4
+	var track_strike_x = strike_anim.add_track(Animation.TYPE_VALUE)
+	strike_anim.track_set_path(track_strike_x, "BaseBody:position:x")
+	strike_anim.track_insert_key(track_strike_x, 0.0, 0.0)
+	strike_anim.track_insert_key(track_strike_x, 0.1, -2.0)
+	strike_anim.track_insert_key(track_strike_x, 0.2, 2.0)
+	strike_anim.track_insert_key(track_strike_x, 0.3, -2.0)
+	strike_anim.track_insert_key(track_strike_x, 0.4, 0.0)
+	var track_strike_frame = strike_anim.add_track(Animation.TYPE_VALUE)
+	strike_anim.track_set_path(track_strike_frame, "BaseBody:frame")
+	strike_anim.track_insert_key(track_strike_frame, 0.0, 0)
+	lib.add_animation("strike", strike_anim)
+	
+	anim_player.add_animation_library("", lib)
