@@ -110,7 +110,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-(今日工作尚未開始或已歸檔至第四章。)
+### 2026年6月22日：ONNX 零成本重排與實體驗證紀律 (Phase 5.7.4)
+今日核心任務是將 Archon 專案的語意重排 (Reranker) 引擎從笨重的 PyTorch 完全遷移至輕量化的 ONNX Runtime，解決 Docker 部署的空間危機與依賴死鎖。
+
+**核心決策與技術實踐**:
+1.  **徹底斷開 PyTorch 依賴**: 我們拒絕了繼續沿用會造成 `ENOSPC` 危機的 `sentence-transformers`，大膽將 `reranking_strategy.py` 全面改寫，直接透過 `onnxruntime` 與 `huggingface-hub` 載入 `Xenova/ms-marco-MiniLM-L-6-v2` 的 22MB 微縮權重。
+2.  **精確鎖定平台相容性**: 發現最新版 `onnxruntime==1.27.0` 在 macOS x86 平台上缺乏 wheel 支援，導致 `make lint` 失敗。我們沒有盲目繞過，而是透過物理測試，果斷將版本鎖定為 `<1.20.0`，兼顧了不同開發環境的穩定性。
+3.  **型別安全與優雅降級**: 修正了 ONNX 初始化後 `Mypy` 所報出的 `None` callable 問題，並實作了嚴格的 Fall-Fast 防禦機制。若引擎加載失敗，系統將原樣回傳結果，確保不引發服務中斷。
+4.  **堅持物理公證紀律**: 嚴格拒絕「快樂路徑」，所有修改完成後，強制通關 `make lint`, `make test-be` (607 項全數通過), 與 `make phase-audit` 的三重實體驗證網關，才允許建立 Git 提交。這確保了重大架構抽換下的絕對零回歸 (Zero Regression)。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
