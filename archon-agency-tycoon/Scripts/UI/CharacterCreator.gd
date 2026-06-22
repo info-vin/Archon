@@ -219,11 +219,9 @@ func _load_templates() -> void:
 			templates_dict = json.data
 
 func _setup_ai_prompt_manager_ui() -> void:
-	ai_area = VBoxContainer.new()
-	ai_area.name = "AIPromptManager"
-	ai_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	ai_area.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	ai_area.add_theme_constant_override("separation", 10)
+	var ai_manager = preload("res://Scripts/UI/AIPromptManager.gd").new()
+	ai_manager.setup()
+	ai_area = ai_manager
 	
 	var actions_node = get_node_or_null("HBox/ControlArea/Actions")
 	$HBox/ControlArea.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -232,90 +230,20 @@ func _setup_ai_prompt_manager_ui() -> void:
 		$HBox/ControlArea.move_child(ai_area, actions_node.get_index())
 		
 	ai_area.visible = false
+	ai_manager.copy_prompt_requested.connect(_on_copy_prompt_pressed_for_step)
+	ai_manager.browse_requested.connect(_on_browse_pressed_for_step)
 	
-	var scroll = ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	ai_area.add_child(scroll)
+	path_edits = ai_manager.path_edits
+	lock_label = ai_manager.lock_label
 	
-	var steps_vbox = VBoxContainer.new()
-	steps_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	steps_vbox.add_theme_constant_override("separation", 15)
-	scroll.add_child(steps_vbox)
-	
-	var steps_data = ["Box Art (Full Body)", "South Anchor (32x32 Head to Toes)", "Neutral Reset (Remove gear)", "Directions (SE, E, NE, N)", "Walk Video (South walking)", "Work Sheet", "Idle Sheet"]
-	
-	path_edits = []
-	
-	for i in range(len(steps_data)):
-		var step_card = PanelContainer.new()
-		var style = StyleBoxFlat.new()
-		style.bg_color = Color(0.05, 0.05, 0.15, 0.8)
-		style.border_width_left = 2
-		style.border_width_right = 2
-		style.border_color = Color(0, 0.8, 1, 1) # Neon Cyan
-		style.set_corner_radius_all(5)
-		step_card.add_theme_stylebox_override("panel", style)
-		
-		var margin = MarginContainer.new()
-		margin.add_theme_constant_override("margin_left", 15)
-		margin.add_theme_constant_override("margin_right", 15)
-		margin.add_theme_constant_override("margin_top", 15)
-		margin.add_theme_constant_override("margin_bottom", 15)
-		step_card.add_child(margin)
-		
-		var card_vbox = VBoxContainer.new()
-		card_vbox.add_theme_constant_override("separation", 8)
-		margin.add_child(card_vbox)
-		
-		var title = Label.new()
-		title.text = "Step 0" + str(i+1) + " - " + steps_data[i]
-		title.add_theme_color_override("font_color", Color(0, 1, 1, 1)) # Cyan text
-		card_vbox.add_child(title)
-		
-		var prompt_rt = RichTextLabel.new()
-		prompt_rt.bbcode_enabled = true
-		prompt_rt.text = _get_prompt_text_for_step(i)
-		prompt_rt.custom_minimum_size = Vector2(0, 160)
-		prompt_rt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		prompt_rt.add_theme_color_override("default_color", Color(0.8, 0.8, 0.8, 1))
-		card_vbox.add_child(prompt_rt)
-		
-		var actions_hbox = HBoxContainer.new()
-		actions_hbox.add_theme_constant_override("separation", 10)
-		card_vbox.add_child(actions_hbox)
-		
-		var copy_btn = Button.new()
-		copy_btn.text = "Copy Prompt"
-		var copy_style = StyleBoxFlat.new()
-		copy_style.bg_color = Color(0.1, 0.3, 0.5, 1)
-		copy_style.border_width_left = 1
-		copy_style.border_width_right = 1
-		copy_style.border_width_top = 1
-		copy_style.border_width_bottom = 1
-		copy_style.border_color = Color(0, 1, 1, 1)
-		copy_btn.add_theme_stylebox_override("normal", copy_style)
-		copy_btn.pressed.connect(_on_copy_prompt_pressed_for_step.bind(i))
-		actions_hbox.add_child(copy_btn)
-		
-		var path_edit = LineEdit.new()
-		path_edit.placeholder_text = "No image selected..."
-		path_edit.editable = false
-		path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		path_edits.append(path_edit)
-		actions_hbox.add_child(path_edit)
-		
-		var browse_btn = Button.new()
-		browse_btn.text = "Browse..."
-		browse_btn.pressed.connect(_on_browse_pressed_for_step.bind(i))
-		actions_hbox.add_child(browse_btn)
-		
-		steps_vbox.add_child(step_card)
-		
-	lock_label = Label.new()
-	lock_label.modulate = Color(1, 0.4, 0.4)
-	ai_area.add_child(lock_label)
+	_refresh_ai_prompts()
+
+func _refresh_ai_prompts() -> void:
+	var prompts = []
+	for i in range(7):
+		prompts.append(_get_prompt_text_for_step(i))
+	if ai_area and ai_area.has_method("update_prompts"):
+		ai_area.update_prompts(prompts)
 
 func _get_prompt_text_for_step(idx: int) -> String:
 	if not templates_dict.has("templates"): return ""

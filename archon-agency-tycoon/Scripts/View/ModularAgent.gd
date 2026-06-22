@@ -39,70 +39,11 @@ var default_outfit_scale: Vector2
 var default_tool_pos: Vector2
 var default_tool_scale: Vector2
 
-# Layout data configurations mapping for the two paper doll asset styles (Pixel Art vs Legacy SVG)
-const PIXEL_LAYOUT = {
-	"body": {"pos": Vector2.ZERO, "scale": Vector2.ONE},
-	"eyes": {"pos": Vector2(3.5, -19.5), "scale": Vector2.ONE},
-	"hair": {"pos": Vector2(0, -18), "scale": Vector2.ONE},
-	"outfit": {"pos": Vector2(0, 2), "scale": Vector2.ONE},
-	"tool": {"pos": Vector2(18, 6), "scale": Vector2(0.8, 0.8)}
-}
-
-const SVG_LAYOUT = {
-	"body": {"pos": Vector2.ZERO, "scale": Vector2.ONE},
-	"eyes": {"pos": Vector2(0, -180), "scale": Vector2(0.12, 0.12)},
-	"hair": {"pos": Vector2(0, -220), "scale": Vector2(0.7, 0.7)},
-	"outfit": {"pos": Vector2(0, 10), "scale": Vector2(0.75, 0.75)},
-	"tool": {"pos": Vector2(150, -50), "scale": Vector2(0.4, 0.4)}
-}
-
-const BOB_LAYOUT = {
-	"body": {"pos": Vector2(0, -18), "scale": Vector2(0.35, 0.35)},
-	"outfit": {"pos": Vector2(0, 0), "scale": Vector2(0.35, 0.35)},
-	"hair": {"pos": Vector2(0, 21), "scale": Vector2(0.35, 0.35)},
-	"tool": {"pos": Vector2(6, 2), "scale": Vector2(0.3, 0.3)}
-}
-
-# Force default styling offsets and scaling dynamically using editor presets
 func reset_layout_for_option_a() -> void:
-	if is_bob:
-		if body_sprite:
-			body_sprite.position = Vector2(0, -18)
-			body_sprite.scale = Vector2(0.35, 0.35)
-			body_sprite.region_enabled = true
-		if outfit_sprite:
-			outfit_sprite.position = Vector2(0, 0)
-			outfit_sprite.scale = Vector2(0.35, 0.35)
-			outfit_sprite.region_enabled = true
-		if hair_sprite:
-			hair_sprite.position = Vector2(0, 21)
-			hair_sprite.scale = Vector2(0.35, 0.35)
-			hair_sprite.region_enabled = true
-		if tool_sprite:
-			tool_sprite.position = Vector2(6, 2)
-			tool_sprite.scale = Vector2(0.3, 0.3)
-		return
-
-	_apply_layout_dict(PIXEL_LAYOUT)
-	if eyes_sprite:
-		eyes_sprite.region_enabled = true
-		eyes_sprite.region_rect = Rect2(29, 34, 13, 11)
+	AgentLayoutHelper.reset_layout_for_option_a(is_bob, {"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite})
 
 func reset_layout_for_option_b() -> void:
-	_apply_layout_dict(SVG_LAYOUT)
-	if eyes_sprite:
-		eyes_sprite.region_enabled = false
-
-func _apply_layout_dict(layout: Dictionary) -> void:
-	var sprites = {"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite}
-	for n in layout:
-		var sprite = sprites[n]
-		if sprite:
-			sprite.position = layout[n].pos
-			sprite.scale = layout[n].scale
-			sprite.rotation = 0.0
-			if n != "hair":
-				sprite.modulate = Color.WHITE
+	AgentLayoutHelper.reset_layout_for_option_b({"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite})
 
 func _ready() -> void:
 	default_scale_x = scale.x
