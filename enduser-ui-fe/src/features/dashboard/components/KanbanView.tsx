@@ -12,12 +12,15 @@ interface KanbanViewProps {
 
 const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat out of the component to prevent expensive re-instantiation on every render cycle
+const kanbanDateFormatter = new Intl.DateTimeFormat(undefined, {month:'short', day:'numeric'});
+
 export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, updateTaskStatus, setEditingTask, userMap }) => {
   // PERFORMANCE: Hoisted expensive date parsing out of the render loop to prevent O(N) allocations
   const formattedDates = React.useMemo(() => {
     const dates: Record<string, string> = {};
     tasks.forEach(t => {
-      if (t.due_date) dates[t.id] = new Date(t.due_date).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+      if (t.due_date) dates[t.id] = kanbanDateFormatter.format(new Date(t.due_date));
     });
     return dates;
   }, [tasks]);
