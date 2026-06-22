@@ -15,8 +15,9 @@ func setup_loaded_game(agent_manager, task_manager) -> void:
 		main_node.dev_room.set_script(drop_script)
 		main_node.sales_room.set_script(drop_script)
 		# Initialize setups
-		main_node.dev_room.setup_room("DevRoom", Color("#39ff14"), main_node.tycoon_manager)
-		main_node.sales_room.setup_room("SalesRoom", Color("#fde910"), main_node.tycoon_manager)
+		var t_mgr = main_node.get_node("/root/SimulationEngine").tycoon_manager
+		main_node.dev_room.setup_room("DevRoom", Color("#39ff14"), t_mgr)
+		main_node.sales_room.setup_room("SalesRoom", Color("#fde910"), t_mgr)
 	
 	for agent_id in range(agent_manager.agents.size()):
 		var agent = agent_manager.get_agent(agent_id)
@@ -56,8 +57,9 @@ func setup_initial_game(agent_manager) -> void:
 	if drop_script:
 		main_node.dev_room.set_script(drop_script)
 		main_node.sales_room.set_script(drop_script)
-		main_node.dev_room.setup_room("DevRoom", Color("#39ff14"), main_node.tycoon_manager)
-		main_node.sales_room.setup_room("SalesRoom", Color("#fde910"), main_node.tycoon_manager)
+		var t_mgr = main_node.get_node("/root/SimulationEngine").tycoon_manager
+		main_node.dev_room.setup_room("DevRoom", Color("#39ff14"), t_mgr)
+		main_node.sales_room.setup_room("SalesRoom", Color("#fde910"), t_mgr)
 
 	# Generate initial tasks
 	main_node._spawn_task_in_backlog("Fix Login Bug", 3, 300, 1) # DEV

@@ -16,7 +16,7 @@ func test_l2_modules_initialization() -> void:
 	# Assert L2 controller modules and configuration
 	assert_not_null(view.config, "Config resource should be loaded")
 	assert_not_null(view.hud_controller, "HUDController should be instantiated and attached")
-	assert_not_null(view.lifecycle, "GameLifecycle should be instantiated and attached")
+	assert_not_null(tree.root.get_node("SimulationEngine").lifecycle, "GameLifecycle should be instantiated and attached in SimulationEngine")
 	
 	# Assert script attachments on dynamic nodes
 	assert_not_null(view.minimap_container, "MinimapContainer should exist")

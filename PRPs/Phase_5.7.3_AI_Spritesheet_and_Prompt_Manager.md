@@ -440,7 +440,7 @@ func generate_dynamic_animation(anim_name: String, start_frame: int, frame_count
 *   🔴 `CharacterCreator.gd`: 455 行 (超標 55 行)
 *   🔴 `ModularAgent.gd`: 402 行 (超標 2 行)
 歸因：因導入「32x32 一體化精靈圖集成」及「AI Prompt Manager 招募介面實作」，注入大量邏輯所致。
-建議：將 `CharacterCreator.gd` 中 AI Prompt 表單生成邏輯抽離至獨立模組 (如 `AIPromptBuilder.gd`)，以恢復 400 行的代碼品質門禁。
+建議：將 `CharacterCreator.gd` 中 AI Prompt 表單生成邏輯抽離至獨立模組 (如 `AIPromptBuilder.gd`)，以恢復 400 行的代碼品質門禁。 **[2026-06-22 已修復]** 成功抽離出 `AIPromptBuilder.gd`，主腳本恢復合規。
 
 **【2. 無菌測試環境 (Clean Room Testing) 實體驗證】**
 *   `Tests/MiniTest.gd` 已確實導入強制淨化協議：
@@ -459,5 +459,5 @@ func generate_dynamic_animation(anim_name: String, start_frame: int, frame_count
 **【5. 無頭環境的音效警告 (Headless Audio Null Fallback)】**
 *   **現象**：在無頭環境 (`--headless`) 或缺少音效實體檔案的情況下，`TycoonManager` 觸發 Crisis (危機) 事件時，會因找不到對應的 SFX 檔而拋出引擎警告 (例如 `WARNING: AudioManager: SFX 'alarm' not found`)。
 *   **技術債**：雖然不直接導致遊戲邏輯崩潰，但代表 `AudioManager` 在資源防禦上不夠強健，缺乏 Null 安全檢查與環境 Fallback 機制。
-*   **代辦事項 (TODO)**：需在 `AudioManager` 實作對無頭模式的偵測 (或檢查音源檔案是否存在)，若無效則平滑忽略 (Silent Ignore)，以確保 CI/CD 測試日誌的純淨度。
+*   **代辦事項 (TODO)**：需在 `AudioManager` 實作對無頭模式的偵測 (或檢查音源檔案是否存在)，若無效則平滑忽略 (Silent Ignore)，以確保 CI/CD 測試日誌的純淨度。 **[2026-06-22 已修復]** 透過檢查 `DisplayServer.get_name() != "headless"` 避免推送警告，保持日誌純淨。
 

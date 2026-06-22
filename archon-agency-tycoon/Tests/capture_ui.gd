@@ -3,6 +3,20 @@ extends SceneTree
 func _initialize() -> void:
 	print("--- 📸 執行實體渲染 UI 視覺截圖公證 ---")
 	
+	if DisplayServer.get_name() == "headless":
+		print("⚠️ 檢測到 headless 模式，略過實體截圖以防崩潰 (Graceful Fallback)")
+		quit(0)
+		return
+		
+	# Inject Autoloads
+	var event_bus = preload("res://Scripts/Autoloads/EventBus.gd").new()
+	event_bus.name = "EventBus"
+	root.add_child(event_bus)
+	
+	var sim_engine = preload("res://Scripts/Logic/SimulationEngine.gd").new()
+	sim_engine.name = "SimulationEngine"
+	root.add_child(sim_engine)
+	
 	# Load and instance the Main scene
 	var scene = load("res://Scenes/Main/Main.tscn")
 	if not scene:

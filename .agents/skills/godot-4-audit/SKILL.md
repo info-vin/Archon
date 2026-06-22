@@ -47,6 +47,9 @@ description: Strict code generation, architecture design, headless compilation c
 - **錯誤**：`button.connect("pressed", self, "_on_pressed")`
 - **正確**：`button.pressed.connect(_on_pressed)`
 
+### 1.5 狀態解耦 (Resource + Event Bus MVC)
+嚴禁 UI 節點 (View) 直接呼叫底層模擬邏輯或持有 Manager 實體。狀態必須存在 `Resource` 或純邏輯節點中，並透過 `EventBus` 發送訊號，UI 只能監聽。
+
 ---
 
 ## 🛡️ 二、【無頭模式防禦與相容性門禁】

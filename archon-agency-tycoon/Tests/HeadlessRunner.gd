@@ -2,6 +2,25 @@ extends SceneTree
 
 func _initialize() -> void:
 	print("=== Running all tests headlessly ===")
+	
+	# Clean Room Protocol: Remove savegame to prevent state pollution
+	if FileAccess.file_exists("user://savegame.save"):
+		DirAccess.remove_absolute("user://savegame.save")
+		print("Cleaned up old savegame.save")
+	
+	# Manually inject Autoloads for -s mode
+	var event_bus = preload("res://Scripts/Autoloads/EventBus.gd").new()
+	event_bus.name = "EventBus"
+	root.add_child(event_bus)
+	
+	var sim_engine = preload("res://Scripts/Logic/SimulationEngine.gd").new()
+	sim_engine.name = "SimulationEngine"
+	root.add_child(sim_engine)
+	
+	var audio_mgr = preload("res://Scripts/Autoloads/AudioManager.gd").new()
+	audio_mgr.name = "AudioManager"
+	root.add_child(audio_mgr)
+	
 	var test_files = [
 		preload("res://Tests/Unit/test_agent_manager.gd"),
 		preload("res://Tests/Unit/test_task_manager.gd"),

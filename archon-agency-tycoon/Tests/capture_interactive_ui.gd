@@ -1,7 +1,26 @@
 extends SceneTree
 
 func _initialize() -> void:
-	print("--- 📸 啟動交互式 UI 多場景視覺公證截圖 ---")
+	print("--- 📸 執行互動 UI 視覺截圖公證 ---")
+	
+	if DisplayServer.get_name() == "headless":
+		print("⚠️ 檢測到 headless 模式，略過實體截圖以防崩潰 (Graceful Fallback)")
+		quit(0)
+		return
+		
+	# Inject Autoloads
+	var event_bus = preload("res://Scripts/Autoloads/EventBus.gd").new()
+	event_bus.name = "EventBus"
+	root.add_child(event_bus)
+	
+	# 2. Simulate Recruiting a Custom Spritesheet Agent
+	var sim_engine = preload("res://Scripts/Logic/SimulationEngine.gd").new()
+	sim_engine.name = "SimulationEngine"
+	root.add_child(sim_engine)
+	
+	var alice = preload("res://Scripts/Resources/AgentResource.gd").new()
+	alice.agent_name = "Alice"
+	sim_engine.agent_manager.add_agent(alice)
 	
 	# Load and instance the Main scene
 	var scene = load("res://Scenes/Main/Main.tscn")
@@ -66,6 +85,7 @@ func _initialize() -> void:
 	# ----------------------------------------------------
 	var expand_btn: Button = main_node.get_node_or_null("VBox/BottomBar/VBox/ActionHBox/ExpandRoomBtn")
 	var game_area: ScrollContainer = main_node.get_node_or_null("VBox/HBoxMain/GameArea")
+	var dev_room_rect = main_node.dev_room.get_global_rect()
 	
 	if expand_btn:
 		print("👉 模擬點擊 ExpandRoomBtn 擴建房間...")

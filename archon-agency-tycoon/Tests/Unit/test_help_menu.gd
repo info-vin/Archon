@@ -53,7 +53,15 @@ func test_agent_energy_and_bubble_visuals() -> void:
     assert_true(view.agent_views.has(0), "Alice view should be spawned")
     # Alice (DEV) is agent_id 0
     var alice_view = view.agent_views[0]
-    var alice_agent = view.agent_manager.get_agent(0)
+    var alice_agent = tree.root.get_node("SimulationEngine").agent_manager.get_agent(0)
+    
+    # Reset state from previous tests due to Autoload persistence
+    alice_agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.IDLE
+    alice_agent.energy = 100.0
+    view._update_ui()
+    
+    await tree.process_frame
+    await tree.process_frame
     
     # Initial status
     assert_eq(alice_view.energy_bar.value, 100.0, "Energy bar value should start at 100")

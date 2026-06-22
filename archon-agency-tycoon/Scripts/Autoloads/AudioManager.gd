@@ -54,7 +54,8 @@ func _ready() -> void:
 
 func play_bgm(track_name: String) -> void:
 	if not bgm_tracks.has(track_name):
-		push_warning("AudioManager: BGM track '%s' not found" % track_name)
+		if DisplayServer.get_name() != "headless":
+			push_warning("AudioManager: BGM track '%s' not found" % track_name)
 		return
 	
 	var stream = bgm_tracks[track_name]
@@ -77,7 +78,8 @@ func cycle_bgm() -> String:
 
 func play_sfx(sfx_name: String) -> void:
 	if not sfx_tracks.has(sfx_name):
-		push_warning("AudioManager: SFX '%s' not found" % sfx_name)
+		if DisplayServer.get_name() != "headless":
+			push_warning("AudioManager: SFX '%s' not found" % sfx_name)
 		return
 	
 	var stream = sfx_tracks[sfx_name]

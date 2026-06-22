@@ -17,10 +17,11 @@ func test_agent_visual_room_relocation() -> void:
     root.add_child(view)
     await tree.process_frame
     await tree.process_frame 
-
+    
+    var sim_engine = tree.root.get_node_or_null("SimulationEngine")
+    
     # Now that the node is inside the tree, `@onready` variables are resolved
-    view.tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
-    view.dev_room.setup_room("DevRoom", Color("#39ff14"), view.tycoon_manager)
+    view.dev_room.setup_room("DevRoom", Color("#39ff14"), sim_engine.tycoon_manager)
 
     # Wait until views are fully spawned
     var timeout = 50
@@ -33,7 +34,7 @@ func test_agent_visual_room_relocation() -> void:
     assert_eq(alice_view.get_parent(), view.dev_room, "Alice should start in DevRoom")
 
     # Change Alice state to WORKING
-    var alice_agent = view.agent_manager.get_agent(0)
+    var alice_agent = sim_engine.agent_manager.get_agent(0)
     alice_agent.state = preload("res://Scripts/Resources/AgentResource.gd").AgentState.WORKING
     view._update_ui()
 
@@ -62,12 +63,14 @@ func test_crisis_visual_pulse_active() -> void:
     root.add_child(view)
     await tree.process_frame
     
+    var sim_engine = tree.root.get_node_or_null("SimulationEngine")
+    
     # Trigger crisis spawned on DevRoom
-    view.tycoon_manager.crisis_spawned.emit("DevRoom")
+    sim_engine.tycoon_manager.crisis_spawned.emit("DevRoom")
     assert_not_null(view.dev_room.crisis_tween, "Crisis tween should be active on DevRoom")
     
     # Trigger crisis resolved
-    view.tycoon_manager.crisis_resolved.emit("DevRoom")
+    sim_engine.tycoon_manager.crisis_resolved.emit("DevRoom")
     assert_eq(view.dev_room.crisis_tween, null, "Crisis tween should be cleared after resolution")
     assert_eq(view.dev_room.modulate, Color.WHITE, "DevRoom modulate should be reset to white")
     

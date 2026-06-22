@@ -1,8 +1,5 @@
 extends Control
 
-var agent_manager
-var task_manager
-var tycoon_manager
 var agent_views = {}
 const AgentRouterClass = preload("res://Scripts/Logic/AgentRouter.gd")
 var agent_router = AgentRouterClass.new()
@@ -21,60 +18,62 @@ var agent_router = AgentRouterClass.new()
 @onready var break_room: PanelContainer = $VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom
 @onready var lang_button: Button = $VBox/TopBar/HBox/LangButton
 @onready var jukebox_button: Button = $VBox/TopBar/HBox/JukeboxButton
-@onready var game_tick_timer: Timer = $GameTickTimer
 @onready var task_container: HBoxContainer = $VBox/BottomBar/VBox/TaskContainer
 
-# L2 Controller Modules
 var hud_controller: Node
-var lifecycle: Node
 var config: Resource
-
 var current_lang_index = 0
 var langs = ["zh_TW", "en", "ja"]
 var lang_names = ["中文", "English", "日本語"]
-var tick_count: int = 0
-var room_agent_counts = {"dev": 0, "sales": 0, "qa": 0, "break": 0}
 
 var instant_positioning: bool = false
 var help_menu_instance = null
 
 func _ready() -> void:
-	# Load centralized config
 	config = load("res://GameConfig.tres")
 	
-	# Initialize L2 modules
-	hud_controller = HUDController.new()
+	hud_controller = preload("res://Scripts/UI/HUDController.gd").new()
 	hud_controller.initialize(self)
-	lifecycle = preload("res://Scripts/Logic/GameLifecycle.gd").new()
-	lifecycle.initialize(self)
 	
-	# Instantiate Managers
-	agent_manager = preload("res://Scripts/Logic/AgentManager.gd").new()
-	task_manager = preload("res://Scripts/Logic/TaskManager.gd").new()
-	tycoon_manager = preload("res://Scripts/Logic/TycoonManager.gd").new()
-	
-	var local_save_adapter = preload("res://Scripts/Logic/SaveSystems/LocalSaveAdapter.gd").new("user://savegame.save")
-	tycoon_manager.set_save_adapter(local_save_adapter)
-	
-	# Setup UI scripts
 	minimap_container.set_script(preload("res://Scripts/UI/Minimap.gd"))
-	dev_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
-	sales_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
-	qa_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
-	break_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
-	dev_room.setup_room("DevRoom", Color("#39ff14"), tycoon_manager)
-	sales_room.setup_room("SalesRoom", Color("#fde910"), tycoon_manager)
-	qa_room.setup_room("QARoom", Color("#ff003c"), tycoon_manager)
-	break_room.setup_room("BreakRoom", Color("#b026ff"), tycoon_manager)
+	var drop_script = preload("res://Scripts/UI/DevRoomDropZone.gd")
+	if drop_script:
+		dev_room.set_script(drop_script)
+		sales_room.set_script(drop_script)
+		qa_room.set_script(drop_script)
+		break_room.set_script(drop_script)
 	
-	# Setup initial game if no save
-	if not FileAccess.file_exists("user://savegame.save"):
-		_setup_initial_game()
-	else:
-		_load_game()
-
-	task_manager.task_generated.connect(_on_task_generated)
-	game_tick_timer.timeout.connect(_on_tick_timer_timeout)
+	var t_mgr = get_node("/root/SimulationEngine").tycoon_manager
+	dev_room.setup_room("DevRoom", Color("#39ff14"), t_mgr)
+	sales_room.setup_room("SalesRoom", Color("#fde910"), t_mgr)
+	qa_room.setup_room("QARoom", Color("#ff003c"), t_mgr)
+	break_room.setup_room("BreakRoom", Color("#b026ff"), t_mgr)
+	
+	get_node("/root/EventBus").tick_updated.connect(_on_tick_updated)
+	get_node("/root/EventBus").agent_spawned.connect(_on_agent_spawned)
+	get_node("/root/EventBus").task_generated.connect(_on_task_generated)
+	
+	# Sync existing agents for tests and initial startup
+	var sim_engine = get_node_or_null("/root/SimulationEngine")
+	if sim_engine and sim_engine.agent_manager:
+		for agent_id in range(sim_engine.agent_manager.agents.size()):
+			var agent = sim_engine.agent_manager.get_agent(agent_id)
+			var target_room = dev_room
+			if agent.role == 0: target_room = sales_room
+			elif agent.role == 2: target_room = qa_room
+			_spawn_agent_view(agent_id, target_room)
+			
+	if sim_engine and sim_engine.task_manager:
+		for task_id in range(sim_engine.task_manager.tasks.size()):
+			var task = sim_engine.task_manager.tasks[task_id]
+			if not task.is_completed and task.assigned_agent_id == -1:
+				var task_card = preload("res://Scenes/UI/TaskCard.tscn").instantiate()
+				task_container.add_child(task_card)
+				task_card.setup(task_id, task.task_name, task.required_ticks, task.reward_funds)
+				
+	if sim_engine:
+		_update_ui()
+	
 	if jukebox_button:
 		jukebox_button.pressed.connect(_on_jukebox_pressed)
 	var recruit_btn = $VBox/BottomBar/VBox/ActionHBox/RecruitBtn
@@ -89,47 +88,32 @@ func _ready() -> void:
 	if lang_button:
 		lang_button.pressed.connect(_on_lang_button_pressed)
 		
-	# Let layout cycles complete so Minimap container obtains its actual non-zero size, then draw minimap
+	# Let layout cycles complete
 	await get_tree().process_frame
+	_update_ui()
 	_update_minimap()
 
-func _load_game() -> void:
-	var loaded = await tycoon_manager.load_game(agent_manager, task_manager)
-	if loaded:
-		lifecycle.setup_loaded_game(agent_manager, task_manager)
-	else:
-		_setup_initial_game()
-func _setup_initial_game() -> void:
-	# Recruit initial staff (Alice DEV, Bob SALES, Charlie QA)
-	var AgentResource = preload("res://Scripts/Resources/AgentResource.gd")
-	# Init parameters: name, role, code, charisma, debug, luck, hair, outfit, tool, gender, hair_style, hair_color, outfit_style, tool_style
-	var alice = AgentResource.new("Alice", AgentResource.AgentRole.DEV, 10, 5, 5, 5, "", "", "", 0, 1, Color("#39ff14"), 1, 1) # Female, green hair, mage robe, DEV Wand
-	var bob = AgentResource.new("Bob", AgentResource.AgentRole.SALES, 5, 10, 5, 5, "", "", "", 1, 2, Color("#fde910"), 2, 2) # Male, yellow hair, vest, Cards
-	var charlie = AgentResource.new("Charlie", AgentResource.AgentRole.QA, 5, 5, 10, 5, "", "", "", 1, 2, Color("#ff003c"), 2, 3) # Male, red hair, vest, QA Spell
-	
-	for agent in [alice, bob, charlie]:
-		var id = agent_manager.add_agent(agent)
-		var target_room = dev_room
-		if agent.role == AgentResource.AgentRole.SALES: target_room = sales_room
-		elif agent.role == AgentResource.AgentRole.QA: target_room = qa_room
-		_spawn_agent_view(id, target_room)
+func _on_tick_updated(tick_count: int, funds: int, rep: int) -> void:
+	hud_controller.update_ticker(tick_count, funds, rep)
 	_update_ui()
+
+func _on_agent_spawned(agent_id: int, room_name: String) -> void:
+	var target_room = dev_room
+	if room_name == "sales": target_room = sales_room
+	elif room_name == "qa": target_room = qa_room
+	_spawn_agent_view(agent_id, target_room)
 
 func _update_ui() -> void:
 	if agent_router:
 		agent_router.reset_counts()
-	room_agent_counts = {"dev": 0, "sales": 0, "qa": 0, "break": 0}
 	
-	# Update HUD Labels
 	hud_controller.update_static_labels()
-	hud_controller.update_ticker(tick_count, tycoon_manager.funds, tycoon_manager.reputation)
 	
-	# Update Agent Positions
 	var walk_speed = 180.0
 	var rooms_dict = {"dev": dev_room, "sales": sales_room, "qa": qa_room, "break": break_room}
 	
 	for agent_id in agent_views.keys():
-		var agent = agent_manager.get_agent(agent_id)
+		var agent = get_node("/root/SimulationEngine").agent_manager.get_agent(agent_id)
 		var view = agent_views[agent_id]
 		if not agent or not view: continue
 			
@@ -141,15 +125,15 @@ func _update_ui() -> void:
 
 func _update_minimap() -> void:
 	if minimap_container and minimap_container.has_method("update_minimap"):
-		minimap_container.update_minimap(office_grid, agent_manager, agent_views)
+		minimap_container.update_minimap(office_grid, get_node("/root/SimulationEngine").agent_manager, agent_views)
 
 func _spawn_agent_view(agent_id: int, room: Control) -> void:
 	var agent_view_scene = preload("res://Scenes/Main/ModularAgent.tscn")
-	var agent = agent_manager.get_agent(agent_id)
+	var agent = get_node("/root/SimulationEngine").agent_manager.get_agent(agent_id)
 	if agent_view_scene and agent:
 		var agent_view = agent_view_scene.instantiate()
-		agent_view.position = Vector2(150, 130) # Center
-		agent_view.scale = Vector2(1.0, 1.0) # Reset scale to 1.0 for true pixel size
+		agent_view.position = Vector2(150, 130)
+		agent_view.scale = Vector2(1.0, 1.0)
 		agent_view.agent_id = agent_id
 		room.add_child(agent_view)
 		agent_view.apply_agent_data(agent)
@@ -157,37 +141,18 @@ func _spawn_agent_view(agent_id: int, room: Control) -> void:
 			agent_view.agent_clicked.connect(_on_agent_clicked)
 		agent_views[agent_id] = agent_view
 
-func _spawn_task_in_backlog(t_name: String, ticks: int, reward: int, req_role: int = 1) -> void:
-	var task = preload("res://Scripts/Resources/TaskResource.gd").new(t_name, req_role, ticks, reward)
-	var task_id = task_manager.add_task(task)
-	_on_task_generated(task_id)
-
-func _on_task_generated(task_id: int) -> void:
-	var task = task_manager.tasks[task_id]
+func _on_task_generated(task_id: int, task_name: String, ticks: int, reward: int) -> void:
 	var task_card = preload("res://Scenes/UI/TaskCard.tscn").instantiate()
 	task_container.add_child(task_card)
-	task_card.setup(task_id, task.task_name, task.required_ticks, task.reward_funds)
+	task_card.setup(task_id, task_name, ticks, reward)
 
 func _on_task_dropped_on_agent(task_id: int, dropped_agent_id: int) -> void:
-	task_manager.assign_task(task_id, dropped_agent_id)
-
-func _assign_task_to_free_agent_in_role(task_id: int, role: int) -> void:
-	var available = agent_manager.get_available_agents_by_role(role)
-	if available.size() > 0:
-		task_manager.assign_task(task_id, available[0])
-		_log_event("Task assigned to Agent ID " + str(available[0]))
-	else:
-		_log_event("[color=#ff003c]No available/rested agents in this department![/color]")
+	get_node("/root/SimulationEngine").task_manager.assign_task(task_id, dropped_agent_id)
 
 func _on_agent_clicked(agent_id: int) -> void:
-	var agent = agent_manager.get_agent(agent_id)
+	var agent = get_node("/root/SimulationEngine").agent_manager.get_agent(agent_id)
 	if agent:
 		_log_event("Clicked on Agent: [color=#39ff14]" + agent.agent_name + "[/color] (" + str(agent.energy) + " Energy, " + str(int(agent.happiness)) + " Happiness)")
-
-func _on_tick_timer_timeout() -> void:
-	tick_count += 1
-	tycoon_manager.process_tick(agent_manager, task_manager)
-	_update_ui()
 
 func _on_lang_button_pressed() -> void:
 	current_lang_index = (current_lang_index + 1) % langs.size()
@@ -202,7 +167,7 @@ func _on_jukebox_pressed() -> void:
 		_log_event("Jukebox BGM track changed to: [color=#39ff14]%s[/color]" % next_track.to_upper())
 
 func _on_save_btn_pressed() -> void:
-	tycoon_manager.save_game(agent_manager, task_manager)
+	get_node("/root/SimulationEngine").save_game()
 	_log_event("Game Saved Successfully!")
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -219,5 +184,5 @@ func _on_expand_room_pressed() -> void:
 func _log_event(msg: String) -> void:
 	var event_log = get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLog")
 	if event_log and event_log is RichTextLabel:
-		var time_str = "[color=#888888][%d][/color] " % tick_count
+		var time_str = "[color=#888888][%d][/color] " % get_node("/root/SimulationEngine").tick_count
 		event_log.append_text("[font_size=12]" + time_str + msg + "[/font_size]\n")

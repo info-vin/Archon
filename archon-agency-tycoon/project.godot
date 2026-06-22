@@ -19,6 +19,8 @@ window/stretch/aspect="expand"
 
 [autoload]
 
+EventBus="*res://Scripts/Autoloads/EventBus.gd"
+SimulationEngine="*res://Scripts/Logic/SimulationEngine.gd"
 AudioManager="*res://Scripts/Autoloads/AudioManager.gd"
 
 [input_devices]

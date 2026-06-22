@@ -9,13 +9,11 @@ func initialize(p_main_node: Control) -> void:
 func update_static_labels() -> void:
 	if not main_node: return
 	
-	# Update room labels
 	if main_node.dev_room_label: main_node.dev_room_label.text = tr("ROOM_DEV")
 	if main_node.sales_room_label: main_node.sales_room_label.text = tr("ROOM_SALES")
 	if main_node.qa_room_label: main_node.qa_room_label.text = tr("ROOM_QA")
 	if main_node.break_room_label: main_node.break_room_label.text = tr("ROOM_BREAK")
 	
-	# Right panel headers
 	var event_log_lbl = main_node.get_node_or_null("VBox/HBoxMain/RightPanel/VBox/EventLogLabel")
 	if event_log_lbl: event_log_lbl.text = tr("UI_EVENT_LOG")
 	
@@ -25,7 +23,6 @@ func update_static_labels() -> void:
 	var minimap_lbl = main_node.get_node_or_null("VBox/HBoxMain/RightPanel/VBox/MinimapLabel")
 	if minimap_lbl: minimap_lbl.text = tr("UI_MINIMAP")
 	
-	# Action buttons
 	var tasks_btn = main_node.get_node_or_null("VBox/BottomBar/VBox/ActionHBox/TasksBtn")
 	if tasks_btn: tasks_btn.text = tr("UI_BACKLOG")
 	
@@ -40,7 +37,7 @@ func update_static_labels() -> void:
 
 func show_recruit_overlay() -> void:
 	var recruit_cost = main_node.config.recruit_cost if main_node.config else 500
-	if main_node.tycoon_manager.funds < recruit_cost:
+	if main_node.get_node("/root/SimulationEngine").tycoon_manager.funds < recruit_cost:
 		print("Insufficient funds to recruit!")
 		return
 		
@@ -61,14 +58,7 @@ func show_recruit_overlay() -> void:
 		creator.set_config(main_node.config)
 		
 		creator.character_created.connect(func(agent_data):
-			main_node.tycoon_manager.funds -= recruit_cost
-			var new_id = main_node.agent_manager.add_agent(agent_data)
-			var target_room = main_node.dev_room
-			if agent_data.role == 0: target_room = main_node.sales_room
-			elif agent_data.role == 2: target_room = main_node.qa_room
-			
-			main_node._spawn_agent_view(new_id, target_room)
-			main_node._update_ui()
+			main_node.get_node("/root/SimulationEngine").recruit_agent(agent_data)
 			overlay.queue_free()
 		)
 		
@@ -77,9 +67,7 @@ func show_recruit_overlay() -> void:
 		)
 
 func show_expand_room() -> void:
-	var expand_cost = main_node.config.expand_cost if main_node.config else 500
-	if main_node.tycoon_manager.funds >= expand_cost:
-		main_node.tycoon_manager.funds -= expand_cost
+	if main_node.get_node("/root/SimulationEngine").expand_room():
 		var office_grid = main_node.office_grid
 		if office_grid:
 			var new_room = PanelContainer.new()
@@ -97,13 +85,12 @@ func show_expand_room() -> void:
 			lbl.text = tr("ROOM_QA") + " (Expansion)"
 			new_room.add_child(lbl)
 			
-			# Add Marker2D spawners (Desk and Stand)
 			var desk1 = Marker2D.new(); desk1.name = "DeskPoint_1"; desk1.position = Vector2(172, 72); new_room.add_child(desk1)
 			var stand1 = Marker2D.new(); stand1.name = "StandPoint_1"; stand1.position = Vector2(100, 250); new_room.add_child(stand1)
 			
 			new_room.set_script(preload("res://Scripts/UI/OfficeRoom.gd"))
 			office_grid.add_child(new_room)
-			new_room.setup_room("QARoom", Color("#ff003c"), main_node.tycoon_manager)
+			new_room.setup_room("QARoom", Color("#ff003c"), main_node.get_node("/root/SimulationEngine").tycoon_manager)
 		main_node._update_ui()
 	else:
 		print("不夠資金擴建房間！")
