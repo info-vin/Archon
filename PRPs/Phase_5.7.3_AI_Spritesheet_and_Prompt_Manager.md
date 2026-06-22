@@ -429,3 +429,25 @@ func generate_dynamic_animation(anim_name: String, start_frame: int, frame_count
         lib.add_animation(anim_name, anim)
 ```
 此代碼架構保證了高度的靈活性與 100% 的渲染穩定性。
+
+---
+
+## 🚨 階段稽核報告 (Phase Audit Report - 2026-06-22)
+
+**【1. 行數門禁破壞警告 (Architectural Constraint Breach)】**
+在 Phase 5.7.1 與 5.7.2 建立的「全 Godot 專案再無任何 `.gd` 檔案超過 400 行門檻」已於本階段 (Phase 5.7.3) 被打破。
+經實體數據驗證：
+*   🔴 `CharacterCreator.gd`: 455 行 (超標 55 行)
+*   🔴 `ModularAgent.gd`: 402 行 (超標 2 行)
+歸因：因導入「32x32 一體化精靈圖集成」及「AI Prompt Manager 招募介面實作」，注入大量邏輯所致。
+建議：將 `CharacterCreator.gd` 中 AI Prompt 表單生成邏輯抽離至獨立模組 (如 `AIPromptBuilder.gd`)，以恢復 400 行的代碼品質門禁。
+
+**【2. 無菌測試環境 (Clean Room Testing) 實體驗證】**
+*   `Tests/MiniTest.gd` 已確實導入強制淨化協議：
+    *   測試套件初始化時移除 `user://savegame.save`。
+    *   各單元測試執行前後追加清理 `user://savegame.json`。
+    *   成功解決測試存檔污染導致的「罷工狀態 (STRIKE)」誤判。
+
+**【3. 測試自癒防護網 (Godot Headless Assertions)】**
+*   `test_modular_agent.gd` 已確實將會導致編譯錯誤的 `assert_null` 替換為 `assert_eq(..., null)`，修復具備物理證據且測試全數通過。
+
