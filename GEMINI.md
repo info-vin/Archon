@@ -110,6 +110,21 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月22日：Hugging Face 部署崩潰歸因與 Race Condition 修復 (Phase 5.7.x)
+
+今日我們解決了 Hugging Face Spaces 雲端部署環境下 `archon-mcp` 服務回傳 0 個工具，導致 `Agent Neural Wiring FAILED` 的致命問題：
+
+1. **破除舊代碼快取與連線超時的惡性循環**：
+   - 經由物理對帳確認，HF Space 原本報出的 `Failed to load reranking model cross-encoder...` 屬於 `sentence_transformers` 底層因雲端離線無法連線造成的下載崩潰。
+   - 該崩潰嚴重阻塞了背景執行的 `archon-mcp` 啟動流程，導致前景的 `archon-server` 透過 HTTP 抓取工具清單時遭遇 Timeout / Connection Refused，最終使防呆機制回傳 0 個工具，破壞了 Agent 神經網路。
+2. **物理閹割模型依賴 (L2 瘦身)**：
+   - 透過修改 `reranking_strategy.py` 中的 `_load_model()` 使其直接 `return None`，徹底切斷不必要的模型下載。
+3. **部署腳本 (deploy_to_hf.sh) 防禦升級**：
+   - 在執行 `make deploy-hf` 雲端打包時，強制追加過濾 `__pycache__` 以及 `.twin` 二進位測試圖片，不僅成功繞過了 HF Git LFS 的二進位檔案推送限制，也確保了雲端編譯出最純淨、無舊代碼污染的 Docker Image。
+4. **驗收成果**：
+   - 重新部署後，HF 雲端日誌顯示 `archon-mcp` 秒速就緒，並成功寫入 `/tmp/mcp_tools.json`。
+   - 主伺服器 `archon-server` 順利讀取到 29 個 MCP 工具 (`🧠 Agent Neural Wiring Complete: MCP Client injected with 29 tools.`)，全系統健康檢查 (System Probe) 皆亮起綠燈。
+
 ### 2026年6月21日：Godot 測試防護網強化與測試存檔污染 (Phase 5.7.3)
 
 今日我們針對 Godot 遊戲專案（archon-agency-tycoon）排除了深層次的自動化測試干擾問題，完成了最後一塊品質門禁的拼圖：
