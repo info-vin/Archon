@@ -74,8 +74,8 @@ server = [
 # Optional reranking dependencies for server (Moved to agents service in Phase 4.6.28)
 server-reranking = [
     "numpy==1.26.4",
-    "sentence-transformers==3.1.1",
-    "torch==2.2.2",
+    "onnxruntime>=1.17.0,<1.20.0",
+    "huggingface-hub>=0.23.0",
     "transformers==4.44.2",
 ]
 
@@ -113,8 +113,8 @@ agents = [
     "psutil>=5.9.0",
     # ML Reranking dependencies (Physically transferred for Phase 4.6.28)
     "numpy==1.26.4",
-    "sentence-transformers==3.1.1",
-    "torch==2.2.2",
+    "onnxruntime>=1.17.0,<1.20.0",
+    "huggingface-hub>=0.23.0",
     "transformers==4.44.2",
     "crawl4ai==0.7.4",
 ]
@@ -156,15 +156,7 @@ all = [
     "aiofiles==25.1.0",
 ]
 
-# PyTorch CPU-only index configuration (Phase 4.6.28 Slimming)
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
 
-# Sources configuration to use CPU-only PyTorch
-[tool.uv.sources]
-torch = [{ index = "pytorch-cpu" }]
 
 [tool.ruff]
 line-length = 120

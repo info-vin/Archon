@@ -40,10 +40,10 @@ var default_tool_pos: Vector2
 var default_tool_scale: Vector2
 
 func reset_layout_for_option_a() -> void:
-	AgentLayoutHelper.reset_layout_for_option_a(is_bob, {"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite})
+	preload("res://Scripts/View/AgentLayoutHelper.gd").reset_layout_for_option_a(is_bob, {"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite})
 
 func reset_layout_for_option_b() -> void:
-	AgentLayoutHelper.reset_layout_for_option_b({"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite})
+	preload("res://Scripts/View/AgentLayoutHelper.gd").reset_layout_for_option_b({"body": body_sprite, "eyes": eyes_sprite, "hair": hair_sprite, "outfit": outfit_sprite, "tool": tool_sprite})
 
 func _ready() -> void:
 	default_scale_x = scale.x

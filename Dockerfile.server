@@ -21,9 +21,7 @@ RUN uv venv /venv && \
 COPY scripts/cache_offline_packages.py scripts/
 RUN python scripts/cache_offline_packages.py --output /app/offline_wheels
 
-# Pre-download and cache SentenceTransformer model weights for offline RAG
-RUN uv pip install --python /venv/bin/python --no-index --find-links=/app/offline_wheels --extra-index-url https://download.pytorch.org/whl/cpu sentence-transformers && \
-    /venv/bin/python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+# Phase 5.7.4: PyTorch removed. ONNX models will be fetched dynamically via huggingface-hub.
 
 # Runtime stage
 FROM python:3.12-slim

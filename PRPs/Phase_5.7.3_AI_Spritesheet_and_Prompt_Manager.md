@@ -451,3 +451,13 @@ func generate_dynamic_animation(anim_name: String, start_frame: int, frame_count
 **【3. 測試自癒防護網 (Godot Headless Assertions)】**
 *   `test_modular_agent.gd` 已確實將會導致編譯錯誤的 `assert_null` 替換為 `assert_eq(..., null)`，修復具備物理證據且測試全數通過。
 
+**【4. @onready 陷阱與測試脆弱性 (Test Fragility & Lifecycle Trap)】**
+*   **現象**：在 `CharacterCreator` 等 UI 測試中，若使用 `.new()` 實例化場景，所有的 `@onready` 變數將無法被引擎初始化並拋出 `Nil` 存取錯誤。這迫使單元測試必須重度依賴 `load("...tscn").instantiate()` 與 `tree.root.add_child()` 來模擬真實的節點生命週期。
+*   **技術債**：此機制使得測試腳本與 UI 場景樹 (Scene Tree) 結構過度耦合。一旦未來 UI 節點層級稍有變動，極易引發大面積的測試崩潰 (Test Fragility)。
+*   **後續建議**：必須將此「Lifecycle Trap」列為 Godot 測試的已知地雷，並將防禦策略 (例如：盡量剝離純邏輯出 UI 腳本，或強制規範測試寫法) 寫入 `CONTRIBUTING_tw.md` 或 `godot-4-audit` 中。
+
+**【5. 無頭環境的音效警告 (Headless Audio Null Fallback)】**
+*   **現象**：在無頭環境 (`--headless`) 或缺少音效實體檔案的情況下，`TycoonManager` 觸發 Crisis (危機) 事件時，會因找不到對應的 SFX 檔而拋出引擎警告 (例如 `WARNING: AudioManager: SFX 'alarm' not found`)。
+*   **技術債**：雖然不直接導致遊戲邏輯崩潰，但代表 `AudioManager` 在資源防禦上不夠強健，缺乏 Null 安全檢查與環境 Fallback 機制。
+*   **代辦事項 (TODO)**：需在 `AudioManager` 實作對無頭模式的偵測 (或檢查音源檔案是否存在)，若無效則平滑忽略 (Silent Ignore)，以確保 CI/CD 測試日誌的純淨度。
+

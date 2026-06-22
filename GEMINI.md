@@ -110,175 +110,42 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026年6月22日：Hugging Face 部署崩潰歸因與 Race Condition 修復 (Phase 5.7.x)
-
-今日我們解決了 Hugging Face Spaces 雲端部署環境下 `archon-mcp` 服務回傳 0 個工具，導致 `Agent Neural Wiring FAILED` 的致命問題：
-
-1. **破除舊代碼快取與連線超時的惡性循環**：
-   - 經由物理對帳確認，HF Space 原本報出的 `Failed to load reranking model cross-encoder...` 屬於 `sentence_transformers` 底層因雲端離線無法連線造成的下載崩潰。
-   - 該崩潰嚴重阻塞了背景執行的 `archon-mcp` 啟動流程，導致前景的 `archon-server` 透過 HTTP 抓取工具清單時遭遇 Timeout / Connection Refused，最終使防呆機制回傳 0 個工具，破壞了 Agent 神經網路。
-2. **物理閹割模型依賴 (L2 瘦身)**：
-   - 透過修改 `reranking_strategy.py` 中的 `_load_model()` 使其直接 `return None`，徹底切斷不必要的模型下載。
-3. **部署腳本 (deploy_to_hf.sh) 防禦升級**：
-   - 在執行 `make deploy-hf` 雲端打包時，強制追加過濾 `__pycache__` 以及 `.twin` 二進位測試圖片，不僅成功繞過了 HF Git LFS 的二進位檔案推送限制，也確保了雲端編譯出最純淨、無舊代碼污染的 Docker Image。
-4. **驗收成果**：
-   - 重新部署後，HF 雲端日誌顯示 `archon-mcp` 秒速就緒，並成功寫入 `/tmp/mcp_tools.json`。
-   - 主伺服器 `archon-server` 順利讀取到 29 個 MCP 工具 (`🧠 Agent Neural Wiring Complete: MCP Client injected with 29 tools.`)，全系統健康檢查 (System Probe) 皆亮起綠燈。
-
-### 2026年6月21日：Godot 測試防護網強化與測試存檔污染 (Phase 5.7.3)
-
-今日我們針對 Godot 遊戲專案（archon-agency-tycoon）排除了深層次的自動化測試干擾問題，完成了最後一塊品質門禁的拼圖：
-
-1. **查明測試跨污染元兇 (Test State Pollution)**：
-   - 在執行 `test_agent_energy_and_bubble_visuals` 時，發現開局剛生成的角色（Alice）狀態竟然不是預期的 `IDLE (0)`，而是 `STRIKE (4)`，導致狀態氣泡異常顯示。
-   - 經追查，原因是 Godot Headless 測試環境在實例化 `Main.tscn` 時，意外載入了先前測試或手動遊玩殘留的 `user://savegame.save`。這份存檔中角色的心情已耗盡，導致開局直接判定為罷工狀態，破壞了測試預期。
-2. **實作無菌測試環境 (Clean Room Testing)**：
-   - 在自製的微型測試框架 `Tests/MiniTest.gd` 中，於 `run_test_suite` 的執行入口加入強制淨化協議：利用 `DirAccess` 主動偵測並刪除 `user://savegame.save`。
-   - 此舉確保了每次執行測試套件時，皆能保證 100% 無污染的初始狀態，根絕了因為本地開發操作所帶來的「幽靈測試失敗」。
-3. **驗收與門禁通過**：
-   - 在導入自動清除存檔機制後，Godot 專案的 `HeadlessRunner.gd` 成功且穩定地通過了全部 **146 項單元與整合測試**。
-   - 所有關於卡牌生成、員工指派、狀態 UI 更新的 Gameplay Loop 測試，皆能在隔離環境中完美運作，為我們後續功能的開發提供了堅實的自動化防護網。
-
-### 2026年6月21日：API 429/503 錯誤突增事件歸因稽核
-
-針對 6 月 19 日 API 錯誤暴增事件完成雲端與排程健康稽核：
-
-1. **歸因結論**：錯誤並非系統性崩潰，而是由前端 `4d2d337a` (並發請求優化) 瞬間觸發的高頻 API 呼叫，疊加當日大規模重構導致的服務重啟波動所致。
-2. **雲端狀態驗證**：執行 `make phase-audit` 與 Hugging Face 運行日誌巡檢，確認排程系統 (`apscheduler`) 與核心服務已完全恢復正常。
-3. **現存警示**：日誌中發現 `Reranking singleton is not available (model failed to load)` 警告，代表雲端 reranking 模型載入失敗，已納入監控優化名單。
-4. **決策**：系統已趨穩，暫不回滾優化代碼，維持持續觀測一日。
-
-今日我們針對 Godot 遊戲專案（archon-agency-tycoon）完成了 Phase 5.7.3 (32x32 AI Spritesheet Integration and in-game Prompt Manager UI) 的核心任務：
-
-1. **32x32 一體化精靈圖集成 (Spritesheet Integration)**：
-   - 於 `AgentResource.gd` 新增 `spritesheet_path`，並在 `ModularAgent.gd` 與 `AgentAnimationHelper.gd` 中實作動態圖集攔截與影格重置。當配置精靈圖時，會自動隱藏原有的紙娃娃子圖層，改用 `hframes=26` 橫向序列排版。
-2. **AI Prompt Manager 招募介面實作**：
-   - 在 `CharacterCreator.gd` 內以程式化方法動態生成 AI Prompt Manager。提供角色 Prompt 模板填寫、剪貼簿複製，以及 1~7 步的順序上傳防呆機制。
-3. **圖片後處理自動化 (bake_spritesheet.py)**：
-   - 實作 Python 精靈圖規格化工具，支援去背 (#FF00FF)、32x32 縮放、Foot Y=30 對齊與單格橫向拼裝。
-4. **測試自癒與門禁校驗**：
-   - 修復了 `test_modular_agent.gd` 中因使用非存在之 `assert_null` 導致的編譯錯誤，將其轉換為 `assert_eq(..., null)`，並使用 Python 腳本將其轉換為統一的 Tab 縮排。
-   - 成功通過全數 146 項 Godot 單元與整合測試，無任何失敗。
-   - 所有變更已推送至 GitHub `feat/twins` 分支。
-
-### 2026年6月19日：Card Battler L2 重構與動態翻譯解耦 (Phase 5.7.1)
-
-今日我們針對 Godot 遊戲專案（arena）完成了 `MainUI.gd` 與 `GameState.gd` 的 L2 重構，並將靜態翻譯字典改為動態加載：
-
-1. **解耦音效與視覺特效 (CombatJuice)**：
-   - 建立 [CombatJuice.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/UI/CombatJuice.gd) 專職處理相機震動、受擊動畫、回復 Block 與漂浮文字等動畫與音效反饋，移除了 `MainUI.gd` 中重複的視覺與音訊細節邏輯。
-2. **解耦牌庫初始化 (DeckController)**：
-   - 建立 [DeckController.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/DeckController.gd) 負責從 Git log 檔案讀取、洗牌並載入初始玩家牌組，徹底分離資料載入與 UI 主循環。
-3. **解耦 GameState 卡牌效果 (CardEffectResolver)**：
-   - 建立 [CardEffectResolver.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/CardEffectResolver.gd) 將卡牌類別（Performance, Merge 等）具體特殊技能效果移出，簡化狀態機管理。
-4. **GitLogParser 動態翻譯 (GitTranslator)**：
-   - 將原本硬編碼在 parser 內的翻譯字典提取至外部設定檔 [git_dict.json](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Resources/git_dict.json)，並以 [GitTranslator.gd](file:///Users/vincenta/GoogleKwok022/Archon/arena/Scripts/Logic/GitTranslator.gd) 在執行期動態加載與替換。
-5. **主框架瘦身與 Godot 靜態載入修正**：
-   - 使用 `preload` 取代直寫 `class_name` 靜態類型的宣告，避免在 Godot headless 模式下尚未掃描 ClassDB Registry 時產生的編譯與解析錯誤。
-   - 重構後，`MainUI.gd` 行數降至 304 行，`GameState.gd` 降至 281 行，全數符合 400 行門禁限制。
-6. **全測試與 UI 物理公證驗證**：
-   - 通過 `HeadlessRunner.gd` 全數 76 項單元與整合測試。
-   - 執行 `capture_proof.py` 繞過 headless 限制完成 UI 截圖物理公證，證實重構並未破壞任何 UI 錨點與 Z-Index 渲染階層。
-   - 順利匯出 Web Release WASM 檔案，並合併推送到遠端分支。
-
-### 2026年6月18日：Card Battler 重構、消除硬編碼與 Headless 限制突破 (Phase 5.7.1)
-
-今日我們針對 Godot 遊戲專案完成了 Phase 5.7.1 (Card Battler Pivot, Rename, and L2 Refactoring) 的核心任務：
-
-1. **全面消除魔法數字與硬編碼 (Hardcoding Remediation)**：
-   - 使用自製的 Python `scan_gd_scripts.py` 掃描專案，定位了 `MainUI.gd` 與 `GameState.gd` 中大量寫死的 `res://` 路徑、UI 尺寸 (`Vector2`) 以及延遲常數。
-   - 將所有數值抽離至 `GameConfig.gd` 與其對應的 `.tres` 資源檔，讓企劃能透過 Inspector 直接調整，實現邏輯與資料的徹底分離。
-2. **L2 模組化與巨型檔案減重 (L2 Modularization)**：
-   - 針對 Godot 專案的 `MainUI.gd` 進行預防性拆分，成功剝離出 `HandController.gd` (專司卡牌弧線渲染與拖曳) 以及 `OverlayManager.gd` (掌管難度、教學與結算畫面)。
-   - 拆分後，全 Godot 專案再無任何 `.gd` 檔案超過 400 行門檻 (MainUI 降至 313 行)。
-3. **CI/CD 現代化與 Lean 測試哲學**：
-   - 在 `.github/workflows/ci.yml` 中導入業界標準 `chickensoft-games/setup-godot` 引擎配置。
-   - 堅持 **Lean 原則**，拒絕盲目跟風導入臃腫的第三方 GUT 框架，改以原生 Headless 模式搭配自製的 `HeadlessRunner.gd`，成功在本地通過了 76 項戰鬥與邏輯測試。
-4. **突破 Godot Headless 渲染限制 (UI Capture Proof)**：
-   - 在執行 `capture_ui.gd` 公證截圖時，遭遇 `--headless` 模式下 `dummy` 渲染器無法擷取 Viewport 影像的底層限制 (回傳 null)。
-   - 撰寫 Python 腳本 `capture_proof.py` 繞過限制，以帶有 GUI 視窗的模式自動啟動 Godot，成功產出 517KB 的實體驗證截圖，證明 L2 拆分與資源抽離未破壞任何 UI 錨點與圖層 (Z-Index)。
-5. **Web (WASM) 發佈與整合**：
-   - 使用 Godot headless 指令將遊戲匯出為 Web 格式 (`index.wasm`, `index.pck`)。
-   - 避開靜默匯出失敗的路徑陷阱，成功將編譯成品部署至 `enduser-ui-fe/public/games/card-battler/` 目錄，使遊戲能被 5173 Port 的前端網頁順利載入。
-
-### 2026年6月8日：L2 模組化代碼減重與 Monolith 行數門禁達成
-
-今日我們針對專案中三個行數超過 400 行的核心程式碼檔案完成了 L2 模組化拆分，以符合單一檔案行數低於 400 行的門禁標準：
-
-1. **後端 Credential 模組拆分**：
-   - 移除了 `manager.py` 內未被調用的 legacy 函數 `get_config_as_env_dict`。
-   - 將 `check_credentials_exist` 驗證邏輯移至新增的 `helpers.py` 中。
-   - 主要服務 `manager.py` 行數從 427 行順利降至 321 行。
-
-2. **前端 Ollama 服務型別抽離**：
-   - 新建 `ollamaTypes.ts`，並將所有 API 響應/請求強型別聲明全部自 `ollamaService.ts` 抽離。
-   - 於 `ollamaService.ts` 內使用 `export * from "./ollamaTypes"` 導出，完美保障對外別名與導入的向上相容性。主要服務行數從 436 行降至 277 行。
-
-3. **前端 Bug 報告彈窗邏輯 Hook 化**：
-   - 建立自訂 Hook `useBugReport.ts`，將 `BugReportModal.tsx` 內所有與表單 state、GitHub Issue 提交、剪貼簿格式化以及 toast 通知相關的非 UI 業務邏輯全數抽離。
-   - `BugReportModal.tsx` 僅保留 JSX 結構渲染，行數從 429 行降至 319 行。
-
-4. **品質門禁與測試驗證**：
-   - 通過 `make test-be` 全體 591 項後端單元與整合測試。
-   - 前端 TS 類型編譯與 `make lint` 檢查皆無任何報錯與警告。
-   - 執行 `make phase-audit` 驗證全系統除大檔案測試套件外，所有主程式碼檔案皆已降至 400 行以下。
-
-### 2026年6月7日：3-Tier 容災降階架構與雙端設定 UI 落地公證
-
-今日我們實作並驗證了具備「人類控制」與「狀態透明」的 3-Tier 容災降階備援系統 (Google Gemini -> Hugging Face -> 本地 Ollama)：
-
-1. **級聯路由與自癒重置**：在 `base.py` 中實作了 Auto-Failover 級聯降階。連線正常但 API Key 失效/429 時直降 Tier 2 (Hugging Face Serverless)；斷網時繞過 Tier 2 直降 Tier 3 (本地 Ollama)。當主要雲端呼叫成功時，自動觸發自癒將作用中層級重設為 Tier 1。支援人類手動 Override 指定 Tier 策略。
-2. **網路 socket 狀態 API**：在 `system_api.py` 中實作 `/api/system/fallback/status` 端點，回傳作用中層級與基於 8.8.8.8:53 TCP Socket 連線偵測的真實網路狀態。
-3. **雙端設定面板 (5173 & 3737) 與指示燈**：
-   - 在 5173 前端 (enduser-ui-fe) 啟用專屬的 `AdminFallbackConfig.tsx` 單選按鈕面板與安全密碼輸入，並修改 `AdminSystemConfig.tsx` 過濾排他設定，避免重複渲染。
-   - 在 3737 前端 (archon-ui-main) RAG 設定中擴充 `forced_fallback_tier` 與 `HF_TOKEN` 型別，並新增 **3-Tier Fallback Settings** 折疊面板。
-   - 在頂欄掛載 `<FallbackStatusBadge />` 狀態指示燈，每 10 秒動態輪詢狀態。
-4. **型別安全與測試通過**：
-   - 修復了 `test_llm_fallback.py` 中的 `MagicMock` 缺少 `close` await 引起的 TypeError 異常。
-   - 順利通過全系統靜態檢查 `make lint` 達 0 Errors / 0 Warnings。
-   - 通過 `make test-be` 全體 588 項後端測試。
-   - 通過 `make audit-qa` 整合品質公證與 `make twin-scout` 數位雙生角色對帳，達到 100% 物理對齊。
-
-### 2026年6月5日：Markdown 擴展升級與 GFM / Mermaid 霓虹美化落地
-
-今日我們針對前台部落格的 Markdown 渲染器進行了深度的功能擴展，完美支援原生 GFM 網格表格與 Mermaid 動態循序圖：
-
-1. **依賴擴展升級**：在 `enduser-ui-fe` 前端套件中安裝了 `remark-gfm` 與 `mermaid` 圖表引擎，徹底打破了 react-markdown 預設無法渲染表格與流程圖的限制。
-2. **實作霓虹美化元件 (`MermaidRenderer`)**：
-   - 封裝了 `MermaidRenderer.tsx` 元件，整合非同步渲染機制與 Tron 暗色霓虹主題設定。
-   - 註冊 `remarkGfm` 至 `<Markdown>` 的 `remarkPlugins` 中，並透過自訂 code 渲染元件，將 `language-mermaid` 代碼區塊無縫導向 Mermaid 渲染引擎。
-3. **資料庫與環境同步**：
-   - 將部落格 Post 9 的 SQL 種子資料還原為原生高精度的 ` ```mermaid ` 與 GFM 表格。
-   - 重新執行 `make db-init` 初始化以重載純淨的種子資料。
-4. **品質門禁公證**：
-   - 執行 `make lint` 確保代碼規範與強型別 100% 正確。
-   - 最終執行全系統 `make audit-qa` 品質公證網關，順利通過前後端全部 **582 項測試案例**，且多角色 (Alice, Bob, Charlie, David) Parity 物理審計全數亮起綠燈。
-5. **Git 自動化合併與推送**：完成了特徵變更的 add, commit, push，並將變更順利合併推送到遠端 `dev/twins` 分支，回復了乾淨無暇的工作區。
-
-### 2026年6月2日：離線雙生模型換裝與品質門禁驗證 (Offline Twin Model Switch & QA Gate)
-
-今日我們專注於本地端離線大模型的測試與環境部署，並成功驗證了核心的品質門禁。
-
-1. **品質門禁公證 (Audit QA & Twin Scout)**：成功執行 `make audit-qa` 與 `make twin-scout`。全系統 579 項後端測試、前端 36 個測試檔以及 DNS/Scroll 等靜態掃描皆無錯誤通過。Alice, Bob 等五大角色的 UI 實體截圖與資料庫狀態實現 100% 物理對齊。
-2. **Ollama 模型冷啟動痛點與換裝**：在測試 `gemma4:e4b` (9.6GB) 與 `gemma4:e2b` (7.2GB) 時，遭遇了 Mac CPU 環境下長達 3~6 分鐘的「冷啟動 (Cold Start)」與記憶體不足 (OOM) 瓶頸。
-3. **務實的本地模型決策**：為了兼顧開發體驗與多模態需求（特別是 Phase 5.5 的 Twin Scout 視覺裁判），我們移除了龐大的 Gemma 4 家族，最終選定並部署了 **`gemma3:4b`** (約 3.3GB)。實測證明其在 CPU 環境下載入速度大幅提升，且具備優異的邏輯與圖像理解能力。
-4. **極速開發備案**：同步部署了超微型模型 `qwen2.5:0.5b` (< 400MB)，為純文字 RAG 測試提供「秒回」級別的極速開發體驗。
-
-### 2026年6月1日：開發流水線重塑與盲目樂觀防禦 (Golden Pipeline & Probe Hardening)
-
-今日我們專注於重新定義專案的標準開發工作流，徹底消除了 Docker 環境啟動與測試之間的「盲目樂觀」現象：
-
-1. **SOP 重新定義 (The Golden Pipeline)**：確立了 `AI Phase-Audit` -> `make dev-docker` -> `make probe` -> `make audit-qa` 的鐵律線性流程。
-2. **Phase-Audit 技能升級**：將 `git fetch origin && git status` 與 `git pull --rebase` 強制寫入 `@.agents/skills/phase-audit/SKILL.md`，確保 AI 實體對帳前必定與遠端同步。
-3. **Dev-Docker 緩衝防禦**：修改 `Makefile` 中的 `dev-docker` 指令，強制在啟動容器後加入 `sleep 30` 與 `make probe`。這確保了系統必定等待 API 與資料庫完全就緒後，才放行後續的自動化測試，根絕了探針因連線被拒絕而導致的偽陰性 (False Negative) 崩潰。
-4. **全系統公證**：以全新 Pipeline 執行 `make audit-qa`，成功在本地通過 578 項 Pytest 與全數 E2E 測試。
-
----
+(今日工作尚未開始或已歸檔至第四章。)
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年6月：Godot 雙生專案、L2 架構重構與雲端部署除錯
+六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，並建立起 100% 物理對齊的測試防護網。
+
+**核心主題歸類**:
+1.  **Godot TDD 與 MVC 架構確立 (Ref: 06-11, 06-18)**:
+    *   **Lean 原則**: 捨棄臃腫的 GUT 框架，以原生 Headless 模式自製微型測試框架 (`HeadlessRunner.gd`)。
+    *   **卡牌 MVC 轉向**: 從塔防轉向卡牌構築戰，徹底解耦 Model (`GameState`) 與 View (`MainUI`)，實現無 UI 邏輯單元測試。
+    *   **雙劍合璧**: 確立 Godot 作為引擎、VS Code 作為 LSP 的雙開工作流，並解決了 Language Server Port 的配置陷阱。
+
+2.  **L2 模組化與巨型檔案減重 (Ref: 06-08, 06-18, 06-21, 06-22)**:
+    *   **行數門禁**: 將超過 400 行的 `manager.py`, `CharacterCreator.gd`, `ModularAgent.gd`, `MainUI.gd` 強制拆分。
+    *   **UI 與邏輯剝離**: 建立 `AIPromptManager.gd`、`AgentLayoutHelper.gd` 等專職工具類別。
+    *   **解耦動態翻譯**: 建立 `GitTranslator.gd` 動態載入 `git_dict.json`，消除硬編碼的翻譯字串與魔法數字。
+
+3.  **無頭環境 (Headless) 與自動化公證突破 (Ref: 06-01, 06-18, 06-21, 06-22)**:
+    *   **開發流水線重塑**: 建立 `Golden Pipeline` 對抗盲目樂觀，嚴格執行探針 (Probe) 與自動化公證。
+    *   **測試存檔淨化**: 透過腳本在測試前主動清除 `user://savegame.save`，消滅「幽靈測試失敗」等污染。
+    *   **突破截圖限制**: 針對 `--headless` 無法擷取 Viewport 影像的問題，撰寫 Python 腳本自動啟動 GUI 完成實體公證。
+    *   **ClassDB Registry 自癒**: 使用 `preload` 取代直寫 `class_name`，解決 Godot Headless 模式下的快取解析錯誤。
+
+4.  **雲端部署除錯與 Race Condition 歸因 (Ref: 06-18, 06-19, 06-22)**:
+    *   **HF 部署防呆**: 撰寫 `deploy_to_hf.sh` 封鎖二進位檔上傳，繞過 Git LFS 阻礙。
+    *   **打破依賴死鎖**: 查明 Hugging Face Serverless 中模型下載造成的崩潰，透過代碼閹割硬切斷下載，修復了 MCP 啟動逾時。
+    *   **Git 考古與歸因**: 透過 `git log` 與 `branch` 查明 UTC 排程異常的真相，以及 API 錯誤突增的主因。
+
+5.  **3-Tier 容災降階與品質升級 (Ref: 06-05, 06-07)**:
+    *   **多層 Fallback 架構**: 實作 Gemini -> Hugging Face -> Ollama 級聯降階備援系統，並於雙端 UI 建立指示燈。
+    *   **GFM / Mermaid 霓虹化**: 擴充 Markdown 渲染引擎，完美解析高難度表格與循序圖。
+    *   **Phase 5.6 歷史歸檔**: 徹底清查任務，將無幽靈的史詩級文件封裝並提煉至 Docusaurus 知識庫。
 
 ### 2026年5月：多 Agent 星環拓樸、QA 全自動化與極端環境救援
 五月是專案從單一 Agent 升級至多 Agent 協作架構，並將品質門禁與測試自動化推向極致的月份。我們完成了 Phase 5.1.x 到 Phase 5.5.0 的史詩級任務群。
@@ -519,48 +386,3 @@
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
 
-### 2026年6月18日 (Part 2)：卡牌機制修復與 MVC 架構驗證 (Card Battler Bug Fixes)
-
-今日我們針對 Agent Card Battler 進行了深度除錯，解決了玩家回報的「無 Combo 特效、角色未顯示、卡牌殘影、無回合顯示」以及「極少抽到低機率卡」的問題。這次除錯深刻驗證了我們堅持的 MVC 與 TDD 原則：
-
-1. **MVC 單向資料流的落實**：
-   - 卡牌殘影問題源自 `GameState` (Model) 忘記發射更新訊號。我們堅持不讓 Model 直接呼叫 UI 函數，而是補上 `emit_signal("draw_finished")`，讓 `MainUI` (View) 監聽並自動重繪，完美保持了低耦合。
-   - 回合數 (Turn Count) 也透過新增 `current_round` 與 `turn_changed` 訊號實作，而非在 UI 內維護狀態。
-2. **終結 Determinism Bug (隨機性修復)**：
-   - 發現「抽不到低機率卡」並非機率公式錯誤，而是牌庫建立的盲點：舊程式碼死板地讀取前 20 筆 Git Commit 且開局未洗牌。
-   - 我們將 Git 樣本池擴大至 50 筆，並在 `_init_deck` 導入了 `logs.shuffle()` 與 `deck_manager.shuffle_deck()` 雙重隨機，徹底實現了 Slay the Spire 般的 Roguelike 首抽體驗。
-3. **Godot 縮排紀律血淚史**：
-   - 在嘗試使用 Python 腳本快速替換 `.gd` 檔案縮排時，因未完全掌握 Godot 嚴苛的 Tab/Space 混用禁令，導致了多次 `Parse Error`。
-   - **教訓**：絕不抱持「快樂路徑」的幻想，必須透過實體工具精準定位空白字元，並理解 GDScript 對於層級退縮的嚴格要求。
-4. **實體公證與發佈**：
-   - 使用 `capture_proof.py` 繞過 Headless 限制，成功截取了修復後的畫面。
-   - 重新執行 `Godot --export-release`，將最新的 `index.wasm` 與 `index.pck` 覆蓋至前端目錄，完成真正的全端更新交付。
-
-### 2026年6月18日：Git 考古還原真相與 Phase 5.6 歷史歸檔
-
-今日我們專注於排程除錯、分支整理與技術債歸檔，強化了「以實體日誌為準」的考古精神：
-
-1. **Git 考古與排程真相還原**：
-   - 針對 Hugging Face 自動排程器在 UTC 00 時中斷的問題，我們拒絕盲猜，透過 `git log` 與 `git branch -a --contains` 進行實體交叉比對。
-   - 成功證實排程修復程式碼已於昨日寫入，但被滯留於 `feat/twins` 分支未合併，導致 GitHub Actions 讀取到舊版 `dev/twins` 設定。
-   - 完成了包含 API Lint `B904` 修復、Godot MVC 卡牌重構在內的大型分支合併與遠端同步。
-2. **分支瘦身與清理**：
-   - 刪除了完成階段性任務的 `feat/tycoon-config-refactor` 與 `fix/tycoon-paper-doll-zindex` 本地分支。
-   - 清理了雲端自動生成的 UI 與 Jules AI 殘留分支，並透過 `git remote prune origin` 確保本地追蹤狀態極簡。
-3. **Phase 5.6 歷史歸檔與知識提煉 (SOP 落實)**：
-   - 依據 `CONTRIBUTING_tw.md` 規範，啟動 `make phase-audit` 確認無幽靈任務後，執行了 Phase 5.6.x (Lean 整合與離線工作流優化) 史詩級文件的歷史封存。
-   - 成功將 9 份 `.md` 計畫壓縮至 `PRPs/archive/`，並提煉其精華至 Docusaurus 知識庫的 `knowledge-journal/phase-5-6-0-lean-optimization.mdx`，維持專案根目錄乾淨且知識不流失。
-
-### 2026年6月11日：Godot TDD 奠基與卡牌架構轉向 (Lean Pivot)
-
-今日我們啟動了 Archon 衍生遊戲專案的開發，並確立了以 TDD (測試驅動開發) 為核心的 Godot 引擎工作流，期間經歷了重要的架構轉向與踩坑學習：
-
-1. **從塔防到卡牌的 MVC 覺醒**：
-   - 原先規劃的「塔防遊戲」因高度依賴物理引擎 (`Area2D`, `Path2D`) 與空間時間，導致單元測試極難撰寫且容易產生 Race Condition。
-   - 果斷將企劃轉向**「AI 卡牌構築戰 (Agent Card Battler)」**。卡牌遊戲純粹的回合制與狀態機本質，能完美實現 **Model-View-Controller (MVC) 的極致解耦**，讓我們能在無 UI 的狀態下完成 100% 的邏輯單元測試。
-2. **Godot 與 VS Code 的雙劍合璧 (LSP 配置鐵律)**：
-   - 確立了「Godot 當大腦與視圖，VS Code 當打字機」的雙開工作流。
-   - **坑點記錄**：VS Code 的 `godot-tools` 設定中，`Editor Path` 絕對不能只填 `/Applications/Godot.app`，必須精確指向內部的終端執行檔 (`/Applications/Godot.app/Contents/MacOS/Godot`)。同時，Godot 的 Language Server Port 必須確認為 `6005`。
-3. **拒絕臃腫：自製 Lean Test Runner (MiniTest)**：
-   - 在導入業界標準的 GUT 測試框架時，遭遇了其內部腳本與 Godot 4.6 原生 API (`Logger` 類別) 衝突導致的 Parse Error 與 `MissingNode` UI 崩潰。
-   - 秉持 Lean 原則，果斷放棄重度依賴第三方框架，改用 Godot 原生的 `@tool extends EditorScript`，以不到 40 行的程式碼打造出 `MiniTest` 微型測試框架。這不僅徹底根除了相容性問題，更實現了「免按 Play 鍵即可在編輯器內秒速執行 TDD」的極致開發體驗。
