@@ -52,6 +52,11 @@ git checkout "$SOURCE_BRANCH" -- scripts/
 git checkout "$SOURCE_BRANCH" -- Makefile
 git checkout "$SOURCE_BRANCH" -- Dockerfile.server
 
+echo "3.5 Removing binary artifacts to comply with HF limits..."
+git rm -rf --cached python/.twin/ 2>/dev/null || true
+rm -rf python/.twin/
+
+
 echo "4. Copying Dockerfile.server to root Dockerfile..."
 cp Dockerfile.server Dockerfile
 
