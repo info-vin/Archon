@@ -48,3 +48,16 @@ export type RagSettingsType = {
   forced_fallback_tier?: string;
   HF_TOKEN?: string;
 };
+
+export interface CustomCredential {
+  key: string;
+  value: string;
+  description: string;
+  originalValue?: string;
+  originalKey?: string; // Track original key for renaming
+  hasChanges?: boolean;
+  is_encrypted?: boolean;
+  showValue?: boolean; // Track per-credential visibility
+  isNew?: boolean; // Track if this is a new unsaved credential
+  isFromBackend?: boolean; // Track if credential came from backend (write-only once encrypted)
+}

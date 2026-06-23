@@ -110,6 +110,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月23日：排程器韌性升級與 L2 前端模組化重構
+今日核心任務是解決 HF 空閒代理導致的 HTTP/2 `ConnectionTerminated` 錯誤，並徹底落實巨型檔案的減重。
+
+**核心決策與技術實踐**:
+1.  **結構性根除網路中斷 (Network Resilience)**: 鑑於 `patrol.py` 與 `task_dispatcher.py` 在長時間休眠後容易因為代理層中斷而報錯，我們全面引入了 `BaseRepository.execute_query` 作為防護網，並完全消滅了上述檔案中所有裸露的 `.execute()` 呼叫，為背景任務加入指數退避與重試機制。
+2.  **階段稽核與雲端對帳 (Phase Audit & Cloud Validation)**: 嚴格執行了 `/phase-audit`。除了本機狀態檢查外，更透過 Hugging Face API 查詢了雲端部署狀態 (`chiawei6/myrmidon`)，確認環境為 `RUNNING`，且 Clockwork 探針日誌顯示重構後的背景排程已成功在雲端無痛運作。
+3.  **前端巨型檔案減重 (Frontend God Object Splitting)**: 掃描發現 `APIKeysSection.tsx` 達到 404 行，違反了 400 行門禁。我們將內部渲染邏輯抽離成 `APIKeyRow.tsx`，並將 `CustomCredential` 介面提報至共用 `types.ts`，成功將該檔案瘦身至 300 行，並通過 `make lint-fe` 的零警告公證。
+
 ### 2026年6月22日：ONNX 零成本重排與實體驗證紀律 (Phase 5.7.4)
 今日核心任務是將 Archon 專案的語意重排 (Reranker) 引擎從笨重的 PyTorch 完全遷移至輕量化的 ONNX Runtime，解決 Docker 部署的空間危機與依賴死鎖。
 

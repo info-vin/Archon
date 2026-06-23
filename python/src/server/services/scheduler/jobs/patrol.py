@@ -15,10 +15,13 @@ async def run_system_probe():
     """Triggering System Probe via HealthService."""
     logger.info("🤖 Clockwork: Triggering System Probe via HealthService...")
     try:
+        from src.server.repositories.base_repository import BaseRepository
         from src.server.services.health_service import HealthService
         from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
+        repo = BaseRepository(supabase)
+        repo = BaseRepository(supabase)
 
         health_service = HealthService()
         result = await health_service.check_rag_integrity()
@@ -33,49 +36,60 @@ async def run_system_probe():
             logger.error(f"❌ Clockwork: {msg} | Details: {result.get('details', {})}")
 
         try:
-            supabase.table("archon_logs").insert(
-                {"source": "clockwork-scheduler", "level": log_level, "message": msg, "details": result}
-            ).execute()
+            repo.execute_query(
+                lambda: supabase.table("archon_logs").insert(
+                    {"source": "clockwork-scheduler", "level": log_level, "message": msg, "details": result}
+                ).execute(),
+                "Log system probe"
+            )
         except Exception as db_err:
             logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")
-    except Exception as e:
-        logger.error(f"💥 Clockwork: System Probe Crashed: {e}")
+    except Exception as outer_e:
+        logger.error(f"💥 Clockwork: System Probe Crashed: {outer_e}")
         try:
             from src.server.utils import get_supabase_client
 
-            get_supabase_client().table("archon_logs").insert(
-                {
-                    "source": "clockwork-scheduler",
-                    "level": "CRITICAL",
-                    "message": f"System Probe Crashed: {str(e)}",
-                    "details": {"error": str(e)},
-                }
-            ).execute()
-        except Exception:
-            pass
+            error_message = f"System Probe Crashed: {str(outer_e)}"
+            error_details = {"error": str(outer_e)}
+
+            BaseRepository(get_supabase_client()).execute_query(
+                lambda: get_supabase_client().table("archon_logs").insert(
+                    {
+                        "source": "clockwork-scheduler",
+                        "level": "CRITICAL",
+                        "message": error_message,
+                        "details": error_details,
+                    }
+                ).execute(),
+                "Log critical failure"
+            )
+        except Exception as inner_e:
+            logger.error(f"Failed to log crash: {inner_e}")
 
 
 async def run_log_patrol():
     """Scans logs for errors and dispatches DevBot."""
     logger.info("👮 Clockwork: Starting Log Patrol...")
     try:
+        from src.server.repositories.base_repository import BaseRepository
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
         from src.server.services.shared_constants import AI_AGENT_ROLES
         from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
+        repo = BaseRepository(supabase)
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
-        res = (
-            supabase.table("archon_logs")
+        success, res = repo.execute_query(
+            lambda: supabase.table("archon_logs")
             .select("*")
             .eq("level", "ERROR")
             .gt("created_at", one_hour_ago)
             .limit(5)
-            .execute()
+            .execute(),
+            "Fetch error logs"
         )
-
-        errors = res.data or []
+        errors = res.get("data", []) if success else []
         if not errors:
             logger.info("👮 Clockwork: No recent errors found. All systems nominal.")
             return
@@ -87,11 +101,15 @@ async def run_log_patrol():
             f"Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
         )
 
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
-        if not p_res.data:
+        success, p_res = repo.execute_query(
+            lambda: supabase.table("archon_projects").select("id").limit(1).execute(),
+            "Get project ID"
+        )
+        p_data = p_res.get("data", []) if success else []
+        if not p_data:
             logger.warning("Clockwork: No projects found to attach repair task.")
             return
-        project_id = p_res.data[0]["id"]
+        project_id = p_data[0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,
@@ -126,64 +144,73 @@ async def cleanup_system_probes():
     """Retention Policy: Deletes Probe data older than 48h."""
     logger.info("🧹 Clockwork: Running System Probe Cleanup...")
     try:
+        from src.server.repositories.base_repository import BaseRepository
         from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()
+        repo = BaseRepository(supabase)
         cutoff_time = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
 
         # 1. Leads cleanup
-        res = (
-            supabase.table("leads").delete().eq("company_name", "System Probe").lt("created_at", cutoff_time).execute()
+        success, res = repo.execute_query(
+            lambda: supabase.table("leads").delete().eq("company_name", "System Probe").lt("created_at", cutoff_time).execute(),
+            "Cleanup leads"
         )
-        deleted_leads = len(res.data or [])
+        deleted_leads = len(res.get("data", []) if success else [])
 
         # 2. Content pages cleanup
-        res_pages = (
-            supabase.table("archon_crawled_pages")
+        success, res_pages = repo.execute_query(
+            lambda: supabase.table("archon_crawled_pages")
             .delete()
             .like("source_id", "pitch-systemprobe-%")
             .lt("created_at", cutoff_time)
-            .execute()
+            .execute(),
+            "Cleanup crawled pages"
         )
-        deleted_pages = len(res_pages.data or [])
+        deleted_pages = len(res_pages.get("data", []) if success else [])
 
         # 3. Document versions cleanup
-        res_versions = (
-            supabase.table("archon_document_versions")
+        success, res_versions = repo.execute_query(
+            lambda: supabase.table("archon_document_versions")
             .delete()
             .eq("created_by", AgentUUIDs.LIBRARIAN)
             .like("change_summary", "%System Probe%")
             .lt("created_at", cutoff_time)
-            .execute()
+            .execute(),
+            "Cleanup document versions"
         )
-        deleted_versions = len(res_versions.data or [])
+        deleted_versions = len(res_versions.get("data", []) if success else [])
 
         # 4. Sources cleanup
-        res_sources = (
-            supabase.table("archon_sources")
+        success, res_sources = repo.execute_query(
+            lambda: supabase.table("archon_sources")
             .delete()
             .like("source_id", "pitch-systemprobe-%")
             .lt("created_at", cutoff_time)
-            .execute()
+            .execute(),
+            "Cleanup sources"
         )
-        deleted_sources = len(res_sources.data or [])
+        deleted_sources = len(res_sources.get("data", []) if success else [])
 
         # 5. Clean up any orphaned sources in the database (e.g. leftover test files with no vector index)
         deleted_orphans = 0
         try:
-            sources_res = supabase.table("archon_sources").select("source_id").execute()
-            all_sources = {s["source_id"] for s in sources_res.data or []}
+            s_succ, sources_res = repo.execute_query(lambda: supabase.table("archon_sources").select("source_id").execute(), "Fetch sources")
+            all_sources = {s["source_id"] for s in (sources_res.get("data", []) if s_succ else [])}
 
-            pages_res = supabase.table("archon_crawled_pages").select("source_id").execute()
-            indexed_sources = {p["source_id"] for p in pages_res.data or []}
+            p_succ, pages_res = repo.execute_query(lambda: supabase.table("archon_crawled_pages").select("source_id").execute(), "Fetch crawled pages")
+            indexed_sources = {p["source_id"] for p in (pages_res.get("data", []) if p_succ else [])}
 
             orphaned_sources = all_sources - indexed_sources
             if orphaned_sources:
                 logger.info(f"🧹 Clockwork: Found {len(orphaned_sources)} orphaned RAG sources. Pruning...")
                 for sid in orphaned_sources:
-                    supabase.table("archon_document_versions").delete().eq("document_id", sid).execute()
-                    supabase.table("archon_project_sources").delete().eq("source_id", sid).execute()
-                    supabase.table("archon_sources").delete().eq("source_id", sid).execute()
+                    # Capturing sid in a closure to fix B023
+                    def delete_task(s_id=sid):
+                        repo.execute_query(lambda: supabase.table("archon_document_versions").delete().eq("document_id", s_id).execute(), "Delete versions")
+                        repo.execute_query(lambda: supabase.table("archon_project_sources").delete().eq("source_id", s_id).execute(), "Delete project sources")
+                        repo.execute_query(lambda: supabase.table("archon_sources").delete().eq("source_id", s_id).execute(), "Delete sources")
+                    delete_task()
                 deleted_orphans = len(orphaned_sources)
                 logger.info(f"✅ Clockwork: Pruned {deleted_orphans} orphaned sources.")
         except Exception as prune_err:

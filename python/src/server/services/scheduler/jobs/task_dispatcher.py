@@ -16,28 +16,32 @@ async def run_task_dispatcher():
     """Scans and dispatches recurring tasks. Reclaims zombie tasks."""
     logger.info("📡 Clockwork: Starting Task Dispatcher (Physical Alignment Mode)...")
     try:
+        from src.server.repositories.base_repository import BaseRepository
         from src.server.services.agent_service import agent_service
         from src.server.services.credential_service import credential_service
 
         supabase = get_supabase_client()
+        repo = BaseRepository(supabase)
 
         # 1. Reclaim stuck tasks (Zombie management)
         timeout_mins = int(await credential_service.get_credential("TASK_RECLAIM_TIMEOUT", 60))
         threshold = (datetime.now(UTC) - timedelta(minutes=timeout_mins)).isoformat()
 
-        reclaim_res = (
-            supabase.table("archon_tasks")
+        success, reclaim_res = repo.execute_query(
+            lambda: supabase.table("archon_tasks")
             .update({"status": "todo", "updated_at": datetime.now(UTC).isoformat()})
             .eq("status", "processing")
             .lt("updated_at", threshold)
-            .execute()
+            .execute(),
+            "Reclaim zombie tasks"
         )
-        if reclaim_res.data:
+        reclaim_data = reclaim_res.get("data", []) if success else []
+        if reclaim_data:
             logger.warning(
-                f"🚨 Task Sentinel: Reclaimed {len(reclaim_res.data)} stuck tasks (Timeout > {timeout_mins}m)"
+                f"🚨 Task Sentinel: Reclaimed {len(reclaim_data)} stuck tasks (Timeout > {timeout_mins}m)"
             )
             log_payloads = []
-            for t in reclaim_res.data:
+            for t in reclaim_data:
                 log_payloads.append(
                     {
                         "source": "task-sentinel",
@@ -47,17 +51,18 @@ async def run_task_dispatcher():
                     }
                 )
             if log_payloads:
-                supabase.table("archon_logs").insert(log_payloads).execute()
+                repo.execute_query(lambda: supabase.table("archon_logs").insert(log_payloads).execute(), "Log task reclamation")
 
         # 2. Dispatch recurring tasks
-        res = (
-            supabase.table("archon_tasks")
+        success, res = repo.execute_query(
+            lambda: supabase.table("archon_tasks")
             .select("id, title, assignee_id, crawler_target_id")
             .eq("is_recurring", True)
             .eq("status", "todo")
-            .execute()
+            .execute(),
+            "Fetch recurring tasks"
         )
-        tasks = res.data or []
+        tasks = res.get("data", []) if success else []
         if not tasks:
             logger.info("📡 Clockwork: No pending recurring tasks found.")
             return
@@ -83,6 +88,6 @@ async def run_task_dispatcher():
                 }
             )
         if log_payloads:
-            supabase.table("archon_logs").insert(log_payloads).execute()
+            repo.execute_query(lambda: supabase.table("archon_logs").insert(log_payloads).execute(), "Log task dispatch")
     except Exception as e:
         logger.error(f"💥 Clockwork: Task Dispatcher Failed: {e}")

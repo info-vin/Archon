@@ -14,13 +14,31 @@ class CredentialRepository:
 
     def fetch_all(self) -> list[dict[str, Any]]:
         """Fetch all credentials from database."""
-        result = self.supabase.table("archon_settings").select("*").execute()
-        return cast(list[dict[str, Any]], result.data)
+        import time
+        for attempt in range(2):
+            try:
+                result = self.supabase.table("archon_settings").select("*").execute()
+                return cast(list[dict[str, Any]], result.data)
+            except Exception as e:
+                if attempt == 0 and ("ConnectionTerminated" in str(e) or "RemoteProtocolError" in str(e)):
+                    time.sleep(0.5)
+                    continue
+                raise
+        return []
 
     def fetch_by_category(self, category: str) -> list[dict[str, Any]]:
         """Fetch all credentials for a specific category."""
-        result = self.supabase.table("archon_settings").select("*").eq("category", category).execute()
-        return cast(list[dict[str, Any]], result.data)
+        import time
+        for attempt in range(2):
+            try:
+                result = self.supabase.table("archon_settings").select("*").eq("category", category).execute()
+                return cast(list[dict[str, Any]], result.data)
+            except Exception as e:
+                if attempt == 0 and ("ConnectionTerminated" in str(e) or "RemoteProtocolError" in str(e)):
+                    time.sleep(0.5)
+                    continue
+                raise
+        return []
 
     def fetch_non_system_protected(self) -> list[dict[str, Any]]:
         """Fetch non-system-protected credentials (primarily for Admin UI)."""
