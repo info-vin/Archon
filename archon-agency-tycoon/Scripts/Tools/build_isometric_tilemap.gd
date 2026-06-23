@@ -10,9 +10,9 @@ func _init():
 	var floor_tex = load("res://Assets/Rooms/isometric/floor_tile.png")
 	var source = TileSetAtlasSource.new()
 	source.texture = floor_tex
-	source.texture_region_size = Vector2i(128, 128)
+	source.texture_region_size = Vector2i(128, 64)
 	source.create_tile(Vector2i(0, 0))
-	source.get_tile_data(Vector2i(0, 0), 0).texture_origin = Vector2i(0, -32) # Align 128x128 texture inside 128x64 tile
+	source.get_tile_data(Vector2i(0, 0), 0).texture_origin = Vector2i(0, 0) # Exact match
 	ts.add_source(source, 1)
 	
 	var err = ResourceSaver.save(ts, tileset_path)

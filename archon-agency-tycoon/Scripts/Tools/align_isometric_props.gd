@@ -71,7 +71,9 @@ func _init():
 			# Since the image is 128x128, bottom center is X=0, Y=64 (when centered=true)
 			# We offset it up by height/2 (64) so its feet touch the tile center.
 			# We add +16 to account for the thickness of the floor tile diamond.
-			sprite.offset = Vector2(0, -sprite.texture.get_height() / 2.0 + 16)
+			# BASED ON ASCII ART: The desk's feet are at y=116. Image center is at y=64. 
+			# Distance to center is 52. To put feet at tile center, shift image up by 52.
+			sprite.offset = Vector2(0, -52)
 			
 			room.add_child(sprite)
 			sprite.owner = root

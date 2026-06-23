@@ -4,9 +4,8 @@
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fdyo6"]
 texture = ExtResource("1_xssq2")
-texture_region_size = Vector2i(128, 128)
+texture_region_size = Vector2i(128, 64)
 0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -32)
 
 [resource]
 tile_shape = 1
