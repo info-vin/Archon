@@ -1,182 +1,268 @@
-[gd_scene load_steps=18 format=3 uid="uid://b8yq7qxyxxxx"]
+[gd_scene format=3]
 
-[ext_resource type="Theme" uid="uid://d3a4bxxxxxxx" path="res://Scripts/Resources/NeonTheme.tres" id="1_theme"]
+[ext_resource type="Theme" path="res://Scripts/Resources/NeonTheme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://Scripts/Main.gd" id="2_script"]
 [ext_resource type="Script" path="res://Scripts/UI/PanZoomController.gd" id="3_panzoom"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/dev_room_bg.png" id="4_dev_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/sales_room_bg.png" id="5_sales_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/qa_room_bg.png" id="6_qa_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/break_room_bg.png" id="7_break_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_top_bg.png" id="hallway_top_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_left_bg.png" id="hallway_left_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/central_lobby_bg.png" id="central_lobby_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_right_bg.png" id="hallway_right_bg"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/hallway_bottom_bg.png" id="hallway_bottom_bg"]
-[ext_resource type="Environment" uid="uid://env_neon" path="res://env.tres" id="8_env"]
-
-[ext_resource type="Texture2D" path="res://Assets/Icons/icon_recruit.svg" id="icon_recruit"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile.png" id="4_wgovn"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/desk_SW.png" id="5_cv8e0"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/server_rack_SW.png" id="6_hkvnm"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/sofa_SW.png" id="7_5ci8a"]
+[ext_resource type="Environment" path="res://env.tres" id="8_env"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_build.svg" id="icon_build"]
-[ext_resource type="Texture2D" path="res://Assets/Icons/icon_tasks.svg" id="icon_tasks"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_lang.svg" id="icon_lang"]
+[ext_resource type="Texture2D" path="res://Assets/Icons/icon_recruit.svg" id="icon_recruit"]
+[ext_resource type="Texture2D" path="res://Assets/Icons/icon_tasks.svg" id="icon_tasks"]
 
-[node name="Main" type="Node"]
+[node name="Main" type="Node" unique_id=1461218835]
 script = ExtResource("2_script")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1377193126]
 environment = ExtResource("8_env")
 
-[node name="GameTickTimer" type="Timer" parent="."]
-wait_time = 1.0
+[node name="GameTickTimer" type="Timer" parent="." unique_id=1877949381]
 autostart = true
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" type="Node2D" parent="." unique_id=345576354]
 
-[node name="Background" type="ColorRect" parent="World"]
+[node name="Background" type="ColorRect" parent="World" unique_id=1739147809]
 offset_left = -4000.0
 offset_top = -4000.0
 offset_right = 4000.0
 offset_bottom = 4000.0
 color = Color(0.02, 0.05, 0.1, 1)
 
-[node name="Camera2D" type="Camera2D" parent="World"]
+[node name="Camera2D" type="Camera2D" parent="World" unique_id=1555006126]
 position = Vector2(576, 324)
 script = ExtResource("3_panzoom")
 
-[node name="Rooms" type="Node2D" parent="World"]
+[node name="Rooms" type="Node2D" parent="World" unique_id=208040668]
 y_sort_enabled = true
 
-[node name="DevRoom" type="Node2D" parent="World/Rooms"]
+[node name="DevRoom" type="Node2D" parent="World/Rooms" unique_id=1605518437]
 y_sort_enabled = true
-position = Vector2(0, 0)
 
-[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/DevRoom"]
-texture = ExtResource("4_dev_bg")
+[node name="FloorTile" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=871947727]
+z_index = -1
+texture = ExtResource("4_wgovn")
 centered = false
 
-[node name="Label" type="Label" parent="World/Rooms/DevRoom"]
+[node name="Label" type="Label" parent="World/Rooms/DevRoom" unique_id=2101290611]
 visible = false
 offset_right = 360.0
 offset_bottom = 23.0
 text = "ROOM_DEV"
 horizontal_alignment = 1
 
-[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=701650969]
 position = Vector2(100, 250)
 
-[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=1449129855]
 position = Vector2(200, 250)
 
-[node name="StandPoint_3" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="StandPoint_3" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=1827950273]
 position = Vector2(280, 250)
 
-[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=1195284907]
 position = Vector2(65, 230)
 
-[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=1829964077]
 position = Vector2(180, 120)
 
-[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=2077986259]
 position = Vector2(280, 130)
 
-[node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/DevRoom"]
+[node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=923655092]
 position = Vector2(280, 240)
 
-[node name="SalesRoom" type="Node2D" parent="World/Rooms"]
+[node name="Desk_DeskPoint_1" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=1394356508]
+y_sort_enabled = true
+position = Vector2(65, 230)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_2" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=2031882670]
+y_sort_enabled = true
+position = Vector2(180, 120)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_3" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=828391133]
+y_sort_enabled = true
+position = Vector2(280, 130)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_4" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=1706966077]
+y_sort_enabled = true
+position = Vector2(280, 240)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Server_StandPoint_1" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=850645622]
+y_sort_enabled = true
+position = Vector2(100, 250)
+texture = ExtResource("6_hkvnm")
+offset = Vector2(0, -48)
+
+[node name="SalesRoom" type="Node2D" parent="World/Rooms" unique_id=1085928579]
 y_sort_enabled = true
 position = Vector2(480, 0)
 
-[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/SalesRoom"]
-texture = ExtResource("5_sales_bg")
+[node name="FloorTile" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=981144234]
+z_index = -1
+texture = ExtResource("4_wgovn")
 centered = false
 
-[node name="Label" type="Label" parent="World/Rooms/SalesRoom"]
+[node name="Label" type="Label" parent="World/Rooms/SalesRoom" unique_id=1022082446]
 visible = false
 offset_right = 360.0
 offset_bottom = 23.0
 text = "ROOM_SALES"
 horizontal_alignment = 1
 
-[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=1292981232]
 position = Vector2(100, 250)
 
-[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=1901005509]
 position = Vector2(200, 250)
 
-[node name="StandPoint_3" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="StandPoint_3" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=827643523]
 position = Vector2(280, 250)
 
-[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=1687301765]
 position = Vector2(110, 130)
 
-[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=314547857]
 position = Vector2(250, 120)
 
-[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=770351806]
 position = Vector2(180, 230)
 
-[node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/SalesRoom"]
+[node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=1902107392]
 position = Vector2(290, 220)
 
-[node name="QARoom" type="Node2D" parent="World/Rooms"]
+[node name="Desk_DeskPoint_1" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1988588855]
+y_sort_enabled = true
+position = Vector2(110, 130)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_2" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=747917366]
+y_sort_enabled = true
+position = Vector2(250, 120)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_3" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1946284156]
+y_sort_enabled = true
+position = Vector2(180, 230)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_4" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=874619917]
+y_sort_enabled = true
+position = Vector2(290, 220)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="QARoom" type="Node2D" parent="World/Rooms" unique_id=645904640]
 y_sort_enabled = true
 position = Vector2(0, 510)
 
-[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/QARoom"]
-texture = ExtResource("6_qa_bg")
+[node name="FloorTile" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=37055252]
+z_index = -1
+texture = ExtResource("4_wgovn")
 centered = false
 
-[node name="Label" type="Label" parent="World/Rooms/QARoom"]
+[node name="Label" type="Label" parent="World/Rooms/QARoom" unique_id=11044942]
 visible = false
 offset_right = 360.0
 offset_bottom = 23.0
 text = "ROOM_QA"
 horizontal_alignment = 1
 
-[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/QARoom"]
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/QARoom" unique_id=1778618415]
 position = Vector2(100, 250)
 
-[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/QARoom"]
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/QARoom" unique_id=1869660787]
 position = Vector2(200, 250)
 
-[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/QARoom"]
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/QARoom" unique_id=1902701780]
 position = Vector2(172, 72)
 
-[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/QARoom"]
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/QARoom" unique_id=217169600]
 position = Vector2(200, 150)
 
-[node name="BreakRoom" type="Node2D" parent="World/Rooms"]
+[node name="Desk_DeskPoint_1" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1911318028]
+y_sort_enabled = true
+position = Vector2(172, 72)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Desk_DeskPoint_2" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1003095520]
+y_sort_enabled = true
+position = Vector2(200, 150)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="Server_StandPoint_1" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1224738286]
+y_sort_enabled = true
+position = Vector2(100, 250)
+texture = ExtResource("6_hkvnm")
+offset = Vector2(0, -48)
+
+[node name="BreakRoom" type="Node2D" parent="World/Rooms" unique_id=1898139783]
 y_sort_enabled = true
 position = Vector2(480, 510)
 
-[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/BreakRoom"]
-texture = ExtResource("7_break_bg")
+[node name="FloorTile" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=1068393200]
+z_index = -1
+texture = ExtResource("4_wgovn")
 centered = false
 
-[node name="Label" type="Label" parent="World/Rooms/BreakRoom"]
+[node name="Label" type="Label" parent="World/Rooms/BreakRoom" unique_id=1738327304]
 visible = false
 offset_right = 360.0
 offset_bottom = 23.0
 text = "ROOM_BREAK"
 horizontal_alignment = 1
 
-[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/BreakRoom"]
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/BreakRoom" unique_id=491859168]
 position = Vector2(180, 250)
 
-[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/BreakRoom"]
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/BreakRoom" unique_id=2050911281]
 position = Vector2(250, 250)
 
-[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/BreakRoom"]
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/BreakRoom" unique_id=1286529446]
 position = Vector2(152, 112)
 
-[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/BreakRoom"]
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/BreakRoom" unique_id=1752884813]
 position = Vector2(80, 150)
 
-[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/BreakRoom"]
+[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/BreakRoom" unique_id=1465730874]
 position = Vector2(220, 150)
 
-[node name="UILayer" type="CanvasLayer" parent="."]
+[node name="Sofa_DeskPoint_1" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=370526888]
+y_sort_enabled = true
+position = Vector2(152, 112)
+texture = ExtResource("7_5ci8a")
+offset = Vector2(0, -48)
 
-[node name="UI" type="Control" parent="UILayer"]
+[node name="Sofa_DeskPoint_2" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=528070695]
+y_sort_enabled = true
+position = Vector2(80, 150)
+texture = ExtResource("7_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="Sofa_DeskPoint_3" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=1741438107]
+y_sort_enabled = true
+position = Vector2(220, 150)
+texture = ExtResource("7_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=1854567724]
+
+[node name="UI" type="Control" parent="UILayer" unique_id=115225713]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -186,18 +272,18 @@ grow_vertical = 2
 mouse_filter = 2
 theme = ExtResource("1_theme")
 
-[node name="TopBar" type="PanelContainer" parent="UILayer/UI"]
+[node name="TopBar" type="PanelContainer" parent="UILayer/UI" unique_id=2046985614]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 40.0
 grow_horizontal = 2
 
-[node name="HBox" type="HBoxContainer" parent="UILayer/UI/TopBar"]
+[node name="HBox" type="HBoxContainer" parent="UILayer/UI/TopBar" unique_id=1883858692]
 layout_mode = 2
 alignment = 1
 
-[node name="TickerLabel" type="RichTextLabel" parent="UILayer/UI/TopBar/HBox"]
+[node name="TickerLabel" type="RichTextLabel" parent="UILayer/UI/TopBar/HBox" unique_id=1576149520]
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
@@ -205,7 +291,7 @@ text = "[color=#888888]ARCHON CORP | DATE:[/color] [color=#ffffff]OCT 26[/color]
 scroll_active = false
 autowrap_mode = 0
 
-[node name="LangButton" type="Button" parent="UILayer/UI/TopBar/HBox"]
+[node name="LangButton" type="Button" parent="UILayer/UI/TopBar/HBox" unique_id=533075590]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
 tooltip_text = "Language"
@@ -213,7 +299,7 @@ icon = ExtResource("icon_lang")
 icon_alignment = 1
 expand_icon = true
 
-[node name="JukeboxButton" type="Button" parent="UILayer/UI/TopBar/HBox"]
+[node name="JukeboxButton" type="Button" parent="UILayer/UI/TopBar/HBox" unique_id=998891389]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
 tooltip_text = "Jukebox"
@@ -221,7 +307,7 @@ icon = ExtResource("icon_tasks")
 icon_alignment = 1
 expand_icon = true
 
-[node name="RightPanel" type="PanelContainer" parent="UILayer/UI"]
+[node name="RightPanel" type="PanelContainer" parent="UILayer/UI" unique_id=1418934832]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 1
 anchors_preset = 11
@@ -234,43 +320,43 @@ offset_bottom = -60.0
 grow_horizontal = 0
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/UI/RightPanel"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/UI/RightPanel" unique_id=639146828]
 layout_mode = 2
 
-[node name="EventLogLabel" type="Label" parent="UILayer/UI/RightPanel/VBox"]
+[node name="EventLogLabel" type="Label" parent="UILayer/UI/RightPanel/VBox" unique_id=1070824446]
 layout_mode = 2
 text = "EVENT LOG"
 horizontal_alignment = 1
 
-[node name="EventLog" type="RichTextLabel" parent="UILayer/UI/RightPanel/VBox"]
+[node name="EventLog" type="RichTextLabel" parent="UILayer/UI/RightPanel/VBox" unique_id=1343177444]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 3.0
 bbcode_enabled = true
 scroll_following = true
 
-[node name="HSeparator" type="HSeparator" parent="UILayer/UI/RightPanel/VBox"]
+[node name="HSeparator" type="HSeparator" parent="UILayer/UI/RightPanel/VBox" unique_id=395478311]
 layout_mode = 2
 
-[node name="AgentStatusLabel" type="Label" parent="UILayer/UI/RightPanel/VBox"]
+[node name="AgentStatusLabel" type="Label" parent="UILayer/UI/RightPanel/VBox" unique_id=1577743044]
 layout_mode = 2
 text = "AGENT STATUS"
 horizontal_alignment = 1
 
-[node name="AgentStatusList" type="VBoxContainer" parent="UILayer/UI/RightPanel/VBox"]
+[node name="AgentStatusList" type="VBoxContainer" parent="UILayer/UI/RightPanel/VBox" unique_id=1332985898]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 3.0
 
-[node name="HSeparatorMinimap" type="HSeparator" parent="UILayer/UI/RightPanel/VBox"]
+[node name="HSeparatorMinimap" type="HSeparator" parent="UILayer/UI/RightPanel/VBox" unique_id=889260716]
 layout_mode = 2
 
-[node name="MinimapContainer" type="Control" parent="UILayer/UI/RightPanel/VBox"]
+[node name="MinimapContainer" type="Control" parent="UILayer/UI/RightPanel/VBox" unique_id=1231326354]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 4.0
 
-[node name="BG" type="ColorRect" parent="UILayer/UI/RightPanel/VBox/MinimapContainer"]
+[node name="BG" type="ColorRect" parent="UILayer/UI/RightPanel/VBox/MinimapContainer" unique_id=332562033]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -281,9 +367,9 @@ offset_right = -8.0
 offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.05, 0.05, 1.0)
+color = Color(0.05, 0.05, 0.05, 1)
 
-[node name="BottomBar" type="PanelContainer" parent="UILayer/UI"]
+[node name="BottomBar" type="PanelContainer" parent="UILayer/UI" unique_id=1328744942]
 custom_minimum_size = Vector2(0, 60)
 layout_mode = 1
 anchors_preset = 12
@@ -294,25 +380,25 @@ offset_top = -60.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/UI/BottomBar"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/UI/BottomBar" unique_id=809723470]
 layout_mode = 2
 
-[node name="TaskContainer" type="HBoxContainer" parent="UILayer/UI/BottomBar/VBox"]
+[node name="TaskContainer" type="HBoxContainer" parent="UILayer/UI/BottomBar/VBox" unique_id=739046484]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
 
-[node name="Spacer" type="Control" parent="UILayer/UI/BottomBar/VBox"]
+[node name="Spacer" type="Control" parent="UILayer/UI/BottomBar/VBox" unique_id=1136416740]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="ActionHBox" type="HBoxContainer" parent="UILayer/UI/BottomBar/VBox"]
+[node name="ActionHBox" type="HBoxContainer" parent="UILayer/UI/BottomBar/VBox" unique_id=649470652]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="TasksBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
+[node name="TasksBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox" unique_id=1898375095]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -323,7 +409,7 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
-[node name="SaveBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
+[node name="SaveBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox" unique_id=719507148]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -334,7 +420,7 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
-[node name="RecruitBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
+[node name="RecruitBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox" unique_id=1417652231]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -345,7 +431,7 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
-[node name="ExpandRoomBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
+[node name="ExpandRoomBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox" unique_id=1030689322]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
