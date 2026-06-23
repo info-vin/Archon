@@ -4,11 +4,13 @@
 [ext_resource type="Script" path="res://Scripts/Main.gd" id="2_script"]
 [ext_resource type="Script" path="res://Scripts/UI/PanZoomController.gd" id="3_panzoom"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile.png" id="4_wgovn"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/wall_corner_SW.png" id="5_5ci8a"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/desk_SW.png" id="5_cv8e0"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/neon_light.tres" id="6_cv8e0"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/server_rack_SW.png" id="6_hkvnm"]
 [ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/sofa_SW.png" id="7_5ci8a"]
 [ext_resource type="Environment" path="res://env.tres" id="8_env"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/chair_SW.png" id="9_18xdc"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_build.svg" id="icon_build"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_lang.svg" id="icon_lang"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_recruit.svg" id="icon_recruit"]
@@ -54,11 +56,6 @@ y_sort_enabled = true
 [node name="DevRoom" type="Node2D" parent="World/Rooms" unique_id=1605518437]
 y_sort_enabled = true
 
-[node name="FloorTile" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=871947727]
-z_index = -1
-texture = ExtResource("4_wgovn")
-centered = false
-
 [node name="Label" type="Label" parent="World/Rooms/DevRoom" unique_id=2101290611]
 visible = false
 offset_right = 360.0
@@ -87,95 +84,57 @@ position = Vector2(280, 130)
 [node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/DevRoom" unique_id=923655092]
 position = Vector2(280, 240)
 
-[node name="Desk_DeskPoint_1" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=1394356508]
-y_sort_enabled = true
-position = Vector2(0, 64)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/Desk_DeskPoint_1" unique_id=614270377]
-position = Vector2(0, -32)
-color = Color(0.22352941, 1, 0.078431375, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_2" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=2031882670]
-y_sort_enabled = true
-position = Vector2(64, 96)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/Desk_DeskPoint_2" unique_id=1663870410]
-position = Vector2(0, -32)
-color = Color(0.22352941, 1, 0.078431375, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_3" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=828391133]
-y_sort_enabled = true
-position = Vector2(-64, 96)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/Desk_DeskPoint_3" unique_id=48378882]
-position = Vector2(0, -32)
-color = Color(0.22352941, 1, 0.078431375, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_4" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=1706966077]
-y_sort_enabled = true
-position = Vector2(0, 128)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/Desk_DeskPoint_4" unique_id=1540809721]
-position = Vector2(0, -32)
-color = Color(0.22352941, 1, 0.078431375, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Server_StandPoint_1" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=850645622]
-y_sort_enabled = true
-position = Vector2(0, 64)
-texture = ExtResource("6_hkvnm")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/Server_StandPoint_1" unique_id=1957305510]
-position = Vector2(0, -32)
-color = Color(0.22352941, 1, 0.078431375, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
 [node name="FloorTileMap" type="TileMapLayer" parent="World/Rooms/DevRoom" unique_id=663288727]
 z_index = -1
 y_sort_enabled = true
 tile_map_data = PackedByteArray("AAAAAAAAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAAMAAQAAAAAAAAABAAAAAQAAAAAAAAABAAEAAQAAAAAAAAABAAIAAQAAAAAAAAABAAMAAQAAAAAAAAACAAAAAQAAAAAAAAACAAEAAQAAAAAAAAACAAIAAQAAAAAAAAACAAMAAQAAAAAAAAADAAAAAQAAAAAAAAADAAEAAQAAAAAAAAADAAIAAQAAAAAAAAADAAMAAQAAAAAAAAA=")
 tile_set = SubResource("TileSet_wgovn")
 
+[node name="WallCorner" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=2006188334]
+y_sort_enabled = true
+position = Vector2(64, 32)
+texture = ExtResource("5_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="ServerRack" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=421925923]
+y_sort_enabled = true
+position = Vector2(0, 64)
+texture = ExtResource("6_hkvnm")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/ServerRack" unique_id=1535588658]
+position = Vector2(0, -32)
+color = Color(0.22352941, 1, 0.078431375, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Desk" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=339948498]
+y_sort_enabled = true
+position = Vector2(64, 160)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/DevRoom/Desk" unique_id=448072499]
+position = Vector2(0, -32)
+color = Color(0.22352941, 1, 0.078431375, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Chair" type="Sprite2D" parent="World/Rooms/DevRoom" unique_id=1411327360]
+y_sort_enabled = true
+position = Vector2(128, 192)
+texture = ExtResource("9_18xdc")
+offset = Vector2(0, -48)
+
 [node name="SalesRoom" type="Node2D" parent="World/Rooms" unique_id=1085928579]
 y_sort_enabled = true
 position = Vector2(480, 0)
-
-[node name="FloorTile" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=981144234]
-z_index = -1
-texture = ExtResource("4_wgovn")
-centered = false
 
 [node name="Label" type="Label" parent="World/Rooms/SalesRoom" unique_id=1022082446]
 visible = false
@@ -205,80 +164,57 @@ position = Vector2(180, 230)
 [node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/SalesRoom" unique_id=1902107392]
 position = Vector2(290, 220)
 
-[node name="Desk_DeskPoint_1" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1988588855]
-y_sort_enabled = true
-position = Vector2(0, 64)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/SalesRoom/Desk_DeskPoint_1" unique_id=378698795]
-position = Vector2(0, -32)
-color = Color(0.99215686, 0.9137255, 0.0627451, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_2" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=747917366]
-y_sort_enabled = true
-position = Vector2(64, 96)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/SalesRoom/Desk_DeskPoint_2" unique_id=1255371267]
-position = Vector2(0, -32)
-color = Color(0.99215686, 0.9137255, 0.0627451, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_3" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1946284156]
-y_sort_enabled = true
-position = Vector2(-64, 96)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/SalesRoom/Desk_DeskPoint_3" unique_id=1949701648]
-position = Vector2(0, -32)
-color = Color(0.99215686, 0.9137255, 0.0627451, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_4" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=874619917]
-y_sort_enabled = true
-position = Vector2(0, 128)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/SalesRoom/Desk_DeskPoint_4" unique_id=957695945]
-position = Vector2(0, -32)
-color = Color(0.99215686, 0.9137255, 0.0627451, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
 [node name="FloorTileMap" type="TileMapLayer" parent="World/Rooms/SalesRoom" unique_id=283024759]
 z_index = -1
 y_sort_enabled = true
 tile_map_data = PackedByteArray("AAAAAAAAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAAMAAQAAAAAAAAABAAAAAQAAAAAAAAABAAEAAQAAAAAAAAABAAIAAQAAAAAAAAABAAMAAQAAAAAAAAACAAAAAQAAAAAAAAACAAEAAQAAAAAAAAACAAIAAQAAAAAAAAACAAMAAQAAAAAAAAADAAAAAQAAAAAAAAADAAEAAQAAAAAAAAADAAIAAQAAAAAAAAADAAMAAQAAAAAAAAA=")
 tile_set = SubResource("TileSet_wgovn")
 
+[node name="WallCorner" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1349649818]
+y_sort_enabled = true
+position = Vector2(64, 32)
+texture = ExtResource("5_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="ServerRack" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=74687142]
+y_sort_enabled = true
+position = Vector2(0, 64)
+texture = ExtResource("6_hkvnm")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/SalesRoom/ServerRack" unique_id=896558329]
+position = Vector2(0, -32)
+color = Color(0.99215686, 0.9137255, 0.0627451, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Desk" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1449866425]
+y_sort_enabled = true
+position = Vector2(64, 160)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/SalesRoom/Desk" unique_id=1615455077]
+position = Vector2(0, -32)
+color = Color(0.99215686, 0.9137255, 0.0627451, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Chair" type="Sprite2D" parent="World/Rooms/SalesRoom" unique_id=1040217301]
+y_sort_enabled = true
+position = Vector2(128, 192)
+texture = ExtResource("9_18xdc")
+offset = Vector2(0, -48)
+
 [node name="QARoom" type="Node2D" parent="World/Rooms" unique_id=645904640]
 y_sort_enabled = true
 position = Vector2(0, 510)
-
-[node name="FloorTile" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=37055252]
-z_index = -1
-texture = ExtResource("4_wgovn")
-centered = false
 
 [node name="Label" type="Label" parent="World/Rooms/QARoom" unique_id=11044942]
 visible = false
@@ -299,65 +235,57 @@ position = Vector2(172, 72)
 [node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/QARoom" unique_id=217169600]
 position = Vector2(200, 150)
 
-[node name="Desk_DeskPoint_1" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1911318028]
-y_sort_enabled = true
-position = Vector2(0, 64)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/QARoom/Desk_DeskPoint_1" unique_id=1186564122]
-position = Vector2(0, -32)
-color = Color(1, 0, 0.23529412, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Desk_DeskPoint_2" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1003095520]
-y_sort_enabled = true
-position = Vector2(64, 96)
-texture = ExtResource("5_cv8e0")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/QARoom/Desk_DeskPoint_2" unique_id=298645115]
-position = Vector2(0, -32)
-color = Color(1, 0, 0.23529412, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Server_StandPoint_1" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1224738286]
-y_sort_enabled = true
-position = Vector2(-64, 96)
-texture = ExtResource("6_hkvnm")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/QARoom/Server_StandPoint_1" unique_id=893682824]
-position = Vector2(0, -32)
-color = Color(1, 0, 0.23529412, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
 [node name="FloorTileMap" type="TileMapLayer" parent="World/Rooms/QARoom" unique_id=1818352822]
 z_index = -1
 y_sort_enabled = true
 tile_map_data = PackedByteArray("AAAAAAAAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAAMAAQAAAAAAAAABAAAAAQAAAAAAAAABAAEAAQAAAAAAAAABAAIAAQAAAAAAAAABAAMAAQAAAAAAAAACAAAAAQAAAAAAAAACAAEAAQAAAAAAAAACAAIAAQAAAAAAAAACAAMAAQAAAAAAAAADAAAAAQAAAAAAAAADAAEAAQAAAAAAAAADAAIAAQAAAAAAAAADAAMAAQAAAAAAAAA=")
 tile_set = SubResource("TileSet_wgovn")
 
+[node name="WallCorner" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=767702094]
+y_sort_enabled = true
+position = Vector2(64, 32)
+texture = ExtResource("5_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="ServerRack" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=2140538378]
+y_sort_enabled = true
+position = Vector2(0, 64)
+texture = ExtResource("6_hkvnm")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/QARoom/ServerRack" unique_id=266574192]
+position = Vector2(0, -32)
+color = Color(1, 0, 0.23529412, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Desk" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=710946298]
+y_sort_enabled = true
+position = Vector2(64, 160)
+texture = ExtResource("5_cv8e0")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/QARoom/Desk" unique_id=335489406]
+position = Vector2(0, -32)
+color = Color(1, 0, 0.23529412, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Chair" type="Sprite2D" parent="World/Rooms/QARoom" unique_id=1679570678]
+y_sort_enabled = true
+position = Vector2(128, 192)
+texture = ExtResource("9_18xdc")
+offset = Vector2(0, -48)
+
 [node name="BreakRoom" type="Node2D" parent="World/Rooms" unique_id=1898139783]
 y_sort_enabled = true
 position = Vector2(480, 510)
-
-[node name="FloorTile" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=1068393200]
-z_index = -1
-texture = ExtResource("4_wgovn")
-centered = false
 
 [node name="Label" type="Label" parent="World/Rooms/BreakRoom" unique_id=1738327304]
 visible = false
@@ -381,56 +309,38 @@ position = Vector2(80, 150)
 [node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/BreakRoom" unique_id=1465730874]
 position = Vector2(220, 150)
 
-[node name="Sofa_DeskPoint_1" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=370526888]
-y_sort_enabled = true
-position = Vector2(0, 64)
-texture = ExtResource("7_5ci8a")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/BreakRoom/Sofa_DeskPoint_1" unique_id=1504918031]
-position = Vector2(0, -32)
-color = Color(0, 1, 1, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Sofa_DeskPoint_2" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=528070695]
-y_sort_enabled = true
-position = Vector2(64, 96)
-texture = ExtResource("7_5ci8a")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/BreakRoom/Sofa_DeskPoint_2" unique_id=60143456]
-position = Vector2(0, -32)
-color = Color(0, 1, 1, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
-[node name="Sofa_DeskPoint_3" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=1741438107]
-y_sort_enabled = true
-position = Vector2(-64, 96)
-texture = ExtResource("7_5ci8a")
-offset = Vector2(0, -48)
-
-[node name="NeonLight" type="PointLight2D" parent="World/Rooms/BreakRoom/Sofa_DeskPoint_3" unique_id=2054103763]
-position = Vector2(0, -32)
-color = Color(0, 1, 1, 1)
-energy = 1.5
-range_z_min = -10
-range_z_max = 10
-shadow_enabled = true
-texture = ExtResource("6_cv8e0")
-
 [node name="FloorTileMap" type="TileMapLayer" parent="World/Rooms/BreakRoom" unique_id=1105371927]
 z_index = -1
 y_sort_enabled = true
 tile_map_data = PackedByteArray("AAAAAAAAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAAMAAQAAAAAAAAABAAAAAQAAAAAAAAABAAEAAQAAAAAAAAABAAIAAQAAAAAAAAABAAMAAQAAAAAAAAACAAAAAQAAAAAAAAACAAEAAQAAAAAAAAACAAIAAQAAAAAAAAACAAMAAQAAAAAAAAADAAAAAQAAAAAAAAADAAEAAQAAAAAAAAADAAIAAQAAAAAAAAADAAMAAQAAAAAAAAA=")
 tile_set = SubResource("TileSet_wgovn")
+
+[node name="WallCorner" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=546617766]
+y_sort_enabled = true
+position = Vector2(64, 32)
+texture = ExtResource("5_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="Sofa" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=2144619738]
+y_sort_enabled = true
+position = Vector2(128, 128)
+texture = ExtResource("7_5ci8a")
+offset = Vector2(0, -48)
+
+[node name="NeonLight" type="PointLight2D" parent="World/Rooms/BreakRoom/Sofa" unique_id=456684979]
+position = Vector2(0, -32)
+color = Color(0, 1, 1, 1)
+energy = 1.2
+range_z_min = -10
+range_z_max = 10
+shadow_enabled = true
+texture = ExtResource("6_cv8e0")
+
+[node name="Sofa2" type="Sprite2D" parent="World/Rooms/BreakRoom" unique_id=43510389]
+y_sort_enabled = true
+position = Vector2(0, 128)
+texture = ExtResource("7_5ci8a")
+offset = Vector2(0, -48)
 
 [node name="WorldModulate" type="CanvasModulate" parent="World/Rooms" unique_id=653487619]
 color = Color(0.2, 0.2, 0.25, 1)
