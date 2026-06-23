@@ -1,59 +1,53 @@
 # Phase 5.7.7: Isometric World Refactoring (等距世界與視覺對齊重構)
 
 ## 📌 核心目標 (Objective)
-徹底打破目前基於「UI 容器排版 (`GridContainer`)」的偽場景架構，將遊戲底層渲染架構全面升級為「等距/俯視角 (Isometric/Top-Down)」的 `Node2D` 實體世界。所有的程式重構與美術切割，皆須 100% 對齊視覺聖經中的概念圖 (`neon_tycoon_ui_mockup.jpg`)，實現真正的空間深度、遮擋關係與無障礙的遊戲操作體驗。
+徹底打破目前基於「UI 容器排版 (`GridContainer`)」的偽場景架構，將遊戲底層渲染架構全面升級為「等距/俯視角 (Isometric/Top-Down)」的 `Node2D` 實體世界。所有的程式重構與尋路邏輯，皆須 100% 建立在【可被完美編碼實作】的數學基礎上，實現真正的空間深度、遮擋關係與無障礙的遊戲操作體驗。
 
 ## 🔍 架構落差與痛點分析 (Architecture Gaps)
-1. **空間維度的錯置 (The Container Trap)**：
-   * 目前 `Main.tscn` 將房間塞在 UI `PanelContainer` 內，導致場景大小受限於視窗拉伸。
-   * **解法**：全面解耦。建立一個無限延伸的 `Node2D` 作為真正的世界根節點，並引入 `Camera2D` 負責視野的平移與縮放。
+1. **素材管線的極限 (The Asset Pipeline Reality)**：
+   * 痛點：目前的去背素材（牆角、辦公桌、伺服器）來自 AI 獨立生成，缺乏人工修圖邊緣對齊。強行用程式碼去拉伸、裁切或拼接「封閉式連續隔間牆」，必然產生裂縫與透視崩壞（小學生作業現象）。
+   * **解法**：**放棄連續牆壁**。轉向「開放式浮島架構 (Open-Plan Islands)」，承認素材極限，只做程式碼 100% 算得準的事。
 2. **缺乏 Y 軸深度排序與對齊 (The Y-Sort & Alignment Crisis)**：
-   * 目前的辦公桌與家具是「散落的 Sprite2D」硬塞在絕對座標上。小人無法精準走位，視覺上沒有透視吸附感，完全是「小學生作業」的拼貼畫。
-   * **解法**：全面拋棄 `Sprite2D` 手動排版。導入 Godot 內建的 `TileMapLayer`，建立嚴格的 2:1 等距網格 (Isometric Grid)，強制所有地板與家具像素對齊，並依賴引擎層級的自動 Y-Sort。
+   * 痛點：目前的辦公桌與家具是「散落的 Sprite2D」硬塞在絕對座標上。小人無法精準走位，視覺上沒有透視吸附感。
+   * **解法**：全面拋棄 `Sprite2D` 手動排版。建立嚴格的 2:1 等距網格 (Isometric Grid, 128x64)，強制所有地板與家具像素對齊，並完全依賴 Godot 引擎的 `Y-Sort` 處理前後遮蔽。
 3. **UI 喧賓奪主 (UI Obscuring the Ant Farm)**：
-   * 目前的 UI 採用 `HBoxContainer` 與遊戲畫面瓜分螢幕空間，擠壓了真正的模擬經營畫面。
-   * **解法**：引入 `CanvasLayer`。將 TopBar（資金/信譽）、RightPanel（事件日誌/雷達）與 BottomBar（指令按鈕）移至浮動的 UI 層，使世界地圖能 100% 鋪滿螢幕底層。
+   * 痛點：目前的 UI 採用 `HBoxContainer` 與遊戲畫面瓜分螢幕空間。
+   * **解法**：引入 `CanvasLayer`。將 UI 移至浮動層，使世界地圖能 100% 鋪滿螢幕底層，搭配 `Camera2D` 負責視野的平移與縮放。
 
-## 🏛️ 三大 Cyberpunk 等距視覺公定標準 (The 3 Pillars of Aesthetics)
-為了 100% 物理對齊 `Art_Bible.md` 中的高標準概念圖，我們設立以下三條不可妥協的美術實作天條：
-1. **幾何空間標準 (Geometric Isometric Standard)**：
-   * 拒絕手動輸入絕對座標。所有房間必須封裝為 `Isometric TileMap`，網格鎖定 2:1 菱形比例 (如 128x64)。地磚與牆壁/家具必須精準吸附格線，不容許絲毫像素錯位。
-2. **渲染與光影標準 (Rendering & Lighting Standard)**：
-   * 拒絕在黑色背景貼去背圖。場景必須掛載 `CanvasModulate` 將全局環境光壓暗。
-   * 家具必須掛載 `PointLight2D` (如開發部 `#39ff14`)，在黑暗房間中將光暈打在地板與角色身上。
-3. **後期處理標準 (Post-Processing Standard)**：
-   * 啟用 `WorldEnvironment` 的 `Glow/Bloom` 效果，並配置 `Additive` 混合與降低 `HDR Threshold`，讓霓虹像素產生真正的高科技溢光。
+## 🏛️ 三大實作可行之視覺標準 (The 3 Implementable Pillars)
+為了在有限的素材下達到最高專業水準，我們確立以下三條不可妥協的實作天條（絕不通靈）：
+1. **無牆開放式/角落錨點架構 (Open-Plan / Corner Anchor Architecture)**：
+   * 拒絕手動拼接直牆。四大部門表現為相連或獨立的「等距地板區塊」。
+   * 僅在每個部門的最北端（視覺最深處）放置唯一一張 `wall_corner.png` 作為視覺錨點，絕對不向兩側做物理延伸。
+   * **物理邊界即地板**：`AStarGrid2D` 尋路網格嚴格對齊地板邊緣，沒有鋪設地板的網格即為實體牆壁/深淵，角色不可逾越。
+2. **嚴格的數學網格對齊 (Strict Grid Alignment & Y-Sort)**：
+   * 所有家具必須精準吸附於 128x64 的 Isometric 菱形格。
+   * 家具的物理碰撞（障礙物）必須註冊在實際佔用的網格點上。
+   * 角色走動與路徑計算 (Pathfinding) 完全交由 `AStarGrid2D` 處理，徹底拔除基於畫面像素的亂數座標移動。
+3. **光影與 UI 融合 (Lighting & UI Integration)**：
+   * 使用 `CanvasModulate` 壓暗場景，家具自帶的光源作為主照明。
+   * UI 面板改為暗黑玻璃透視風格 (`Alpha 0.6` ~ `0.8`) 搭配霓虹字體，讓底層精心編排的等距像素世界能自然透出。
 
 ## 🎯 實作計畫 (Action Plan)
 
-### Step 1: 基礎設施拆分 (World & UI Decoupling)
-*   **任務**: 重構 `Main.tscn`，將場景一分為二。
+### Step 1: 基礎網格與地基重建 (Grid & Foundation)
+*   **任務**: 清除所有舊的破爛牆壁腳本，重新建立乾淨的地基。
 *   **規格**:
-    *   新增 `CanvasLayer` 命名為 `UILayer`，將所有的 UI 面板移入其中，並設定 Anchors 貼齊邊緣。
-    *   新增 `Node2D` 命名為 `World`，作為所有辦公室房間與員工的實體容器。
-    *   新增 `Camera2D`，綁定自訂的 Pan & Zoom 拖曳腳本，取代現有的 `ScrollContainer`。
+    *   在 `World` 節點下建立 `TileMapLayer`，設置為 Isometric 模式，Tile Size 為 128x64。
+    *   使用 `floor_tile.png` 鋪設出四個部門的地板區塊，區塊間以地板顏色或走道區分。
 
-### Step 2: 等距網格地圖重構 (Isometric TileMap Conversion)
-*   **任務**: 將混亂的 `Sprite2D` 廢墟拆除，建立真正的 Isometric TileSet。
+### Step 2: 尋路與碰撞數學重構 (AStarGrid2D & Collision)
+*   **任務**: 重寫 `AgentRouter.gd` 與角色移動邏輯。
 *   **規格**:
-    *   建立 `Isometric_TileSet.tres` 資源，定義 128x64 等距網格。
-    *   將切好的 `floor_tile.png` 加入 TileSet 作為底層繪製。
-    *   將 `desk_SW.png`, `server_rack_SW.png` 等家具以 Y-Sort 原點偏移的方式匯入 TileSet，或以場景節點放置但鎖定 Grid Snap。
-    *   在 `DevRoom` 啟用 `TileMapLayer`，刷出無縫的地板與對齊的家具陣列。
+    *   建立對齊 `TileMapLayer` 的 `AStarGrid2D` 實體。
+    *   把帶有碰撞的家具 (桌子、伺服器) 所佔據的格點標記為 `is_solid = true`。
+    *   角色移動時，嚴格沿著 AStar 計算出的網格路徑點 `map_to_local` 移動。
 
-### Step 3: 空間座標系重構 (Coordinate System Migration)
-*   **任務**: 修正所有基於 UI 的假座標。
+### Step 3: Y-Sort 與物件放置 (Y-Sort Registration)
+*   **任務**: 讓角色能自然地繞過辦公桌與伺服器並被正確遮蔽。
 *   **規格**:
-    *   將現有的 `Marker2D` (`DeskPoint`, `StandPoint`) 從 UI 的相對像素座標，轉換為 `World` 中的絕對全域座標。
-    *   修改 `SimulationEngine` 與 `AgentRouter` 的尋路邏輯，讓角色能正確在 2D 世界中移動，不受 UI 縮放影響。
+    *   開啟 `YSortWorld` (Node2D) 的 `y_sort_enabled = true`。
+    *   確保所有角色與家具都位於此節點下，並微調原點偏移量 (Offset Y)，確保底部基準線正確對齊。
 
-### Step 4: 霓虹風格對齊 (Neon Style Alignment)
-*   **任務**: 將目前的灰色調/高亮 UI，全面替換為 Mockup 圖中的暗色系玻璃擬物化風格。
-*   **規格**:
-    *   UI 背景全面改為 `Color(0.1, 0.1, 0.1, 0.8)` 帶透明度的暗黑風格。
-    *   數值與文字套用發光的 `#39ff14` (綠)、`#fde910` (黃)、`#ff003c` (紅)。
-    *   導入像素字體 (VT323 或相似字型) 替換系統預設字體。
-
-## 🛡️ 單一事實管理 (SSOT & Quality Gates)
-*   本階段的所有修改，必須以 `neon_tycoon_ui_mockup.jpg` 為最終視覺驗收標準 (Visual Quality Gate)。
-*   完成 Step 1~3 後，必須再次執行 `capture_interactive_ui.gd` 產生實體驗證圖，確認房間的 Y-Sort 深度關係正確生效。
+## 🛡️ 防翻供公證 (Anti-Flip-Flop Clause)
+本文件已確實記錄「無牆開放式架構」作為官方實作標準。禁止 Agent 以任何理由退回「程式碼拼接破牆」或「整圖流」等無法滿足 Tycoon 核心機制與現有素材極限的荒謬解法。所有重構必須奠基於嚴謹的網格數學之上。
