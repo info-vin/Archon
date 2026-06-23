@@ -1,6 +1,9 @@
 import React from 'react';
 import { CheckCircleIcon, ClockIcon, MapPinIcon, UserIcon } from '@/components/Icons';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat to avoid expensive instantiations inside the render loop
+const dateFormatter = new Intl.DateTimeFormat();
+
 interface TimelineEvent {
     id: string;
     type: 'creation' | 'interaction' | 'status_change' | 'visit';
@@ -47,7 +50,7 @@ export const LeadsTimeline: React.FC<LeadsTimelineProps> = ({ events }) => {
                             <div className="flex justify-between items-start mb-1">
                                 <h4 className="font-bold text-gray-800">{event.title}</h4>
                                 <span className="text-xs text-gray-400 font-mono">
-                                    {new Date(event.timestamp).toLocaleDateString()}
+                                {dateFormatter.format(new Date(event.timestamp))}
                                 </span>
                             </div>
                             <p className="text-sm text-gray-600 mb-2">{event.description}</p>
