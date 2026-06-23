@@ -1,9 +1,9 @@
 extends Node
 class_name HUDController
 
-var main_node: Control
+var main_node: Node
 
-func initialize(p_main_node: Control) -> void:
+func initialize(p_main_node: Node) -> void:
 	main_node = p_main_node
 
 func update_static_labels() -> void:
@@ -70,14 +70,13 @@ func show_expand_room() -> void:
 	if main_node.get_node("/root/SimulationEngine").expand_room():
 		var office_grid = main_node.office_grid
 		if office_grid:
-			var new_room = PanelContainer.new()
-			new_room.custom_minimum_size = Vector2(360, 390)
+			var new_room = Node2D.new()
+			# Manually set position to a new grid cell (e.g., column 1, row 2)
+			new_room.position = Vector2(0, 900)
 			
-			var bg_tex = TextureRect.new()
+			var bg_tex = Sprite2D.new()
 			bg_tex.texture = preload("res://Assets/Rooms/qa_room_bg.png")
-			bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+			bg_tex.centered = false
 			new_room.add_child(bg_tex)
 			
 			var lbl = Label.new()

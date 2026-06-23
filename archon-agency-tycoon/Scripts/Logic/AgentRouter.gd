@@ -45,7 +45,7 @@ func calculate_route(agent_data: AgentResource, rooms: Dictionary) -> Dictionary
 
 	return {"room": target_room, "pos": target_pos}
 
-func _get_marker_pos(room: Control, slot: int, prefix: String, fallback: Vector2) -> Vector2:
+func _get_marker_pos(room: Node2D, slot: int, prefix: String, fallback: Vector2) -> Vector2:
 	if not room: return fallback
 	var markers = []
 	for child in room.get_children():

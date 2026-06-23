@@ -1,4 +1,4 @@
-extends PanelContainer
+extends Node2D
 class_name OfficeRoom
 
 var room_name: String
@@ -11,14 +11,10 @@ func setup_room(p_name: String, p_color: Color, tycoon_manager) -> void:
 	neon_color = p_color
 	set_meta("neon_color", p_color)
 	
-	# Remove border from the main room container itself
-	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	
-	# Create a dedicated child border layer to allow precise size/offset tuning
 	var border_panel = Panel.new()
 	border_panel.name = "NeonBorder"
 	border_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	border_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	border_panel.size = Vector2(360, 390)
 	
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.0, 0.0, 0.0, 0.0) # Transparent inside
@@ -26,12 +22,6 @@ func setup_room(p_name: String, p_color: Color, tycoon_manager) -> void:
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	
-	# Inward margins to align perfectly with the room's walls in the background image
-	style.expand_margin_left = -6
-	style.expand_margin_top = -6
-	style.expand_margin_right = -6
-	style.expand_margin_bottom = -6
 	
 	style.border_color = neon_color * 1.5 # Overbright for neon glow
 	style.corner_radius_top_left = 4

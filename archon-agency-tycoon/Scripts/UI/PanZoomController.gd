@@ -1,33 +1,33 @@
-extends ScrollContainer
+extends Camera2D
 class_name PanZoomController
 
-# Zoom configuration
 @export var min_zoom: float = 0.5
 @export var max_zoom: float = 2.0
-@export var zoom_speed: float = 0.05
+@export var zoom_speed: float = 0.1
 
 var current_zoom: float = 1.0
 var touch_points: Dictionary = {}
 var last_pinch_distance: float = 0.0
 
-@onready var building: Control = $Building
-
 func _ready() -> void:
-	# Ensure the building has its pivot point at the center of the viewport or top-center
-	if building:
-		building.pivot_offset = Vector2.ZERO
+	self.zoom = Vector2(current_zoom, current_zoom)
 
-func _gui_input(event: InputEvent) -> void:
-	# Handle mouse wheel zoom for desktop
+func _unhandled_input(event: InputEvent) -> void:
+	# Desktop Mouse Wheel Zoom
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			_adjust_zoom(zoom_speed, event.position)
-			accept_event()
+			_adjust_zoom(zoom_speed)
+			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			_adjust_zoom(-zoom_speed, event.position)
-			accept_event()
+			_adjust_zoom(-zoom_speed)
+			get_viewport().set_input_as_handled()
 			
-	# Handle touch gestures (Mobile / iPad)
+	# Desktop Right Click Drag Pan
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		self.position -= event.relative / self.zoom
+		get_viewport().set_input_as_handled()
+			
+	# Mobile Touch
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			touch_points[event.index] = event.position
@@ -36,10 +36,11 @@ func _gui_input(event: InputEvent) -> void:
 			if touch_points.size() < 2:
 				last_pinch_distance = 0.0
 				
+	# Mobile Drag & Pinch
 	if event is InputEventScreenDrag:
 		touch_points[event.index] = event.position
 		
-		# Double touch drag -> Pinch to Zoom
+		# Pinch to Zoom
 		if touch_points.size() == 2:
 			var keys = touch_points.keys()
 			var p1 = touch_points[keys[0]]
@@ -48,35 +49,26 @@ func _gui_input(event: InputEvent) -> void:
 			
 			if last_pinch_distance > 0.0:
 				var zoom_delta = (current_distance - last_pinch_distance) * 0.005
-				var midpoint = (p1 + p2) / 2.0
-				_adjust_zoom(zoom_delta, midpoint)
+				_adjust_zoom(zoom_delta)
 				
 			last_pinch_distance = current_distance
-			accept_event()
+			get_viewport().set_input_as_handled()
 		
-		# Single touch drag -> Pan view
+		# Single touch Pan
 		elif touch_points.size() == 1:
-			scroll_horizontal -= event.relative.x
-			scroll_vertical -= event.relative.y
-			accept_event()
+			self.position -= event.relative / self.zoom
+			get_viewport().set_input_as_handled()
 
-func _adjust_zoom(delta: float, zoom_center: Vector2) -> void:
-	if not building:
-		return
-		
+func _adjust_zoom(delta: float) -> void:
 	var old_zoom = current_zoom
 	current_zoom = clamp(current_zoom + delta, min_zoom, max_zoom)
 	
 	if old_zoom == current_zoom:
 		return
 		
-	# Scale the inner building
-	building.scale = Vector2(current_zoom, current_zoom)
+	var mouse_pos_before = get_global_mouse_position()
+	self.zoom = Vector2(current_zoom, current_zoom)
+	var mouse_pos_after = get_global_mouse_position()
 	
-	# Adjust ScrollContainer offsets to zoom towards the mouse/touch center
-	var scroll_pos = Vector2(scroll_horizontal, scroll_vertical)
-	var local_center = zoom_center + scroll_pos
-	var new_local_center = local_center * (current_zoom / old_zoom)
-	
-	scroll_horizontal = int(new_local_center.x - zoom_center.x)
-	scroll_vertical = int(new_local_center.y - zoom_center.y)
+	# Adjust position to zoom towards the mouse
+	self.position += mouse_pos_before - mouse_pos_after

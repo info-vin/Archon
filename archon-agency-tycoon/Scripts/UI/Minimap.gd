@@ -1,7 +1,7 @@
 extends Control
 class_name Minimap
 
-func update_minimap(office_grid: GridContainer, agent_manager, agent_views: Dictionary) -> void:
+func update_minimap(office_grid: Node2D, agent_manager: Object, agent_views: Dictionary) -> void:
 	var minimap_size = size
 	if minimap_size.x == 0 or minimap_size.y == 0: return
 	

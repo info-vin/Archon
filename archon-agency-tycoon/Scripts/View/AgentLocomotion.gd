@@ -1,7 +1,7 @@
 extends RefCounted
 class_name AgentLocomotion
 
-func walk_to(agent_view: Node2D, agent_data: AgentResource, target_room: Control, target_pos: Vector2, is_instant: bool = false, walk_speed: float = 180.0) -> void:
+func walk_to(agent_view: Node2D, agent_data: AgentResource, target_room: Node2D, target_pos: Vector2, is_instant: bool = false, walk_speed: float = 180.0) -> void:
 	var old_parent = agent_view.get_parent()
 	
 	if is_instant:

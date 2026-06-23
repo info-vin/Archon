@@ -336,8 +336,6 @@ func stop_animation() -> void:
 
 # --- Entity Autonomy (Locomotion & Routing) ---
 
-func walk_to(agent_data: AgentResource, target_room: Control, target_pos: Vector2, is_instant: bool = false, walk_speed: float = 180.0) -> void:
+func walk_to(agent_data: AgentResource, target_room: Node2D, target_pos: Vector2, is_instant: bool = false, walk_speed: float = 180.0) -> void:
 	var locomotion = preload("res://Scripts/View/AgentLocomotion.gd").new()
 	locomotion.walk_to(self, agent_data, target_room, target_pos, is_instant, walk_speed)
-
-

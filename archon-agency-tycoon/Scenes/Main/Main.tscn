@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://b8yq7qxyxxxx"]
+[gd_scene load_steps=18 format=3 uid="uid://b8yq7qxyxxxx"]
 
 [ext_resource type="Theme" uid="uid://d3a4bxxxxxxx" path="res://Scripts/Resources/NeonTheme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://Scripts/Main.gd" id="2_script"]
@@ -17,50 +17,187 @@
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_recruit.svg" id="icon_recruit"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_build.svg" id="icon_build"]
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_tasks.svg" id="icon_tasks"]
-
 [ext_resource type="Texture2D" path="res://Assets/Icons/icon_lang.svg" id="icon_lang"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hallway"]
+[node name="Main" type="Node"]
+script = ExtResource("2_script")
 
-[node name="Main" type="Control"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("8_env")
+
+[node name="GameTickTimer" type="Timer" parent="."]
+wait_time = 1.0
+autostart = true
+
+[node name="World" type="Node2D" parent="."]
+
+[node name="Background" type="ColorRect" parent="World"]
+offset_left = -4000.0
+offset_top = -4000.0
+offset_right = 4000.0
+offset_bottom = 4000.0
+color = Color(0.02, 0.05, 0.1, 1)
+
+[node name="Camera2D" type="Camera2D" parent="World"]
+position = Vector2(576, 324)
+script = ExtResource("3_panzoom")
+
+[node name="Rooms" type="Node2D" parent="World"]
+y_sort_enabled = true
+
+[node name="DevRoom" type="Node2D" parent="World/Rooms"]
+y_sort_enabled = true
+position = Vector2(0, 0)
+
+[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/DevRoom"]
+texture = ExtResource("4_dev_bg")
+centered = false
+
+[node name="Label" type="Label" parent="World/Rooms/DevRoom"]
+visible = false
+offset_right = 360.0
+offset_bottom = 23.0
+text = "ROOM_DEV"
+horizontal_alignment = 1
+
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(100, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(200, 250)
+
+[node name="StandPoint_3" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(280, 250)
+
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(65, 230)
+
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(180, 120)
+
+[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(280, 130)
+
+[node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/DevRoom"]
+position = Vector2(280, 240)
+
+[node name="SalesRoom" type="Node2D" parent="World/Rooms"]
+y_sort_enabled = true
+position = Vector2(480, 0)
+
+[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/SalesRoom"]
+texture = ExtResource("5_sales_bg")
+centered = false
+
+[node name="Label" type="Label" parent="World/Rooms/SalesRoom"]
+visible = false
+offset_right = 360.0
+offset_bottom = 23.0
+text = "ROOM_SALES"
+horizontal_alignment = 1
+
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(100, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(200, 250)
+
+[node name="StandPoint_3" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(280, 250)
+
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(110, 130)
+
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(250, 120)
+
+[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(180, 230)
+
+[node name="DeskPoint_4" type="Marker2D" parent="World/Rooms/SalesRoom"]
+position = Vector2(290, 220)
+
+[node name="QARoom" type="Node2D" parent="World/Rooms"]
+y_sort_enabled = true
+position = Vector2(0, 510)
+
+[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/QARoom"]
+texture = ExtResource("6_qa_bg")
+centered = false
+
+[node name="Label" type="Label" parent="World/Rooms/QARoom"]
+visible = false
+offset_right = 360.0
+offset_bottom = 23.0
+text = "ROOM_QA"
+horizontal_alignment = 1
+
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/QARoom"]
+position = Vector2(100, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/QARoom"]
+position = Vector2(200, 250)
+
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/QARoom"]
+position = Vector2(172, 72)
+
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/QARoom"]
+position = Vector2(200, 150)
+
+[node name="BreakRoom" type="Node2D" parent="World/Rooms"]
+y_sort_enabled = true
+position = Vector2(480, 510)
+
+[node name="BackgroundTexture" type="Sprite2D" parent="World/Rooms/BreakRoom"]
+texture = ExtResource("7_break_bg")
+centered = false
+
+[node name="Label" type="Label" parent="World/Rooms/BreakRoom"]
+visible = false
+offset_right = 360.0
+offset_bottom = 23.0
+text = "ROOM_BREAK"
+horizontal_alignment = 1
+
+[node name="StandPoint_1" type="Marker2D" parent="World/Rooms/BreakRoom"]
+position = Vector2(180, 250)
+
+[node name="StandPoint_2" type="Marker2D" parent="World/Rooms/BreakRoom"]
+position = Vector2(250, 250)
+
+[node name="DeskPoint_1" type="Marker2D" parent="World/Rooms/BreakRoom"]
+position = Vector2(152, 112)
+
+[node name="DeskPoint_2" type="Marker2D" parent="World/Rooms/BreakRoom"]
+position = Vector2(80, 150)
+
+[node name="DeskPoint_3" type="Marker2D" parent="World/Rooms/BreakRoom"]
+position = Vector2(220, 150)
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="UILayer"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 theme = ExtResource("1_theme")
-script = ExtResource("2_script")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = ExtResource("8_env")
-
-[node name="Background" type="ColorRect" parent="."]
+[node name="TopBar" type="PanelContainer" parent="UILayer/UI"]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 40.0
 grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.02, 0.05, 0.1, 1)
 
-[node name="VBox" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TopBar" type="PanelContainer" parent="VBox"]
-custom_minimum_size = Vector2(0, 40)
-layout_mode = 2
-
-[node name="HBox" type="HBoxContainer" parent="VBox/TopBar"]
+[node name="HBox" type="HBoxContainer" parent="UILayer/UI/TopBar"]
 layout_mode = 2
 alignment = 1
 
-[node name="TickerLabel" type="RichTextLabel" parent="VBox/TopBar/HBox"]
+[node name="TickerLabel" type="RichTextLabel" parent="UILayer/UI/TopBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 bbcode_enabled = true
@@ -68,7 +205,7 @@ text = "[color=#888888]ARCHON CORP | DATE:[/color] [color=#ffffff]OCT 26[/color]
 scroll_active = false
 autowrap_mode = 0
 
-[node name="LangButton" type="Button" parent="VBox/TopBar/HBox"]
+[node name="LangButton" type="Button" parent="UILayer/UI/TopBar/HBox"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
 tooltip_text = "Language"
@@ -76,7 +213,7 @@ icon = ExtResource("icon_lang")
 icon_alignment = 1
 expand_icon = true
 
-[node name="JukeboxButton" type="Button" parent="VBox/TopBar/HBox"]
+[node name="JukeboxButton" type="Button" parent="UILayer/UI/TopBar/HBox"]
 custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
 tooltip_text = "Jukebox"
@@ -84,199 +221,56 @@ icon = ExtResource("icon_tasks")
 icon_alignment = 1
 expand_icon = true
 
-[node name="GameTickTimer" type="Timer" parent="."]
-wait_time = 1.0
-autostart = true
-
-[node name="HBoxMain" type="HBoxContainer" parent="VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="GameArea" type="ScrollContainer" parent="VBox/HBoxMain"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-script = ExtResource("3_panzoom")
-
-[node name="Building" type="CenterContainer" parent="VBox/HBoxMain/GameArea"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="OfficeGrid" type="GridContainer" parent="VBox/HBoxMain/GameArea/Building"]
-layout_mode = 2
-theme_override_constants/h_separation = 0
-theme_override_constants/v_separation = 0
-columns = 3
-
-[node name="DevRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-custom_minimum_size = Vector2(360, 390)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-layout_mode = 2
-texture = ExtResource("4_dev_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 0
-text = "ROOM_DEV"
-horizontal_alignment = 1
-
-[node name="HallwayTop" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
-custom_minimum_size = Vector2(120, 390)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayTop"]
-layout_mode = 2
-texture = ExtResource("hallway_top_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="SalesRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-custom_minimum_size = Vector2(360, 390)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-layout_mode = 2
-texture = ExtResource("5_sales_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 0
-text = "ROOM_SALES"
-horizontal_alignment = 1
-
-[node name="HallwayLeft" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
-custom_minimum_size = Vector2(360, 120)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayLeft"]
-layout_mode = 2
-texture = ExtResource("hallway_left_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="CentralLobby" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
-custom_minimum_size = Vector2(120, 120)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/CentralLobby"]
-layout_mode = 2
-texture = ExtResource("central_lobby_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="HallwayRight" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
-custom_minimum_size = Vector2(360, 120)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayRight"]
-layout_mode = 2
-texture = ExtResource("hallway_right_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="QARoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-custom_minimum_size = Vector2(360, 390)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
-layout_mode = 2
-texture = ExtResource("6_qa_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 0
-text = "ROOM_QA"
-horizontal_alignment = 1
-
-[node name="HallwayBottom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-theme_override_styles/panel = SubResource("StyleBoxEmpty_hallway")
-custom_minimum_size = Vector2(120, 390)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/HallwayBottom"]
-layout_mode = 2
-texture = ExtResource("hallway_bottom_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="BreakRoom" type="PanelContainer" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid"]
-custom_minimum_size = Vector2(360, 390)
-layout_mode = 2
-
-[node name="BackgroundTexture" type="TextureRect" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-layout_mode = 2
-texture = ExtResource("7_break_bg")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 0
-text = "ROOM_BREAK"
-horizontal_alignment = 1
-
-
-
-[node name="RightPanel" type="PanelContainer" parent="VBox/HBoxMain"]
+[node name="RightPanel" type="PanelContainer" parent="UILayer/UI"]
 custom_minimum_size = Vector2(250, 0)
-layout_mode = 2
-size_flags_horizontal = 8
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = 40.0
+offset_bottom = -60.0
+grow_horizontal = 0
+grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="VBox/HBoxMain/RightPanel"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/UI/RightPanel"]
 layout_mode = 2
 
-[node name="EventLogLabel" type="Label" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="EventLogLabel" type="Label" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 text = "EVENT LOG"
 horizontal_alignment = 1
 
-[node name="EventLog" type="RichTextLabel" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="EventLog" type="RichTextLabel" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 3.0
 bbcode_enabled = true
 scroll_following = true
 
-[node name="HSeparator" type="HSeparator" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="HSeparator" type="HSeparator" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 
-[node name="AgentStatusLabel" type="Label" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="AgentStatusLabel" type="Label" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 text = "AGENT STATUS"
 horizontal_alignment = 1
 
-[node name="AgentStatusList" type="VBoxContainer" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="AgentStatusList" type="VBoxContainer" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 3.0
 
-
-[node name="HSeparatorMinimap" type="HSeparator" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="HSeparatorMinimap" type="HSeparator" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 
-[node name="MinimapContainer" type="Control" parent="VBox/HBoxMain/RightPanel/VBox"]
+[node name="MinimapContainer" type="Control" parent="UILayer/UI/RightPanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 4.0
 
-[node name="BG" type="ColorRect" parent="VBox/HBoxMain/RightPanel/VBox/MinimapContainer"]
+[node name="BG" type="ColorRect" parent="UILayer/UI/RightPanel/VBox/MinimapContainer"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -289,29 +283,36 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.05, 0.05, 0.05, 1.0)
 
-[node name="BottomBar" type="PanelContainer" parent="VBox"]
+[node name="BottomBar" type="PanelContainer" parent="UILayer/UI"]
 custom_minimum_size = Vector2(0, 60)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="UILayer/UI/BottomBar"]
 layout_mode = 2
 
-[node name="VBox" type="VBoxContainer" parent="VBox/BottomBar"]
-layout_mode = 2
-
-[node name="TaskContainer" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
+[node name="TaskContainer" type="HBoxContainer" parent="UILayer/UI/BottomBar/VBox"]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
 
-[node name="Spacer" type="Control" parent="VBox/BottomBar/VBox"]
+[node name="Spacer" type="Control" parent="UILayer/UI/BottomBar/VBox"]
 custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="ActionHBox" type="HBoxContainer" parent="VBox/BottomBar/VBox"]
+[node name="ActionHBox" type="HBoxContainer" parent="UILayer/UI/BottomBar/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="TasksBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+[node name="TasksBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -322,7 +323,7 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
-[node name="SaveBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+[node name="SaveBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -333,7 +334,7 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
-[node name="RecruitBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+[node name="RecruitBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -344,7 +345,7 @@ icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
 
-[node name="ExpandRoomBtn" type="Button" parent="VBox/BottomBar/VBox/ActionHBox"]
+[node name="ExpandRoomBtn" type="Button" parent="UILayer/UI/BottomBar/VBox/ActionHBox"]
 modulate = Color(0, 1.5, 1.5, 1)
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
@@ -354,72 +355,3 @@ icon = ExtResource("icon_build")
 icon_alignment = 1
 vertical_icon_alignment = 0
 expand_icon = true
-
-[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(100, 250)
-
-[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(200, 250)
-
-[node name="StandPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(280, 250)
-
-[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(100, 250)
-
-[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(200, 250)
-
-[node name="StandPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(280, 250)
-
-[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
-position = Vector2(100, 250)
-
-[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
-position = Vector2(200, 250)
-
-[node name="StandPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-position = Vector2(180, 250)
-
-[node name="StandPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-position = Vector2(250, 250)
-
-[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(65, 230)
-
-[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(180, 120)
-
-[node name="DeskPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(280, 130)
-
-[node name="DeskPoint_4" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom"]
-position = Vector2(280, 240)
-
-[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(110, 130)
-
-[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(250, 120)
-
-[node name="DeskPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(180, 230)
-
-[node name="DeskPoint_4" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/SalesRoom"]
-position = Vector2(290, 220)
-
-[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
-position = Vector2(172, 72)
-
-[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/QARoom"]
-position = Vector2(200, 150)
-
-[node name="DeskPoint_1" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-position = Vector2(152, 112)
-
-[node name="DeskPoint_2" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-position = Vector2(80, 150)
-
-[node name="DeskPoint_3" type="Marker2D" parent="VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom"]
-position = Vector2(220, 150)

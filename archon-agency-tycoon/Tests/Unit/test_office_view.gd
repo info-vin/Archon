@@ -7,9 +7,9 @@ func test_agent_visual_room_relocation() -> void:
     var view = scene.instantiate()
     view.set_script(load("res://Scripts/Main.gd"))
     
-    var dev_room_node = view.get_node("VBox/HBoxMain/GameArea/Building/OfficeGrid/DevRoom")
+    var dev_room_node = view.get_node("World/Rooms/DevRoom")
     dev_room_node.set_script(load("res://Scripts/UI/OfficeRoom.gd"))
-    var break_room_node = view.get_node("VBox/HBoxMain/GameArea/Building/OfficeGrid/BreakRoom")
+    var break_room_node = view.get_node("World/Rooms/BreakRoom")
     break_room_node.set_script(load("res://Scripts/UI/OfficeRoom.gd"))
 
     view.instant_positioning = true
