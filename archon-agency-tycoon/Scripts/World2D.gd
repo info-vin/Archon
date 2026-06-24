@@ -8,8 +8,8 @@ var astar = AStarGrid2D.new()
 var grid_size = 10
 
 var assets = {
-    "desk_nw": preload("res://Assets/Rooms/isometric/desk_v2_NW.png"),
-    "chair_nw": preload("res://Assets/Rooms/isometric/chair_v2_NW.png"),
+    "desk_nw": preload("res://Assets/Rooms/isometric/desk_SW.png"),
+    "chair_nw": preload("res://Assets/Rooms/isometric/chair_SW.png"),
     "sofa_sw": preload("res://Assets/Rooms/isometric/sofa_SW.png"),
     "sofa_se": preload("res://Assets/Rooms/isometric/sofa_SE.png"),
     "coffee_table": preload("res://Assets/Rooms/isometric/coffee_table_SE.png"),
