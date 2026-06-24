@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Archon Agency Tycoon"
 config/description="Agency Tycoon simulator built with TDD in Godot 4."
-run/main_scene="uid://b8yq7qxyxxxx"
+run/main_scene="res://Scenes/Main/World2D.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
@@ -22,6 +22,10 @@ window/stretch/aspect="expand"
 EventBus="*res://Scripts/Autoloads/EventBus.gd"
 SimulationEngine="*res://Scripts/Logic/SimulationEngine.gd"
 AudioManager="*res://Scripts/Autoloads/AudioManager.gd"
+
+[display]
+
+window/stretch/mode="viewport"
 
 [input_devices]
 
@@ -33,7 +37,8 @@ locale/translations=PackedStringArray("res://translations.en.translation", "res:
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
+textures/canvas_textures/default_texture_filter=3
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 viewport/hdr_2d=true
+2d/snap/snap_2d_transforms_to_pixel=true
