@@ -4,9 +4,9 @@ extends SceneTree
 var assets = {}
 
 func _init():
-    print("Restoring exact 1:1 layout from user screenshot...")
+    print("Restoring ABSOLUTE EXACT 1:1 layout from user screenshot...")
     
-    # 載入所有必要的圖檔資源
+    # 載入所有圖檔資源
     assets = {
         "desk_sw": load("res://Assets/Rooms/isometric/desk_SW.png"),
         "desk_se": load("res://Assets/Rooms/isometric/desk_SE.png"),
@@ -33,10 +33,8 @@ func _init():
     world.name = "World2D"
     world.y_sort_enabled = true 
     
-    # 部門大小為 12x12
-    # 外框 1 格，走道 2 格
-    # 總大小: 1 + 12 + 2 + 12 + 1 = 28
-    var GRID_SIZE = 28
+    # 精準 24x24 網格 (包含 1格邊界 + 10x10部門 + 2格走道)
+    var GRID_SIZE = 24
     
     if world_script:
         world.set_script(world_script)
@@ -51,7 +49,9 @@ func _init():
     floor_layer.name = "FloorLayer"
     floor_layer.tile_set = tileset
     floor_layer.z_index = -1 
-    floor_layer.position = Vector2(900, 250)
+    
+    # 完美對齊 Godot Editor 的十字準星 (0,0) 於綠區最左側頂點 (Grid X=1, Y=10)
+    floor_layer.position = Vector2(576, -352)
     world.add_child(floor_layer)
     floor_layer.owner = world
     
@@ -62,53 +62,52 @@ func _init():
     world.add_child(objects)
     objects.owner = world
     
-    # 攝影機對準正中央
-    camera.position = floor_layer.position + floor_layer.map_to_local(Vector2i(14, 14))
+    # 攝影機置中
+    camera.position = floor_layer.position + floor_layer.map_to_local(Vector2i(11, 11))
     
-    # 鋪設地板 (1:1 還原外圍地毯、十字走道與四個部門)
+    # 鋪設 1:1 精準地板
     for x in range(GRID_SIZE):
         for y in range(GRID_SIZE):
             var tile_id = 0
-            # 判斷是否為外圍地毯邊框或十字走道
             if x == 0 or x == GRID_SIZE - 1 or y == 0 or y == GRID_SIZE - 1: 
-                tile_id = 4 # 外圍邊框地毯
-            elif (x == 13 or x == 14) or (y == 13 or y == 14): 
-                tile_id = 4 # 十字走道地毯
-            elif x >= 1 and x <= 12 and y >= 1 and y <= 12: 
-                tile_id = 0 # Green QA
-            elif x >= 15 and x <= 26 and y >= 1 and y <= 12: 
-                tile_id = 3 # Orange Dev
-            elif x >= 1 and x <= 12 and y >= 15 and y <= 26: 
-                tile_id = 2 # Blue Art
-            elif x >= 15 and x <= 26 and y >= 15 and y <= 26: 
-                tile_id = 1 # Red Lounge
+                tile_id = 4 # 1格最外圍地毯
+            elif (x == 11 or x == 12) or (y == 11 or y == 12): 
+                tile_id = 4 # 2格十字走道
+            elif x >= 1 and x <= 10 and y >= 1 and y <= 10: 
+                tile_id = 0 # 綠區 10x10
+            elif x >= 13 and x <= 22 and y >= 1 and y <= 10: 
+                tile_id = 3 # 橘區 10x10
+            elif x >= 1 and x <= 10 and y >= 13 and y <= 22: 
+                tile_id = 2 # 藍區 10x10
+            elif x >= 13 and x <= 22 and y >= 13 and y <= 22: 
+                tile_id = 1 # 紅區 10x10
                 
             floor_layer.set_cell(Vector2i(x, y), tile_id, Vector2i(0, 0))
             
-    # --- 放置家具 (精準對位使用者的截圖) ---
+    # --- 1:1 像素級精準放置家具 ---
     
-    # Green Zone (Top-Left): 1 桌椅
-    place_object(objects, floor_layer, Vector2i(9, 9), "desk_se")
-    place_object(objects, floor_layer, Vector2i(10, 9), "chair_nw")
+    # Green Zone
+    place_object(objects, floor_layer, Vector2i(7, 6), "desk_se")
+    place_object(objects, floor_layer, Vector2i(8, 6), "chair_nw")
     
-    # Orange Zone (Top-Right): 2 桌椅, 1 機櫃
-    place_object(objects, floor_layer, Vector2i(18, 8), "desk_sw")
-    place_object(objects, floor_layer, Vector2i(18, 9), "chair_ne")
-    place_object(objects, floor_layer, Vector2i(21, 8), "desk_sw")
-    place_object(objects, floor_layer, Vector2i(21, 9), "chair_ne")
-    place_object(objects, floor_layer, Vector2i(25, 2), "server_rack_se")
+    # Orange Zone
+    place_object(objects, floor_layer, Vector2i(16, 6), "desk_sw")
+    place_object(objects, floor_layer, Vector2i(16, 7), "chair_ne")
+    place_object(objects, floor_layer, Vector2i(19, 6), "desk_sw")
+    place_object(objects, floor_layer, Vector2i(19, 7), "chair_ne")
+    place_object(objects, floor_layer, Vector2i(20, 2), "server_rack_se")
     
-    # Blue Zone (Bottom-Left): 3 機櫃
-    place_object(objects, floor_layer, Vector2i(3, 20), "server_rack_se")
-    place_object(objects, floor_layer, Vector2i(3, 21), "server_rack_se")
-    place_object(objects, floor_layer, Vector2i(3, 22), "server_rack_se")
+    # Blue Zone
+    place_object(objects, floor_layer, Vector2i(3, 16), "server_rack_se")
+    place_object(objects, floor_layer, Vector2i(3, 17), "server_rack_se")
+    place_object(objects, floor_layer, Vector2i(3, 18), "server_rack_se")
     
-    # Red Zone (Bottom-Right): 2 沙發, 2 邊櫃, 1 販賣機
-    place_object(objects, floor_layer, Vector2i(19, 21), "sofa_sw")
-    place_object(objects, floor_layer, Vector2i(20, 21), "sofa_sw")
-    place_object(objects, floor_layer, Vector2i(18, 21), "side_cabinet_se")
-    place_object(objects, floor_layer, Vector2i(21, 21), "side_cabinet_se")
-    place_object(objects, floor_layer, Vector2i(22, 19), "vending_machine_sw")
+    # Red Zone
+    place_object(objects, floor_layer, Vector2i(16, 18), "sofa_sw")
+    place_object(objects, floor_layer, Vector2i(17, 18), "sofa_sw")
+    place_object(objects, floor_layer, Vector2i(15, 18), "side_cabinet_se")
+    place_object(objects, floor_layer, Vector2i(18, 18), "side_cabinet_se")
+    place_object(objects, floor_layer, Vector2i(20, 16), "vending_machine_sw")
 
     for child in objects.get_children():
         child.owner = world

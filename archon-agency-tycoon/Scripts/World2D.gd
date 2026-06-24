@@ -5,7 +5,7 @@ extends Node2D
 @onready var path_line: Line2D = $PathLine
 
 var astar = AStarGrid2D.new()
-var grid_size = 28
+var grid_size = 24
 
 var assets = {
     "desk_nw": preload("res://Assets/Rooms/isometric/desk_SW.png"),
