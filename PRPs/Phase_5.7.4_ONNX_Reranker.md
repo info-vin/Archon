@@ -32,3 +32,7 @@
   - `make test-be`: 607 passed (100% 通過，確保無破壞性變更)。
   - `make phase-audit`: 物理掃描通過。
 本階段目標圓滿達成，正式從 PyTorch 解放，實現了 0 Token 成本且極低記憶體的強大語意重排。
+
+## 執行報告 (Execution Report - 2026-06-24 補充修復)
+- **架構依賴歸位**：在先前的架構演進中，由於錯誤假設 ONNX 必須被隔離到 `agents` 服務中，導致 `server` 容器失去了語意重排能力。現已將 `onnxruntime` 等相依套件合併回 `pyproject.toml` 的 `server` 核心群組，貫徹「以極低記憶體無痛恢復強大語意重排」的初衷。
+- **連線抖動根除 (Connection Jitter Fix)**：修復了因 `rag_service.py` 預期 ONNX 存在卻物理缺失時，所引發的無限 `WARNING | Reranking singleton is not available` 日誌。此日誌與其背後的錯誤狀態判斷在高併發查詢下消耗了異常的處理路徑資源，並放大了 Supabase 的 `ConnectionTerminated` 連線抖動。將 ONNX 依賴歸位至 `server` 容器後，Reranker 得以順利載入，不僅恢復了 RAG 品質，更從根本上消滅了此高併發連線崩潰。
