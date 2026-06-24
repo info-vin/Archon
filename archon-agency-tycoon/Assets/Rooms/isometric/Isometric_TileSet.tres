@@ -9,6 +9,5 @@ texture_region_size = Vector2i(128, 64)
 
 [resource]
 tile_shape = 1
-tile_layout = 5
 tile_size = Vector2i(128, 64)
-sources/1 = SubResource("TileSetAtlasSource_fdyo6")
+sources/0 = SubResource("TileSetAtlasSource_fdyo6")

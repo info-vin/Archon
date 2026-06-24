@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/World2D.gd" id="1_6gyj5"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile.png" id="2_4mg5v"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fdyo6"]
+texture = ExtResource("2_4mg5v")
+texture_region_size = Vector2i(128, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_x3ecy"]
+tile_shape = 1
+tile_size = Vector2i(128, 64)
+sources/0 = SubResource("TileSetAtlasSource_fdyo6")
+
+[node name="World2D" type="Node2D" unique_id=2081496670]
+y_sort_enabled = true
+script = ExtResource("1_6gyj5")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1154470196]
+
+[node name="FloorLayer" type="TileMapLayer" parent="." unique_id=1508604408]
+z_index = -1
+tile_set = SubResource("TileSet_x3ecy")
+
+[node name="Objects" type="Node2D" parent="." unique_id=546186568]
+y_sort_enabled = true
+
+[node name="PathLine" type="Line2D" parent="." unique_id=1836023415]
+width = 4.0
+default_color = Color(0, 1, 0, 0.5)
