@@ -1,119 +1,146 @@
 [gd_scene format=4]
 
-[ext_resource type="Script" path="res://Scripts/World2D.gd" id="1_5ybs4"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile.png" id="2_bkwp6"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_red.png" id="3_71bqa"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_blue.png" id="4_ttm88"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_orange.png" id="5_js6l1"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_carpet.png" id="6_gu0ea"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/half_wall_SW.png" id="7_5fkrj"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/desk_SW.png" id="8_w161x"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/chair_SW.png" id="9_mwv2q"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/coffee_table_SE.png" id="10_docjk"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/sofa_SW.png" id="11_6kx61"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/sofa_SE.png" id="12_i1d8d"]
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/vending_machine_SW.png" id="13_62x75"]
+[ext_resource type="Script" path="res://Scripts/World2D.gd" id="1_k4bh1"]
+[ext_resource type="TileSet" path="res://Assets/Rooms/isometric/Isometric_TileSet.tres" id="2_kweop"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/server_rack_SE.png" id="3_5ybs4"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/desk_SW.png" id="4_bkwp6"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/chair_SW.png" id="5_71bqa"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/desk_SE.png" id="6_ttm88"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/chair_SE.png" id="7_js6l1"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/server_rack_SW.png" id="8_gu0ea"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/sofa_SW.png" id="9_5fkrj"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/vending_machine_SW.png" id="10_w161x"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/side_cabinet_SE.png" id="11_mwv2q"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pf6yc"]
-texture = ExtResource("2_bkwp6")
-texture_region_size = Vector2i(128, 64)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qlcu0"]
-texture = ExtResource("3_71bqa")
-texture_region_size = Vector2i(128, 64)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w5e7g"]
-texture = ExtResource("4_ttm88")
-texture_region_size = Vector2i(128, 64)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8dnku"]
-texture = ExtResource("5_js6l1")
-texture_region_size = Vector2i(128, 64)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_77eph"]
-texture = ExtResource("6_gu0ea")
-texture_region_size = Vector2i(128, 64)
-0:0/0 = 0
-
-[sub_resource type="TileSet" id="TileSet_kpd25"]
-tile_shape = 1
-tile_size = Vector2i(128, 64)
-sources/0 = SubResource("TileSetAtlasSource_pf6yc")
-sources/1 = SubResource("TileSetAtlasSource_qlcu0")
-sources/2 = SubResource("TileSetAtlasSource_w5e7g")
-sources/3 = SubResource("TileSetAtlasSource_8dnku")
-sources/4 = SubResource("TileSetAtlasSource_77eph")
-
-[node name="World2D" type="Node2D" unique_id=1171365714]
+[node name="World2D" type="Node2D" unique_id=1692828756]
 y_sort_enabled = true
-script = ExtResource("1_5ybs4")
+script = ExtResource("1_k4bh1")
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1202766819]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=651617486]
 
-[node name="FloorLayer" type="TileMapLayer" parent="." unique_id=1866576715]
+[node name="FloorLayer" type="TileMapLayer" parent="." unique_id=116254371]
 z_index = -1
-tile_map_data = PackedByteArray("AAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAQABAAAAAAAAAAAAAUAAgAAAAAAAAAAAAYAAgAAAAAAAAAAAAcAAgAAAAAAAAAAAAgAAgAAAAAAAAAAAAkAAgAAAAAAAAABAAAAAAAAAAAAAAABAAEAAAAAAAAAAAABAAIAAAAAAAAAAAABAAMAAAAAAAAAAAABAAQABAAAAAAAAAABAAUAAgAAAAAAAAABAAYAAgAAAAAAAAABAAcAAgAAAAAAAAABAAgAAgAAAAAAAAABAAkAAgAAAAAAAAACAAAAAAAAAAAAAAACAAEAAAAAAAAAAAACAAIAAAAAAAAAAAACAAMAAAAAAAAAAAACAAQABAAAAAAAAAACAAUAAgAAAAAAAAACAAYAAgAAAAAAAAACAAcAAgAAAAAAAAACAAgAAgAAAAAAAAACAAkAAgAAAAAAAAADAAAAAAAAAAAAAAADAAEAAAAAAAAAAAADAAIAAAAAAAAAAAADAAMAAAAAAAAAAAADAAQABAAAAAAAAAADAAUAAgAAAAAAAAADAAYAAgAAAAAAAAADAAcAAgAAAAAAAAADAAgAAgAAAAAAAAADAAkAAgAAAAAAAAAEAAAABAAAAAAAAAAEAAEABAAAAAAAAAAEAAIABAAAAAAAAAAEAAMABAAAAAAAAAAEAAQABAAAAAAAAAAEAAUABAAAAAAAAAAEAAYABAAAAAAAAAAEAAcABAAAAAAAAAAEAAgABAAAAAAAAAAEAAkABAAAAAAAAAAFAAAAAwAAAAAAAAAFAAEAAwAAAAAAAAAFAAIAAwAAAAAAAAAFAAMAAwAAAAAAAAAFAAQABAAAAAAAAAAFAAUAAQAAAAAAAAAFAAYAAQAAAAAAAAAFAAcAAQAAAAAAAAAFAAgAAQAAAAAAAAAFAAkAAQAAAAAAAAAGAAAAAwAAAAAAAAAGAAEAAwAAAAAAAAAGAAIAAwAAAAAAAAAGAAMAAwAAAAAAAAAGAAQABAAAAAAAAAAGAAUAAQAAAAAAAAAGAAYAAQAAAAAAAAAGAAcAAQAAAAAAAAAGAAgAAQAAAAAAAAAGAAkAAQAAAAAAAAAHAAAAAwAAAAAAAAAHAAEAAwAAAAAAAAAHAAIAAwAAAAAAAAAHAAMAAwAAAAAAAAAHAAQABAAAAAAAAAAHAAUAAQAAAAAAAAAHAAYAAQAAAAAAAAAHAAcAAQAAAAAAAAAHAAgAAQAAAAAAAAAHAAkAAQAAAAAAAAAIAAAAAwAAAAAAAAAIAAEAAwAAAAAAAAAIAAIAAwAAAAAAAAAIAAMAAwAAAAAAAAAIAAQABAAAAAAAAAAIAAUAAQAAAAAAAAAIAAYAAQAAAAAAAAAIAAcAAQAAAAAAAAAIAAgAAQAAAAAAAAAIAAkAAQAAAAAAAAAJAAAAAwAAAAAAAAAJAAEAAwAAAAAAAAAJAAIAAwAAAAAAAAAJAAMAAwAAAAAAAAAJAAQABAAAAAAAAAAJAAUAAQAAAAAAAAAJAAYAAQAAAAAAAAAJAAcAAQAAAAAAAAAJAAgAAQAAAAAAAAAJAAkAAQAAAAAAAAA=")
-tile_set = SubResource("TileSet_kpd25")
+tile_map_data = PackedByteArray("AAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAUAAAAAAAAAAAAAAAYABAAAAAAAAAAAAAcAAgAAAAAAAAAAAAgAAgAAAAAAAAAAAAkAAgAAAAAAAAAAAAoAAgAAAAAAAAAAAAsAAgAAAAAAAAAAAAwAAgAAAAAAAAABAAAAAAAAAAAAAAABAAEAAAAAAAAAAAABAAIAAAAAAAAAAAABAAMAAAAAAAAAAAABAAQAAAAAAAAAAAABAAUAAAAAAAAAAAABAAYABAAAAAAAAAABAAcAAgAAAAAAAAABAAgAAgAAAAAAAAABAAkAAgAAAAAAAAABAAoAAgAAAAAAAAABAAsAAgAAAAAAAAABAAwAAgAAAAAAAAACAAAAAAAAAAAAAAACAAEAAAAAAAAAAAACAAIAAAAAAAAAAAACAAMAAAAAAAAAAAACAAQAAAAAAAAAAAACAAUAAAAAAAAAAAACAAYABAAAAAAAAAACAAcAAgAAAAAAAAACAAgAAgAAAAAAAAACAAkAAgAAAAAAAAACAAoAAgAAAAAAAAACAAsAAgAAAAAAAAACAAwAAgAAAAAAAAADAAAAAAAAAAAAAAADAAEAAAAAAAAAAAADAAIAAAAAAAAAAAADAAMAAAAAAAAAAAADAAQAAAAAAAAAAAADAAUAAAAAAAAAAAADAAYABAAAAAAAAAADAAcAAgAAAAAAAAADAAgAAgAAAAAAAAADAAkAAgAAAAAAAAADAAoAAgAAAAAAAAADAAsAAgAAAAAAAAADAAwAAgAAAAAAAAAEAAAAAAAAAAAAAAAEAAEAAAAAAAAAAAAEAAIAAAAAAAAAAAAEAAMAAAAAAAAAAAAEAAQAAAAAAAAAAAAEAAUAAAAAAAAAAAAEAAYABAAAAAAAAAAEAAcAAgAAAAAAAAAEAAgAAgAAAAAAAAAEAAkAAgAAAAAAAAAEAAoAAgAAAAAAAAAEAAsAAgAAAAAAAAAEAAwAAgAAAAAAAAAFAAAAAAAAAAAAAAAFAAEAAAAAAAAAAAAFAAIAAAAAAAAAAAAFAAMAAAAAAAAAAAAFAAQAAAAAAAAAAAAFAAUAAAAAAAAAAAAFAAYABAAAAAAAAAAFAAcAAgAAAAAAAAAFAAgAAgAAAAAAAAAFAAkAAgAAAAAAAAAFAAoAAgAAAAAAAAAFAAsAAgAAAAAAAAAFAAwAAgAAAAAAAAAGAAAABAAAAAAAAAAGAAEABAAAAAAAAAAGAAIABAAAAAAAAAAGAAMABAAAAAAAAAAGAAQABAAAAAAAAAAGAAUABAAAAAAAAAAGAAYABAAAAAAAAAAGAAcABAAAAAAAAAAGAAgABAAAAAAAAAAGAAkABAAAAAAAAAAGAAoABAAAAAAAAAAGAAsABAAAAAAAAAAGAAwABAAAAAAAAAAHAAAAAwAAAAAAAAAHAAEAAwAAAAAAAAAHAAIAAwAAAAAAAAAHAAMAAwAAAAAAAAAHAAQAAwAAAAAAAAAHAAUAAwAAAAAAAAAHAAYABAAAAAAAAAAHAAcAAQAAAAAAAAAHAAgAAQAAAAAAAAAHAAkAAQAAAAAAAAAHAAoAAQAAAAAAAAAHAAsAAQAAAAAAAAAHAAwAAQAAAAAAAAAIAAAAAwAAAAAAAAAIAAEAAwAAAAAAAAAIAAIAAwAAAAAAAAAIAAMAAwAAAAAAAAAIAAQAAwAAAAAAAAAIAAUAAwAAAAAAAAAIAAYABAAAAAAAAAAIAAcAAQAAAAAAAAAIAAgAAQAAAAAAAAAIAAkAAQAAAAAAAAAIAAoAAQAAAAAAAAAIAAsAAQAAAAAAAAAIAAwAAQAAAAAAAAAJAAAAAwAAAAAAAAAJAAEAAwAAAAAAAAAJAAIAAwAAAAAAAAAJAAMAAwAAAAAAAAAJAAQAAwAAAAAAAAAJAAUAAwAAAAAAAAAJAAYABAAAAAAAAAAJAAcAAQAAAAAAAAAJAAgAAQAAAAAAAAAJAAkAAQAAAAAAAAAJAAoAAQAAAAAAAAAJAAsAAQAAAAAAAAAJAAwAAQAAAAAAAAAKAAAAAwAAAAAAAAAKAAEAAwAAAAAAAAAKAAIAAwAAAAAAAAAKAAMAAwAAAAAAAAAKAAQAAwAAAAAAAAAKAAUAAwAAAAAAAAAKAAYABAAAAAAAAAAKAAcAAQAAAAAAAAAKAAgAAQAAAAAAAAAKAAkAAQAAAAAAAAAKAAoAAQAAAAAAAAAKAAsAAQAAAAAAAAAKAAwAAQAAAAAAAAALAAAAAwAAAAAAAAALAAEAAwAAAAAAAAALAAIAAwAAAAAAAAALAAMAAwAAAAAAAAALAAQAAwAAAAAAAAALAAUAAwAAAAAAAAALAAYABAAAAAAAAAALAAcAAQAAAAAAAAALAAgAAQAAAAAAAAALAAkAAQAAAAAAAAALAAoAAQAAAAAAAAALAAsAAQAAAAAAAAALAAwAAQAAAAAAAAAMAAAAAwAAAAAAAAAMAAEAAwAAAAAAAAAMAAIAAwAAAAAAAAAMAAMAAwAAAAAAAAAMAAQAAwAAAAAAAAAMAAUAAwAAAAAAAAAMAAYABAAAAAAAAAAMAAcAAQAAAAAAAAAMAAgAAQAAAAAAAAAMAAkAAQAAAAAAAAAMAAoAAQAAAAAAAAAMAAsAAQAAAAAAAAAMAAwAAQAAAAAAAAA=")
+tile_set = ExtResource("2_kweop")
 
-[node name="Objects" type="Node2D" parent="." unique_id=1662711118]
+[node name="Objects" type="Node2D" parent="." unique_id=498389963]
 y_sort_enabled = true
 
-[node name="@Sprite2D@2" type="Sprite2D" parent="Objects" unique_id=1952550187]
+[node name="@Sprite2D@2" type="Sprite2D" parent="Objects" unique_id=1202812879]
 y_sort_enabled = true
 texture_filter = 1
-position = Vector2(64, 0)
-texture = ExtResource("7_5fkrj")
-offset = Vector2(0, -142)
+position = Vector2(128, 128)
+texture = ExtResource("3_5ybs4")
+offset = Vector2(0, -38.5)
 
-[node name="@Sprite2D@3" type="Sprite2D" parent="Objects" unique_id=19807405]
+[node name="@Sprite2D@3" type="Sprite2D" parent="Objects" unique_id=696826438]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(64, 160)
+texture = ExtResource("3_5ybs4")
+offset = Vector2(0, -38.5)
+
+[node name="@Sprite2D@4" type="Sprite2D" parent="Objects" unique_id=76008881]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(128, 192)
+texture = ExtResource("3_5ybs4")
+offset = Vector2(0, -38.5)
+
+[node name="@Sprite2D@5" type="Sprite2D" parent="Objects" unique_id=1626446702]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(384, 64)
+texture = ExtResource("4_bkwp6")
+offset = Vector2(0, -32)
+
+[node name="@Sprite2D@6" type="Sprite2D" parent="Objects" unique_id=1025563280]
 y_sort_enabled = true
 texture_filter = 1
 position = Vector2(320, 96)
-texture = ExtResource("8_w161x")
-offset = Vector2(0, -32)
-
-[node name="@Sprite2D@4" type="Sprite2D" parent="Objects" unique_id=820414506]
-y_sort_enabled = true
-texture_filter = 1
-position = Vector2(512, 128)
-texture = ExtResource("9_mwv2q")
+texture = ExtResource("5_71bqa")
 offset = Vector2(0, -14)
 
-[node name="@Sprite2D@5" type="Sprite2D" parent="Objects" unique_id=2123456688]
+[node name="@Sprite2D@7" type="Sprite2D" parent="Objects" unique_id=946746631]
 y_sort_enabled = true
 texture_filter = 1
-position = Vector2(1024, 256)
-texture = ExtResource("10_docjk")
-offset = Vector2(0, -66)
+position = Vector2(640, 128)
+texture = ExtResource("6_ttm88")
+offset = Vector2(0, -32)
 
-[node name="@Sprite2D@6" type="Sprite2D" parent="Objects" unique_id=1834867687]
+[node name="@Sprite2D@8" type="Sprite2D" parent="Objects" unique_id=270122610]
 y_sort_enabled = true
 texture_filter = 1
-position = Vector2(896, 256)
-texture = ExtResource("11_6kx61")
-offset = Vector2(0, -21)
+position = Vector2(768, 128)
+texture = ExtResource("7_js6l1")
+offset = Vector2(0, -14)
 
-[node name="@Sprite2D@7" type="Sprite2D" parent="Objects" unique_id=1358960528]
+[node name="@Sprite2D@9" type="Sprite2D" parent="Objects" unique_id=196075877]
 y_sort_enabled = true
 texture_filter = 1
-position = Vector2(960, 224)
-texture = ExtResource("12_i1d8d")
-offset = Vector2(0, -21)
+position = Vector2(1152, 64)
+texture = ExtResource("4_bkwp6")
+offset = Vector2(0, -32)
 
-[node name="@Sprite2D@8" type="Sprite2D" parent="Objects" unique_id=1634293547]
+[node name="@Sprite2D@10" type="Sprite2D" parent="Objects" unique_id=1365796134]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(1088, 96)
+texture = ExtResource("5_71bqa")
+offset = Vector2(0, -14)
+
+[node name="@Sprite2D@11" type="Sprite2D" parent="Objects" unique_id=473977886]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(1408, 128)
+texture = ExtResource("4_bkwp6")
+offset = Vector2(0, -32)
+
+[node name="@Sprite2D@12" type="Sprite2D" parent="Objects" unique_id=421037030]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(1344, 160)
+texture = ExtResource("5_71bqa")
+offset = Vector2(0, -14)
+
+[node name="@Sprite2D@13" type="Sprite2D" parent="Objects" unique_id=1103571208]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(1600, 32)
+texture = ExtResource("8_gu0ea")
+offset = Vector2(0, -38.5)
+
+[node name="@Sprite2D@14" type="Sprite2D" parent="Objects" unique_id=1095111434]
 y_sort_enabled = true
 texture_filter = 1
 position = Vector2(1088, 288)
-texture = ExtResource("13_62x75")
-offset = Vector2(0, -41.5)
+texture = ExtResource("9_5fkrj")
+offset = Vector2(0, -21)
 
-[node name="@Sprite2D@9" type="Sprite2D" parent="Objects" unique_id=2029171915]
+[node name="@Sprite2D@15" type="Sprite2D" parent="Objects" unique_id=1941450797]
 y_sort_enabled = true
 texture_filter = 1
-position = Vector2(1216, 288)
-texture = ExtResource("13_62x75")
+position = Vector2(1280, 320)
+texture = ExtResource("9_5fkrj")
+offset = Vector2(0, -21)
+
+[node name="@Sprite2D@16" type="Sprite2D" parent="Objects" unique_id=1730021776]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(1472, 288)
+texture = ExtResource("10_w161x")
 offset = Vector2(0, -41.5)
+
+[node name="@Sprite2D@17" type="Sprite2D" parent="Objects" unique_id=1798446447]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(960, 352)
+texture = ExtResource("11_mwv2q")
+offset = Vector2(0, -13)
+
+[node name="@Sprite2D@18" type="Sprite2D" parent="Objects" unique_id=1571335106]
+y_sort_enabled = true
+texture_filter = 1
+position = Vector2(1152, 384)
+texture = ExtResource("11_mwv2q")
+offset = Vector2(0, -13)
