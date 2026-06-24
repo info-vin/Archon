@@ -1,54 +1,53 @@
-# Phase 5.7.7: HD-2D Orthogonal World Refactoring (降維打擊：3D正交等距重構)
+# Phase 5.7.7: Isometric World Refactoring (等距世界與視覺對齊重構)
 
 ## 📌 核心目標 (Objective)
-徹底打破目前基於「UI 容器排版 (`GridContainer`)」或「2D 偽等距 (`Node2D` + `Y-Sort`)」的架構，將遊戲底層渲染架構全面升級為 **「HD-2D」風格的 3D 空間 + 2.5D 正交視覺 (Node3D + Orthogonal Camera3D + Sprite3D)**。
-藉由 Godot 原生的 3D Z-buffer 深度渲染，徹底消滅 2D 排序噩夢與錯位的「小學生作業現象」，實現完美的空間深度、真實光影與物理遮擋。
+徹底打破目前基於「UI 容器排版 (`GridContainer`)」的偽場景架構，將遊戲底層渲染架構全面升級為「等距/俯視角 (Isometric/Top-Down)」的 `Node2D` 實體世界。所有的程式重構與尋路邏輯，皆須 100% 建立在【可被完美編碼實作】的數學基礎上，實現真正的空間深度、遮擋關係與無障礙的遊戲操作體驗。
 
-## 🔍 架構痛點與降維打擊 (Architecture Paradigm Shift)
-過去使用 2D 引擎強做等距遊戲的三大痛點：
-1. **Y-Sort 遮擋地獄**：角色走到桌子後面，還要手動調整 Sprite 的 Y 軸偏移點，稍有不慎就會出現頭穿破桌子的慘況。
-2. **等距座標轉換噩夢**：滑鼠點擊與角色移動要在菱形網格與直角座標系之間來回轉換，充滿 Bug。
-3. **破爛的牆壁與空間感**：缺乏真正透視，2D 素材拉伸後邊緣破裂。
-
-**🚀 降維打擊解法 (The HD-2D Solution)**：
-**把世界做成真正的 3D，但把它「拍」成 2.5D。**
-* 所有的牆壁、地板與家具都放置在絕對精準的 3D `GridMap` 空間中。
-* 角色是貼著 2D 動畫的 `Sprite3D` (Billboard 永遠面向鏡頭)。
-* 攝影機採用 `PROJECTION_ORTHOGONAL` (正交投影)，斜 45 度角鎖定俯視。在正交投影下，3D 空間在螢幕上看起來就是完美的 Isometric 像素風。
-* **物理遮擋交給 Z-buffer**，再也不用寫任何 Y-Sort 程式碼！
+## 🔍 架構落差與痛點分析 (Architecture Gaps)
+1. **素材管線的極限 (The Asset Pipeline Reality)**：
+   * 痛點：目前的去背素材（牆角、辦公桌、伺服器）來自 AI 獨立生成，缺乏人工修圖邊緣對齊。強行用程式碼去拉伸、裁切或拼接「封閉式連續隔間牆」，必然產生裂縫與透視崩壞（小學生作業現象）。
+   * **解法**：**放棄連續牆壁**。轉向「開放式浮島架構 (Open-Plan Islands)」，承認素材極限，只做程式碼 100% 算得準的事。
+2. **缺乏 Y 軸深度排序與對齊 (The Y-Sort & Alignment Crisis)**：
+   * 痛點：目前的辦公桌與家具是「散落的 Sprite2D」硬塞在絕對座標上。小人無法精準走位，視覺上沒有透視吸附感。
+   * **解法**：全面拋棄 `Sprite2D` 手動排版。建立嚴格的 2:1 等距網格 (Isometric Grid, 128x64)，強制所有地板與家具像素對齊，並完全依賴 Godot 引擎的 `Y-Sort` 處理前後遮蔽。
+3. **UI 喧賓奪主 (UI Obscuring the Ant Farm)**：
+   * 痛點：目前的 UI 採用 `HBoxContainer` 與遊戲畫面瓜分螢幕空間。
+   * **解法**：引入 `CanvasLayer`。將 UI 移至浮動層，使世界地圖能 100% 鋪滿螢幕底層，搭配 `Camera2D` 負責視野的平移與縮放。
 
 ## 🏛️ 三大實作可行之視覺標準 (The 3 Implementable Pillars)
-1. **3D 實體網格背景 (GridMap Foundation)**：
-   * 遊戲世界由 `GridMap` 搭建。地板為 `y=0` 的網格，家具和牆壁佔據 `y=1` 的網格。
-   * 地圖不再是 2D 的手動拼接圖，而是透過 `set_cell_item` 從 `MeshLibrary` 取出具備長寬高的 3D 方塊。
-2. **正交攝影機與移動修正 (Orthogonal Camera Rig)**：
-   * `Camera3D` 放置於相對於玩家的 `Vector3(15, 20, 15)`，啟用 `PROJECTION_ORTHOGONAL` 並 `look_at` 玩家。
-   * 玩家的移動向量將根據攝影機的 `basis` 進行相對修正。按 W 鍵永遠是往螢幕的「上方」走，而非世界座標的絕對北邊，保證操作直覺。
-3. **動態 3D 光影與賽博龐克渲染 (3D Lighting & Shadows)**：
-   * 引入 `DirectionalLight3D` 與 `OmniLight3D`，讓 2D 的 `Sprite3D` 也能投射出真實的 3D 陰影在 3D 地板上。
-   * UI 面板改為暗黑玻璃透視風格 (`Alpha 0.6` ~ `0.8`) 搭配霓虹字體，讓底層精心編排的 HD-2D 世界能自然透出。
+為了在有限的素材下達到最高專業水準，我們確立以下三條不可妥協的實作天條（絕不通靈）：
+1. **無牆開放式/角落錨點架構 (Open-Plan / Corner Anchor Architecture)**：
+   * 拒絕手動拼接直牆。四大部門表現為相連或獨立的「等距地板區塊」。
+   * 僅在每個部門的最北端（視覺最深處）放置唯一一張 `wall_corner.png` 作為視覺錨點，絕對不向兩側做物理延伸。
+   * **物理邊界即地板**：`AStarGrid2D` 尋路網格嚴格對齊地板邊緣，沒有鋪設地板的網格即為實體牆壁/深淵，角色不可逾越。
+2. **嚴格的數學網格對齊 (Strict Grid Alignment & Y-Sort)**：
+   * 所有家具必須精準吸附於 128x64 的 Isometric 菱形格。
+   * 家具的物理碰撞（障礙物）必須註冊在實際佔用的網格點上。
+   * 角色走動與路徑計算 (Pathfinding) 完全交由 `AStarGrid2D` 處理，徹底拔除基於畫面像素的亂數座標移動。
+3. **光影與 UI 融合 (Lighting & UI Integration)**：
+   * 使用 `CanvasModulate` 壓暗場景，家具自帶的光源作為主照明。
+   * UI 面板改為暗黑玻璃透視風格 (`Alpha 0.6` ~ `0.8`) 搭配霓虹字體，讓底層精心編排的等距像素世界能自然透出。
 
 ## 🎯 實作計畫 (Action Plan)
 
-### Step 1: 3D 世界地基重建 (Node3D & GridMap)
-*   **任務**: 清除所有 2D `TileMapLayer` 與 UI 偽場景，建立 `Node3D` 的世界根節點。
+### Step 1: 基礎網格與地基重建 (Grid & Foundation)
+*   **任務**: 清除所有舊的破爛牆壁腳本，重新建立乾淨的地基。
 *   **規格**:
-    *   在 `World` 節點下建立 `GridMap`，設定 Cell Size (例如 `2x2x2`)。
-    *   製作基礎的 `MeshLibrary` (包含地板與基礎牆體)。
-    *   透過 GDScript 腳本動態生成或鋪設 3D 辦公室格局。
+    *   在 `World` 節點下建立 `TileMapLayer`，設置為 Isometric 模式，Tile Size 為 128x64。
+    *   使用 `floor_tile.png` 鋪設出四個部門的地板區塊，區塊間以地板顏色或走道區分。
 
-### Step 2: HD-2D 角色與正交運鏡 (Sprite3D & Orthogonal Camera)
-*   **任務**: 將 2D 小人升級為 3D 空間實體，並掛載正交攝影機。
+### Step 2: 尋路與碰撞數學重構 (AStarGrid2D & Collision)
+*   **任務**: 重寫 `AgentRouter.gd` 與角色移動邏輯。
 *   **規格**:
-    *   將角色節點改為 `CharacterBody3D`。
-    *   外觀使用 `Sprite3D`，並設定 `billboard = BaseMaterial3D.BILLBOARD_FIXED_Y`，確保紙片人永遠面朝鏡頭但不會前後傾倒。
-    *   掛載 `Camera3D`，設定為 Orthogonal 投影，定位於斜上方並追蹤角色。
+    *   建立對齊 `TileMapLayer` 的 `AStarGrid2D` 實體。
+    *   把帶有碰撞的家具 (桌子、伺服器) 所佔據的格點標記為 `is_solid = true`。
+    *   角色移動時，嚴格沿著 AStar 計算出的網格路徑點 `map_to_local` 移動。
 
-### Step 3: 移動邏輯與 3D 尋路對齊 (3D Navigation)
-*   **任務**: 讓角色能在 3D 空間中順暢走動，且操作符合 2.5D 視覺直覺。
+### Step 3: Y-Sort 與物件放置 (Y-Sort Registration)
+*   **任務**: 讓角色能自然地繞過辦公桌與伺服器並被正確遮蔽。
 *   **規格**:
-    *   重寫輸入控制，將 WASD 方向依據 Camera 的 `basis` 轉換為 X-Z 平面移動。
-    *   （可選）導入 `AStar3D` 或 `NavigationRegion3D` 讓 Agent 角色能自動避障導航。
+    *   開啟 `YSortWorld` (Node2D) 的 `y_sort_enabled = true`。
+    *   確保所有角色與家具都位於此節點下，並微調原點偏移量 (Offset Y)，確保底部基準線正確對齊。
 
 ## 🛡️ 防翻供公證 (Anti-Flip-Flop Clause)
-本文件已確實記錄「HD-2D 3D正交架構」作為官方實作標準。禁止 Agent 退回任何基於「2D Node + Y-Sort 手動排版」或「Sprite2D 偽場景」的過時方案。所有空間遮擋必須 100% 交由 Godot 3D 引擎的 Z-buffer 物理處理，徹底根除小學生作業現象。
+本文件已確實記錄「無牆開放式架構」作為官方實作標準。禁止 Agent 以任何理由退回「程式碼拼接破牆」或「整圖流」等無法滿足 Tycoon 核心機制與現有素材極限的荒謬解法。所有重構必須奠基於嚴謹的網格數學之上。
