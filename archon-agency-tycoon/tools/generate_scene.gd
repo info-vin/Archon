@@ -33,12 +33,16 @@ func _init():
     world.name = "World2D"
     world.y_sort_enabled = true 
     
-    # 精準 24x24 網格 (包含 1格邊界 + 10x10部門 + 2格走道)
-    var GRID_SIZE = 24
+    # 精準 34x24 網格 
+    # X軸: 1(邊界) + 15(部門) + 2(走道) + 15(部門) + 1(邊界) = 34
+    # Y軸: 1(邊界) + 10(部門) + 2(走道) + 10(部門) + 1(邊界) = 24
+    var GRID_SIZE_X = 34
+    var GRID_SIZE_Y = 24
     
     if world_script:
         world.set_script(world_script)
-        world.set("grid_size", GRID_SIZE)
+        # 暫時把 grid_size 設成最大邊界，避免越界
+        world.set("grid_size", 34)
     
     var camera = Camera2D.new()
     camera.name = "Camera2D"
@@ -63,51 +67,53 @@ func _init():
     objects.owner = world
     
     # 攝影機置中
-    camera.position = floor_layer.position + floor_layer.map_to_local(Vector2i(11, 11))
+    camera.position = floor_layer.position + floor_layer.map_to_local(Vector2i(17, 12))
     
     # 鋪設 1:1 精準地板
-    for x in range(GRID_SIZE):
-        for y in range(GRID_SIZE):
+    for x in range(GRID_SIZE_X):
+        for y in range(GRID_SIZE_Y):
             var tile_id = 0
-            if x == 0 or x == GRID_SIZE - 1 or y == 0 or y == GRID_SIZE - 1: 
-                tile_id = 4 # 1格最外圍地毯
-            elif (x == 11 or x == 12) or (y == 11 or y == 12): 
-                tile_id = 4 # 2格十字走道
-            elif x >= 1 and x <= 10 and y >= 1 and y <= 10: 
-                tile_id = 0 # 綠區 10x10
-            elif x >= 13 and x <= 22 and y >= 1 and y <= 10: 
-                tile_id = 3 # 橘區 10x10
-            elif x >= 1 and x <= 10 and y >= 13 and y <= 22: 
-                tile_id = 2 # 藍區 10x10
-            elif x >= 13 and x <= 22 and y >= 13 and y <= 22: 
-                tile_id = 1 # 紅區 10x10
+            if x == 0 or x == GRID_SIZE_X - 1 or y == 0 or y == GRID_SIZE_Y - 1: 
+                tile_id = 4 # 外圍地毯
+            elif (x == 16 or x == 17) and y > 0 and y < GRID_SIZE_Y - 1: 
+                tile_id = 4 # 垂直走道
+            elif (y == 11 or y == 12) and x > 0 and x < GRID_SIZE_X - 1: 
+                tile_id = 4 # 水平走道
+            elif x >= 1 and x <= 15 and y >= 1 and y <= 10: 
+                tile_id = 0 # 綠區 15x10
+            elif x >= 18 and x <= 32 and y >= 1 and y <= 10: 
+                tile_id = 3 # 橘區 15x10
+            elif x >= 1 and x <= 15 and y >= 13 and y <= 22: 
+                tile_id = 2 # 藍區 15x10
+            elif x >= 18 and x <= 32 and y >= 13 and y <= 22: 
+                tile_id = 1 # 紅區 15x10
                 
             floor_layer.set_cell(Vector2i(x, y), tile_id, Vector2i(0, 0))
             
     # --- 1:1 像素級精準放置家具 ---
     
-    # Green Zone
-    place_object(objects, floor_layer, Vector2i(7, 6), "desk_se")
-    place_object(objects, floor_layer, Vector2i(8, 6), "chair_nw")
+    # Green Zone (15x10)
+    place_object(objects, floor_layer, Vector2i(12, 6), "desk_se")
+    place_object(objects, floor_layer, Vector2i(13, 6), "chair_nw")
     
-    # Orange Zone
-    place_object(objects, floor_layer, Vector2i(16, 6), "desk_sw")
-    place_object(objects, floor_layer, Vector2i(16, 7), "chair_ne")
-    place_object(objects, floor_layer, Vector2i(19, 6), "desk_sw")
-    place_object(objects, floor_layer, Vector2i(19, 7), "chair_ne")
-    place_object(objects, floor_layer, Vector2i(20, 2), "server_rack_se")
+    # Orange Zone (15x10)
+    place_object(objects, floor_layer, Vector2i(21, 6), "desk_sw")
+    place_object(objects, floor_layer, Vector2i(21, 7), "chair_ne")
+    place_object(objects, floor_layer, Vector2i(24, 6), "desk_sw")
+    place_object(objects, floor_layer, Vector2i(24, 7), "chair_ne")
+    place_object(objects, floor_layer, Vector2i(30, 2), "server_rack_se")
     
-    # Blue Zone
+    # Blue Zone (15x10)
     place_object(objects, floor_layer, Vector2i(3, 16), "server_rack_se")
     place_object(objects, floor_layer, Vector2i(3, 17), "server_rack_se")
     place_object(objects, floor_layer, Vector2i(3, 18), "server_rack_se")
     
-    # Red Zone
-    place_object(objects, floor_layer, Vector2i(16, 18), "sofa_sw")
-    place_object(objects, floor_layer, Vector2i(17, 18), "sofa_sw")
-    place_object(objects, floor_layer, Vector2i(15, 18), "side_cabinet_se")
-    place_object(objects, floor_layer, Vector2i(18, 18), "side_cabinet_se")
-    place_object(objects, floor_layer, Vector2i(20, 16), "vending_machine_sw")
+    # Red Zone (15x10)
+    place_object(objects, floor_layer, Vector2i(21, 18), "sofa_sw")
+    place_object(objects, floor_layer, Vector2i(22, 18), "sofa_sw")
+    place_object(objects, floor_layer, Vector2i(20, 18), "side_cabinet_se")
+    place_object(objects, floor_layer, Vector2i(23, 18), "side_cabinet_se")
+    place_object(objects, floor_layer, Vector2i(25, 16), "vending_machine_sw")
 
     for child in objects.get_children():
         child.owner = world
