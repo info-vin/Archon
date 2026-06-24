@@ -60,13 +60,6 @@ class RAGService(BaseRepository):
         # Initialize reranking strategy based on settings
         self.reranking_strategy = None
         use_reranking = self.get_bool_setting("USE_RERANKING", False)
-        
-        # Phase 5.7.4 (Audit Fix): Strict container isolation check
-        # Force disable reranking if ONNX runtime is physically missing (e.g., in server container)
-        # This cuts the error path early and prevents log spamming under high concurrency.
-        from .reranking_strategy import ONNX_AVAILABLE
-        if use_reranking and not ONNX_AVAILABLE:
-            use_reranking = False
 
         if use_reranking:
             # Physical Optimization: Use the singleton to avoid 15s loading delay

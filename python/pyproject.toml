@@ -69,15 +69,15 @@ server = [
     "lxml>=5.4.0",
     "APScheduler>=3.10.0",
     "pydantic-ai==1.44.0",
-]
-
-# Optional reranking dependencies for server (Moved to agents service in Phase 4.6.28)
-server-reranking = [
+    # ML Reranking (Phase 5.7.4: Restored to server as lightweight ONNX)
     "numpy==1.26.4",
     "onnxruntime>=1.17.0,<1.20.0",
     "huggingface-hub>=0.23.0",
     "transformers==4.44.2",
 ]
+
+# Optional reranking dependencies for server (Deprecated in Phase 5.7.4 as ONNX is now in server)
+server-reranking = []
 
 # MCP container dependencies (Hardened for Phase 4.6.28 - Fully grounded)
 mcp = [
