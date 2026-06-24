@@ -110,13 +110,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026年6月24日：架構初衷糾偏與 Reranker 物理歸位 (Phase 5.7.4 延續)
-今日核心教訓是「**切勿依賴錯誤的前提進行盲目隔離**」。在處理高併發下的 `ConnectionTerminated` 問題時，我起初錯誤判斷將 `onnxruntime` 視為必須隔離在代理容器的套件，從而在伺服器端強制禁用了重排功能（方案 A），這直接導致了 Phase 5.7.4 「無痛恢復 0 API 成本重排能力」的初衷破滅。
+### 2026年6月24日：架構初衷糾偏、Duck-Typing 測試防護與 HF 環境字元陷阱 (Phase 5.7.4 延續)
+今日經歷了多個深度的除錯迴圈，核心教訓是「**切勿依賴錯誤的前提進行盲目隔離**」與「**永遠對外部環境變數保持防禦性懷疑**」。
 
 **核心決策與技術實踐**:
 1.  **打臉與糾偏 (Architectural Correction)**: 經過使用者的嚴厲指正與深入對比 `Phase_5.7.4_ONNX_Reranker.md`，我意識到替換 PyTorch 為 ONNX 的**真正目的**正是因為它極度輕量 (~150MB)，足以且**必須**放回 `server` 容器中。
-2.  **依賴物理歸位 (Dependency Restoration)**: 撤銷了 `rag_service.py` 中的強制禁用邏輯，並將 `onnxruntime` 等依賴從廢棄的 `server-reranking` 群組正式搬回 `pyproject.toml` 的 `server` 核心群組。
-3.  **連線抖動根除 (Connection Jitter Eradication)**: 隨著 ONNX 依賴歸位，`rag_service.py` 不再因為 `ImportError` 而瘋狂觸發 `WARNING` 日誌。這徹底消除了高併發下處理路徑的阻塞，拔除了放大 Supabase 連線抖動的病灶，一舉解決了困擾已久的網路中斷與 RAG 品質低落的雙重問題。
+2.  **依賴物理歸位與連線自癒 (Dependency Restoration & Network Resilience)**: 將 `onnxruntime` 正式搬回 `server` 核心群組。同時為 `ReportService` 引入 `BaseRepository.execute_query` 防護網，徹底解決了高併發與休眠喚醒下 Supabase `ConnectionTerminated` 的連線斷崖問題。
+3.  **動態型別與測試公證 (Duck-Typing & Test Hardening)**: 放棄了僵化的 `isinstance(..., list)` 檢查，改採 Pythonic 的 EAFP (Easier to Ask for Forgiveness than Permission) 模式 (`try-except`)。這不僅解決了 Mypy 的嚴格索引檢查報錯，也完美兼容了測試環境中 `MagicMock` 無法通過型別判斷的陷阱。
+4.  **HF 字元陷阱與標頭防護 (Unicode Encoding Trap)**: 解決了 HF Spaces 啟動時 `huggingface_hub` 因 `http.client` 標頭編碼引發的 `UnicodeEncodeError (\u3112)` 崩潰。經追查，兇手竟是使用者在貼上 `HF_TOKEN` 或設定 HF 參數時，不小心混入了注音「ㄒ」。我們為此加入了環境變數遮蔽機制，強行免疫了這類輸入法意外。
 ### 2026年6月23日：排程器韌性升級與 L2 前端模組化重構
 今日核心任務是解決 HF 空閒代理導致的 HTTP/2 `ConnectionTerminated` 錯誤，並徹底落實巨型檔案的減重。
 

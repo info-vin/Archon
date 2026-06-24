@@ -666,6 +666,22 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 2.  **模組匯入錯誤**: 若日誌顯示 `ModuleNotFoundError: No module named 'src.server.agents'`，需將 `main.py` 中的相對匯入修正為絕對路徑或正確的相對層級 (例如 `from ..agents` 而非 `from .agents`)。
 3.  **Supabase 連線異常**: 確保 `SUPABASE_SERVICE_KEY` 具備 `service_role` 權限且未過期。
 
+### 6.4 Hugging Face 環境字元陷阱 (UnicodeEncodeError) & Secrets 注意事項
+
+**症狀**: 部署至 Hugging Face Spaces 後，伺服器啟動失敗或 ONNX Reranker 無法載入，日誌顯示：
+`UnicodeEncodeError: 'latin-1' codec can't encode character '\u3112' in position 44: ordinal not in range(256)`
+
+**根源解析**:
+這是台灣 Mac 開發者最常踩的「注音輸入法剪貼簿陷阱」！
+`\u3112` 是注音符號「ㄒ」的 Unicode。當您在 Hugging Face 的 Settings -> Secrets 貼上 `HF_TOKEN` 時，若當時輸入法處於注音模式，按下 `Cmd + V` 卻沒按好 `Cmd`，就會在金鑰最尾端多打出一個「ㄒ」（鍵盤 V 鍵在注音對應ㄒ）。
+這會導致伺服器在使用 `huggingface_hub` 套件發送 HTTP Authorization 標頭時，`http.client` 因無法編碼「ㄒ」為 `latin-1` 而發生致命崩潰。
+
+**解決方案**:
+1. 回到 Hugging Face 的 Space Settings -> Secrets。
+2. 將輸入法切換為「純英文」狀態。
+3. 將包含錯誤字元的 `HF_TOKEN` 刪除，重新複製貼上乾淨的金鑰並儲存，Hugging Face 將會自動重啟 Space。
+*(註：目前系統層已加入對部分 HF 內建環境變數如 `SPACE_TITLE` 包含非英數字元的防護，但開發者仍須確保手動填寫的 Secrets 純淨無污染。)*
+
 ---
 
 ## 附錄 A：系統分析 (System Analysis)
