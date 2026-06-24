@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/World3D.gd" id="1_w0my1"]
+[ext_resource type="MeshLibrary" path="res://Assets/Rooms/isometric/HD2D_MeshLibrary.tres" id="2_vf2hr"]
+
+[node name="World3D" type="Node3D" unique_id=1763222593]
+script = ExtResource("1_w0my1")
+
+[node name="GridMap" type="GridMap" parent="." unique_id=1592623244]
+mesh_library = ExtResource("2_vf2hr")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1795557309]
+transform = Transform3D(0.70710677, -0.49999997, 0.49999997, 0, 0.70710677, 0.70710677, -0.70710677, -0.49999997, 0.49999997, 0, 0, 0)
+light_color = Color(0.8, 0.9, 1, 1)
+light_energy = 0.8
+shadow_enabled = true
