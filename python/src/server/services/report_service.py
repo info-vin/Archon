@@ -148,7 +148,7 @@ class ReportService(BaseRepository):
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
                 "Failed to get charlie's id"
             )
-            charlie_data = charlie_res.get("data") if success else []
+            charlie_data = charlie_res.get("data", []) if success else []
             try:
                 assignee_id = charlie_data[0]["id"]
             except (IndexError, KeyError, TypeError):
@@ -239,7 +239,7 @@ class ReportService(BaseRepository):
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
                 "Failed to get charlie's id"
             )
-            charlie_data = charlie_res.get("data") if success else []
+            charlie_data = charlie_res.get("data", []) if success else []
             try:
                 assignee_id = charlie_data[0]["id"]
             except (IndexError, KeyError, TypeError):
@@ -320,7 +320,7 @@ class ReportService(BaseRepository):
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
                 "Failed to get charlie's id"
             )
-            charlie_data = charlie_res.get("data") if success else []
+            charlie_data = charlie_res.get("data", []) if success else []
             try:
                 assignee_id = charlie_data[0]["id"]
             except (IndexError, KeyError, TypeError):
