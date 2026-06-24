@@ -336,9 +336,12 @@ server = [
     { name = "fastapi" },
     { name = "google-genai" },
     { name = "httpx" },
+    { name = "huggingface-hub" },
     { name = "logfire" },
     { name = "lxml" },
     { name = "markdown" },
+    { name = "numpy" },
+    { name = "onnxruntime" },
     { name = "openai" },
     { name = "pdfplumber" },
     { name = "psycopg2-binary" },
@@ -354,14 +357,9 @@ server = [
     { name = "python-multipart" },
     { name = "slowapi" },
     { name = "supabase" },
+    { name = "transformers" },
     { name = "uvicorn" },
     { name = "watchfiles" },
-]
-server-reranking = [
-    { name = "huggingface-hub" },
-    { name = "numpy" },
-    { name = "onnxruntime" },
-    { name = "transformers" },
 ]
 
 [package.metadata]
@@ -467,9 +465,12 @@ server = [
     { name = "fastapi", specifier = ">=0.104.0" },
     { name = "google-genai", specifier = ">=0.3.0" },
     { name = "httpx", specifier = ">=0.24.0" },
+    { name = "huggingface-hub", specifier = ">=0.23.0" },
     { name = "logfire", specifier = ">=0.30.0" },
     { name = "lxml", specifier = ">=5.4.0" },
     { name = "markdown", specifier = ">=3.8" },
+    { name = "numpy", specifier = "==1.26.4" },
+    { name = "onnxruntime", specifier = ">=1.17.0,<1.20.0" },
     { name = "openai", specifier = "==2.37.0" },
     { name = "pdfplumber", specifier = ">=0.11.6" },
     { name = "psycopg2-binary", specifier = ">=2.9.9" },
@@ -485,15 +486,11 @@ server = [
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "slowapi", specifier = ">=0.1.9" },
     { name = "supabase", specifier = "==2.15.1" },
+    { name = "transformers", specifier = "==4.44.2" },
     { name = "uvicorn", specifier = ">=0.24.0" },
     { name = "watchfiles", specifier = ">=0.18" },
 ]
-server-reranking = [
-    { name = "huggingface-hub", specifier = ">=0.23.0" },
-    { name = "numpy", specifier = "==1.26.4" },
-    { name = "onnxruntime", specifier = ">=1.17.0,<1.20.0" },
-    { name = "transformers", specifier = "==4.44.2" },
-]
+server-reranking = []
 
 [[package]]
 name = "argcomplete"

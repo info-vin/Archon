@@ -8,11 +8,11 @@ from typing import Any
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AgentUUIDs
-from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
 from src.server.repositories.base_repository import BaseRepository
+
 
 class ReportService(BaseRepository):
     def __init__(self, supabase_client=None):
