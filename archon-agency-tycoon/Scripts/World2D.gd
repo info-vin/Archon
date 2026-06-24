@@ -70,9 +70,9 @@ func _ready():
     y_sort_enabled = true
     objects_node.y_sort_enabled = true
     
-    setup_floor()
     setup_astar()
-    build_office_layout()
+    # 由於我們已經將場景透過 GDScript 寫入到 World2D.tscn 存檔
+    # 所以不需要在執行時重複產生家具與地板了！您在編輯器看到的，就是遊戲實際畫面。
 
 # ---------------------------------------------------------
 # 1. 右上角透視修正與網格鎖定 (snap_to_grid)
