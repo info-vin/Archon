@@ -49,5 +49,16 @@
     *   開啟 `YSortWorld` (Node2D) 的 `y_sort_enabled = true`。
     *   確保所有角色與家具都位於此節點下，並微調原點偏移量 (Offset Y)，確保底部基準線正確對齊。
 
+### Step 4: 素材補完與比例校準 (Asset Completion & Scale Calibration) [進度更新]
+*   **目前進度 (Status)**:
+    *   已透過 Python 腳本完成舊有家具的鏡像翻轉 (產生 `_SE` 朝向)。
+    *   已透過 Python 色相偏移完成四部門彩色地板 (`floor_tile_red/blue/orange.png`)。
+    *   已結合 AI 生成與 Python 裁切去背，自動產出新的賽博龐克物件 (咖啡機、販賣機)。
+    *   已成功用 `World2D` 與 `TileMapLayer` 拼圖並透過截圖確認程式拼接邏輯無誤。
+*   **待辦任務 (Pending Actions)**:
+    1.  **尺寸校準 (Scale Calibration)**: AI 產出的素材 (如咖啡機) 以及舊家具在網格上的比例與目標 Mock 圖存在落差，需要進一步統整 Sprite 的 Scale 或重新規範邏輯框架大小。
+    2.  **背景底圖融合 (Background Integration)**: 將精細繪製的背景圖 (Background) 墊入 `CanvasLayer` 或底層 `ParallaxBackground`，以填補目前素材不足的空白區域，提升整體賽博龐克氛圍。
+    3.  **大量素材擴充 (Asset Expansion)**: 目前素材庫品項仍遠小於 Mock 圖的豐富度，需要持續建立更多辦公道具與隔間細節。
+
 ## 🛡️ 防翻供公證 (Anti-Flip-Flop Clause)
 本文件已確實記錄「無牆開放式架構」作為官方實作標準。禁止 Agent 以任何理由退回「程式碼拼接破牆」或「整圖流」等無法滿足 Tycoon 核心機制與現有素材極限的荒謬解法。所有重構必須奠基於嚴謹的網格數學之上。

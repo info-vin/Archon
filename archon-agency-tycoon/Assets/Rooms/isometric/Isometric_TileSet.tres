@@ -1,13 +1,34 @@
 [gd_resource type="TileSet" format=3]
 
-[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile.png" id="1_xssq2"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile.png" id="1_44l76"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_red.png" id="2_pfwly"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_blue.png" id="3_ya6ds"]
+[ext_resource type="Texture2D" path="res://Assets/Rooms/isometric/floor_tile_orange.png" id="4_1p7jv"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fdyo6"]
-texture = ExtResource("1_xssq2")
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7eoed"]
+texture = ExtResource("1_44l76")
+texture_region_size = Vector2i(128, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3v6fe"]
+texture = ExtResource("2_pfwly")
+texture_region_size = Vector2i(128, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pf6yc"]
+texture = ExtResource("3_ya6ds")
+texture_region_size = Vector2i(128, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qlcu0"]
+texture = ExtResource("4_1p7jv")
 texture_region_size = Vector2i(128, 64)
 0:0/0 = 0
 
 [resource]
 tile_shape = 1
 tile_size = Vector2i(128, 64)
-sources/0 = SubResource("TileSetAtlasSource_fdyo6")
+sources/0 = SubResource("TileSetAtlasSource_7eoed")
+sources/1 = SubResource("TileSetAtlasSource_3v6fe")
+sources/2 = SubResource("TileSetAtlasSource_pf6yc")
+sources/3 = SubResource("TileSetAtlasSource_qlcu0")
