@@ -60,9 +60,20 @@ class RerankingStrategy:
 
         try:
             logger.info(f"Loading ONNX Reranker: {self.model_name}")
-            onnx_file = hf_hub_download(repo_id=self.model_name, filename="onnx/model_quantized.onnx")
-            self.session = ort.InferenceSession(onnx_file, providers=['CPUExecutionProvider'])
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            import os
+            # Sanitize HF Space environment variables that might contain non-ASCII characters
+            # which breaks http.client latin-1 header encoding
+            hf_env_keys = ["SPACE_TITLE", "SPACE_AUTHOR_NAME", "SPACE_REPO_NAME"]
+            safe_env = {k: os.environ.pop(k) for k in hf_env_keys if k in os.environ}
+            
+            try:
+                onnx_file = hf_hub_download(repo_id=self.model_name, filename="onnx/model_quantized.onnx")
+                self.session = ort.InferenceSession(onnx_file, providers=['CPUExecutionProvider'])
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            finally:
+                for k, v in safe_env.items():
+                    os.environ[k] = v
+                    
             logger.info("ONNX Reranker loaded successfully.")
         except Exception as e:
             logger.error(f"Failed to load ONNX Reranker: {e}", exc_info=True)
