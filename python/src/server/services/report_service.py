@@ -7,11 +7,10 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from src.server.config.logfire_config import get_logger
+from src.server.repositories.base_repository import BaseRepository
 from src.server.services.shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
-
-from src.server.repositories.base_repository import BaseRepository
 
 
 class ReportService(BaseRepository):
@@ -149,10 +148,20 @@ class ReportService(BaseRepository):
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
                 "Failed to get charlie's id"
             )
-            assignee_id = charlie_res.get("data")[0]["id"] if success and charlie_res.get("data") else AgentUUIDs.SUPERVISOR
+            charlie_data = charlie_res.get("data") if success else []
+            try:
+                assignee_id = charlie_data[0]["id"]
+            except (IndexError, KeyError, TypeError):
+                assignee_id = AgentUUIDs.SUPERVISOR
+
+            p_data = p_res.get("data", [])
+            try:
+                p_id = p_data[0]["id"]
+            except (IndexError, KeyError, TypeError):
+                p_id = ""
 
             success, tr = await task_service.create_task(
-                project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=assignee_id
+                project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
             )
             if success:
                 logger.info(
@@ -211,13 +220,15 @@ class ReportService(BaseRepository):
             output = run_result.output if hasattr(run_result, "output") else run_result
 
             # 3. Save to DB as a completed Task
+            # Get internal project ID
             supabase = self.supabase_client
             success, p_res = self.execute_query(
-                lambda: supabase.table("archon_projects").select("id").limit(1).execute(),
-                "Failed to get projects"
+                lambda: supabase.table("projects").select("id").limit(1).execute(),
+                "Failed to get internal project",
+                require_data=True
             )
             if not success or not p_res.get("data"):
-                logger.warning("ReportService: No projects found to attach weekly summary task.")
+                logger.warning("ReportService: No internal project found to attach weekly summary task.")
                 return
 
             task_title = f"[Weekly Report] Executive Summary ({datetime.now().strftime('%Y-%m-%d')})"
@@ -228,10 +239,20 @@ class ReportService(BaseRepository):
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
                 "Failed to get charlie's id"
             )
-            assignee_id = charlie_res.get("data")[0]["id"] if success and charlie_res.get("data") else AgentUUIDs.SUPERVISOR
+            charlie_data = charlie_res.get("data") if success else []
+            try:
+                assignee_id = charlie_data[0]["id"]
+            except (IndexError, KeyError, TypeError):
+                assignee_id = AgentUUIDs.SUPERVISOR
+
+            p_data = p_res.get("data", [])
+            try:
+                p_id = p_data[0]["id"]
+            except (IndexError, KeyError, TypeError):
+                p_id = ""
 
             success, tr = await task_service.create_task(
-                project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=assignee_id
+                project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
             )
             if success:
                 await task_service.update_task(tr["task"]["id"], {"status": "done"})
@@ -299,10 +320,20 @@ class ReportService(BaseRepository):
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
                 "Failed to get charlie's id"
             )
-            assignee_id = charlie_res.get("data")[0]["id"] if success and charlie_res.get("data") else AgentUUIDs.SUPERVISOR
+            charlie_data = charlie_res.get("data") if success else []
+            try:
+                assignee_id = charlie_data[0]["id"]
+            except (IndexError, KeyError, TypeError):
+                assignee_id = AgentUUIDs.SUPERVISOR
+
+            p_data = p_res.get("data", [])
+            try:
+                p_id = p_data[0]["id"]
+            except (IndexError, KeyError, TypeError):
+                p_id = ""
 
             success, tr = await task_service.create_task(
-                project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=assignee_id
+                project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
             )
             if success:
                 await task_service.update_task(tr["task"]["id"], {"status": "done"})

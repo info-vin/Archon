@@ -8,7 +8,7 @@ from src.server.services.report_service import report_service
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.services.agent_service.agent_service", new_callable=AsyncMock)
-@patch("src.server.services.report_service.get_supabase_client")
+@patch("src.server.repositories.base_repository.get_supabase_client")
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
 async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabase, mock_agent_service, mock_task_service):
     """
@@ -18,7 +18,7 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
     mock_gather.return_value = "Mocked Context for Daily"
 
     mock_supabase = MagicMock()
-    mock_get_supabase.return_value = mock_supabase
+    report_service.supabase_client = mock_supabase
 
     mock_p_res = MagicMock()
     mock_p_res.data = [{"id": "test-project-123"}]
@@ -44,7 +44,7 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
-@patch("src.server.services.report_service.get_supabase_client")
+@patch("src.server.repositories.base_repository.get_supabase_client")
 @patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
 async def test_run_weekly_executive_summary_success(mock_gather, mock_beta_graph, mock_get_supabase, mock_task_service):
@@ -60,7 +60,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_beta_graph
     mock_beta_graph.run.return_value = MockResult("Mocked Weekly Map-Reduce Output")
 
     mock_supabase = MagicMock()
-    mock_get_supabase.return_value = mock_supabase
+    report_service.supabase_client = mock_supabase
 
     mock_p_res = MagicMock()
     mock_p_res.data = [{"id": "test-project-123"}]
@@ -90,7 +90,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_beta_graph
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
-@patch("src.server.services.report_service.get_supabase_client")
+@patch("src.server.repositories.base_repository.get_supabase_client")
 @patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
 async def test_run_monthly_executive_summary_success(mock_gather, mock_beta_graph, mock_get_supabase, mock_task_service):
@@ -106,7 +106,7 @@ async def test_run_monthly_executive_summary_success(mock_gather, mock_beta_grap
     mock_beta_graph.run.return_value = MockResult("Mocked Monthly Map-Reduce Output")
 
     mock_supabase = MagicMock()
-    mock_get_supabase.return_value = mock_supabase
+    report_service.supabase_client = mock_supabase
 
     mock_p_res = MagicMock()
     mock_p_res.data = [{"id": "test-project-123"}]
@@ -132,14 +132,14 @@ async def test_run_monthly_executive_summary_success(mock_gather, mock_beta_grap
     assert "Mocked Monthly Map-Reduce Output" in call_kwargs["description"]
 
 @pytest.mark.asyncio
-@patch("src.server.services.report_service.get_supabase_client")
+@patch("src.server.repositories.base_repository.get_supabase_client")
 async def test_gather_report_context_queries(mock_get_supabase):
     """
     Test that gather_report_context correctly constructs and executes queries
     on leads, token_usage, archon_logs, and archon_tasks.
     """
     mock_supabase = MagicMock()
-    mock_get_supabase.return_value = mock_supabase
+    report_service.supabase_client = mock_supabase
 
     mock_res_leads = MagicMock()
     mock_res_leads.data = [{"company_name": "Google", "job_title": "SWE", "status": "active"}]
