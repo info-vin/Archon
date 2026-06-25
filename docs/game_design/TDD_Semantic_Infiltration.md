@@ -164,13 +164,28 @@ $$;
 *   **Prompt**: `A high-tech server rack interface, empty glowing motherboard RAM slots, cyberpunk aesthetic, dark metallic textures, neon green indicator lights, retro CRT monitor elements, UI design, flat front-facing perspective, highly detailed, transparent background layout, aspect ratio 16:9`
 *   **實作方式**: 裁切圖像後，作為玩家的 Context Window（手牌區）插槽背景底圖。
 
-### 5.3 數據晶片卡牌 (Data Chips)
+### 5.3 數據晶片與行動卡牌 (Data Chips & Action Cards)
+為了與第 2、3 節的核心機制完全對齊，卡牌視覺分為「檢索回來的數據晶片」與「玩家打出的行動卡」兩大類：
+
+#### 5.3.1 檢索數據晶片 (Retrieved Data Chips)
+出現在 Context Window (手牌區)，代表從資料庫撈出的 Chunk。
 *   **🟢 黃金命中晶片 (Target Chunk)**
-    *   **Prompt**: `A futuristic rectangular data chip, glowing neon green circuit board lines, 16-bit pixel art style mixed with high-tech materials, holographic text projecting, clean cyberpunk aesthetic, aspect ratio 2:3`
+    *   **Prompt**: `A futuristic rectangular data chip, glowing neon green circuit board lines, holographic text projecting "MATCH", clean cyberpunk aesthetic, aspect ratio 2:3`
 *   **🔴 紅幽靈雜訊晶片 (False Positive)**
-    *   **Prompt**: `A corrupted dark rectangular data chip, rust red and crimson glowing edges, digital glitch effects, torn circuits, menacing virus aesthetic, cyberpunk pixel art hybrid, aspect ratio 2:3`
-*   **⚡ 武器/工具卡 (Weapon Tool)**
-    *   **Prompt**: `A tactical high-performance data drive card, laser purple and cyan glowing edges, sleek metallic casing, plasma energy core, cyberpunk hacker tool aesthetic, aspect ratio 2:3`
+    *   **Prompt**: `A corrupted dark rectangular data chip, rust red and crimson glowing edges, digital glitch effects, torn circuits, menacing virus aesthetic, aspect ratio 2:3`
+
+#### 5.3.2 玩家行動卡 (Player Action Cards)
+玩家用於操作檢索策略的技能卡。
+*   **🔫 BM25 關鍵字實彈卡 (Keyword Search)**
+    *   **Prompt**: `A tactical cyberpunk ability card, metallic grey and orange aesthetic, showing a sniper crosshair locking onto data text, mechanical and precise, retro-arcade style, aspect ratio 2:3`
+*   **☄️ Dense 向量雷射卡 (Dense Search)**
+    *   **Prompt**: `A dynamic sci-fi ability card, shooting a massive glowing cyan laser beam through a matrix of numbers, high energy, neon vaporwave aesthetic, aspect ratio 2:3`
+*   **🛡️ Reranker 電漿護盾卡 (Rerank/Filter)**
+    *   **Prompt**: `A defensive cyberpunk ability card, showing a glowing hexagonal energy shield repelling red corrupted data bugs, glowing blue forcefield, high tech, aspect ratio 2:3`
+*   **🗜️ Matryoshka 降維壓縮卡 (Dimension Shrink)**
+    *   **Prompt**: `A futuristic ability card, showing a glowing holographic cube folding and compressing into a smaller hypercube, neon purple and green, physics manipulation aesthetic, aspect ratio 2:3`
+*   **🕸️ 知識圖譜連鎖卡 (GraphRAG Navigation)**
+    *   **Prompt**: `A network-themed ability card, showing glowing nodes and laser fiber-optic connections forming a constellation, data networking, neon blue and gold, cybernetic web, aspect ratio 2:3`
 
 ---
 
