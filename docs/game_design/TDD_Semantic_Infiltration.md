@@ -73,6 +73,24 @@ sequenceDiagram
 
 **最終結算（LLM 交付）**：手牌純度越高（綠色 Target 卡多，紅色雜訊卡為 0），觸發的 LLM 生成 Combo 傷害越高。若混入紅色雜訊卡，直接扣除玩家血量並判定【模型幻覺崩潰 (Hallucination)】。
 
+### 2.3 核心戰鬥數學驗證公式 (Combat Math Validation Formulas)
+為了確保 TDD 腳本能進行精確的斷言 (Assert)，以下是 Godot Model 層必須實作的嚴格數學公式：
+
+1.  **上下文純淨度 (Context Purity, $P$)**:
+    $$P = \frac{\text{黃金命中晶片數量}}{\text{手牌區 (Context Window) 總晶片數}}$$
+2.  **LLM 交付傷害 (Delivery Damage, $D$)**:
+    當按下「交付」時，對目標危機造成的解決分數 (傷害)：
+    $$D = (\text{基礎火力 } 1000) \times P \times \text{連鎖乘數}$$
+    *(註：若觸發 GraphRAG 連鎖卡，連鎖乘數為 $1.5$，否則為 $1.0$)*
+3.  **幻覺反噬懲罰 (Hallucination Penalty)**:
+    若交付時 $P < 1.0$ (即手牌中包含「紅幽靈雜訊晶片」)，交付傷害 $D$ 強制歸零，且玩家直接受到反噬：
+    $$\text{玩家受傷} = (\text{紅幽靈晶片數量}) \times 500 \text{ HP}$$
+4.  **算力消耗 (AP Cost)**:
+    玩家每回合初始 AP = 5。
+    *   BM25 實彈卡：消耗 1 AP
+    *   Dense 向量雷射卡：消耗 2 AP
+    *   Reranker 電漿護盾卡：消耗 3 AP (極度耗能，需謹慎使用)
+
 ---
 
 ## 3. 產業主題劇本與現實反思機制 (Scenario Campaigns & Post-Mortem Feedback)
