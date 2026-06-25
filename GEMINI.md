@@ -110,6 +110,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026年6月25日：自動化並發防護驗證與死碼清除
+今日核心任務是清除前端死碼，並針對 Hugging Face Serverless 環境下的高並發自動化任務進行了深度的日誌與機制驗證，釐清了系統級防護網的正確運作方式。
+
+**核心決策與技術實踐**:
+1.  **死碼物理清除 (Dead Code Elimination)**: 經過全域引用分析，確認 `DiffViewer.tsx` 為完全隔離的幽靈元件。果斷將其移除以降低維護成本與潛在的依賴負擔。
+2.  **極端環境自癒驗證 (System Resilience Validation)**: 深入分析了 HF 容器因休眠產生的 `time_t` 溢位，以及空閒被中斷的 Supabase 連線 (`ConnectionTerminated`)。確認我們之前部署的 `BaseRepository.execute_query` 底層重試防護網成功發揮作用，讓 System Probe 能夠在斷線後自動重建連線並順利過關 (`System Probe Passed`)。
+3.  **自動化並發與限流對帳 (Automation Concurrency & Throttling)**: 糾正了將「瞬間密集 RAG 查詢」誤判為死循環的假設。經原始碼查證，確認這正是自動化任務（如 Map-Reduce 星環）追求的**無鎖並發極速**。前置的 RAG 查詢平行完成，而後續昂貴的 LLM 呼叫則被 `GlobalThrottler` 優雅地以 `asyncio.sleep` 持鎖序列化排隊 (Serialized Queuing)。這完美達成了「發揮最大並發效能同時防禦 429 災難」的自動化初衷。
+
 ### 2026年6月24日：架構初衷糾偏、Duck-Typing 測試防護與 HF 環境字元陷阱 (Phase 5.7.4 延續)
 今日經歷了多個深度的除錯迴圈，核心教訓是「**切勿依賴錯誤的前提進行盲目隔離**」與「**永遠對外部環境變數保持防禦性懷疑**」。
 
