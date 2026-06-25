@@ -1,4 +1,4 @@
-# Phase 5.8.0: Semantic Infiltration - 實作與防禦性驗證計畫 (Implementation & Validation Plan)
+# Phase 5.8.0: Recontextualization - 實作與防禦性驗證計畫 (Implementation & Validation Plan)
 
 > **核心原則：拒絕樂觀路徑 (No Happy Path)**
 > 任何跨網路、跨服務的架構，在被實體程式碼證明可行之前，皆視為「必定失敗」。在進入 Godot 視覺與遊戲邏輯開發前，必須先以 Python Probe 腳本貫穿整條基礎架構序列。

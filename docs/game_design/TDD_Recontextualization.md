@@ -1,8 +1,8 @@
-# Technical Design Document (TDD): Semantic Infiltration
+# Technical Design Document (TDD): Recontextualization
 
 ```text
 =============================================================================
-                  Archon: Semantic Infiltration (Godot 4.3)
+                  Archon: Recontextualization (Godot 4.3)
                   "Hybrid RAG Deck-builder" Architecture
 =============================================================================
 ```
@@ -235,7 +235,7 @@ $$;
 為了徹底貫徹 0 元邊緣計算與 Godot MVC 解耦，專案目錄結構設計如下：
 
 archon/
-├── archon-semantic-infiltration/       # Godot 4.3 卡牌遊戲客戶端
+├── recontextualization/                # Godot 4.3 卡牌遊戲客戶端
 │   ├── project.godot
 │   ├── assets/                         # 16-bit Cyber-Matrix 美術與音效資源
 │   ├── src/
