@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat(undefined);
+
 const BlogPage: React.FC = () => {
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
@@ -60,7 +63,7 @@ const BlogPage: React.FC = () => {
                                             <p className="text-muted-foreground mb-4 flex-grow line-clamp-3 leading-relaxed">{post.excerpt}</p>
                                             <div className="flex items-center justify-between text-sm text-muted-foreground mt-auto pt-4 border-t border-border">
                                                 <span className="font-medium">{post.authorName}</span>
-                                                <time dateTime={post.publishDate}>{new Date(post.publishDate).toLocaleDateString()}</time>
+                                                <time dateTime={post.publishDate}>{dateFormatter.format(new Date(post.publishDate))}</time>
                                             </div>
                                         </div>
                                     </Link>
