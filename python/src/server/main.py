@@ -66,6 +66,7 @@ from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
 from .api_routes.prompts_api import router as prompts_router  # MISSING
 from .api_routes.providers_api import router as providers_router
+from .api_routes.rag_api import router as rag_router  # NEW IMPORT
 from .api_routes.settings_api import router as settings_router
 from .api_routes.sse_api import router as sse_router  # NEW IMPORT
 from .api_routes.stats_api import router as stats_router
@@ -159,6 +160,7 @@ app.include_router(prompts_router)
 app.include_router(auth_router, prefix="/api")
 app.include_router(settings_router, prefix="/api")
 app.include_router(game_router, prefix="/api")
+app.include_router(rag_router, prefix="/api")
 app.include_router(internal_router)  # Already defines /internal
 
 app.include_router(test_api_router)

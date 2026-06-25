@@ -253,12 +253,14 @@ archon/
 │   ├── src/
 │   │   └── server/
 │   │       ├── api_routes/
-│   │       │   └── rag_game_api.py     # 處理 Godot 檢索與發牌的核心 FastAPI 路由
+│   │       │   └── rag_api.py          # 處理 Godot 檢索與發牌的核心 FastAPI 路由
+│   │       ├── schemas/
+│   │       │   └── rag.py              # Pydantic 驗證模型 (Request/Response)
 │   │       └── services/
-│   │           └── rag_game_service.py # 負責打 HF API、Supabase DB 與 GitHub CDN
+│   │           └── rag_service.py      # 負責打 HF API、Supabase DB 與 GitHub CDN
 │   └── start_all.sh                    # 啟動整個 Phase 5 Docker 生態系的入口
 │
 └── migration/                          # 全域資料庫變更紀錄
     └── 0.2.2/
-        └── 26_rag_hybrid_search_rpc.sql# pgvector 與 hybrid_match_chunks 預存程序
+        └── 26_rag_hybrid_match_chunks.sql # pgvector 與 hybrid_match_chunks 預存程序
 ```
