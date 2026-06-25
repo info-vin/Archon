@@ -6,6 +6,7 @@ interface PowerButtonProps {
   onClick: () => void;
   color?: 'purple' | 'green' | 'pink' | 'blue' | 'cyan' | 'orange';
   size?: number;
+  ariaLabel?: string;
 }
 
 // Helper function to get color hex values for animations
@@ -25,7 +26,8 @@ export const PowerButton: React.FC<PowerButtonProps> = ({
   isOn,
   onClick,
   color = 'blue',
-  size = 40
+  size = 40,
+  ariaLabel
 }) => {
   const colorMap = {
     purple: {
@@ -77,6 +79,8 @@ export const PowerButton: React.FC<PowerButtonProps> = ({
   return (
     <motion.button
       onClick={onClick}
+      aria-label={ariaLabel || "Toggle power"}
+      aria-pressed={isOn}
       className={`
         relative rounded-full border-2 transition-all duration-300
         ${styles.border}
