@@ -198,6 +198,11 @@ $$;
 2.  **狀態移轉測試**：驗證當玩家打出卡牌時，Model 層正確扣除費用，並對陣列中的目標施加效果（例如提升 Context 質量，或丟棄雜訊卡）。
 3.  **零物理依賴測試**：確認所有戰鬥與卡牌結算，完全不依賴 Godot 的 `Node2D` 物理屬性或 `CharacterBody2D`。
 
+### 6.2 LEAN 驗證與 Headless 公證踩坑紀實 (LEAN Validation History)
+在先前的架構驗證中，我們經歷了多次慘痛的血淚教訓，確立了以下不可動搖的 Godot 開發鐵律：
+1.  **捨棄臃腫的 GUT 框架 (Lean 原則)**：為了極致的效能與 CI/CD 整合，我們捨棄了會污染專案的第三方 GUT 測試框架，改以原生 Headless 模式自製微型測試框架 (`HeadlessRunner.gd`)，徹底實現 0 依賴公證。
+2.  **存檔淨化與幽靈失敗防禦 (State Purification)**：過去曾發生測試通過但實際執行報錯的「幽靈失敗」，主因是測試環境吃到殘留的存檔。因此，所有自動化腳本在測試前**必須強制刪除** `user://savegame.save`，確保測試的絕對無狀態性 (Stateless)。
+3.  **ClassDB Registry 自癒防護**：Godot 在 `--headless` 模式下，有時會發生類別快取解析錯誤 (Class Name Resolution Error)。為了徹底根除此問題，所有動態載入的類別與腳本，**強制使用 `preload` 取代直寫 `class_name`**，以確保編譯期的強型別安全與依賴載入。
 ---
 
 ## 7. Web 輸出與跨裝置適配 (Web Export & Cross-Device Optimization)
