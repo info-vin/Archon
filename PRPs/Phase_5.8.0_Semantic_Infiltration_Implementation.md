@@ -9,7 +9,7 @@
 *   **任務 1.1：建立探針腳本 (`scripts/probe_rag_pipeline.py`)**
     *   **HF 向量化驗證**：打 Hugging Face Serverless API，測試 `768` 維度的 Embedding 模型是否超時或觸發 429 Rate Limit。
     *   **Supabase RPC 驗證**：透過 `supabase-py` 直接呼叫 `hybrid_match_chunks` 預存程序 (模擬資料)，確認 `vector(768)` 運算與 `metadata` 回傳無誤。
-    *   **CDN 穿透驗證**：讀取回傳的 `metadata` GitHub 網址，實體發送 HTTP GET，驗證是否能成功抓回巨大 JSON 實體，並確認無 CORS 或阻斷問題。
+    *   **CDN 穿透驗證**：讀取回傳的 `metadata` GitHub 網址，實體發送 HTTP GET。**初期探針測試僅需抓取極小型的「範例 JSON (Minimal Mock)」**，目的是以最低成本證明網路通聯 (Connectivity) 與 CORS 無阻礙，而非盲目下載巨型檔案浪費頻寬。
     *   **斷言 (Assert)**：腳本必須輸出各階段的延遲 (Latency)。若總耗時超過 3 秒，或遇到任何網路中斷，Probe 視為失敗，計畫退回重審。
 
 ## 階段二：後端 API 與資料庫部署 (Backend & Database)
