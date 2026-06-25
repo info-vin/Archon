@@ -11,6 +11,12 @@ interface ChatMessageListProps {
   messagesEndRef: RefObject<HTMLDivElement>;
 }
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit'
+});
+
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   isTyping,
@@ -22,10 +28,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
    * Format timestamp for display in messages
    */
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return timeFormatter.format(date);
   };
 
   /**
