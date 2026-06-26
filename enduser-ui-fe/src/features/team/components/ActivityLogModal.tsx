@@ -4,6 +4,9 @@ import { Employee, Task } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { XIcon } from '@/components/Icons';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat(undefined);
+
 export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({ member, onClose }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
@@ -72,7 +75,7 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                                         </span>
                                     </div>
                                     <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
-                                        <span>Updated: {new Date(task.updated_at || Date.now()).toLocaleDateString()}</span>
+                                        <span>Updated: {dateFormatter.format(new Date(task.updated_at || Date.now()))}</span>
                                         <span>Priority: {task.priority}</span>
                                     </div>
                                 </div>
