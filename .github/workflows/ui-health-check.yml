@@ -14,21 +14,35 @@ jobs:
     steps:
       - name: Test Admin UI Status
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-jet.vercel.app/)
-          echo "Admin UI HTTP Status: $STATUS"
-          if [ "$STATUS" -ne 200 ]; then
-            echo "🚨 Admin UI check failed! Status: $STATUS"
-            exit 1
-          fi
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-jet.vercel.app/)
+            echo "Attempt $i: Admin UI HTTP Status: $STATUS"
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ Admin UI check successful."
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "🚨 Admin UI check failed after 5 attempts!"
+              exit 1
+            fi
+            sleep 10
+          done
 
       - name: Test End-user UI Status
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-enduser.vercel.app/)
-          echo "End-user UI HTTP Status: $STATUS"
-          if [ "$STATUS" -ne 200 ]; then
-            echo "🚨 End-user UI check failed! Status: $STATUS"
-            exit 1
-          fi
+          for i in {1..5}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-enduser.vercel.app/)
+            echo "Attempt $i: End-user UI HTTP Status: $STATUS"
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ End-user UI check successful."
+              break
+            fi
+            if [ "$i" -eq 5 ]; then
+              echo "🚨 End-user UI check failed after 5 attempts!"
+              exit 1
+            fi
+            sleep 10
+          done
 
       - name: Send Telegram Notification on Failure
         if: failure() && env.TELEGRAM_TOKEN != '' && env.TELEGRAM_TO != ''
