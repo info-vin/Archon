@@ -1,0 +1,33 @@
+name: Hugging Face Space Scheduler (Restart)
+
+on:
+  schedule:
+    # 每天台灣時間早上 06:42 啟動 (UTC 22:42)
+    - cron: '42 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  manage-space:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Perform Action
+        run: |
+          USERNAME="chiawei6"
+          SPACE_NAME="myrmidon"
+          ACTION="restart"
+
+          echo "Attempting to $ACTION the space $USERNAME/$SPACE_NAME..."
+
+          RESPONSE=$(curl -s -o response.txt -w "%{http_code}" -X POST \
+            "https://huggingface.co/api/spaces/$USERNAME/$SPACE_NAME/$ACTION" \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}")
+
+          cat response.txt
+          echo ""
+          
+          if [ "$RESPONSE" == "200" ] || [ "$RESPONSE" == "201" ] || [ "$RESPONSE" == "202" ]; then
+            echo "Successfully executed $ACTION."
+          else
+            echo "Failed to $ACTION. HTTP Status: $RESPONSE"
+            exit 1
+          fi
