@@ -20,6 +20,14 @@ jobs:
         with:
           version: "latest"
 
+      - name: Set up Python
+        working-directory: ./python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        working-directory: ./python
+        run: uv sync --group server
+
       - name: Run Web Health Check
         working-directory: ./python
         run: |
