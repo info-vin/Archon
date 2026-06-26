@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./python
-        run: uv sync --group server
+        run: uv sync --group all
 
       - name: Run Web Health Check
         working-directory: ./python
