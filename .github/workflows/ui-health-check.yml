@@ -12,45 +12,20 @@ jobs:
   health-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Test Admin UI Status
-        run: |
-          for i in {1..5}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-jet.vercel.app/)
-            echo "Attempt $i: Admin UI HTTP Status: $STATUS"
-            if [ "$STATUS" -eq 200 ]; then
-              echo "✅ Admin UI check successful."
-              break
-            fi
-            if [ "$i" -eq 5 ]; then
-              echo "🚨 Admin UI check failed after 5 attempts!"
-              exit 1
-            fi
-            
-            # Exponential backoff: 2^1=2s, 2^2=4s, 2^3=8s, 2^4=16s
-            DELAY=$((2**i))
-            echo "Sleeping for $DELAY seconds before retry..."
-            sleep $DELAY
-          done
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Test End-user UI Status
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Run Web Health Check
         run: |
-          for i in {1..5}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://archon-enduser.vercel.app/)
-            echo "Attempt $i: End-user UI HTTP Status: $STATUS"
-            if [ "$STATUS" -eq 200 ]; then
-              echo "✅ End-user UI check successful."
-              break
-            fi
-            if [ "$i" -eq 5 ]; then
-              echo "🚨 End-user UI check failed after 5 attempts!"
-              exit 1
-            fi
-            
-            # Exponential backoff: 2^1=2s, 2^2=4s, 2^3=8s, 2^4=16s
-            DELAY=$((2**i))
-            echo "Sleeping for $DELAY seconds before retry..."
-            sleep $DELAY
-          done
+          uv run python scripts/web_health_check.py
+        env:
+          # Required for internal service logging/config if accessed by the script
+          PYTHONPATH: ${{ github.workspace }}/python
 
       - name: Send Telegram Notification on Failure
         if: failure() && env.TELEGRAM_TOKEN != '' && env.TELEGRAM_TO != ''
