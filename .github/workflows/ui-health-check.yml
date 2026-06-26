@@ -21,11 +21,9 @@ jobs:
           version: "latest"
 
       - name: Run Web Health Check
+        working-directory: ./python
         run: |
-          uv run python scripts/web_health_check.py
-        env:
-          # Required for internal service logging/config if accessed by the script
-          PYTHONPATH: ${{ github.workspace }}/python
+          uv run python ../scripts/web_health_check.py
 
       - name: Send Telegram Notification on Failure
         if: failure() && env.TELEGRAM_TOKEN != '' && env.TELEGRAM_TO != ''
