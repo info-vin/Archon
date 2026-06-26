@@ -25,7 +25,11 @@ jobs:
               echo "🚨 Admin UI check failed after 5 attempts!"
               exit 1
             fi
-            sleep 10
+            
+            # Exponential backoff: 2^1=2s, 2^2=4s, 2^3=8s, 2^4=16s
+            DELAY=$((2**i))
+            echo "Sleeping for $DELAY seconds before retry..."
+            sleep $DELAY
           done
 
       - name: Test End-user UI Status
@@ -41,7 +45,11 @@ jobs:
               echo "🚨 End-user UI check failed after 5 attempts!"
               exit 1
             fi
-            sleep 10
+            
+            # Exponential backoff: 2^1=2s, 2^2=4s, 2^3=8s, 2^4=16s
+            DELAY=$((2**i))
+            echo "Sleeping for $DELAY seconds before retry..."
+            sleep $DELAY
           done
 
       - name: Send Telegram Notification on Failure
