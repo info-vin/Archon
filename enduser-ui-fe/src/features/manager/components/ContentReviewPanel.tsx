@@ -3,6 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import { XIcon, SparklesIcon, CheckCircleIcon, RefreshCwIcon } from '../../../components/Icons';
 import { api } from '../../../services/api';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat(undefined);
+
 interface ContentReviewPanelProps {
     blogs: any[];
     processingId: string | null;
@@ -65,7 +68,7 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                         <h4 className="font-bold text-gray-800 text-sm line-clamp-1">{blog.title}</h4>
                         <p className="text-xs text-gray-500 mt-1 flex justify-between">
                             <span>{blog.author_name || 'Bob'}</span>
-                            <span className="font-mono text-[10px]">{new Date(blog.created_at || Date.now()).toLocaleDateString()}</span>
+                            <span className="font-mono text-[10px]">{dateFormatter.format(new Date(blog.created_at || Date.now()))}</span>
                         </p>
                     </div>
                 ))}

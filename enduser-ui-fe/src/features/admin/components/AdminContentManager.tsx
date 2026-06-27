@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { PlusIcon, TrashIcon } from '../../../components/Icons';
 import { useBlogPosts } from '../hooks/useAdminDashboard';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat(undefined);
+
 export const AdminContentManager: React.FC = () => {
     const { posts, deletePost, loading } = useBlogPosts();
     const navigate = useNavigate();
@@ -35,7 +38,7 @@ export const AdminContentManager: React.FC = () => {
                                 <td className="px-6 py-4 font-bold">{post.title}</td>
                                 <td className="px-6 py-4">{post.authorName || 'Admin'}</td>
                                 <td className="px-6 py-4 capitalize">{post.status}</td>
-                                <td className="px-6 py-4">{new Date(post.publishDate).toLocaleDateString()}</td>
+                                <td className="px-6 py-4">{dateFormatter.format(new Date(post.publishDate))}</td>
                                 <td className="px-6 py-4 text-right">
                                     <button
                                         onClick={() => deletePost(post.id)}
