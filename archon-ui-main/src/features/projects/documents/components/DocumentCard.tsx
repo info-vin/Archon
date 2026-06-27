@@ -18,6 +18,9 @@ import { Button, Card } from "../../../ui/primitives";
 import { cn } from "../../../ui/primitives/styles";
 import type { DocumentCardProps, DocumentType } from "../types";
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat(undefined);
+
 const getDocumentIcon = (type?: DocumentType) => {
   switch (type) {
     case "prp":
@@ -135,7 +138,7 @@ export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: Do
 
         {/* Metadata */}
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-          {new Date(document.updated_at || document.created_at || Date.now()).toLocaleDateString()}
+          {dateFormatter.format(new Date(document.updated_at || document.created_at || Date.now()))}
         </p>
 
         {/* ID Display Section - Always visible for active, hover for others */}
