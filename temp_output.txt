@@ -63,28 +63,33 @@ export const Button: React.FC<ButtonProps> = ({
       shadow-md shadow-${c}-500/20 hover:shadow-lg hover:shadow-${c}-500/30 hover:bg-${c}-700
       active:scale-95 transition-all duration-200
       disabled:opacity-50 disabled:cursor-not-allowed
-      group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-${c}-500 focus-visible:ring-offset-2
+      group
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-${c}-500 focus-visible:ring-offset-2
     `,
     // For Archon UI alignment, 'secondary' is often dark glass or solid neutral
     secondary: `
       bg-white text-gray-700 border border-gray-200
       hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
       active:bg-gray-100 active:scale-95 transition-all duration-200
-      disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2
+      disabled:opacity-50 disabled:cursor-not-allowed
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2
     `,
     outline: `
       bg-transparent border border-${c}-500 text-${c}-600
       hover:bg-${c}-50 active:bg-${c}-100
-      disabled:opacity-50 disabled:cursor-not-allowed transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-${c}-500 focus-visible:ring-offset-2
+      disabled:opacity-50 disabled:cursor-not-allowed transition-all
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-${c}-500 focus-visible:ring-offset-2
     `,
     ghost: `
       bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900
-      disabled:opacity-50 disabled:cursor-not-allowed transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2
+      disabled:opacity-50 disabled:cursor-not-allowed transition-all
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2
     `,
     danger: `
       bg-red-600 text-white border border-red-500
       hover:bg-red-700 shadow-md shadow-red-500/20
-      active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2
+      active:scale-95 transition-all
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2
     `
   };
 
