@@ -9,6 +9,10 @@ interface VisitLogModalProps {
     companyName?: string;
 }
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString/toLocaleTimeString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat();
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
 export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess, leadId, companyName }) => {
     const [step, setStep] = useState<'type' | 'details' | 'summary'>('type');
     const [type, setType] = useState('');
@@ -125,7 +129,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                             const et = new Date(slot.end_time);
                                             return (
                                                 <div key={idx} className="p-2 bg-purple-50 text-purple-900 border border-purple-100 rounded text-xs">
-                                                    Slot {String.fromCharCode(65 + idx)}: {st.toLocaleDateString()} {st.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ~ {et.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                    Slot {String.fromCharCode(65 + idx)}: {dateFormatter.format(st)} {timeFormatter.format(st)} ~ {timeFormatter.format(et)}
                                                 </div>
                                             );
                                         })}
