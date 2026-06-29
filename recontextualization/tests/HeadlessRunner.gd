@@ -53,6 +53,12 @@ func _run_tests():
 	else:
 		tests_failed += 1
 		
+	var test_threats = preload("res://tests/test_composite_threats.gd").new()
+	if test_threats.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
 	print("--- Test Results ---")
 	print("Passed: ", tests_passed)
 	print("Failed: ", tests_failed)

@@ -7,6 +7,8 @@ signal player_died()
 signal context_updated(purity: float)
 signal game_over(is_victory: bool)
 signal sla_changed(new_sla: float)
+signal poisoning_updated(ratio: float)
+signal rate_limit_updated(compression: float)
 
 var current_ap: int = 10
 var crisis_hp: float = 10000.0
@@ -21,6 +23,7 @@ var max_sla: float = 300.0
 var is_game_active: bool = false
 var rate_limit_compression: float = 1.0
 var data_poisoning_ratio: float = 0.0
+var delivery_count: int = 0
 
 var active_context = preload("res://src/models/DeckData.gd").new()
 
@@ -34,6 +37,15 @@ func _process(delta: float) -> void:
 	if is_game_active and sla_timer > 0.0:
 		sla_timer -= delta
 		sla_changed.emit(sla_timer)
+		
+		# Data Poisoning increases as SLA decreases. 
+		# e.g., mapping SLA 300->0 to Poisoning 0.0->0.5 (50% max poison chance)
+		var elapsed = max_sla - sla_timer
+		var target_poison = min(0.5, elapsed / max_sla * 0.5)
+		if abs(target_poison - data_poisoning_ratio) > 0.01:
+			data_poisoning_ratio = target_poison
+			poisoning_updated.emit(data_poisoning_ratio)
+			
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
@@ -44,9 +56,14 @@ func start_game() -> void:
 	sla_timer = max_sla
 	player_hp = max_player_hp
 	crisis_hp = max_crisis_hp
+	rate_limit_compression = 1.0
+	data_poisoning_ratio = 0.0
+	delivery_count = 0
 	hp_changed.emit(crisis_hp)
 	player_hp_changed.emit(player_hp)
 	sla_changed.emit(sla_timer)
+	poisoning_updated.emit(data_poisoning_ratio)
+	rate_limit_updated.emit(rate_limit_compression)
 
 func apply_hallucination_penalty(purity: float) -> void:
 	if purity < 1.0:
@@ -59,6 +76,15 @@ func apply_hallucination_penalty(purity: float) -> void:
 			player_died.emit()
 			game_over.emit(false)
 		player_hp_changed.emit(player_hp)
+
+func deduct_sla(amount: float) -> void:
+	if is_game_active:
+		sla_timer -= amount
+		if sla_timer <= 0.0:
+			sla_timer = 0.0
+			is_game_active = false
+			game_over.emit(false)
+		sla_changed.emit(sla_timer)
 
 func _on_card_played(card: Resource) -> void:
 	if not is_game_active:
@@ -80,11 +106,24 @@ func _on_card_played(card: Resource) -> void:
 		context_updated.emit(purity)
 		
 	elif type_val == 1:
-		# It's an Action Card (Execution)
+		# ACTION CARD (Execution/Delivery)
+		# SLA Penalty for high cost cards (Cost * 2.0 seconds)
+		deduct_sla(cost * 2.0)
+		
+		# Rate Limit Compression increases on Delivery
+		delivery_count += 1
+		# Decrease rate limit compression by 10% per delivery, floor at 0.5
+		rate_limit_compression = max(0.5, 1.0 - (delivery_count * 0.1))
+		rate_limit_updated.emit(rate_limit_compression)
+		
 		var purity = active_context.calculate_context_purity(0.5)
 		apply_hallucination_penalty(purity)
 		
 		var damage = active_context.calculate_delivery_damage(1000.0, 0.5, false)
+		
+		# Apply Rate Limit Compression to Damage
+		damage = damage * rate_limit_compression
+		
 		crisis_hp -= damage
 		if crisis_hp <= 0:
 			crisis_hp = 0

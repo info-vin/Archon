@@ -5,6 +5,8 @@ extends Control
 
 var card_chip_scene = preload("res://src/views/CardChip.tscn")
 
+@onready var poison_label: Label = $MarginContainer/VBoxContainer/TopBar/PoisonLabel
+@onready var rate_limit_label: Label = $MarginContainer/VBoxContainer/TopBar/RateLimitLabel
 @onready var ap_label: Label = $MarginContainer/VBoxContainer/TopBar/APLabel
 @onready var context_label: Label = $MarginContainer/VBoxContainer/TopBar/ContextLabel
 @onready var crisis_hp_label: Label = $MarginContainer/VBoxContainer/TopBar/CrisisHPLabel
@@ -35,10 +37,14 @@ func _ready():
 		game_state.hp_changed.connect(_on_hp_changed)
 		game_state.sla_changed.connect(_on_sla_changed)
 		game_state.game_over.connect(_on_game_over)
+		game_state.poisoning_updated.connect(_on_poisoning_updated)
+		game_state.rate_limit_updated.connect(_on_rate_limit_updated)
 		# Initialize UI
 		_on_ap_changed(game_state.current_ap)
 		_on_hp_changed(game_state.crisis_hp)
 		_on_sla_changed(game_state.sla_timer)
+		_on_poisoning_updated(game_state.data_poisoning_ratio)
+		_on_rate_limit_updated(game_state.rate_limit_compression)
 		
 	# Show tutorial initially, hide game over
 	tutorial_panel.show()
@@ -104,7 +110,36 @@ func _on_game_over(is_victory: bool):
 		game_over_title.text = "系統崩潰！(SLA 超時或幻覺反噬)"
 		game_over_title.add_theme_color_override("font_color", Color.RED)
 
+func _on_poisoning_updated(ratio: float):
+	poison_label.text = "Poisoning: %d%%" % int(ratio * 100)
+	if ratio > 0.2:
+		poison_label.add_theme_color_override("font_color", Color.RED)
+	else:
+		poison_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.0, 1.0)) # Orange
+
+func _on_rate_limit_updated(compression: float):
+	if compression < 0.8:
+		rate_limit_label.show()
+		# Flash animation
+		event_queue.add_animation(func():
+			var tween = create_tween()
+			tween.tween_property(rate_limit_label, "modulate:a", 0.0, 0.2)
+			tween.tween_property(rate_limit_label, "modulate:a", 1.0, 0.2)
+			await tween.finished
+		)
+	else:
+		rate_limit_label.hide()
+
 func _on_card_drawn(card: Resource):
+	if Engine.has_singleton("GameState"):
+		var ratio = Engine.get_singleton("GameState").data_poisoning_ratio
+		if randf() < ratio:
+			var type_val = card.get("type") if card.get("type") != null else 1
+			if type_val == 2:
+				card.set("type", 3) # Convert to Noise Chip
+				var current_title = card.get("title")
+				card.set("title", "[CORRUPTED] " + (current_title if current_title != null else ""))
+
 	event_queue.add_animation(func():
 		await _anim_draw_card(card)
 	)

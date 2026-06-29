@@ -51,7 +51,8 @@ func run_tests(runner) -> bool:
 	if not assert_eq(game_state.active_context.size(), 0, "Context should be cleared after action"): tests_failed += 1
 	
 	# Context had 1 card (similarity 0.9 > 0.5), purity = 1.0. Base damage 1000 * 1.0 = 1000
-	if not assert_eq(game_state.crisis_hp, initial_hp - 1000.0, "HP should decrease by 1000"): tests_failed += 1
+	# Rate Limit Compression applies on 1st delivery (count=1 -> 0.9 compression) -> damage = 900
+	if not assert_eq(game_state.crisis_hp, initial_hp - 900.0, "HP should decrease by 900"): tests_failed += 1
 	
 	# Test SLA Timer
 	var initial_sla = game_state.sla_timer
