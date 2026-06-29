@@ -39,6 +39,29 @@
 *   ✅ **任務 3.3：非同步測試公證**
     *   ✅ 更新所有 Headless 測試，確保 `await tween.finished` 不會在無算繪環境下導致 Engine 崩潰，全測試 100% 通過。
 
+## 階段四：RAG 核心機制對齊與新手引導 (RAG Alignment & Tutorial)
+**門禁**：嚴格依照 `TDD_Recontextualization.md`，拒絕傳統卡牌戰鬥與敵人回合。
+
+*   ✅ **任務 4.1：SLA 與危機倒數 (`GameState.gd`)**
+    *   ✅ 導入嚴苛的 SLA Timeout (`sla_timer`)，超時即觸發 `game_over`。
+    *   ✅ 將 `enemy_hp` 更名為 `crisis_hp` (系統危機)，並保留打出髒資料導致 LLM 幻覺並扣除 `player_hp` 的硬核機制。
+*   ✅ **任務 4.2：UI 教學與提示 (`GameBoard.tscn`)**
+    *   ✅ 新增覆蓋式新手教學 (Tutorial Panel)，以 RAG 工程師語氣引導玩家。
+    *   ✅ 透過 Godot 原生的 hover tooltip 標示「資料晶片」與「雜訊晶片」區別。
+
+## 階段五：複合危機機制與動態難度增長 (Composite Threats)
+**門禁**：必須包含嚴謹的 Headless TDD 測試，防範隨時間與操作數產生的數值錯誤。
+
+*   ✅ **任務 5.1：動態威脅機制 (`GameState.gd`)**
+    *   ✅ **運算僵直 (SLA Penalty)**：打出高耗能卡牌觸發 `sla_timer -= (cost * 2.0)` 的瞬間時間懲罰。
+    *   ✅ **高併發限流 (Rate Limit Compression)**：每次交付增加 `delivery_count`，使傷害輸出受 `rate_limit_compression` 壓制。
+    *   ✅ **資料庫投毒 (Data Poisoning)**：隨著 SLA 流失，`data_poisoning_ratio` 上升，強制將部分抽出的資料晶片轉化為 `[CORRUPTED]` 雜訊晶片。
+*   ✅ **任務 5.2：動態威脅 UI 反饋 (`GameBoard.tscn`)**
+    *   ✅ 加入閃爍的 `[RATE LIMITED]` 紅色警告標籤。
+    *   ✅ 加入 `PoisonLabel` 實時綁定投毒百分比。
+*   ✅ **任務 5.3：複合威脅測試公證 (`test_composite_threats.gd`)**
+    *   ✅ 撰寫並於 `HeadlessRunner.gd` 通過 SLA 扣除、限流遞減以及投毒率上升的運算邏輯斷言。
+
 ---
-**Phase 5.8 MVP 狀態：已完成 (Completed) 🟢**
-*自此，從 FastAPI 後端取得 RAG JSON -> Godot 生成卡牌 -> 玩家拖曳打擊 -> 數學結算與動畫 的核心端到端迴圈已經完全打通。*
+**Phase 5.8 重新脈絡化系列狀態：已完成 (Completed) 🟢**
+*自此，從 FastAPI 後端取得 RAG JSON -> Godot 生成卡牌 -> 玩家拖曳打擊 -> 數學結算與動畫 -> 複合危機與動態難度限制 的核心端到端迴圈已經完全打通，Web 版已匯出。*
