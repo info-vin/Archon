@@ -18,7 +18,9 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	
 	# Wait for max retries (3 retries * 1.0s delay = ~3s)
 	print("Waiting for retries to complete...")
-	await scene_tree.create_timer(4.0).timeout
+	await scene_tree.create_timer(5.0).timeout
+	
+	client.queue_free()
 	
 	if state[0]:
 		print("test_backend_client PASSED (Fallback mechanism works)")

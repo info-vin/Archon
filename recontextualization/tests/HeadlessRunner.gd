@@ -29,6 +29,18 @@ func _run_tests():
 	else:
 		tests_failed += 1
 		
+	var test_visual = preload("res://tests/test_visual_integration.gd").new()
+	if await test_visual.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
+	var test_e2e = preload("res://tests/test_e2e_api_to_ui.gd").new()
+	if await test_e2e.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
 	print("--- Test Results ---")
 	print("Passed: ", tests_passed)
 	print("Failed: ", tests_failed)

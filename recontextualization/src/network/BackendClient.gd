@@ -7,7 +7,8 @@ var _http_request: HTTPRequest
 var _max_retries: int = 3
 var _current_retries: int = 0
 var _current_payload: Dictionary = {}
-var _api_url: String = "http://127.0.0.1:8181/rag/hybrid-search"
+var _api_url: String = "http://127.0.0.1:8181/api/rag/hybrid-search"
+var auth_token: String = ""
 
 func _ready():
 	_http_request = HTTPRequest.new()
@@ -27,7 +28,8 @@ func search(query: String, similarity_threshold: float = 0.5, match_count: int =
 func _send_request():
 	var json_payload = JSON.stringify(_current_payload)
 	var headers = ["Content-Type: application/json"]
-	
+	if auth_token != "":
+		headers.append("Authorization: Bearer " + auth_token)	
 	# Godot 4 HTTPRequest.request uses error enums
 	var error = _http_request.request(_api_url, headers, HTTPClient.METHOD_POST, json_payload)
 	if error != OK:
