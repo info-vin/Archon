@@ -120,12 +120,13 @@
     *   修復了 `PYTHONPATH` 的匯入路徑問題，確保 `scripts/` 下的腳本能正確解析 `python/src` 模組。
 3.  **CI 公證通過**: 經修正後，不僅成功通過 Web Health Check 的部署觸發，隨後的 `make test-be` (607 個單元測試) 亦全數通過，證實 CI 環境已穩定。
 
-### 2026年6月29日：Hugging Face Space 自動化排程解析與調整
-今日協助釐清 Hugging Face Space (myrmidon) 呈現暫停狀態的根本原因，並優化了資源排程。
+### 2026年6月29日：Hugging Face 排程優化與全域 Supabase 斷線自癒 (Monkey Patch)
+今日協助釐清 Hugging Face Space (myrmidon) 呈現暫停狀態的根本原因，優化資源排程，並從底層根除了糾纏系統已久的 HTTP/2 斷線幽靈。
 
 **核心決策與實踐**:
 1.  **破除異常迷思 (Demystify Paused State)**: 透過調閱原始碼排程 (`hf-pause.yml`) 與即時呼叫 HF Space API，證明環境的「暫停」並非崩潰，而是 GitHub Actions 執行的例行性休眠保護，並提供即時數據確認其已恢復 `RUNNING`。
 2.  **排程精準調配 (Schedule Adjustment)**: 將每日自動暫停時間提早至台灣時間 10:38 (UTC 02:38)，並將重啟喚醒時間提早至 06:32 (UTC 22:32)，準確轉換 UTC 寫入 Cron 配置。
+3.  **全域斷線自癒 (Global Connection Resilience)**: 透過深度 `git log` 考古，發現 `client_manager.py` 在 2025 年底為了迴避 E2E 測試報錯而鎖死在同步模式，導致全系統殘留 430 多個缺乏重試機制的 `.execute()`。我們拒絕高風險的逐行修改，改以 Monkey Patch 底層攔截 `SyncQueryRequestBuilder.execute`，精準捕捉 `ConnectionTerminated` 並執行指數退避重試。此舉一次性為全系統賦予抗斷線免疫力，且完美通過 607 項物理公證。
 ---
 
 ---
