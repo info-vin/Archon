@@ -9,8 +9,18 @@ var _current_retries: int = 0
 var _current_payload: Dictionary = {}
 var _api_url: String = "http://127.0.0.1:8181/api/rag/hybrid-search"
 var auth_token: String = ""
+var _is_web: bool = false
 
 func _ready() -> void:
+	if OS.has_feature("web"):
+		_is_web = true
+		if JavaScriptBridge.get_interface("window"):
+			var origin = JavaScriptBridge.eval("window.location.origin")
+			if origin:
+				_api_url = str(origin) + "/api/rag/hybrid-search"
+			else:
+				_api_url = "/api/rag/hybrid-search"
+				
 	_http_request = HTTPRequest.new()
 	_http_request.timeout = 5.0 # SLA limit
 	add_child(_http_request)
