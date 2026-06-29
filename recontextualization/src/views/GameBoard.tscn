@@ -97,6 +97,23 @@ text = "SLA: 05:00"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="QueryBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="QueryLabel" type="Label" parent="MarginContainer/VBoxContainer/QueryBar"]
+layout_mode = 2
+text = "Query:"
+
+[node name="QueryInput" type="LineEdit" parent="MarginContainer/VBoxContainer/QueryBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "輸入 RAG 檢索關鍵字..."
+
+[node name="DeliverButton" type="Button" parent="MarginContainer/VBoxContainer/QueryBar"]
+layout_mode = 2
+text = "交付 LLM (Deliver)"
+
 [node name="PlayArea" type="Control" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3

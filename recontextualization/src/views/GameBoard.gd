@@ -13,6 +13,9 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 @onready var sla_progress: ProgressBar = $MarginContainer/VBoxContainer/TopBar/SLAPorgressBar
 @onready var sla_text: Label = $MarginContainer/VBoxContainer/TopBar/SLAPorgressBar/SLAText
 
+@onready var query_input: LineEdit = $MarginContainer/VBoxContainer/QueryBar/QueryInput
+@onready var deliver_button: Button = $MarginContainer/VBoxContainer/QueryBar/DeliverButton
+
 @onready var tutorial_panel: ColorRect = $TutorialPanel
 @onready var start_button: Button = $TutorialPanel/VBox/StartButton
 
@@ -20,7 +23,16 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 @onready var game_over_title: Label = $GameOverPanel/VBox/Title
 @onready var restart_button: Button = $GameOverPanel/VBox/RestartButton
 
-func _ready():
+var backend_client_script = preload("res://src/network/BackendClient.gd")
+var backend_client: Node
+
+func _ready() -> void:
+	# Instantiate BackendClient
+	backend_client = backend_client_script.new()
+	add_child(backend_client)
+	backend_client.request_completed.connect(_on_search_completed)
+	backend_client.request_failed.connect(_on_search_failed)
+
 	# Allow any Autoload (like EventBus) to register card draws.
 	if Engine.has_singleton("EventBus"):
 		var event_bus = Engine.get_singleton("EventBus")
@@ -29,6 +41,7 @@ func _ready():
 			
 	start_button.pressed.connect(_on_start_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
+	deliver_button.pressed.connect(_on_deliver_pressed)
 	
 	if Engine.has_singleton("GameState"):
 		var game_state = Engine.get_singleton("GameState")
@@ -39,6 +52,9 @@ func _ready():
 		game_state.game_over.connect(_on_game_over)
 		game_state.poisoning_updated.connect(_on_poisoning_updated)
 		game_state.rate_limit_updated.connect(_on_rate_limit_updated)
+		game_state.search_triggered.connect(_on_search_triggered)
+		game_state.context_purified.connect(_on_context_purified)
+		
 		# Initialize UI
 		_on_ap_changed(game_state.current_ap)
 		_on_hp_changed(game_state.crisis_hp)
@@ -50,26 +66,31 @@ func _ready():
 	tutorial_panel.show()
 	game_over_panel.hide()
 
-func _on_start_pressed():
+func _on_start_pressed() -> void:
 	tutorial_panel.hide()
 	if Engine.has_singleton("GameState"):
 		Engine.get_singleton("GameState").start_game()
 
-func _on_restart_pressed():
+func _on_restart_pressed() -> void:
 	game_over_panel.hide()
-	# clear hand
+	# clear hand and play area
 	for child in hand_container.get_children():
 		child.queue_free()
+	var play_area = $MarginContainer/VBoxContainer/PlayArea
+	for child in play_area.get_children():
+		if child.name != "HintLabel":
+			child.queue_free()
+			
 	if Engine.has_singleton("GameState"):
 		Engine.get_singleton("GameState").start_game()
 
-func _on_ap_changed(new_ap: int):
+func _on_ap_changed(new_ap: int) -> void:
 	ap_label.text = "AP: %d" % new_ap
 
-func _on_context_updated(purity: float):
+func _on_context_updated(purity: float) -> void:
 	context_label.text = "Context Purity: %d%%" % int(purity * 100)
 
-func _on_hp_changed(new_hp: float):
+func _on_hp_changed(new_hp: float) -> void:
 	var old_text = crisis_hp_label.text
 	crisis_hp_label.text = "Crisis HP: %d" % int(new_hp)
 	
@@ -90,7 +111,7 @@ func _on_hp_changed(new_hp: float):
 			await tween.finished
 		)
 
-func _on_sla_changed(new_sla: float):
+func _on_sla_changed(new_sla: float) -> void:
 	sla_progress.value = new_sla
 	var mins = int(new_sla) / 60
 	var secs = int(new_sla) % 60
@@ -101,7 +122,7 @@ func _on_sla_changed(new_sla: float):
 	else:
 		sla_progress.modulate = Color.WHITE
 
-func _on_game_over(is_victory: bool):
+func _on_game_over(is_victory: bool) -> void:
 	game_over_panel.show()
 	if is_victory:
 		game_over_title.text = "危機解除！"
@@ -110,14 +131,14 @@ func _on_game_over(is_victory: bool):
 		game_over_title.text = "系統崩潰！(SLA 超時或幻覺反噬)"
 		game_over_title.add_theme_color_override("font_color", Color.RED)
 
-func _on_poisoning_updated(ratio: float):
+func _on_poisoning_updated(ratio: float) -> void:
 	poison_label.text = "Poisoning: %d%%" % int(ratio * 100)
 	if ratio > 0.2:
 		poison_label.add_theme_color_override("font_color", Color.RED)
 	else:
 		poison_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.0, 1.0)) # Orange
 
-func _on_rate_limit_updated(compression: float):
+func _on_rate_limit_updated(compression: float) -> void:
 	if compression < 0.8:
 		rate_limit_label.show()
 		# Flash animation
@@ -130,13 +151,81 @@ func _on_rate_limit_updated(compression: float):
 	else:
 		rate_limit_label.hide()
 
-func _on_card_drawn(card: Resource):
+func _on_deliver_pressed() -> void:
+	if Engine.has_singleton("GameState"):
+		Engine.get_singleton("GameState").deliver_context()
+
+func _on_search_triggered(match_type: int) -> void:
+	var query_text = query_input.text.strip_edges()
+	if query_text.is_empty():
+		query_text = "default query"
+	backend_client.search(query_text, 0.5, 5)
+
+func _on_search_completed(response: Dictionary) -> void:
+	if not response.has("results"):
+		return
+	var results = response.get("results")
+	for chunk in results:
+		var card = CardData.new()
+		card.type = CardData.CardType.DATA_CHIP
+		card.similarity = chunk.get("similarity", 0.0)
+		card.title = chunk.get("content", "Data Chunk").left(20) + "..."
+		
+		# Set match type based on string
+		var mt = chunk.get("match_type", "keyword")
+		if mt == "keyword":
+			card.match_type = CardData.MatchType.KEYWORD
+		elif mt == "vector":
+			card.match_type = CardData.MatchType.VECTOR
+		else:
+			card.match_type = CardData.MatchType.HYBRID
+			
+		if Engine.has_singleton("EventBus"):
+			Engine.get_singleton("EventBus").card_drawn.emit(card)
+
+func _on_search_failed(error_code: int, message: String) -> void:
+	print("Search failed (Code: %d, Message: %s). Activating Standalone Fallback!" % [error_code, message])
+	var num_cards = randi_range(3, 4)
+	var base_title = query_input.text if not query_input.text.is_empty() else "RAG Chunk"
+	
+	for i in range(num_cards):
+		var card = CardData.new()
+		card.type = CardData.CardType.DATA_CHIP
+		card.similarity = randf_range(0.3, 0.98)
+		card.title = "[MOCK] %s #%d" % [base_title.left(15), i + 1]
+		card.match_type = randi_range(1, 3) # Random MatchType
+		
+		if Engine.has_singleton("EventBus"):
+			Engine.get_singleton("EventBus").card_drawn.emit(card)
+
+func _on_context_purified(remaining_cards: Array) -> void:
+	var play_area = $MarginContainer/VBoxContainer/PlayArea
+	for child in play_area.get_children():
+		if child.name == "HintLabel":
+			continue
+		if child.get("card_data") != null:
+			var c_data = child.card_data
+			if not remaining_cards.has(c_data):
+				event_queue.add_animation(func():
+					var tween = create_tween().set_parallel(true)
+					tween.tween_property(child, "modulate:a", 0.0, 0.3)
+					tween.tween_property(child, "scale", Vector2(0.1, 0.1), 0.3)
+					tween.chain().tween_callback(func(): child.queue_free())
+					await tween.finished
+				)
+
+func _on_card_drawn(card: Resource) -> void:
+	# Hand Limit constraint: max 5 cards
+	if hand_container.get_child_count() >= 5:
+		print("Hand full! Card draw rejected.")
+		return
+
 	if Engine.has_singleton("GameState"):
 		var ratio = Engine.get_singleton("GameState").data_poisoning_ratio
 		if randf() < ratio:
 			var type_val = card.get("type") if card.get("type") != null else 1
-			if type_val == 2:
-				card.set("type", 3) # Convert to Noise Chip
+			if type_val == 2: # DATA_CHIP = 2
+				card.set("type", 3) # Convert to Noise Chip (NOISE_CHIP = 3)
 				var current_title = card.get("title")
 				card.set("title", "[CORRUPTED] " + (current_title if current_title != null else ""))
 
@@ -144,9 +233,8 @@ func _on_card_drawn(card: Resource):
 		await _anim_draw_card(card)
 	)
 
-func _anim_draw_card(card: Resource):
+func _anim_draw_card(card: Resource) -> void:
 	var chip = card_chip_scene.instantiate()
-	
 	hand_container.add_child(chip)
 	chip.set_card_data(card)
 	

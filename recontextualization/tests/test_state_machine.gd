@@ -30,28 +30,24 @@ func run_tests(runner) -> bool:
 	
 	# Create a Data Chip
 	var data_chip = card_script.new()
-	data_chip.set("type", 2)
+	data_chip.set("type", 2) # DATA_CHIP
 	data_chip.set("similarity", 0.9)
 	data_chip.set("ap_cost", 1)
 	
-	# Emit card_played
+	# Emit card_played (equivalent to dragging Data Chip to PlayArea)
 	event_bus.card_played.emit(data_chip)
 	
 	if not assert_eq(game_state.current_ap, initial_ap - 1, "AP should decrease by 1"): tests_failed += 1
 	if not assert_eq(game_state.active_context.size(), 1, "Context should have 1 card"): tests_failed += 1
 	
-	# Create an Action Chip
-	var action_chip = card_script.new()
-	action_chip.set("type", 1)
-	action_chip.set("ap_cost", 2)
-	
-	event_bus.card_played.emit(action_chip)
-	
-	if not assert_eq(game_state.current_ap, initial_ap - 3, "AP should decrease by 2"): tests_failed += 1
-	if not assert_eq(game_state.active_context.size(), 0, "Context should be cleared after action"): tests_failed += 1
+	# Explicitly call deliver_context (representing clicking the Deliver button)
+	game_state.deliver_context()
 	
 	# Context had 1 card (similarity 0.9 > 0.5), purity = 1.0. Base damage 1000 * 1.0 = 1000
+	# Delivery cost 1 AP
 	# Rate Limit Compression applies on 1st delivery (count=1 -> 0.9 compression) -> damage = 900
+	if not assert_eq(game_state.current_ap, initial_ap - 2, "AP should decrease by 2 total (1 for chip, 1 for delivery)"): tests_failed += 1
+	if not assert_eq(game_state.active_context.size(), 0, "Context should be cleared after delivery"): tests_failed += 1
 	if not assert_eq(game_state.crisis_hp, initial_hp - 900.0, "HP should decrease by 900"): tests_failed += 1
 	
 	# Test SLA Timer

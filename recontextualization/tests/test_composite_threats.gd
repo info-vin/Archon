@@ -16,10 +16,12 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	game_state.start_game()
 	
 	var initial_sla = game_state.sla_timer
+	var initial_hp = game_state.player_hp
 	
 	# Test 1: SLA Penalty for Action Card
 	var action_card = preload("res://src/models/cards/CardData.gd").new()
-	action_card.set("type", 1) # Action
+	action_card.set("type", 1) # ACTION
+	action_card.set("id", "some_action")
 	action_card.set("ap_cost", 3)
 	
 	if Engine.has_singleton("EventBus"):
@@ -32,7 +34,61 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	else:
 		print("PASS: SLA Penalty applied (-6.0s for AP cost 3).")
 		
-	# Test 2: Rate Limit Compression
+	# Test 2: Reranker and Hallucination Logic
+	var card_script = preload("res://src/models/cards/CardData.gd")
+	var data_chip = card_script.new()
+	data_chip.set("type", 2) # DATA_CHIP
+	data_chip.set("similarity", 0.9)
+	data_chip.set("ap_cost", 1)
+	
+	var noise_chip = card_script.new()
+	noise_chip.set("type", 3) # NOISE_CHIP
+	noise_chip.set("similarity", 0.3) # Under 0.5 threshold -> noise
+	noise_chip.set("ap_cost", 1)
+	
+	# Add both to context
+	event_bus.card_played.emit(data_chip)
+	event_bus.card_played.emit(noise_chip)
+	
+	if game_state.active_context.size() != 2:
+		print("FAIL: Context size should be 2. Got ", game_state.active_context.size())
+		passed = false
+		
+	# Play Reranker Card
+	var reranker_card = card_script.new()
+	reranker_card.set("type", 1) # ACTION
+	reranker_card.set("id", "reranker")
+	reranker_card.set("ap_cost", 3)
+	
+	event_bus.card_played.emit(reranker_card)
+	
+	# Reranker should remove noise_chip (similarity 0.3 < 0.5)
+	if game_state.active_context.size() != 1:
+		print("FAIL: Reranker did not remove noise chip. Context size got ", game_state.active_context.size())
+		passed = false
+	elif game_state.active_context.cards[0] != data_chip:
+		print("FAIL: Reranker removed the wrong card!")
+		passed = false
+	else:
+		print("PASS: Reranker filtered out similarity < 0.5 noise chip successfully.")
+		
+	# Add noise chip back to test hallucination penalty
+	event_bus.card_played.emit(noise_chip)
+	
+	var crisis_before = game_state.crisis_hp
+	game_state.deliver_context()
+	
+	# With 1 noise chip, purity is 0.5 < 1.0 -> Delivery damage = 0, player HP decreases by 1 * 20.0 = 20.0
+	if game_state.player_hp != initial_hp - 20.0:
+		print("FAIL: Hallucination HP penalty mismatch. Expected %f, got %f" % [initial_hp - 20.0, game_state.player_hp])
+		passed = false
+	elif game_state.crisis_hp != crisis_before:
+		print("FAIL: Impact damage should be 0 on hallucination. HP changed to ", game_state.crisis_hp)
+		passed = false
+	else:
+		print("PASS: Hallucination formula matched TDD (0 damage, -20.0 player HP).")
+		
+	# Test 3: Rate Limit Compression
 	# First delivery happened above. delivery_count should be 1. compression should be 0.9.
 	if game_state.delivery_count != 1:
 		print("FAIL: Delivery count not incremented. Got ", game_state.delivery_count)
@@ -44,15 +100,17 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	else:
 		print("PASS: Rate Limit Compression updated to 0.9.")
 		
-	# Test 3: Data Poisoning Growth
+	# Test 4: Data Poisoning Growth
 	# Manually simulate SLA dropping by 150 seconds (half of 300)
 	game_state._process(150.0)
-	# Poison should be (156/300) * 0.5 = 0.26
-	if abs(game_state.data_poisoning_ratio - 0.26) > 0.01:
-		print("FAIL: Data Poisoning ratio not scaling correctly. Expected 0.26, got ", game_state.data_poisoning_ratio)
+	# SLA was 300 - 6 (action_card) - 6 (reranker) - 2 (delivery) = 286
+	# After 150 seconds elapsed, SLA is 136. Elapsed is 164.
+	# Poison should be (164/300) * 0.5 = 0.27
+	if abs(game_state.data_poisoning_ratio - 0.27) > 0.01:
+		print("FAIL: Data Poisoning ratio not scaling correctly. Expected 0.27, got ", game_state.data_poisoning_ratio)
 		passed = false
 	else:
-		print("PASS: Data Poisoning ratio scaled to 0.26 after 156s SLA loss.")
+		print("PASS: Data Poisoning ratio scaled to 0.27 after 164s SLA loss.")
 		
 	# Cleanup
 	Engine.unregister_singleton("EventBus")

@@ -1,2 +1,5 @@
 res://src/views/CardChip.tscn::bcba7a35e5bcef2408ed42710091d2b9::1782698870::res://.godot/exported/133200997/export-6be3be3a1c8cc85296b6c85711156691-CardChip.scn
-res://src/views/GameBoard.tscn::14bf2a0df864a4d49fda208d02882ed8::1782719325::res://.godot/exported/133200997/export-e03d6c8456a1ef663a3654340a15497a-GameBoard.scn
+res://src/views/GameBoard.tscn::778d19a95af01be4003450cb8762abaf::1782723775::res://.godot/exported/133200997/export-e03d6c8456a1ef663a3654340a15497a-GameBoard.scn
+res://src/models/cards/resources/dense_search.tres::803cee22aa49c21a41c60b16f124d47d::1782723748::res://.godot/exported/133200997/export-32513b5559c9449b4891939c82d85ccc-dense_search.res
+res://src/models/cards/resources/keyword_search.tres::3ebdb96d6764058875ece7fe35812a7e::1782723744::res://.godot/exported/133200997/export-a8c7cd67416e13874b0def0ecedeb324-keyword_search.res
+res://src/models/cards/resources/reranker.tres::5c5b44000b644eb9daf41bf3a5e7e8f3::1782723753::res://.godot/exported/133200997/export-b3ae03c03b9a011694277361fe526d0e-reranker.res

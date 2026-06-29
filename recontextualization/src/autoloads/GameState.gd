@@ -9,6 +9,8 @@ signal game_over(is_victory: bool)
 signal sla_changed(new_sla: float)
 signal poisoning_updated(ratio: float)
 signal rate_limit_updated(compression: float)
+signal search_triggered(match_type: int)
+signal context_purified(remaining_card_instances: Array)
 
 var current_ap: int = 10
 var crisis_hp: float = 10000.0
@@ -64,18 +66,17 @@ func start_game() -> void:
 	sla_changed.emit(sla_timer)
 	poisoning_updated.emit(data_poisoning_ratio)
 	rate_limit_updated.emit(rate_limit_compression)
-
-func apply_hallucination_penalty(purity: float) -> void:
-	if purity < 1.0:
-		# Hallucination Penalty: P < 1.0 triggers damage to player
-		var penalty: float = (1.0 - purity) * 10.0
-		player_hp -= penalty
-		if player_hp <= 0:
-			player_hp = 0
-			is_game_active = false
-			player_died.emit()
-			game_over.emit(false)
-		player_hp_changed.emit(player_hp)
+	
+	# Draw starting action cards
+	if Engine.has_singleton("CardRegistry") and Engine.has_singleton("EventBus"):
+		var card_reg = Engine.get_singleton("CardRegistry")
+		var event_bus = Engine.get_singleton("EventBus")
+		var kw = card_reg.get_card("keyword_search")
+		if kw: event_bus.card_drawn.emit(kw)
+		var ds = card_reg.get_card("dense_search")
+		if ds: event_bus.card_drawn.emit(ds)
+		var rr = card_reg.get_card("reranker")
+		if rr: event_bus.card_drawn.emit(rr)
 
 func deduct_sla(amount: float) -> void:
 	if is_game_active:
@@ -90,40 +91,82 @@ func _on_card_played(card: Resource) -> void:
 	if not is_game_active:
 		return
 		
-	# Deduct AP (cost is 1 for now, or from card.get("ap_cost") if available)
 	var cost = card.get("ap_cost") if card.get("ap_cost") != null else 1
 	current_ap -= cost
 	ap_changed.emit(current_ap)
 	
-	# Check card type
-	# CardType: ACTION = 1, DATA_CHIP = 2, NOISE_CHIP = 3
 	var type_val = card.get("type") if card.get("type") != null else 1
 	
 	if type_val == 2 or type_val == 3:
-		# It's a context chip
+		# Context Chips (Data/Noise)
 		active_context.add_card(card)
 		var purity = active_context.calculate_context_purity(0.5)
 		context_updated.emit(purity)
 		
 	elif type_val == 1:
-		# ACTION CARD (Execution/Delivery)
-		# SLA Penalty for high cost cards (Cost * 2.0 seconds)
-		deduct_sla(cost * 2.0)
+		# ACTION CARD
+		var card_id = card.get("id") if card.get("id") != null else ""
+		deduct_sla(cost * 2.0) # Cost * 2.0 seconds penalty for playing action card
 		
-		# Rate Limit Compression increases on Delivery
-		delivery_count += 1
-		# Decrease rate limit compression by 10% per delivery, floor at 0.5
-		rate_limit_compression = max(0.5, 1.0 - (delivery_count * 0.1))
-		rate_limit_updated.emit(rate_limit_compression)
+		if card_id == "reranker":
+			# Reranker filter logic: remove similarity < 0.5 cards from active_context
+			var remaining_cards = []
+			for c in active_context.cards:
+				var sim = c.get("similarity") if c.get("similarity") != null else 0.0
+				if sim >= 0.5:
+					remaining_cards.append(c)
+			active_context.cards = remaining_cards
+			var purity = active_context.calculate_context_purity(0.5)
+			context_updated.emit(purity)
+			context_purified.emit(remaining_cards)
+			
+		elif card_id == "keyword_search":
+			search_triggered.emit(3) # KEYWORD
+			# Draw back so it's reusable
+			if Engine.has_singleton("EventBus"):
+				Engine.get_singleton("EventBus").card_drawn.emit(card.duplicate())
+				
+		elif card_id == "dense_search":
+			search_triggered.emit(2) # VECTOR
+			if Engine.has_singleton("EventBus"):
+				Engine.get_singleton("EventBus").card_drawn.emit(card.duplicate())
+
+func deliver_context() -> void:
+	if not is_game_active:
+		return
 		
-		var purity = active_context.calculate_context_purity(0.5)
-		apply_hallucination_penalty(purity)
-		
-		var damage = active_context.calculate_delivery_damage(1000.0, 0.5, false)
-		
-		# Apply Rate Limit Compression to Damage
+	# Delivery cost 1 AP
+	current_ap -= 1
+	ap_changed.emit(current_ap)
+	deduct_sla(2.0) # SLA penalty: 2.0s
+	
+	delivery_count += 1
+	rate_limit_compression = max(0.5, 1.0 - (delivery_count * 0.1))
+	rate_limit_updated.emit(rate_limit_compression)
+	
+	var purity = active_context.calculate_context_purity(0.5)
+	
+	var damage = 0.0
+	if purity < 1.0:
+		# Hallucination Penalty: D = 0, player HP damage based on noise chips
+		var noise_count = active_context.get_noise_chips(0.5)
+		# TDD alignment: noise_count * 20.0 (5 chips = 100 HP dead)
+		player_hp -= noise_count * 20.0
+		if player_hp <= 0:
+			player_hp = 0
+			is_game_active = false
+			player_died.emit()
+			game_over.emit(false)
+		player_hp_changed.emit(player_hp)
+	else:
+		# Check for GraphRAG KG multiplier
+		var has_chain = false
+		for card in active_context.cards:
+			if card.get("id") == "graph_rag":
+				has_chain = true
+				break
+		damage = active_context.calculate_delivery_damage(1000.0, 0.5, has_chain)
 		damage = damage * rate_limit_compression
-		
 		crisis_hp -= damage
 		if crisis_hp <= 0:
 			crisis_hp = 0
@@ -131,7 +174,8 @@ func _on_card_played(card: Resource) -> void:
 			game_over.emit(true)
 		hp_changed.emit(crisis_hp)
 		
-		# Reset context after action
-		active_context.clear()
-		context_updated.emit(0.0)
+	# Reset context
+	active_context.clear()
+	context_updated.emit(0.0)
+	context_purified.emit([])
 

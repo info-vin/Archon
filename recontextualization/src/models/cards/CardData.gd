@@ -19,6 +19,8 @@ enum MatchType { NONE, HYBRID, VECTOR, KEYWORD }
 @export var chunk_metadata: Dictionary = {}
 
 func is_noise(safe_threshold: float = 0.5) -> bool:
+	if type == CardType.NOISE_CHIP:
+		return true
 	if type != CardType.DATA_CHIP:
 		return false
 	return similarity < safe_threshold
