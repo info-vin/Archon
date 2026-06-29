@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://doyy6fdk13ovv"
-path="res://.godot/imported/bullseye.png-419ca69a99727be5b322fa05bf865a19.ctex"
+path="res://.godot/imported/bullseye.png-b4491040de0602552c1ee87ca4dc5f60.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/bullseye.png"
-dest_files=["res://.godot/imported/bullseye.png-419ca69a99727be5b322fa05bf865a19.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/bullseye.png"
+dest_files=["res://.godot/imported/bullseye.png-b4491040de0602552c1ee87ca4dc5f60.ctex"]
 
 [params]
 

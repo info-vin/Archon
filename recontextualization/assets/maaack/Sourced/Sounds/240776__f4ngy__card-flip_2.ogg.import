@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://s18l76kirf7f"
-path="res://.godot/imported/240776__f4ngy__card-flip_2.ogg-4d8b965d7777e71980c3a60de5d161fd.oggvorbisstr"
+path="res://.godot/imported/240776__f4ngy__card-flip_2.ogg-28892a0ae6fbea86020fa45a0dc603cc.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/240776__f4ngy__card-flip_2.ogg"
-dest_files=["res://.godot/imported/240776__f4ngy__card-flip_2.ogg-4d8b965d7777e71980c3a60de5d161fd.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/240776__f4ngy__card-flip_2.ogg"
+dest_files=["res://.godot/imported/240776__f4ngy__card-flip_2.ogg-28892a0ae6fbea86020fa45a0dc603cc.oggvorbisstr"]
 
 [params]
 

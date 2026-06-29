@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dujxpq8lk6d3c"
-path="res://.godot/imported/chemical-arrow.png-b546e1852e0b14d86a3e03010fb39a90.ctex"
+path="res://.godot/imported/chemical-arrow.png-d39e892ddbc57e7cf5f7b29b22da525c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/chemical-arrow.png"
-dest_files=["res://.godot/imported/chemical-arrow.png-b546e1852e0b14d86a3e03010fb39a90.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/chemical-arrow.png"
+dest_files=["res://.godot/imported/chemical-arrow.png-d39e892ddbc57e7cf5f7b29b22da525c.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://sjlwqpbst5dt"
-path="res://.godot/imported/brick-wall.png-6ea38b6ea0b992093ced614d33f0a0ab.ctex"
+path="res://.godot/imported/brick-wall.png-18dcb6240c04303a97a772f14449cdf2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/brick-wall.png"
-dest_files=["res://.godot/imported/brick-wall.png-6ea38b6ea0b992093ced614d33f0a0ab.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/brick-wall.png"
+dest_files=["res://.godot/imported/brick-wall.png-18dcb6240c04303a97a772f14449cdf2.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c44ykt2ahu8va"
-path="res://.godot/imported/teleport.png-beb8ea78f6706f1eeb6f84c3ec543566.ctex"
+path="res://.godot/imported/teleport.png-555c2921ed5cfbe4187b818862c20dd5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/teleport.png"
-dest_files=["res://.godot/imported/teleport.png-beb8ea78f6706f1eeb6f84c3ec543566.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/teleport.png"
+dest_files=["res://.godot/imported/teleport.png-555c2921ed5cfbe4187b818862c20dd5.ctex"]
 
 [params]
 

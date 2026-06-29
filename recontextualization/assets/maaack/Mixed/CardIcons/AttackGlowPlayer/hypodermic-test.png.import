@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b4urmtn5xjo2t"
-path="res://.godot/imported/hypodermic-test.png-22d332b8258e378c36deff7e897208d0.ctex"
+path="res://.godot/imported/hypodermic-test.png-6ffbbe092cbc6993598a6533c9ac3b4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/hypodermic-test.png"
-dest_files=["res://.godot/imported/hypodermic-test.png-22d332b8258e378c36deff7e897208d0.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/hypodermic-test.png"
+dest_files=["res://.godot/imported/hypodermic-test.png-6ffbbe092cbc6993598a6533c9ac3b4a.ctex"]
 
 [params]
 

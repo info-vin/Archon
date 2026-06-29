@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://oirma3d01d0h"
-path="res://.godot/imported/knife-thrust.png-aaa38a239e99f8bd78ea97997c0769bb.ctex"
+path="res://.godot/imported/knife-thrust.png-a9a54a1443ebe69b4467c8e96d7245ae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/knife-thrust.png"
-dest_files=["res://.godot/imported/knife-thrust.png-aaa38a239e99f8bd78ea97997c0769bb.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/knife-thrust.png"
+dest_files=["res://.godot/imported/knife-thrust.png-a9a54a1443ebe69b4467c8e96d7245ae.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cq31gj8m0mvu3"
-path="res://.godot/imported/blindfold.png-b8ef5ac36615de9f4dc1cbd77a918ae7.ctex"
+path="res://.godot/imported/blindfold.png-4f3518d3e865c863d086bf8d4ef4bdd3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/blindfold.png"
-dest_files=["res://.godot/imported/blindfold.png-b8ef5ac36615de9f4dc1cbd77a918ae7.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/blindfold.png"
+dest_files=["res://.godot/imported/blindfold.png-4f3518d3e865c863d086bf8d4ef4bdd3.ctex"]
 
 [params]
 

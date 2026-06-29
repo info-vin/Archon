@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfiak8ow67fdf"
-path="res://.godot/imported/locked-fortress.png-96e1210d4facfc127a574a4f23ebee2e.ctex"
+path="res://.godot/imported/locked-fortress.png-575ac7defd293fa7b615a5ccf13db243.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/locked-fortress.png"
-dest_files=["res://.godot/imported/locked-fortress.png-96e1210d4facfc127a574a4f23ebee2e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/locked-fortress.png"
+dest_files=["res://.godot/imported/locked-fortress.png-575ac7defd293fa7b615a5ccf13db243.ctex"]
 
 [params]
 

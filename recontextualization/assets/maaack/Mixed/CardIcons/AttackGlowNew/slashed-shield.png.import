@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxgd63udxjjgs"
-path="res://.godot/imported/slashed-shield.png-a8ff72c06c44d84e34a8b35540124858.ctex"
+path="res://.godot/imported/slashed-shield.png-07f7f969358e91a92b6e74e78ddbf5f6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/slashed-shield.png"
-dest_files=["res://.godot/imported/slashed-shield.png-a8ff72c06c44d84e34a8b35540124858.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/slashed-shield.png"
+dest_files=["res://.godot/imported/slashed-shield.png-07f7f969358e91a92b6e74e78ddbf5f6.ctex"]
 
 [params]
 

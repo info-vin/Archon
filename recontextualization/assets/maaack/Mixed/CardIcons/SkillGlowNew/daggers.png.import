@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://qxjc0krv4vve"
-path="res://.godot/imported/daggers.png-8edb8d56480197d624582f6460abbe02.ctex"
+path="res://.godot/imported/daggers.png-39fd3a6d11f86195bc8bc3c3fe59f25d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/daggers.png"
-dest_files=["res://.godot/imported/daggers.png-8edb8d56480197d624582f6460abbe02.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/daggers.png"
+dest_files=["res://.godot/imported/daggers.png-39fd3a6d11f86195bc8bc3c3fe59f25d.ctex"]
 
 [params]
 

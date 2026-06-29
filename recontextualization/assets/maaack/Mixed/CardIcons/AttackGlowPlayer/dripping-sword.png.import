@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dxy4i4lsopf1r"
-path="res://.godot/imported/dripping-sword.png-ecb37426f6d6e21422484791e68f4951.ctex"
+path="res://.godot/imported/dripping-sword.png-864d55986f776c90b7acdb243ac14172.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/dripping-sword.png"
-dest_files=["res://.godot/imported/dripping-sword.png-ecb37426f6d6e21422484791e68f4951.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/dripping-sword.png"
+dest_files=["res://.godot/imported/dripping-sword.png-864d55986f776c90b7acdb243ac14172.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://de71k6w4kyh8g"
-path="res://.godot/imported/sore.png-858c2c3d318f6bbbefd0c91c3247655e.ctex"
+path="res://.godot/imported/sore.png-d27ca6cb6c837eee8bcbc64f2606cf9a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/sore.png"
-dest_files=["res://.godot/imported/sore.png-858c2c3d318f6bbbefd0c91c3247655e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/sore.png"
+dest_files=["res://.godot/imported/sore.png-d27ca6cb6c837eee8bcbc64f2606cf9a.ctex"]
 
 [params]
 

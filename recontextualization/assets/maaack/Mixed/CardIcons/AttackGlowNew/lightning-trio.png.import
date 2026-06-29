@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://2h25fhjawe13"
-path="res://.godot/imported/lightning-trio.png-c6e38a4418d915edd39f3af834b46ee1.ctex"
+path="res://.godot/imported/lightning-trio.png-b2c002f5c28f35fe1bc87c9793a31c21.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/lightning-trio.png"
-dest_files=["res://.godot/imported/lightning-trio.png-c6e38a4418d915edd39f3af834b46ee1.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/lightning-trio.png"
+dest_files=["res://.godot/imported/lightning-trio.png-b2c002f5c28f35fe1bc87c9793a31c21.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://r8ueciwwmd8p"
-path="res://.godot/imported/crosshair.png-9abc8f59b8c47a0242c243e229a85639.ctex"
+path="res://.godot/imported/crosshair.png-1cc7a55219fe8d9ec5ec72b3f0b67ae9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/crosshair.png"
-dest_files=["res://.godot/imported/crosshair.png-9abc8f59b8c47a0242c243e229a85639.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/crosshair.png"
+dest_files=["res://.godot/imported/crosshair.png-1cc7a55219fe8d9ec5ec72b3f0b67ae9.ctex"]
 
 [params]
 

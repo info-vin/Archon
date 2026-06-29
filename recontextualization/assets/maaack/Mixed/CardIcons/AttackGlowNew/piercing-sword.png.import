@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ste0rttq84e3"
-path="res://.godot/imported/piercing-sword.png-b64bf96f6b011eda77b6f4e94fdf5341.ctex"
+path="res://.godot/imported/piercing-sword.png-4aa0c981ce0ecb36795e3b33c9423eea.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/piercing-sword.png"
-dest_files=["res://.godot/imported/piercing-sword.png-b64bf96f6b011eda77b6f4e94fdf5341.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/piercing-sword.png"
+dest_files=["res://.godot/imported/piercing-sword.png-4aa0c981ce0ecb36795e3b33c9423eea.ctex"]
 
 [params]
 

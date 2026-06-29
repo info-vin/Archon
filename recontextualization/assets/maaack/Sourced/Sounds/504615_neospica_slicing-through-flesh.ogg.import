@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://vprk3s0y404m"
-path="res://.godot/imported/504615_neospica_slicing-through-flesh.ogg-1cef26174b829f8fc5bc0880734415c2.oggvorbisstr"
+path="res://.godot/imported/504615_neospica_slicing-through-flesh.ogg-29125daf9ff1e1a4c159a10d6bee45ee.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/504615_neospica_slicing-through-flesh.ogg"
-dest_files=["res://.godot/imported/504615_neospica_slicing-through-flesh.ogg-1cef26174b829f8fc5bc0880734415c2.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/504615_neospica_slicing-through-flesh.ogg"
+dest_files=["res://.godot/imported/504615_neospica_slicing-through-flesh.ogg-29125daf9ff1e1a4c159a10d6bee45ee.oggvorbisstr"]
 
 [params]
 

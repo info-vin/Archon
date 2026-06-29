@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c6ygpjcn1n6eo"
-path="res://.godot/imported/eruption.png-ebb3ecd2f6e0b0febe8396ff9a9e63b5.ctex"
+path="res://.godot/imported/eruption.png-d62759a5d52247e6af651f4414f9ae18.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/Energy/eruption.png"
-dest_files=["res://.godot/imported/eruption.png-ebb3ecd2f6e0b0febe8396ff9a9e63b5.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/Energy/eruption.png"
+dest_files=["res://.godot/imported/eruption.png-d62759a5d52247e6af651f4414f9ae18.ctex"]
 
 [params]
 

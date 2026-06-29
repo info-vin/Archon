@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bl4e1866gpi8d"
-path="res://.godot/imported/sprint.png-b35cf439a4cb05b85429cd74c0ce62f3.ctex"
+path="res://.godot/imported/sprint.png-927da5036eabd0f0ccab30fdb8ad393d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/sprint.png"
-dest_files=["res://.godot/imported/sprint.png-b35cf439a4cb05b85429cd74c0ce62f3.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/sprint.png"
+dest_files=["res://.godot/imported/sprint.png-927da5036eabd0f0ccab30fdb8ad393d.ctex"]
 
 [params]
 

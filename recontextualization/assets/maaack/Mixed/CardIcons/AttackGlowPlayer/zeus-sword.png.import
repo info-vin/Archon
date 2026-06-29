@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwlk8o65ytqwq"
-path="res://.godot/imported/zeus-sword.png-77872223f55d0f6686b3a66baa11b1b8.ctex"
+path="res://.godot/imported/zeus-sword.png-78be61c0de021d875328affa980c5d1d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/zeus-sword.png"
-dest_files=["res://.godot/imported/zeus-sword.png-77872223f55d0f6686b3a66baa11b1b8.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/zeus-sword.png"
+dest_files=["res://.godot/imported/zeus-sword.png-78be61c0de021d875328affa980c5d1d.ctex"]
 
 [params]
 

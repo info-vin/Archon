@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dhsuav8fy38fd"
-path="res://.godot/imported/spiral-arrow.png-430f0f9b97aecd40cb797025a301e849.ctex"
+path="res://.godot/imported/spiral-arrow.png-1caf3733ac0c556292baf6f9f4821c48.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/spiral-arrow.png"
-dest_files=["res://.godot/imported/spiral-arrow.png-430f0f9b97aecd40cb797025a301e849.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/spiral-arrow.png"
+dest_files=["res://.godot/imported/spiral-arrow.png-1caf3733ac0c556292baf6f9f4821c48.ctex"]
 
 [params]
 

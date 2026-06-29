@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c8w3mjntb7mrd"
-path="res://.godot/imported/fragmented-sword.png-0537a942c147ec2fa931930125a4b148.ctex"
+path="res://.godot/imported/fragmented-sword.png-1c2ee2e0a0e0d3574e4757679deb6859.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/fragmented-sword.png"
-dest_files=["res://.godot/imported/fragmented-sword.png-0537a942c147ec2fa931930125a4b148.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/fragmented-sword.png"
+dest_files=["res://.godot/imported/fragmented-sword.png-1c2ee2e0a0e0d3574e4757679deb6859.ctex"]
 
 [params]
 

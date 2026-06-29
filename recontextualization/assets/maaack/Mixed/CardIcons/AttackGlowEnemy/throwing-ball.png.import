@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dw7npt34n3dbh"
-path="res://.godot/imported/throwing-ball.png-830c1fbaf0d0c6e66eee852a57b5c4d6.ctex"
+path="res://.godot/imported/throwing-ball.png-5dfce68188ee1310ebe7341d697f83a1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/throwing-ball.png"
-dest_files=["res://.godot/imported/throwing-ball.png-830c1fbaf0d0c6e66eee852a57b5c4d6.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/throwing-ball.png"
+dest_files=["res://.godot/imported/throwing-ball.png-5dfce68188ee1310ebe7341d697f83a1.ctex"]
 
 [params]
 

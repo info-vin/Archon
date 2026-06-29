@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cci3y1p72m8hs"
-path="res://.godot/imported/hand-grip.png-d8c03c6e506e50974d64e607564ba13b.ctex"
+path="res://.godot/imported/hand-grip.png-616f28b68e13d254eebb7c6ba2289c61.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/hand-grip.png"
-dest_files=["res://.godot/imported/hand-grip.png-d8c03c6e506e50974d64e607564ba13b.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/hand-grip.png"
+dest_files=["res://.godot/imported/hand-grip.png-616f28b68e13d254eebb7c6ba2289c61.ctex"]
 
 [params]
 

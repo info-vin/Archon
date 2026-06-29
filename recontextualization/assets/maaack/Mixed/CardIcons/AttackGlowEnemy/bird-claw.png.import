@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://blaxfng0gidqy"
-path="res://.godot/imported/bird-claw.png-a4da3a831a62a8d8b964879fd9b3b88d.ctex"
+path="res://.godot/imported/bird-claw.png-553fa402a190cf54f9e9b9ba921c304d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/bird-claw.png"
-dest_files=["res://.godot/imported/bird-claw.png-a4da3a831a62a8d8b964879fd9b3b88d.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/bird-claw.png"
+dest_files=["res://.godot/imported/bird-claw.png-553fa402a190cf54f9e9b9ba921c304d.ctex"]
 
 [params]
 

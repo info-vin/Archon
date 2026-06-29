@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cevour54ways"
-path="res://.godot/imported/wrapped-heart.png-4883acba33a32bbccffd1532e545e746.ctex"
+path="res://.godot/imported/wrapped-heart.png-43c3a120a0a8b2ae189fac09c7ed7f02.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/wrapped-heart.png"
-dest_files=["res://.godot/imported/wrapped-heart.png-4883acba33a32bbccffd1532e545e746.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/wrapped-heart.png"
+dest_files=["res://.godot/imported/wrapped-heart.png-43c3a120a0a8b2ae189fac09c7ed7f02.ctex"]
 
 [params]
 

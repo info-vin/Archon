@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ckfmqhnfr2h76"
-path="res://.godot/imported/saber-slash.png-b872297ba20a32a40dca9d6ae9eb92f4.ctex"
+path="res://.godot/imported/saber-slash.png-2e3f115ac0b1db593ba858b0404afd3d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/saber-slash.png"
-dest_files=["res://.godot/imported/saber-slash.png-b872297ba20a32a40dca9d6ae9eb92f4.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/saber-slash.png"
+dest_files=["res://.godot/imported/saber-slash.png-2e3f115ac0b1db593ba858b0404afd3d.ctex"]
 
 [params]
 

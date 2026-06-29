@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b1bc33ls02oip"
-path="res://.godot/imported/drowning.png-58f0629a8a0fc64e6fc546e4b47f80c9.ctex"
+path="res://.godot/imported/drowning.png-46ef440bd2607e60272193c1dd7e8b10.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/drowning.png"
-dest_files=["res://.godot/imported/drowning.png-58f0629a8a0fc64e6fc546e4b47f80c9.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/drowning.png"
+dest_files=["res://.godot/imported/drowning.png-46ef440bd2607e60272193c1dd7e8b10.ctex"]
 
 [params]
 

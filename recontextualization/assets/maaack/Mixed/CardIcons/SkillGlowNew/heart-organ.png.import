@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cvu3shhvknf6q"
-path="res://.godot/imported/heart-organ.png-0bbf348f9f3f77fc61a33a9ccf63513a.ctex"
+path="res://.godot/imported/heart-organ.png-47ec3dc25ab3b14d737b494acf9ca0d9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/heart-organ.png"
-dest_files=["res://.godot/imported/heart-organ.png-0bbf348f9f3f77fc61a33a9ccf63513a.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/heart-organ.png"
+dest_files=["res://.godot/imported/heart-organ.png-47ec3dc25ab3b14d737b494acf9ca0d9.ctex"]
 
 [params]
 

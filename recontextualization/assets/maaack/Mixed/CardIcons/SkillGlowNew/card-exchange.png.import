@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cx3bga62n1wh0"
-path="res://.godot/imported/card-exchange.png-5e07ef2149613d75522cf714b4975658.ctex"
+path="res://.godot/imported/card-exchange.png-50024d780b8e3edbebef089a6a5cda0a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/card-exchange.png"
-dest_files=["res://.godot/imported/card-exchange.png-5e07ef2149613d75522cf714b4975658.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/card-exchange.png"
+dest_files=["res://.godot/imported/card-exchange.png-50024d780b8e3edbebef089a6a5cda0a.ctex"]
 
 [params]
 

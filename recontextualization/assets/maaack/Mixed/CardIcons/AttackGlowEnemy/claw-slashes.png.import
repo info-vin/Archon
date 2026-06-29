@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c2ydebs2qydcv"
-path="res://.godot/imported/claw-slashes.png-8c5a0b4ffdc40309c564a3fdb74480a5.ctex"
+path="res://.godot/imported/claw-slashes.png-a729e43bc06474a5afb55327102ba01a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/claw-slashes.png"
-dest_files=["res://.godot/imported/claw-slashes.png-8c5a0b4ffdc40309c564a3fdb74480a5.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/claw-slashes.png"
+dest_files=["res://.godot/imported/claw-slashes.png-a729e43bc06474a5afb55327102ba01a.ctex"]
 
 [params]
 

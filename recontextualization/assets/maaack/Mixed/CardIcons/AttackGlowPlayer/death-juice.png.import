@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dedjcejjcjcdy"
-path="res://.godot/imported/death-juice.png-49ae24fd608870587d2c07230ddbe79e.ctex"
+path="res://.godot/imported/death-juice.png-4bb8a739f63a3eecb7c58999514aa337.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/death-juice.png"
-dest_files=["res://.godot/imported/death-juice.png-49ae24fd608870587d2c07230ddbe79e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/death-juice.png"
+dest_files=["res://.godot/imported/death-juice.png-4bb8a739f63a3eecb7c58999514aa337.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dpicrmwt5d41q"
-path="res://.godot/imported/fortified.png-a94cf4a8ec27b38283ba27be787fcea5.ctex"
+path="res://.godot/imported/fortified.png-1c4e667ee05c39a4156f33a278fd8d13.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats/fortified.png"
-dest_files=["res://.godot/imported/fortified.png-a94cf4a8ec27b38283ba27be787fcea5.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats/fortified.png"
+dest_files=["res://.godot/imported/fortified.png-1c4e667ee05c39a4156f33a278fd8d13.ctex"]
 
 [params]
 

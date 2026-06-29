@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://4rbggise3ef7"
-path="res://.godot/imported/burning-embers.png-db066600d2cfba24696a4e60c5e40efd.ctex"
+path="res://.godot/imported/burning-embers.png-ee00c801bedab2eab0243398af36bc5d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/Energy/burning-embers.png"
-dest_files=["res://.godot/imported/burning-embers.png-db066600d2cfba24696a4e60c5e40efd.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/Energy/burning-embers.png"
+dest_files=["res://.godot/imported/burning-embers.png-ee00c801bedab2eab0243398af36bc5d.ctex"]
 
 [params]
 

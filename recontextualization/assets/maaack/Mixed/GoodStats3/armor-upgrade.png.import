@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://sxx3wkq1vk7o"
-path="res://.godot/imported/armor-upgrade.png-1f21825cdfe94be3d067fcbcb3151553.ctex"
+path="res://.godot/imported/armor-upgrade.png-1ab03951dabc40f1952792f50e59c00c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats3/armor-upgrade.png"
-dest_files=["res://.godot/imported/armor-upgrade.png-1f21825cdfe94be3d067fcbcb3151553.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats3/armor-upgrade.png"
+dest_files=["res://.godot/imported/armor-upgrade.png-1ab03951dabc40f1952792f50e59c00c.ctex"]
 
 [params]
 

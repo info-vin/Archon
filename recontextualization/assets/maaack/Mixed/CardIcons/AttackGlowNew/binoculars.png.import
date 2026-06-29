@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ckxf1ny7u2wrs"
-path="res://.godot/imported/binoculars.png-c549860cfaf476f7ae198bec45eb7ebe.ctex"
+path="res://.godot/imported/binoculars.png-f67055514f79befaea24a595ce66bf01.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/binoculars.png"
-dest_files=["res://.godot/imported/binoculars.png-c549860cfaf476f7ae198bec45eb7ebe.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/binoculars.png"
+dest_files=["res://.godot/imported/binoculars.png-f67055514f79befaea24a595ce66bf01.ctex"]
 
 [params]
 

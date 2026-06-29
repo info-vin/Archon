@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c8d8hijnqd2mr"
-path="res://.godot/imported/rune-sword.png-9e3de317c3fd42f0da5c76b03da324a5.ctex"
+path="res://.godot/imported/rune-sword.png-c868ee8ca31fd154ef89fa8e6aab5d70.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/rune-sword.png"
-dest_files=["res://.godot/imported/rune-sword.png-9e3de317c3fd42f0da5c76b03da324a5.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/rune-sword.png"
+dest_files=["res://.godot/imported/rune-sword.png-c868ee8ca31fd154ef89fa8e6aab5d70.ctex"]
 
 [params]
 

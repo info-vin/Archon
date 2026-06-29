@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://8rgr0eq3qgyy"
-path="res://.godot/imported/smooth-shields.png-4c0f84de62aca8e1c9c70b280c4332cc.ctex"
+path="res://.godot/imported/smooth-shields.png-698534ceaaf635540b9e243d258a369e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/smooth-shields.png"
-dest_files=["res://.godot/imported/smooth-shields.png-4c0f84de62aca8e1c9c70b280c4332cc.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/smooth-shields.png"
+dest_files=["res://.godot/imported/smooth-shields.png-698534ceaaf635540b9e243d258a369e.ctex"]
 
 [params]
 

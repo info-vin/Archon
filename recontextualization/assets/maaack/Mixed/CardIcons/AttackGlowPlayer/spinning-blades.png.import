@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://x6xuvb3gag5d"
-path="res://.godot/imported/spinning-blades.png-392056d4712405144649f2e583c54614.ctex"
+path="res://.godot/imported/spinning-blades.png-7a28fa77ece15bc8ea84f1338ec2125d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/spinning-blades.png"
-dest_files=["res://.godot/imported/spinning-blades.png-392056d4712405144649f2e583c54614.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/spinning-blades.png"
+dest_files=["res://.godot/imported/spinning-blades.png-7a28fa77ece15bc8ea84f1338ec2125d.ctex"]
 
 [params]
 

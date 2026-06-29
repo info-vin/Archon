@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dl5ohf6tif425"
-path="res://.godot/imported/pointy-sword.png-e7ef86b1e5d249563956a73d8cef3522.ctex"
+path="res://.godot/imported/pointy-sword.png-b1effa16582b51cad73e67624d2803b2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/pointy-sword.png"
-dest_files=["res://.godot/imported/pointy-sword.png-e7ef86b1e5d249563956a73d8cef3522.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/pointy-sword.png"
+dest_files=["res://.godot/imported/pointy-sword.png-b1effa16582b51cad73e67624d2803b2.ctex"]
 
 [params]
 

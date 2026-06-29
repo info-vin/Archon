@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dulovtvgopk1b"
-path="res://.godot/imported/sonic-lightning.png-dcca8b6f38a75c5e90b73b666a9778bf.ctex"
+path="res://.godot/imported/sonic-lightning.png-23d48e9e108138768b1f65bd11ca7956.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/sonic-lightning.png"
-dest_files=["res://.godot/imported/sonic-lightning.png-dcca8b6f38a75c5e90b73b666a9778bf.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/sonic-lightning.png"
+dest_files=["res://.godot/imported/sonic-lightning.png-23d48e9e108138768b1f65bd11ca7956.ctex"]
 
 [params]
 

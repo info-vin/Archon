@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cx5xvwghdtar4"
-path="res://.godot/imported/gift-of-knowledge.png-a39f5d4a16a34308cccfd7f34ebc5011.ctex"
+path="res://.godot/imported/gift-of-knowledge.png-fccbff1d890e71ac63b617bad9cc0dd8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/gift-of-knowledge.png"
-dest_files=["res://.godot/imported/gift-of-knowledge.png-a39f5d4a16a34308cccfd7f34ebc5011.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/gift-of-knowledge.png"
+dest_files=["res://.godot/imported/gift-of-knowledge.png-fccbff1d890e71ac63b617bad9cc0dd8.ctex"]
 
 [params]
 

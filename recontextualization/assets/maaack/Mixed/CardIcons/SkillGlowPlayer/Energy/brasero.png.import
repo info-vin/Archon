@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ptwh4sjeokx5"
-path="res://.godot/imported/brasero.png-a0e7009b6d8aacbeb11419016a1039c1.ctex"
+path="res://.godot/imported/brasero.png-049737456a79e9c45bc0e272e0d9da47.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/Energy/brasero.png"
-dest_files=["res://.godot/imported/brasero.png-a0e7009b6d8aacbeb11419016a1039c1.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/Energy/brasero.png"
+dest_files=["res://.godot/imported/brasero.png-049737456a79e9c45bc0e272e0d9da47.ctex"]
 
 [params]
 

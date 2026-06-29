@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://civ7r3cdxuv46"
-path="res://.godot/imported/card-discard.png-adfa7ab6ad1bf22b5036fbf88b4316dd.ctex"
+path="res://.godot/imported/card-discard.png-48cca3983d50f628a63236247930dd46.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/card-discard.png"
-dest_files=["res://.godot/imported/card-discard.png-adfa7ab6ad1bf22b5036fbf88b4316dd.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/card-discard.png"
+dest_files=["res://.godot/imported/card-discard.png-48cca3983d50f628a63236247930dd46.ctex"]
 
 [params]
 

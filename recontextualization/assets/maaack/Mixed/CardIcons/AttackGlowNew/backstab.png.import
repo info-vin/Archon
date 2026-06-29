@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://de1usrj1xu88x"
-path="res://.godot/imported/backstab.png-41f6d7d6e2d3d4c494450c1f95714328.ctex"
+path="res://.godot/imported/backstab.png-ecd9a438caba3990dd1372ed25830e12.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/backstab.png"
-dest_files=["res://.godot/imported/backstab.png-41f6d7d6e2d3d4c494450c1f95714328.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/backstab.png"
+dest_files=["res://.godot/imported/backstab.png-ecd9a438caba3990dd1372ed25830e12.ctex"]
 
 [params]
 

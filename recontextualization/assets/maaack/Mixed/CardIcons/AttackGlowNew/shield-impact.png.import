@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://2srio864pt6l"
-path="res://.godot/imported/shield-impact.png-52c9532bb6700db15a3b2105c5a41f31.ctex"
+path="res://.godot/imported/shield-impact.png-fd17ee8c4c60edcc453dd71fa8ad678c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/shield-impact.png"
-dest_files=["res://.godot/imported/shield-impact.png-52c9532bb6700db15a3b2105c5a41f31.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/shield-impact.png"
+dest_files=["res://.godot/imported/shield-impact.png-fd17ee8c4c60edcc453dd71fa8ad678c.ctex"]
 
 [params]
 

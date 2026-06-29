@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://bw6kh50dlv6ew"
-path="res://.godot/imported/Road_Rage.otf-347b6dac00a8e34b706574693384dbca.fontdata"
+path="res://.godot/imported/Road_Rage.otf-b1c3897b62e813132ef3f0bd434f786a.fontdata"
 
 [deps]
 
-source_file="res://Assets/Sourced/Fonts/road-rage/Road_Rage.otf"
-dest_files=["res://.godot/imported/Road_Rage.otf-347b6dac00a8e34b706574693384dbca.fontdata"]
+source_file="res://assets/maaack/Sourced/Fonts/road-rage/Road_Rage.otf"
+dest_files=["res://.godot/imported/Road_Rage.otf-b1c3897b62e813132ef3f0bd434f786a.fontdata"]
 
 [params]
 

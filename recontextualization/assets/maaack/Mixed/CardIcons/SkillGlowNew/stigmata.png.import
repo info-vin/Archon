@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3uipowf5tqpr"
-path="res://.godot/imported/stigmata.png-d8a2e8411e40bf436a0b2a34b7621b42.ctex"
+path="res://.godot/imported/stigmata.png-0dd89fd0bca50e8e06aeb6e9e4a7587d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/stigmata.png"
-dest_files=["res://.godot/imported/stigmata.png-d8a2e8411e40bf436a0b2a34b7621b42.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/stigmata.png"
+dest_files=["res://.godot/imported/stigmata.png-0dd89fd0bca50e8e06aeb6e9e4a7587d.ctex"]
 
 [params]
 

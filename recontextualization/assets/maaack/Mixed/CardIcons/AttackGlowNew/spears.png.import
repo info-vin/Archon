@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://py61ee3x81wa"
-path="res://.godot/imported/spears.png-39c6dd2ce4ef48486ffab8245d73bbce.ctex"
+path="res://.godot/imported/spears.png-38c05c5e6f081fba39d9df41772f4048.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/spears.png"
-dest_files=["res://.godot/imported/spears.png-39c6dd2ce4ef48486ffab8245d73bbce.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/spears.png"
+dest_files=["res://.godot/imported/spears.png-38c05c5e6f081fba39d9df41772f4048.ctex"]
 
 [params]
 

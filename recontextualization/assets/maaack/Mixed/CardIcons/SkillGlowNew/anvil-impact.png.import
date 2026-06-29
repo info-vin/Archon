@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://sl088837gtpj"
-path="res://.godot/imported/anvil-impact.png-d8d6fb1ea520b4aa98edc5dab8e765cf.ctex"
+path="res://.godot/imported/anvil-impact.png-eb46b064a3fa01bfa19c97e9525e9152.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/anvil-impact.png"
-dest_files=["res://.godot/imported/anvil-impact.png-d8d6fb1ea520b4aa98edc5dab8e765cf.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/anvil-impact.png"
+dest_files=["res://.godot/imported/anvil-impact.png-eb46b064a3fa01bfa19c97e9525e9152.ctex"]
 
 [params]
 

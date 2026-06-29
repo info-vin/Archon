@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cli3p7ppig46k"
-path="res://.godot/imported/thunder-skull.png-a0f24a4f2e31c36e4e54cee429e97c9b.ctex"
+path="res://.godot/imported/thunder-skull.png-b200a04f54de46e94c2ffc5abd2144c3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/thunder-skull.png"
-dest_files=["res://.godot/imported/thunder-skull.png-a0f24a4f2e31c36e4e54cee429e97c9b.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/thunder-skull.png"
+dest_files=["res://.godot/imported/thunder-skull.png-b200a04f54de46e94c2ffc5abd2144c3.ctex"]
 
 [params]
 

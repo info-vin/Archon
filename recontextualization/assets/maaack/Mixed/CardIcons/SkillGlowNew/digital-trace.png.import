@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://do4x8mx33d7nf"
-path="res://.godot/imported/digital-trace.png-599e2e92bf696fb6a1de79edd3c49f4f.ctex"
+path="res://.godot/imported/digital-trace.png-de0dda0269bb9e0ae93c78fd49d88091.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/digital-trace.png"
-dest_files=["res://.godot/imported/digital-trace.png-599e2e92bf696fb6a1de79edd3c49f4f.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/digital-trace.png"
+dest_files=["res://.godot/imported/digital-trace.png-de0dda0269bb9e0ae93c78fd49d88091.ctex"]
 
 [params]
 

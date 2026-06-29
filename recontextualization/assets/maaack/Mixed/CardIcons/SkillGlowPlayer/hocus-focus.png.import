@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b0sisfwxjfqmt"
-path="res://.godot/imported/hocus-focus.png-b97d6ba1611f50c5549aeb9d6754de4c.ctex"
+path="res://.godot/imported/hocus-focus.png-370a020efe0c7bb37a6beef4dd80424b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/hocus-focus.png"
-dest_files=["res://.godot/imported/hocus-focus.png-b97d6ba1611f50c5549aeb9d6754de4c.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/hocus-focus.png"
+dest_files=["res://.godot/imported/hocus-focus.png-370a020efe0c7bb37a6beef4dd80424b.ctex"]
 
 [params]
 

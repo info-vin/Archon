@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ckxq0iu6r6srw"
-path="res://.godot/imported/fire-solid.svg-41efa1d57ff1313f27984dd7cc34d1dd.ctex"
+path="res://.godot/imported/fire-solid.svg-3fcfd82a60f633ca7db02041a2d69fc2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Sourced/Icons/FontAwesome/fire-solid.svg"
-dest_files=["res://.godot/imported/fire-solid.svg-41efa1d57ff1313f27984dd7cc34d1dd.ctex"]
+source_file="res://assets/maaack/Sourced/Icons/FontAwesome/fire-solid.svg"
+dest_files=["res://.godot/imported/fire-solid.svg-3fcfd82a60f633ca7db02041a2d69fc2.ctex"]
 
 [params]
 

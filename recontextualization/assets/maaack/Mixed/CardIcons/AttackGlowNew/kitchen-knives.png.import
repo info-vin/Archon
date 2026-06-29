@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cdv5l8o6563j"
-path="res://.godot/imported/kitchen-knives.png-45f053edc9d2a30d7bfa1d9fe65c5ac5.ctex"
+path="res://.godot/imported/kitchen-knives.png-59386b409f6a244e5aff97c5116d40a2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/kitchen-knives.png"
-dest_files=["res://.godot/imported/kitchen-knives.png-45f053edc9d2a30d7bfa1d9fe65c5ac5.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/kitchen-knives.png"
+dest_files=["res://.godot/imported/kitchen-knives.png-59386b409f6a244e5aff97c5116d40a2.ctex"]
 
 [params]
 

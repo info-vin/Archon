@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d2k12kgrjrqyb"
-path="res://.godot/imported/Button9sliceHover.png-74fabb8633fa205c33add23415389f3e.ctex"
+path="res://.godot/imported/Button9sliceHover.png-4be220c6ef1e8f506052089d42fb178f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/Buttons/Button9sliceHover.png"
-dest_files=["res://.godot/imported/Button9sliceHover.png-74fabb8633fa205c33add23415389f3e.ctex"]
+source_file="res://assets/maaack/Mixed/Buttons/Button9sliceHover.png"
+dest_files=["res://.godot/imported/Button9sliceHover.png-4be220c6ef1e8f506052089d42fb178f.ctex"]
 
 [params]
 

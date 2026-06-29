@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bykcbwvgsxeh4"
-path="res://.godot/imported/winged-shield.png-2a21decf317a60ed9fba7f4b5e057d9c.ctex"
+path="res://.godot/imported/winged-shield.png-bbfbf619ca59ed44b7e567bde54d683b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/winged-shield.png"
-dest_files=["res://.godot/imported/winged-shield.png-2a21decf317a60ed9fba7f4b5e057d9c.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/winged-shield.png"
+dest_files=["res://.godot/imported/winged-shield.png-bbfbf619ca59ed44b7e567bde54d683b.ctex"]
 
 [params]
 

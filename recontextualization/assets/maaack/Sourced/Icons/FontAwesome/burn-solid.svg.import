@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hnxbmroybvnr"
-path="res://.godot/imported/burn-solid.svg-d4e5515d80020805305d035ec18586d5.ctex"
+path="res://.godot/imported/burn-solid.svg-2f4fba10d76be6bc0d84354998c773ae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Sourced/Icons/FontAwesome/burn-solid.svg"
-dest_files=["res://.godot/imported/burn-solid.svg-d4e5515d80020805305d035ec18586d5.ctex"]
+source_file="res://assets/maaack/Sourced/Icons/FontAwesome/burn-solid.svg"
+dest_files=["res://.godot/imported/burn-solid.svg-2f4fba10d76be6bc0d84354998c773ae.ctex"]
 
 [params]
 

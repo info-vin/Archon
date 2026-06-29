@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1ydrljavkn5j"
-path="res://.godot/imported/steeltoe-boots.png-18a24b7a822b347a05bbeec23bbcf8cf.ctex"
+path="res://.godot/imported/steeltoe-boots.png-a9c86afd50f362b7e4de5b728ec22bc5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/En Garde/steeltoe-boots.png"
-dest_files=["res://.godot/imported/steeltoe-boots.png-18a24b7a822b347a05bbeec23bbcf8cf.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/En Garde/steeltoe-boots.png"
+dest_files=["res://.godot/imported/steeltoe-boots.png-a9c86afd50f362b7e4de5b728ec22bc5.ctex"]
 
 [params]
 

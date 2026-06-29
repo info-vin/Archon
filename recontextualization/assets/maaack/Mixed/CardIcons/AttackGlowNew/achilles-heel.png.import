@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://84upffbdrlsc"
-path="res://.godot/imported/achilles-heel.png-e0f35dbd2d775b938a30ee68b6a25d1d.ctex"
+path="res://.godot/imported/achilles-heel.png-2e9f55466391a4c2bbac18700ba0109e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/achilles-heel.png"
-dest_files=["res://.godot/imported/achilles-heel.png-e0f35dbd2d775b938a30ee68b6a25d1d.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/achilles-heel.png"
+dest_files=["res://.godot/imported/achilles-heel.png-2e9f55466391a4c2bbac18700ba0109e.ctex"]
 
 [params]
 

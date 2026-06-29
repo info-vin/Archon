@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://5oruxn56mej5"
-path="res://.godot/imported/switchblade.png-db97338e266b7353dab265de45901c18.ctex"
+path="res://.godot/imported/switchblade.png-534223fc62989c69d0bfa791dd4d5cf7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/switchblade.png"
-dest_files=["res://.godot/imported/switchblade.png-db97338e266b7353dab265de45901c18.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/switchblade.png"
+dest_files=["res://.godot/imported/switchblade.png-534223fc62989c69d0bfa791dd4d5cf7.ctex"]
 
 [params]
 

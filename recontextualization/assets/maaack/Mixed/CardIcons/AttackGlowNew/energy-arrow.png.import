@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clakcqshfhuml"
-path="res://.godot/imported/energy-arrow.png-1e4f68caad21a2fec61de4c3f4913c4c.ctex"
+path="res://.godot/imported/energy-arrow.png-9fa6268abd243e50d8bcc81a9c34ad49.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/energy-arrow.png"
-dest_files=["res://.godot/imported/energy-arrow.png-1e4f68caad21a2fec61de4c3f4913c4c.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/energy-arrow.png"
+dest_files=["res://.godot/imported/energy-arrow.png-9fa6268abd243e50d8bcc81a9c34ad49.ctex"]
 
 [params]
 

@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://x3fylxjg5lc2"
-path="res://.godot/imported/240787_f4ngy_metal-clank.ogg-3b003890a59162dd6fed1803e2d85a8b.oggvorbisstr"
+path="res://.godot/imported/240787_f4ngy_metal-clank.ogg-9fa3bead73e93f6a60bfa19f24b11c08.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/240787_f4ngy_metal-clank.ogg"
-dest_files=["res://.godot/imported/240787_f4ngy_metal-clank.ogg-3b003890a59162dd6fed1803e2d85a8b.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/240787_f4ngy_metal-clank.ogg"
+dest_files=["res://.godot/imported/240787_f4ngy_metal-clank.ogg-9fa3bead73e93f6a60bfa19f24b11c08.oggvorbisstr"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://diu6fctas5ytr"
-path="res://.godot/imported/machete.png-b57d6704e179196b4f4c19278635d866.ctex"
+path="res://.godot/imported/machete.png-01a2bf692cea9dfd2e7abff01608c7eb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/machete.png"
-dest_files=["res://.godot/imported/machete.png-b57d6704e179196b4f4c19278635d866.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/machete.png"
+dest_files=["res://.godot/imported/machete.png-01a2bf692cea9dfd2e7abff01608c7eb.ctex"]
 
 [params]
 

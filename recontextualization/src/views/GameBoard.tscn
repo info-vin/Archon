@@ -57,9 +57,28 @@ text = "Context Purity: 0%"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BossHPLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="CrisisHPLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
 layout_mode = 2
-text = "Boss HP: 10000"
+text = "Crisis HP: 10000"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SLAPorgressBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/TopBar"]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 300.0
+value = 300.0
+show_percentage = false
+
+[node name="SLAText" type="Label" parent="MarginContainer/VBoxContainer/TopBar/SLAPorgressBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "SLA: 05:00"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -68,8 +87,109 @@ layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3_pa")
 
+[node name="HintLabel" type="Label" parent="MarginContainer/VBoxContainer/PlayArea"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -50.0
+offset_right = 250.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "1. 將資料晶片拖曳至此建立 Context
+2. 打出行動卡進行交付 (Deliver)"
+horizontal_alignment = 1
+vertical_alignment = 1
+modulate = Color(1, 1, 1, 0.3)
+
 [node name="HandContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
+
+[node name="TutorialPanel" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="VBox" type="VBoxContainer" parent="TutorialPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -150.0
+offset_right = 300.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="TutorialPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+text = "⚠️ 系統危機發生！"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+
+[node name="Body" type="Label" parent="TutorialPanel/VBox"]
+layout_mode = 2
+text = "身為 RAG 工程師，你必須在 SLA 倒數結束前，透過卡牌過濾雜訊並精準交付資料來解除危機 (Crisis HP)。
+
+記住：如果你將混雜著錯誤資訊的卡牌交付給 LLM，模型將產生『幻覺 (Hallucination)』，不只危機無法解除，你還會受到反噬傷害！"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="StartButton" type="Button" parent="TutorialPanel/VBox"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "開始防禦"
+
+[node name="GameOverPanel" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+
+[node name="VBox" type="VBoxContainer" parent="GameOverPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="GameOverPanel/VBox"]
+layout_mode = 2
+text = "遊戲結束"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 32
+
+[node name="RestartButton" type="Button" parent="GameOverPanel/VBox"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "重新開始"

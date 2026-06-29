@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c62b5b7ic7dne"
-path="res://.godot/imported/gavel.png-4d3480f987a05467561a8125462a35d8.ctex"
+path="res://.godot/imported/gavel.png-6c58187eed72a00b98697b572a053e26.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/gavel.png"
-dest_files=["res://.godot/imported/gavel.png-4d3480f987a05467561a8125462a35d8.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/gavel.png"
+dest_files=["res://.godot/imported/gavel.png-6c58187eed72a00b98697b572a053e26.ctex"]
 
 [params]
 

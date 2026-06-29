@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dn8nyjq6upjo7"
-path="res://.godot/imported/pretty-fangs.png-f8601868f2b4c33a7e090bb997dce50b.ctex"
+path="res://.godot/imported/pretty-fangs.png-16bba506b7b8f0d572fa342a9c67809b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/pretty-fangs.png"
-dest_files=["res://.godot/imported/pretty-fangs.png-f8601868f2b4c33a7e090bb997dce50b.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/pretty-fangs.png"
+dest_files=["res://.godot/imported/pretty-fangs.png-16bba506b7b8f0d572fa342a9c67809b.ctex"]
 
 [params]
 

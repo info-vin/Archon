@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://v32tbn23575h"
-path="res://.godot/imported/wolf-trap.png-7283b62286ede8305d5319e7d3068ee0.ctex"
+path="res://.godot/imported/wolf-trap.png-2d9c612533af082adbb7dbd7998cf44b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/wolf-trap.png"
-dest_files=["res://.godot/imported/wolf-trap.png-7283b62286ede8305d5319e7d3068ee0.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/wolf-trap.png"
+dest_files=["res://.godot/imported/wolf-trap.png-2d9c612533af082adbb7dbd7998cf44b.ctex"]
 
 [params]
 

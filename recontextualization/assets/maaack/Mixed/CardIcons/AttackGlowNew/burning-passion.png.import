@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://j0uikh5asff7"
-path="res://.godot/imported/burning-passion.png-4a5906bc24750631196e7ad60e096ad4.ctex"
+path="res://.godot/imported/burning-passion.png-5e3d8d53128c76c2a494400f598e6e68.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/burning-passion.png"
-dest_files=["res://.godot/imported/burning-passion.png-4a5906bc24750631196e7ad60e096ad4.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/burning-passion.png"
+dest_files=["res://.godot/imported/burning-passion.png-5e3d8d53128c76c2a494400f598e6e68.ctex"]
 
 [params]
 

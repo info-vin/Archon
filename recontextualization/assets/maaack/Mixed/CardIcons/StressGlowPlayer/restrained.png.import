@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cvbe5bgay1cpo"
-path="res://.godot/imported/restrained.png-7fa65fd81cf128a49392e189ed82af39.ctex"
+path="res://.godot/imported/restrained.png-fe42d7488556d542a55167935d2e5626.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/restrained.png"
-dest_files=["res://.godot/imported/restrained.png-7fa65fd81cf128a49392e189ed82af39.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/restrained.png"
+dest_files=["res://.godot/imported/restrained.png-fe42d7488556d542a55167935d2e5626.ctex"]
 
 [params]
 

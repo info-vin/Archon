@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://s47xcc4p20hv"
-path="res://.godot/imported/locked-heart.png-c20137f78db4561deed24d1516339aea.ctex"
+path="res://.godot/imported/locked-heart.png-d86d064bf8fce7c40ae79106b3def851.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/locked-heart.png"
-dest_files=["res://.godot/imported/locked-heart.png-c20137f78db4561deed24d1516339aea.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/locked-heart.png"
+dest_files=["res://.godot/imported/locked-heart.png-d86d064bf8fce7c40ae79106b3def851.ctex"]
 
 [params]
 

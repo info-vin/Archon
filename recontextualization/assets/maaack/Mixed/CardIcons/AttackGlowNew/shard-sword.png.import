@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://u8i77h4jh6wn"
-path="res://.godot/imported/shard-sword.png-f91085ca11e030e5a18b288e8fac207c.ctex"
+path="res://.godot/imported/shard-sword.png-979aadba3786fbd9ca4210d628790389.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/shard-sword.png"
-dest_files=["res://.godot/imported/shard-sword.png-f91085ca11e030e5a18b288e8fac207c.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/shard-sword.png"
+dest_files=["res://.godot/imported/shard-sword.png-979aadba3786fbd9ca4210d628790389.ctex"]
 
 [params]
 

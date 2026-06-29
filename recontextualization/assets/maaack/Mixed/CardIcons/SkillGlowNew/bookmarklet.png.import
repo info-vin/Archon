@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cym1h8bvu2nvh"
-path="res://.godot/imported/bookmarklet.png-0af57655c77f9fe309434248ca40a1e4.ctex"
+path="res://.godot/imported/bookmarklet.png-4eea68bb840a7463276586e68dce44fe.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/bookmarklet.png"
-dest_files=["res://.godot/imported/bookmarklet.png-0af57655c77f9fe309434248ca40a1e4.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/bookmarklet.png"
+dest_files=["res://.godot/imported/bookmarklet.png-4eea68bb840a7463276586e68dce44fe.ctex"]
 
 [params]
 

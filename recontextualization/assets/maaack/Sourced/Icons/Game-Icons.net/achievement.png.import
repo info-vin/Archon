@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b8jju36w8trb6"
-path="res://.godot/imported/achievement.png-fb1d0d9703e3b6c900caa693a5341787.ctex"
+path="res://.godot/imported/achievement.png-f44bb75e2a03fe00dedb394c428311b0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Sourced/Icons/Game-Icons.net/achievement.png"
-dest_files=["res://.godot/imported/achievement.png-fb1d0d9703e3b6c900caa693a5341787.ctex"]
+source_file="res://assets/maaack/Sourced/Icons/Game-Icons.net/achievement.png"
+dest_files=["res://.godot/imported/achievement.png-f44bb75e2a03fe00dedb394c428311b0.ctex"]
 
 [params]
 

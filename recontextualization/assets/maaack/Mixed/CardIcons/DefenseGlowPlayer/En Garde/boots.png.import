@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ced8apahtirj5"
-path="res://.godot/imported/boots.png-a083cdafa0e41b161302aaa446b93132.ctex"
+path="res://.godot/imported/boots.png-1ed7b151e6813a13778d0249f31fd8d9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/En Garde/boots.png"
-dest_files=["res://.godot/imported/boots.png-a083cdafa0e41b161302aaa446b93132.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/En Garde/boots.png"
+dest_files=["res://.godot/imported/boots.png-1ed7b151e6813a13778d0249f31fd8d9.ctex"]
 
 [params]
 

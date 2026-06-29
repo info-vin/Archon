@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bmvlnybcq8kwq"
-path="res://.godot/imported/attack-pip-slot.png-4b8f27bfd279a3567d845c296566997f.ctex"
+path="res://.godot/imported/attack-pip-slot.png-6219ca1e8db8910eb66bbb5c5281ad95.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Originals/Icons/attack-pip-slot.png"
-dest_files=["res://.godot/imported/attack-pip-slot.png-4b8f27bfd279a3567d845c296566997f.ctex"]
+source_file="res://assets/maaack/Originals/Icons/attack-pip-slot.png"
+dest_files=["res://.godot/imported/attack-pip-slot.png-6219ca1e8db8910eb66bbb5c5281ad95.ctex"]
 
 [params]
 

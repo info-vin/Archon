@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://3k8edw68tnny"
-path="res://.godot/imported/silenced.png-97bddfc7ce79b4f4cf95788c65ba5b49.ctex"
+path="res://.godot/imported/silenced.png-2fa2dc6e5636a310469eb6b322b29efa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/silenced.png"
-dest_files=["res://.godot/imported/silenced.png-97bddfc7ce79b4f4cf95788c65ba5b49.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/silenced.png"
+dest_files=["res://.godot/imported/silenced.png-2fa2dc6e5636a310469eb6b322b29efa.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmuxcif03ej2e"
-path="res://.godot/imported/defense-stance.png-052a93a7422b37970134b39465649950.ctex"
+path="res://.godot/imported/defense-stance.png-feb7090afbded3e4a859d1dfdb4306e9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/defense-stance.png"
-dest_files=["res://.godot/imported/defense-stance.png-052a93a7422b37970134b39465649950.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/defense-stance.png"
+dest_files=["res://.godot/imported/defense-stance.png-feb7090afbded3e4a859d1dfdb4306e9.ctex"]
 
 [params]
 

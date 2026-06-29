@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cn5tkow16tfkw"
-path="res://.godot/imported/walking-boot.png-945b4f482da446a6b74c766be9c172a2.ctex"
+path="res://.godot/imported/walking-boot.png-5660793adafd2b3a80ffe344510e9071.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowEnemy/walking-boot.png"
-dest_files=["res://.godot/imported/walking-boot.png-945b4f482da446a6b74c766be9c172a2.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowEnemy/walking-boot.png"
+dest_files=["res://.godot/imported/walking-boot.png-5660793adafd2b3a80ffe344510e9071.ctex"]
 
 [params]
 

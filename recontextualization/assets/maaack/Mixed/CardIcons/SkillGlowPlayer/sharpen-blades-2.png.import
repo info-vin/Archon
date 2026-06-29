@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bv7dq4g56cfen"
-path="res://.godot/imported/sharpen-blades-2.png-abe9f4221e5662319f1283a89959d61c.ctex"
+path="res://.godot/imported/sharpen-blades-2.png-d5bbd46f0b13c40d00b45c8908630269.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/sharpen-blades-2.png"
-dest_files=["res://.godot/imported/sharpen-blades-2.png-abe9f4221e5662319f1283a89959d61c.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/sharpen-blades-2.png"
+dest_files=["res://.godot/imported/sharpen-blades-2.png-d5bbd46f0b13c40d00b45c8908630269.ctex"]
 
 [params]
 

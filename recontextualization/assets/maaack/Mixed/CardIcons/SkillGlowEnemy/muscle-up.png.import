@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cufbk5r6gdlrp"
-path="res://.godot/imported/muscle-up.png-ac9eb319e9539ddd06584e1eb477bef1.ctex"
+path="res://.godot/imported/muscle-up.png-cea109695dec7c6844457d02765b74af.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowEnemy/muscle-up.png"
-dest_files=["res://.godot/imported/muscle-up.png-ac9eb319e9539ddd06584e1eb477bef1.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowEnemy/muscle-up.png"
+dest_files=["res://.godot/imported/muscle-up.png-cea109695dec7c6844457d02765b74af.ctex"]
 
 [params]
 

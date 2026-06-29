@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1gnk75g1rmdj"
-path="res://.godot/imported/swiss-army-knife.png-130b2719bb46f8991abaae251c2f1e96.ctex"
+path="res://.godot/imported/swiss-army-knife.png-5f94c18e102086b8e36d8cebc7eea473.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/swiss-army-knife.png"
-dest_files=["res://.godot/imported/swiss-army-knife.png-130b2719bb46f8991abaae251c2f1e96.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/swiss-army-knife.png"
+dest_files=["res://.godot/imported/swiss-army-knife.png-5f94c18e102086b8e36d8cebc7eea473.ctex"]
 
 [params]
 

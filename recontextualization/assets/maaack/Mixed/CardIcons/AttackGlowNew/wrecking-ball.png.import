@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://7kqx41rnmqv1"
-path="res://.godot/imported/wrecking-ball.png-13bbd1b1a9d8b690a21a842694a489b0.ctex"
+path="res://.godot/imported/wrecking-ball.png-761c9c3256043012d63a934ca26f29ff.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/wrecking-ball.png"
-dest_files=["res://.godot/imported/wrecking-ball.png-13bbd1b1a9d8b690a21a842694a489b0.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/wrecking-ball.png"
+dest_files=["res://.godot/imported/wrecking-ball.png-761c9c3256043012d63a934ca26f29ff.ctex"]
 
 [params]
 

@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://e4y1upc500fc"
-path="res://.godot/imported/240778__f4ngy__bridging-cards_1.ogg-a4ba5e1e9749cb452a8a920d085d29e9.oggvorbisstr"
+path="res://.godot/imported/240778__f4ngy__bridging-cards_1.ogg-94c37e3350ea697586c144727de17910.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/240778__f4ngy__bridging-cards_1.ogg"
-dest_files=["res://.godot/imported/240778__f4ngy__bridging-cards_1.ogg-a4ba5e1e9749cb452a8a920d085d29e9.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/240778__f4ngy__bridging-cards_1.ogg"
+dest_files=["res://.godot/imported/240778__f4ngy__bridging-cards_1.ogg-94c37e3350ea697586c144727de17910.oggvorbisstr"]
 
 [params]
 

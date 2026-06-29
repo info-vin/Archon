@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bwflmheehlvmm"
-path="res://.godot/imported/andromeda-chain.png-9b0f318924a04388354ca4e663ca8eef.ctex"
+path="res://.godot/imported/andromeda-chain.png-c0383d8336cd2df3a9a162d48b82a238.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/andromeda-chain.png"
-dest_files=["res://.godot/imported/andromeda-chain.png-9b0f318924a04388354ca4e663ca8eef.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/andromeda-chain.png"
+dest_files=["res://.godot/imported/andromeda-chain.png-c0383d8336cd2df3a9a162d48b82a238.ctex"]
 
 [params]
 

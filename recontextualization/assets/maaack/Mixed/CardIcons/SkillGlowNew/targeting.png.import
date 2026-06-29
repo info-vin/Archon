@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ca2dh6kkgx1fr"
-path="res://.godot/imported/targeting.png-a42fb9a2cd3d9c8d0575fcdcef124763.ctex"
+path="res://.godot/imported/targeting.png-ab155887a49b6266202828bb9b84d217.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/targeting.png"
-dest_files=["res://.godot/imported/targeting.png-a42fb9a2cd3d9c8d0575fcdcef124763.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/targeting.png"
+dest_files=["res://.godot/imported/targeting.png-ab155887a49b6266202828bb9b84d217.ctex"]
 
 [params]
 

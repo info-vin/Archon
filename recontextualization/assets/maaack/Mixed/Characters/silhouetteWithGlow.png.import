@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bee36ixn5r485"
-path="res://.godot/imported/silhouetteWithGlow.png-2fb95399764b938150ea297a28e643a4.ctex"
+path="res://.godot/imported/silhouetteWithGlow.png-1d825333decd2ed7ed99d2017385b9fd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/Characters/silhouetteWithGlow.png"
-dest_files=["res://.godot/imported/silhouetteWithGlow.png-2fb95399764b938150ea297a28e643a4.ctex"]
+source_file="res://assets/maaack/Mixed/Characters/silhouetteWithGlow.png"
+dest_files=["res://.godot/imported/silhouetteWithGlow.png-1d825333decd2ed7ed99d2017385b9fd.ctex"]
 
 [params]
 

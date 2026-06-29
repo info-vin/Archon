@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dqnnql1d2inva"
-path="res://.godot/imported/ice-shield.png-9ab138cc8b3863999c651e7917a55594.ctex"
+path="res://.godot/imported/ice-shield.png-a4131c1b24d1d266dc8f0b1eafceb09c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/ice-shield.png"
-dest_files=["res://.godot/imported/ice-shield.png-9ab138cc8b3863999c651e7917a55594.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/ice-shield.png"
+dest_files=["res://.godot/imported/ice-shield.png-a4131c1b24d1d266dc8f0b1eafceb09c.ctex"]
 
 [params]
 

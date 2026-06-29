@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cf0yo55pyl5b1"
-path="res://.godot/imported/life-tap.png-2b2513cb435ae880dab072f1d1b80d7a.ctex"
+path="res://.godot/imported/life-tap.png-d40c4148b190d1bd93b54258fcc8b11e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/life-tap.png"
-dest_files=["res://.godot/imported/life-tap.png-2b2513cb435ae880dab072f1d1b80d7a.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/life-tap.png"
+dest_files=["res://.godot/imported/life-tap.png-d40c4148b190d1bd93b54258fcc8b11e.ctex"]
 
 [params]
 

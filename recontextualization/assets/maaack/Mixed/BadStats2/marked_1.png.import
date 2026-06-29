@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b2owbyu0sk57c"
-path="res://.godot/imported/marked_1.png-7d600774661a98e374b679792e54d1c6.ctex"
+path="res://.godot/imported/marked_1.png-860414e33d124a0f4a7b55ec16faf1c1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/marked_1.png"
-dest_files=["res://.godot/imported/marked_1.png-7d600774661a98e374b679792e54d1c6.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/marked_1.png"
+dest_files=["res://.godot/imported/marked_1.png-860414e33d124a0f4a7b55ec16faf1c1.ctex"]
 
 [params]
 

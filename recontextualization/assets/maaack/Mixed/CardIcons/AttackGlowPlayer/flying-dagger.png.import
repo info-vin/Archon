@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dliakcityd4n8"
-path="res://.godot/imported/flying-dagger.png-b47c0df7935cad9ecdcb9c8214913a04.ctex"
+path="res://.godot/imported/flying-dagger.png-02b5d55965c6c92c7953862705deb1b4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/flying-dagger.png"
-dest_files=["res://.godot/imported/flying-dagger.png-b47c0df7935cad9ecdcb9c8214913a04.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/flying-dagger.png"
+dest_files=["res://.godot/imported/flying-dagger.png-02b5d55965c6c92c7953862705deb1b4.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://gt6ri1ch7cjs"
-path="res://.godot/imported/dart.png-8c1ba75df641dcc9d1e131a2c15dcd33.ctex"
+path="res://.godot/imported/dart.png-e07c58424dd7ef7d003446d160feffbe.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/dart.png"
-dest_files=["res://.godot/imported/dart.png-8c1ba75df641dcc9d1e131a2c15dcd33.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/dart.png"
+dest_files=["res://.godot/imported/dart.png-e07c58424dd7ef7d003446d160feffbe.ctex"]
 
 [params]
 

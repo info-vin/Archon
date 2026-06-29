@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cx2k4qdx2oy5k"
-path="res://.godot/imported/lizard-tongue.png-80d0238f4bad292ce57e3ea2035a2f90.ctex"
+path="res://.godot/imported/lizard-tongue.png-9b5455c846f3fdc44738352cf7989fc1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/lizard-tongue.png"
-dest_files=["res://.godot/imported/lizard-tongue.png-80d0238f4bad292ce57e3ea2035a2f90.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/lizard-tongue.png"
+dest_files=["res://.godot/imported/lizard-tongue.png-9b5455c846f3fdc44738352cf7989fc1.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://tiijptg3rr18"
-path="res://.godot/imported/grab.png-9b9a12f6ea5623c1fad7ad9f7ea14388.ctex"
+path="res://.godot/imported/grab.png-107ebb4e266fd151abd5b707a4c8157b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/grab.png"
-dest_files=["res://.godot/imported/grab.png-9b9a12f6ea5623c1fad7ad9f7ea14388.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/grab.png"
+dest_files=["res://.godot/imported/grab.png-107ebb4e266fd151abd5b707a4c8157b.ctex"]
 
 [params]
 

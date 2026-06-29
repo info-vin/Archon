@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://da4aur0trv14t"
-path="res://.godot/imported/brass-knuckles.png-7cc22ae4dacdaba2722542f9c174bdfc.ctex"
+path="res://.godot/imported/brass-knuckles.png-76637871d5cefaff040f2077a5436471.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/brass-knuckles.png"
-dest_files=["res://.godot/imported/brass-knuckles.png-7cc22ae4dacdaba2722542f9c174bdfc.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/brass-knuckles.png"
+dest_files=["res://.godot/imported/brass-knuckles.png-76637871d5cefaff040f2077a5436471.ctex"]
 
 [params]
 

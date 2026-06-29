@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://drtl0hny5wh1u"
-path="res://.godot/imported/heart-tower.png-49cc95673d9b7ea434feda32fb439516.ctex"
+path="res://.godot/imported/heart-tower.png-370645af743c31f40d3f49f676e35a2a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/heart-tower.png"
-dest_files=["res://.godot/imported/heart-tower.png-49cc95673d9b7ea434feda32fb439516.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/heart-tower.png"
+dest_files=["res://.godot/imported/heart-tower.png-370645af743c31f40d3f49f676e35a2a.ctex"]
 
 [params]
 

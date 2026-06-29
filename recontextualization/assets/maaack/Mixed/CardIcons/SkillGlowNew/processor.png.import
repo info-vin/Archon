@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://djbyq2mamcwqc"
-path="res://.godot/imported/processor.png-4578ae7978699f7f9b5b49d3ac506880.ctex"
+path="res://.godot/imported/processor.png-ae41f4ffeeffe471be68a7e4b3625cc0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/processor.png"
-dest_files=["res://.godot/imported/processor.png-4578ae7978699f7f9b5b49d3ac506880.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/processor.png"
+dest_files=["res://.godot/imported/processor.png-ae41f4ffeeffe471be68a7e4b3625cc0.ctex"]
 
 [params]
 

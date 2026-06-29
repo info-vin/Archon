@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vpupd16gde3p"
-path="res://.godot/imported/leg-armor.png-479b0a856c4c7ccf7a22ae73f6075af6.ctex"
+path="res://.godot/imported/leg-armor.png-0551ee590e8236226b790fb5bdb39097.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/En Garde/leg-armor.png"
-dest_files=["res://.godot/imported/leg-armor.png-479b0a856c4c7ccf7a22ae73f6075af6.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/En Garde/leg-armor.png"
+dest_files=["res://.godot/imported/leg-armor.png-0551ee590e8236226b790fb5bdb39097.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bpl55lvdyw08b"
-path="res://.godot/imported/bouncing-sword.png-48af96c4661302dd4798bda92eb024dd.ctex"
+path="res://.godot/imported/bouncing-sword.png-f80bf021eaa68a632532ea0563a065eb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/bouncing-sword.png"
-dest_files=["res://.godot/imported/bouncing-sword.png-48af96c4661302dd4798bda92eb024dd.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/bouncing-sword.png"
+dest_files=["res://.godot/imported/bouncing-sword.png-f80bf021eaa68a632532ea0563a065eb.ctex"]
 
 [params]
 

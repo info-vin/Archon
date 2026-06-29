@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://drmx3oy2wkdl1"
-path="res://.godot/imported/bull.png-4432dd26a266907870a968e23801a46b.ctex"
+path="res://.godot/imported/bull.png-b2c62c590220e33988aa004784302129.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/bull.png"
-dest_files=["res://.godot/imported/bull.png-4432dd26a266907870a968e23801a46b.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/bull.png"
+dest_files=["res://.godot/imported/bull.png-b2c62c590220e33988aa004784302129.ctex"]
 
 [params]
 

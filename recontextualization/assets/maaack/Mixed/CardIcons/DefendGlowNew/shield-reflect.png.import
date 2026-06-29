@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxde3oob5dyxc"
-path="res://.godot/imported/shield-reflect.png-dc90b3e5e4f3df4af4ea335b0ab3b109.ctex"
+path="res://.godot/imported/shield-reflect.png-1aa16988156bd26e0e1547f4469d8d8b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/shield-reflect.png"
-dest_files=["res://.godot/imported/shield-reflect.png-dc90b3e5e4f3df4af4ea335b0ab3b109.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/shield-reflect.png"
+dest_files=["res://.godot/imported/shield-reflect.png-1aa16988156bd26e0e1547f4469d8d8b.ctex"]
 
 [params]
 

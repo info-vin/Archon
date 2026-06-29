@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://fkogqh1y8b7e"
-path="res://.godot/imported/delayed-shield.png-78ac48dc2b33fb6adacfc1ac7fc0b9be.ctex"
+path="res://.godot/imported/delayed-shield.png-87550d3ea9115eb695b14379acdc3abb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/delayed-shield.png"
-dest_files=["res://.godot/imported/delayed-shield.png-78ac48dc2b33fb6adacfc1ac7fc0b9be.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/delayed-shield.png"
+dest_files=["res://.godot/imported/delayed-shield.png-87550d3ea9115eb695b14379acdc3abb.ctex"]
 
 [params]
 

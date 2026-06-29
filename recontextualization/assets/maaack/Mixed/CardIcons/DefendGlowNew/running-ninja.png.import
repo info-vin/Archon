@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cewsb351thqqq"
-path="res://.godot/imported/running-ninja.png-12d25c33f32fd44b1a66129aa2dc8f6e.ctex"
+path="res://.godot/imported/running-ninja.png-8204fc43d18554aeb3817c9bc3d26fa5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/running-ninja.png"
-dest_files=["res://.godot/imported/running-ninja.png-12d25c33f32fd44b1a66129aa2dc8f6e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/running-ninja.png"
+dest_files=["res://.godot/imported/running-ninja.png-8204fc43d18554aeb3817c9bc3d26fa5.ctex"]
 
 [params]
 

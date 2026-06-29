@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clddrr2no1s57"
-path="res://.godot/imported/brute.png-af54b6c283966bd48a7a2f346259bc6d.ctex"
+path="res://.godot/imported/brute.png-01f66e0271cce5f61a60f6f180551394.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Sourced/Icons/Game-Icons.net/brute.png"
-dest_files=["res://.godot/imported/brute.png-af54b6c283966bd48a7a2f346259bc6d.ctex"]
+source_file="res://assets/maaack/Sourced/Icons/Game-Icons.net/brute.png"
+dest_files=["res://.godot/imported/brute.png-01f66e0271cce5f61a60f6f180551394.ctex"]
 
 [params]
 

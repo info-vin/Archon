@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxb1m3ux6w0i5"
-path="res://.godot/imported/star-struck.png-799fce1b6fae9f663f0fd4112fd5fead.ctex"
+path="res://.godot/imported/star-struck.png-e7dd63222089c4f24849bf14253e87f4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/star-struck.png"
-dest_files=["res://.godot/imported/star-struck.png-799fce1b6fae9f663f0fd4112fd5fead.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/star-struck.png"
+dest_files=["res://.godot/imported/star-struck.png-e7dd63222089c4f24849bf14253e87f4.ctex"]
 
 [params]
 

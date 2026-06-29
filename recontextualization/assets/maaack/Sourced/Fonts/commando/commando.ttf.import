@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://bsub308hf86do"
-path="res://.godot/imported/commando.ttf-2184b2942ba283fbc92f6cc53751f10d.fontdata"
+path="res://.godot/imported/commando.ttf-d957c15b7e6becec57d8bea8c7537ed8.fontdata"
 
 [deps]
 
-source_file="res://Assets/Sourced/Fonts/commando/commando.ttf"
-dest_files=["res://.godot/imported/commando.ttf-2184b2942ba283fbc92f6cc53751f10d.fontdata"]
+source_file="res://assets/maaack/Sourced/Fonts/commando/commando.ttf"
+dest_files=["res://.godot/imported/commando.ttf-d957c15b7e6becec57d8bea8c7537ed8.fontdata"]
 
 [params]
 

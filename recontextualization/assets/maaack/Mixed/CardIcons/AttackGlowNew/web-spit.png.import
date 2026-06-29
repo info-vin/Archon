@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bw1nwkd642m40"
-path="res://.godot/imported/web-spit.png-4006ccc6fac58f16de3ef0abd79b29c9.ctex"
+path="res://.godot/imported/web-spit.png-3383492dd486f4c4b935653ed7ecfeec.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/web-spit.png"
-dest_files=["res://.godot/imported/web-spit.png-4006ccc6fac58f16de3ef0abd79b29c9.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/web-spit.png"
+dest_files=["res://.godot/imported/web-spit.png-3383492dd486f4c4b935653ed7ecfeec.ctex"]
 
 [params]
 

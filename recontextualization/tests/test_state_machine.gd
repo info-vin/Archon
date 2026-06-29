@@ -21,8 +21,9 @@ func run_tests(runner) -> bool:
 	
 	# Run ready manually for headless testing (since we just created it)
 	game_state._ready()
+	game_state.start_game()
 	
-	var initial_hp = game_state.enemy_hp
+	var initial_hp = game_state.crisis_hp
 	var initial_ap = game_state.current_ap
 	
 	var card_script = preload("res://src/models/cards/CardData.gd")
@@ -50,7 +51,16 @@ func run_tests(runner) -> bool:
 	if not assert_eq(game_state.active_context.size(), 0, "Context should be cleared after action"): tests_failed += 1
 	
 	# Context had 1 card (similarity 0.9 > 0.5), purity = 1.0. Base damage 1000 * 1.0 = 1000
-	if not assert_eq(game_state.enemy_hp, initial_hp - 1000.0, "HP should decrease by 1000"): tests_failed += 1
+	if not assert_eq(game_state.crisis_hp, initial_hp - 1000.0, "HP should decrease by 1000"): tests_failed += 1
+	
+	# Test SLA Timer
+	var initial_sla = game_state.sla_timer
+	game_state._process(10.0)
+	if not assert_eq(game_state.sla_timer, initial_sla - 10.0, "SLA should decrease by 10"): tests_failed += 1
+	
+	game_state._process(300.0)
+	if not assert_eq(game_state.sla_timer, 0.0, "SLA should hit 0"): tests_failed += 1
+	if not assert_eq(game_state.is_game_active, false, "Game should end on SLA 0"): tests_failed += 1
 	
 	# Cleanup
 	Engine.unregister_singleton("EventBus")

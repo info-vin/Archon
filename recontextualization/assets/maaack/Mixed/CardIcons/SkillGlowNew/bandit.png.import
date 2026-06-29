@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3mx3jqtuckos"
-path="res://.godot/imported/bandit.png-21ed20cc68e397c0984d08e8ee81bbf6.ctex"
+path="res://.godot/imported/bandit.png-74425a1b1d4a8e99d42a3cc537906049.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/bandit.png"
-dest_files=["res://.godot/imported/bandit.png-21ed20cc68e397c0984d08e8ee81bbf6.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/bandit.png"
+dest_files=["res://.godot/imported/bandit.png-74425a1b1d4a8e99d42a3cc537906049.ctex"]
 
 [params]
 

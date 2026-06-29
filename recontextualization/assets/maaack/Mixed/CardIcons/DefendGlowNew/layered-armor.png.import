@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c2umbstqy3s77"
-path="res://.godot/imported/layered-armor.png-057618ae2518159939dd271385e0dc1d.ctex"
+path="res://.godot/imported/layered-armor.png-9b2857a8ab7aaf8dc2cd087f7153a27c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/layered-armor.png"
-dest_files=["res://.godot/imported/layered-armor.png-057618ae2518159939dd271385e0dc1d.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/layered-armor.png"
+dest_files=["res://.godot/imported/layered-armor.png-9b2857a8ab7aaf8dc2cd087f7153a27c.ctex"]
 
 [params]
 

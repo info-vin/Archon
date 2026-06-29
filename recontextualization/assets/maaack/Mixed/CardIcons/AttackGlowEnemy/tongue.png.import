@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1mnn2x8ngyw3"
-path="res://.godot/imported/tongue.png-3e4c4b9a34413828f43815efb29ecd5f.ctex"
+path="res://.godot/imported/tongue.png-a80469f4168878f002d1009865c29e7e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/tongue.png"
-dest_files=["res://.godot/imported/tongue.png-3e4c4b9a34413828f43815efb29ecd5f.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/tongue.png"
+dest_files=["res://.godot/imported/tongue.png-a80469f4168878f002d1009865c29e7e.ctex"]
 
 [params]
 

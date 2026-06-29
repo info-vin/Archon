@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clenodf6kne0o"
-path="res://.godot/imported/duality.png-bb85af3c01fe0e094ed0aa4fe52ef9b1.ctex"
+path="res://.godot/imported/duality.png-76b11cdff3acf10d13911225d0d33fac.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/duality.png"
-dest_files=["res://.godot/imported/duality.png-bb85af3c01fe0e094ed0aa4fe52ef9b1.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/duality.png"
+dest_files=["res://.godot/imported/duality.png-76b11cdff3acf10d13911225d0d33fac.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://co6cqn1bv4kvy"
-path="res://.godot/imported/fist-raised-solid.svg-9d90d08aa2ce2a3be527a7a65ae1cd28.ctex"
+path="res://.godot/imported/fist-raised-solid.svg-4361cabfa1da2d856db2679d64c8c99a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Sourced/Icons/FontAwesome/fist-raised-solid.svg"
-dest_files=["res://.godot/imported/fist-raised-solid.svg-9d90d08aa2ce2a3be527a7a65ae1cd28.ctex"]
+source_file="res://assets/maaack/Sourced/Icons/FontAwesome/fist-raised-solid.svg"
+dest_files=["res://.godot/imported/fist-raised-solid.svg-4361cabfa1da2d856db2679d64c8c99a.ctex"]
 
 [params]
 

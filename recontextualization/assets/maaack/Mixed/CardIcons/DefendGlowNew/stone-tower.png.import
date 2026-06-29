@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cbxa2s1hco75p"
-path="res://.godot/imported/stone-tower.png-2193e955fdd6799b92d3f24b02256dd0.ctex"
+path="res://.godot/imported/stone-tower.png-e0463925a877fa6dacffc5edb09e4a2b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/stone-tower.png"
-dest_files=["res://.godot/imported/stone-tower.png-2193e955fdd6799b92d3f24b02256dd0.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/stone-tower.png"
+dest_files=["res://.godot/imported/stone-tower.png-e0463925a877fa6dacffc5edb09e4a2b.ctex"]
 
 [params]
 

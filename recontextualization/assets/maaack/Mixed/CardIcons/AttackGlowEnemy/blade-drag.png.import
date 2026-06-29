@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cskhojqt5jo52"
-path="res://.godot/imported/blade-drag.png-d37b317d985be5b64e715df1535c560b.ctex"
+path="res://.godot/imported/blade-drag.png-2db5ed467a27301b59ae014d29a9771c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/blade-drag.png"
-dest_files=["res://.godot/imported/blade-drag.png-d37b317d985be5b64e715df1535c560b.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/blade-drag.png"
+dest_files=["res://.godot/imported/blade-drag.png-2db5ed467a27301b59ae014d29a9771c.ctex"]
 
 [params]
 

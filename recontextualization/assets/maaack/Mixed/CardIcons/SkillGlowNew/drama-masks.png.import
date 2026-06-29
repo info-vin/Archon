@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://csx12eawiw25k"
-path="res://.godot/imported/drama-masks.png-2001bf1a3de99fd27a8c357d92d55161.ctex"
+path="res://.godot/imported/drama-masks.png-3921828394388f14255629e44877ef39.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/drama-masks.png"
-dest_files=["res://.godot/imported/drama-masks.png-2001bf1a3de99fd27a8c357d92d55161.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/drama-masks.png"
+dest_files=["res://.godot/imported/drama-masks.png-3921828394388f14255629e44877ef39.ctex"]
 
 [params]
 

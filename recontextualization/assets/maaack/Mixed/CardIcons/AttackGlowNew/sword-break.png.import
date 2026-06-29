@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b2vjdhlkb0xti"
-path="res://.godot/imported/sword-break.png-ba047a652d67898aeae535c3c0f4e970.ctex"
+path="res://.godot/imported/sword-break.png-875291444dc40e472ebfc905f81b8f36.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/sword-break.png"
-dest_files=["res://.godot/imported/sword-break.png-ba047a652d67898aeae535c3c0f4e970.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/sword-break.png"
+dest_files=["res://.godot/imported/sword-break.png-875291444dc40e472ebfc905f81b8f36.ctex"]
 
 [params]
 

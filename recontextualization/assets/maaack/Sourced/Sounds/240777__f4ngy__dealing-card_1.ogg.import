@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://clgkf140jbwn5"
-path="res://.godot/imported/240777__f4ngy__dealing-card_1.ogg-73d1891685a830254bf8231b94b2d98a.oggvorbisstr"
+path="res://.godot/imported/240777__f4ngy__dealing-card_1.ogg-b6431a862464695fbdb8b6b2fca1ab75.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/240777__f4ngy__dealing-card_1.ogg"
-dest_files=["res://.godot/imported/240777__f4ngy__dealing-card_1.ogg-73d1891685a830254bf8231b94b2d98a.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/240777__f4ngy__dealing-card_1.ogg"
+dest_files=["res://.godot/imported/240777__f4ngy__dealing-card_1.ogg-b6431a862464695fbdb8b6b2fca1ab75.oggvorbisstr"]
 
 [params]
 

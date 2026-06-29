@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwur6cxmbp2lg"
-path="res://.godot/imported/crossed-swords.png-9b9a8242dbcf80ed10da3c3157bdf968.ctex"
+path="res://.godot/imported/crossed-swords.png-56b51a5003cb83093ced6ff3390d3216.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/crossed-swords.png"
-dest_files=["res://.godot/imported/crossed-swords.png-9b9a8242dbcf80ed10da3c3157bdf968.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/crossed-swords.png"
+dest_files=["res://.godot/imported/crossed-swords.png-56b51a5003cb83093ced6ff3390d3216.ctex"]
 
 [params]
 

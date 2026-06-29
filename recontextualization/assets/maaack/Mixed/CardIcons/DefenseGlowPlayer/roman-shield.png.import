@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://5fvuktveovu1"
-path="res://.godot/imported/roman-shield.png-ce23006f68695e542d99bcff973fcbc6.ctex"
+path="res://.godot/imported/roman-shield.png-155c2143da47e3341896f795961ebfdd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/roman-shield.png"
-dest_files=["res://.godot/imported/roman-shield.png-ce23006f68695e542d99bcff973fcbc6.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/roman-shield.png"
+dest_files=["res://.godot/imported/roman-shield.png-155c2143da47e3341896f795961ebfdd.ctex"]
 
 [params]
 

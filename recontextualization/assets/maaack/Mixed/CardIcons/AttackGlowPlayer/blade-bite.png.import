@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://deoftt05fcy1i"
-path="res://.godot/imported/blade-bite.png-2fa2d5ffbaa4c3a4cea2ed4692b36059.ctex"
+path="res://.godot/imported/blade-bite.png-9453b0584d94dc3f459b69aa0c9bf4c5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/blade-bite.png"
-dest_files=["res://.godot/imported/blade-bite.png-2fa2d5ffbaa4c3a4cea2ed4692b36059.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/blade-bite.png"
+dest_files=["res://.godot/imported/blade-bite.png-9453b0584d94dc3f459b69aa0c9bf4c5.ctex"]
 
 [params]
 

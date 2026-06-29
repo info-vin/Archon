@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://djk66dbypmwyu"
-path="res://.godot/imported/shining-sword.png-8f453d1d08390c34bb75aaf4791cc58c.ctex"
+path="res://.godot/imported/shining-sword.png-7769782d9f14e743c549f86426b10c2a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/shining-sword.png"
-dest_files=["res://.godot/imported/shining-sword.png-8f453d1d08390c34bb75aaf4791cc58c.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/shining-sword.png"
+dest_files=["res://.godot/imported/shining-sword.png-7769782d9f14e743c549f86426b10c2a.ctex"]
 
 [params]
 

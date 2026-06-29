@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://ci2yywcw0im6v"
-path="res://.godot/imported/260713__daenerys__fire-crackling_loop.ogg-3e8fa564911320e36e7bed8857cd7073.oggvorbisstr"
+path="res://.godot/imported/260713__daenerys__fire-crackling_loop.ogg-cd2b18edaaf74caa01c2da398def6ba6.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/260713__daenerys__fire-crackling_loop.ogg"
-dest_files=["res://.godot/imported/260713__daenerys__fire-crackling_loop.ogg-3e8fa564911320e36e7bed8857cd7073.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/260713__daenerys__fire-crackling_loop.ogg"
+dest_files=["res://.godot/imported/260713__daenerys__fire-crackling_loop.ogg-cd2b18edaaf74caa01c2da398def6ba6.oggvorbisstr"]
 
 [params]
 

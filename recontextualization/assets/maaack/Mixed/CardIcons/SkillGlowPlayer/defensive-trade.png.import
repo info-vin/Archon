@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp7uiiymxk08t"
-path="res://.godot/imported/defensive-trade.png-03c57c7be3ed136d4f0ecb626543af1e.ctex"
+path="res://.godot/imported/defensive-trade.png-498e52abe0daed180379aab5f0d24421.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/defensive-trade.png"
-dest_files=["res://.godot/imported/defensive-trade.png-03c57c7be3ed136d4f0ecb626543af1e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/defensive-trade.png"
+dest_files=["res://.godot/imported/defensive-trade.png-498e52abe0daed180379aab5f0d24421.ctex"]
 
 [params]
 

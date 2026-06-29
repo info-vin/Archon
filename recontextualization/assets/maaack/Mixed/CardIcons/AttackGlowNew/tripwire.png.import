@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://21uyj2xbj2db"
-path="res://.godot/imported/tripwire.png-c23da51ee4d6fee13ef229e6de7cb689.ctex"
+path="res://.godot/imported/tripwire.png-6ba75b3a9164053ee1df5e8bbc3412b8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/tripwire.png"
-dest_files=["res://.godot/imported/tripwire.png-c23da51ee4d6fee13ef229e6de7cb689.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/tripwire.png"
+dest_files=["res://.godot/imported/tripwire.png-6ba75b3a9164053ee1df5e8bbc3412b8.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://q4dhmb1r83hl"
-path="res://.godot/imported/crenulated-shield.png-62b46199238ceafc6d26d1bdd3927a50.ctex"
+path="res://.godot/imported/crenulated-shield.png-7039eb28fe4db3dd97a6e3e79dd67366.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowEnemy/crenulated-shield.png"
-dest_files=["res://.godot/imported/crenulated-shield.png-62b46199238ceafc6d26d1bdd3927a50.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowEnemy/crenulated-shield.png"
+dest_files=["res://.godot/imported/crenulated-shield.png-7039eb28fe4db3dd97a6e3e79dd67366.ctex"]
 
 [params]
 

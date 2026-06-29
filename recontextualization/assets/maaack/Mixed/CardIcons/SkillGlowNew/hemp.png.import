@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://0egokgn8gioy"
-path="res://.godot/imported/hemp.png-dada96ea7e913713ed8bbf658e1ed914.ctex"
+path="res://.godot/imported/hemp.png-ff8d5783e0d7f47905d7718a83859eb6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/hemp.png"
-dest_files=["res://.godot/imported/hemp.png-dada96ea7e913713ed8bbf658e1ed914.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/hemp.png"
+dest_files=["res://.godot/imported/hemp.png-ff8d5783e0d7f47905d7718a83859eb6.ctex"]
 
 [params]
 

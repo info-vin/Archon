@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1f35sga1iu65"
-path="res://.godot/imported/medusa-head.png-a109f57c66825b5ec010d4dcbe7daec1.ctex"
+path="res://.godot/imported/medusa-head.png-5f320802ecfcc81f00eda1aa3386d847.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/medusa-head.png"
-dest_files=["res://.godot/imported/medusa-head.png-a109f57c66825b5ec010d4dcbe7daec1.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/medusa-head.png"
+dest_files=["res://.godot/imported/medusa-head.png-5f320802ecfcc81f00eda1aa3386d847.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dwha6fn6giwr0"
-path="res://.godot/imported/sword-array.png-8a33e3df345d8d0ae93861b0fcbe390f.ctex"
+path="res://.godot/imported/sword-array.png-da82832a51f00767707346f716057cec.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/sword-array.png"
-dest_files=["res://.godot/imported/sword-array.png-8a33e3df345d8d0ae93861b0fcbe390f.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/sword-array.png"
+dest_files=["res://.godot/imported/sword-array.png-da82832a51f00767707346f716057cec.ctex"]
 
 [params]
 

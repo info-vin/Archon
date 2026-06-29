@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dr5cq78igabrc"
-path="res://.godot/imported/lamellar.png-b6608fa849ba8b0628fbb438735b7b26.ctex"
+path="res://.godot/imported/lamellar.png-c7baa8e65df3459b100fc7fdf00c8668.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/lamellar.png"
-dest_files=["res://.godot/imported/lamellar.png-b6608fa849ba8b0628fbb438735b7b26.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/lamellar.png"
+dest_files=["res://.godot/imported/lamellar.png-c7baa8e65df3459b100fc7fdf00c8668.ctex"]
 
 [params]
 

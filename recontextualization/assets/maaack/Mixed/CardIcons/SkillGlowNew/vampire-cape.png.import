@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cwqtndv8tj0aw"
-path="res://.godot/imported/vampire-cape.png-9cd0d8abae9d65b695fb91a8b62c7610.ctex"
+path="res://.godot/imported/vampire-cape.png-fc21d924895eba98bd938eaceeee9b5d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/vampire-cape.png"
-dest_files=["res://.godot/imported/vampire-cape.png-9cd0d8abae9d65b695fb91a8b62c7610.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/vampire-cape.png"
+dest_files=["res://.godot/imported/vampire-cape.png-fc21d924895eba98bd938eaceeee9b5d.ctex"]
 
 [params]
 

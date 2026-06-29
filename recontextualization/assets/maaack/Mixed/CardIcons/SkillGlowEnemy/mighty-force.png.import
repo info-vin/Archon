@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cf14rh6lfkbji"
-path="res://.godot/imported/mighty-force.png-f64396047811bd9601da59efa8151811.ctex"
+path="res://.godot/imported/mighty-force.png-75dedda4966dfdbd40026e6117565a11.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowEnemy/mighty-force.png"
-dest_files=["res://.godot/imported/mighty-force.png-f64396047811bd9601da59efa8151811.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowEnemy/mighty-force.png"
+dest_files=["res://.godot/imported/mighty-force.png-75dedda4966dfdbd40026e6117565a11.ctex"]
 
 [params]
 

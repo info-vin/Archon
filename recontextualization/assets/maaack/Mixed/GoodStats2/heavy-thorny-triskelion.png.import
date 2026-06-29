@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dxpspqt2jr3s1"
-path="res://.godot/imported/heavy-thorny-triskelion.png-7b32ec8f079db77af8da7b430fe4a5fe.ctex"
+path="res://.godot/imported/heavy-thorny-triskelion.png-6caec95ee448e13c0f2e87297bab9e27.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/heavy-thorny-triskelion.png"
-dest_files=["res://.godot/imported/heavy-thorny-triskelion.png-7b32ec8f079db77af8da7b430fe4a5fe.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/heavy-thorny-triskelion.png"
+dest_files=["res://.godot/imported/heavy-thorny-triskelion.png-6caec95ee448e13c0f2e87297bab9e27.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://wuaoscgy6wgy"
-path="res://.godot/imported/extra-lucid.png-62d01b1de4322297fd3c390f2b0e9bd1.ctex"
+path="res://.godot/imported/extra-lucid.png-6b2d8388772583dec82ced0751fa9796.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/extra-lucid.png"
-dest_files=["res://.godot/imported/extra-lucid.png-62d01b1de4322297fd3c390f2b0e9bd1.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/extra-lucid.png"
+dest_files=["res://.godot/imported/extra-lucid.png-6b2d8388772583dec82ced0751fa9796.ctex"]
 
 [params]
 

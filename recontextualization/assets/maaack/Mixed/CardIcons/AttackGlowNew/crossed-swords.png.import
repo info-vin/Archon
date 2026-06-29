@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d1dyy6lrsg4k1"
-path="res://.godot/imported/crossed-swords.png-3dd3ffd7d1bd0f138807cd23c8026a06.ctex"
+path="res://.godot/imported/crossed-swords.png-c2ba0e23aab30f482ada2aabebfcf33c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/crossed-swords.png"
-dest_files=["res://.godot/imported/crossed-swords.png-3dd3ffd7d1bd0f138807cd23c8026a06.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/crossed-swords.png"
+dest_files=["res://.godot/imported/crossed-swords.png-c2ba0e23aab30f482ada2aabebfcf33c.ctex"]
 
 [params]
 

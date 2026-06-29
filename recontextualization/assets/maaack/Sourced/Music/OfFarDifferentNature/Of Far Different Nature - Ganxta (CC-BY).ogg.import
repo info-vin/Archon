@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cmilwh31j0k0j"
-path="res://.godot/imported/Of Far Different Nature - Ganxta (CC-BY).ogg-3a0d27bded7ad3b833e75e04e02c691b.oggvorbisstr"
+path="res://.godot/imported/Of Far Different Nature - Ganxta (CC-BY).ogg-8a6f64940e03d0a4b8907aa767c4b94d.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Music/OfFarDifferentNature/Of Far Different Nature - Ganxta (CC-BY).ogg"
-dest_files=["res://.godot/imported/Of Far Different Nature - Ganxta (CC-BY).ogg-3a0d27bded7ad3b833e75e04e02c691b.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Music/OfFarDifferentNature/Of Far Different Nature - Ganxta (CC-BY).ogg"
+dest_files=["res://.godot/imported/Of Far Different Nature - Ganxta (CC-BY).ogg-8a6f64940e03d0a4b8907aa767c4b94d.oggvorbisstr"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnkjjffra3a37"
-path="res://.godot/imported/rally-the-troops.png-559e5008562126f5038f0bb2c887ee75.ctex"
+path="res://.godot/imported/rally-the-troops.png-7f5b5835a848e4554d1d5678acb5293a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/rally-the-troops.png"
-dest_files=["res://.godot/imported/rally-the-troops.png-559e5008562126f5038f0bb2c887ee75.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/rally-the-troops.png"
+dest_files=["res://.godot/imported/rally-the-troops.png-7f5b5835a848e4554d1d5678acb5293a.ctex"]
 
 [params]
 

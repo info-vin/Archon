@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dk2it33fpyj6r"
-path="res://.godot/imported/steel-claws.png-4eb846afec656e621b23643605e7ae88.ctex"
+path="res://.godot/imported/steel-claws.png-96683cf2cc583eae9dd42149158395c5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/steel-claws.png"
-dest_files=["res://.godot/imported/steel-claws.png-4eb846afec656e621b23643605e7ae88.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/steel-claws.png"
+dest_files=["res://.godot/imported/steel-claws.png-96683cf2cc583eae9dd42149158395c5.ctex"]
 
 [params]
 

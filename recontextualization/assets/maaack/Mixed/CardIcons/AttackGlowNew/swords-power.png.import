@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ybl8q1evmm0j"
-path="res://.godot/imported/swords-power.png-7f96e6c9ec1ef01b9ca45c3cd030e80b.ctex"
+path="res://.godot/imported/swords-power.png-4bc71afe70b0fcedc922845ee6c4e485.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/swords-power.png"
-dest_files=["res://.godot/imported/swords-power.png-7f96e6c9ec1ef01b9ca45c3cd030e80b.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/swords-power.png"
+dest_files=["res://.godot/imported/swords-power.png-4bc71afe70b0fcedc922845ee6c4e485.ctex"]
 
 [params]
 

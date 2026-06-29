@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://meymustddpxe"
-path="res://.godot/imported/blade-fall.png-54428014acfdb15ae5505871aa936d65.ctex"
+path="res://.godot/imported/blade-fall.png-5ac4a537ad6705a367012b450f192880.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/blade-fall.png"
-dest_files=["res://.godot/imported/blade-fall.png-54428014acfdb15ae5505871aa936d65.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/blade-fall.png"
+dest_files=["res://.godot/imported/blade-fall.png-5ac4a537ad6705a367012b450f192880.ctex"]
 
 [params]
 

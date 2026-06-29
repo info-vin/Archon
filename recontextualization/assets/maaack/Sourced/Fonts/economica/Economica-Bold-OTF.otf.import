@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://n0w6napig00d"
-path="res://.godot/imported/Economica-Bold-OTF.otf-8b8ed0a384284b19968ef02115825f61.fontdata"
+path="res://.godot/imported/Economica-Bold-OTF.otf-1cd1240d59aeb4155ec63b726267ba32.fontdata"
 
 [deps]
 
-source_file="res://Assets/Sourced/Fonts/economica/Economica-Bold-OTF.otf"
-dest_files=["res://.godot/imported/Economica-Bold-OTF.otf-8b8ed0a384284b19968ef02115825f61.fontdata"]
+source_file="res://assets/maaack/Sourced/Fonts/economica/Economica-Bold-OTF.otf"
+dest_files=["res://.godot/imported/Economica-Bold-OTF.otf-1cd1240d59aeb4155ec63b726267ba32.fontdata"]
 
 [params]
 

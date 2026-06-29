@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://do3qh72uf4ypk"
-path="res://.godot/imported/Wushu-Fighter-With-Deck.svg-c07846385883cfe697477239cf624ed6.ctex"
+path="res://.godot/imported/Wushu-Fighter-With-Deck.svg-9c038fbc1efcef3a51f55582974936ef.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/Backgrounds/Wushu-Fighter-With-Deck.svg"
-dest_files=["res://.godot/imported/Wushu-Fighter-With-Deck.svg-c07846385883cfe697477239cf624ed6.ctex"]
+source_file="res://assets/maaack/Mixed/Backgrounds/Wushu-Fighter-With-Deck.svg"
+dest_files=["res://.godot/imported/Wushu-Fighter-With-Deck.svg-9c038fbc1efcef3a51f55582974936ef.ctex"]
 
 [params]
 

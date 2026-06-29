@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bxepi045ycgyj"
-path="res://.godot/imported/chain-lightning.png-2a81e8c1294fc966f251565fb9d91052.ctex"
+path="res://.godot/imported/chain-lightning.png-8ef90abc918d0a551781b4d23e2a852a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/chain-lightning.png"
-dest_files=["res://.godot/imported/chain-lightning.png-2a81e8c1294fc966f251565fb9d91052.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/chain-lightning.png"
+dest_files=["res://.godot/imported/chain-lightning.png-8ef90abc918d0a551781b4d23e2a852a.ctex"]
 
 [params]
 

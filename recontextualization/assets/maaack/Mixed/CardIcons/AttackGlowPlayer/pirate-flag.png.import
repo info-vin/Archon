@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://chedq2wpqvjdm"
-path="res://.godot/imported/pirate-flag.png-0691f52dda6341e7b986db32b9376172.ctex"
+path="res://.godot/imported/pirate-flag.png-24307d91c6392e3f4f6030291982112e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/pirate-flag.png"
-dest_files=["res://.godot/imported/pirate-flag.png-0691f52dda6341e7b986db32b9376172.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/pirate-flag.png"
+dest_files=["res://.godot/imported/pirate-flag.png-24307d91c6392e3f4f6030291982112e.ctex"]
 
 [params]
 

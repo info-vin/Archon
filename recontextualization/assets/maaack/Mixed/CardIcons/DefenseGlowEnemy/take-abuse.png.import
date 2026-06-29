@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b0nloaupvm4t8"
-path="res://.godot/imported/take-abuse.png-03575ba3dea239c321f9b05e6de4bb4e.ctex"
+path="res://.godot/imported/take-abuse.png-d656399d221f08d00afe37b7050d71ce.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowEnemy/take-abuse.png"
-dest_files=["res://.godot/imported/take-abuse.png-03575ba3dea239c321f9b05e6de4bb4e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowEnemy/take-abuse.png"
+dest_files=["res://.godot/imported/take-abuse.png-d656399d221f08d00afe37b7050d71ce.ctex"]
 
 [params]
 

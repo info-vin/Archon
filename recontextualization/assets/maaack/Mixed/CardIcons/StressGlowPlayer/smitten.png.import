@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://krh7oc77yete"
-path="res://.godot/imported/smitten.png-9941f7ec46712cc8e4bc505b8137bf79.ctex"
+path="res://.godot/imported/smitten.png-49159a533d9d37df1251edb95a20d10a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/smitten.png"
-dest_files=["res://.godot/imported/smitten.png-9941f7ec46712cc8e4bc505b8137bf79.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/smitten.png"
+dest_files=["res://.godot/imported/smitten.png-49159a533d9d37df1251edb95a20d10a.ctex"]
 
 [params]
 

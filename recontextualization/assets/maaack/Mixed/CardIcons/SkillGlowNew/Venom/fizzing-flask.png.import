@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://brdixw84s6kbb"
-path="res://.godot/imported/fizzing-flask.png-b71e9fa4f33f8a36b5ab17ac69cb34df.ctex"
+path="res://.godot/imported/fizzing-flask.png-2e48aadf6ca8f3b887c841150e63c07b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/Venom/fizzing-flask.png"
-dest_files=["res://.godot/imported/fizzing-flask.png-b71e9fa4f33f8a36b5ab17ac69cb34df.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/Venom/fizzing-flask.png"
+dest_files=["res://.godot/imported/fizzing-flask.png-2e48aadf6ca8f3b887c841150e63c07b.ctex"]
 
 [params]
 

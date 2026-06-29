@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dphyoov1y1xcu"
-path="res://.godot/imported/evil-eyes.png-20ee0961b3cccad3405d0be74841defc.ctex"
+path="res://.godot/imported/evil-eyes.png-ad91f9b796709d02fe7def27ddbf0861.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowEnemy/evil-eyes.png"
-dest_files=["res://.godot/imported/evil-eyes.png-20ee0961b3cccad3405d0be74841defc.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowEnemy/evil-eyes.png"
+dest_files=["res://.godot/imported/evil-eyes.png-ad91f9b796709d02fe7def27ddbf0861.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bwfx3xnj41uk2"
-path="res://.godot/imported/heart-wings.png-a82a14e24bb76be0e19ad2e5093f5f05.ctex"
+path="res://.godot/imported/heart-wings.png-66739d76a42baf426016af24ede0043d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/heart-wings.png"
-dest_files=["res://.godot/imported/heart-wings.png-a82a14e24bb76be0e19ad2e5093f5f05.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/heart-wings.png"
+dest_files=["res://.godot/imported/heart-wings.png-66739d76a42baf426016af24ede0043d.ctex"]
 
 [params]
 

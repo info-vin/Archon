@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dutgmd6qwi8yw"
-path="res://.godot/imported/convergence-target.png-0660343250d494f3873ff896f3ac1f7f.ctex"
+path="res://.godot/imported/convergence-target.png-26611b6b7ff473ef051ceb94ab214e30.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/convergence-target.png"
-dest_files=["res://.godot/imported/convergence-target.png-0660343250d494f3873ff896f3ac1f7f.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/convergence-target.png"
+dest_files=["res://.godot/imported/convergence-target.png-26611b6b7ff473ef051ceb94ab214e30.ctex"]
 
 [params]
 

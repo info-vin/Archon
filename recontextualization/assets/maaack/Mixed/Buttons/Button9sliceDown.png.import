@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ccrwplcej3w3"
-path="res://.godot/imported/Button9sliceDown.png-ff4fd5b9fcb0782b7a0a8a153f6fbbb4.ctex"
+path="res://.godot/imported/Button9sliceDown.png-b19ee27e394be51e26c2f16c01dbe934.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/Buttons/Button9sliceDown.png"
-dest_files=["res://.godot/imported/Button9sliceDown.png-ff4fd5b9fcb0782b7a0a8a153f6fbbb4.ctex"]
+source_file="res://assets/maaack/Mixed/Buttons/Button9sliceDown.png"
+dest_files=["res://.godot/imported/Button9sliceDown.png-b19ee27e394be51e26c2f16c01dbe934.ctex"]
 
 [params]
 

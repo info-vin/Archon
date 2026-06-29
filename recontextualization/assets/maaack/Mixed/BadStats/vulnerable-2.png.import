@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bv6wpoo0tis6e"
-path="res://.godot/imported/vulnerable-2.png-983befebd84293a0fd1e4c2c34da6922.ctex"
+path="res://.godot/imported/vulnerable-2.png-c6097819b930195c275582c35f6c7216.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats/vulnerable-2.png"
-dest_files=["res://.godot/imported/vulnerable-2.png-983befebd84293a0fd1e4c2c34da6922.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats/vulnerable-2.png"
+dest_files=["res://.godot/imported/vulnerable-2.png-c6097819b930195c275582c35f6c7216.ctex"]
 
 [params]
 

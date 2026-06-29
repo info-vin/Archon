@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c0i2l82tjy11v"
-path="res://.godot/imported/handcuffs.png-dc09ca9e20516965cd1e7de78f4ed324.ctex"
+path="res://.godot/imported/handcuffs.png-979bbf0aa86ee50a376bc4a47373b9a9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/handcuffs.png"
-dest_files=["res://.godot/imported/handcuffs.png-dc09ca9e20516965cd1e7de78f4ed324.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/handcuffs.png"
+dest_files=["res://.godot/imported/handcuffs.png-979bbf0aa86ee50a376bc4a47373b9a9.ctex"]
 
 [params]
 

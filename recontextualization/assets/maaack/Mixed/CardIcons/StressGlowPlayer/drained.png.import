@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dsv56847rgfw4"
-path="res://.godot/imported/drained.png-f9f2c09dc6fc8b11c1f18e4a51073720.ctex"
+path="res://.godot/imported/drained.png-8f23b5859e5c0232b5e0f9dcd423fe4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/drained.png"
-dest_files=["res://.godot/imported/drained.png-f9f2c09dc6fc8b11c1f18e4a51073720.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/drained.png"
+dest_files=["res://.godot/imported/drained.png-8f23b5859e5c0232b5e0f9dcd423fe4a.ctex"]
 
 [params]
 

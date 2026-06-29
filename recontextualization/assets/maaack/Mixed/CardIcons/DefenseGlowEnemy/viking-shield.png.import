@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dl12b1sxvjsfq"
-path="res://.godot/imported/viking-shield.png-48be9e7233e373db109656b296bf081e.ctex"
+path="res://.godot/imported/viking-shield.png-8c881aaa57b7411a9fd9e86c50599462.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowEnemy/viking-shield.png"
-dest_files=["res://.godot/imported/viking-shield.png-48be9e7233e373db109656b296bf081e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowEnemy/viking-shield.png"
+dest_files=["res://.godot/imported/viking-shield.png-8c881aaa57b7411a9fd9e86c50599462.ctex"]
 
 [params]
 

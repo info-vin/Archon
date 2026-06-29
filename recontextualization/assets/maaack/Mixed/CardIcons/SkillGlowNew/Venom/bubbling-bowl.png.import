@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cxn3t6nj0r1x7"
-path="res://.godot/imported/bubbling-bowl.png-1d309133f7c056c0e3ff6a869f2d02d2.ctex"
+path="res://.godot/imported/bubbling-bowl.png-68abcea609ef928a01bc15819b26d00f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/Venom/bubbling-bowl.png"
-dest_files=["res://.godot/imported/bubbling-bowl.png-1d309133f7c056c0e3ff6a869f2d02d2.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/Venom/bubbling-bowl.png"
+dest_files=["res://.godot/imported/bubbling-bowl.png-68abcea609ef928a01bc15819b26d00f.ctex"]
 
 [params]
 

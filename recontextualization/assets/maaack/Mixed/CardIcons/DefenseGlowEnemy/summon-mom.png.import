@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cw63plrfj4gx6"
-path="res://.godot/imported/summon-mom.png-11d6f6ce3c7e2f5cb6b4574017f11aed.ctex"
+path="res://.godot/imported/summon-mom.png-9774abeb5e522f540be1fdcfe5e742b7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowEnemy/summon-mom.png"
-dest_files=["res://.godot/imported/summon-mom.png-11d6f6ce3c7e2f5cb6b4574017f11aed.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowEnemy/summon-mom.png"
+dest_files=["res://.godot/imported/summon-mom.png-9774abeb5e522f540be1fdcfe5e742b7.ctex"]
 
 [params]
 

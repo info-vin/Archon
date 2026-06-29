@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bkaylkawnvnr1"
-path="res://.godot/imported/shield-bounces.png-a8bb54888422a4d66251fedbb3892300.ctex"
+path="res://.godot/imported/shield-bounces.png-a9f628a0025f2e3890c7b241a292aaa0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/shield-bounces.png"
-dest_files=["res://.godot/imported/shield-bounces.png-a8bb54888422a4d66251fedbb3892300.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/shield-bounces.png"
+dest_files=["res://.godot/imported/shield-bounces.png-a9f628a0025f2e3890c7b241a292aaa0.ctex"]
 
 [params]
 

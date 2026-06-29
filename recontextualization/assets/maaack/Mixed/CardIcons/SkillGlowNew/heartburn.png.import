@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bd1v4ewt34ns"
-path="res://.godot/imported/heartburn.png-0e6823487809ba70f6fa94637d931fa2.ctex"
+path="res://.godot/imported/heartburn.png-dbbbcfc8ce3087cfbc81be27286ea6ef.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/heartburn.png"
-dest_files=["res://.godot/imported/heartburn.png-0e6823487809ba70f6fa94637d931fa2.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/heartburn.png"
+dest_files=["res://.godot/imported/heartburn.png-dbbbcfc8ce3087cfbc81be27286ea6ef.ctex"]
 
 [params]
 

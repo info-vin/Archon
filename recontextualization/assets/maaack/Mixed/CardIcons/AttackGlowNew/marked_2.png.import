@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://fb5tjonimva"
-path="res://.godot/imported/marked_2.png-e8560d2b991deb631af2978234d1a6c8.ctex"
+path="res://.godot/imported/marked_2.png-42ebe6895305463f56064c82a9c7469e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/marked_2.png"
-dest_files=["res://.godot/imported/marked_2.png-e8560d2b991deb631af2978234d1a6c8.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/marked_2.png"
+dest_files=["res://.godot/imported/marked_2.png-42ebe6895305463f56064c82a9c7469e.ctex"]
 
 [params]
 

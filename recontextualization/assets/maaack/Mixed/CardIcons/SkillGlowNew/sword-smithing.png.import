@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://yf02d7ohv62c"
-path="res://.godot/imported/sword-smithing.png-29012b7fccc5f82a1d0f6b035bb3b775.ctex"
+path="res://.godot/imported/sword-smithing.png-61b7b3215fab94177afb4ee87e7c8929.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/sword-smithing.png"
-dest_files=["res://.godot/imported/sword-smithing.png-29012b7fccc5f82a1d0f6b035bb3b775.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/sword-smithing.png"
+dest_files=["res://.godot/imported/sword-smithing.png-61b7b3215fab94177afb4ee87e7c8929.ctex"]
 
 [params]
 

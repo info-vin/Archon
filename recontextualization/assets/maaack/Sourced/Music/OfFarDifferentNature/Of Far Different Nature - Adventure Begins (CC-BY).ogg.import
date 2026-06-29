@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://dxbu6q4o1ct52"
-path="res://.godot/imported/Of Far Different Nature - Adventure Begins (CC-BY).ogg-24d2d736097e6967d2b66d1ff339da7a.oggvorbisstr"
+path="res://.godot/imported/Of Far Different Nature - Adventure Begins (CC-BY).ogg-977a08f75b6c8cd67e65c12a588f1076.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Music/OfFarDifferentNature/Of Far Different Nature - Adventure Begins (CC-BY).ogg"
-dest_files=["res://.godot/imported/Of Far Different Nature - Adventure Begins (CC-BY).ogg-24d2d736097e6967d2b66d1ff339da7a.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Music/OfFarDifferentNature/Of Far Different Nature - Adventure Begins (CC-BY).ogg"
+dest_files=["res://.godot/imported/Of Far Different Nature - Adventure Begins (CC-BY).ogg-977a08f75b6c8cd67e65c12a588f1076.oggvorbisstr"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://blhdxr7xu50d8"
-path="res://.godot/imported/crosshair-arrow.png-368be7f0e2d195887c38dd4932e23b4a.ctex"
+path="res://.godot/imported/crosshair-arrow.png-5a3f0ec3c53b4ad7d0fe6b0081fd9a7b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/crosshair-arrow.png"
-dest_files=["res://.godot/imported/crosshair-arrow.png-368be7f0e2d195887c38dd4932e23b4a.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/crosshair-arrow.png"
+dest_files=["res://.godot/imported/crosshair-arrow.png-5a3f0ec3c53b4ad7d0fe6b0081fd9a7b.ctex"]
 
 [params]
 

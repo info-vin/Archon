@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://tthov2oas2mf"
-path="res://.godot/imported/333941__igorzets__sword-fight-single-hits_clank.ogg-86ef26e95ef99c67c6f354e677310db1.oggvorbisstr"
+path="res://.godot/imported/333941__igorzets__sword-fight-single-hits_clank.ogg-971560dca803b703be44ad0f3536e82a.oggvorbisstr"
 
 [deps]
 
-source_file="res://Assets/Sourced/Sounds/333941__igorzets__sword-fight-single-hits_clank.ogg"
-dest_files=["res://.godot/imported/333941__igorzets__sword-fight-single-hits_clank.ogg-86ef26e95ef99c67c6f354e677310db1.oggvorbisstr"]
+source_file="res://assets/maaack/Sourced/Sounds/333941__igorzets__sword-fight-single-hits_clank.ogg"
+dest_files=["res://.godot/imported/333941__igorzets__sword-fight-single-hits_clank.ogg-971560dca803b703be44ad0f3536e82a.oggvorbisstr"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dnl14k6er2dpt"
-path="res://.godot/imported/fire-ace.png-e0e448f517478aef49f795bf3192d310.ctex"
+path="res://.godot/imported/fire-ace.png-bf8a73b77b6e0af0d1df63d0a6458f56.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/fire-ace.png"
-dest_files=["res://.godot/imported/fire-ace.png-e0e448f517478aef49f795bf3192d310.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/fire-ace.png"
+dest_files=["res://.godot/imported/fire-ace.png-bf8a73b77b6e0af0d1df63d0a6458f56.ctex"]
 
 [params]
 

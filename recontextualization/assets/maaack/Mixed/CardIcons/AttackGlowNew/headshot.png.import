@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://pe5cib8jeda0"
-path="res://.godot/imported/headshot.png-3a49d5fc6383d827a965d9e71d158636.ctex"
+path="res://.godot/imported/headshot.png-294ae8736cb9ec662ea865e833868aa5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/headshot.png"
-dest_files=["res://.godot/imported/headshot.png-3a49d5fc6383d827a965d9e71d158636.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/headshot.png"
+dest_files=["res://.godot/imported/headshot.png-294ae8736cb9ec662ea865e833868aa5.ctex"]
 
 [params]
 

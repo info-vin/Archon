@@ -23,12 +23,15 @@ func set_card_data(card: Resource):
 	if type_val == 2:
 		icon_path = "res://assets/maaack/Sourced/Icons/Game-Icons.net/achievement.png" # Golden chip
 		background.color = Color(0.1, 0.4, 0.1, 1.0)
+		tooltip_text = "資料晶片：提供給 LLM 的安全上下文"
 	elif type_val == 3:
 		icon_path = "res://assets/maaack/Sourced/Icons/Game-Icons.net/evil-minion.png" # Noise/virus
 		background.color = Color(0.4, 0.1, 0.1, 1.0)
+		tooltip_text = "雜訊晶片：包含錯誤資訊，會引發幻覺！"
 	elif type_val == 1:
 		icon_path = "res://assets/maaack/Sourced/Icons/Game-Icons.net/brute.png" # Action
 		background.color = Color(0.1, 0.1, 0.4, 1.0)
+		tooltip_text = "行動卡：消耗 AP 執行交付或過濾"
 	
 	if ResourceLoader.exists(icon_path):
 		icon_rect.texture = load(icon_path)

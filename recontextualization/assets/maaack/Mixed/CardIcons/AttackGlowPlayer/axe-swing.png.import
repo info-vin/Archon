@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://6dgqmbo4jqwd"
-path="res://.godot/imported/axe-swing.png-abc4bc4b8906fe0dd23b7a4025ed05dc.ctex"
+path="res://.godot/imported/axe-swing.png-ca315a288b7dc781b8719fec1ccef792.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowPlayer/axe-swing.png"
-dest_files=["res://.godot/imported/axe-swing.png-abc4bc4b8906fe0dd23b7a4025ed05dc.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowPlayer/axe-swing.png"
+dest_files=["res://.godot/imported/axe-swing.png-ca315a288b7dc781b8719fec1ccef792.ctex"]
 
 [params]
 

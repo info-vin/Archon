@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c2pxccuol3c7k"
-path="res://.godot/imported/dig-hole.png-481e1cccfe9028a10ad929db3fcdf057.ctex"
+path="res://.godot/imported/dig-hole.png-93c9b7cafd095573e436553c64952a1e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/dig-hole.png"
-dest_files=["res://.godot/imported/dig-hole.png-481e1cccfe9028a10ad929db3fcdf057.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/dig-hole.png"
+dest_files=["res://.godot/imported/dig-hole.png-93c9b7cafd095573e436553c64952a1e.ctex"]
 
 [params]
 

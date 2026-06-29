@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://kfktrvtmui5o"
-path="res://.godot/imported/medicine-pills.png-649e00a7d02575ef2ac0e3c615d47c2f.ctex"
+path="res://.godot/imported/medicine-pills.png-1b37c2a658615724c86245fe939abb68.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/medicine-pills.png"
-dest_files=["res://.godot/imported/medicine-pills.png-649e00a7d02575ef2ac0e3c615d47c2f.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/medicine-pills.png"
+dest_files=["res://.godot/imported/medicine-pills.png-1b37c2a658615724c86245fe939abb68.ctex"]
 
 [params]
 

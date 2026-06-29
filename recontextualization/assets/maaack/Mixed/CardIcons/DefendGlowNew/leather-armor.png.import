@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bae20f6v5s0ch"
-path="res://.godot/imported/leather-armor.png-b416b2e86e3c371c490dede76c43236d.ctex"
+path="res://.godot/imported/leather-armor.png-3bd087c42c394186efbec2363d13426c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/leather-armor.png"
-dest_files=["res://.godot/imported/leather-armor.png-b416b2e86e3c371c490dede76c43236d.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/leather-armor.png"
+dest_files=["res://.godot/imported/leather-armor.png-3bd087c42c394186efbec2363d13426c.ctex"]
 
 [params]
 

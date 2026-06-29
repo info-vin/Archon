@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dc53ur0cv2ibg"
-path="res://.godot/imported/hit-nerve.png-2eae6cfde1b8e02ff6cbc465f8a45e1f.ctex"
+path="res://.godot/imported/hit-nerve.png-921cf956754a55cbc4d813c087ac1725.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/StressGlowPlayer/hit-nerve.png"
-dest_files=["res://.godot/imported/hit-nerve.png-2eae6cfde1b8e02ff6cbc465f8a45e1f.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/StressGlowPlayer/hit-nerve.png"
+dest_files=["res://.godot/imported/hit-nerve.png-921cf956754a55cbc4d813c087ac1725.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://w3h0sbg2vw6j"
-path="res://.godot/imported/diamond-hilt.png-cc7804bef3784dd56708e6419d352858.ctex"
+path="res://.godot/imported/diamond-hilt.png-14e4be478520ee744d8873afeef4cc4f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/diamond-hilt.png"
-dest_files=["res://.godot/imported/diamond-hilt.png-cc7804bef3784dd56708e6419d352858.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/diamond-hilt.png"
+dest_files=["res://.godot/imported/diamond-hilt.png-14e4be478520ee744d8873afeef4cc4f.ctex"]
 
 [params]
 

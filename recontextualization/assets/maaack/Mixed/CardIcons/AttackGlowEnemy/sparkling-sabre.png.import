@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dla7y6o7phe38"
-path="res://.godot/imported/sparkling-sabre.png-623b49b4b3b0237c5527a4589ad9b806.ctex"
+path="res://.godot/imported/sparkling-sabre.png-87f9a75a0d47e192cdf27e7fba9db63d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/sparkling-sabre.png"
-dest_files=["res://.godot/imported/sparkling-sabre.png-623b49b4b3b0237c5527a4589ad9b806.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/sparkling-sabre.png"
+dest_files=["res://.godot/imported/sparkling-sabre.png-87f9a75a0d47e192cdf27e7fba9db63d.ctex"]
 
 [params]
 

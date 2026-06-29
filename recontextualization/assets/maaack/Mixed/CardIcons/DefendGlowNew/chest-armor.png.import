@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b42u8o4k7pqsy"
-path="res://.godot/imported/chest-armor.png-b589ef9cf435768ee7a57e5426c092f4.ctex"
+path="res://.godot/imported/chest-armor.png-02353c4b571b6538c5c7c2fbeedbb1e6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefendGlowNew/chest-armor.png"
-dest_files=["res://.godot/imported/chest-armor.png-b589ef9cf435768ee7a57e5426c092f4.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefendGlowNew/chest-armor.png"
+dest_files=["res://.godot/imported/chest-armor.png-02353c4b571b6538c5c7c2fbeedbb1e6.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp6weue203ewc"
-path="res://.godot/imported/book-aura.png-1150c96cc1be0648e408faf8f008de4d.ctex"
+path="res://.godot/imported/book-aura.png-0feee984ad4673545fa96182888d1fb6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/book-aura.png"
-dest_files=["res://.godot/imported/book-aura.png-1150c96cc1be0648e408faf8f008de4d.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/book-aura.png"
+dest_files=["res://.godot/imported/book-aura.png-0feee984ad4673545fa96182888d1fb6.ctex"]
 
 [params]
 

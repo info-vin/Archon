@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cyw15o4scxgyf"
-path="res://.godot/imported/focused.png-4658ef6f646798a04da561a0ecf228f8.ctex"
+path="res://.godot/imported/focused.png-80638394be2a1aa19101deccf3a59947.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/focused.png"
-dest_files=["res://.godot/imported/focused.png-4658ef6f646798a04da561a0ecf228f8.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/focused.png"
+dest_files=["res://.godot/imported/focused.png-80638394be2a1aa19101deccf3a59947.ctex"]
 
 [params]
 

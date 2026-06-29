@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://vjd2efw1r2hy"
-path="res://.godot/imported/heart-drop.png-deb0033ea69235bb20a0b3613b8207f3.ctex"
+path="res://.godot/imported/heart-drop.png-632f2c7ca9c694d587d163a595f2e096.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats2/heart-drop.png"
-dest_files=["res://.godot/imported/heart-drop.png-deb0033ea69235bb20a0b3613b8207f3.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats2/heart-drop.png"
+dest_files=["res://.godot/imported/heart-drop.png-632f2c7ca9c694d587d163a595f2e096.ctex"]
 
 [params]
 

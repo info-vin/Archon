@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dcnotecqag0cy"
-path="res://.godot/imported/broken-shield.png-c92e4406d49b213a3291072ab2c7abaa.ctex"
+path="res://.godot/imported/broken-shield.png-9f8fdfb39086e818e950293f1ceee738.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/broken-shield.png"
-dest_files=["res://.godot/imported/broken-shield.png-c92e4406d49b213a3291072ab2c7abaa.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/broken-shield.png"
+dest_files=["res://.godot/imported/broken-shield.png-9f8fdfb39086e818e950293f1ceee738.ctex"]
 
 [params]
 

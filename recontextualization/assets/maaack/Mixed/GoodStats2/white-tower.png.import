@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c6wspymrbjkug"
-path="res://.godot/imported/white-tower.png-a6099fdb3ada5a201ee77110d1cce0aa.ctex"
+path="res://.godot/imported/white-tower.png-5458c7fb4f3bd52bff4e7efed5aef106.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/white-tower.png"
-dest_files=["res://.godot/imported/white-tower.png-a6099fdb3ada5a201ee77110d1cce0aa.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/white-tower.png"
+dest_files=["res://.godot/imported/white-tower.png-5458c7fb4f3bd52bff4e7efed5aef106.ctex"]
 
 [params]
 

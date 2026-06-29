@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dom34dixugrhr"
-path="res://.godot/imported/bad-breath.png-38700f4144bf826d6d8e7d62e19ec7d6.ctex"
+path="res://.godot/imported/bad-breath.png-9983f08b78006a976d7de56e004ddaa4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowEnemy/bad-breath.png"
-dest_files=["res://.godot/imported/bad-breath.png-38700f4144bf826d6d8e7d62e19ec7d6.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowEnemy/bad-breath.png"
+dest_files=["res://.godot/imported/bad-breath.png-9983f08b78006a976d7de56e004ddaa4.ctex"]
 
 [params]
 

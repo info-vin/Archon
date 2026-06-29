@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b5yjvbbtnrckp"
-path="res://.godot/imported/distraction.png-88a0afa6afca7ef04a63528cab486d9a.ctex"
+path="res://.godot/imported/distraction.png-95afcdc800da21b088f98ffcee2aaaaa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/distraction.png"
-dest_files=["res://.godot/imported/distraction.png-88a0afa6afca7ef04a63528cab486d9a.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/distraction.png"
+dest_files=["res://.godot/imported/distraction.png-95afcdc800da21b088f98ffcee2aaaaa.ctex"]
 
 [params]
 

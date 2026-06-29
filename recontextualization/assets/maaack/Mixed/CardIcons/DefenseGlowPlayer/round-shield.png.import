@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://mhbqk4g4lhdf"
-path="res://.godot/imported/round-shield.png-75d02c5c3473e1eaa065535dc3239da8.ctex"
+path="res://.godot/imported/round-shield.png-be0d79defc5aad56b3b5b79b4e551935.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/DefenseGlowPlayer/round-shield.png"
-dest_files=["res://.godot/imported/round-shield.png-75d02c5c3473e1eaa065535dc3239da8.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/DefenseGlowPlayer/round-shield.png"
+dest_files=["res://.godot/imported/round-shield.png-be0d79defc5aad56b3b5b79b4e551935.ctex"]
 
 [params]
 

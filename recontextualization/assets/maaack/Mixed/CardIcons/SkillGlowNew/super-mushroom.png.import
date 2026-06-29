@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ba4xmlhul7uav"
-path="res://.godot/imported/super-mushroom.png-ae8a09df734b7831c49e2868e14dbca1.ctex"
+path="res://.godot/imported/super-mushroom.png-7426da3e751f00263c80af14aac8a62f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/super-mushroom.png"
-dest_files=["res://.godot/imported/super-mushroom.png-ae8a09df734b7831c49e2868e14dbca1.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/super-mushroom.png"
+dest_files=["res://.godot/imported/super-mushroom.png-7426da3e751f00263c80af14aac8a62f.ctex"]
 
 [params]
 

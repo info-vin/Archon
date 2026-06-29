@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://k11ui74blyff"
-path="res://.godot/imported/en-garde-1.png-1180aaeb803baab5674bf4abf2994a17.ctex"
+path="res://.godot/imported/en-garde-1.png-878be6f9a13f1f0524bfa64567387cf8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats/en-garde-1.png"
-dest_files=["res://.godot/imported/en-garde-1.png-1180aaeb803baab5674bf4abf2994a17.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats/en-garde-1.png"
+dest_files=["res://.godot/imported/en-garde-1.png-878be6f9a13f1f0524bfa64567387cf8.ctex"]
 
 [params]
 

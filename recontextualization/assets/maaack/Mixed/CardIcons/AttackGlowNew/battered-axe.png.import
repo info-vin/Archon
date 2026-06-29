@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cb7gqafy65ibh"
-path="res://.godot/imported/battered-axe.png-a838001400b269fc8ae35f8a77f02207.ctex"
+path="res://.godot/imported/battered-axe.png-ef66a66c60b5636309f04360a6e27347.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/battered-axe.png"
-dest_files=["res://.godot/imported/battered-axe.png-a838001400b269fc8ae35f8a77f02207.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/battered-axe.png"
+dest_files=["res://.godot/imported/battered-axe.png-ef66a66c60b5636309f04360a6e27347.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dn8wpvgoo0wac"
-path="res://.godot/imported/Mountain-Background.png-e1f2ca1003933cef4ab5f573fe62350e.ctex"
+path="res://.godot/imported/Mountain-Background.png-beaca14cb6c81f26b5bbb58eb19470ac.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/Backgrounds/Mountain-Background.png"
-dest_files=["res://.godot/imported/Mountain-Background.png-e1f2ca1003933cef4ab5f573fe62350e.ctex"]
+source_file="res://assets/maaack/Mixed/Backgrounds/Mountain-Background.png"
+dest_files=["res://.godot/imported/Mountain-Background.png-beaca14cb6c81f26b5bbb58eb19470ac.ctex"]
 
 [params]
 

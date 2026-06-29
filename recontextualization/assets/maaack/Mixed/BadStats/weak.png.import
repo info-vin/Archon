@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bafvb10pya6fo"
-path="res://.godot/imported/weak.png-ca4640b414205ed0be481dc9f88b9d4a.ctex"
+path="res://.godot/imported/weak.png-735f01ee6300fe8d864d1a2457986f94.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/BadStats/weak.png"
-dest_files=["res://.godot/imported/weak.png-ca4640b414205ed0be481dc9f88b9d4a.ctex"]
+source_file="res://assets/maaack/Mixed/BadStats/weak.png"
+dest_files=["res://.godot/imported/weak.png-735f01ee6300fe8d864d1a2457986f94.ctex"]
 
 [params]
 

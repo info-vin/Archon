@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cy33cftnudycp"
-path="res://.godot/imported/thunder-blade.png-1e436124bf33c972e32ebfa0351eaf7e.ctex"
+path="res://.godot/imported/thunder-blade.png-8bf44b7168670a1dbab8043cd2ee478a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/thunder-blade.png"
-dest_files=["res://.godot/imported/thunder-blade.png-1e436124bf33c972e32ebfa0351eaf7e.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/thunder-blade.png"
+dest_files=["res://.godot/imported/thunder-blade.png-8bf44b7168670a1dbab8043cd2ee478a.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://jqtg5xsd4imi"
-path="res://.godot/imported/person.svg-1420a7a66235fc490e2914fb0e453d3e.ctex"
+path="res://.godot/imported/person.svg-d05955a92b582aa44825b3ac2a31ea30.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/UI/person.svg"
-dest_files=["res://.godot/imported/person.svg-1420a7a66235fc490e2914fb0e453d3e.ctex"]
+source_file="res://assets/maaack/Mixed/UI/person.svg"
+dest_files=["res://.godot/imported/person.svg-d05955a92b582aa44825b3ac2a31ea30.ctex"]
 
 [params]
 

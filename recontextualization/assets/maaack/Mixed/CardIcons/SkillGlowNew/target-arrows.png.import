@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dd323be0fl7e1"
-path="res://.godot/imported/target-arrows.png-bb89e5c42e4b80b01afb0aac9b01aad0.ctex"
+path="res://.godot/imported/target-arrows.png-12f562396bd059fd360ae221fd6eafcd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/target-arrows.png"
-dest_files=["res://.godot/imported/target-arrows.png-bb89e5c42e4b80b01afb0aac9b01aad0.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/target-arrows.png"
+dest_files=["res://.godot/imported/target-arrows.png-12f562396bd059fd360ae221fd6eafcd.ctex"]
 
 [params]
 

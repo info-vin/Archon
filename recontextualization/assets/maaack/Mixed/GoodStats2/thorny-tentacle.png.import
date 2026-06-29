@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dble0blujlari"
-path="res://.godot/imported/thorny-tentacle.png-8851b8b65378e345a831645e03d11960.ctex"
+path="res://.godot/imported/thorny-tentacle.png-dd5ec8ac7d2fdfa220a9d9fe45b5c098.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/thorny-tentacle.png"
-dest_files=["res://.godot/imported/thorny-tentacle.png-8851b8b65378e345a831645e03d11960.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/thorny-tentacle.png"
+dest_files=["res://.godot/imported/thorny-tentacle.png-dd5ec8ac7d2fdfa220a9d9fe45b5c098.ctex"]
 
 [params]
 

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bfbex045t2c5n"
-path="res://.godot/imported/distraction.png-1cdda478b1094ba835e4eaaee9ebfd6a.ctex"
+path="res://.godot/imported/distraction.png-d0290cb7c3fb4104e7cf118b9718ba60.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/AttackGlowNew/distraction.png"
-dest_files=["res://.godot/imported/distraction.png-1cdda478b1094ba835e4eaaee9ebfd6a.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/AttackGlowNew/distraction.png"
+dest_files=["res://.godot/imported/distraction.png-d0290cb7c3fb4104e7cf118b9718ba60.ctex"]
 
 [params]
 

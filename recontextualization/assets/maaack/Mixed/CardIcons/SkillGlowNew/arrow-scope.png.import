@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://djag4nim1x0qj"
-path="res://.godot/imported/arrow-scope.png-96975180d11ff61da3b2c59ea0504638.ctex"
+path="res://.godot/imported/arrow-scope.png-b38e44787986e74bc4b01b1236f06048.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/arrow-scope.png"
-dest_files=["res://.godot/imported/arrow-scope.png-96975180d11ff61da3b2c59ea0504638.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/arrow-scope.png"
+dest_files=["res://.godot/imported/arrow-scope.png-b38e44787986e74bc4b01b1236f06048.ctex"]
 
 [params]
 

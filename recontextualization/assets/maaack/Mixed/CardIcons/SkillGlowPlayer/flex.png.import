@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://8bh5ne3wm2iy"
-path="res://.godot/imported/flex.png-f3536c73eda8a7c21cc928954e1eaf8f.ctex"
+path="res://.godot/imported/flex.png-35bcde0becb85ed55a02702905e6bc90.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowPlayer/flex.png"
-dest_files=["res://.godot/imported/flex.png-f3536c73eda8a7c21cc928954e1eaf8f.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowPlayer/flex.png"
+dest_files=["res://.godot/imported/flex.png-35bcde0becb85ed55a02702905e6bc90.ctex"]
 
 [params]
 

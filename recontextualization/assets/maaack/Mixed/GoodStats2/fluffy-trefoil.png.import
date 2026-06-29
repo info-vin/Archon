@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cxv3ssakeqryt"
-path="res://.godot/imported/fluffy-trefoil.png-62f836c2c0c2bc527635d5aaa8ff00c5.ctex"
+path="res://.godot/imported/fluffy-trefoil.png-488c032356d0cf88a1914fa8631b4df9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/GoodStats2/fluffy-trefoil.png"
-dest_files=["res://.godot/imported/fluffy-trefoil.png-62f836c2c0c2bc527635d5aaa8ff00c5.ctex"]
+source_file="res://assets/maaack/Mixed/GoodStats2/fluffy-trefoil.png"
+dest_files=["res://.godot/imported/fluffy-trefoil.png-488c032356d0cf88a1914fa8631b4df9.ctex"]
 
 [params]
 

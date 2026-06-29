@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dvaulovqhkuxl"
-path="res://.godot/imported/light-thorny-triskelion.png-c0dba6afe77d713218fc9ba56fe115e6.ctex"
+path="res://.godot/imported/light-thorny-triskelion.png-5992e8cf8cc80f748a57d09a902bae06.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Mixed/CardIcons/SkillGlowNew/light-thorny-triskelion.png"
-dest_files=["res://.godot/imported/light-thorny-triskelion.png-c0dba6afe77d713218fc9ba56fe115e6.ctex"]
+source_file="res://assets/maaack/Mixed/CardIcons/SkillGlowNew/light-thorny-triskelion.png"
+dest_files=["res://.godot/imported/light-thorny-triskelion.png-5992e8cf8cc80f748a57d09a902bae06.ctex"]
 
 [params]
 
