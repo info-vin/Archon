@@ -110,15 +110,23 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026年6月26日：CI/CD 基礎設施健壯化與自動化公證升級
-今日針對專案的 CI/CD 流程進行了架構級的健壯化升級，解決了長期存在的排程不穩定與誤報問題。
+### 2026年6月26日（更新）：CI/CD 依賴解析修復與架構穩定
+在完成 CI/CD 基礎設施健壯化後，針對 `Web UI Health Check` 進行了關鍵除錯。
 
-**核心決策與技術實踐**:
-1.  **Hugging Face Scheduler 結構重構**: 將原先依賴脆弱時間判斷的單體 Workflow 拆分為兩個專責的 `hf-pause.yml` 與 `hf-restart.yml`。此舉移除了對 `date` 指令的依賴，徹底消滅了 GitHub Actions 排程延遲導致的邏輯失效問題。
-2.  **Web UI 健康檢查韌性提升**: 
-    *   **邏輯遷移**: 將原有的 Bash 迴圈邏輯遷移至 Python 腳本 `scripts/web_health_check.py`，並整合了專案標準的指數退避 (`retry_with_backoff`) 機制。
-    *   **故障檢測優化**: 實作了 5 次重試循環，有效過濾瞬時網路雜訊，提升告警準確度。
-    *   **文檔顯性化**: 將所需的 Telegram 通知變數加入 `.env.example`，達成配置與文檔的物理對齊。
+**核心偵錯與實踐**:
+1.  **解決 `ModuleNotFoundError`**: 初次部署發現 Python 環境缺乏 `supabase` 套件。經查證，原先 Workflow 僅安裝了 `server` 群組依賴，且執行環境未正確映射 Python 工作目錄。
+2.  **架構對齊與依賴升級**: 
+    *   將 CI 依賴安裝強制升級至 `--group all`，確保包含所有執行腳本所需的 `supabase` 與其他套件。
+    *   修復了 `PYTHONPATH` 的匯入路徑問題，確保 `scripts/` 下的腳本能正確解析 `python/src` 模組。
+3.  **CI 公證通過**: 經修正後，不僅成功通過 Web Health Check 的部署觸發，隨後的 `make test-be` (607 個單元測試) 亦全數通過，證實 CI 環境已穩定。
+
+### 2026年6月29日：Hugging Face Space 自動化排程解析與調整
+今日協助釐清 Hugging Face Space (myrmidon) 呈現暫停狀態的根本原因，並優化了資源排程。
+
+**核心決策與實踐**:
+1.  **破除異常迷思 (Demystify Paused State)**: 透過調閱原始碼排程 (`hf-pause.yml`) 與即時呼叫 HF Space API，證明環境的「暫停」並非崩潰，而是 GitHub Actions 執行的例行性休眠保護，並提供即時數據確認其已恢復 `RUNNING`。
+2.  **排程精準調配 (Schedule Adjustment)**: 將每日自動暫停時間提早至台灣時間 10:38 (UTC 02:38)，並將重啟喚醒時間提早至 06:32 (UTC 22:32)，準確轉換 UTC 寫入 Cron 配置。
+---
 
 ---
 

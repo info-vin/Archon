@@ -2,8 +2,8 @@ name: Hugging Face Space Scheduler (Pause)
 
 on:
   schedule:
-    # 每天台灣時間凌晨 00:18 暫停 (UTC 16:18)
-    - cron: '18 16 * * *'
+    # 每天台灣時間 10:38 暫停 (UTC 02:38)
+    - cron: '38 2 * * *'
   workflow_dispatch:
 
 jobs:
