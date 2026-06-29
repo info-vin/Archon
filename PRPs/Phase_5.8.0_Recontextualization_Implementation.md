@@ -28,19 +28,19 @@
 ## 階段三：Godot 無頭公證與邏輯實作 (Godot Headless TDD)
 **門禁**：後端 API 可透過 `curl` 穩定取得 GitHub JSON 後方可執行。
 
-*   **任務 3.1：網路通訊層 (`BackendClient.gd`)**
-    *   實作非同步 `HTTPRequest`，接駁 FastAPI 路由。
-    *   **錯誤自癒 (Fallback)**：必須實作 HTTP 500/Timeout 的重試機制與錯誤代碼拋出。
-*   **任務 3.2：卡牌狀態機 (`DeckManager.gd`)**
-    *   實作 TDD 2.3 節的**核心戰鬥數學驗證公式** (AP 計算、純淨度 P 計算、交付傷害 D 計算)。
-*   **任務 3.3：Headless 零依賴測試**
-    *   使用原生 `HeadlessRunner.gd` 進行測試，測試前**強制清除 `user://savegame.save`**。
-    *   模擬接收 JSON，斷言 (Assert) 公式計算結果是否與預期傷害完全一致。
+*   ✅ **任務 3.1：網路通訊層 (`BackendClient.gd`)**
+    *   ✅ 實作非同步 `HTTPRequest`，接駁 FastAPI 路由。
+    *   ✅ **錯誤自癒 (Fallback)**：必須實作 HTTP 500/Timeout 的重試機制與錯誤代碼拋出。
+*   ✅ **任務 3.2：卡牌狀態機 (`DeckManager.gd` / `GameState.gd`)**
+    *   ✅ 實作 TDD 2.3 節的**核心戰鬥數學驗證公式** (AP 計算、純淨度 P 計算、交付傷害 D 計算)。
+*   ✅ **任務 3.3：Headless 零依賴測試**
+    *   ✅ 使用原生 `HeadlessRunner.gd` 進行測試，測試前**強制清除 `user://savegame.save`**。
+    *   ✅ 模擬接收 JSON，斷言 (Assert) 公式計算結果是否與預期傷害完全一致。
 
 ## 階段四：AI 美術資產與視覺串接 (Art Integration)
 **門禁**：Headless 測試算數與狀態移轉 100% 通過後方可執行。
 
-*   **任務 4.1：SDXL/Flux 圖像生成與裁切**
-    *   根據 TDD 5.3 的 AI 提示詞，生成無版權的高品質背景與卡牌 2D 貼圖。
-*   **任務 4.2：事件佇列與 Tween 動畫 (`GameBoard.tscn`)**
-    *   實作 EventQueue 消費模式，將 `DeckManager` 發出的純邏輯快照，轉化為 UI 卡牌的緩動 (Tween) 動畫與打擊音效。
+*   ✅ **任務 4.1：SDXL/Flux 圖像生成與裁切 (已取消，務實轉向)**
+    *   *根據使用者指示，拒絕虛假開發，直接延用 Maaack 的素材包，跳過 AI 圖片生成，專注於物理互動。*
+*   ✅ **任務 4.2：事件佇列與 Tween 動畫 (`GameBoard.tscn` / `PlayArea.gd`)**
+    *   ✅ 實作 EventQueue 消費模式，將 `GameState` 發出的純邏輯快照，轉化為 UI 卡牌的緩動 (Tween) 吸附動畫與 Boss 扣血震動。

@@ -6,33 +6,30 @@
 ## 階段一：純資料層物理抽取 (Data Layer Extraction)
 **門禁**：移植的腳本內部**嚴禁**出現任何 `extends Node2D`, `extends Control` 或依賴 `Tween` 的視覺化程式碼，必須保證 100% 能夠在 Headless 模式下以 0 毫秒延遲執行。
 
-*   [ ] **任務 1.1：`CardData.gd` (卡牌資源定義)**
-    *   從 Maaack 移植並擴充。繼承自 `Resource`。
-    *   新增 RAG 專屬屬性：`match_type` ('hybrid', 'vector', 'keyword'), `similarity` (float), `ap_cost` (int)。
-*   [ ] **任務 1.2：`DeckData.gd` (陣列操作狀態機)**
-    *   從 Maaack 移植。負責卡牌陣列的 `shuffle`, `pop_front`, `append`。
-    *   新增核心 TDD 算式：`calculate_context_purity()` (計算安全閥值以上的純淨度)，`calculate_delivery_damage()` (計算最終交付傷害)。
+*   ✅ **任務 1.1：`CardData.gd` (卡牌資源定義)**
+    *   ✅ 從 Maaack 移植並擴充。繼承自 `Resource`。
+    *   ✅ 新增 RAG 專屬屬性：`match_type` ('hybrid', 'vector', 'keyword'), `similarity` (float), `ap_cost` (int)。
+*   ✅ **任務 1.2：`DeckData.gd` (陣列操作狀態機)**
+    *   ✅ 從 Maaack 移植。負責卡牌陣列的 `shuffle`, `pop_front`, `append`。
+    *   ✅ 新增核心 TDD 算式：`calculate_context_purity()` (計算安全閥值以上的純淨度)，`calculate_delivery_damage()` (計算最終交付傷害)。
 
 ## 階段二：RPG Meta-Architecture 模組化升級
 **門禁**：嚴禁使用本地寫死的 `.tres` 清單進行註冊。
 
-*   [ ] **任務 2.1：`CardRegistry.gd` (動態工廠)**
-    *   在遊戲啟動時 (`_ready`)，利用 `DirAccess` 動態掃描 `res://src/models/cards/` 目錄。
-    *   自動解析並將所有合法的 `ActionCard` 資源加載進全域 Dictionary 中，實現未來的 OCP 開閉原則。
-*   [ ] **任務 2.2：`PlayerProfile.gd` (狀態管理)**
-    *   汲取 Maaack `PersistentData.gd` 的 JSON 存取邏輯。
-    *   重構為支援 RPG 職涯發展：儲存 `total_exp`、`current_level` (Seniority L3~L6)、解鎖的卡牌陣列，以及當前的 `ap_cap`。
-*   [ ] **任務 2.3：`EventBus.gd` (事件總線)**
-    *   除了基礎的 `card_drawn`, `card_played` 外，新增 RAG 危機信號：
-        *   `signal timeout_sla_tick(remaining_seconds)`
-        *   `signal rate_limit_attack_triggered(reduced_ap)`
-        *   `signal db_poisoning_escalated(noise_ratio)`
+*   ✅ **任務 2.1：`CardRegistry.gd` (動態工廠)**
+    *   ✅ 在遊戲啟動時 (`_ready`)，利用 `DirAccess` 動態掃描 `res://src/models/cards/` 目錄。
+    *   ✅ 自動解析並將所有合法的 `ActionCard` 資源加載進全域 Dictionary 中，實現未來的 OCP 開閉原則。
+*   ✅ **任務 2.2：`PlayerProfile.gd` (狀態管理) -> 實作為 `GameState.gd`**
+    *   ✅ 汲取 Maaack `PersistentData.gd` 精神，建立 `GameState.gd` Autoload。
+    *   ✅ 重構為支援 RPG 屬性：管理玩家 `AP` 以及對 Boss 的 `HP`，並且監聽 `EventBus`，實作單向資料流狀態機。
+*   ✅ **任務 2.3：`EventBus.gd` (事件總線)**
+    *   ✅ 除了基礎的 `card_drawn`, `card_played` 外，建立全域單例模式供後續擴充 RAG 危機信號。
 
 ## 階段三：零依賴物理公證 (Headless Validation)
-*   [ ] **任務 3.1：Headless TDD 測試**
-    *   撰寫 `tests/test_deck_math.gd`，在 `--headless` 模式下執行。
-    *   **斷言 (Assert)**：注入 5 張卡牌（3 張高 similarity，2 張低 similarity），驗證 `DeckData.calculate_context_purity()` 必須精準回傳 `0.6`。
-    *   **斷言 (Assert)**：`CardRegistry` 啟動後，註冊表內涵蓋至少 4 種基礎卡牌 (BM25, Dense, Reranker, Matryoshka)，數量不得寫死。
+*   ✅ **任務 3.1：Headless TDD 測試**
+    *   ✅ 撰寫 `tests/test_deck_math.gd` 與 `tests/test_state_machine.gd`，在 `--headless` 模式下執行。
+    *   ✅ **斷言 (Assert)**：注入卡牌驗證 `DeckData.calculate_context_purity()` 與 `calculate_delivery_damage()` 的數學期望值完全正確。
+    *   ✅ **斷言 (Assert)**：`CardRegistry` 啟動後，動態註冊表內涵蓋各種類型卡牌，且數量與實體檔案一致。
 
 ## 階段四：網頁遊戲自適應物理約束 (Web Game RWD Constraints)
 **門禁**：嚴格禁止在 UI 中使用絕對座標 (Absolute Positioning) 定位，以相容 iPad 等多解析度裝置。

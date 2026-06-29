@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.3", "Forward Plus")
 [autoload]
 
 EventBus="*res://src/autoloads/EventBus.gd"
+GameState="*res://src/autoloads/GameState.gd"
 CardRegistry="*res://src/managers/CardRegistry.gd"
 PlayerProfile="*res://src/managers/PlayerProfile.gd"
 
