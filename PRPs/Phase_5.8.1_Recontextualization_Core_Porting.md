@@ -33,3 +33,14 @@
     *   撰寫 `tests/test_deck_math.gd`，在 `--headless` 模式下執行。
     *   **斷言 (Assert)**：注入 5 張卡牌（3 張高 similarity，2 張低 similarity），驗證 `DeckData.calculate_context_purity()` 必須精準回傳 `0.6`。
     *   **斷言 (Assert)**：`CardRegistry` 啟動後，註冊表內涵蓋至少 4 種基礎卡牌 (BM25, Dense, Reranker, Matryoshka)，數量不得寫死。
+
+## 階段四：網頁遊戲自適應物理約束 (Web Game RWD Constraints)
+**門禁**：嚴格禁止在 UI 中使用絕對座標 (Absolute Positioning) 定位，以相容 iPad 等多解析度裝置。
+
+*   [x] **任務 4.1：專案全局設定約束**
+    *   `project.godot` 中 `display/window/stretch/mode` 必須為 `canvas_items`。
+    *   `project.godot` 中 `display/window/stretch/aspect` 必須為 `expand`。
+*   [x] **任務 4.2：UI 根節點與容器約束**
+    *   主畫面 (`GameBoard` 等) 的根 `Control` 節點必須使用 `set_anchors_and_offsets_preset(PRESET_FULL_RECT)`，鎖死於螢幕四角。
+    *   卡牌排列必須依賴 `HBoxContainer` / `VBoxContainer` / `GridContainer`。
+    *   版面留白必須使用 `MarginContainer`，嚴禁使用 `position = Vector2(x, y)` 手動排版。
