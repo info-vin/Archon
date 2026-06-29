@@ -18,6 +18,13 @@ interface ApprovalSidebarListProps {
     onSelect: (id: string) => void;
 }
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+});
+
 export const ApprovalSidebarList: React.FC<ApprovalSidebarListProps> = ({ proposals, loading, selectedId, onSelect }) => {
     
     const getIcon = (type: ChangeType) => {
@@ -62,7 +69,7 @@ export const ApprovalSidebarList: React.FC<ApprovalSidebarListProps> = ({ propos
                         {item.change_summary || (item.request_payload?.file_path ? `Update ${item.request_payload.file_path.split('/').pop()}` : 'Proposed Change')}
                         </h4>
                         <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
-                        <UserIcon className="w-3 h-3" /> {item.is_marketing ? item.marketing_author : 'DevBot'} • <ClockIcon className="w-3 h-3" /> {new Date(item.created_at).toLocaleTimeString()}
+                        <UserIcon className="w-3 h-3" /> {item.is_marketing ? item.marketing_author : 'DevBot'} • <ClockIcon className="w-3 h-3" /> {timeFormatter.format(new Date(item.created_at))}
                         </p>
                     </div>
                     <ChevronRightIcon className="w-4 h-4 text-gray-300" />

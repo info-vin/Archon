@@ -64,6 +64,9 @@ const getTypeColor = (type?: DocumentType) => {
   }
 };
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations
+const dateFormatter = new Intl.DateTimeFormat();
+
 export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: DocumentCardProps) => {
   const [showDelete, setShowDelete] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -135,7 +138,7 @@ export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: Do
 
         {/* Metadata */}
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-          {new Date(document.updated_at || document.created_at || Date.now()).toLocaleDateString()}
+          {dateFormatter.format(new Date(document.updated_at || document.created_at || Date.now()))}
         </p>
 
         {/* ID Display Section - Always visible for active, hover for others */}

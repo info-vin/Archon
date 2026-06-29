@@ -15,6 +15,13 @@ interface TokenUsageTableProps {
   details: TokenUsageDetail[];
 }
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+});
+
 const TokenUsageTable: React.FC<TokenUsageTableProps> = ({ details }) => {
   return (
     <div className="overflow-x-auto">
@@ -32,7 +39,7 @@ const TokenUsageTable: React.FC<TokenUsageTableProps> = ({ details }) => {
           {details.map((row) => (
             <tr key={row.id} className="text-sm hover:bg-muted/30 transition-colors">
               <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                {new Date(row.timestamp).toLocaleTimeString()}
+                {timeFormatter.format(new Date(row.timestamp))}
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-col">
