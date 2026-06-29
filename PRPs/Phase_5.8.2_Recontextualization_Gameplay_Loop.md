@@ -30,9 +30,10 @@
 ## 階段三：視覺串接與動畫回饋 (Art Integration & Tweening)
 **門禁**：拒絕使用 `generate_image` 進行虛假開發。直接套用 Maaack 素材包，並使用 `EventQueue` 確保動畫不重疊。
 
-*   ✅ **任務 3.1：卡牌打擊動畫 (Tween)**
+*   ✅ **任務 3.1：卡牌打擊與 Maaack 素材綁定 (Tween & Assets)**
+    *   ✅ 物理複製 `maaack` 素材包於 `recontextualization/assets/maaack`，確保 `CardChip.gd` 的 `res://` 正確對應 PNG。
     *   ✅ 當卡牌放入 `PlayArea` 時，加入 Tween 彈性吸附動畫 (`TRANS_SPRING`)。
-    *   ✅ 根據 Action/Data 類型播放不同的消失/微縮動畫。
+    *   ✅ 根據 Action/Data 類型播放不同的消失/微縮動畫，不再是虛假的生成路徑。
 *   ✅ **任務 3.2：UI 震動回饋 (Shake/Flash)**
     *   ✅ 當 `GameState` 觸發 `hp_changed` (扣血) 時，Tween `BossHPLabel` 的位置左右震動並閃爍紅色。
 *   ✅ **任務 3.3：非同步測試公證**

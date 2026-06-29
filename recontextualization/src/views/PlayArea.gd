@@ -6,7 +6,7 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 		return true
 	return false
 
-func _drop_data(_at_position: Vector2, data: Variant):
+func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	if typeof(data) == TYPE_OBJECT and data is Control:
 		# Reparent the node to PlayArea
 		var parent = data.get_parent()

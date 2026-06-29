@@ -19,9 +19,11 @@
 *   ✅ **任務 2.1：`CardRegistry.gd` (動態工廠)**
     *   ✅ 在遊戲啟動時 (`_ready`)，利用 `DirAccess` 動態掃描 `res://src/models/cards/` 目錄。
     *   ✅ 自動解析並將所有合法的 `ActionCard` 資源加載進全域 Dictionary 中，實現未來的 OCP 開閉原則。
-*   ✅ **任務 2.2：`PlayerProfile.gd` (狀態管理) -> 實作為 `GameState.gd`**
-    *   ✅ 汲取 Maaack `PersistentData.gd` 精神，建立 `GameState.gd` Autoload。
-    *   ✅ 重構為支援 RPG 屬性：管理玩家 `AP` 以及對 Boss 的 `HP`，並且監聽 `EventBus`，實作單向資料流狀態機。
+*   ✅ **任務 2.2：`PlayerProfile.gd` 與 `GameState.gd` (核心狀態管理)**
+    *   ✅ 建立 `GameState.gd` 管理玩家 `AP`, Boss `HP`, 以及玩家 `HP` (預設 100.0)。
+    *   ✅ 實作「幻覺懲罰 (Hallucination Penalty)」：當出牌純淨度 P < 1.0 時，玩家扣血 (`player_hp -= penalty`)，若歸零觸發 `player_died`。
+    *   ✅ 實作「複合威脅 (Composite Threat)」基礎變數：`sla_timer`, `rate_limit_compression`, `data_poisoning_ratio`。
+    *   ✅ 確保所有腳本強制嚴格宣告 (`-> void`) 以符合 Godot 4 稽核標準。
 *   ✅ **任務 2.3：`EventBus.gd` (事件總線)**
     *   ✅ 除了基礎的 `card_drawn`, `card_played` 外，建立全域單例模式供後續擴充 RAG 危機信號。
 

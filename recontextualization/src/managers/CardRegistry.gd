@@ -2,10 +2,10 @@ extends Node
 
 var cards: Dictionary = {}
 
-func _ready():
+func _ready() -> void:
 	load_all_cards("res://src/models/cards/resources/")
 
-func load_all_cards(path: String):
+func load_all_cards(path: String) -> void:
 	var dir = DirAccess.open(path)
 	if dir:
 		dir.list_dir_begin()
@@ -20,7 +20,7 @@ func load_all_cards(path: String):
 	else:
 		push_warning("Directory not found or error accessing: " + path)
 
-func register_card(card: Resource):
+func register_card(card: Resource) -> void:
 	if card.id == "":
 		push_warning("Card %s has no ID, skipping registration" % card.title)
 		return

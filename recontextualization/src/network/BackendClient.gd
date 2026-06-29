@@ -10,13 +10,13 @@ var _current_payload: Dictionary = {}
 var _api_url: String = "http://127.0.0.1:8181/api/rag/hybrid-search"
 var auth_token: String = ""
 
-func _ready():
+func _ready() -> void:
 	_http_request = HTTPRequest.new()
 	_http_request.timeout = 5.0 # SLA limit
 	add_child(_http_request)
 	_http_request.request_completed.connect(_on_http_request_completed)
 
-func search(query: String, similarity_threshold: float = 0.5, match_count: int = 10):
+func search(query: String, similarity_threshold: float = 0.5, match_count: int = 10) -> void:
 	_current_payload = {
 		"query": query,
 		"similarity_threshold": similarity_threshold,
@@ -25,7 +25,7 @@ func search(query: String, similarity_threshold: float = 0.5, match_count: int =
 	_current_retries = 0
 	_send_request()
 
-func _send_request():
+func _send_request() -> void:
 	var json_payload = JSON.stringify(_current_payload)
 	var headers = ["Content-Type: application/json"]
 	if auth_token != "":
@@ -35,7 +35,7 @@ func _send_request():
 	if error != OK:
 		_handle_failure(error, "Failed to initiate HTTP request.")
 
-func _on_http_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
+func _on_http_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result != HTTPRequest.RESULT_SUCCESS or response_code >= 400:
 		if _current_retries < _max_retries:
 			_current_retries += 1
@@ -58,6 +58,6 @@ func _on_http_request_completed(result: int, response_code: int, headers: Packed
 	else:
 		_handle_failure(err, "Failed to parse JSON response.")
 
-func _handle_failure(code: int, message: String):
+func _handle_failure(code: int, message: String) -> void:
 	print("BackendClient ERROR: %d - %s" % [code, message])
 	request_failed.emit(code, message)
