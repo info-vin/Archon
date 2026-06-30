@@ -8,11 +8,15 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Archon Recontextualization"
-run/main_scene="res://tests/HeadlessRunner.gd"
-config/features=PackedStringArray("4.3", "Forward Plus")
+run/main_scene="res://src/views/GameBoard.tscn"
+config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
 
@@ -21,13 +25,13 @@ GameState="*res://src/autoloads/GameState.gd"
 CardRegistry="*res://src/managers/CardRegistry.gd"
 PlayerProfile="*res://src/managers/PlayerProfile.gd"
 
-[dotnet]
-
-project/assembly_name="Archon Recontextualization"
-
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[dotnet]
+
+project/assembly_name="Archon Recontextualization"
