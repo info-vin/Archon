@@ -1,6 +1,15 @@
 extends Control
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+	# Enforce 5 card context limit
+	var card_count = 0
+	for child in get_children():
+		if child.name != "HintLabel":
+			card_count += 1
+	if card_count >= 5:
+		print("Context Window full! Cannot drop more cards.")
+		return false
+		
 	# Check if the data is a valid CardChip node
 	if typeof(data) == TYPE_OBJECT and data is Control and data.has_method("set_card_data") and data.get("card_data") != null:
 		return true

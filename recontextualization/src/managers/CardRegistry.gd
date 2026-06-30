@@ -12,9 +12,11 @@ func load_all_cards(path: String) -> void:
 		var file_name = dir.get_next()
 		while file_name != "":
 			if not dir.current_is_dir() and file_name.ends_with(".tres"):
-				# IMPORTANT: Use preload pattern or load cautiously. For dynamic loading in Godot 4, load() is fine if the paths are exported, but we'll use load() here since it's scanning.
-				var resource = load(path + "/" + file_name)
-				if resource.get("id") != null: # Duck typing check
+				var full_path = path + file_name if path.ends_with("/") else path + "/" + file_name
+				var resource = load(full_path)
+				print("Attempting to load card: ", full_path)
+				if resource and resource.get("id") != null: # Duck typing check
+					print("Loaded card successfully: ", resource.get("id"))
 					register_card(resource)
 			file_name = dir.get_next()
 	else:

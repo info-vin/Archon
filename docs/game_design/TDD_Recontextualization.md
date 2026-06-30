@@ -160,6 +160,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | **醫療劇本：抗生素的致命防線** | `pubmedqa/master/data/ori_pqal.json` | 容錯率為 0，假陽性雜訊會導致醫療事故 | 檢索污染度極高，高相似度中混雜了語意相左的雜訊 | ❌ 失敗：「嚴重醫療事故發生！模型幻覺將 Metformin 推薦給腎病患者，導致患者乳酸中毒。」 |
 | **能源劇本：黑點危機** | `owid/energy-data/master/owid-energy-data.json` | 算力與 AP 極度匱乏，海量法規檢索超時 | 連續發送大 query 導致高併發 API 限流 (AP 上限壓縮) | ✅ 成功：「成功利用 Matryoshka 壓縮與多跳圖譜推理，以最低 Token 完成調度。」 |
+| **遊戲產業劇本：失控的熱修復與架構腐敗** | `local_repo/Archon/commits` | 開發者頭痛醫頭，導致架構物理限制被繞過 (例如：無上限的 Context Window 與消失的行動卡) | 為了快速解決 UI 阻斷問題，強行寫死 Enter 鍵熱修復，導致 TDD 核心卡牌構築體驗徹底崩壞 | ❌ 失敗：「嚴重技術債爆發！由於 PlayArea 未限制容量，玩家塞入無限資料導致 LLM Token 溢出，系統當機；且因 Action Cards 工廠缺失，遊戲降級為無聊的文字輸入框。」 |
 
 ---
 
