@@ -179,3 +179,13 @@ func deliver_context() -> void:
 	context_updated.emit(0.0)
 	context_purified.emit([])
 
+func trigger_search(match_type: int) -> void:
+	if not is_game_active:
+		return
+	if current_ap >= 2:
+		current_ap -= 2
+		ap_changed.emit(current_ap)
+		search_triggered.emit(match_type)
+	else:
+		print("Not enough AP to search!")
+

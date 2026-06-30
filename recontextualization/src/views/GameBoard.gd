@@ -42,6 +42,7 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	deliver_button.pressed.connect(_on_deliver_pressed)
+	query_input.text_submitted.connect(_on_query_submitted)
 	
 	if Engine.has_singleton("GameState"):
 		var game_state = Engine.get_singleton("GameState")
@@ -154,6 +155,10 @@ func _on_rate_limit_updated(compression: float) -> void:
 func _on_deliver_pressed() -> void:
 	if Engine.has_singleton("GameState"):
 		Engine.get_singleton("GameState").deliver_context()
+
+func _on_query_submitted(new_text: String) -> void:
+	if Engine.has_singleton("GameState"):
+		Engine.get_singleton("GameState").trigger_search(1) # 1 = KEYWORD
 
 func _on_search_triggered(match_type: int) -> void:
 	var query_text = query_input.text.strip_edges()
