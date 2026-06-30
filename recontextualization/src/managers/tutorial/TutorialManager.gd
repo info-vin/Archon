@@ -65,11 +65,12 @@ func set_mask_dark() -> void:
 
 func _end_tutorial() -> void:
     print("Tutorial Completed!")
-    if Engine.has_singleton("GameState"):
-        Engine.get_singleton("GameState").is_tutorial_active = false
+    var game_state = get_node_or_null("/root/GameState")
+    if game_state != null:
+        game_state.is_tutorial_active = false
         
-    if Engine.has_singleton("SaveManager"):
-        var sm = Engine.get_singleton("SaveManager")
+    var sm = get_node_or_null("/root/SaveManager")
+    if sm != null:
         sm.has_completed_tutorial = true
         sm.save_progress()
     
