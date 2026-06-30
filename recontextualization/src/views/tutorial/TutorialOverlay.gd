@@ -58,6 +58,9 @@ func show_dialog(text: String):
 
 func set_mask_transparent():
     mask_rect.color = Color(0, 0, 0, 0.0)
+    mask_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dialog_box.hide()
 
 func set_mask_dark():
     mask_rect.color = Color(0, 0, 0, 0.35)
+    mask_rect.mouse_filter = Control.MOUSE_FILTER_PASS
