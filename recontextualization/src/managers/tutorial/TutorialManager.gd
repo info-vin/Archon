@@ -65,6 +65,9 @@ func set_mask_dark() -> void:
 
 func _end_tutorial() -> void:
     print("Tutorial Completed!")
+    if Engine.has_singleton("GameState"):
+        Engine.get_singleton("GameState").is_tutorial_active = false
+        
     if Engine.has_singleton("SaveManager"):
         var sm = Engine.get_singleton("SaveManager")
         sm.has_completed_tutorial = true

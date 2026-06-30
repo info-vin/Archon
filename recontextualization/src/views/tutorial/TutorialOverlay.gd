@@ -18,16 +18,24 @@ func _ready():
     dialog_box.hide()
 
 func _input(event):
+    var is_advance_action = false
     if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        is_advance_action = true
+    elif event is InputEventKey and event.pressed and (event.keycode == KEY_SPACE or event.keycode == KEY_ENTER):
+        is_advance_action = true
+
+    if is_advance_action:
         if dialog_box.visible:
             if is_typing:
                 # Skip typing
                 is_typing = false
                 dialog_label.text = full_text
                 continue_hint.show()
+                get_viewport().set_input_as_handled()
             else:
                 dialog_box.hide()
                 dialog_advanced.emit()
+                get_viewport().set_input_as_handled()
 
 func _process(delta):
     if is_typing:

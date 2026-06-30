@@ -23,6 +23,7 @@ var max_player_hp: float = 100.0
 var sla_timer: float = 300.0
 var max_sla: float = 300.0
 var is_game_active: bool = false
+var is_tutorial_active: bool = false
 var rate_limit_compression: float = 1.0
 var data_poisoning_ratio: float = 0.0
 var delivery_count: int = 0
@@ -36,7 +37,7 @@ func _ready() -> void:
 			event_bus.card_played.connect(_on_card_played)
 
 func _process(delta: float) -> void:
-	if is_game_active and sla_timer > 0.0:
+	if is_game_active and not is_tutorial_active and sla_timer > 0.0:
 		sla_timer -= delta
 		sla_changed.emit(sla_timer)
 		
@@ -87,7 +88,7 @@ func start_game() -> void:
 				event_bus.card_drawn.emit(card)
 
 func deduct_sla(amount: float) -> void:
-	if is_game_active:
+	if is_game_active and not is_tutorial_active:
 		sla_timer -= amount
 		if sla_timer <= 0.0:
 			sla_timer = 0.0

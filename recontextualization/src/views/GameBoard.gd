@@ -83,8 +83,11 @@ func _ready() -> void:
 			add_child(t_mgr)
 			# Start game immediately for tutorial
 			if Engine.has_singleton("GameState"):
+				Engine.get_singleton("GameState").is_tutorial_active = true
 				Engine.get_singleton("GameState").start_game()
 		else:
+			if Engine.has_singleton("GameState"):
+				Engine.get_singleton("GameState").is_tutorial_active = false
 			tutorial_panel.show()
 	else:
 		tutorial_panel.show()
@@ -192,10 +195,9 @@ func _on_search_triggered(match_type: int) -> void:
 		card1.title = "精準資料"
 		
 		var card2 = CardData.new()
-		card2.type = CardData.CardType.DATA_CHIP
+		card2.type = CardData.CardType.NOISE_CHIP
 		card2.similarity = 0.2
 		card2.title = "雜訊干擾"
-		card2.set("type", 3) # NOISE_CHIP
 		
 		if Engine.has_singleton("EventBus"):
 			Engine.get_singleton("EventBus").card_drawn.emit(card1)
