@@ -13,7 +13,7 @@ var type_timer = 0.0
 const TYPE_SPEED = 0.03
 
 func _ready():
-    mask_rect.color = Color(0, 0, 0, 0.7)
+    mask_rect.color = Color(0, 0, 0, 0.35)
     dialog_box.hide()
 
 func _input(event):
@@ -60,4 +60,4 @@ func set_mask_transparent():
     mask_rect.color = Color(0, 0, 0, 0.0)
 
 func set_mask_dark():
-    mask_rect.color = Color(0, 0, 0, 0.7)
+    mask_rect.color = Color(0, 0, 0, 0.35)
