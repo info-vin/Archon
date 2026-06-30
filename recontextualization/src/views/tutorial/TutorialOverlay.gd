@@ -2,7 +2,6 @@ extends CanvasLayer
 
 @onready var mask_rect = $MaskRect
 @onready var dialog_box = $DialogBox
-@onready var character_icon = $DialogBox/MarginContainer/HBoxContainer/CharacterIcon
 @onready var dialog_label = $DialogBox/MarginContainer/HBoxContainer/DialogLabel
 @onready var continue_hint = $DialogBox/MarginContainer/HBoxContainer/ContinueHint
 
