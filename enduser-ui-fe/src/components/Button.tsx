@@ -92,7 +92,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       disabled={disabled || isLoading}
       className={`
-        inline-flex items-center justify-center
+        inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${className}
