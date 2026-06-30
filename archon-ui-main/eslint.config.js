@@ -36,7 +36,18 @@ export default [
       "@typescript-eslint/no-empty-object-type": "warn",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
-      "react-hooks/exhaustive-deps": "error"
+      "react-hooks/exhaustive-deps": "error",
+      "no-restricted-syntax": [
+        "warn",
+        {
+          "selector": "NewExpression[callee.object.name='Intl'][callee.property.name='DateTimeFormat']",
+          "message": "Do not instantiate Intl.DateTimeFormat directly in components (causes GC/performance bottleneck). Use date-fns/format or backend pre-formatted strings."
+        },
+        {
+          "selector": "CallExpression[callee.property.name=/toLocaleDateString|toLocaleString|toLocaleTimeString/]",
+          "message": "Do not use implicit high-cost localization methods inside components. Use date-fns/format instead."
+        }
+      ]
     },
   },
 ];

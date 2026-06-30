@@ -120,6 +120,15 @@
     *   修復了 `PYTHONPATH` 的匯入路徑問題，確保 `scripts/` 下的腳本能正確解析 `python/src` 模組。
 3.  **CI 公證通過**: 經修正後，不僅成功通過 Web Health Check 的部署觸發，隨後的 `make test-be` (607 個單元測試) 亦全數通過，證實 CI 環境已穩定。
 
+### 2026年6月30日：時間格式化效能優化與雙前端架構物理隔離
+今日核心任務是根除 `Intl.DateTimeFormat` 在前端渲染迴圈中造成的效能瓶頸（GC 壓力與實例化延遲），並為不同架構的雙前端建立精準的物理防護網。
+
+**核心決策與技術實踐**:
+1.  **物理防禦取代人工記憶**: 拒絕單純依賴開發者或 AI 的記憶，將「禁止在 render function 內直接使用 `new Intl.DateTimeFormat` 或隱含的 `toLocaleDateString`」寫入 `eslint.config.js` (`no-restricted-syntax`) 作為編譯期防線。
+2.  **辨識並尊重前端架構差異**: 發現 `archon-ui-main` (3737) 與 `enduser-ui-fe` (5173) 的架構哲學完全不同。3737 需要動態多國語系 (i18n)，因此統一使用 `date-fns`；而 5173 為了極致輕量 (0 KB 額外相依)，採用了「模組層級的單例模式 (Hoisted Singleton)」。我們沒有盲目同步，而是修改了 `UI_STANDARDS.md` 將這兩種合規架構明確物理隔離並明文規定。
+3.  **API 預格式化契約**: 在 `API_NAMING_CONVENTIONS.md` 中訂立契約，將無動態時區需求的負擔轉移給後端（透過 Pydantic `@computed_field` 預先格式化為字串），徹底消滅前端運算成本。
+4.  **發布程序對帳**: 釐清了 Hugging Face 的 orphan branch 部署機制。為符合 `dev` 環境的程序正義，切換至 `dev/twins` 分支執行 `make deploy-hf`，並確認 `APScheduler` 單次任務 (`_catchup`) 完成後自動 Remove 的底層機制屬正常運作。
+
 ### 2026年6月29日：Hugging Face 排程優化與全域 Supabase 斷線自癒 (Monkey Patch)
 今日協助釐清 Hugging Face Space (myrmidon) 呈現暫停狀態的根本原因，優化資源排程，並從底層根除了糾纏系統已久的 HTTP/2 斷線幽靈。
 

@@ -240,6 +240,14 @@ Database values used directly - no mapping layers:
 - Don't use inconsistent naming within a feature
 - Don't embed business logic in components
 
+## Data Formatting Contracts (Performance & Responsibilities)
+
+### 1. Date and Time Data
+To prevent client-side rendering bottlenecks (e.g., GC pressure from `Intl.DateTimeFormat` on large lists), follow these contracts:
+- **Fixed-Timezone Pre-formatting**: If a dashboard or table does not require dynamic client-timezones, the backend API **MUST** use Pydantic `@computed_field` or `@field_serializer` to pre-format dates as strings (e.g., `YYYY-MM-DD HH:mm:ss`).
+- **Standardized Raw Timestamps**: If the UI explicitly needs dynamic timezone translation, the backend **MUST** return strict ISO 8601 strings (e.g., `2026-06-30T09:00:00Z`). The frontend is required by `UI_STANDARDS.md` to format these exclusively via `date-fns` (never native `Intl` in render loops).
+
+
 ## Common Patterns Reference
 
 For implementation examples, see:

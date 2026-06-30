@@ -781,6 +781,48 @@ const variants = {
 
 ---
 
+## 13. PERFORMANCE & OPTIMIZATION
+
+### Anti-Patterns (Applies Globally)
+- **NO `new Intl.DateTimeFormat()` inside render loops** - High cost initialization causes rendering bottlenecks and massive GC pressure.
+- **NO `new Date().toLocaleDateString()` inside render loops** - Implicit high-cost localization causes the exact same issues.
+- **Long List/Table Degradation** - Render loops containing 100+ items must never compute costly date string instantiations per item.
+
+### Architecture Rules (Differentiated by Frontend)
+
+**1. Dynamic i18n Architectures (e.g., `archon-ui-main` on Port 3737)**
+- **Rule**: Use `date-fns` exclusively.
+- **Why**: Allows injecting dynamic locales via React Context without full page reloads.
+- **Example**:
+  ```tsx
+  import { format } from 'date-fns';
+  const dateStr = format(new Date(item.createdAt), 'MMM dd, yyyy');
+  ```
+
+**2. Lean / Static Architectures (e.g., `enduser-ui-fe` on Port 5173)**
+- **Rule**: Ban external time libraries to minimize bundle size (0 dependencies). You **MUST** use native `Intl.DateTimeFormat` but it **MUST be hoisted (declared outside the component)**.
+- **Why**: Native C++ V8 execution is lightning fast, and hoisting guarantees zero GC pressure.
+- **Example**:
+  ```tsx
+  // PERFORMANCE: Hoisted to prevent expensive re-instantiation
+  const tableDateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+  
+  export function TableView({ data }) {
+    return <td>{tableDateFormatter.format(new Date(data.date))}</td>;
+  }
+  ```
+
+### Automated Scans
+```bash
+# Catch high cost date initializations inside render loops (requires manual AST review to confirm if hoisted)
+grep -rn "new Intl.DateTimeFormat" [path] --include="*.tsx"
+grep -rn "\.toLocaleDateString(" [path] --include="*.tsx"
+```
+
+**Fix Pattern**: Either use `date-fns/format` (3737) or hoist the `Intl.DateTimeFormat` instance to the top level of the file (5173).
+
+---
+
 ## ADDING NEW RULES
 
 When code review finds an issue not caught by automated review:
