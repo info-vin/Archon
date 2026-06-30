@@ -53,7 +53,7 @@ func _on_state_transitioned(new_state_name: String) -> void:
         push_error("TutorialManager: State not found: " + new_state_name)
 
 func show_dialog(text: String, wait_for_click: bool = true) -> void:
-    overlay_instance.show_dialog(text)
+    overlay_instance.show_dialog(text, wait_for_click)
     if wait_for_click:
         await overlay_instance.dialog_advanced
 

@@ -11,6 +11,7 @@ var is_typing = false
 var full_text = ""
 var type_timer = 0.0
 const TYPE_SPEED = 0.03
+var requires_click = true
 
 func _ready():
     mask_rect.color = Color(0, 0, 0, 0.35)
@@ -24,7 +25,7 @@ func _input(event):
         is_advance_action = true
 
     if is_advance_action:
-        if dialog_box.visible:
+        if dialog_box.visible and requires_click:
             if is_typing:
                 # Skip typing
                 is_typing = false
@@ -46,20 +47,21 @@ func _process(delta):
                 dialog_label.text += full_text[current_len]
             else:
                 is_typing = false
-                continue_hint.show()
+                if requires_click:
+                    continue_hint.show()
 
-func show_dialog(text: String):
+func show_dialog(text: String, wait_for_click: bool = true):
     dialog_box.show()
     full_text = text
     dialog_label.text = ""
     is_typing = true
     type_timer = 0.0
+    requires_click = wait_for_click
     continue_hint.hide()
 
 func set_mask_transparent():
     mask_rect.color = Color(0, 0, 0, 0.0)
     mask_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    dialog_box.hide()
 
 func set_mask_dark():
     mask_rect.color = Color(0, 0, 0, 0.35)
