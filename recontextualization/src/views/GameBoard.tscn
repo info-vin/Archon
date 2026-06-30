@@ -131,11 +131,13 @@ layout_mode = 2
 text = "交付 LLM (Deliver)"
 
 [node name="PlayArea" type="Control" parent="MarginContainer/VBoxContainer"]
+mouse_filter = 0
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3_pa")
 
 [node name="HintLabel" type="Label" parent="MarginContainer/VBoxContainer/PlayArea"]
+mouse_filter = 2
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

@@ -42,6 +42,7 @@ mouse_filter = 2
 theme_override_constants/separation = 16
 
 [node name="CharacterIcon" type="ColorRect" parent="DialogBox/MarginContainer/HBoxContainer"]
+mouse_filter = 2
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 2
 color = Color(0.2, 0.6, 1, 1)

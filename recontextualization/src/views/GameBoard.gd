@@ -256,11 +256,16 @@ func _on_context_purified(remaining_cards: Array) -> void:
 			var c_data = child.card_data
 			if not remaining_cards.has(c_data):
 				event_queue.add_animation(func():
+					if not is_instance_valid(child):
+						return
 					var tween = create_tween().set_parallel(true)
 					tween.tween_property(child, "modulate:a", 0.0, 0.3)
 					tween.tween_property(child, "scale", Vector2(0.1, 0.1), 0.3)
-					tween.chain().tween_callback(func(): child.queue_free())
-					await tween.finished
+					tween.chain().tween_callback(func(): 
+						if is_instance_valid(child):
+							child.queue_free()
+					)
+					await get_tree().create_timer(0.3).timeout
 				)
 
 func _on_card_drawn(card: Resource) -> void:
@@ -296,4 +301,4 @@ func _anim_draw_card(card: Resource) -> void:
 	tween.tween_property(chip, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
 	tween.tween_property(chip, "scale", Vector2(1.0, 1.0), 0.3).set_trans(Tween.TRANS_SPRING)
 	
-	await tween.finished
+	await get_tree().create_timer(0.3).timeout
