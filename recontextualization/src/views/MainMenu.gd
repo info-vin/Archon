@@ -12,6 +12,7 @@ func _on_new_career_pressed() -> void:
         # Wipe run progress but maybe keep career level? For "New Career", maybe we reset career level too?
         # Actually, let's keep career level and just start the GameBoard
         sm.max_player_hp = 100.0
+        sm.has_completed_tutorial = false
         sm.save_progress()
     get_tree().change_scene_to_file("res://src/views/GameBoard.tscn")
 

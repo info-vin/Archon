@@ -19,8 +19,8 @@ run/main_scene="res://src/views/MainMenu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
-SaveManager="*res://src/autoloads/SaveManager.gd"
 
+SaveManager="*res://src/autoloads/SaveManager.gd"
 EventBus="*res://src/autoloads/EventBus.gd"
 GameState="*res://src/autoloads/GameState.gd"
 CardRegistry="*res://src/managers/CardRegistry.gd"
