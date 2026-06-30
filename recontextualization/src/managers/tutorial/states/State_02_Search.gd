@@ -11,5 +11,5 @@ func exit() -> void:
     Engine.get_singleton("EventBus").card_drawn.disconnect(_on_card_drawn)
 
 func _on_card_drawn(card_data: Resource) -> void:
-    # A card was successfully retrieved. Move to next state.
-    transitioned.emit("DragData")
+    if card_data.get("type") == 2 or card_data.get("type") == 3:
+        transitioned.emit("DragData")

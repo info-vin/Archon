@@ -9,7 +9,7 @@ func update(_delta: float) -> void:
     # In tutorial we could just wait for GameState to emit an event, or we can just hook into the deliver button.
     # Since GameState doesn't explicitly emit "delivered" unless crisis is defeated, we can just listen to crisis_hp_changed or similar.
     # Actually, GameState deducts crisis hp. Let's poll for crisis_hp change.
-    if GameState.crisis_hp < 100.0:
+    if GameState.crisis_hp < GameState.max_crisis_hp:
         transitioned.emit("End")
         set_process(false)
 
