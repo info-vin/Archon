@@ -174,12 +174,14 @@ func _on_rate_limit_updated(compression: float) -> void:
 		rate_limit_label.hide()
 
 func _on_deliver_pressed() -> void:
-	if Engine.has_singleton("GameState"):
-		Engine.get_singleton("GameState").deliver_context()
+	var game_state = get_node_or_null("/root/GameState")
+	if game_state != null:
+		game_state.deliver_context()
 
 func _on_query_submitted(new_text: String) -> void:
-	if Engine.has_singleton("GameState"):
-		Engine.get_singleton("GameState").trigger_search(1) # 1 = KEYWORD
+	var game_state = get_node_or_null("/root/GameState")
+	if game_state != null:
+		game_state.trigger_search(1) # 1 = KEYWORD
 
 func _on_search_triggered(match_type: int) -> void:
 	var query_text = query_input.text.strip_edges()
@@ -199,9 +201,10 @@ func _on_search_triggered(match_type: int) -> void:
 		card2.similarity = 0.2
 		card2.title = "雜訊干擾"
 		
-		if Engine.has_singleton("EventBus"):
-			Engine.get_singleton("EventBus").card_drawn.emit(card1)
-			Engine.get_singleton("EventBus").card_drawn.emit(card2)
+		var event_bus = get_node_or_null("/root/EventBus")
+		if event_bus != null:
+			event_bus.card_drawn.emit(card1)
+			event_bus.card_drawn.emit(card2)
 	else:
 		backend_client.search(query_text, 0.5, 5)
 
@@ -224,8 +227,9 @@ func _on_search_completed(response: Dictionary) -> void:
 		else:
 			card.match_type = CardData.MatchType.HYBRID
 			
-		if Engine.has_singleton("EventBus"):
-			Engine.get_singleton("EventBus").card_drawn.emit(card)
+		var event_bus = get_node_or_null("/root/EventBus")
+		if event_bus != null:
+			event_bus.card_drawn.emit(card)
 
 func _on_search_failed(error_code: int, message: String) -> void:
 	print("Search failed (Code: %d, Message: %s). Activating Standalone Fallback!" % [error_code, message])
@@ -239,8 +243,9 @@ func _on_search_failed(error_code: int, message: String) -> void:
 		card.title = "[MOCK] %s #%d" % [base_title.left(15), i + 1]
 		card.match_type = randi_range(1, 3) # Random MatchType
 		
-		if Engine.has_singleton("EventBus"):
-			Engine.get_singleton("EventBus").card_drawn.emit(card)
+		var event_bus = get_node_or_null("/root/EventBus")
+		if event_bus != null:
+			event_bus.card_drawn.emit(card)
 
 func _on_context_purified(remaining_cards: Array) -> void:
 	var play_area = $MarginContainer/VBoxContainer/PlayArea
@@ -264,8 +269,9 @@ func _on_card_drawn(card: Resource) -> void:
 		print("Hand full! Card draw rejected.")
 		return
 
-	if Engine.has_singleton("GameState"):
-		var ratio = Engine.get_singleton("GameState").data_poisoning_ratio
+	var game_state = get_node_or_null("/root/GameState")
+	if game_state != null:
+		var ratio = game_state.data_poisoning_ratio
 		if randf() < ratio:
 			var type_val = card.get("type") if card.get("type") != null else 1
 			if type_val == 2: # DATA_CHIP = 2
