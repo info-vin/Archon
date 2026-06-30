@@ -1,23 +1,17 @@
 extends SceneTree
 
 func _init():
-	print("--- Running Godot Test ---")
 	call_deferred("run_test")
 
 func run_test():
-	# Load main menu and click New Career
 	var root = get_root()
-	var main_scene = load("res://src/views/MainMenu.tscn").instantiate()
-	root.add_child(main_scene)
-	main_scene._on_new_career_pressed()
+	# Check if EventBus node is under root too
+	print("Has EventBus node under root: ", root.has_node("EventBus"))
+	print("Has GameState node under root: ", root.has_node("GameState"))
+	print("Has CardRegistry node under root: ", root.has_node("CardRegistry"))
 	
-	# Wait 2 seconds for GameBoard to load and Tutorial to show
-	await create_timer(2.0).timeout
+	# Can we get them using get_node?
+	var sm = root.get_node_or_null("SaveManager")
+	print("SaveManager instance: ", sm)
 	
-	print("--- Tree ---")
-	var gb = root.get_node("GameBoard")
-	if gb:
-		gb.print_tree_pretty()
-	else:
-		print("GameBoard not found!")
 	quit()

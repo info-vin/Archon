@@ -36,8 +36,8 @@ func _ready() -> void:
 	backend_client.request_failed.connect(_on_search_failed)
 
 	# Allow any Autoload (like EventBus) to register card draws.
-	if Engine.has_singleton("EventBus"):
-		var event_bus = Engine.get_singleton("EventBus")
+	var event_bus = get_node_or_null("/root/EventBus")
+	if event_bus != null:
 		if event_bus.has_signal("card_drawn"):
 			event_bus.card_drawn.connect(_on_card_drawn)
 			
@@ -46,8 +46,8 @@ func _ready() -> void:
 	deliver_button.pressed.connect(_on_deliver_pressed)
 	query_input.text_submitted.connect(_on_query_submitted)
 	
-	if Engine.has_singleton("GameState"):
-		var game_state = Engine.get_singleton("GameState")
+	var game_state = get_node_or_null("/root/GameState")
+	if game_state != null:
 		game_state.ap_changed.connect(_on_ap_changed)
 		game_state.context_updated.connect(_on_context_updated)
 		game_state.hp_changed.connect(_on_hp_changed)
@@ -59,8 +59,8 @@ func _ready() -> void:
 		game_state.search_triggered.connect(_on_search_triggered)
 		game_state.context_purified.connect(_on_context_purified)
 		
-		if Engine.has_singleton("SaveManager"):
-			var sm = Engine.get_singleton("SaveManager")
+		var sm = get_node_or_null("/root/SaveManager")
+		if sm != null:
 			career_label.text = "L" + str(sm.career_level)
 			player_hp_bar.max_value = sm.max_player_hp
 		
@@ -74,20 +74,20 @@ func _ready() -> void:
 		
 	game_over_panel.hide()
 	
-	if Engine.has_singleton("SaveManager"):
-		var sm = Engine.get_singleton("SaveManager")
+	var sm = get_node_or_null("/root/SaveManager")
+	if sm != null:
 		if not sm.has_completed_tutorial:
 			tutorial_panel.hide()
 			var t_mgr_scene = preload("res://src/managers/tutorial/TutorialManager.gd")
 			var t_mgr = t_mgr_scene.new()
 			add_child(t_mgr)
 			# Start game immediately for tutorial
-			if Engine.has_singleton("GameState"):
-				Engine.get_singleton("GameState").is_tutorial_active = true
-				Engine.get_singleton("GameState").start_game()
+			if game_state != null:
+				game_state.is_tutorial_active = true
+				game_state.start_game()
 		else:
-			if Engine.has_singleton("GameState"):
-				Engine.get_singleton("GameState").is_tutorial_active = false
+			if game_state != null:
+				game_state.is_tutorial_active = false
 			tutorial_panel.show()
 	else:
 		tutorial_panel.show()
