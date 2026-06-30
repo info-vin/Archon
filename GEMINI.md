@@ -447,3 +447,10 @@
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
 
+
+### 2026年6月30日（晚間更新）：Godot 4 語法陷阱與匿名函數空指標防護
+今日晚間修復了教學關卡中的嚴重卡牌拖曳異常，此異常起因於兩個深度的 Godot 4 底層行為：
+
+**核心決策與技術實踐**:
+1.  **Object.get() 參數限制**: Godot 4 中，對 `Resource` 或 `Object` 呼叫 `.get(property)` 嚴格禁止傳入預設值 (Default Value) 作為第二個參數，否則會觸發靜默的崩潰 (Silent Crash) 並直接中斷事件處理 (例如導致 `_drop_data` 半途失敗)。我們將其改寫為 `get(prop)` 配合 `if == null` 的顯式防護。
+2.  **Lambda Capture 的生命週期安全**: 當透過 `create_tween().tween_callback(func(): child.queue_free())` 等方式將節點傳入匿名函數 (Lambda) 並放入非同步事件佇列 (Event Queue) 時，若該節點在動畫執行前被釋放，Lambda 在執行時會因捕獲到 `null` 而引發 `Cannot call method 'queue_free' on a null value` 閃退。我們確立了在所有延遲執行的 Lambda 中，呼叫 `queue_free` 前**必須**加入 `if is_instance_valid(node):` 檢查的鐵律。
