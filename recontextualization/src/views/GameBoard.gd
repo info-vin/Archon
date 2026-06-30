@@ -10,6 +10,8 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 @onready var ap_label: Label = $MarginContainer/VBoxContainer/TopBar/APLabel
 @onready var context_label: Label = $MarginContainer/VBoxContainer/TopBar/ContextLabel
 @onready var crisis_hp_label: Label = $MarginContainer/VBoxContainer/TopBar/CrisisHPLabel
+@onready var career_label: Label = $MarginContainer/VBoxContainer/TopBar/CareerLabel
+@onready var player_hp_bar: ProgressBar = $MarginContainer/VBoxContainer/TopBar/PlayerHPBar
 @onready var sla_progress: ProgressBar = $MarginContainer/VBoxContainer/TopBar/SLAPorgressBar
 @onready var sla_text: Label = $MarginContainer/VBoxContainer/TopBar/SLAPorgressBar/SLAText
 
@@ -49,6 +51,7 @@ func _ready() -> void:
 		game_state.ap_changed.connect(_on_ap_changed)
 		game_state.context_updated.connect(_on_context_updated)
 		game_state.hp_changed.connect(_on_hp_changed)
+		game_state.player_hp_changed.connect(_on_player_hp_changed)
 		game_state.sla_changed.connect(_on_sla_changed)
 		game_state.game_over.connect(_on_game_over)
 		game_state.poisoning_updated.connect(_on_poisoning_updated)
@@ -56,16 +59,35 @@ func _ready() -> void:
 		game_state.search_triggered.connect(_on_search_triggered)
 		game_state.context_purified.connect(_on_context_purified)
 		
+		if Engine.has_singleton("SaveManager"):
+			var sm = Engine.get_singleton("SaveManager")
+			career_label.text = "L" + str(sm.career_level)
+			player_hp_bar.max_value = sm.max_player_hp
+		
 		# Initialize UI
 		_on_ap_changed(game_state.current_ap)
 		_on_hp_changed(game_state.crisis_hp)
+		_on_player_hp_changed(game_state.player_hp)
 		_on_sla_changed(game_state.sla_timer)
 		_on_poisoning_updated(game_state.data_poisoning_ratio)
 		_on_rate_limit_updated(game_state.rate_limit_compression)
 		
-	# Show tutorial initially, hide game over
-	tutorial_panel.show()
 	game_over_panel.hide()
+	
+	if Engine.has_singleton("SaveManager"):
+		var sm = Engine.get_singleton("SaveManager")
+		if not sm.has_completed_tutorial:
+			tutorial_panel.hide()
+			var t_mgr_scene = preload("res://src/managers/tutorial/TutorialManager.gd")
+			var t_mgr = t_mgr_scene.new()
+			add_child(t_mgr)
+			# Start game immediately for tutorial
+			if Engine.has_singleton("GameState"):
+				Engine.get_singleton("GameState").start_game()
+		else:
+			tutorial_panel.show()
+	else:
+		tutorial_panel.show()
 
 func _on_start_pressed() -> void:
 	tutorial_panel.hide()
@@ -73,23 +95,16 @@ func _on_start_pressed() -> void:
 		Engine.get_singleton("GameState").start_game()
 
 func _on_restart_pressed() -> void:
-	game_over_panel.hide()
-	# clear hand and play area
-	for child in hand_container.get_children():
-		child.queue_free()
-	var play_area = $MarginContainer/VBoxContainer/PlayArea
-	for child in play_area.get_children():
-		if child.name != "HintLabel":
-			child.queue_free()
-			
-	if Engine.has_singleton("GameState"):
-		Engine.get_singleton("GameState").start_game()
+	get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
 
 func _on_ap_changed(new_ap: int) -> void:
 	ap_label.text = "AP: %d" % new_ap
 
 func _on_context_updated(purity: float) -> void:
 	context_label.text = "Context Purity: %d%%" % int(purity * 100)
+
+func _on_player_hp_changed(new_hp: float) -> void:
+	player_hp_bar.value = new_hp
 
 func _on_hp_changed(new_hp: float) -> void:
 	var old_text = crisis_hp_label.text
@@ -118,7 +133,10 @@ func _on_sla_changed(new_sla: float) -> void:
 	var secs = int(new_sla) % 60
 	sla_text.text = "SLA: %02d:%02d" % [mins, secs]
 	
-	if new_sla < 60.0:
+	if new_sla < 30.0:
+		var pulse = (sin(Time.get_ticks_msec() / 150.0) + 1.0) / 2.0
+		sla_progress.modulate = Color.WHITE.lerp(Color.RED, pulse)
+	elif new_sla < 60.0:
 		sla_progress.modulate = Color.RED
 	else:
 		sla_progress.modulate = Color.WHITE
@@ -164,7 +182,26 @@ func _on_search_triggered(match_type: int) -> void:
 	var query_text = query_input.text.strip_edges()
 	if query_text.is_empty():
 		query_text = "default query"
-	backend_client.search(query_text, 0.5, 5)
+		
+	var t_mgr = get_tree().get_first_node_in_group("tutorial_manager")
+	if t_mgr != null:
+		# Seeded Random (1 perfect, 1 noise)
+		var card1 = CardData.new()
+		card1.type = CardData.CardType.DATA_CHIP
+		card1.similarity = 0.98
+		card1.title = "精準資料"
+		
+		var card2 = CardData.new()
+		card2.type = CardData.CardType.DATA_CHIP
+		card2.similarity = 0.2
+		card2.title = "雜訊干擾"
+		card2.set("type", 3) # NOISE_CHIP
+		
+		if Engine.has_singleton("EventBus"):
+			Engine.get_singleton("EventBus").card_drawn.emit(card1)
+			Engine.get_singleton("EventBus").card_drawn.emit(card2)
+	else:
+		backend_client.search(query_text, 0.5, 5)
 
 func _on_search_completed(response: Dictionary) -> void:
 	if not response.has("results"):

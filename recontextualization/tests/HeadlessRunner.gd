@@ -58,6 +58,24 @@ func _run_tests():
 		tests_passed += 1
 	else:
 		tests_failed += 1
+
+	var test_sm_save = preload("res://tests/test_save_manager.gd").new()
+	if test_sm_save.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
+	var test_meta = preload("res://tests/test_meta_progression.gd").new()
+	if test_meta.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+
+	var test_fsm = preload("res://tests/test_tutorial_fsm.gd").new()
+	if test_fsm.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
 		
 	print("--- Test Results ---")
 	print("Passed: ", tests_passed)

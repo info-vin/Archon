@@ -60,6 +60,22 @@ text = "[RATE LIMITED]"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="CareerLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+text = "L3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerHPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/TopBar"]
+custom_minimum_size = Vector2(150, 20)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+max_value = 100.0
+value = 100.0
+show_percentage = true
+
 [node name="APLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
 layout_mode = 2
 text = "AP: 10"

@@ -51,9 +51,15 @@ func _process(delta: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
+			if Engine.has_singleton("SaveManager"):
+				Engine.get_singleton("SaveManager").wipe_run_progress()
 			game_over.emit(false)
 
 func start_game() -> void:
+	if Engine.has_singleton("SaveManager"):
+		var sm = Engine.get_singleton("SaveManager")
+		max_player_hp = sm.max_player_hp
+
 	is_game_active = true
 	sla_timer = max_sla
 	player_hp = max_player_hp
@@ -67,16 +73,18 @@ func start_game() -> void:
 	poisoning_updated.emit(data_poisoning_ratio)
 	rate_limit_updated.emit(rate_limit_compression)
 	
-	# Draw starting action cards
+	# Draw starting action cards based on SaveManager
 	if Engine.has_singleton("CardRegistry") and Engine.has_singleton("EventBus"):
 		var card_reg = Engine.get_singleton("CardRegistry")
 		var event_bus = Engine.get_singleton("EventBus")
-		var kw = card_reg.get_card("keyword_search")
-		if kw: event_bus.card_drawn.emit(kw)
-		var ds = card_reg.get_card("dense_search")
-		if ds: event_bus.card_drawn.emit(ds)
-		var rr = card_reg.get_card("reranker")
-		if rr: event_bus.card_drawn.emit(rr)
+		var equipped = ["keyword_search", "dense_search", "reranker"]
+		if Engine.has_singleton("SaveManager"):
+			equipped = Engine.get_singleton("SaveManager").equipped_action_cards
+			
+		for card_id in equipped:
+			var card = card_reg.get_card(card_id)
+			if card:
+				event_bus.card_drawn.emit(card)
 
 func deduct_sla(amount: float) -> void:
 	if is_game_active:
@@ -84,6 +92,8 @@ func deduct_sla(amount: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
+			if Engine.has_singleton("SaveManager"):
+				Engine.get_singleton("SaveManager").wipe_run_progress()
 			game_over.emit(false)
 		sla_changed.emit(sla_timer)
 
@@ -155,6 +165,8 @@ func deliver_context() -> void:
 		if player_hp <= 0:
 			player_hp = 0
 			is_game_active = false
+			if Engine.has_singleton("SaveManager"):
+				Engine.get_singleton("SaveManager").wipe_run_progress()
 			player_died.emit()
 			game_over.emit(false)
 		player_hp_changed.emit(player_hp)

@@ -17,6 +17,15 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
 	if typeof(data) == TYPE_OBJECT and data is Control:
+		# Tutorial Error Blocking
+		var t_mgr = get_tree().get_first_node_in_group("tutorial_manager")
+		if t_mgr and t_mgr.is_blocking_noise_drag() and data.get("card_data"):
+			var similarity = data.card_data.get("similarity", 1.0)
+			if similarity < 0.5:
+				# Reject drag
+				t_mgr.show_dialog("等等！這份資料的相似度太低了。如果強行把無關的垃圾資料塞給 LLM，會引發嚴重的『模型幻覺 (Hallucination)』，系統會崩潰的！請換一張綠色的晶片。", false)
+				return
+		
 		# Reparent the node to PlayArea
 		var parent = data.get_parent()
 		if parent != null:
