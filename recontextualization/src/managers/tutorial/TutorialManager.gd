@@ -57,6 +57,21 @@ func show_dialog(text: String, wait_for_click: bool = true) -> void:
     if wait_for_click:
         await overlay_instance.dialog_advanced
 
+func focus_node(target: Control) -> void:
+    unfocus() # Remove any existing focus
+    if not target: return
+    
+    var focus_scene = preload("res://src/managers/tutorial/FocusFrame.tscn")
+    var focus_inst = focus_scene.instantiate()
+    target.add_child(focus_inst)
+    focus_inst.set_anchors_preset(Control.PRESET_FULL_RECT)
+    focus_inst.add_to_group("tutorial_focus_frames")
+
+func unfocus() -> void:
+    for f in get_tree().get_nodes_in_group("tutorial_focus_frames"):
+        if is_instance_valid(f):
+            f.queue_free()
+
 func set_mask_transparent() -> void:
     overlay_instance.set_mask_transparent()
 

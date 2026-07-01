@@ -5,11 +5,11 @@ extends Control
 
 var card_chip_scene = preload("res://src/views/CardChip.tscn")
 
-@onready var poison_label: Label = $MarginContainer/VBoxContainer/TopBar/PoisonLabel
+@onready var poison_bar: ProgressBar = $MarginContainer/VBoxContainer/TopBar/PoisonBar
 @onready var rate_limit_label: Label = $MarginContainer/VBoxContainer/TopBar/RateLimitLabel
 @onready var ap_label: Label = $MarginContainer/VBoxContainer/TopBar/APLabel
-@onready var context_label: Label = $MarginContainer/VBoxContainer/TopBar/ContextLabel
-@onready var crisis_hp_label: Label = $MarginContainer/VBoxContainer/TopBar/CrisisHPLabel
+@onready var purity_bar: ProgressBar = $MarginContainer/VBoxContainer/TopBar/PurityBar
+@onready var crisis_hp_bar: ProgressBar = $MarginContainer/VBoxContainer/TopBar/CrisisHPBar
 @onready var career_label: Label = $MarginContainer/VBoxContainer/TopBar/CareerLabel
 @onready var player_hp_bar: ProgressBar = $MarginContainer/VBoxContainer/TopBar/PlayerHPBar
 @onready var sla_progress: ProgressBar = $MarginContainer/VBoxContainer/TopBar/SLAPorgressBar
@@ -25,6 +25,8 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 @onready var game_over_title: Label = $GameOverPanel/VBox/Title
 @onready var restart_button: Button = $GameOverPanel/VBox/RestartButton
 
+@onready var pause_menu: ColorRect = $PauseMenu
+
 var backend_client_script = preload("res://src/network/BackendClient.gd")
 var backend_client: Node
 
@@ -34,6 +36,18 @@ func _ready() -> void:
 	add_child(backend_client)
 	backend_client.request_completed.connect(_on_search_completed)
 	backend_client.request_failed.connect(_on_search_failed)
+
+	var style_green = StyleBoxFlat.new()
+	style_green.bg_color = Color(0.2, 0.8, 0.2, 1.0)
+	purity_bar.add_theme_stylebox_override("fill", style_green)
+
+	var style_red = StyleBoxFlat.new()
+	style_red.bg_color = Color(1.0, 0.2, 0.2, 1.0)
+	poison_bar.add_theme_stylebox_override("fill", style_red)
+
+	var style_dark_red = StyleBoxFlat.new()
+	style_dark_red.bg_color = Color(0.6, 0.0, 0.0, 1.0)
+	crisis_hp_bar.add_theme_stylebox_override("fill", style_dark_red)
 
 	# Allow any Autoload (like EventBus) to register card draws.
 	var event_bus = get_node_or_null("/root/EventBus")
@@ -45,6 +59,26 @@ func _ready() -> void:
 	restart_button.pressed.connect(_on_restart_pressed)
 	deliver_button.pressed.connect(_on_deliver_pressed)
 	query_input.text_submitted.connect(_on_query_submitted)
+	
+	if pause_menu:
+		pause_menu.resume_game.connect(func(): pause_menu.hide())
+		pause_menu.save_progress.connect(func(): 
+			var sm = get_node_or_null("/root/SaveManager")
+			if sm != null: sm.save_progress()
+		)
+		pause_menu.load_progress.connect(func():
+			var sm = get_node_or_null("/root/SaveManager")
+			if sm != null: sm.load_progress()
+			pause_menu.hide()
+			get_tree().reload_current_scene()
+		)
+		pause_menu.quit_to_menu.connect(func():
+			pause_menu.hide()
+			get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
+		)
+		pause_menu.quit_game.connect(func():
+			get_tree().quit()
+		)
 	
 	var game_state = get_node_or_null("/root/GameState")
 	if game_state != null:
@@ -92,6 +126,12 @@ func _ready() -> void:
 	else:
 		tutorial_panel.show()
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if not tutorial_panel.visible and not game_over_panel.visible:
+			if pause_menu:
+				pause_menu.visible = not pause_menu.visible
+
 func _on_start_pressed() -> void:
 	tutorial_panel.hide()
 	if Engine.has_singleton("GameState"):
@@ -101,32 +141,30 @@ func _on_restart_pressed() -> void:
 	get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
 
 func _on_ap_changed(new_ap: int) -> void:
-	ap_label.text = "AP: %d" % new_ap
+	ap_label.text = tr("hud_ap") + ": %d" % new_ap
 
 func _on_context_updated(purity: float) -> void:
-	context_label.text = "Context Purity: %d%%" % int(purity * 100)
+	purity_bar.value = purity * 100.0
 
 func _on_player_hp_changed(new_hp: float) -> void:
 	player_hp_bar.value = new_hp
 
 func _on_hp_changed(new_hp: float) -> void:
-	var old_text = crisis_hp_label.text
-	crisis_hp_label.text = "Crisis HP: %d" % int(new_hp)
+	var old_val = crisis_hp_bar.value
+	crisis_hp_bar.value = new_hp
 	
-	# Only flash if it's a decrease (taking damage)
-	if old_text != "Crisis HP: %d" % int(new_hp) and not old_text.is_empty():
+	if old_val > new_hp:
 		event_queue.add_animation(func():
 			var tween = create_tween()
-			crisis_hp_label.modulate = Color.RED
+			crisis_hp_bar.modulate = Color.RED
 			
-			# Shake effect
-			var original_pos = crisis_hp_label.position
-			tween.tween_property(crisis_hp_label, "position", original_pos + Vector2(10, 0), 0.05)
-			tween.tween_property(crisis_hp_label, "position", original_pos - Vector2(10, 0), 0.05)
-			tween.tween_property(crisis_hp_label, "position", original_pos + Vector2(5, 0), 0.05)
-			tween.tween_property(crisis_hp_label, "position", original_pos, 0.05)
+			var original_pos = crisis_hp_bar.position
+			tween.tween_property(crisis_hp_bar, "position", original_pos + Vector2(10, 0), 0.05)
+			tween.tween_property(crisis_hp_bar, "position", original_pos - Vector2(10, 0), 0.05)
+			tween.tween_property(crisis_hp_bar, "position", original_pos + Vector2(5, 0), 0.05)
+			tween.tween_property(crisis_hp_bar, "position", original_pos, 0.05)
 			
-			tween.parallel().tween_property(crisis_hp_label, "modulate", Color.WHITE, 0.3)
+			tween.parallel().tween_property(crisis_hp_bar, "modulate", Color.WHITE, 0.3)
 			await tween.finished
 		)
 
@@ -154,11 +192,7 @@ func _on_game_over(is_victory: bool) -> void:
 		game_over_title.add_theme_color_override("font_color", Color.RED)
 
 func _on_poisoning_updated(ratio: float) -> void:
-	poison_label.text = "Poisoning: %d%%" % int(ratio * 100)
-	if ratio > 0.2:
-		poison_label.add_theme_color_override("font_color", Color.RED)
-	else:
-		poison_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.0, 1.0)) # Orange
+	poison_bar.value = ratio * 100.0
 
 func _on_rate_limit_updated(compression: float) -> void:
 	if compression < 0.8:
@@ -188,25 +222,8 @@ func _on_search_triggered(match_type: int) -> void:
 	if query_text.is_empty():
 		query_text = "default query"
 		
-	var t_mgr = get_tree().get_first_node_in_group("tutorial_manager")
-	if t_mgr != null:
-		# Seeded Random (1 perfect, 1 noise)
-		var card1 = CardData.new()
-		card1.type = CardData.CardType.DATA_CHIP
-		card1.similarity = 0.98
-		card1.title = "精準資料"
-		
-		var card2 = CardData.new()
-		card2.type = CardData.CardType.NOISE_CHIP
-		card2.similarity = 0.2
-		card2.title = "雜訊干擾"
-		
-		var event_bus = get_node_or_null("/root/EventBus")
-		if event_bus != null:
-			event_bus.card_drawn.emit(card1)
-			event_bus.card_drawn.emit(card2)
-	else:
-		backend_client.search(query_text, 0.5, 5)
+	# Always use backend client. BackendClient handles tutorial mock data internally.
+	backend_client.search(query_text, 0.5, 5)
 
 func _on_search_completed(response: Dictionary) -> void:
 	if not response.has("results"):

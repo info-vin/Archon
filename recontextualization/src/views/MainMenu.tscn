@@ -53,22 +53,57 @@ theme_override_constants/separation = 20
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "New Career"
+text = "menu_new_career"
 
 [node name="ContinueButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Continue"
+text = "menu_continue"
 
 [node name="CardManagementButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Card Management"
+text = "menu_card_management"
 
 [node name="QuitButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Quit"
+text = "menu_quit"
+
+[node name="SettingsBox" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LangBox" type="HBoxContainer" parent="VBoxContainer/SettingsBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/SettingsBox/LangBox"]
+layout_mode = 2
+text = "menu_language"
+
+[node name="LangButton" type="OptionButton" parent="VBoxContainer/SettingsBox/LangBox"]
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "English"
+popup/item_0/id = 0
+popup/item_1/text = "繁體中文"
+popup/item_1/id = 1
+
+[node name="VolBox" type="HBoxContainer" parent="VBoxContainer/SettingsBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="Label" type="Label" parent="VBoxContainer/SettingsBox/VolBox"]
+layout_mode = 2
+text = "menu_bgm_volume"
+
+[node name="VolSlider" type="HSlider" parent="VBoxContainer/SettingsBox/VolBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.05
+value = 1.0

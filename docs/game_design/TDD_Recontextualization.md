@@ -172,8 +172,25 @@ sequenceDiagram
 
 ---
 
-## 5. 美術設計 AI 提示詞 (SDXL / Flux Prompts Database)
-為方便快速複製與動態解析，本專案將所有美術資產提示詞整合為標準的 JSON 格式：
+## 5. 美術設計與卡片模組說明表 (Art Assets & Card Module)
+
+> **【測試與上線兩階段美術綁定策略】**
+> 在 Phase 5.8 開發與測試階段，我們秉持務實原則，使用 `Maaack` 素材包作為實體驗證的佔位符 (Placeholder)，拒絕幻覺阻礙開發進度。待功能與系統完全穩定後，將依據表中的 **SDXL/Flux 最終 Prompt** 進行商業級美術升級。
+
+### 5.1 卡片模組說明表 (Card Module Explanation Table)
+
+| 卡牌類型 | 卡牌名稱 | 遊戲功能描述 | 測試期 Maaack 佔位圖 (Placeholder) | 最終 SDXL / Flux 提示詞目標 (對應下方 JSON) |
+|---|---|---|---|---|
+| **晶片卡** | 🟢 黃金命中晶片 (Target Chunk) | 相似度 > 0.5 的乾淨資料，增加 Context 純淨度 | `res://assets/maaack/ui/icons/data_green.png` | `target_chunk` |
+| **晶片卡** | 🔴 紅幽靈雜訊晶片 (False Positive) | 相似度 < 0.5 的被污染雜訊，會導致幻覺扣血 | `res://assets/maaack/ui/icons/data_red_corrupted.png` | `noise_chip` |
+| **基礎行動卡** | 🔫 BM25 關鍵字實彈卡 (Keyword Search) | 消耗 1 AP。字面精準匹配，雜訊機率中等 | `res://assets/maaack/ui/icons/skill_sniper.png` | `keyword_search` |
+| **進階行動卡** | ☄️ Dense 向量雷射卡 (Dense Search) | 消耗 2 AP。高召回率語意穿透，雜訊機率極高 | `res://assets/maaack/ui/icons/skill_laser.png` | `dense_search` |
+| **進階行動卡** | 🛡️ Reranker 電漿護盾卡 (Rerank/Filter) | 消耗 3 AP。物理抹除手牌區所有 < 0.5 的雜訊卡 | `res://assets/maaack/ui/icons/skill_shield.png` | `reranker` |
+| **L5擴充卡** | 🗜️ Matryoshka 降維壓縮卡 (Dimension Shrink) | 消耗 4 AP。壓縮檢索維度，降低後續 AP 消耗 | `res://assets/maaack/ui/icons/skill_cube_fold.png` | `matryoshka` |
+| **L5擴充卡** | 🕸️ 知識圖譜連鎖卡 (GraphRAG Navigation) | 消耗 5 AP。將所有黃金晶片組成連鎖，傷害 1.5 倍 | `res://assets/maaack/ui/icons/skill_network.png` | `graph_rag` |
+
+### 5.2 美術設計 AI 提示詞資料庫 (SDXL / Flux Prompts Database)
+為方便未來快速複製與動態解析，本專案將所有美術資產提示詞整合為標準的 JSON 格式：
 
 ```json
 {

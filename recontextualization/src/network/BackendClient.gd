@@ -27,6 +27,25 @@ func _ready() -> void:
 	_http_request.request_completed.connect(_on_http_request_completed)
 
 func search(query: String, similarity_threshold: float = 0.5, match_count: int = 10) -> void:
+	var game_state = get_node_or_null("/root/GameState")
+	if game_state != null and game_state.is_tutorial_active:
+		var file = FileAccess.open("res://assets/data/tutorial_dataset.json", FileAccess.READ)
+		if file:
+			var text = file.get_as_text()
+			var json = JSON.new()
+			if json.parse(text) == OK:
+				var data = json.data
+				if typeof(data) == TYPE_ARRAY:
+					# Mock random selection from array
+					data.shuffle()
+					var results = data.slice(0, min(match_count, data.size()))
+					call_deferred("emit_signal", "request_completed", {"results": results})
+					return
+		
+		# Fallback if json fails
+		call_deferred("emit_signal", "request_failed", 404, "Tutorial dataset missing")
+		return
+
 	_current_payload = {
 		"query": query,
 		"similarity_threshold": similarity_threshold,

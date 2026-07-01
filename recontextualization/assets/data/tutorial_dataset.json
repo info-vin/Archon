@@ -1,0 +1,27 @@
+[
+    {
+        "content": "Godot 4 introduces a new global class system for GDScript. Use class_name to register a class in the editor.",
+        "similarity": 0.95,
+        "match_type": "keyword"
+    },
+    {
+        "content": "Signals in Godot 4 use the new Callable syntax. Example: button.pressed.connect(_on_pressed)",
+        "similarity": 0.88,
+        "match_type": "vector"
+    },
+    {
+        "content": "Tweens in Godot 4 are now node-independent. Use create_tween() to animate properties.",
+        "similarity": 0.92,
+        "match_type": "hybrid"
+    },
+    {
+        "content": "Warning: The `load()` function is synchronous. Use ResourceLoader.load_threaded_request for async loading.",
+        "similarity": 0.85,
+        "match_type": "keyword"
+    },
+    {
+        "content": "[FORUM_POST] Help! My game crashes when I use OS.execute(). Any ideas? I'm using Windows 95.",
+        "similarity": 0.2,
+        "match_type": "hybrid"
+    }
+]

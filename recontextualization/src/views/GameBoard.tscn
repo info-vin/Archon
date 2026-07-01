@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://cxgb456xyz"]
+[gd_scene load_steps=5 format=3 uid="uid://cxgb456xyz"]
 
 [ext_resource type="Script" path="res://src/views/GameBoard.gd" id="1_gb"]
 [ext_resource type="Script" path="res://src/views/EventQueue.gd" id="2_eq"]
+[ext_resource type="PackedScene" path="res://src/views/PauseMenu.tscn" id="3_pause"]
 [ext_resource type="Script" path="res://src/views/PlayArea.gd" id="3_pa"]
 
 [node name="GameBoard" type="Control"]
@@ -45,12 +46,13 @@ layout_mode = 2
 theme_override_constants/separation = 40
 alignment = 1
 
-[node name="PoisonLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="PoisonBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/TopBar"]
+custom_minimum_size = Vector2(120, 20)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.5, 0, 1)
-text = "Poisoning: 0%"
-horizontal_alignment = 1
-vertical_alignment = 1
+size_flags_vertical = 4
+tooltip_text = "tooltip_poisoning"
+max_value = 50.0
+value = 0.0
 
 [node name="RateLimitLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
 visible = false
@@ -82,17 +84,20 @@ text = "AP: 10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ContextLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="PurityBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/TopBar"]
+custom_minimum_size = Vector2(150, 20)
 layout_mode = 2
-text = "Context Purity: 0%"
-horizontal_alignment = 1
-vertical_alignment = 1
+size_flags_vertical = 4
+tooltip_text = "tooltip_purity"
+value = 0.0
 
-[node name="CrisisHPLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+[node name="CrisisHPBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/TopBar"]
+custom_minimum_size = Vector2(150, 20)
 layout_mode = 2
-text = "Crisis HP: 10000"
-horizontal_alignment = 1
-vertical_alignment = 1
+size_flags_vertical = 4
+tooltip_text = "tooltip_crisis_hp"
+max_value = 10000.0
+value = 10000.0
 
 [node name="SLAPorgressBar" type="ProgressBar" parent="MarginContainer/VBoxContainer/TopBar"]
 custom_minimum_size = Vector2(200, 20)
@@ -243,3 +248,6 @@ custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "重新開始"
+
+[node name="PauseMenu" parent="." instance=ExtResource("3_pause")]
+visible = false

@@ -1,0 +1,19 @@
+keys,en,zh_TW
+menu_new_career,New Career,新遊戲
+menu_continue,Continue,繼續遊戲
+menu_card_management,Card Management,卡牌管理
+menu_quit,Quit to Menu,回主選單
+menu_language,Language,語言
+menu_bgm_volume,BGM Volume,音樂音量
+menu_resume,Resume,繼續遊戲
+menu_save,Save Progress,儲存進度
+menu_load,Load Progress,讀取進度
+menu_quit_game,Quit Game,離開遊戲
+hud_crisis_hp,Crisis HP,系統危機
+hud_purity,Purity,純淨度
+hud_poisoning,Poisoning,投毒率
+hud_ap,AP,行動力
+tooltip_crisis_hp,System Crisis Level. Reduce to 0 to win.,系統危機值。這代表系統遭受的故障嚴重度，將其降至 0 即可過關。
+tooltip_purity,Context Purity. Higher purity means safer LLM response.,資料純淨度。數值越高，代表交付給 LLM 的資料越乾淨，能造成更多傷害。
+tooltip_poisoning,Poisoning Rate. Chance of drawing corrupted data.,投毒率。SLA 時間越少，投毒率越高，抽出紅色雜訊晶片的機率就越大。
+tooltip_ap,Action Points. Required to play cards.,行動力 (AP)。每次出牌都會消耗行動力。

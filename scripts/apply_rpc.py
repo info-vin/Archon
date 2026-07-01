@@ -10,7 +10,7 @@ if not db_url:
     exit(1)
 
 try:
-    with open("migration/0.2.2/26_rag_hybrid_match_chunks.sql", "r") as f:
+    with open("migration/0.2.2/27_enable_missing_rls.sql", "r") as f:
         sql = f.read()
 
     print("Executing SQL migration...")
