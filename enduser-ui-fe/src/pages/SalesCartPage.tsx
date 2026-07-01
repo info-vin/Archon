@@ -30,13 +30,18 @@ const SalesCartPage: React.FC = () => {
     const handleRemove = (id: string) => send({ type: 'REMOVE_LEAD', id });
     const handleGeneratePitch = (lead: any) => send({ type: 'GENERATE_PITCH', lead });
 
+    const [promotingLeadId, setPromotingLeadId] = React.useState<string | null>(null);
+
     const handlePromote = async (lead: any) => {
         if (confirm(`Promote ${lead.company_name} to Vendor?`)) {
+            setPromotingLeadId(lead.id);
             try {
                 await api.promoteLead(lead.id, { vendor_name: lead.company_name });
                 fetchCart(); // simple refresh after direct api call for promote
             } catch (err) {
                 alert("Failed to promote");
+            } finally {
+                setPromotingLeadId(null);
             }
         }
     };
@@ -123,14 +128,15 @@ const SalesCartPage: React.FC = () => {
                                             className="py-2 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-secondary flex items-center justify-center gap-2 disabled:opacity-50"
                                             disabled={processing}
                                         >
-                                            <TrashIcon className="w-4 h-4" />
+                                            {processing && state.context.processingLeadAction === 'remove' && state.context.processingLeadId === lead.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <TrashIcon className="w-4 h-4" />}
                                             Remove
                                         </button>
                                         <button 
                                             onClick={() => handlePromote(lead)}
-                                            className="py-2 rounded-lg text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50"
-                                            disabled={processing}
+                                            className="py-2 rounded-lg text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 flex items-center justify-center gap-2"
+                                            disabled={processing || promotingLeadId === lead.id}
                                         >
+                                            {promotingLeadId === lead.id && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
                                             Promote
                                         </button>
                                     </div>
