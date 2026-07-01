@@ -110,103 +110,51 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026年6月26日（更新）：CI/CD 依賴解析修復與架構穩定
-在完成 CI/CD 基礎設施健壯化後，針對 `Web UI Health Check` 進行了關鍵除錯。
-
-**核心偵錯與實踐**:
-1.  **解決 `ModuleNotFoundError`**: 初次部署發現 Python 環境缺乏 `supabase` 套件。經查證，原先 Workflow 僅安裝了 `server` 群組依賴，且執行環境未正確映射 Python 工作目錄。
-2.  **架構對齊與依賴升級**: 
-    *   將 CI 依賴安裝強制升級至 `--group all`，確保包含所有執行腳本所需的 `supabase` 與其他套件。
-    *   修復了 `PYTHONPATH` 的匯入路徑問題，確保 `scripts/` 下的腳本能正確解析 `python/src` 模組。
-3.  **CI 公證通過**: 經修正後，不僅成功通過 Web Health Check 的部署觸發，隨後的 `make test-be` (607 個單元測試) 亦全數通過，證實 CI 環境已穩定。
-
-### 2026年6月30日：時間格式化效能優化與雙前端架構物理隔離
-今日核心任務是根除 `Intl.DateTimeFormat` 在前端渲染迴圈中造成的效能瓶頸（GC 壓力與實例化延遲），並為不同架構的雙前端建立精準的物理防護網。
-
-**核心決策與技術實踐**:
-1.  **物理防禦取代人工記憶**: 拒絕單純依賴開發者或 AI 的記憶，將「禁止在 render function 內直接使用 `new Intl.DateTimeFormat` 或隱含的 `toLocaleDateString`」寫入 `eslint.config.js` (`no-restricted-syntax`) 作為編譯期防線。
-2.  **辨識並尊重前端架構差異**: 發現 `archon-ui-main` (3737) 與 `enduser-ui-fe` (5173) 的架構哲學完全不同。3737 需要動態多國語系 (i18n)，因此統一使用 `date-fns`；而 5173 為了極致輕量 (0 KB 額外相依)，採用了「模組層級的單例模式 (Hoisted Singleton)」。我們沒有盲目同步，而是修改了 `UI_STANDARDS.md` 將這兩種合規架構明確物理隔離並明文規定。
-3.  **API 預格式化契約**: 在 `API_NAMING_CONVENTIONS.md` 中訂立契約，將無動態時區需求的負擔轉移給後端（透過 Pydantic `@computed_field` 預先格式化為字串），徹底消滅前端運算成本。
-4.  **發布程序對帳**: 釐清了 Hugging Face 的 orphan branch 部署機制。為符合 `dev` 環境的程序正義，切換至 `dev/twins` 分支執行 `make deploy-hf`，並確認 `APScheduler` 單次任務 (`_catchup`) 完成後自動 Remove 的底層機制屬正常運作。
-
-### 2026年6月29日：Hugging Face 排程優化與全域 Supabase 斷線自癒 (Monkey Patch)
-今日協助釐清 Hugging Face Space (myrmidon) 呈現暫停狀態的根本原因，優化資源排程，並從底層根除了糾纏系統已久的 HTTP/2 斷線幽靈。
-
-**核心決策與實踐**:
-1.  **破除異常迷思 (Demystify Paused State)**: 透過調閱原始碼排程 (`hf-pause.yml`) 與即時呼叫 HF Space API，證明環境的「暫停」並非崩潰，而是 GitHub Actions 執行的例行性休眠保護，並提供即時數據確認其已恢復 `RUNNING`。
-2.  **排程精準調配 (Schedule Adjustment)**: 將每日自動暫停時間提早至台灣時間 10:38 (UTC 02:38)，並將重啟喚醒時間提早至 06:32 (UTC 22:32)，準確轉換 UTC 寫入 Cron 配置。
-3.  **全域斷線自癒 (Global Connection Resilience)**: 透過深度 `git log` 考古，發現 `client_manager.py` 在 2025 年底為了迴避 E2E 測試報錯而鎖死在同步模式，導致全系統殘留 430 多個缺乏重試機制的 `.execute()`。我們拒絕高風險的逐行修改，改以 Monkey Patch 底層攔截 `SyncQueryRequestBuilder.execute`，精準捕捉 `ConnectionTerminated` 並執行指數退避重試。此舉一次性為全系統賦予抗斷線免疫力，且完美通過 607 項物理公證。
----
-
----
-
-### 2026年6月25日：自動化並發防護驗證與死碼清除
-今日核心任務是清除前端死碼，並針對 Hugging Face Serverless 環境下的高並發自動化任務進行了深度的日誌與機制驗證，釐清了系統級防護網的正確運作方式。
-
-**核心決策與技術實踐**:
-1.  **死碼物理清除 (Dead Code Elimination)**: 經過全域引用分析，確認 `DiffViewer.tsx` 為完全隔離的幽靈元件。果斷將其移除以降低維護成本與潛在的依賴負擔。
-2.  **極端環境自癒驗證 (System Resilience Validation)**: 深入分析了 HF 容器因休眠產生的 `time_t` 溢位，以及空閒被中斷的 Supabase 連線 (`ConnectionTerminated`)。確認我們之前部署的 `BaseRepository.execute_query` 底層重試防護網成功發揮作用，讓 System Probe 能夠在斷線後自動重建連線並順利過關 (`System Probe Passed`)。
-3.  **自動化並發與限流對帳 (Automation Concurrency & Throttling)**: 糾正了將「瞬間密集 RAG 查詢」誤判為死循環的假設。經原始碼查證，確認這正是自動化任務（如 Map-Reduce 星環）追求的**無鎖並發極速**。前置的 RAG 查詢平行完成，而後續昂貴的 LLM 呼叫則被 `GlobalThrottler` 優雅地以 `asyncio.sleep` 持鎖序列化排隊 (Serialized Queuing)。這完美達成了「發揮最大並發效能同時防禦 429 災難」的自動化初衷。
-
-### 2026年6月24日：架構初衷糾偏、Duck-Typing 測試防護與 HF 環境字元陷阱 (Phase 5.7.4 延續)
-今日經歷了多個深度的除錯迴圈，核心教訓是「**切勿依賴錯誤的前提進行盲目隔離**」與「**永遠對外部環境變數保持防禦性懷疑**」。
-
-**核心決策與技術實踐**:
-1.  **打臉與糾偏 (Architectural Correction)**: 經過使用者的嚴厲指正與深入對比 `Phase_5.7.4_ONNX_Reranker.md`，我意識到替換 PyTorch 為 ONNX 的**真正目的**正是因為它極度輕量 (~150MB)，足以且**必須**放回 `server` 容器中。
-2.  **依賴物理歸位與連線自癒 (Dependency Restoration & Network Resilience)**: 將 `onnxruntime` 正式搬回 `server` 核心群組。同時為 `ReportService` 引入 `BaseRepository.execute_query` 防護網，徹底解決了高併發與休眠喚醒下 Supabase `ConnectionTerminated` 的連線斷崖問題。
-3.  **動態型別與測試公證 (Duck-Typing & Test Hardening)**: 放棄了僵化的 `isinstance(..., list)` 檢查，改採 Pythonic 的 EAFP (Easier to Ask for Forgiveness than Permission) 模式 (`try-except`)。這不僅解決了 Mypy 的嚴格索引檢查報錯，也完美兼容了測試環境中 `MagicMock` 無法通過型別判斷的陷阱。
-4.  **HF 字元陷阱與標頭防護 (Unicode Encoding Trap)**: 解決了 HF Spaces 啟動時 `huggingface_hub` 因 `http.client` 標頭編碼引發的 `UnicodeEncodeError (\u3112)` 崩潰。經追查，兇手竟是使用者在貼上 `HF_TOKEN` 或設定 HF 參數時，不小心混入了注音「ㄒ」。我們為此加入了環境變數遮蔽機制，強行免疫了這類輸入法意外。
-### 2026年6月23日：排程器韌性升級與 L2 前端模組化重構
-今日核心任務是解決 HF 空閒代理導致的 HTTP/2 `ConnectionTerminated` 錯誤，並徹底落實巨型檔案的減重。
-
-**核心決策與技術實踐**:
-1.  **結構性根除網路中斷 (Network Resilience)**: 鑑於 `patrol.py` 與 `task_dispatcher.py` 在長時間休眠後容易因為代理層中斷而報錯，我們全面引入了 `BaseRepository.execute_query` 作為防護網，並完全消滅了上述檔案中所有裸露的 `.execute()` 呼叫，為背景任務加入指數退避與重試機制。
-2.  **階段稽核與雲端對帳 (Phase Audit & Cloud Validation)**: 嚴格執行了 `/phase-audit`。除了本機狀態檢查外，更透過 Hugging Face API 查詢了雲端部署狀態 (`chiawei6/myrmidon`)，確認環境為 `RUNNING`，且 Clockwork 探針日誌顯示重構後的背景排程已成功在雲端無痛運作。
-3.  **前端巨型檔案減重 (Frontend God Object Splitting)**: 掃描發現 `APIKeysSection.tsx` 達到 404 行，違反了 400 行門禁。我們將內部渲染邏輯抽離成 `APIKeyRow.tsx`，並將 `CustomCredential` 介面提報至共用 `types.ts`，成功將該檔案瘦身至 300 行，並通過 `make lint-fe` 的零警告公證。
-
-### 2026年6月22日：ONNX 零成本重排與實體驗證紀律 (Phase 5.7.4)
-今日核心任務是將 Archon 專案的語意重排 (Reranker) 引擎從笨重的 PyTorch 完全遷移至輕量化的 ONNX Runtime，解決 Docker 部署的空間危機與依賴死鎖。
-
-**核心決策與技術實踐**:
-1.  **徹底斷開 PyTorch 依賴**: 我們拒絕了繼續沿用會造成 `ENOSPC` 危機的 `sentence-transformers`，大膽將 `reranking_strategy.py` 全面改寫，直接透過 `onnxruntime` 與 `huggingface-hub` 載入 `Xenova/ms-marco-MiniLM-L-6-v2` 的 22MB 微縮權重。
-2.  **精確鎖定平台相容性**: 發現最新版 `onnxruntime==1.27.0` 在 macOS x86 平台上缺乏 wheel 支援，導致 `make lint` 失敗。我們沒有盲目繞過，而是透過物理測試，果斷將版本鎖定為 `<1.20.0`，兼顧了不同開發環境的穩定性。
-3.  **型別安全與優雅降級**: 修正了 ONNX 初始化後 `Mypy` 所報出的 `None` callable 問題，並實作了嚴格的 Fall-Fast 防禦機制。若引擎加載失敗，系統將原樣回傳結果，確保不引發服務中斷。
-4.  **堅持物理公證紀律**: 嚴格拒絕「快樂路徑」，所有修改完成後，強制通關 `make lint`, `make test-be` (607 項全數通過), 與 `make phase-audit` 的三重實體驗證網關，才允許建立 Git 提交。這確保了重大架構抽換下的絕對零回歸 (Zero Regression)。
+> *目前等待七月份的新日誌寫入...*
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
 
-### 2026年6月：Godot 雙生專案、L2 架構重構與雲端部署除錯
-六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，並建立起 100% 物理對齊的測試防護網。
+### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
+六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
 
 **核心主題歸類**:
-1.  **Godot TDD 與 MVC 架構確立 (Ref: 06-11, 06-18)**:
+1.  **Godot TDD 與 MVC 架構確立 (Ref: 06-11, 06-18, 06-30)**:
     *   **Lean 原則**: 捨棄臃腫的 GUT 框架，以原生 Headless 模式自製微型測試框架 (`HeadlessRunner.gd`)。
     *   **卡牌 MVC 轉向**: 從塔防轉向卡牌構築戰，徹底解耦 Model (`GameState`) 與 View (`MainUI`)，實現無 UI 邏輯單元測試。
     *   **雙劍合璧**: 確立 Godot 作為引擎、VS Code 作為 LSP 的雙開工作流，並解決了 Language Server Port 的配置陷阱。
+    *   **底層防呆**: 解決 `Object.get()` 預設參數造成的靜默崩潰，並補強了匿名函數與 `call_deferred` 結合時的空指標防護。
 
-2.  **L2 模組化與巨型檔案減重 (Ref: 06-08, 06-18, 06-21, 06-22)**:
+2.  **L2 模組化與巨型檔案減重 (Ref: 06-08, 06-18, 06-21, 06-22, 06-23, 06-25)**:
     *   **行數門禁**: 將超過 400 行的 `manager.py`, `CharacterCreator.gd`, `ModularAgent.gd`, `MainUI.gd` 強制拆分。
+    *   **死碼物理清除**: 徹底移除幽靈元件（如 `DiffViewer.tsx`）與分離 `APIKeysSection.tsx`，成功將巨型檔案瘦身並通過公證。
     *   **UI 與邏輯剝離**: 建立 `AIPromptManager.gd`、`AgentLayoutHelper.gd` 等專職工具類別。
     *   **解耦動態翻譯**: 建立 `GitTranslator.gd` 動態載入 `git_dict.json`，消除硬編碼的翻譯字串與魔法數字。
 
-3.  **無頭環境 (Headless) 與自動化公證突破 (Ref: 06-01, 06-18, 06-21, 06-22)**:
+3.  **無頭環境 (Headless) 與自動化公證突破 (Ref: 06-01, 06-18, 06-21, 06-22, 06-23)**:
     *   **開發流水線重塑**: 建立 `Golden Pipeline` 對抗盲目樂觀，嚴格執行探針 (Probe) 與自動化公證。
     *   **測試存檔淨化**: 透過腳本在測試前主動清除 `user://savegame.save`，消滅「幽靈測試失敗」等污染。
     *   **突破截圖限制**: 針對 `--headless` 無法擷取 Viewport 影像的問題，撰寫 Python 腳本自動啟動 GUI 完成實體公證。
+    *   **雲端對帳公證**: 將自動化公證推進至 Hugging Face 雲端探針，確保 Clockwork 任務在 Serverless 環境成功運作。
     *   **ClassDB Registry 自癒**: 使用 `preload` 取代直寫 `class_name`，解決 Godot Headless 模式下的快取解析錯誤。
 
-4.  **雲端部署除錯與 Race Condition 歸因 (Ref: 06-18, 06-19, 06-22)**:
-    *   **HF 部署防呆**: 撰寫 `deploy_to_hf.sh` 封鎖二進位檔上傳，繞過 Git LFS 阻礙。
-    *   **打破依賴死鎖**: 查明 Hugging Face Serverless 中模型下載造成的崩潰，透過代碼閹割硬切斷下載，修復了 MCP 啟動逾時。
-    *   **Git 考古與歸因**: 透過 `git log` 與 `branch` 查明 UTC 排程異常的真相，以及 API 錯誤突增的主因。
+4.  **雲端部署除錯、CI/CD 與網路連線自癒 (Ref: 06-18, 06-19, 06-22, 06-25, 06-26, 06-29)**:
+    *   **HF 部署防呆與字元陷阱**: 撰寫部署腳本繞過 Git LFS 阻礙。並解決了 HF Secrets 混入注音「ㄒ」導致的 UnicodeEncodeError，加入環境變數遮蔽機制。
+    *   **CI/CD 依賴對齊**: 強制 CI 安裝 `--group all` 依賴並修正 `PYTHONPATH`，修復了 Web Health Check 的部署觸發問題。
+    *   **排程與並發極速**: 精準調配 HF 每日休眠喚醒排程 (10:38 暫停 / 06:32 啟動)；糾正 RAG 高併發死循環迷思，引入 `asyncio.sleep` 序列化排隊。
+    *   **全域連線自癒 (Monkey Patch)**: 徹底根除高併發下的 HTTP/2 `ConnectionTerminated` 斷線危機，由底層 `execute_query` 實作指數退避重試，無需盲目修改上層業務。
 
 5.  **3-Tier 容災降階與品質升級 (Ref: 06-05, 06-07)**:
     *   **多層 Fallback 架構**: 實作 Gemini -> Hugging Face -> Ollama 級聯降階備援系統，並於雙端 UI 建立指示燈。
     *   **GFM / Mermaid 霓虹化**: 擴充 Markdown 渲染引擎，完美解析高難度表格與循序圖。
     *   **Phase 5.6 歷史歸檔**: 徹底清查任務，將無幽靈的史詩級文件封裝並提煉至 Docusaurus 知識庫。
+
+6.  **語意重排 (Reranker) 引擎輕量化與效能收斂 (Ref: 06-22, 06-24, 06-30)**:
+    *   **ONNX 零成本重排**: 放棄笨重的 PyTorch (`sentence-transformers`)，改採 `onnxruntime` 與 22MB 微縮權重，解決 Docker 空間危機與依賴死鎖。
+    *   **型別安全與動態降級**: 棄用僵化的 `isinstance` 檢查，改採 `try-except` 模式 (EAFP) 兼容 Mock 測試，確保模型載入失敗時能 Fall-Fast。
+    *   **雙前端架構物理隔離**: 釐清 `archon-ui-main` (3737) 與 `enduser-ui-fe` (5173) 的設計哲學差異。將 `Intl.DateTimeFormat` 效能瓶頸轉移至後端，並透過 `eslint.config.js` 實施編譯期防禦。
 
 ### 2026年5月：多 Agent 星環拓樸、QA 全自動化與極端環境救援
 五月是專案從單一 Agent 升級至多 Agent 協作架構，並將品質門禁與測試自動化推向極致的月份。我們完成了 Phase 5.1.x 到 Phase 5.5.0 的史詩級任務群。
@@ -446,11 +394,3 @@
 
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
-
-
-### 2026年6月30日（晚間更新）：Godot 4 語法陷阱與匿名函數空指標防護
-今日晚間修復了教學關卡中的嚴重卡牌拖曳異常，此異常起因於兩個深度的 Godot 4 底層行為：
-
-**核心決策與技術實踐**:
-1.  **Object.get() 參數限制**: Godot 4 中，對 `Resource` 或 `Object` 呼叫 `.get(property)` 嚴格禁止傳入預設值 (Default Value) 作為第二個參數，否則會觸發靜默的崩潰 (Silent Crash) 並直接中斷事件處理 (例如導致 `_drop_data` 半途失敗)。我們將其改寫為 `get(prop)` 配合 `if == null` 的顯式防護。
-2.  **Lambda Capture 的生命週期安全**: 當透過 `create_tween().tween_callback(func(): child.queue_free())` 等方式將節點傳入匿名函數 (Lambda) 並放入非同步事件佇列 (Event Queue) 時，若該節點在動畫執行前被釋放，Lambda 在執行時會因捕獲到 `null` 而引發 `Cannot call method 'queue_free' on a null value` 閃退。我們確立了在所有延遲執行的 Lambda 中，呼叫 `queue_free` 前**必須**加入 `if is_instance_valid(node):` 檢查的鐵律。
