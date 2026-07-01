@@ -11,6 +11,8 @@ export const salesCartMachine = setup({
       generatingPitchId: string | null;
       pitchResult: { content: string; company: string } | null;
       activeTaskId: string | null;
+      processingLeadId: string | null;
+      processingLeadAction: 'remove' | 'promote' | null;
     },
     events: {} as
       | { type: 'FETCH' }
@@ -66,6 +68,8 @@ export const salesCartMachine = setup({
     generatingPitchId: null,
     pitchResult: null,
     activeTaskId: null,
+    processingLeadId: null,
+    processingLeadAction: null,
   },
   invoke: {
     src: 'listenToSSE'
@@ -138,6 +142,10 @@ export const salesCartMachine = setup({
         ],
         REMOVE_LEAD: {
           target: 'processingRemove',
+          actions: assign({
+            processingLeadId: ({ event }) => event.id,
+            processingLeadAction: 'remove'
+          })
         },
         GENERATE_PITCH: {
           target: 'generatingPitch',
@@ -229,7 +237,7 @@ export const salesCartMachine = setup({
       tags: ['processing'],
       invoke: {
         src: 'removeLead',
-        input: ({ event }: any) => ({ id: event.id }),
+        input: ({ context }: any) => ({ id: context.processingLeadId }),
         onDone: {
           target: 'idle',
           actions: assign({
@@ -238,13 +246,17 @@ export const salesCartMachine = setup({
               const newSet = new Set(context.selectedIds);
               newSet.delete(event.output);
               return newSet;
-            }
+            },
+            processingLeadId: null,
+            processingLeadAction: null
           })
         },
         onError: {
           target: 'idle',
           actions: assign({
-            error: ({ event }) => `Remove action failed: ${(event.error as any)?.message}`
+            error: ({ event }) => `Remove action failed: ${(event.error as any)?.message}`,
+            processingLeadId: null,
+            processingLeadAction: null
           })
         }
       }
