@@ -14,4 +14,4 @@ func _on_video_finished() -> void:
     _skip_intro()
 
 func _skip_intro() -> void:
-    get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
+    get_tree().change_scene_to_file("res://src/views/GameBoard.tscn")

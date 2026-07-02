@@ -28,10 +28,10 @@ func _on_new_career_pressed() -> void:
         sm.max_player_hp = 100.0
         sm.has_completed_tutorial = false
         sm.save_progress()
-    get_tree().change_scene_to_file("res://src/views/IntroVideo.tscn")
+    get_tree().change_scene_to_file("res://src/views/TransitionVideo.tscn")
 
 func _on_continue_pressed() -> void:
-    get_tree().change_scene_to_file("res://src/views/GameBoard.tscn")
+    get_tree().change_scene_to_file("res://src/views/TransitionVideo.tscn")
 
 func _on_card_management_pressed() -> void:
     get_tree().change_scene_to_file("res://src/views/CardManagementMenu.tscn")

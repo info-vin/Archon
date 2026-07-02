@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://c5xk3j7l9g1"]
 
-[ext_resource type="Script" path="res://src/views/IntroVideo.gd" id="1_intro"]
-[ext_resource type="VideoStream" path="res://assets/vfx/transition_os_boot.ogv" id="2_video"]
+[ext_resource type="Script" path="res://src/views/TransitionVideo.gd" id="1_intro"]
+[ext_resource type="VideoStream" path="res://assets/vfx/transition_battle_intro.ogv" id="2_video"]
 
-[node name="IntroVideo" type="Control"]
+[node name="TransitionVideo" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

@@ -24,6 +24,7 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 @onready var game_over_panel: ColorRect = $GameOverPanel
 @onready var game_over_title: Label = $GameOverPanel/VBox/Title
 @onready var restart_button: Button = $GameOverPanel/VBox/RestartButton
+@onready var end_game_video: VideoStreamPlayer = $EndGameVideoPlayer
 
 @onready var pause_menu: ColorRect = $PauseMenu
 
@@ -183,13 +184,28 @@ func _on_sla_changed(new_sla: float) -> void:
 		sla_progress.modulate = Color.WHITE
 
 func _on_game_over(is_victory: bool) -> void:
-	game_over_panel.show()
-	if is_victory:
-		game_over_title.text = "危機解除！"
-		game_over_title.add_theme_color_override("font_color", Color.GREEN)
-	else:
-		game_over_title.text = "系統崩潰！(SLA 超時或幻覺反噬)"
-		game_over_title.add_theme_color_override("font_color", Color.RED)
+    if is_victory:
+        game_over_title.text = "危機解除！"
+        game_over_title.add_theme_color_override("font_color", Color.GREEN)
+        end_game_video.stream = load("res://assets/vfx/transition_victory.ogv")
+        end_game_video.show()
+        end_game_video.play()
+        await end_game_video.finished
+    else:
+        game_over_title.text = "系統崩潰！(SLA 超時或幻覺反噬)"
+        game_over_title.add_theme_color_override("font_color", Color.RED)
+        end_game_video.stream = load("res://assets/vfx/transition_defeat_glitch.ogv")
+        end_game_video.show()
+        end_game_video.play()
+        await end_game_video.finished
+        
+        # Chain the shutdown video
+        end_game_video.stream = load("res://assets/vfx/transition_defeat_shutdown.ogv")
+        end_game_video.play()
+        await end_game_video.finished
+        
+    end_game_video.hide()
+    game_over_panel.show()
 
 func _on_poisoning_updated(ratio: float) -> void:
 	poison_bar.value = ratio * 100.0

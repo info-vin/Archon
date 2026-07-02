@@ -251,3 +251,13 @@ text = "重新開始"
 
 [node name="PauseMenu" parent="." instance=ExtResource("3_pause")]
 visible = false
+
+[node name="EndGameVideoPlayer" type="VideoStreamPlayer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand = true
