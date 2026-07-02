@@ -430,6 +430,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `25_create_user_game_saves.sql`
 > - `26_rag_hybrid_match_chunks.sql`
 > - `27_enable_missing_rls.sql`
+> - `28_graphrag_and_mrl.sql`
 > - `99_rescue_live_data.sql`
 > - `RESET_DB.sql`
 > - `seed_blog_posts.sql`
