@@ -50,6 +50,17 @@ description: Strict code generation, architecture design, headless compilation c
 ### 1.5 狀態解耦 (Resource + Event Bus MVC)
 嚴禁 UI 節點 (View) 直接呼叫底層模擬邏輯或持有 Manager 實體。狀態必須存在 `Resource` 或純邏輯節點中，並透過 `EventBus` 發送訊號，UI 只能監聽。
 
+### 1.6 非同步與記憶體安全 (Async & Memory Safety)
+- **非同步死鎖 (Tweens)**：使用 `await tween.finished` 時，若目標節點被釋放 (`queue_free()`) 或轉移父節點，會導致死鎖或崩潰。高風險非同步應改用 `await get_tree().create_timer(time).timeout`，或在 `_exit_tree` 時手動 `tween.kill()`。
+- **懸空指標 (Lambdas)**：Lambda 閉包捕獲外部 Node 參考時，若該 Node 被釋放觸發 Lambda 會導致靜默崩潰。**強制**在內部使用 `if is_instance_valid(node):` 進行檢查。
+
+### 1.7 UI 事件傳遞防禦 (mouse_filter)
+透明遮罩或裝飾性卡牌子節點的預設 `mouse_filter = STOP` 容易意外攔截滑鼠點擊，導致拖曳系統 (Drag & Drop) 癱瘓。嚴格區分 `STOP` (攔截)、`PASS` (攔截並穿透給父節點) 與 `IGNORE` (完全忽略)。裝飾性 UI 一律設為 `IGNORE`。
+
+### 1.8 全域單例與 API 存取 (Singleton & API Misuse)
+- **單例認知錯誤**：`Engine.has_singleton("GameState")` 是檢查 C++ 單例。自定義的 Autoload 必須使用 `get_tree().root.has_node("GameState")` 或 `get_node_or_null("/root/GameState")` 檢查。
+- **Object.get 誤用**：將 Godot 的 `Object.get(property)` 誤用為 Python 的 `dict.get(key, default)`（傳入兩個參數）會導致靜默崩潰。存取 Object 時只能傳遞單一屬性名稱。
+
 ---
 
 ## 🛡️ 二、【無頭模式防禦與相容性門禁】

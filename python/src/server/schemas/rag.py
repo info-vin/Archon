@@ -11,6 +11,21 @@ class RagSearchRequest(BaseModel):
     )
     filter_dict: dict[str, Any] | None = Field(default_factory=dict, description="Metadata filter (JSONB)")
     source_filter: str | None = Field(default=None, description="Optional source ID filter")
+    truncate_dim: int | None = Field(default=None, description="MRL truncate dimension to reduce AP cost")
+
+
+class GraphSearchRequest(BaseModel):
+    start_entity_name: str = Field(..., description="The starting entity name to begin traversal")
+    max_hops: int = Field(default=2, description="Maximum number of hops for reasoning")
+
+class GraphPathResponse(BaseModel):
+    path: str
+    hop_count: int
+    final_entity: str
+
+class GraphSearchResponse(BaseModel):
+    status: str = "success"
+    results: list[GraphPathResponse]
 
 
 class RagChunkResponse(BaseModel):

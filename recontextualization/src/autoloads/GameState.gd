@@ -12,6 +12,16 @@ signal rate_limit_updated(compression: float)
 signal search_triggered(match_type: int)
 signal context_purified(remaining_card_instances: Array)
 
+# --- Sector Difficulty Constants ---
+const SECTOR_1_BASE_HP = 10000.0
+const SECTOR_2_BASE_HP = 15000.0
+const SECTOR_3_BASE_HP = 20000.0
+
+const SECTOR_1_POISON = 0.0
+const SECTOR_2_POISON = 0.2
+const SECTOR_3_POISON = 0.4
+# ---------------------------------
+
 var current_ap: int = 10
 var crisis_hp: float = 10000.0
 var max_crisis_hp: float = 10000.0
@@ -26,6 +36,7 @@ var is_game_active: bool = false
 var is_tutorial_active: bool = false
 var rate_limit_compression: float = 1.0
 var data_poisoning_ratio: float = 0.0
+var base_poisoning_ratio: float = 0.0
 var delivery_count: int = 0
 
 var active_context = preload("res://src/models/DeckData.gd").new()
@@ -42,9 +53,8 @@ func _process(delta: float) -> void:
 		sla_changed.emit(sla_timer)
 		
 		# Data Poisoning increases as SLA decreases. 
-		# e.g., mapping SLA 300->0 to Poisoning 0.0->0.5 (50% max poison chance)
 		var elapsed = max_sla - sla_timer
-		var target_poison = min(0.5, elapsed / max_sla * 0.5)
+		var target_poison = min(0.8, base_poisoning_ratio + (elapsed / max_sla * 0.5))
 		if abs(target_poison - data_poisoning_ratio) > 0.01:
 			data_poisoning_ratio = target_poison
 			poisoning_updated.emit(data_poisoning_ratio)
@@ -52,16 +62,11 @@ func _process(delta: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
-			var sm = get_node_or_null("/root/SaveManager")
 			if sm != null:
-				sm.wipe_run_progress()
+				sm.penalize_battle_loss()
 			game_over.emit(false)
 
 func start_game() -> void:
-	var sm = get_node_or_null("/root/SaveManager")
-	if sm != null:
-		max_player_hp = sm.max_player_hp
-
 	is_game_active = true
 	sla_timer = max_sla
 	player_hp = max_player_hp
@@ -69,6 +74,28 @@ func start_game() -> void:
 	rate_limit_compression = 1.0
 	data_poisoning_ratio = 0.0
 	delivery_count = 0
+	
+	var sm = get_node_or_null("/root/SaveManager")
+	if sm != null:
+		max_player_hp = sm.max_player_hp
+		player_hp = max_player_hp
+		var sec = sm.get_current_sector()
+		if sec == 2:
+			base_poisoning_ratio = SECTOR_2_POISON
+			data_poisoning_ratio = SECTOR_2_POISON
+			max_crisis_hp = SECTOR_2_BASE_HP
+			crisis_hp = SECTOR_2_BASE_HP
+		elif sec == 3:
+			base_poisoning_ratio = SECTOR_3_POISON
+			data_poisoning_ratio = SECTOR_3_POISON
+			max_crisis_hp = SECTOR_3_BASE_HP
+			crisis_hp = SECTOR_3_BASE_HP
+		else:
+			base_poisoning_ratio = SECTOR_1_POISON
+			data_poisoning_ratio = SECTOR_1_POISON
+			max_crisis_hp = SECTOR_1_BASE_HP
+			crisis_hp = SECTOR_1_BASE_HP
+
 	hp_changed.emit(crisis_hp)
 	player_hp_changed.emit(player_hp)
 	sla_changed.emit(sla_timer)
@@ -96,7 +123,7 @@ func deduct_sla(amount: float) -> void:
 			is_game_active = false
 			var sm = get_node_or_null("/root/SaveManager")
 			if sm != null:
-				sm.wipe_run_progress()
+				sm.penalize_battle_loss()
 			game_over.emit(false)
 		sla_changed.emit(sla_timer)
 
@@ -172,7 +199,7 @@ func deliver_context() -> void:
 			is_game_active = false
 			var sm = get_node_or_null("/root/SaveManager")
 			if sm != null:
-				sm.wipe_run_progress()
+				sm.penalize_battle_loss()
 			player_died.emit()
 			game_over.emit(false)
 		player_hp_changed.emit(player_hp)
@@ -189,6 +216,11 @@ func deliver_context() -> void:
 		if crisis_hp <= 0:
 			crisis_hp = 0
 			is_game_active = false
+			var rank = calculate_battle_rank()
+			print("Battle Won with Rank: ", rank)
+			var sm = get_node_or_null("/root/SaveManager")
+			if sm != null:
+				sm.award_battle_loot(rank)
 			game_over.emit(true)
 		hp_changed.emit(crisis_hp)
 		
@@ -207,3 +239,10 @@ func trigger_search(match_type: int) -> void:
 	else:
 		print("Not enough AP to search!")
 
+func calculate_battle_rank() -> String:
+	if sla_timer > 150.0 and player_hp >= max_player_hp and delivery_count <= 2:
+		return "S"
+	elif sla_timer > 60.0 and player_hp >= max_player_hp * 0.5:
+		return "A"
+	else:
+		return "B"

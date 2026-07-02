@@ -64,3 +64,12 @@
     *   補回「卡片模組說明表 (Card Module Explanation Table)」。
     *   明確定義 5 種核心與擴充卡牌：Keyword, Dense, Reranker, Matryoshka, GraphRAG。
     *   標示這些卡牌在測試階段暫時對應的 `Maaack` 佔位圖示，並完整保留供未來使用的 `SDXL/Flux` 美術生成 Prompt。
+
+---
+
+## ✅ 實體驗證與斷層修復完成 (Verification & Gap Fixed)
+經 7 月 1 日實體開發與 Git Log (`24becded50445da6`) 審查，本階段所有曾被標示為「高風險斷層」的項目皆已物理補強完畢：
+1. **媒體轉碼與開場動畫**：已確認 `hero_animation.ogv` 轉碼成功 (6.3MB)，並實作 `IntroVideo.tscn`。
+2. **官方在地化系統**：已確認 `translations.csv` 存在，且已透過 Headless Editor 成功生成 `.translation` 資源檔並掛載至主選單設定。
+3. **離線教學資料庫**：已確認 `tutorial_dataset.json` 實體建立，且 `BackendClient.gd` 已實作雙軌攔截邏輯 (`GameState.is_tutorial_active` 判定)。
+至此 Phase 5.8.4 的所有項目皆已 100% 物理對齊，**無任何缺失或樂觀幻想路徑**。

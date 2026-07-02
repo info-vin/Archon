@@ -45,6 +45,7 @@ class RagService:
         similarity_threshold: float = 0.82,
         filter_dict: dict[str, Any] | None = None,
         source_filter: str | None = None,
+        truncate_dim: int | None = None,
     ) -> list[dict[str, Any]]:
         if filter_dict is None:
             filter_dict = {}
@@ -62,6 +63,7 @@ class RagService:
                 "similarity_threshold": similarity_threshold,
                 "filter": filter_dict,
                 "source_filter": source_filter,
+                "truncate_dim": truncate_dim,
             }
 
             res = supabase.rpc("hybrid_match_chunks", rpc_params).execute()
@@ -98,4 +100,27 @@ class RagService:
 
         except Exception as e:
             logger.error(f"Error in hybrid_search: {e}")
+            raise
+
+    @staticmethod
+    async def graph_search(
+        start_entity_name: str,
+        max_hops: int = 2,
+    ) -> list[dict[str, Any]]:
+        try:
+            supabase = get_supabase_client()
+            rpc_params = {
+                "start_entity_name": start_entity_name,
+                "max_hops": max_hops,
+            }
+
+            res = supabase.rpc("graph_reasoning_n_hop", rpc_params).execute()
+
+            if hasattr(res, "data") and res.data:
+                from typing import cast
+                return cast(list[dict[str, Any]], res.data)
+            return []
+
+        except Exception as e:
+            logger.error(f"Error in graph_search: {e}")
             raise

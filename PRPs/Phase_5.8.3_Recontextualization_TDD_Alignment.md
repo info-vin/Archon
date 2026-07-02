@@ -59,3 +59,10 @@
     *   **TDD 算式對齊**：`deliver_context()` 內的算式完全對齊 TDD：當 Purity < 1.0 時，傷害輸出為 0，且幻覺反噬完美套用 `noise_count * 20.0` 公式。
     *   **無頭測試公證**：`HeadlessRunner.gd` 下的所有 6 項相關斷言測試皆已通過。
 *   **當前狀態**：✅ 12 項查核與填補項目全數通過，Phase 5.8.3 任務圓滿達成，並已同步更新 Walkthrough。
+
+---
+
+## ⚠️ 殘留斷層與技術債 (Pending Gaps & Technical Debt)
+經 6 月底 Git Log 審查，本階段雖宣稱通過，但仍有以下尚未被驗證或具高風險的斷層：
+1. **iPad 觸控拖曳驗證斷層**：第 12 項稽核問題「iPad 觸控拖曳」並未在 `PlayArea.gd` 與 `CardChip.gd` 的拖曳邏輯修復中看到對應的 `InputEventScreenTouch` / `InputEventScreenDrag` 相容性代碼或 Headless 測試。此項目需列為高風險，有待後續行動端測試公證。
+2. **非同步資源釋放風險**：為解決 `await tween.finished` 死鎖，大量換成了 `SceneTreeTimer` 或其他繞道方式。但若節點在此期間被銷毀 (`tree_exited`)，依然存在記憶體洩漏與懸空指標崩潰的隱患。

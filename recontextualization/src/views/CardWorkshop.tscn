@@ -1,0 +1,151 @@
+[gd_scene load_steps=2 format=3 uid="uid://b1x2y3z4a5b6c"]
+
+[ext_resource type="Script" path="res://src/views/CardWorkshop.gd" id="1_wshop"]
+
+[node name="CardWorkshop" type="Control" node_paths=PackedStringArray("inventory_container", "slot_1", "slot_2", "slot_3", "catalyst_slot", "synthesize_btn", "status_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_wshop")
+inventory_container = NodePath("HBoxContainer/InventoryPanel/ScrollContainer/InventoryContainer")
+slot_1 = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot1")
+slot_2 = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot2")
+slot_3 = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot3")
+catalyst_slot = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/CatalystSlot")
+synthesize_btn = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SynthesizeBtn")
+status_label = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/StatusLabel")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.08, 1)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 50
+
+[node name="InventoryPanel" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.4
+
+[node name="Title" type="Label" parent="HBoxContainer/InventoryPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Inventory / 玩家牌庫"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/InventoryPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="InventoryContainer" type="VBoxContainer" parent="HBoxContainer/InventoryPanel/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FurnacePanel" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="HBoxContainer/FurnacePanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Synthesizer / 卡牌合成爐"
+horizontal_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/FurnacePanel"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="SlotsHBox" type="HBoxContainer" parent="HBoxContainer/FurnacePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Slot1" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
+custom_minimum_size = Vector2(150, 200)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Card 1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot2" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
+custom_minimum_size = Vector2(150, 200)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Card 2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot3" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
+custom_minimum_size = Vector2(150, 200)
+layout_mode = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Card 3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CatalystSlot" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.3, 0.2, 0.4, 1)
+
+[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/CatalystSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Catalyst"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Furnace: 0/3 Cards"
+horizontal_alignment = 1
+
+[node name="SynthesizeBtn" type="Button" parent="HBoxContainer/FurnacePanel/VBoxContainer"]
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 24
+text = "SYNTHESIZE"
