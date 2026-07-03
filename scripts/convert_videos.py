@@ -1,6 +1,6 @@
 import os
 import glob
-from moviepy import VideoFileClip
+from moviepy.editor import VideoFileClip
 
 def convert_to_ogv(input_path, output_path):
     # 定義目標長度 (秒)
@@ -19,20 +19,25 @@ def convert_to_ogv(input_path, output_path):
     try:
         clip = VideoFileClip(input_path)
         
+        import moviepy.video.fx.all as vfx
         # 檢查是否需要加速
         if target_duration and clip.duration > target_duration:
             speed_factor = clip.duration / target_duration
             print(f"  -> Original duration: {clip.duration:.2f}s. Scaling speed by {speed_factor:.2f}x to fit {target_duration}s.")
-            clip = clip.with_speed_scaled(speed_factor)
+            clip = clip.fx(vfx.speedx, speed_factor)
         else:
             print(f"  -> Duration {clip.duration:.2f}s is within target limits.")
             
+        # 強制輸出為 1080p (高度 1080)
+        clip = clip.fx(vfx.resize, height=1080)
+        
         # Godot requires theora codec and vorbis audio for .ogv playback
+        # 設定 bitrate 為 4500k 以確保檔案容量不會大於原檔的兩倍
         clip.write_videofile(
             output_path, 
             codec='libtheora', 
             audio_codec='libvorbis',
-            bitrate='2000k'
+            bitrate='4500k'
         )
         clip.close()
         print(f"✅ Success! Created {output_path}")

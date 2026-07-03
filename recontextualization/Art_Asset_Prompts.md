@@ -34,25 +34,38 @@
 ---
 
 ## 2. 實體卡牌圖示 (Card Icons)
+* **需求數量**：總共 5 款獨特的卡牌美術（2 款資料晶片 + 3 款行動卡）。
+* **格式建議**：若只產出圖示 (Icon) 供 UI 框架套用，請維持正方形比例並加上無文字的負向提示詞。若希望產出整張完整實體卡牌，請改用 `--ar 11:16`。
+
+### 🏆 【進階】通用實體卡牌框 (Shared Blank Card Frame Template)
+* **目標檔案**：`recontextualization/assets/images/card_frame_blank.png`
+* **說明**：如果您希望自己在修圖軟體中，將上述的「純圖示」合成到一張完整的卡牌上，您只需要用這個提示詞產出**幾張共用的空白卡牌底框**即可。後續只要更換顏色與微調特效，就能套用在所有卡牌上！
+* **Prompt & Settings**:
+  ```text
+  A blank collectible Trading Card frame template, futuristic sci-fi border layout, cyberpunk UI elements, empty glowing central container for artwork, large empty dark text box area at the bottom for card description, highly detailed 2d vector art style, clean dark background.
+  --no text, typography, letters, words, icons, characters
+  --ar 11:16
+  (⚠️ 產出後，請將中央挖空，並確保卡牌「下方」有足夠乾淨的空間(約1/3)或文字框，用來放置卡牌的說明文字)
+  ```
 
 ### 2.1 黃金資料晶片 (Data Core / Target Chunk)
 * **目標檔案**：`recontextualization/assets/images/chip_green_target.png`
 * **主題**：極具價值的無污染資料核心。
-* **Prompt & Settings**:
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
   ```text
-  A glowing emerald green cyberpunk microchip, intricate golden circuit patterns, floating in dark void, high contrast, macro photography, 3d render, glowing edges, highly detailed sci-fi tech artifact.
+  A glowing emerald green cyberpunk microchip, intricate golden circuit patterns, floating in dark void, high contrast, macro photography, 3d render, glowing edges, straight front view, centered, symmetrical, slight 3D depth, highly detailed sci-fi tech artifact.
+  --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景需為黑色或透明的 .png/.webp)
   ```
 
 ### 2.2 毒性雜訊晶片 (Noise / Corrupted Chunk)
 * **目標檔案**：`recontextualization/assets/images/chip_red_noise.png`
 * **主題**：遭到病毒感染、破圖與閃爍的危險資料。
-* **Prompt & Settings**:
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
   ```text
-  A corrupted cyberpunk microchip, glowing sinister crimson red, fractured and shattered edges, digital glitch effects, dark void background, high contrast, macro photography, dangerous aura, highly detailed sci-fi tech artifact.
+  A corrupted cyberpunk microchip, glowing sinister crimson red, fractured and shattered edges, digital glitch effects, dark void background, high contrast, macro photography, dangerous aura, straight front view, centered, symmetrical, slight 3D depth, highly detailed sci-fi tech artifact.
+  --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景需為黑色或透明的 .png/.webp)
   ```
 
 ---
@@ -62,31 +75,31 @@
 ### 3.1 Keyword Search (L1)
 * **目標檔案**：`recontextualization/assets/images/action_keyword.png`
 * **主題**：精準的狙擊鎖定。
-* **Prompt & Settings**:
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
   ```text
-  A minimalist futuristic sniper crosshair symbol, glowing neon cyan, geometric shapes, cyberpunk UI element, dark background, sharp lines, highly detailed 2d vector art style.
+  A minimalist futuristic sniper crosshair symbol, glowing neon cyan, geometric shapes, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景需為黑色或透明的 .png/.webp)
   ```
 
 ### 3.2 Dense Vector (L2)
 * **目標檔案**：`recontextualization/assets/images/action_dense.png`
 * **主題**：深層穿透的雷射光束。
-* **Prompt & Settings**:
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
   ```text
-  A futuristic glowing laser beam piercing through digital layers, neon purple and blue, geometric cyberpunk UI element, dark background, sharp lines, dynamic composition, highly detailed 2d vector art style.
+  A futuristic glowing laser beam piercing through digital layers, neon purple and blue, geometric cyberpunk UI element, dark background, sharp lines, dynamic composition, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景需為黑色或透明的 .png/.webp)
   ```
 
 ### 3.3 Reranker (L3)
 * **目標檔案**：`recontextualization/assets/images/action_reranker.png`
 * **主題**：完美的六角形量子護盾/重組器。
-* **Prompt & Settings**:
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
   ```text
-  A glowing neon gold hexagonal energy shield, complex geometric fractal patterns inside, cyberpunk UI element, dark background, sharp lines, highly detailed 2d vector art style.
+  A glowing neon gold hexagonal energy shield, complex geometric fractal patterns inside, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景需為黑色或透明的 .png/.webp)
   ```
 
 ---
@@ -190,3 +203,19 @@
   (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景需為黑色或透明的 .png/.webp)
   ```
 
+
+
+
+## 6. 使用者介面元素 (UI Elements)
+
+為了配合 Phase 5.8.7 的「角色管理 UI (Character Dashboard)」以及 RBAC 系統中「依權限變色的使用者頭像」功能，我們需要一個高質感的預設頭像。
+
+### 6.1 預設駭客頭像 (Default Hacker Avatar)
+* **目標檔案**：`recontextualization/assets/images/avatar_default.png`
+* **主題**：一個神秘的賽博龐克駭客輪廓或高科技面罩，採用灰階或單色系（Grayscale），以便在 Godot 中透過程式碼 (Modulate) 依權限動態上色。
+* **Prompt & Settings**:
+  ```text
+  A mysterious cyberpunk hacker silhouette wearing a high-tech glowing visor, hooded figure, glowing neon accents, dark background, pure grayscale color palette, monochromatic, game UI portrait, 2d vector art style, highly detailed.
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：必須是灰階/黑白圖像，解析度限制 512x512，背景建議為純黑或透明)
+  ```

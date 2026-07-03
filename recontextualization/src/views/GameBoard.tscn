@@ -1,6 +1,8 @@
 [gd_scene load_steps=5 format=3 uid="uid://cxgb456xyz"]
 
 [ext_resource type="Script" path="res://src/views/GameBoard.gd" id="1_gb"]
+[ext_resource type="Script" path="res://src/views/components/HandLayout.gd" id="hand_layout_script"]
+[ext_resource type="Texture2D" path="res://assets/images/bg_vector_grid.png" id="bg_tex"]
 [ext_resource type="Script" path="res://src/views/EventQueue.gd" id="2_eq"]
 [ext_resource type="PackedScene" path="res://src/views/PauseMenu.tscn" id="3_pause"]
 [ext_resource type="Script" path="res://src/views/PlayArea.gd" id="3_pa"]
@@ -14,14 +16,16 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_gb")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.05, 0.08, 1)
+texture = ExtResource("bg_tex")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="EventQueue" type="Node" parent="."]
 script = ExtResource("2_eq")
@@ -161,11 +165,16 @@ horizontal_alignment = 1
 vertical_alignment = 1
 modulate = Color(1, 1, 1, 0.3)
 
-[node name="HandContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 260)
+[node name="HandContainer" type="Container" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.3
+script = ExtResource("hand_layout_script")
+radius = 800.0
+angle_spread_degrees = 40.0
+vertical_offset = 600.0
+hover_scale = 1.2
+hover_y_offset = -40.0
 
 [node name="TutorialPanel" type="ColorRect" parent="."]
 layout_mode = 1

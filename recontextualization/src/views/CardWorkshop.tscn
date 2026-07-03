@@ -1,6 +1,7 @@
 [gd_scene load_steps=2 format=3 uid="uid://b1x2y3z4a5b6c"]
 
 [ext_resource type="Script" path="res://src/views/CardWorkshop.gd" id="1_wshop"]
+[ext_resource type="Texture2D" path="res://assets/images/bg_synthesizer.png" id="bg_tex2"]
 
 [node name="CardWorkshop" type="Control" node_paths=PackedStringArray("inventory_container", "slot_1", "slot_2", "slot_3", "catalyst_slot", "synthesize_btn", "status_label")]
 layout_mode = 3
@@ -18,14 +19,16 @@ catalyst_slot = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/CatalystSlot"
 synthesize_btn = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SynthesizeBtn")
 status_label = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/StatusLabel")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.05, 0.08, 1)
+texture = ExtResource("bg_tex2")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 1

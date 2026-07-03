@@ -36,3 +36,7 @@ window/stretch/aspect="expand"
 [dotnet]
 
 project/assembly_name="Archon Recontextualization"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/translations.en.translation", "res://locale/translations.zh_TW.translation")

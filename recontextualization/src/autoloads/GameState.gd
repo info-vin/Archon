@@ -62,6 +62,7 @@ func _process(delta: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
+			var sm = get_node_or_null("/root/SaveManager")
 			if sm != null:
 				sm.penalize_battle_loss()
 			game_over.emit(false)

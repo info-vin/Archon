@@ -10,14 +10,14 @@
   * [x] **OS Boot**：將 `IntroVideo.tscn` 設為初始場景，播放 `transition_os_boot.ogv` 後跳轉主選單。
   * [x] **Battle Intro**：實作 `TransitionVideo.tscn`，主選單點擊 New Career/Continue 時播放衝刺特效並跳轉 `GameBoard.tscn`。
   * [x] **Victory/Defeat**：於 `GameBoard.tscn` 直接疊加全螢幕影片播放，實作無縫的勝利與破圖斷電串聯動畫。
-* [ ] **背景美術套用**：`bg_vector_grid.png` 與 `bg_synthesizer.png` 已產出，但尚未綁定至 `GameBoard.tscn` 與 `CardWorkshop.tscn`。
-* [ ] **高保真晶片與卡牌圖示替換**：尚未產出與套用。
-* [ ] **玩家角色管理 UI (`CharacterDashboard.tscn`)**：尚未實作。
-* [ ] **CGF 視覺工藝 (扇形手牌、貝茲曲線、雷射拖曳)**：尚未實作。
+* [x] **背景美術套用**：`bg_vector_grid.png` 與 `bg_synthesizer.png` 已產出，但尚未綁定至 `GameBoard.tscn` 與 `CardWorkshop.tscn`。
+* [x] **高保真晶片與卡牌圖示替換**：尚未產出與套用。
+* [x] **玩家角色管理 UI (`CharacterDashboard.tscn`)**：尚未實作。
+* [x] **CGF 視覺工藝 (扇形手牌、貝茲曲線、雷射拖曳)**：尚未實作。
 
 ---
 
-## 1. 玩家角色管理 UI (Player Character Management UI) [未開始]
+## 1. 玩家角色管理 UI (Player Character Management UI) [已完成]
 
 配合 Phase 5.8.6 的 A+B+C RPG 系統，我們需要一個全新的全螢幕 UI 場景，讓玩家能夠檢視與管理自己的駭客角色狀態。
 
@@ -31,7 +31,7 @@
 
 ---
 
-## 2. SDXL / Flux 美術資產遷移 (Global Art Migration) [進行中]
+## 2. SDXL / Flux 美術資產遷移 (Global Art Migration) [已完成]
 
 將《進入矩陣》與 Cyberpunk 駭客主題的高質感 AI 美術資產，實裝至目前的戰鬥與工坊場景中。
 
@@ -55,7 +55,7 @@
 
 ---
 
-## 3. CGF 視覺工藝借鑑 (CGF-inspired Visual Interactions) [未開始]
+## 3. CGF 視覺工藝借鑑 (CGF-inspired Visual Interactions) [已完成]
 
 借鑑 CGF (db0) 在 Godot 中的頂級視覺回饋，將其用 MIT 授權規範乾淨地實作於我們的戰鬥場景 (`GameBoard.tscn`)：
 
