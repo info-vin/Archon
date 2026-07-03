@@ -7,6 +7,9 @@ import { BlogPost } from '../types.ts';
 import { RAGCitation } from '../features/marketing/components/RAGCitation';
 import { MermaidRenderer } from '../components/MermaidRenderer';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat(undefined);
+
 const BlogDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [post, setPost] = useState<BlogPost | null>(null);
@@ -68,7 +71,7 @@ const BlogDetailPage: React.FC = () => {
                 <div className="flex items-center text-muted-foreground mb-8 text-sm">
                     <span className="font-semibold text-foreground mr-2">{post.authorName}</span>
                     <span>&middot;</span>
-                    <span className="ml-2">{new Date(post.publishDate).toLocaleDateString()}</span>
+                    <span className="ml-2">{dateFormatter.format(new Date(post.publishDate))}</span>
                 </div>
 
                 <div className="markdown-content">
