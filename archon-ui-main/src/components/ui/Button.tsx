@@ -62,7 +62,7 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
     cyan: 'bg-cyan-500 shadow-[0_0_10px_2px_rgba(34,211,238,0.4)] dark:shadow-[0_0_20px_5px_rgba(34,211,238,0.7)]',
     orange: 'bg-orange-500 shadow-[0_0_10px_2px_rgba(249,115,22,0.4)] dark:shadow-[0_0_20px_5px_rgba(249,115,22,0.7)]'
   };
-  return <button disabled={disabled || isLoading} className={`
+  return <button disabled={disabled || isLoading} aria-disabled={disabled || isLoading} aria-busy={isLoading} className={`
         inline-flex items-center justify-center transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
         ${variantClasses[variant]}
