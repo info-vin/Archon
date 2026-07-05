@@ -10,8 +10,8 @@
   * [x] **OS Boot**：將 `IntroVideo.tscn` 設為初始場景，播放 `transition_os_boot.ogv` 後跳轉主選單。
   * [x] **Battle Intro**：實作 `TransitionVideo.tscn`，主選單點擊 New Career/Continue 時播放衝刺特效並跳轉 `GameBoard.tscn`。
   * [x] **Victory/Defeat**：於 `GameBoard.tscn` 直接疊加全螢幕影片播放，實作無縫的勝利與破圖斷電串聯動畫。
-* [x] **背景美術套用**：`bg_vector_grid.png` 與 `bg_synthesizer.png` 已產出，但尚未綁定至 `GameBoard.tscn` 與 `CardWorkshop.tscn`。
-* [x] **高保真晶片與卡牌圖示替換**：尚未產出與套用。
+* [x] **背景美術套用**：`bg_vector_grid.png` 與 `bg_synthesizer.png` 已產出並綁定至 `GameBoard.tscn` 與 `CardWorkshop.tscn`。
+* [ ] **高保真晶片與卡牌圖示替換**：尚未產出與套用。
 * [x] **玩家角色管理 UI (`CharacterDashboard.tscn`)**：尚未實作。
 * [x] **CGF 視覺工藝 (扇形手牌、貝茲曲線、雷射拖曳)**：尚未實作。
 
@@ -69,7 +69,7 @@
 
 ---
 
-## 4. 殘留斷層與防禦性自癒計畫 (Gaps & Self-Healing Action Plan) [未開始]
+## 4. 殘留斷層與防禦性自癒計畫 (Gaps & Self-Healing Action Plan) [已完成]
 
 經過 2026/07 的 Headless 測試與實體程式碼稽核，我們揪出了 CGF 美術遷移後引發的型別與單例註冊死鎖，現制定修復計畫如下：
 

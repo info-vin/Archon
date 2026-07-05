@@ -266,30 +266,49 @@ archon/
 ├── recontextualization/                # Godot 4.3 卡牌遊戲客戶端
 │   ├── project.godot
 │   ├── assets/                         # 視覺與音效資源目錄
-│   │   └── maaack/                     # 移植之開源 UI/音效資源
+│   │   ├── maaack/                     # 移植之開源 UI/音效資源
+│   │   ├── sfx/                        # 音效資產
+│   │   ├── ui_cyber/                   # 賽博龐克 UI 資產
+│   │   ├── vfx/                        # 視覺過場特效
+│   │   └── videos/                     # 影片資產
+│   ├── locale/                         # 多國語系翻譯檔
 │   ├── src/
 │   │   ├── autoloads/                  # 全域單例
 │   │   │   ├── EventBus.gd             # 事件分發總線
-│   │   │   └── GameState.gd            # 核心遊戲狀態機與危機結算
+│   │   │   ├── GameState.gd            # 核心遊戲狀態機與危機結算
+│   │   │   └── SaveManager.gd          # 遊戲進度保存管理
 │   │   ├── managers/                   # 管理工廠
-│   │   │   └── CardRegistry.gd         # 動態卡牌資源掃描器
+│   │   │   ├── tutorial/               # 新手教學狀態機與管理
+│   │   │   ├── CardRegistry.gd         # 動態卡牌資源掃描器
+│   │   │   └── PlayerProfile.gd        # 玩家個人資料與進度管理
 │   │   ├── models/                     # 純數據層
 │   │   │   ├── cards/
 │   │   │   │   ├── CardData.gd         # 卡牌 Resource 定義
 │   │   │   │   └── resources/          # 實體行動卡資源 (.tres)
 │   │   │   └── DeckData.gd             # 手牌 context 陣列與 RAG 數學公式
-│   │   ├── views/                      # 視覺 UI 特效層
-│   │   │   ├── GameBoard.tscn          # 主遊戲場景 UI
-│   │   │   ├── GameBoard.gd            # 綁定狀態機信號與播放視覺動畫
-│   │   │   ├── CardChip.tscn           # 卡牌 UI 實體
-│   │   │   └── PlayArea.gd             # 拖曳投放判定區
-│   │   └── network/                    # 網路通訊層
-│   │       └── BackendClient.gd        # FastAPI 異步 RAG 請求
+│   │   ├── network/                    # 網路通訊層
+│   │   │   └── BackendClient.gd        # FastAPI 異步 RAG 請求
+│   │   ├── shaders/                    # 著色器 (Shader) 目錄
+│   │   │   ├── DataFlowLine.gdshader
+│   │   │   └── TargetingArrow.gdshader
+│   │   └── views/                      # 視覺 UI 特效層
+│   │       ├── components/             # 共用 UI 元件 (HandLayout, TargetingArrow 等)
+│   │       ├── tutorial/               # 新手教學 UI 覆蓋層
+│   │       ├── CardManagementMenu.gd   # 卡牌管理介面
+│   │       ├── CardWorkshop.gd         # 卡牌升級/工作坊介面
+│   │       ├── CharacterDashboard.gd   # 角色面板介面
+│   │       ├── EventQueue.gd           # 動畫佇列處理
+│   │       ├── GameBoard.tscn          # 主遊戲場景 UI
+│   │       ├── GameBoard.gd            # 綁定狀態機信號與播放視覺動畫
+│   │       ├── CardChip.tscn           # 卡牌 UI 實體
+│   │       ├── MainMenu.gd             # 遊戲主選單
+│   │       └── PlayArea.gd             # 拖曳投放判定區
 │   └── tests/                          # 自動化無頭測試
 │       ├── HeadlessRunner.gd           # 測試執行入口
+│       ├── test_composite_threats.gd   # 測試高壓複合危機機制
 │       ├── test_deck_math.gd           # 測試 RAG 數學公式
 │       ├── test_state_machine.gd       # 測試出牌狀態扣除與傷害
-│       └── test_composite_threats.gd   # 測試高壓複合危機機制
+│       └── ...                         # 及其他 8 個擴充模組測試
 ```
 
 ---
