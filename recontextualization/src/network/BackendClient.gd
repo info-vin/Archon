@@ -27,7 +27,7 @@ func _ready() -> void:
 	_http_request.request_completed.connect(_on_http_request_completed)
 
 func search(query: String, similarity_threshold: float = 0.5, match_count: int = 10) -> void:
-	var game_state = (Engine.get_singleton("GameState") if Engine.has_singleton("GameState") else get_node_or_null("/root/GameState"))
+	var game_state: Node = (Engine.get_singleton("GameState") if Engine.has_singleton("GameState") else get_node_or_null("/root/GameState"))
 	if game_state != null and game_state.is_tutorial_active:
 		var file = FileAccess.open("res://assets/data/tutorial_dataset.json", FileAccess.READ)
 		if file:

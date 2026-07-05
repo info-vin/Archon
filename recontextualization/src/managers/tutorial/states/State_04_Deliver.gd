@@ -3,9 +3,9 @@ extends "res://src/managers/tutorial/TutorialState.gd"
 func enter() -> void:
     manager.set_mask_transparent()
     await manager.show_dialog("幹得好！乾淨的資料能保護系統不產生幻覺。\n現在點擊『交付 LLM (Deliver)』按鈕，結算傷害吧！", false)
-    var current_scene = manager.get_tree().current_scene
+    var current_scene: Node = manager.get_tree().current_scene
     if current_scene:
-        var deliver_btn = current_scene.find_child("DeliverButton", true, false)
+        var deliver_btn: Node = current_scene.find_child("DeliverButton", true, false)
         if deliver_btn:
             manager.focus_node(deliver_btn)
 

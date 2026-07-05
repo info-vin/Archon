@@ -18,7 +18,7 @@ func _ready() -> void:
 	setup_topology_web()
 
 func update_profile() -> void:
-	var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
+	var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
 	if sm == null: return
 	
 	var sector = sm.get_current_sector()

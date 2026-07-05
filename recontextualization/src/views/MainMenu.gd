@@ -12,7 +12,7 @@ func _ready() -> void:
     lang_button.item_selected.connect(_on_lang_selected)
     vol_slider.value_changed.connect(_on_vol_changed)
     
-    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
+    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if sm != null:
         if sm.language == "en":
             lang_button.selected = 0
@@ -21,7 +21,7 @@ func _ready() -> void:
         vol_slider.value = sm.bgm_volume
 
 func _on_new_career_pressed() -> void:
-    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
+    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if sm != null:
         # Wipe run progress but maybe keep career level? For "New Career", maybe we reset career level too?
         # Actually, let's keep career level and just start the GameBoard
@@ -40,7 +40,7 @@ func _on_quit_pressed() -> void:
     get_tree().quit()
 
 func _on_lang_selected(index: int) -> void:
-    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
+    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if sm != null:
         if index == 0:
             sm.language = "en"
@@ -50,7 +50,7 @@ func _on_lang_selected(index: int) -> void:
         sm._apply_settings()
 
 func _on_vol_changed(value: float) -> void:
-    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
+    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if sm != null:
         sm.bgm_volume = value
         sm.save_progress()
