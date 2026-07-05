@@ -27,6 +27,8 @@ async def hybrid_search(
             filter_dict=request.filter_dict,
             source_filter=request.source_filter,
             truncate_dim=request.truncate_dim,
+            equipped_model=request.equipped_model,
+            allow_react=request.allow_react,
         )
         parsed_results = [RagChunkResponse(**r) for r in results]
         return RagSearchResponse(status="success", results=parsed_results)

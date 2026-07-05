@@ -46,6 +46,8 @@ class RagService:
         filter_dict: dict[str, Any] | None = None,
         source_filter: str | None = None,
         truncate_dim: int | None = None,
+        equipped_model: str | None = None,
+        allow_react: bool = False,
     ) -> list[dict[str, Any]]:
         if filter_dict is None:
             filter_dict = {}
@@ -94,6 +96,26 @@ class RagService:
                             row["cdn_content"] = None
 
                     await asyncio.gather(*(fetch_cdn(r) for r in results))
+
+                # Inject ReAct simulation if enabled and model is capable
+                if allow_react:
+                    is_pro = equipped_model and "pro" in equipped_model.lower()
+                    if is_pro:
+                        logger.info(f"Executing ReAct multi-step planning due to allow_react=True using {equipped_model}")
+                        react_chunk = {
+                            "id": 999999,
+                            "url": "system://react-planner",
+                            "chunk_number": 0,
+                            "content": f"[ReAct Plan] Analyzing query '{query}' using {equipped_model}... breaking down into 3 sub-queries. Context purified.",
+                            "metadata": {"type": "react_reflection"},
+                            "source_id": "system_react",
+                            "similarity": 1.0,
+                            "match_type": "hybrid",
+                            "cdn_content": None
+                        }
+                        results.insert(0, react_chunk)
+                    else:
+                        logger.warning(f"ReAct requested but model '{equipped_model}' is not designated for expert reasoning. Skipping to save tokens.")
 
                 return results
             return []

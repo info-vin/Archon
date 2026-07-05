@@ -11,6 +11,7 @@ signal poisoning_updated(ratio: float)
 signal rate_limit_updated(compression: float)
 signal search_triggered(match_type: int)
 signal context_purified(remaining_card_instances: Array)
+signal chaos_event_triggered(event_id: String)
 
 # --- Sector Difficulty Constants ---
 const SECTOR_1_BASE_HP = 10000.0
@@ -38,6 +39,8 @@ var rate_limit_compression: float = 1.0
 var data_poisoning_ratio: float = 0.0
 var base_poisoning_ratio: float = 0.0
 var delivery_count: int = 0
+var agent_planning_state: String = "idle"
+var combo_multiplier: float = 1.0
 
 var active_context = preload("res://src/models/DeckData.gd").new()
 var hand_context = preload("res://src/models/HandData.gd").new()
@@ -98,6 +101,8 @@ func start_game() -> void:
 	rate_limit_compression = 1.0
 	data_poisoning_ratio = 0.0
 	delivery_count = 0
+	agent_planning_state = "idle"
+	combo_multiplier = 1.0
 	hand_context.clear()
 	
 	var sm = _safe_get_node("SaveManager")

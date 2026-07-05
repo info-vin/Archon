@@ -41,6 +41,7 @@ var cognitive_level: int = 1
 var current_xp: float = 0.0
 var topology_points: int = 0
 var unlocked_talents: Array = []
+var teammates: Array = []
 
 func _ready() -> void:
     load_progress()
@@ -73,7 +74,8 @@ func save_progress() -> void:
         "cognitive_level": cognitive_level,
         "current_xp": current_xp,
         "topology_points": topology_points,
-        "unlocked_talents": unlocked_talents
+        "unlocked_talents": unlocked_talents,
+        "teammates": teammates
     }
     var json_string = JSON.stringify(data)
     var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -122,6 +124,7 @@ func load_progress() -> void:
             current_xp = data.get("current_xp", 0.0)
             topology_points = data.get("topology_points", 0)
             unlocked_talents = data.get("unlocked_talents", [])
+            teammates = data.get("teammates", [])
             
             _enforce_equipment_limit()
             _apply_settings()
@@ -157,6 +160,7 @@ func _reset_to_default() -> void:
     current_xp = 0.0
     topology_points = 0
     unlocked_talents = []
+    teammates = []
     _apply_settings()
     save_progress()
 

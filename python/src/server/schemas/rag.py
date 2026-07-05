@@ -12,6 +12,8 @@ class RagSearchRequest(BaseModel):
     filter_dict: dict[str, Any] | None = Field(default_factory=dict, description="Metadata filter (JSONB)")
     source_filter: str | None = Field(default=None, description="Optional source ID filter")
     truncate_dim: int | None = Field(default=None, description="MRL truncate dimension to reduce AP cost")
+    equipped_model: str | None = Field(default=None, description="Model equipped by the teammate")
+    allow_react: bool = Field(default=False, description="Whether to allow ReAct multi-step reasoning")
 
 
 class GraphSearchRequest(BaseModel):

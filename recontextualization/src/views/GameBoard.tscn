@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/views/EventQueue.gd" id="2_eq"]
 [ext_resource type="PackedScene" path="res://src/views/PauseMenu.tscn" id="3_pause"]
 [ext_resource type="Script" path="res://src/views/PlayArea.gd" id="3_pa"]
+[ext_resource type="PackedScene" path="res://src/views/AgentCompanion.tscn" id="4_agent"]
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
@@ -175,6 +176,19 @@ angle_spread_degrees = 40.0
 vertical_offset = 600.0
 hover_scale = 1.2
 hover_y_offset = -40.0
+
+[node name="AgentCompanion" parent="." instance=ExtResource("4_agent")]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = 40.0
+offset_right = -20.0
+offset_bottom = -40.0
+grow_horizontal = 0
+grow_vertical = 2
 
 [node name="TutorialPanel" type="ColorRect" parent="."]
 layout_mode = 1

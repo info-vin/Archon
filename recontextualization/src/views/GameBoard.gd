@@ -225,6 +225,12 @@ func _on_rate_limit_updated(compression: float) -> void:
 		rate_limit_label.hide()
 
 func _on_deliver_pressed() -> void:
+	var play_area = $MarginContainer/VBoxContainer/PlayArea
+	if not play_area: return
+	
+	var juice = load("res://src/views/components/CombatJuice.gd")
+	if juice: juice.deliver_blast(deliver_button)
+	
 	var game_state = _safe_get_node("GameState")
 	if game_state != null:
 		game_state.deliver_context()
@@ -247,11 +253,12 @@ func _on_context_purified(remaining_cards: Array) -> void:
 			var c_data = child.card_data
 			if not remaining_cards.has(c_data):
 				event_queue.add_animation(func():
-					var tween = create_tween().set_parallel(true)
-					tween.tween_property(child, "modulate:a", 0.0, 0.3)
-					tween.tween_property(child, "scale", Vector2(0.1, 0.1), 0.3)
-					tween.chain().tween_callback(func(): child.queue_free())
-					await tween.finished
+					var juice = load("res://src/views/components/CombatJuice.gd")
+					if juice:
+						var tween = juice.card_dissolve(child)
+						await tween.finished
+					else:
+						child.queue_free()
 				)
 
 func _on_card_drawn(card: Resource) -> void:

@@ -219,3 +219,48 @@
   --ar 1:1
   (⚠️ 畫師/產圖工具注意：必須是灰階/黑白圖像，解析度限制 512x512，背景建議為純黑或透明)
   ```
+
+## 7. 代理團隊與裝備 (Agent Teammates & Equipment)
+
+為了配合 Phase 5.8.9 的「AI 代理終端面板」與「雙腦架構」，我們需要為不同的 Agent 隊友生成具備專屬性格的頭像，以及在裝備欄中顯示的空插槽圖示。
+
+### 7.1 社交者助理 - Alice (Socializer Agent)
+* **目標檔案**：`recontextualization/assets/images/avatar_alice.png`
+* **主題**：親切、活潑且善於溝通的賽博龐克接線生或社群經理風格。
+* **Prompt & Settings**:
+  ```text
+  A cyberpunk female hacker avatar named Alice, friendly and charismatic expression, wearing sleek futuristic headset with glowing pink and cyan neon lights, stylish casual cyberpunk street wear, neon-lit cityscape in the background, anime-influenced highly detailed portrait, 2d vector art style, game UI portrait.
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：解析度限制 512x512)
+  ```
+
+### 7.2 推論者助理 - Bob (Deductor Agent)
+* **目標檔案**：`recontextualization/assets/images/avatar_bob.png`
+* **主題**：冷靜、嚴謹、像偵探或分析師的 ReAct 推理大師。
+* **Prompt & Settings**:
+  ```text
+  A cyberpunk male detective hacker avatar named Bob, serious and analytical expression, wearing a high-tech augmented reality monocle glowing with amber data streams, tailored futuristic dark suit, dimly lit server room background, film noir cyberpunk aesthetic, highly detailed portrait, 2d vector art style, game UI portrait.
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：解析度限制 512x512)
+  ```
+
+### 7.3 檢索者助理 - Charlie (Retriever Agent)
+* **目標檔案**：`recontextualization/assets/images/avatar_charlie.png`
+* **主題**：專注於深度潛入資料庫的礦工或導航員。
+* **Prompt & Settings**:
+  ```text
+  A heavy-duty cyberpunk data miner avatar named Charlie, rugged and focused expression, wearing a bulky neural-dive helmet with multiple glowing green optical sensors, thick cables connecting to the suit, deep matrix grid background, industrial sci-fi aesthetic, highly detailed portrait, 2d vector art style, game UI portrait.
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：解析度限制 512x512)
+  ```
+
+### 7.4 裝備插槽圖示 (Equipment Slot Icon)
+* **目標檔案**：`recontextualization/assets/images/icon_equipment_slot.png`
+* **主題**：等待插入大語言模型 (LLM) 晶片的空裝備槽位。
+* **Prompt & Settings**:
+  ```text
+  An empty futuristic equipment slot icon for a microchip, glowing UI outline, minimalist cyberpunk design, dark empty placeholder in the center, faint blue holographic grid pattern, 2d vector art style, sharp lines, clean dark background.
+  --ar 1:1
+  --no text, letters, typography
+  (⚠️ 畫師/產圖工具注意：解析度限制 256x256)
+  ```

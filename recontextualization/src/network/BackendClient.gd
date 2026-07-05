@@ -48,10 +48,22 @@ func search(query: String, similarity_threshold: float = 0.5, match_count: int =
 		call_deferred("emit_signal", "request_failed", 404, "Tutorial dataset missing")
 		return
 
+	var eq_model = "gemini-1.5-flash"
+	var al_react = false
+	
+	var save_manager = _safe_get_node("SaveManager")
+	if save_manager and save_manager.teammates.size() > 0:
+		# Use the first selected teammate for now or active logic
+		var active_t = save_manager.teammates[0]
+		eq_model = active_t.get("equipped_model", eq_model)
+		al_react = active_t.get("allow_react", al_react)
+
 	_current_payload = {
 		"query": query,
 		"similarity_threshold": similarity_threshold,
-		"match_count": match_count
+		"match_count": match_count,
+		"equipped_model": eq_model,
+		"allow_react": al_react
 	}
 	_current_retries = 0
 	_send_request()
@@ -92,3 +104,10 @@ func _on_http_request_completed(result: int, response_code: int, headers: Packed
 func _handle_failure(code: int, message: String) -> void:
 	print("BackendClient ERROR: %d - %s" % [code, message])
 	request_failed.emit(code, message)
+
+func _safe_get_node(singleton_name: String) -> Node:
+	if Engine.has_singleton(singleton_name):
+		return Engine.get_singleton(singleton_name)
+	if is_inside_tree():
+		return get_node_or_null("/root/" + singleton_name)
+	return null
