@@ -1,6 +1,6 @@
 63f7b34db8d8cdea90c76aacccf841ec
 ::res://::1783239695
-Art_Asset_Prompts.md::TextFile::-1::1783075220::0::1::::<><><>0<>0<><>::
+Art_Asset_Prompts.md::TextFile::-1::1783243024::0::1::::<><><>0<>0<><>::
 env.json::JSON::-1::1783239695::0::1::::<><><>0<>0<><>::
 export_presets.cfg::TextFile::-1::1782781117::0::1::::<><><>0<>0<><>::
 test_engine.gd::GDScript::529482596092364367::1783075222::0::1::::<>SceneTree<><>0<>0<><>::
@@ -9,10 +9,13 @@ test_engine.gd::GDScript::529482596092364367::1783075222::0::1::::<>SceneTree<><
 ::res://assets/cards_flux/::1782380331
 ::res://assets/data/::1782873929
 tutorial_dataset.json::JSON::-1::1782873929::0::1::::<><><>0<>0<><>::
-::res://assets/images/::1783075222
+::res://assets/images/::1783244173
 action_dense.png::CompressedTexture2D::1001744932483170454::1783075220::1783075220::1::::<><><>0<>0<>b605c1bd887ee84a65a01b67002f80a1<>res://.godot/imported/action_dense.png-d51afb12f91b38e32386585c6be71f31.ctex::
 action_keyword.png::CompressedTexture2D::8764713163978746375::1783075221::1783075221::1::::<><><>0<>0<>743b5645d96705039d9bd7b619c836cb<>res://.godot/imported/action_keyword.png-094a98764c7b29ff6dd9ff6b5a803e3c.ctex::
 action_reranker.png::CompressedTexture2D::280917565944356616::1783075221::1783075221::1::::<><><>0<>0<>8e297ac6ee01fa59bd22e88b39072fd4<>res://.godot/imported/action_reranker.png-e0900ebeb94f6f44d1d6602df9cd751d.ctex::
+avatar_alice.png::CompressedTexture2D::2546103748233911492::1783244114::1783244314::1::::<><><>0<>0<>2a14bbbe3515978d32a72d5024f524e6<>res://.godot/imported/avatar_alice.png-063c8196994f1115bf67a4886a8b34e6.ctex::
+avatar_bob.png::CompressedTexture2D::2014183350857040204::1783244021::1783244313::1::::<><><>0<>0<>70eb67ee537a864c91834cb62c077965<>res://.godot/imported/avatar_bob.png-d6f6da1f5485e463dd140bff6f536174.ctex::
+avatar_charlie.png::CompressedTexture2D::3225661833808365613::1783243902::1783244313::1::::<><><>0<>0<>f6e6cdba61fb8593cad9818fba20d53a<>res://.godot/imported/avatar_charlie.png-297acde9bc3022c88afbbcf92b0d0abf.ctex::
 avatar_default.png::CompressedTexture2D::1485962789198146095::1783075221::1783075221::1::::<><><>0<>0<>ffc37caabfb2d41551eb3979a49832e4<>res://.godot/imported/avatar_default.png-b5bad52ad3e4fdebe6b0805b4ad88c9b.ctex::
 badge_rank_a.png::CompressedTexture2D::3513993098564916735::1783075221::1783075221::1::::<><><>0<>0<>d69ecb9734018e0739c8fb0e21855fcf<>res://.godot/imported/badge_rank_a.png-99cf3dd813f096eace53b7e02aa811c7.ctex::
 badge_rank_b.png::CompressedTexture2D::6997581880661099544::1783075221::1783075221::1::::<><><>0<>0<>039e98952372ea39eec403a8f4809f70<>res://.godot/imported/badge_rank_b.png-5f3386aa78508f1308e230288bab7695.ctex::
@@ -24,6 +27,7 @@ bg_vector_grid.png::CompressedTexture2D::3555210619976975190::1782981648::178307
 card_frame_blank.png::CompressedTexture2D::6452396669091761209::1783075222::1783075222::1::::<><><>0<>0<>fbd4d70ce174ac1210a5dd8a5f1270c3<>res://.godot/imported/card_frame_blank.png-9b64f2a1c4cc0109882e3f6df3a15a68.ctex::
 chip_green_target.png::CompressedTexture2D::7025896761752123265::1783075222::1783075222::1::::<><><>0<>0<>2b1ff04d4862668d378483965796c8e1<>res://.godot/imported/chip_green_target.png-7ec77c24e668955953dd6372a53f22c3.ctex::
 chip_red_noise.png::CompressedTexture2D::956187415304008267::1783075222::1783075222::1::::<><><>0<>0<>111ea6343927d22f7eae94451afcfd30<>res://.godot/imported/chip_red_noise.png-cf999b9f4950aba25cd2fa8b28d7d2f6.ctex::
+icon_equipment_slot.png::CompressedTexture2D::2697418861314989309::1783244146::1783244315::1::::<><><>0<>0<>d71594df93594c3778887e2febcdcf61<>res://.godot/imported/icon_equipment_slot.png-02b993427c3cb88ffc779524173d9e60.ctex::
 ::res://assets/maaack/::1782781117
 ::res://assets/maaack/Mixed/::1782781116
 ::res://assets/maaack/Mixed/Backgrounds/::1782781116

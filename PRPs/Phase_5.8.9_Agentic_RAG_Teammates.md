@@ -78,3 +78,26 @@
     *   移除所有模型字串的 Hard-coding，建立 SSOT 環境設定。
     *   所有 Godot UI 邏輯 (`play_area`, `CombatJuice` 呼叫等) 均通過 `godot --headless --editor --quit` 的 0 個 Parse Error 實體掃描。
 *   **下一步**：執行驗證計畫 (單元測試)，以及根據美術提示詞庫生成實體資產。
+
+---
+
+## 7. 玩家核心 UI 介面架構 (Player UI Architecture)
+
+截至 Phase 5.8.9，玩家在遊戲中主要會操作 **7 種** 不同的 UI 介面，大致可分為三大類：
+
+### 7.1 第一類：核心戰鬥與操作 (Core Gameplay)
+1. **主選單 (`MainMenu.tscn`)**：遊戲的入口，負責載入存檔、觀看開場影片與進入「深潛 (Dive)」。
+2. **戰鬥主機板 (`GameBoard.tscn`)**：玩家停留最久的主畫面。玩家在這裡打出卡牌（晶片）、輸入查詢指令、監控 SLA 倒數條，並點擊「Deliver（交付）」按鈕來執行 RAG 檢索。
+
+### 7.2 第二類：代理與團隊管理 (Agent Management) - *Phase 5.8.9 新增*
+3. **代理終端面板 (`AgentCompanion.tscn`)**：掛載在戰鬥主機板旁邊的「側邊欄 UI」。雖然主要是被動顯示（打字機特效對話），但玩家需要緊盯這裡來獲取「網路危機事件（Chaos Events）」的警告與隊友的即時回饋。
+4. **隊友管理面板 (`TeammateDashboard.tscn`)**：玩家的「戰前準備 / 後勤中心」。玩家要在這裡：
+   * 切換上陣的 AI 隊友（Alice, Bob, Charlie）。
+   * 點擊裝備插槽（`icon_equipment_slot.png`），為隊友裝備不同的 LLM 模型。
+   * 拉動滑桿調整該隊友的 Token 與 AP 預算。
+   * 切換是否啟用高階的「ReAct 反思機制」。
+
+### 7.3 第三類：卡牌與角色養成 (Progression & Deck Building)
+5. **卡牌管理庫 (`CardManagementMenu.tscn`)**：讓玩家檢視目前擁有的所有卡牌（資料塊與行動卡）以及構築牌組。
+6. **量子合成工坊 (`CardWorkshop.tscn`)**：背景是高溫融合爐，玩家在此消耗資源合成、升級卡牌。
+7. **駭客個人檔案 (`CharacterDashboard.tscn`)**：顯示玩家的動態權限階級（Rank C 到 Rank S 的徽章）、個人頭像，以及點擊升級天賦的拓樸天賦網（Skill Tree）。
