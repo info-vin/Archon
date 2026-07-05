@@ -106,13 +106,21 @@ godot --headless --export-release "Web" ../enduser-ui-fe/public/games/card-battl
 
 ---
 
-## 📏 四、【L2 模組化與 400 行門禁】
+## 📏 四、【L2 模組化與架構門禁】
 
-- **400 行絕對限制**：任何 GDScript 主檔案（包括 `MainUI.gd`、`GameState.gd`）行數上限為 **400 行**。
-- **核心職責拆分**：
+### 4.1 核心職責剝離與 400 行門禁
+- **400 行絕對限制**：任何 GDScript 主檔案（包括 `MainUI.gd`、`GameState.gd`）行數上限為 **400 行**。檔案行數合規不代表沒有上帝類別 (God Object)，必須嚴格檢查職責：
   - 音效、震動與受擊文字等視覺回饋抽出至 `CombatJuice.gd`。
   - 卡牌特技效果抽出至 `CardEffectResolver.gd`。
   - 翻譯與字串處理抽出至 `GitTranslator.gd`。
+
+### 4.2 技術債假象與資源綁定 (Hardcoding Ban)
+- 在 Godot 4 專案中，必須嚴格檢驗並禁止 `res://` 路徑的字串硬編碼。
+- **強制綁定**：必須使用 `@export` 將靜態素材、影片、場景的綁定權力交還給 Godot 編輯器，以杜絕資源遺失導致的靜默崩潰與 404 錯誤。
+
+### 4.3 MVC 反向依賴防禦 (State Leaking)
+- **View 狀態偷跑防禦**：View 層（如 `PlayArea.gd` 或 `GameBoard.gd`）絕對禁止在發送事件 (EventBus) 請求前，自行播放刪除動畫、修改分數或呼叫 `queue_free()`。
+- **單向資料流**：必須嚴格遵循「View 發送請求 -> Model 驗證狀態 -> Model 發送更新信號 -> View 聆聽信號才更新畫面」的單向同步原則。
 
 ---
 

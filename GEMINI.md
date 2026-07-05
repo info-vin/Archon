@@ -106,10 +106,6 @@
         3. **資料模型對齊**：Mock 數據結構必須與前端介面 100% 物理對齊，缺少必填欄位將引發 React `TypeError`。
         4. **空值與日誌穿透**：後端嚴禁使用 `.single()` 獲取資料，改用安全陣列查詢防禦 HTTP 500。Playwright 必須穿透捕捉瀏覽器 `error`，杜絕盲人摸象。
 
-* **13. 技術債假象與 MVC 反向依賴 (Technical Debt Illusion & MVC Violation)**
-    * **核心**: 
-        1. **行數合規的陷阱**：檔案行數符合規範 (<400) 不代表沒有上帝類別 (God Object)。在 Godot 4 專案中，必須嚴格檢驗 `res://` 路徑硬編碼，並強制使用 `@export` 將靜態綁定權力交還給編輯器，杜絕 404 崩潰。
-        2. **View 狀態偷跑防禦**：View 層（如 `PlayArea.gd`）絕對禁止在發送 EventBus 請求前，自行播放刪除動畫或呼叫 `queue_free()`。必須嚴格遵循「View 發送請求 -> Model 驗證狀態 -> View 聆聽信號才更新畫面」的單向資料流原則。
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
