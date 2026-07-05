@@ -5,7 +5,7 @@ signal hp_changed(new_hp: float)
 signal player_hp_changed(new_hp: float)
 signal player_died()
 signal context_updated(purity: float)
-signal game_over(is_victory: bool)
+signal game_over(is_victory: bool, rank: String)
 signal sla_changed(new_sla: float)
 signal poisoning_updated(ratio: float)
 signal rate_limit_updated(compression: float)
@@ -40,6 +40,7 @@ var base_poisoning_ratio: float = 0.0
 var delivery_count: int = 0
 
 var active_context = preload("res://src/models/DeckData.gd").new()
+var CardEffectResolver = preload("res://src/models/cards/CardEffectResolver.gd")
 
 
 func _safe_get_node(singleton_name: String) -> Node:
@@ -70,10 +71,7 @@ func _process(delta: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
-			var sm = _safe_get_node("SaveManager")
-			if sm != null:
-				sm.penalize_battle_loss()
-			game_over.emit(false)
+			game_over.emit(false, "")
 
 func start_game() -> void:
 	is_game_active = true
@@ -130,10 +128,7 @@ func deduct_sla(amount: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
-			var sm = _safe_get_node("SaveManager")
-			if sm != null:
-				sm.penalize_battle_loss()
-			game_over.emit(false)
+			game_over.emit(false, "")
 		sla_changed.emit(sla_timer)
 
 func _on_card_played(card: Resource) -> void:
@@ -154,33 +149,7 @@ func _on_card_played(card: Resource) -> void:
 		
 	elif type_val == 1:
 		# ACTION CARD
-		var card_id = card.get("id") if card.get("id") != null else ""
-		deduct_sla(cost * 2.0) # Cost * 2.0 seconds penalty for playing action card
-		
-		if card_id == "reranker":
-			# Reranker filter logic: remove similarity < 0.5 cards from active_context
-			var remaining_cards = []
-			for c in active_context.cards:
-				var sim = c.get("similarity") if c.get("similarity") != null else 0.0
-				if sim >= 0.5:
-					remaining_cards.append(c)
-			active_context.cards = remaining_cards
-			var purity = active_context.calculate_context_purity(0.5)
-			context_updated.emit(purity)
-			context_purified.emit(remaining_cards)
-			
-		elif card_id == "keyword_search":
-			search_triggered.emit(3) # KEYWORD
-			# Draw back so it's reusable
-			var event_bus = _safe_get_node("EventBus")
-			if event_bus != null:
-				event_bus.card_drawn.emit(card.duplicate())
-				
-		elif card_id == "dense_search":
-			search_triggered.emit(2) # VECTOR
-			var event_bus = _safe_get_node("EventBus")
-			if event_bus != null:
-				event_bus.card_drawn.emit(card.duplicate())
+		CardEffectResolver.resolve_action_card(self, card)
 
 func deliver_context() -> void:
 	if not is_game_active:
@@ -206,11 +175,8 @@ func deliver_context() -> void:
 		if player_hp <= 0:
 			player_hp = 0
 			is_game_active = false
-			var sm = _safe_get_node("SaveManager")
-			if sm != null:
-				sm.penalize_battle_loss()
 			player_died.emit()
-			game_over.emit(false)
+			game_over.emit(false, "")
 		player_hp_changed.emit(player_hp)
 	else:
 		# Check for GraphRAG KG multiplier
@@ -227,10 +193,7 @@ func deliver_context() -> void:
 			is_game_active = false
 			var rank = calculate_battle_rank()
 			print("Battle Won with Rank: ", rank)
-			var sm = _safe_get_node("SaveManager")
-			if sm != null:
-				sm.award_battle_loot(rank)
-			game_over.emit(true)
+			game_over.emit(true, rank)
 		hp_changed.emit(crisis_hp)
 		
 	# Reset context

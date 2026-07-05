@@ -44,6 +44,15 @@ var unlocked_talents: Array = []
 
 func _ready() -> void:
     load_progress()
+    var game_state = get_node_or_null("/root/GameState")
+    if game_state and game_state.has_signal("game_over"):
+        game_state.game_over.connect(_on_game_over)
+
+func _on_game_over(is_victory: bool, rank: String = "") -> void:
+    if is_victory:
+        award_battle_loot(rank)
+    else:
+        penalize_battle_loss()
 
 func get_max_equipped_cards() -> int:
     return max(3, career_level)

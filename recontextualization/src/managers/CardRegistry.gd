@@ -1,7 +1,8 @@
 extends Node
 
-var cards: Dictionary = {}
+@export var cards_dir: String = "res://src/models/cards/resources/"
 
+var cards: Dictionary = {}
 
 func _safe_get_node(singleton_name: String) -> Node:
 	if Engine.has_singleton(singleton_name):
@@ -11,7 +12,7 @@ func _safe_get_node(singleton_name: String) -> Node:
 	return null
 
 func _ready() -> void:
-	load_all_cards("res://src/models/cards/resources/")
+	load_all_cards(cards_dir)
 
 func load_all_cards(path: String) -> void:
 	var dir = DirAccess.open(path)

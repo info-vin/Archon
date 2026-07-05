@@ -3,7 +3,13 @@ extends Control
 @onready var hand_container: Container = $MarginContainer/VBoxContainer/HandContainer
 @onready var event_queue: Node = $EventQueue
 
+@export var main_menu_scene: PackedScene
+@export var video_victory: VideoStream
+@export var video_defeat_glitch: VideoStream
+@export var video_defeat_shutdown: VideoStream
+
 var card_chip_scene = preload("res://src/views/CardChip.tscn")
+var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
 
 @onready var poison_bar: ProgressBar = $MarginContainer/VBoxContainer/TopBar/PoisonBar
 @onready var rate_limit_label: Label = $MarginContainer/VBoxContainer/TopBar/RateLimitLabel
@@ -83,7 +89,8 @@ func _ready() -> void:
 		)
 		pause_menu.quit_to_menu.connect(func():
 			pause_menu.hide()
-			get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
+			if main_menu_scene:
+				get_tree().change_scene_to_packed(main_menu_scene)
 		)
 		pause_menu.quit_game.connect(func():
 			get_tree().quit()
@@ -148,7 +155,8 @@ func _on_start_pressed() -> void:
 		game_state.start_game()
 
 func _on_restart_pressed() -> void:
-	get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
+	if main_menu_scene:
+		get_tree().change_scene_to_packed(main_menu_scene)
 
 func _on_ap_changed(new_ap: int) -> void:
 	ap_label.text = tr("hud_ap") + ": %d" % new_ap
@@ -165,16 +173,7 @@ func _on_hp_changed(new_hp: float) -> void:
 	
 	if old_val > new_hp:
 		event_queue.add_animation(func():
-			var tween = create_tween()
-			crisis_hp_bar.modulate = Color.RED
-			
-			var original_pos = crisis_hp_bar.position
-			tween.tween_property(crisis_hp_bar, "position", original_pos + Vector2(10, 0), 0.05)
-			tween.tween_property(crisis_hp_bar, "position", original_pos - Vector2(10, 0), 0.05)
-			tween.tween_property(crisis_hp_bar, "position", original_pos + Vector2(5, 0), 0.05)
-			tween.tween_property(crisis_hp_bar, "position", original_pos, 0.05)
-			
-			tween.parallel().tween_property(crisis_hp_bar, "modulate", Color.WHITE, 0.3)
+			var tween = CombatJuice.damage_flash_and_shake(crisis_hp_bar)
 			await tween.finished
 		)
 
@@ -185,31 +184,35 @@ func _on_sla_changed(new_sla: float) -> void:
 	sla_text.text = "SLA: %02d:%02d" % [mins, secs]
 	
 	if new_sla < 30.0:
-		var pulse = (sin(Time.get_ticks_msec() / 150.0) + 1.0) / 2.0
-		sla_progress.modulate = Color.WHITE.lerp(Color.RED, pulse)
+		CombatJuice.warning_pulse(sla_progress, Time.get_ticks_msec())
 	elif new_sla < 60.0:
 		sla_progress.modulate = Color.RED
 	else:
 		sla_progress.modulate = Color.WHITE
 
-func _on_game_over(is_victory: bool) -> void:
+func _on_game_over(is_victory: bool, rank: String = "") -> void:
 	if is_victory:
 		game_over_title.text = "危機解除！"
+		if rank != "":
+			game_over_title.text += " (Rank: " + rank + ")"
 		game_over_title.add_theme_color_override("font_color", Color.GREEN)
-		end_game_video.stream = load("res://assets/vfx/transition_victory.ogv")
+		if video_victory:
+			end_game_video.stream = video_victory
 		end_game_video.show()
 		end_game_video.play()
 		await end_game_video.finished
 	else:
 		game_over_title.text = "系統崩潰！(SLA 超時或幻覺反噬)"
 		game_over_title.add_theme_color_override("font_color", Color.RED)
-		end_game_video.stream = load("res://assets/vfx/transition_defeat_glitch.ogv")
+		if video_defeat_glitch:
+			end_game_video.stream = video_defeat_glitch
 		end_game_video.show()
 		end_game_video.play()
 		await end_game_video.finished
 		
 		# Chain the shutdown video
-		end_game_video.stream = load("res://assets/vfx/transition_defeat_shutdown.ogv")
+		if video_defeat_shutdown:
+			end_game_video.stream = video_defeat_shutdown
 		end_game_video.play()
 		await end_game_video.finished
 		
@@ -224,9 +227,7 @@ func _on_rate_limit_updated(compression: float) -> void:
 		rate_limit_label.show()
 		# Flash animation
 		event_queue.add_animation(func():
-			var tween = create_tween()
-			tween.tween_property(rate_limit_label, "modulate:a", 0.0, 0.2)
-			tween.tween_property(rate_limit_label, "modulate:a", 1.0, 0.2)
+			var tween = CombatJuice.flash_alpha(rate_limit_label)
 			await tween.finished
 		)
 	else:

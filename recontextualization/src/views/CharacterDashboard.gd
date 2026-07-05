@@ -1,5 +1,11 @@
 extends Control
 
+@export var badge_rank_c: Texture2D
+@export var badge_rank_b: Texture2D
+@export var badge_rank_a: Texture2D
+@export var badge_rank_s: Texture2D
+@export var main_menu_scene: PackedScene
+
 @onready var bg_texture: TextureRect = $Background
 @onready var avatar_rect: TextureRect = $HBoxContainer/ProfilePanel/VBox/Avatar
 @onready var badge_rect: TextureRect = $HBoxContainer/ProfilePanel/VBox/Badge
@@ -24,25 +30,25 @@ func update_profile() -> void:
 	var sector = sm.get_current_sector()
 	
 	# Determine badge and avatar tint
-	var badge_path = "res://assets/images/badge_rank_c.png"
+	var badge_tex: Texture2D = badge_rank_c
 	var avatar_tint = Color(0.6, 0.6, 0.6) # C rank gray
 	var rank_text = "Rank C: Script Kiddie"
 	
 	if sector == 2:
-		badge_path = "res://assets/images/badge_rank_b.png"
+		badge_tex = badge_rank_b
 		avatar_tint = Color(0.2, 0.8, 0.2) # B rank green
 		rank_text = "Rank B: Node Runner"
 	elif sector == 3:
-		badge_path = "res://assets/images/badge_rank_a.png"
+		badge_tex = badge_rank_a
 		avatar_tint = Color(0.2, 0.5, 1.0) # A rank blue
 		rank_text = "Rank A: Elite Netrunner"
 	elif sector >= 4:
-		badge_path = "res://assets/images/badge_rank_s.png"
+		badge_tex = badge_rank_s
 		avatar_tint = Color(1.0, 0.8, 0.2) # S rank gold
 		rank_text = "Rank S: Archon Admin"
 		
-	if ResourceLoader.exists(badge_path):
-		badge_rect.texture = load(badge_path)
+	if badge_tex:
+		badge_rect.texture = badge_tex
 		
 	avatar_rect.modulate = avatar_tint
 	rank_label.text = rank_text
@@ -92,4 +98,5 @@ func _on_node_pressed(node_idx: int) -> void:
 	tween.tween_property(btn, "modulate", Color.WHITE, 0.4)
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")
+	if main_menu_scene:
+		get_tree().change_scene_to_packed(main_menu_scene)

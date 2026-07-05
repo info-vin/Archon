@@ -3,11 +3,13 @@ extends Node
 signal request_completed(result: Dictionary)
 signal request_failed(error_code: int, message: String)
 
+@export var api_url: String = "http://127.0.0.1:8181/api/rag/hybrid-search"
+@export var tutorial_dataset_path: String = "res://assets/data/tutorial_dataset.json"
+
 var _http_request: HTTPRequest
 var _max_retries: int = 3
 var _current_retries: int = 0
 var _current_payload: Dictionary = {}
-var _api_url: String = "http://127.0.0.1:8181/api/rag/hybrid-search"
 var auth_token: String = ""
 var _is_web: bool = false
 
@@ -17,9 +19,9 @@ func _ready() -> void:
 		if JavaScriptBridge.get_interface("window"):
 			var origin = JavaScriptBridge.eval("window.location.origin")
 			if origin:
-				_api_url = str(origin) + "/api/rag/hybrid-search"
+				api_url = str(origin) + "/api/rag/hybrid-search"
 			else:
-				_api_url = "/api/rag/hybrid-search"
+				api_url = "/api/rag/hybrid-search"
 				
 	_http_request = HTTPRequest.new()
 	_http_request.timeout = 5.0 # SLA limit
@@ -29,7 +31,7 @@ func _ready() -> void:
 func search(query: String, similarity_threshold: float = 0.5, match_count: int = 10) -> void:
 	var game_state: Node = (Engine.get_singleton("GameState") if Engine.has_singleton("GameState") else get_node_or_null("/root/GameState"))
 	if game_state != null and game_state.is_tutorial_active:
-		var file = FileAccess.open("res://assets/data/tutorial_dataset.json", FileAccess.READ)
+		var file = FileAccess.open(tutorial_dataset_path, FileAccess.READ)
 		if file:
 			var text = file.get_as_text()
 			var json = JSON.new()
@@ -60,7 +62,7 @@ func _send_request() -> void:
 	if auth_token != "":
 		headers.append("Authorization: Bearer " + auth_token)	
 	# Godot 4 HTTPRequest.request uses error enums
-	var error = _http_request.request(_api_url, headers, HTTPClient.METHOD_POST, json_payload)
+	var error = _http_request.request(api_url, headers, HTTPClient.METHOD_POST, json_payload)
 	if error != OK:
 		_handle_failure(error, "Failed to initiate HTTP request.")
 
