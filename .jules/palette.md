@@ -1,3 +1,3 @@
-## 2023-10-27 - Button Loading States
-**Learning:** Adding `animate-spin` to inline SVG icons inside buttons is a lightweight, low-friction way to significantly improve user feedback for asynchronous operations, especially in list views where global loading overlays are disruptive. Tracking the specific item ID in state is critical to avoid spinning all buttons simultaneously.
-**Action:** When adding async operations to list items, always maintain a specific `processingId` in local state or the state machine instead of a generic `isProcessing` boolean.
+## 2025-03-05 - Button Accessibility Pattern
+**Learning:** Found that custom buttons in the UI library rely on HTML `disabled` attribute but omitted `aria-disabled` and `aria-busy`. Screen readers benefit from explicitly mirroring these states, especially `aria-busy` for loading states to announce asynchronous operations properly.
+**Action:** Always verify `aria-disabled` and `aria-busy` accompany visually disabled/loading components, particularly for reusable core components.
