@@ -36,8 +36,6 @@ var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
 
 var backend_client_script = preload("res://src/network/BackendClient.gd")
 var backend_client: Node
-
-
 func _safe_get_node(singleton_name: String) -> Node:
 	if Engine.has_singleton(singleton_name):
 		return Engine.get_singleton(singleton_name)
@@ -46,11 +44,13 @@ func _safe_get_node(singleton_name: String) -> Node:
 	return null
 
 func _ready() -> void:
-	# Instantiate BackendClient
-	backend_client = backend_client_script.new()
-	add_child(backend_client)
-	backend_client.request_completed.connect(_on_search_completed)
-	backend_client.request_failed.connect(_on_search_failed)
+	# Allow any Autoload (like EventBus) to register card draws.
+	if Engine.has_singleton("EventBus"):
+		var event_bus = Engine.get_singleton("EventBus")
+		if event_bus.has_signal("card_drawn"):
+			event_bus.card_drawn.connect(_on_card_drawn)
+		if event_bus.has_signal("card_played"):
+			event_bus.card_played.connect(_on_card_played)
 
 	var style_green = StyleBoxFlat.new()
 	style_green.bg_color = Color(0.2, 0.8, 0.2, 1.0)
@@ -64,12 +64,6 @@ func _ready() -> void:
 	style_dark_red.bg_color = Color(0.6, 0.0, 0.0, 1.0)
 	crisis_hp_bar.add_theme_stylebox_override("fill", style_dark_red)
 
-	# Allow any Autoload (like EventBus) to register card draws.
-	var event_bus = _safe_get_node("EventBus")
-	if event_bus != null:
-		if event_bus.has_signal("card_drawn"):
-			event_bus.card_drawn.connect(_on_card_drawn)
-			
 	start_button.pressed.connect(_on_start_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	deliver_button.pressed.connect(_on_deliver_pressed)
@@ -128,9 +122,6 @@ func _ready() -> void:
 	if sm != null:
 		if not sm.has_completed_tutorial:
 			tutorial_panel.hide()
-			var t_mgr_scene = preload("res://src/managers/tutorial/TutorialManager.gd")
-			var t_mgr = t_mgr_scene.new()
-			add_child(t_mgr)
 			# Start game immediately for tutorial
 			if game_state != null:
 				game_state.is_tutorial_active = true
@@ -244,51 +235,8 @@ func _on_query_submitted(new_text: String) -> void:
 		game_state.trigger_search(1) # 1 = KEYWORD
 
 func _on_search_triggered(match_type: int) -> void:
-	var query_text = query_input.text.strip_edges()
-	if query_text.is_empty():
-		query_text = "default query"
-		
-	# Always use backend client. BackendClient handles tutorial mock data internally.
-	backend_client.search(query_text, 0.5, 5)
-
-func _on_search_completed(response: Dictionary) -> void:
-	if not response.has("results"):
-		return
-	var results = response.get("results")
-	for chunk in results:
-		var card = CardData.new()
-		card.type = CardData.CardType.DATA_CHIP
-		card.similarity = chunk.get("similarity", 0.0)
-		card.title = chunk.get("content", "Data Chunk").left(20) + "..."
-		
-		# Set match type based on string
-		var mt = chunk.get("match_type", "keyword")
-		if mt == "keyword":
-			card.match_type = CardData.MatchType.KEYWORD
-		elif mt == "vector":
-			card.match_type = CardData.MatchType.VECTOR
-		else:
-			card.match_type = CardData.MatchType.HYBRID
-			
-		var event_bus = _safe_get_node("EventBus")
-		if event_bus != null:
-			event_bus.card_drawn.emit(card)
-
-func _on_search_failed(error_code: int, message: String) -> void:
-	print("Search failed (Code: %d, Message: %s). Activating Standalone Fallback!" % [error_code, message])
-	var num_cards = randi_range(3, 4)
-	var base_title = query_input.text if not query_input.text.is_empty() else "RAG Chunk"
-	
-	for i in range(num_cards):
-		var card = CardData.new()
-		card.type = CardData.CardType.DATA_CHIP
-		card.similarity = randf_range(0.3, 0.98)
-		card.title = "[MOCK] %s #%d" % [base_title.left(15), i + 1]
-		card.match_type = randi_range(1, 3) # Random MatchType
-		
-		var event_bus = _safe_get_node("EventBus")
-		if event_bus != null:
-			event_bus.card_drawn.emit(card)
+	# Now just purely visual if needed, GameState handles network.
+	pass
 
 func _on_context_purified(remaining_cards: Array) -> void:
 	var play_area = $MarginContainer/VBoxContainer/PlayArea
@@ -299,37 +247,38 @@ func _on_context_purified(remaining_cards: Array) -> void:
 			var c_data = child.card_data
 			if not remaining_cards.has(c_data):
 				event_queue.add_animation(func():
-					if not is_instance_valid(child):
-						return
 					var tween = create_tween().set_parallel(true)
 					tween.tween_property(child, "modulate:a", 0.0, 0.3)
 					tween.tween_property(child, "scale", Vector2(0.1, 0.1), 0.3)
-					tween.chain().tween_callback(func(): 
-						if is_instance_valid(child):
-							child.queue_free()
-					)
-					await get_tree().create_timer(0.3).timeout
+					tween.chain().tween_callback(func(): child.queue_free())
+					await tween.finished
 				)
 
 func _on_card_drawn(card: Resource) -> void:
-	# Hand Limit constraint: max 5 cards
-	if hand_container.get_child_count() >= 5:
-		print("Hand full! Card draw rejected.")
-		return
-
-	var game_state = _safe_get_node("GameState")
-	if game_state != null:
-		var ratio = game_state.data_poisoning_ratio
-		if randf() < ratio:
-			var type_val = card.get("type") if card.get("type") != null else 1
-			if type_val == 2: # DATA_CHIP = 2
-				card.set("type", 3) # Convert to Noise Chip (NOISE_CHIP = 3)
-				var current_title = card.get("title")
-				card.set("title", "[CORRUPTED] " + (current_title if current_title != null else ""))
-
 	event_queue.add_animation(func():
 		await _anim_draw_card(card)
 	)
+
+func _on_card_played(card: Resource) -> void:
+	# Find the card in hand and move it to play area
+	var target_child = null
+	for child in hand_container.get_children():
+		if child.has_method("get_card_data") and child.get_card_data() == card:
+			target_child = child
+			break
+			
+	if target_child != null:
+		event_queue.add_animation(func():
+			var play_area = $MarginContainer/VBoxContainer/PlayArea
+			target_child.get_parent().remove_child(target_child)
+			play_area.add_child(target_child)
+			
+			var tween = create_tween()
+			var target_pos = (play_area.size / 2.0) - (target_child.size / 2.0)
+			tween.tween_property(target_child, "position", target_pos, 0.4).set_trans(Tween.TRANS_SPRING)
+			tween.parallel().tween_property(target_child, "scale", Vector2(0.8, 0.8), 0.3)
+			await get_tree().create_timer(0.4).timeout
+		)
 
 func _anim_draw_card(card: Resource) -> void:
 	var chip = card_chip_scene.instantiate()

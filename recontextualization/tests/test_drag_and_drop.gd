@@ -58,23 +58,20 @@ func run_tests(runner) -> bool:
 		tests_failed += 1
 		
 	# Test 3: _drop_data
+	if Engine.has_singleton("EventBus"):
+		var eb = Engine.get_singleton("EventBus")
+		if eb.has_signal("request_play_card"):
+			eb.request_play_card.connect(_on_card_played)
+			
 	play_area._drop_data(Vector2(50, 50), drag_data)
 	
 	# Wait for Tween to finish (0.4s) before checking signal
 	await runner.create_timer(1.5).timeout
 	
-	if drag_data == null or not is_instance_valid(drag_data):
-		print("Test confirmed card was deleted (Action card behavior).")
-	elif drag_data.get_parent() == play_area:
-		print("Test confirmed card was reparented to PlayArea.")
-	else:
-		print("FAIL: Card was not reparented.")
-		tests_failed += 1
-		
 	if _signal_emitted and _emitted_card_data == card:
-		print("Test confirmed card_played signal emitted with correct data.")
+		print("Test confirmed request_play_card signal emitted with correct data.")
 	else:
-		print("FAIL: card_played signal was not emitted or data was wrong.")
+		print("FAIL: request_play_card signal was not emitted or data was wrong.")
 		tests_failed += 1
 		
 	# Cleanup

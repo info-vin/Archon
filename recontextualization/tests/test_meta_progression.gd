@@ -14,16 +14,22 @@ func run_tests(tree = null) -> bool:
     var eb = preload("res://src/autoloads/EventBus.gd").new()
     Engine.register_singleton("EventBus", eb)
     
-    var drawn_cards = []
-    eb.card_drawn.connect(func(c): drawn_cards.append(c))
+    var game_state = preload("res://src/autoloads/GameState.gd").new()
+    Engine.register_singleton("GameState", game_state)
     
-    # Mock Save Data
+    # Run _ready to ensure signal hookups
+    game_state._ready()
+    
+    # Mock some basic progression data
     sm.career_level = 4
     sm.max_player_hp = 110.0
     sm.equipped_action_cards = ["keyword_search", "reranker"] # only equip 2
     
+    var drawn_cards = []
+    eb.card_drawn.connect(func(c): drawn_cards.append(c))
+    
     # Test GameState Start
-    var gs = preload("res://src/autoloads/GameState.gd").new()
+    var gs = game_state
     gs.start_game()
     
     if gs.max_player_hp != 110.0:
@@ -47,6 +53,11 @@ func run_tests(tree = null) -> bool:
     Engine.unregister_singleton("SaveManager")
     Engine.unregister_singleton("CardRegistry")
     Engine.unregister_singleton("EventBus")
+    Engine.unregister_singleton("GameState")
+    sm.free()
+    cr.free()
+    eb.free()
+    game_state.free()
     
     print("test_meta_progression PASSED")
     return true

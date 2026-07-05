@@ -14,6 +14,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	# Run ready manually for headless testing (since we just created it)
 	game_state._ready()
 	game_state.start_game()
+	game_state.is_tutorial_active = false
 	
 	var initial_sla = game_state.sla_timer
 	var initial_hp = game_state.player_hp
@@ -25,7 +26,8 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	action_card.set("ap_cost", 3)
 	
 	if Engine.has_singleton("EventBus"):
-		Engine.get_singleton("EventBus").card_played.emit(action_card)
+		game_state.hand_context.add_card(action_card, 0.0)
+		Engine.get_singleton("EventBus").request_play_card.emit(action_card)
 		
 	# Cost 3 * 2.0 = 6.0 seconds penalty
 	if abs(game_state.sla_timer - (initial_sla - 6.0)) > 0.1:
@@ -47,8 +49,10 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	noise_chip.set("ap_cost", 1)
 	
 	# Add both to context
-	event_bus.card_played.emit(data_chip)
-	event_bus.card_played.emit(noise_chip)
+	game_state.hand_context.add_card(data_chip, 0.0)
+	event_bus.request_play_card.emit(data_chip)
+	game_state.hand_context.add_card(noise_chip, 0.0)
+	event_bus.request_play_card.emit(noise_chip)
 	
 	if game_state.active_context.size() != 2:
 		print("FAIL: Context size should be 2. Got ", game_state.active_context.size())
@@ -60,7 +64,8 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	reranker_card.set("id", "reranker")
 	reranker_card.set("ap_cost", 3)
 	
-	event_bus.card_played.emit(reranker_card)
+	game_state.hand_context.add_card(reranker_card, 0.0)
+	event_bus.request_play_card.emit(reranker_card)
 	
 	# Reranker should remove noise_chip (similarity 0.3 < 0.5)
 	if game_state.active_context.size() != 1:
@@ -73,7 +78,8 @@ func run_tests(scene_tree: SceneTree) -> bool:
 		print("PASS: Reranker filtered out similarity < 0.5 noise chip successfully.")
 		
 	# Add noise chip back to test hallucination penalty
-	event_bus.card_played.emit(noise_chip)
+	game_state.hand_context.add_card(noise_chip, 0.0)
+	event_bus.request_play_card.emit(noise_chip)
 	
 	var crisis_before = game_state.crisis_hp
 	game_state.deliver_context()

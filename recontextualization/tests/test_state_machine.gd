@@ -22,6 +22,7 @@ func run_tests(runner) -> bool:
 	# Run ready manually for headless testing (since we just created it)
 	game_state._ready()
 	game_state.start_game()
+	game_state.is_tutorial_active = false
 	
 	var initial_hp = game_state.crisis_hp
 	var initial_ap = game_state.current_ap
@@ -34,8 +35,9 @@ func run_tests(runner) -> bool:
 	data_chip.set("similarity", 0.9)
 	data_chip.set("ap_cost", 1)
 	
-	# Emit card_played (equivalent to dragging Data Chip to PlayArea)
-	event_bus.card_played.emit(data_chip)
+	# Emit request_play_card (equivalent to dragging Data Chip to PlayArea)
+	game_state.hand_context.add_card(data_chip, 0.0)
+	event_bus.request_play_card.emit(data_chip)
 	
 	if not assert_eq(game_state.current_ap, initial_ap - 1, "AP should decrease by 1"): tests_failed += 1
 	if not assert_eq(game_state.active_context.size(), 1, "Context should have 1 card"): tests_failed += 1

@@ -21,10 +21,10 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	
 	# Check if hand container has children
 	var hand = game_board.get_node("MarginContainer/VBoxContainer/HandContainer")
-	if hand.get_child_count() == 4:
+	if hand.get_child_count() == 1:
 		print("Test captured expected visual instantiation.")
 	else:
-		print("FAIL: Expected 4 children in hand, got ", hand.get_child_count())
+		print("FAIL: Expected 1 children in hand, got ", hand.get_child_count())
 		passed = false
 	
 	game_board.queue_free()

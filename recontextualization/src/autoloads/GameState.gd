@@ -40,7 +40,12 @@ var base_poisoning_ratio: float = 0.0
 var delivery_count: int = 0
 
 var active_context = preload("res://src/models/DeckData.gd").new()
+var hand_context = preload("res://src/models/HandData.gd").new()
 var CardEffectResolver = preload("res://src/models/cards/CardEffectResolver.gd")
+var backend_client_script = preload("res://src/network/BackendClient.gd")
+var backend_client: Node
+var t_mgr_scene = preload("res://src/managers/tutorial/TutorialManager.gd")
+var CardData = preload("res://src/models/cards/CardData.gd")
 
 
 func _safe_get_node(singleton_name: String) -> Node:
@@ -51,10 +56,22 @@ func _safe_get_node(singleton_name: String) -> Node:
 	return null
 
 func _ready() -> void:
+	# Instantiate BackendClient
+	backend_client = backend_client_script.new()
+	add_child(backend_client)
+	backend_client.request_completed.connect(_on_search_completed)
+	backend_client.request_failed.connect(_on_search_failed)
+	
+	hand_context.card_added.connect(func(card):
+		var event_bus = _safe_get_node("EventBus")
+		if event_bus != null and event_bus.has_signal("card_drawn"):
+			event_bus.card_drawn.emit(card)
+	)
+
 	var event_bus = _safe_get_node("EventBus")
 	if event_bus != null:
-		if event_bus.has_signal("card_played"):
-			event_bus.card_played.connect(_on_card_played)
+		if event_bus.has_signal("request_play_card"):
+			event_bus.request_play_card.connect(_on_request_play_card)
 
 func _process(delta: float) -> void:
 	if is_game_active and not is_tutorial_active and sla_timer > 0.0:
@@ -81,8 +98,20 @@ func start_game() -> void:
 	rate_limit_compression = 1.0
 	data_poisoning_ratio = 0.0
 	delivery_count = 0
+	hand_context.clear()
 	
 	var sm = _safe_get_node("SaveManager")
+	var has_completed_tutorial = false
+	if sm != null:
+		has_completed_tutorial = sm.has_completed_tutorial
+		
+	if not has_completed_tutorial:
+		is_tutorial_active = true
+		var t_mgr = t_mgr_scene.new()
+		add_child(t_mgr)
+	else:
+		is_tutorial_active = false
+	
 	if sm != null:
 		max_player_hp = sm.max_player_hp
 		player_hp = max_player_hp
@@ -131,11 +160,20 @@ func deduct_sla(amount: float) -> void:
 			game_over.emit(false, "")
 		sla_changed.emit(sla_timer)
 
-func _on_card_played(card: Resource) -> void:
+func _on_request_play_card(card: Resource) -> void:
 	if not is_game_active:
 		return
 		
 	var cost = card.get("ap_cost") if card.get("ap_cost") != null else 1
+	if current_ap < cost:
+		print("Not enough AP to play card!")
+		return
+		
+	# Verify and remove from hand
+	if not hand_context.remove_card(card):
+		print("Card not in hand!")
+		return
+		
 	current_ap -= cost
 	ap_changed.emit(current_ap)
 	
@@ -150,6 +188,11 @@ func _on_card_played(card: Resource) -> void:
 	elif type_val == 1:
 		# ACTION CARD
 		CardEffectResolver.resolve_action_card(self, card)
+		
+	# Emit confirmed card_played so View can animate
+	var event_bus = _safe_get_node("EventBus")
+	if event_bus != null and event_bus.has_signal("card_played"):
+		event_bus.card_played.emit(card)
 
 func deliver_context() -> void:
 	if not is_game_active:
@@ -201,15 +244,49 @@ func deliver_context() -> void:
 	context_updated.emit(0.0)
 	context_purified.emit([])
 
-func trigger_search(match_type: int) -> void:
+func trigger_search(match_type: int, query_text: String = "default query") -> void:
 	if not is_game_active:
 		return
 	if current_ap >= 2:
 		current_ap -= 2
 		ap_changed.emit(current_ap)
 		search_triggered.emit(match_type)
+		backend_client.search(query_text, 0.5, 5)
 	else:
 		print("Not enough AP to search!")
+
+func _on_search_completed(response: Dictionary) -> void:
+	if not response.has("results"):
+		return
+	var results = response.get("results")
+	for chunk in results:
+		var card = CardData.new()
+		card.type = CardData.CardType.DATA_CHIP
+		card.similarity = chunk.get("similarity", 0.0)
+		card.title = chunk.get("content", "Data Chunk").left(20) + "..."
+		
+		var mt = chunk.get("match_type", "keyword")
+		if mt == "keyword":
+			card.match_type = CardData.MatchType.KEYWORD
+		elif mt == "vector":
+			card.match_type = CardData.MatchType.VECTOR
+		else:
+			card.match_type = CardData.MatchType.HYBRID
+			
+		hand_context.add_card(card, data_poisoning_ratio)
+
+func _on_search_failed(error_code: int, message: String) -> void:
+	print("Search failed (Code: %d, Message: %s). Activating Standalone Fallback!" % [error_code, message])
+	var num_cards = randi_range(3, 4)
+	
+	for i in range(num_cards):
+		var card = CardData.new()
+		card.type = CardData.CardType.DATA_CHIP
+		card.similarity = randf_range(0.3, 0.98)
+		card.title = "[MOCK] RAG Chunk #%d" % [i + 1]
+		card.match_type = randi_range(1, 3)
+		
+		hand_context.add_card(card, data_poisoning_ratio)
 
 func calculate_battle_rank() -> String:
 	if sla_timer > 150.0 and player_hp >= max_player_hp and delivery_count <= 2:

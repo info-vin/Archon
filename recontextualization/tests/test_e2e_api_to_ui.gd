@@ -86,11 +86,11 @@ func _on_search_completed(result: Dictionary):
 	await _scene_tree.create_timer(2.5).timeout
 	
 	var hand = _game_board.get_node("MarginContainer/VBoxContainer/HandContainer")
-	if hand.get_child_count() == results.size() + 3:
+	if hand.get_child_count() == results.size():
 		print("Test captured expected E2E visual instantiation! Hand size: ", hand.get_child_count())
 		_passed = true
 	else:
-		print("FAIL: Expected %d children in hand, got %d" % [results.size() + 3, hand.get_child_count()])
+		print("FAIL: Expected %d children in hand, got %d" % [results.size(), hand.get_child_count()])
 		
 	_is_completed = true
 

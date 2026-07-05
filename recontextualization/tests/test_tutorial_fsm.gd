@@ -9,7 +9,9 @@ func run_tests(tree: SceneTree = null) -> bool:
     
     var gs = preload("res://src/autoloads/GameState.gd").new()
     Engine.register_singleton("GameState", gs)
-    gs.crisis_hp = 10000.0 # Initial
+    
+    # Run _ready to connect signals and start
+    gs._ready()
     
     # 2. Instantiate TutorialManager
     var tm = preload("res://src/managers/tutorial/TutorialManager.gd").new()
@@ -42,7 +44,8 @@ func run_tests(tree: SceneTree = null) -> bool:
         
     # 5. Simulate DragData -> Deliver
     # Emitting card_played(data) should trigger Deliver
-    eb.card_played.emit(mock_card)
+    gs.hand_context.add_card(mock_card, 0.0)
+    eb.request_play_card.emit(mock_card)
     if tm.current_state.name != "Deliver":
         print("FAIL: Did not transition to Deliver state on card played")
         return false
@@ -57,5 +60,8 @@ func run_tests(tree: SceneTree = null) -> bool:
     print("test_tutorial_fsm PASSED")
     
     Engine.unregister_singleton("EventBus")
+    eb.free()
     Engine.unregister_singleton("GameState")
+    gs.free()
+    
     return true
