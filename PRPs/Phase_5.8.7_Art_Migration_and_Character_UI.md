@@ -66,3 +66,17 @@
     *   當玩家抽牌或將卡牌打出時，使用 `Tween` 與 `Path2D` 運算，讓卡牌不只是線性平移，而是帶有立體拋物線感的平滑移動。
 *   **3.3 攻擊與指定目標箭頭 (Targeting Arrow)**：
     *   當玩家拖曳某張需要指定目標的指令卡時，從卡牌中心畫出一條動態連接到滑鼠鼠標的雷射箭頭 (使用 `Line2D` 與自定義 Shader 實作光流動感)。
+
+---
+
+## 4. 殘留斷層與防禦性自癒計畫 (Gaps & Self-Healing Action Plan) [未開始]
+
+經過 2026/07 的 Headless 測試與實體程式碼稽核，我們揪出了 CGF 美術遷移後引發的型別與單例註冊死鎖，現制定修復計畫如下：
+
+*   **4.1 解決型別聲明死鎖 (Type Mismatch Fix)**：
+    *   將 [GameBoard.gd](file:///Users/vincenta/GoogleKwok022/Archon/recontextualization/src/views/GameBoard.gd) 中對 `hand_container` 的定義從 `HBoxContainer` 改為 `Container`，以物理適配 `.tscn` 中已轉換為 `Container` (掛載 `HandLayout`) 的實體節點。
+*   **4.2 解決 Headless 測試下的單例定位崩潰 (Safe Singleton Lookup)**：
+    *   重構 [GameState.gd](file:///Users/vincenta/GoogleKwok022/Archon/recontextualization/src/autoloads/GameState.gd) 與 [CardRegistry.gd](file:///Users/vincenta/GoogleKwok022/Archon/recontextualization/src/managers/CardRegistry.gd)，將 `get_node("/root/...")` 的絕對路徑獲取，改為「Engine 單例池與場景樹雙軌尋訪機制」，確保測試在 `.new()` 實體化且不在活躍場景樹時，能自癒定位：
+      `var event_bus = Engine.get_singleton("EventBus") if Engine.has_singleton("EventBus") else (get_node_or_null("/root/EventBus") if is_inside_tree() else null)`
+*   **4.3 解決單例註冊衝突 (Duplicate Registration Fix)**：
+    *   在 [test_tutorial_fsm.gd](file:///Users/vincenta/GoogleKwok022/Archon/recontextualization/tests/test_tutorial_fsm.gd) 等測試腳本的 `run_tests()` 開頭與結尾，補強 `Engine.has_singleton(...)` 檢查與 `Engine.unregister_singleton(...)` 銷毀邏輯，徹底阻斷測試執行序中的單例註冊死鎖。

@@ -4,11 +4,11 @@ func _init():
 	print("--- Starting Headless Tests ---")
 	
 	# Clean up save file if exists to ensure statelessness
-	if FileAccess.file_exists("user://savegame.save"):
+	if FileAccess.file_exists("user://archon_progress.json"):
 		var dir = DirAccess.open("user://")
 		if dir:
-			dir.remove("savegame.save")
-		print("Purged user://savegame.save")
+			dir.remove("archon_progress.json")
+		print("Purged user://archon_progress.json")
 
 	call_deferred("_run_tests")
 

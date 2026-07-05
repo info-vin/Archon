@@ -2,6 +2,14 @@ extends Node
 
 var cards: Dictionary = {}
 
+
+func _safe_get_node(singleton_name: String) -> Node:
+	if Engine.has_singleton(singleton_name):
+		return Engine.get_singleton(singleton_name)
+	if is_inside_tree():
+		return get_node_or_null("/root/" + singleton_name)
+	return null
+
 func _ready() -> void:
 	load_all_cards("res://src/models/cards/resources/")
 

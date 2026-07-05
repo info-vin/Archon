@@ -59,14 +59,14 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 				await get_tree().create_timer(0.4).timeout
 				
 				# Inform the game state via EventBus after animation
-				var event_bus = get_node_or_null("/root/EventBus")
+				var event_bus = (Engine.get_singleton("EventBus") if Engine.has_singleton("EventBus") else get_node_or_null("/root/EventBus"))
 				if event_bus != null:
 					if event_bus.has_signal("card_played"):
 						event_bus.card_played.emit(card_data_ref)
 			)
 		else:
 			# Fallback if no event_queue (e.g. tests without full GameBoard owner)
-			var event_bus = get_node_or_null("/root/EventBus")
+			var event_bus = (Engine.get_singleton("EventBus") if Engine.has_singleton("EventBus") else get_node_or_null("/root/EventBus"))
 			if event_bus != null:
 				if event_bus.has_signal("card_played"):
 					event_bus.card_played.emit(data.card_data)

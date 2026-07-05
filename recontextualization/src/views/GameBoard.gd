@@ -1,6 +1,6 @@
 extends Control
 
-@onready var hand_container: HBoxContainer = $MarginContainer/VBoxContainer/HandContainer
+@onready var hand_container: Container = $MarginContainer/VBoxContainer/HandContainer
 @onready var event_queue: Node = $EventQueue
 
 var card_chip_scene = preload("res://src/views/CardChip.tscn")
@@ -31,6 +31,14 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 var backend_client_script = preload("res://src/network/BackendClient.gd")
 var backend_client: Node
 
+
+func _safe_get_node(singleton_name: String) -> Node:
+	if Engine.has_singleton(singleton_name):
+		return Engine.get_singleton(singleton_name)
+	if is_inside_tree():
+		return get_node_or_null("/root/" + singleton_name)
+	return null
+
 func _ready() -> void:
 	# Instantiate BackendClient
 	backend_client = backend_client_script.new()
@@ -51,7 +59,7 @@ func _ready() -> void:
 	crisis_hp_bar.add_theme_stylebox_override("fill", style_dark_red)
 
 	# Allow any Autoload (like EventBus) to register card draws.
-	var event_bus = get_node_or_null("/root/EventBus")
+	var event_bus = _safe_get_node("EventBus")
 	if event_bus != null:
 		if event_bus.has_signal("card_drawn"):
 			event_bus.card_drawn.connect(_on_card_drawn)
@@ -64,11 +72,11 @@ func _ready() -> void:
 	if pause_menu:
 		pause_menu.resume_game.connect(func(): pause_menu.hide())
 		pause_menu.save_progress.connect(func(): 
-			var sm = get_node_or_null("/root/SaveManager")
+			var sm = _safe_get_node("SaveManager")
 			if sm != null: sm.save_progress()
 		)
 		pause_menu.load_progress.connect(func():
-			var sm = get_node_or_null("/root/SaveManager")
+			var sm = _safe_get_node("SaveManager")
 			if sm != null: sm.load_progress()
 			pause_menu.hide()
 			get_tree().reload_current_scene()
@@ -81,7 +89,7 @@ func _ready() -> void:
 			get_tree().quit()
 		)
 	
-	var game_state = get_node_or_null("/root/GameState")
+	var game_state = _safe_get_node("GameState")
 	if game_state != null:
 		game_state.ap_changed.connect(_on_ap_changed)
 		game_state.context_updated.connect(_on_context_updated)
@@ -94,7 +102,7 @@ func _ready() -> void:
 		game_state.search_triggered.connect(_on_search_triggered)
 		game_state.context_purified.connect(_on_context_purified)
 		
-		var sm = get_node_or_null("/root/SaveManager")
+		var sm = _safe_get_node("SaveManager")
 		if sm != null:
 			career_label.text = "L" + str(sm.career_level)
 			player_hp_bar.max_value = sm.max_player_hp
@@ -109,7 +117,7 @@ func _ready() -> void:
 		
 	game_over_panel.hide()
 	
-	var sm = get_node_or_null("/root/SaveManager")
+	var sm = _safe_get_node("SaveManager")
 	if sm != null:
 		if not sm.has_completed_tutorial:
 			tutorial_panel.hide()
@@ -135,7 +143,7 @@ func _input(event: InputEvent) -> void:
 
 func _on_start_pressed() -> void:
 	tutorial_panel.hide()
-	var game_state = get_node_or_null("/root/GameState")
+	var game_state = _safe_get_node("GameState")
 	if game_state != null:
 		game_state.start_game()
 
@@ -225,12 +233,12 @@ func _on_rate_limit_updated(compression: float) -> void:
 		rate_limit_label.hide()
 
 func _on_deliver_pressed() -> void:
-	var game_state = get_node_or_null("/root/GameState")
+	var game_state = _safe_get_node("GameState")
 	if game_state != null:
 		game_state.deliver_context()
 
 func _on_query_submitted(new_text: String) -> void:
-	var game_state = get_node_or_null("/root/GameState")
+	var game_state = _safe_get_node("GameState")
 	if game_state != null:
 		game_state.trigger_search(1) # 1 = KEYWORD
 
@@ -261,7 +269,7 @@ func _on_search_completed(response: Dictionary) -> void:
 		else:
 			card.match_type = CardData.MatchType.HYBRID
 			
-		var event_bus = get_node_or_null("/root/EventBus")
+		var event_bus = _safe_get_node("EventBus")
 		if event_bus != null:
 			event_bus.card_drawn.emit(card)
 
@@ -277,7 +285,7 @@ func _on_search_failed(error_code: int, message: String) -> void:
 		card.title = "[MOCK] %s #%d" % [base_title.left(15), i + 1]
 		card.match_type = randi_range(1, 3) # Random MatchType
 		
-		var event_bus = get_node_or_null("/root/EventBus")
+		var event_bus = _safe_get_node("EventBus")
 		if event_bus != null:
 			event_bus.card_drawn.emit(card)
 
@@ -308,7 +316,7 @@ func _on_card_drawn(card: Resource) -> void:
 		print("Hand full! Card draw rejected.")
 		return
 
-	var game_state = get_node_or_null("/root/GameState")
+	var game_state = _safe_get_node("GameState")
 	if game_state != null:
 		var ratio = game_state.data_poisoning_ratio
 		if randf() < ratio:

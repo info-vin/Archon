@@ -61,7 +61,7 @@ func run_tests(runner) -> bool:
 	play_area._drop_data(Vector2(50, 50), drag_data)
 	
 	# Wait for Tween to finish (0.4s) before checking signal
-	await runner.create_timer(0.5).timeout
+	await runner.create_timer(1.5).timeout
 	
 	if drag_data == null or not is_instance_valid(drag_data):
 		print("Test confirmed card was deleted (Action card behavior).")

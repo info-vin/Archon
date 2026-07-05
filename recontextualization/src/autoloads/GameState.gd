@@ -41,8 +41,16 @@ var delivery_count: int = 0
 
 var active_context = preload("res://src/models/DeckData.gd").new()
 
+
+func _safe_get_node(singleton_name: String) -> Node:
+	if Engine.has_singleton(singleton_name):
+		return Engine.get_singleton(singleton_name)
+	if is_inside_tree():
+		return get_node_or_null("/root/" + singleton_name)
+	return null
+
 func _ready() -> void:
-	var event_bus = get_node_or_null("/root/EventBus")
+	var event_bus = _safe_get_node("EventBus")
 	if event_bus != null:
 		if event_bus.has_signal("card_played"):
 			event_bus.card_played.connect(_on_card_played)
@@ -62,7 +70,7 @@ func _process(delta: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
-			var sm = get_node_or_null("/root/SaveManager")
+			var sm = _safe_get_node("SaveManager")
 			if sm != null:
 				sm.penalize_battle_loss()
 			game_over.emit(false)
@@ -76,7 +84,7 @@ func start_game() -> void:
 	data_poisoning_ratio = 0.0
 	delivery_count = 0
 	
-	var sm = get_node_or_null("/root/SaveManager")
+	var sm = _safe_get_node("SaveManager")
 	if sm != null:
 		max_player_hp = sm.max_player_hp
 		player_hp = max_player_hp
@@ -104,8 +112,8 @@ func start_game() -> void:
 	rate_limit_updated.emit(rate_limit_compression)
 	
 	# Draw starting action cards based on SaveManager
-	var card_reg = get_node_or_null("/root/CardRegistry")
-	var event_bus = get_node_or_null("/root/EventBus")
+	var card_reg = _safe_get_node("CardRegistry")
+	var event_bus = _safe_get_node("EventBus")
 	if card_reg != null and event_bus != null:
 		var equipped = ["keyword_search", "dense_search", "reranker"]
 		if sm != null:
@@ -122,7 +130,7 @@ func deduct_sla(amount: float) -> void:
 		if sla_timer <= 0.0:
 			sla_timer = 0.0
 			is_game_active = false
-			var sm = get_node_or_null("/root/SaveManager")
+			var sm = _safe_get_node("SaveManager")
 			if sm != null:
 				sm.penalize_battle_loss()
 			game_over.emit(false)
@@ -164,13 +172,13 @@ func _on_card_played(card: Resource) -> void:
 		elif card_id == "keyword_search":
 			search_triggered.emit(3) # KEYWORD
 			# Draw back so it's reusable
-			var event_bus = get_node_or_null("/root/EventBus")
+			var event_bus = _safe_get_node("EventBus")
 			if event_bus != null:
 				event_bus.card_drawn.emit(card.duplicate())
 				
 		elif card_id == "dense_search":
 			search_triggered.emit(2) # VECTOR
-			var event_bus = get_node_or_null("/root/EventBus")
+			var event_bus = _safe_get_node("EventBus")
 			if event_bus != null:
 				event_bus.card_drawn.emit(card.duplicate())
 
@@ -198,7 +206,7 @@ func deliver_context() -> void:
 		if player_hp <= 0:
 			player_hp = 0
 			is_game_active = false
-			var sm = get_node_or_null("/root/SaveManager")
+			var sm = _safe_get_node("SaveManager")
 			if sm != null:
 				sm.penalize_battle_loss()
 			player_died.emit()
@@ -219,7 +227,7 @@ func deliver_context() -> void:
 			is_game_active = false
 			var rank = calculate_battle_rank()
 			print("Battle Won with Rank: ", rank)
-			var sm = get_node_or_null("/root/SaveManager")
+			var sm = _safe_get_node("SaveManager")
 			if sm != null:
 				sm.award_battle_loot(rank)
 			game_over.emit(true)

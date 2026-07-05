@@ -31,7 +31,7 @@ func refresh_inventory_ui() -> void:
     for child in inventory_container.get_children():
         child.queue_free()
         
-    var sm = get_node_or_null("/root/SaveManager")
+    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if not sm:
         return
         
@@ -69,7 +69,7 @@ func _calculate_success_rate(level: int, catalyst: String) -> float:
         bonus = CATALYST_A_BONUS
         
     var level_bonus = 0.0
-    var sm = get_node_or_null("/root/SaveManager")
+    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if sm:
         level_bonus = min(COGNITIVE_BONUS_MAX, sm.cognitive_level * COGNITIVE_BONUS_MULT)
         
@@ -83,7 +83,7 @@ func _on_synthesize_pressed() -> void:
     var base_id = current_cards_in_furnace[0]["base_id"]
     var rate = _calculate_success_rate(target_level, current_catalyst)
     
-    var sm = get_node_or_null("/root/SaveManager")
+    var sm = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
     if sm:
         # Deduct catalyst
         if current_catalyst != "none":
