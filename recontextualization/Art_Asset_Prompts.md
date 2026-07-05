@@ -226,32 +226,35 @@
 
 ### 7.1 社交者助理 - Alice (Socializer Agent)
 * **目標檔案**：`recontextualization/assets/images/avatar_alice.png`
-* **主題**：親切、活潑且善於溝通的賽博龐克接線生或社群經理風格。
+* **主題**：親切、活潑且善於溝通的賽博龐克接線生或社群經理風格。以「粉紅與亮青色 (Pink & Cyan)」為主要視覺特徵，輪廓圓潤具親和力。
 * **Prompt & Settings**:
   ```text
-  A cyberpunk female hacker avatar named Alice, friendly and charismatic expression, wearing sleek futuristic headset with glowing pink and cyan neon lights, stylish casual cyberpunk street wear, neon-lit cityscape in the background, anime-influenced highly detailed portrait, 2d vector art style, game UI portrait.
+  A cyberpunk female hacker avatar named Alice, friendly and charismatic expression, wearing sleek futuristic headset with glowing pink and cyan neon lights, stylish casual cyberpunk street wear, neon-lit cityscape in the background, anime-influenced highly detailed portrait, 2d vector art style, game UI portrait, distinct pink and cyan color theme, recognizable silhouette.
+  --no text, typography, letters, words, dark gloomy colors
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：解析度限制 512x512)
+  (⚠️ 畫師/產圖工具注意：解析度限制 256x256)
   ```
 
 ### 7.2 推論者助理 - Bob (Deductor Agent)
 * **目標檔案**：`recontextualization/assets/images/avatar_bob.png`
-* **主題**：冷靜、嚴謹、像偵探或分析師的 ReAct 推理大師。
+* **主題**：冷靜、嚴謹、像偵探或分析師的 ReAct 推理大師。以「琥珀與黃金色 (Amber & Gold)」為主要視覺特徵，輪廓俐落且穿著正裝。
 * **Prompt & Settings**:
   ```text
-  A cyberpunk male detective hacker avatar named Bob, serious and analytical expression, wearing a high-tech augmented reality monocle glowing with amber data streams, tailored futuristic dark suit, dimly lit server room background, film noir cyberpunk aesthetic, highly detailed portrait, 2d vector art style, game UI portrait.
+  A cyberpunk male detective hacker avatar named Bob, serious and analytical expression, wearing a high-tech augmented reality monocle glowing with amber data streams, tailored futuristic dark suit, dimly lit server room background, film noir cyberpunk aesthetic, highly detailed portrait, 2d vector art style, game UI portrait, distinct amber and gold color theme, sharp tailored silhouette.
+  --no text, typography, letters, words, bright cheerful colors
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：解析度限制 512x512)
+  (⚠️ 畫師/產圖工具注意：解析度限制 256x256)
   ```
 
 ### 7.3 檢索者助理 - Charlie (Retriever Agent)
 * **目標檔案**：`recontextualization/assets/images/avatar_charlie.png`
-* **主題**：專注於深度潛入資料庫的礦工或導航員。
+* **主題**：專注於深度潛入資料庫的礦工或導航員。以「工業綠與鐵灰色 (Industrial Green & Iron Grey)」為主要視覺特徵，輪廓厚重且帶有重裝備。
 * **Prompt & Settings**:
   ```text
-  A heavy-duty cyberpunk data miner avatar named Charlie, rugged and focused expression, wearing a bulky neural-dive helmet with multiple glowing green optical sensors, thick cables connecting to the suit, deep matrix grid background, industrial sci-fi aesthetic, highly detailed portrait, 2d vector art style, game UI portrait.
+  A heavy-duty cyberpunk data miner avatar named Charlie, rugged and focused expression, wearing a bulky neural-dive helmet with multiple glowing green optical sensors, thick cables connecting to the suit, deep matrix grid background, industrial sci-fi aesthetic, highly detailed portrait, 2d vector art style, game UI portrait, distinct industrial green color theme, bulky heavy silhouette.
+  --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：解析度限制 512x512)
+  (⚠️ 畫師/產圖工具注意：解析度限制 256x256)
   ```
 
 ### 7.4 裝備插槽圖示 (Equipment Slot Icon)
