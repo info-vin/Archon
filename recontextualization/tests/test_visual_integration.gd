@@ -8,13 +8,10 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	var game_board = game_board_scene.instantiate()
 	scene_tree.root.add_child(game_board)
 	
-	var card_script = preload("res://src/models/cards/CardData.gd")
-	var card = card_script.new()
-	card.set("type", 2)
-	card.set("title", "Test Chip")
+	var card = load("res://src/models/cards/resources/keyword_search.tres")
 	
 	# Simulate drawing a card directly
-	game_board._on_card_drawn(card)
+	game_board.anim_draw_card(card)
 	
 	print("Waiting for visual animation to complete...")
 	await scene_tree.create_timer(1.0).timeout

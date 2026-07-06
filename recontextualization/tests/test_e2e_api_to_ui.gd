@@ -78,9 +78,9 @@ func _on_search_completed(result: Dictionary):
 			if event_bus.has_signal("card_drawn"):
 				event_bus.card_drawn.emit(card)
 			else:
-				_game_board._on_card_drawn(card)
+				_game_board.anim_draw_card(card)
 		else:
-			_game_board._on_card_drawn(card)
+			_game_board.anim_draw_card(card)
 			
 	print("Waiting for visual animations...")
 	await _scene_tree.create_timer(2.5).timeout

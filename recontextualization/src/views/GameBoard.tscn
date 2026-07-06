@@ -1,6 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://cxgb456xyz"]
 
 [ext_resource type="Script" path="res://src/views/GameBoard.gd" id="1_gb"]
+[ext_resource type="Script" path="res://src/views/GameBoardController.gd" id="5_controller"]
 [ext_resource type="Script" path="res://src/views/components/HandLayout.gd" id="hand_layout_script"]
 [ext_resource type="Texture2D" path="res://assets/images/bg_vector_grid.png" id="bg_tex"]
 [ext_resource type="Script" path="res://src/views/EventQueue.gd" id="2_eq"]
@@ -284,3 +285,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 expand = true
+
+[node name="GameBoardController" type="Node" parent="."]
+script = ExtResource("5_controller")
