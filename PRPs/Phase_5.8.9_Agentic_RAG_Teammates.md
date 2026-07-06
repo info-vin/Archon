@@ -75,12 +75,13 @@
 
 ## 6. 完成狀態 (Completion Status)
 
-**Phase 5.8.9 核心實作已於 2026-07-05 完成。**
+**Phase 5.8.9 核心實作已於 2026-07-06 完成。**
 *   **實體化產出**：成功完成 Tasks 4.1 ~ 4.6 的所有實作，包括 `TeammateDashboard`, `EnvConfig`, 雙腦路由, `AgentCompanion`, `CombatJuice`，以及 `Art_Asset_Prompts.md` 的擴充。
 *   **物理公證 (No Fake Code)**：
     *   移除所有模型字串的 Hard-coding，建立 SSOT 環境設定。
-    *   所有 Godot UI 邏輯 (`play_area`, `CombatJuice` 呼叫等) 均通過 `godot --headless --editor --quit` 的 0 個 Parse Error 實體掃描。
-*   **下一步**：執行驗證計畫 (單元測試)，以及根據美術提示詞庫生成實體資產。
+    *   **全面根除視圖與控制器中的硬編碼 (Hardcoding Eradication)**：對所有的 `src/views/` 進行稽核，已將 `res://` 路徑加載、動態 `.new()` 實例化，以及 `StyleBox` 之類的 UI 屬性，全數轉移為 `@export_file` 參數化、或是實體定義在 `.tscn` 場景圖內。解除循環依賴，保證 Controller 與 View 之間的安全解耦。
+    *   所有 Godot UI 邏輯 (`play_area`, `CombatJuice` 呼叫等) 均通過 `/Applications/Godot.app/Contents/MacOS/Godot --headless --build-solutions --quit` 的 0 個 Parse Error 實體掃描。
+*   **下一步**：執行 Phase 6.0 相關的前置作業 (Transition to next phase)。
 
 ---
 

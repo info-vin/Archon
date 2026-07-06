@@ -1,12 +1,140 @@
-[gd_scene load_steps=2 format=3 uid="uid://b4yq1q5x9b3a"]
+[gd_scene load_steps=6 format=3 uid="uid://b4yq1q5x9b3a"]
 
-[ext_resource type="Script" path="res://src/views/TeammateDashboard.gd" id="1_xxx"]
+[ext_resource type="Script" path="res://src/views/TeammateDashboard.gd" id="1_dash"]
+[ext_resource type="Script" path="res://src/views/TeammateDashboardController.gd" id="2_ctrl"]
+[ext_resource type="PackedScene" uid="uid://cxgb456xyz" path="res://src/views/GameBoard.tscn" id="3_gb"]
+[ext_resource type="PackedScene" uid="uid://card_manage_id" path="res://src/views/CardManagementMenu.tscn" id="4_cm"]
+[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="5_mm"]
 
-[node name="TeammateDashboard" type="Control"]
+[node name="TeammateDashboard" type="Control" node_paths=PackedStringArray("teammate_list", "model_option", "react_check", "budget_slider", "budget_label", "ingested_docs_label", "back_btn", "card_menu_btn", "dive_btn")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_xxx")
+script = ExtResource("1_dash")
+teammate_list = NodePath("MarginContainer/VBoxContainer/HBoxContainer/LeftVBox/ItemList")
+model_option = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox/OptionButton")
+react_check = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox/CheckButton")
+budget_slider = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/HSlider")
+budget_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/Label")
+ingested_docs_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/IngestedLabel")
+back_btn = NodePath("MarginContainer/VBoxContainer/NavHBox/BackButton")
+card_menu_btn = NodePath("MarginContainer/VBoxContainer/NavHBox/CardMenuButton")
+dive_btn = NodePath("MarginContainer/VBoxContainer/NavHBox/DiveButton")
+
+[node name="TeammateDashboardController" type="Node" parent="."]
+script = ExtResource("2_ctrl")
+game_board_scene = ExtResource("3_gb")
+card_menu_scene = ExtResource("4_cm")
+main_menu_scene = ExtResource("5_mm")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "menu_teammate_dashboard"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 40
+
+[node name="LeftVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ListTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
+layout_mode = 2
+text = "label_recruited_agents"
+
+[node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ConfigVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 20
+
+[node name="ConfigTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+layout_mode = 2
+text = "label_reasoning_strategy"
+
+[node name="ModelHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
+layout_mode = 2
+text = "label_equipped_model"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
+layout_mode = 2
+
+[node name="ReactHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
+layout_mode = 2
+text = "label_react_reasoning"
+
+[node name="CheckButton" type="CheckButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
+layout_mode = 2
+
+[node name="BudgetVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
+layout_mode = 2
+text = "label_token_cap_500"
+
+[node name="HSlider" type="HSlider" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
+layout_mode = 2
+min_value = 100.0
+max_value = 2000.0
+step = 100.0
+value = 500.0
+
+[node name="IngestedLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+layout_mode = 2
+text = "label_ingested_docs_0"
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NavHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer/NavHBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "menu_return"
+
+[node name="CardMenuButton" type="Button" parent="MarginContainer/VBoxContainer/NavHBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "menu_card_management"
+
+[node name="DiveButton" type="Button" parent="MarginContainer/VBoxContainer/NavHBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "menu_start_dive"

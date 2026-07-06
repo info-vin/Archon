@@ -1,7 +1,8 @@
 extends Node
 
-const TRANSITION_SCENE_PATH = "res://src/views/TransitionVideo.tscn"
-const CARD_MENU_SCENE_PATH = "res://src/views/CardManagementMenu.tscn"
+@export var transition_scene: PackedScene
+@export var card_menu_scene: PackedScene
+@export var teammate_dashboard_scene: PackedScene
 
 @onready var view = get_parent()
 
@@ -17,6 +18,7 @@ func _ready() -> void:
 
 	view.request_new_career.connect(_on_new_career_requested)
 	view.request_continue.connect(_on_continue_requested)
+	view.request_teammate_dashboard.connect(_on_teammate_dashboard_requested)
 	view.request_card_management.connect(_on_card_management_requested)
 	view.request_quit.connect(_on_quit_requested)
 	view.request_language_change.connect(_on_language_change_requested)
@@ -27,13 +29,16 @@ func _on_new_career_requested() -> void:
 		save_manager.max_player_hp = 100.0
 		save_manager.has_completed_tutorial = false
 		save_manager.save_progress()
-	get_tree().change_scene_to_file(TRANSITION_SCENE_PATH)
+	if transition_scene: get_tree().change_scene_to_packed(transition_scene)
 
 func _on_continue_requested() -> void:
-	get_tree().change_scene_to_file(TRANSITION_SCENE_PATH)
+	if transition_scene: get_tree().change_scene_to_packed(transition_scene)
 
 func _on_card_management_requested() -> void:
-	get_tree().change_scene_to_file(CARD_MENU_SCENE_PATH)
+	if card_menu_scene: get_tree().change_scene_to_packed(card_menu_scene)
+
+func _on_teammate_dashboard_requested() -> void:
+	if teammate_dashboard_scene: get_tree().change_scene_to_packed(teammate_dashboard_scene)
 
 func _on_quit_requested() -> void:
 	get_tree().quit()

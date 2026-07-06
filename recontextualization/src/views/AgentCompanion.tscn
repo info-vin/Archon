@@ -2,7 +2,8 @@
 
 [ext_resource type="Script" path="res://src/views/AgentCompanion.gd" id="1_agent"]
 
-[node name="AgentCompanion" type="Control"]
+[node name="AgentCompanion" type="Control" node_paths=PackedStringArray("rich_text_label", "typewriter_timer")]
+custom_minimum_size = Vector2(300, 400)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,3 +11,34 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_agent")
+rich_text_label = NodePath("Panel/VBoxContainer/RichTextLabel")
+typewriter_timer = NodePath("TypewriterTimer")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Header" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "agent_terminal_title"
+horizontal_alignment = 1
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+
+[node name="TypewriterTimer" type="Timer" parent="."]
+wait_time = 0.05

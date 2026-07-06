@@ -1,11 +1,22 @@
-[gd_scene load_steps=2 format=3 uid="uid://cxgb456hud1"]
+[gd_scene load_steps=5 format=3 uid="uid://cxgb456hud1"]
 
 [ext_resource type="Script" path="res://src/views/components/GameHUD.gd" id="1_hud"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_green"]
+bg_color = Color(0.2, 0.8, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_red"]
+bg_color = Color(1, 0.2, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dark_red"]
+bg_color = Color(0.6, 0, 0, 1)
 [node name="GameHUD" type="HBoxContainer"]
 theme_override_constants/separation = 40
 alignment = 1
 script = ExtResource("1_hud")
+style_green = SubResource("StyleBoxFlat_green")
+style_red = SubResource("StyleBoxFlat_red")
+style_dark_red = SubResource("StyleBoxFlat_dark_red")
 
 [node name="PoisonBar" type="ProgressBar" parent="."]
 custom_minimum_size = Vector2(120, 20)

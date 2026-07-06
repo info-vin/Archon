@@ -1,5 +1,7 @@
 extends Control
 
+@export var next_scene: PackedScene
+
 @onready var video_player: VideoStreamPlayer = $VideoStreamPlayer
 
 func _ready() -> void:
@@ -14,4 +16,5 @@ func _on_video_finished() -> void:
     _skip_intro()
 
 func _skip_intro() -> void:
-    get_tree().change_scene_to_file("res://src/views/GameBoard.tscn")
+    if next_scene:
+        get_tree().change_scene_to_packed(next_scene)

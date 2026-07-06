@@ -37,4 +37,4 @@ theme_override_font_sizes/font_size = 32
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "重新開始"
+text = "menu_continue_dashboard"

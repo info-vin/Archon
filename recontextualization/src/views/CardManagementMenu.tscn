@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://card_manage_id"]
+[gd_scene load_steps=6 format=3 uid="uid://card_manage_id"]
 
 [ext_resource type="Script" path="res://src/views/CardManagementMenu.gd" id="1_cardmanage"]
+[ext_resource type="Script" path="res://src/views/CardManagementMenuController.gd" id="2_ctrl"]
+[ext_resource type="PackedScene" uid="uid://cxgb456xyz" path="res://src/views/GameBoard.tscn" id="3_gb"]
+[ext_resource type="PackedScene" uid="uid://b4yq1q5x9b3a" path="res://src/views/TeammateDashboard.tscn" id="4_td"]
+[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="5_mm"]
 
 [node name="CardManagementMenu" type="Control"]
 layout_mode = 3
@@ -10,6 +14,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_cardmanage")
+
+[node name="CardManagementMenuController" type="Node" parent="."]
+script = ExtResource("2_ctrl")
+game_board_scene = ExtResource("3_gb")
+teammate_dash_scene = ExtResource("4_td")
+main_menu_scene = ExtResource("5_mm")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
@@ -75,18 +85,36 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BackButton" type="Button" parent="."]
+[node name="NavBox" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -100.0
+offset_left = -300.0
 offset_top = -100.0
-offset_right = 100.0
+offset_right = 300.0
 offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BackButton" type="Button" parent="NavBox"]
+custom_minimum_size = Vector2(150, 50)
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Back"
+text = "menu_return"
+
+[node name="TeammateDashboardButton" type="Button" parent="NavBox"]
+custom_minimum_size = Vector2(250, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu_teammate_dashboard"
+
+[node name="StartDiveButton" type="Button" parent="NavBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu_start_dive"

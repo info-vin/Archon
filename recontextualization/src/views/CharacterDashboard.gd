@@ -1,10 +1,11 @@
 extends Control
 
+signal request_return_menu
+
 @export var badge_rank_c: Texture2D
 @export var badge_rank_b: Texture2D
 @export var badge_rank_a: Texture2D
 @export var badge_rank_s: Texture2D
-@export var main_menu_scene: PackedScene
 
 @onready var bg_texture: TextureRect = $Background
 @onready var avatar_rect: TextureRect = $HBoxContainer/ProfilePanel/VBox/Avatar
@@ -18,17 +19,15 @@ extends Control
 @onready var nodes_container: Control = $HBoxContainer/TopologyPanel/NodesContainer
 
 var line_shader = preload("res://src/shaders/DataFlowLine.gdshader")
+var _controller: Node
 
 func _ready() -> void:
-	update_profile()
 	setup_topology_web()
+	
+	if has_node("BackButton"):
+		$BackButton.pressed.connect(func(): request_return_menu.emit())
 
-func update_profile() -> void:
-	var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-	if sm == null: return
-	
-	var sector = sm.get_current_sector()
-	
+func update_profile(sector: int, account_xp: int) -> void:
 	# Determine badge and avatar tint
 	var badge_tex: Texture2D = badge_rank_c
 	var avatar_tint = Color(0.6, 0.6, 0.6) # C rank gray
@@ -52,7 +51,7 @@ func update_profile() -> void:
 		
 	avatar_rect.modulate = avatar_tint
 	rank_label.text = rank_text
-	xp_bar.value = sm.account_xp
+	xp_bar.value = account_xp
 
 func setup_topology_web() -> void:
 	# Define a few mock nodes and connections matching the background roughly
@@ -96,7 +95,3 @@ func _on_node_pressed(node_idx: int) -> void:
 	var tween = create_tween()
 	tween.tween_property(btn, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.1) # HDR Glow
 	tween.tween_property(btn, "modulate", Color.WHITE, 0.4)
-
-func _on_back_pressed() -> void:
-	if main_menu_scene:
-		get_tree().change_scene_to_packed(main_menu_scene)

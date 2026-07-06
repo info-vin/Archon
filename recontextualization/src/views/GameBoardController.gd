@@ -25,6 +25,8 @@ func _ready() -> void:
 		await view.ready
 
 	# 1. Connect View signals to Controller actions
+	view.request_dashboard.connect(_on_dashboard_requested)
+	view.request_workshop.connect(_on_workshop_requested)
 	view.request_start.connect(_on_request_start)
 	view.request_restart.connect(_on_request_restart)
 	view.request_deliver.connect(_on_request_deliver)
@@ -37,6 +39,7 @@ func _ready() -> void:
 	# 2. Connect Model/State signals to View updates
 	if game_state != null:
 		game_state.ap_changed.connect(view.update_ap)
+		game_state.chaos_event_triggered.connect(view.trigger_chaos_event)
 		game_state.context_updated.connect(view.update_purity)
 		game_state.hp_changed.connect(view.update_crisis_hp)
 		game_state.player_hp_changed.connect(view.update_player_hp)
@@ -85,7 +88,7 @@ func _on_request_start() -> void:
 
 func _on_request_restart() -> void:
 	if view.main_menu_scene:
-		get_tree().change_scene_to_packed(view.main_menu_scene)
+		get_tree().change_scene_to_file(view.main_menu_scene)
 
 func _on_request_deliver() -> void:
 	view.play_deliver_blast()
@@ -100,6 +103,14 @@ func _on_request_save_progress() -> void:
 	if save_manager != null:
 		save_manager.save_progress()
 
+func _on_dashboard_requested() -> void:
+	if view.dashboard_scene:
+		get_tree().change_scene_to_file(view.dashboard_scene)
+
+func _on_workshop_requested() -> void:
+	if view.workshop_scene:
+		get_tree().change_scene_to_file(view.workshop_scene)
+
 func _on_request_load_progress() -> void:
 	if save_manager != null:
 		save_manager.load_progress()
@@ -107,7 +118,7 @@ func _on_request_load_progress() -> void:
 
 func _on_request_main_menu() -> void:
 	if view.main_menu_scene:
-		get_tree().change_scene_to_packed(view.main_menu_scene)
+		get_tree().change_scene_to_file(view.main_menu_scene)
 
 func _on_request_quit_game() -> void:
 	get_tree().quit()

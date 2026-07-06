@@ -1,6 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://char_dashboard_uid"]
+[gd_scene load_steps=7 format=3 uid="uid://char_dashboard_uid"]
 
 [ext_resource type="Script" path="res://src/views/CharacterDashboard.gd" id="1_dash"]
+[ext_resource type="Script" path="res://src/views/CharacterDashboardController.gd" id="2_ctrl"]
+[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="3_mm"]
 [ext_resource type="Texture2D" path="res://assets/images/bg_talent_web.png" id="2_bg"]
 [ext_resource type="Texture2D" path="res://assets/images/avatar_default.png" id="3_avatar"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_c.png" id="4_badge"]
@@ -13,6 +15,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dash")
+
+[node name="CharacterDashboardController" type="Node" parent="."]
+script = ExtResource("2_ctrl")
+main_menu_scene = ExtResource("3_mm")
 
 [node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
@@ -86,6 +92,8 @@ size_flags_horizontal = 4
 max_value = 1000.0
 value = 100.0
 
+
+
 [node name="TopologyPanel" type="Control" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -110,6 +118,4 @@ offset_top = -60.0
 offset_right = 120.0
 offset_bottom = -20.0
 grow_vertical = 0
-text = "Back"
-
-[connection signal="pressed" from="BackButton" to="." method="_on_back_pressed"]
+text = "menu_return"

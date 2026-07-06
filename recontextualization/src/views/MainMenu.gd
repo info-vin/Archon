@@ -2,6 +2,7 @@ extends Control
 
 signal request_new_career
 signal request_continue
+signal request_teammate_dashboard
 signal request_card_management
 signal request_quit
 signal request_language_change(new_lang: String)
@@ -16,6 +17,7 @@ func _ready() -> void:
 func _connect_ui_signals() -> void:
 	$VBoxContainer/NewCareerButton.pressed.connect(func(): request_new_career.emit())
 	$VBoxContainer/ContinueButton.pressed.connect(func(): request_continue.emit())
+	$VBoxContainer/TeammateDashboardButton.pressed.connect(func(): request_teammate_dashboard.emit())
 	$VBoxContainer/CardManagementButton.pressed.connect(func(): request_card_management.emit())
 	$VBoxContainer/QuitButton.pressed.connect(func(): request_quit.emit())
 	

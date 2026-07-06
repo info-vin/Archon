@@ -10,20 +10,19 @@ extends HBoxContainer
 @onready var sla_progress: ProgressBar = $SLAPorgressBar
 @onready var sla_text: Label = $SLAPorgressBar/SLAText
 
+@export var style_green: StyleBox
+@export var style_red: StyleBox
+@export var style_dark_red: StyleBox
+
 var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
 
 func _ready() -> void:
-	var style_green = StyleBoxFlat.new()
-	style_green.bg_color = Color(0.2, 0.8, 0.2, 1.0)
-	purity_bar.add_theme_stylebox_override("fill", style_green)
-
-	var style_red = StyleBoxFlat.new()
-	style_red.bg_color = Color(1.0, 0.2, 0.2, 1.0)
-	poison_bar.add_theme_stylebox_override("fill", style_red)
-
-	var style_dark_red = StyleBoxFlat.new()
-	style_dark_red.bg_color = Color(0.6, 0.0, 0.0, 1.0)
-	crisis_hp_bar.add_theme_stylebox_override("fill", style_dark_red)
+	if style_green:
+		purity_bar.add_theme_stylebox_override("fill", style_green)
+	if style_red:
+		poison_bar.add_theme_stylebox_override("fill", style_red)
+	if style_dark_red:
+		crisis_hp_bar.add_theme_stylebox_override("fill", style_dark_red)
 
 func initialize_career(level: int, max_player_hp: float) -> void:
 	career_label.text = "L" + str(level)

@@ -1,5 +1,7 @@
 extends Control
 
+signal request_dashboard
+signal request_workshop
 signal request_start
 signal request_restart
 signal request_deliver
@@ -12,7 +14,9 @@ signal request_quit_game
 @onready var hand_container: Container = $MarginContainer/VBoxContainer/HandContainer
 @onready var event_queue: Node = $EventQueue
 
-@export var main_menu_scene: PackedScene
+@export_file("*.tscn") var main_menu_scene: String
+@export_file("*.tscn") var dashboard_scene: String
+@export_file("*.tscn") var workshop_scene: String
 @export var video_victory: VideoStream
 @export var video_defeat_glitch: VideoStream
 @export var video_defeat_shutdown: VideoStream
@@ -21,6 +25,7 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
 
 @onready var game_hud: HBoxContainer = $MarginContainer/VBoxContainer/GameHUD
+@onready var agent_companion: Control = $AgentCompanion
 @onready var query_input: LineEdit = $MarginContainer/VBoxContainer/QueryBar/QueryInput
 @onready var deliver_button: Button = $MarginContainer/VBoxContainer/QueryBar/DeliverButton
 @onready var tutorial_panel: ColorRect = $TutorialPanel
@@ -30,7 +35,9 @@ var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
 
 func _ready() -> void:
 	tutorial_panel.request_start.connect(func(): request_start.emit())
-	game_over_panel.request_restart.connect(func(): request_restart.emit())
+	game_over_panel.request_dashboard.connect(func(): request_dashboard.emit())
+
+	$MarginContainer/VBoxContainer/QueryBar/WorkshopButton.pressed.connect(func(): request_workshop.emit())
 	deliver_button.pressed.connect(func(): request_deliver.emit())
 	query_input.text_submitted.connect(func(text): request_query.emit(text))
 	
@@ -89,6 +96,10 @@ func update_poisoning(ratio: float) -> void:
 
 func update_rate_limit(compression: float) -> void:
 	game_hud.update_rate_limit(compression, event_queue)
+
+func trigger_chaos_event(event_id: String) -> void:
+	if agent_companion and agent_companion.has_method("trigger_chaos_event"):
+		agent_companion.trigger_chaos_event(event_id)
 
 func play_deliver_blast() -> void:
 	CombatJuice.deliver_blast(deliver_button)
