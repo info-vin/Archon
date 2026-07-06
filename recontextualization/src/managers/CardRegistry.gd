@@ -11,16 +11,19 @@ func _safe_get_node(singleton_name: String) -> Node:
 		return get_node_or_null("/root/" + singleton_name)
 	return null
 
-var _preloaded_cards: Array[Resource] = [
-	preload("res://src/models/cards/resources/keyword_search.tres"),
-	preload("res://src/models/cards/resources/dense_search.tres"),
-	preload("res://src/models/cards/resources/reranker.tres")
-]
-
 func _ready() -> void:
-	for card in _preloaded_cards:
-		if card and card.get("id") != null:
-			register_card(card)
+	var dir = DirAccess.open(cards_dir)
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		while file_name != "":
+			if not dir.current_is_dir():
+				if file_name.ends_with(".tres") or file_name.ends_with(".tres.remap"):
+					var actual_name = file_name.replace(".remap", "")
+					var res = ResourceLoader.load(cards_dir + actual_name)
+					if res and res.get("id") != null:
+						register_card(res)
+			file_name = dir.get_next()
 
 func register_card(card: Resource) -> void:
 	if card.id == "":

@@ -44,7 +44,7 @@ func run_tests(tree: SceneTree = null) -> bool:
         
     # 5. Simulate DragData -> Deliver
     # Emitting card_played(data) should trigger Deliver
-    gs.hand_context.add_card(mock_card, 0.0)
+    gs.hand_context.add_card(mock_card)
     eb.request_play_card.emit(mock_card)
     if tm.current_state.name != "Deliver":
         print("FAIL: Did not transition to Deliver state on card played")

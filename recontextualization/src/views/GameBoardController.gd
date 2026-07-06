@@ -43,9 +43,9 @@ func _ready() -> void:
 		game_state.context_updated.connect(view.update_purity)
 		game_state.hp_changed.connect(view.update_crisis_hp)
 		game_state.player_hp_changed.connect(view.update_player_hp)
-		game_state.sla_changed.connect(view.update_sla)
+		game_state.env_mgr.sla_changed.connect(view.update_sla)
 		game_state.game_over.connect(view.show_game_over)
-		game_state.poisoning_updated.connect(view.update_poisoning)
+		game_state.env_mgr.poisoning_updated.connect(view.update_poisoning)
 		game_state.rate_limit_updated.connect(view.update_rate_limit)
 		game_state.context_purified.connect(view.purify_context)
 		
@@ -97,7 +97,7 @@ func _on_request_deliver() -> void:
 
 func _on_request_query(text: String) -> void:
 	if game_state != null:
-		game_state.trigger_search(1) # 1 = KEYWORD
+		game_state.search_ctrl.trigger_search(1) # 1 = KEYWORD
 
 func _on_request_save_progress() -> void:
 	if save_manager != null:

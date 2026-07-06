@@ -61,6 +61,15 @@ description: Strict code generation, architecture design, headless compilation c
 - **單例認知錯誤**：`Engine.has_singleton("GameState")` 是檢查 C++ 單例。自定義的 Autoload 必須使用 `get_tree().root.has_node("GameState")` 或 `get_node_or_null("/root/GameState")` 檢查。
 - **Object.get 誤用**：將 Godot 的 `Object.get(property)` 誤用為 Python 的 `dict.get(key, default)`（傳入兩個參數）會導致靜默崩潰。存取 Object 時只能傳遞單一屬性名稱。
 
+### 1.9 全域污染防禦 (Autoload vs Child Nodes)
+根據 Godot 社群最佳實踐，**嚴格限制 Autoload (Singleton) 的數量**。
+- **Autoload 適用時機**：僅保留給「真正需要跨場景、生命週期為永久」的系統（如：`AudioPlayer`, `EventBus`, `SceneChanger`）。
+- **子元件組合 (Child Node Composition) 優先**：若 Controller（如 `SearchController`, `EnvironmentManager`）僅服務於「單一對戰或特定場景」，絕對禁止將其註冊為 Autoload。必須將其設計為**子節點 (Child Nodes)**，掛載於核心管理器（如 `GameState`）之下。
+- **優勢**：
+  1. 避免高耦合與義大利麵條程式碼 (Spaghetti Code)。
+  2. 確保「生命週期綁定 (Lifecycle Binding)」，場景重置時狀態能安全歸零，杜絕上一局數值殘留的致命 Bug。
+  3. 符合 "If you can avoid making it a global, do it." 的引擎哲學。
+
 ---
 
 ## 🛡️ 二、【無頭模式防禦與相容性門禁】

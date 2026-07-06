@@ -4,6 +4,11 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	print("Running test_composite_threats...")
 	var passed = true
 	
+	if Engine.has_singleton("EventBus"):
+		Engine.unregister_singleton("EventBus")
+	if Engine.has_singleton("GameState"):
+		Engine.unregister_singleton("GameState")
+		
 	# Manually instantiate singletons
 	var event_bus = preload("res://src/autoloads/EventBus.gd").new()
 	Engine.register_singleton("EventBus", event_bus)
@@ -26,7 +31,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	action_card.set("ap_cost", 3)
 	
 	if Engine.has_singleton("EventBus"):
-		game_state.hand_context.add_card(action_card, 0.0)
+		game_state.hand_context.add_card(action_card)
 		Engine.get_singleton("EventBus").request_play_card.emit(action_card)
 		
 	# Cost 3 * 2.0 = 6.0 seconds penalty
@@ -49,9 +54,9 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	noise_chip.set("ap_cost", 1)
 	
 	# Add both to context
-	game_state.hand_context.add_card(data_chip, 0.0)
+	game_state.hand_context.add_card(data_chip)
 	event_bus.request_play_card.emit(data_chip)
-	game_state.hand_context.add_card(noise_chip, 0.0)
+	game_state.hand_context.add_card(noise_chip)
 	event_bus.request_play_card.emit(noise_chip)
 	
 	if game_state.active_context.size() != 2:
@@ -64,7 +69,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	reranker_card.set("id", "reranker")
 	reranker_card.set("ap_cost", 3)
 	
-	game_state.hand_context.add_card(reranker_card, 0.0)
+	game_state.hand_context.add_card(reranker_card)
 	event_bus.request_play_card.emit(reranker_card)
 	
 	# Reranker should remove noise_chip (similarity 0.3 < 0.5)
@@ -78,7 +83,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 		print("PASS: Reranker filtered out similarity < 0.5 noise chip successfully.")
 		
 	# Add noise chip back to test hallucination penalty
-	game_state.hand_context.add_card(noise_chip, 0.0)
+	game_state.hand_context.add_card(noise_chip)
 	event_bus.request_play_card.emit(noise_chip)
 	
 	var crisis_before = game_state.crisis_hp
@@ -108,7 +113,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 		
 	# Test 4: Data Poisoning Growth
 	# Manually simulate SLA dropping by 150 seconds (half of 300)
-	game_state._process(150.0)
+	game_state.env_mgr._process(150.0)
 	# SLA was 300 - 6 (action_card) - 6 (reranker) - 2 (delivery) = 286
 	# After 150 seconds elapsed, SLA is 136. Elapsed is 164.
 	# Poison should be (164/300) * 0.5 = 0.27

@@ -23,7 +23,7 @@ func run_tests(tree: SceneTree) -> bool:
 		
 	# Reduce SLA to simulate time passing and adaptation
 	game_state.sla_timer = game_state.max_sla / 2.0
-	game_state._process(0.1) # Trigger process to update ratio
+	game_state.env_mgr._process(0.1) # Trigger process to update ratio
 	
 	if game_state.data_poisoning_ratio <= 0.0:
 		print("[test_behavior_adaptation] FAILED: Poisoning ratio did not adapt to SLA drop.")

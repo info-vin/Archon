@@ -3,7 +3,7 @@ class_name MockDataGenerator
 static func generate_mock_rag_chunks() -> Array:
 	var mock_cards = []
 	var num_cards = randi_range(3, 4)
-	var CardData = preload("res://src/models/cards/CardData.gd")
+
 	
 	for i in range(num_cards):
 		var card = CardData.new()

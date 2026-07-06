@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/images/action_graphrag.png" id="1_icon"]
+[ext_resource type="Script" path="res://src/models/cards/CardData.gd" id="2_sc"]
+
+[resource]
+script = ExtResource("2_sc")
+id = "graph_rag"
+title = "GraphRAG Navigation"
+description = "將所有黃金晶片組成連鎖，傷害 1.5 倍"
+ap_cost = 5
+icon = ExtResource("1_icon")
+type = 1
+match_type = 0
+similarity = 0.0
+chunk_metadata = {}

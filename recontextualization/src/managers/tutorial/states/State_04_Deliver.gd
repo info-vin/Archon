@@ -14,7 +14,11 @@ func update(_delta: float) -> void:
     # In tutorial we could just wait for GameState to emit an event, or we can just hook into the deliver button.
     # Since GameState doesn't explicitly emit "delivered" unless crisis is defeated, we can just listen to crisis_hp_changed or similar.
     # Actually, GameState deducts crisis hp. Let's poll for crisis_hp change.
-    if GameState.crisis_hp < GameState.max_crisis_hp:
+    var game_state: Node = (Engine.get_singleton("GameState") if Engine.has_singleton("GameState") else manager.get_tree().root.get_node_or_null("GameState"))
+    if not game_state:
+        game_state = manager.get_node_or_null("/root/GameState")
+        
+    if game_state and game_state.crisis_hp < game_state.max_crisis_hp:
         transitioned.emit("End")
         set_process(false)
 

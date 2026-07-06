@@ -48,27 +48,29 @@ func run_tests() -> bool:
 	deck.add_card(card4)
 	deck.add_card(card5)
 	
+	var BattleRuleEngine = preload("res://src/managers/BattleRuleEngine.gd")
+	
 	# 2. Test calculate_context_purity()
-	var purity = deck.calculate_context_purity(0.5)
+	var purity = BattleRuleEngine.calculate_context_purity(deck.cards, 0.5)
 	if not assert_float_eq(purity, 0.6, 0.001, "Context Purity should be 0.6"): passed = false
 	
 	# 3. Test get_noise_chips()
-	var noise = deck.get_noise_chips(0.5)
+	var noise = BattleRuleEngine.get_noise_chips(deck.cards, 0.5)
 	if not assert_eq(noise, 2, "Noise chips should be 2"): passed = false
 	
 	# 4. Test calculate_delivery_damage()
-	var damage = deck.calculate_delivery_damage(1000.0, 0.5)
+	var damage = BattleRuleEngine.calculate_delivery_damage(deck.cards, 1000.0, 0.5)
 	if not assert_float_eq(damage, 0.0, 0.001, "Damage should be 0 due to hallucination penalty"): passed = false
 	
 	# Remove noise and re-test
 	var _pop1 = deck.cards.pop_back()
 	var _pop2 = deck.cards.pop_back()
 	
-	damage = deck.calculate_delivery_damage(1000.0, 0.5)
+	damage = BattleRuleEngine.calculate_delivery_damage(deck.cards, 1000.0, 0.5)
 	if not assert_float_eq(damage, 1000.0, 0.001, "Damage should be 1000.0 (purity is 1.0)"): passed = false
 	
 	# Test chain multiplier
-	damage = deck.calculate_delivery_damage(1000.0, 0.5, true)
+	damage = BattleRuleEngine.calculate_delivery_damage(deck.cards, 1000.0, 0.5, true)
 	if not assert_float_eq(damage, 1500.0, 0.001, "Damage should be 1500.0 with chain multiplier"): passed = false
 	
 	if passed:

@@ -102,6 +102,16 @@
   --ar 1:1
   ```
 
+### 3.4 GraphRAG Navigation (L5)
+* **目標檔案**：`recontextualization/assets/images/action_graphrag.png`
+* **主題**：知識圖譜連鎖，展示數據節點多跳關聯的纖維星座結構。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  A glowing neon data node constellation structure showing multi-hop connections, complex glowing fiber optic network, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  ```
+
 ---
 
 ## 4. 轉場動畫 (Video Transitions)

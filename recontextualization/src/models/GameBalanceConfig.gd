@@ -9,6 +9,14 @@ const SAFE_PURITY_THRESHOLD = 0.5
 const DELIVERY_AP_COST = 1
 const SEARCH_AP_COST = 2
 
+# --- Battle Rule Engine Constants ---
+const RANK_S_SLA_RATIO = 0.5
+const RANK_A_SLA_RATIO = 0.2
+const RANK_S_DELIVERY_LIMIT = 2
+const RANK_A_HP_RATIO = 0.5
+const MULTIPLIER_BASE = 1.0
+const MULTIPLIER_CHAIN = 1.5
+
 # --- Mechanic Constants ---
 const MAX_POISON_RATIO_LIMIT = 0.8
 const POISON_TIME_SCALE = 0.5

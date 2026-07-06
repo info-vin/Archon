@@ -1,5 +1,14 @@
 extends SceneTree
 
+# Pre-warm global class cache for headless execution to allow clean code in src/
+var _warmup1 = preload("res://src/models/cards/CardData.gd")
+var _warmup2 = preload("res://src/models/GameBalanceConfig.gd")
+var _warmup3 = preload("res://src/models/cards/CardEffectResolver.gd")
+var _warmup4 = preload("res://src/managers/BattleRuleEngine.gd")
+var _warmup5 = preload("res://src/network/BackendClient.gd")
+var _warmup6 = preload("res://src/network/MockDataGenerator.gd")
+var _warmup7 = preload("res://src/managers/ProgressionSystem.gd")
+
 func _init():
 	print("--- Starting Headless Tests ---")
 	
@@ -98,6 +107,12 @@ func _run_tests():
 		
 	var test_dual_brain = preload("res://tests/test_dual_brain_logic.gd").new()
 	if test_dual_brain.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
+	var test_graphrag = preload("res://tests/test_graphrag_chain.gd").new()
+	if test_graphrag.run_tests(self):
 		tests_passed += 1
 	else:
 		tests_failed += 1

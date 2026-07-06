@@ -1,3 +1,4 @@
+class_name BackendClient
 extends Node
 
 signal request_completed(result: Dictionary)
