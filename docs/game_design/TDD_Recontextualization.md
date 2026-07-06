@@ -59,10 +59,11 @@ sequenceDiagram
 ```
 
 #### 【連線異常與效能優化說明】
-*   **異常處理 (Error Handling)**：
+*   **異常處理 (Error Handling) 與延遲補償**：
     *   **超時限制 (SLA Timeout)**：網路請求設定為 5 秒超時。
     *   **指數型退避重試 (Exponential Backoff)**：客戶端 `BackendClient.gd` 內建 3 次重試機制，每次失敗間隔時間按數倍遞增。
     *   **無網 Fallback 自癒**：當檢索連線中斷或後端不可用時，遊戲將自動啟動本地隨機資料生成機制（Fallback Generator），確保遊戲仍 100% 可玩。
+    *   **【延遲 Plan B 對話補償系統】**：若使用 Pro 等級之慢速推理腦進行多步檢索，因網路擁堵或併發過高導致回應時間拉長（可能大於 10 秒），客戶端 `AgentCompanion.gd` 會在請求超過 2 秒後自動觸發非同步的「漸進式診斷對白」（Progressive Diagnostic Chatter），利用科幻技術話術進行打字機演繹，確保玩家不處於靜默等待狀態。
 *   **快取優化 (Latency Reduction)**：後端對熱門 Query 與 GitHub CDN 回傳內容實施本地記憶體快取 (LRU Cache)，大幅減少 RAG 響應時間。
 
 ---
@@ -272,9 +273,11 @@ archon/
 │   │   ├── vfx/                        # 視覺過場特效
 │   │   └── videos/                     # 影片資產
 │   ├── locale/                         # 多國語系翻譯檔
+│   ├── env.json                        # 全域模型配置 SSOT 檔
 │   ├── src/
 │   │   ├── autoloads/                  # 全域單例
 │   │   │   ├── EventBus.gd             # 事件分發總線
+│   │   │   ├── EnvConfig.gd            # 全域設定管理單例 (SSOT)
 │   │   │   ├── GameState.gd            # 核心遊戲狀態機與危機結算
 │   │   │   └── SaveManager.gd          # 遊戲進度保存管理
 │   │   ├── managers/                   # 管理工廠
@@ -285,6 +288,8 @@ archon/
 │   │   │   ├── cards/
 │   │   │   │   ├── CardData.gd         # 卡牌 Resource 定義
 │   │   │   │   └── resources/          # 實體行動卡資源 (.tres)
+│   │   │   ├── events/
+│   │   │   │   └── ChaosEventPool.gd   # 網路危機隨機事件池
 │   │   │   └── DeckData.gd             # 手牌 context 陣列與 RAG 數學公式
 │   │   ├── network/                    # 網路通訊層
 │   │   │   └── BackendClient.gd        # FastAPI 異步 RAG 請求
@@ -292,11 +297,15 @@ archon/
 │   │   │   ├── DataFlowLine.gdshader
 │   │   │   └── TargetingArrow.gdshader
 │   │   └── views/                      # 視覺 UI 特效層
-│   │       ├── components/             # 共用 UI 元件 (HandLayout, TargetingArrow 等)
+│   │       ├── components/             # 共用 UI 元件 (HandLayout, CombatJuice 等)
 │   │       ├── tutorial/               # 新手教學 UI 覆蓋層
 │   │       ├── CardManagementMenu.gd   # 卡牌管理介面
 │   │       ├── CardWorkshop.gd         # 卡牌升級/工作坊介面
 │   │       ├── CharacterDashboard.gd   # 角色面板介面
+│   │       ├── AgentCompanion.gd       # 代理終端介面 (打字機/網路危機)
+│   │       ├── AgentCompanion.tscn
+│   │       ├── TeammateDashboard.gd    # 隊友管理與模型/預算調配介面
+│   │       ├── TeammateDashboard.tscn
 │   │       ├── EventQueue.gd           # 動畫佇列處理
 │   │       ├── GameBoard.tscn          # 主遊戲場景 UI
 │   │       ├── GameBoard.gd            # 綁定狀態機信號與播放視覺動畫
