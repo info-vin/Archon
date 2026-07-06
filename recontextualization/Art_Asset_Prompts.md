@@ -277,3 +277,24 @@
   --no text, letters, typography
   (⚠️ 畫師/產圖工具注意：解析度限制 256x256)
   ```
+
+---
+
+## 8. 自動化美術處理腳本 (Automated Asset Processing)
+
+在生成 AI 美術資源後，原始檔案（通常大於 5MB）必須經過安全降轉與裁切，才能匯入 Godot 專案。我們統一使用 Python 腳本 `optimize_assets.py` 進行處理。
+
+### 8.1 執行降轉腳本 (Image Optimizer)
+* **腳本位置**：`recontextualization/optimize_assets.py`
+* **功能**：自動進行完美的中心正方裁切 (Center Crop)，並使用 Lanczos 高品質無損演算法降採樣至各類別規定的解析度。
+* **執行規範 (強制使用 uv 環境)**：
+  為避免系統 Python 版本 (3.7 vs 3.12) 混亂，請一律透過後端的 `uv` 環境執行此腳本。
+  ```bash
+  # 進入後端目錄以使用 uv 環境 (內建 Python 3.12)
+  cd ../python
+  # 確保安裝 Pillow 影像處理庫
+  uv pip install Pillow
+  # 執行前端的美術優化腳本
+  uv run python ../recontextualization/optimize_assets.py
+  ```
+* **注意**：絕不可使用粗糙的自動去背演算法。所有頭像與 UI 底框皆應保留原始背景，透過 Godot UI 系統的 `MarginContainer` 或 Shader 進行遮罩 (Masking)，以避免鋸齒毛邊。

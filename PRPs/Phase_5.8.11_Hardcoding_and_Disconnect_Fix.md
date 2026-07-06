@@ -17,9 +17,9 @@
 
 ## 3. 執行清單 (Execution Plan)
 
-1. [ ] 掃描並替換 `GameState.gd` 中的 `DeckData`, `HandData`, `MatchBuilder`, `SearchController`, `EnvironmentManager` 的 `preload`。
-2. [ ] 掃描並替換 `EnvironmentManager.gd` 與 `MatchBuilder.gd` 中的 `GameBalanceConfig` 的 `preload`。
-3. [ ] 掃描並替換 `CardEffectResolver.gd` (以及其他) 對 `BattleRuleEngine` 的冗餘宣告。
-4. [ ] 掃描並替換 `AgentCompanion.gd` 對 `ChaosEventPool` 等類型的 `preload`。
-5. [ ] 修正 `BattleRuleEngine.gd` 中的迴圈內條件判斷式。
-6. [ ] 執行 `make test-godot` (或 `HeadlessRunner`) 確保改動不會破壞既有單元與 E2E 測試。
+1. [x] 掃描並替換 `GameState.gd` 中的 `DeckData`, `HandData`, `MatchBuilder`, `SearchController`, `EnvironmentManager` 的 `preload`。
+2. [x] 掃描並替換 `EnvironmentManager.gd` 與 `MatchBuilder.gd` 中的 `GameBalanceConfig` 的 `preload`。
+3. [x] 掃描並替換 `CardEffectResolver.gd` (以及其他) 對 `BattleRuleEngine` 的冗餘宣告。
+4. [x] 掃描並替換 `AgentCompanion.gd` 對 `ChaosEventPool` 等類型的 `preload`。
+5. [x] 修正 `BattleRuleEngine.gd` 中的迴圈內條件判斷式。
+6. [x] 執行 `make test-godot` (或 `HeadlessRunner`) 確保改動不會破壞既有單元與 E2E 測試。
