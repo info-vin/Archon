@@ -1,57 +1,32 @@
 extends Control
 
+signal request_new_career
+signal request_continue
+signal request_card_management
+signal request_quit
+signal request_language_change(new_lang: String)
+signal request_volume_change(new_volume: float)
+
 @onready var lang_button: OptionButton = $VBoxContainer/SettingsBox/LangBox/LangButton
 @onready var vol_slider: HSlider = $VBoxContainer/SettingsBox/VolBox/VolSlider
 
 func _ready() -> void:
-    $VBoxContainer/NewCareerButton.pressed.connect(_on_new_career_pressed)
-    $VBoxContainer/ContinueButton.pressed.connect(_on_continue_pressed)
-    $VBoxContainer/CardManagementButton.pressed.connect(_on_card_management_pressed)
-    $VBoxContainer/QuitButton.pressed.connect(_on_quit_pressed)
-    
-    lang_button.item_selected.connect(_on_lang_selected)
-    vol_slider.value_changed.connect(_on_vol_changed)
-    
-    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-    if sm != null:
-        if sm.language == "en":
-            lang_button.selected = 0
-        else:
-            lang_button.selected = 1
-        vol_slider.value = sm.bgm_volume
+	_connect_ui_signals()
 
-func _on_new_career_pressed() -> void:
-    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-    if sm != null:
-        # Wipe run progress but maybe keep career level? For "New Career", maybe we reset career level too?
-        # Actually, let's keep career level and just start the GameBoard
-        sm.max_player_hp = 100.0
-        sm.has_completed_tutorial = false
-        sm.save_progress()
-    get_tree().change_scene_to_file("res://src/views/TransitionVideo.tscn")
+func _connect_ui_signals() -> void:
+	$VBoxContainer/NewCareerButton.pressed.connect(func(): request_new_career.emit())
+	$VBoxContainer/ContinueButton.pressed.connect(func(): request_continue.emit())
+	$VBoxContainer/CardManagementButton.pressed.connect(func(): request_card_management.emit())
+	$VBoxContainer/QuitButton.pressed.connect(func(): request_quit.emit())
+	
+	lang_button.item_selected.connect(_on_lang_selected)
+	vol_slider.value_changed.connect(func(v): request_volume_change.emit(v))
 
-func _on_continue_pressed() -> void:
-    get_tree().change_scene_to_file("res://src/views/TransitionVideo.tscn")
-
-func _on_card_management_pressed() -> void:
-    get_tree().change_scene_to_file("res://src/views/CardManagementMenu.tscn")
-
-func _on_quit_pressed() -> void:
-    get_tree().quit()
+func set_initial_settings(language: String, volume: float) -> void:
+	lang_button.selected = 0 if language == "en" else 1
+	vol_slider.value = volume
 
 func _on_lang_selected(index: int) -> void:
-    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-    if sm != null:
-        if index == 0:
-            sm.language = "en"
-        else:
-            sm.language = "zh_TW"
-        sm.save_progress()
-        sm._apply_settings()
+	var lang_code = "en" if index == 0 else "zh_TW"
+	request_language_change.emit(lang_code)
 
-func _on_vol_changed(value: float) -> void:
-    var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-    if sm != null:
-        sm.bgm_volume = value
-        sm.save_progress()
-        sm._apply_settings()
