@@ -83,7 +83,36 @@
 
 ## 7. 玩家核心 UI 介面架構 (Player UI Architecture)
 
-截至 Phase 5.8.9，玩家在遊戲中主要會操作 **7 種** 不同的 UI 介面，大致可分為三大類：
+截至 Phase 5.8.9，玩家在遊戲中主要會操作 **7 種** 不同的 UI 介面，其完整的前、中、後台運作流程如下：
+
+```mermaid
+stateDiagram-v2
+    [*] --> MainMenu : 1. 啟動遊戲 (Game Pre)
+    
+    MainMenu --> TeammateDashboard : 2. 整備隊伍 (選擇 Agent/裝備模型/調整 Token 預算)
+    MainMenu --> CardManagementMenu : 2. 整備牌組 (檢視與管理卡牌)
+    
+    TeammateDashboard --> CardManagementMenu : 切換整備
+    CardManagementMenu --> TeammateDashboard : 切換整備
+    
+    TeammateDashboard --> GameBoard : 3. 開始深潛 (進入戰鬥 - Game Mid)
+    CardManagementMenu --> GameBoard : 3. 開始深潛 (進入戰鬥 - Game Mid)
+    
+    state GameBoard {
+        [*] --> PlayArea : 玩家抽卡/出牌 (資料晶片 & 行動卡)
+        PlayArea --> Backend_8181 : 點擊 Deliver 提交檢索 (傳遞等級/模型/ReAct 設定)
+        Backend_8181 --> AgentCompanion : 觸發 ChaosEvent (API冷啟動/高併發) 或 語意重排結果
+        AgentCompanion --> PlayArea : 顯示打字機對話與視覺故障特效
+    }
+    
+    GameBoard --> CardWorkshop : 4. 戰中/戰後合成 (卡牌量子融合爐)
+    CardWorkshop --> GameBoard : 返回戰鬥
+    
+    GameBoard --> CharacterDashboard : 5. 戰後結算/升級 (Game Post)
+    CharacterDashboard --> MainMenu : 返回主選單
+    
+    GameBoard --> [*] : 遊戲結束 (SLA歸零/勝利通關)
+```
 
 ### 7.1 第一類：核心戰鬥與操作 (Core Gameplay)
 1. **主選單 (`MainMenu.tscn`)**：遊戲的入口，負責載入存檔、觀看開場影片與進入「深潛 (Dive)」。
