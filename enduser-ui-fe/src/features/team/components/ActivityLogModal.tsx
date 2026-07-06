@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api } from '@/services/api';
 import { Employee, Task } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
-import { XIcon } from '@/components/Icons';
+import { XIcon, ClockIcon } from '@/components/Icons';
+import { EmptyState } from '@/components/common/EmptyState';
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
@@ -53,7 +54,13 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                     {loading ? (
                         <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>
                     ) : tasks.length === 0 ? (
-                        <div className="text-center py-8 text-gray-400">No recent activity found.</div>
+                        <div className="py-8">
+                            <EmptyState
+                                title="No Recent Activity"
+                                description="This user hasn't been assigned any tasks recently."
+                                icon={<ClockIcon className="w-12 h-12 text-gray-300 dark:text-gray-500" />}
+                            />
+                        </div>
                     ) : (
                         <div className="space-y-3">
                             {tasks.map(task => (
