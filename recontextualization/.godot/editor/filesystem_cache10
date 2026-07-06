@@ -646,10 +646,10 @@ translations.zh_TW.translation::OptimizedTranslation::1173469463007988838::17828
 ::res://src/autoloads/::1783241107
 EnvConfig.gd::GDScript::1436774006162950364::1783309656::0::1::::<>Node<><>0<>0<><>::
 EventBus.gd::GDScript::8638012008994797471::1783233042::0::1::::<>Node<><>0<>0<><>::
-GameState.gd::GDScript::2199860791077462491::1783312042::0::1::::<>Node<><>0<>0<><>::
+GameState.gd::GDScript::2199860791077462491::1783312216::0::1::::<>Node<><>0<>0<><>::
 SaveManager.gd::GDScript::4724236169794096980::1783310735::0::1::::<>Node<><>0<>0<><>::
 ::res://src/managers/::1783311988
-BattleRuleEngine.gd::GDScript::7221791765056045191::1783312013::0::1::::BattleRuleEngine<>RefCounted<><>0<>0<><>::
+BattleRuleEngine.gd::GDScript::7221791765056045191::1783312203::0::1::::BattleRuleEngine<>RefCounted<><>0<>0<><>::
 CardRegistry.gd::GDScript::8938936671780083628::1783309428::0::1::::<>Node<><>0<>0<><>::
 ProgressionSystem.gd::GDScript::3537720231233865597::1783310687::0::1::::ProgressionSystem<>RefCounted<><>0<>0<><>::
 ::res://src/managers/tutorial/::1782874542
@@ -664,7 +664,7 @@ State_03_DragData.gd::GDScript::1795475329337617360::1783233617::0::1::::<>Node<
 State_04_Deliver.gd::GDScript::5935548330886819946::1783213788::0::1::::<>Node<><>0<>0<><>::
 ::res://src/models/::1783310799
 DeckData.gd::GDScript::268094361860937345::1783312019::0::1::::DeckData<>Resource<><>0<>0<><>::
-GameBalanceConfig.gd::GDScript::1018193622584790503::1783310667::0::1::::GameBalanceConfig<>RefCounted<><>0<>0<><>::
+GameBalanceConfig.gd::GDScript::1018193622584790503::1783312195::0::1::::GameBalanceConfig<>RefCounted<><>0<>0<><>::
 HandData.gd::GDScript::1374229183340577886::1783312029::0::1::::HandData<>Resource<><>0<>0<><>::
 ::res://src/models/cards/::1783241107
 CardData.gd::GDScript::6356671591719224::1783309409::0::1::::CardData<>Resource<><>0<>0<><>::

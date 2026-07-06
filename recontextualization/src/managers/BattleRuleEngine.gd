@@ -14,7 +14,7 @@ static func evaluate_battle_rank(sla_timer: float, player_hp: float, max_player_
 	else:
 		return "B"
 
-static func calculate_context_purity(cards: Array, safe_threshold: float = 0.5) -> float:
+static func calculate_context_purity(cards: Array, safe_threshold: float = GameBalanceConfig.SAFE_PURITY_THRESHOLD) -> float:
 	if cards.is_empty():
 		return 0.0
 		
@@ -33,7 +33,7 @@ static func calculate_context_purity(cards: Array, safe_threshold: float = 0.5) 
 		return 0.0
 	return float(valid_count) / float(data_cards_count)
 
-static func get_noise_chips(cards: Array, safe_threshold: float = 0.5) -> int:
+static func get_noise_chips(cards: Array, safe_threshold: float = GameBalanceConfig.SAFE_PURITY_THRESHOLD) -> int:
 	var noise_count := 0
 	var CardData = preload("res://src/models/cards/CardData.gd")
 	
@@ -44,7 +44,7 @@ static func get_noise_chips(cards: Array, safe_threshold: float = 0.5) -> int:
 				noise_count += 1
 	return noise_count
 
-static func calculate_delivery_damage(cards: Array, base_firepower: float = 1000.0, safe_threshold: float = 0.5, has_chain_multiplier: bool = false) -> float:
+static func calculate_delivery_damage(cards: Array, base_firepower: float = GameBalanceConfig.BASE_FIREPOWER, safe_threshold: float = GameBalanceConfig.SAFE_PURITY_THRESHOLD, has_chain_multiplier: bool = false) -> float:
 	var purity := calculate_context_purity(cards, safe_threshold)
 	if purity < 1.0: # Model Hallucination Penalty
 		return 0.0 

@@ -69,7 +69,7 @@ func _process(delta: float) -> void:
 		sla_changed.emit(sla_timer)
 		
 		var elapsed = max_sla - sla_timer
-		var target_poison = min(0.8, base_poisoning_ratio + (elapsed / max_sla * 0.5))
+		var target_poison = min(GameBalanceConfig.MAX_POISON_RATIO_LIMIT, base_poisoning_ratio + (elapsed / max_sla * GameBalanceConfig.POISON_TIME_SCALE))
 		if abs(target_poison - data_poisoning_ratio) > 0.01:
 			data_poisoning_ratio = target_poison
 			poisoning_updated.emit(data_poisoning_ratio)
@@ -171,14 +171,14 @@ func _on_request_play_card(card: Resource) -> void:
 	current_ap -= cost
 	ap_changed.emit(current_ap)
 	
-	var type_val = card.get("type") if card.get("type") != null else 1
+	var type_val = card.get("type") if card.get("type") != null else CardData.CardType.ACTION_CARD
 	
-	if type_val == 2 or type_val == 3:
+	if type_val == CardData.CardType.DATA_CHIP or type_val == CardData.CardType.NOISE_CHIP:
 		active_context.add_card(card)
-		var purity = BattleRuleEngine.calculate_context_purity(active_context.cards, 0.5)
+		var purity = BattleRuleEngine.calculate_context_purity(active_context.cards)
 		context_updated.emit(purity)
 		
-	elif type_val == 1:
+	elif type_val == CardData.CardType.ACTION_CARD:
 		CardEffectResolver.resolve_action_card(self, card)
 		
 	var event_bus = _safe_get_node("EventBus")
@@ -189,19 +189,19 @@ func deliver_context() -> void:
 	if not is_game_active:
 		return
 		
-	current_ap -= 1
+	current_ap -= GameBalanceConfig.DELIVERY_AP_COST
 	ap_changed.emit(current_ap)
 	deduct_sla(GameBalanceConfig.SLA_PENALTY_PER_DELIVERY)
 	
 	delivery_count += 1
-	rate_limit_compression = max(0.5, 1.0 - (delivery_count * 0.1))
+	rate_limit_compression = max(GameBalanceConfig.RATE_LIMIT_COMPRESSION_MIN, GameBalanceConfig.RATE_LIMIT_COMPRESSION_BASE - (delivery_count * GameBalanceConfig.RATE_LIMIT_COMPRESSION_STEP))
 	rate_limit_updated.emit(rate_limit_compression)
 	
-	var purity = BattleRuleEngine.calculate_context_purity(active_context.cards, 0.5)
+	var purity = BattleRuleEngine.calculate_context_purity(active_context.cards)
 	var damage = 0.0
 	
 	if purity < 1.0:
-		var noise_count = BattleRuleEngine.get_noise_chips(active_context.cards, 0.5)
+		var noise_count = BattleRuleEngine.get_noise_chips(active_context.cards)
 		var damage_taken = BattleRuleEngine.calculate_hallucination_damage(noise_count)
 		player_hp -= damage_taken
 		if player_hp <= 0:
@@ -216,7 +216,7 @@ func deliver_context() -> void:
 			if card.get("id") == GameBalanceConfig.CARD_GRAPH_RAG:
 				has_chain = true
 				break
-		damage = BattleRuleEngine.calculate_delivery_damage(active_context.cards, 1000.0, 0.5, has_chain)
+		damage = BattleRuleEngine.calculate_delivery_damage(active_context.cards, GameBalanceConfig.BASE_FIREPOWER, GameBalanceConfig.SAFE_PURITY_THRESHOLD, has_chain)
 		damage = damage * rate_limit_compression
 		crisis_hp -= damage
 		if crisis_hp <= 0:
@@ -234,11 +234,11 @@ func deliver_context() -> void:
 func trigger_search(match_type: int, query_text: String = "default query") -> void:
 	if not is_game_active:
 		return
-	if current_ap >= 2:
-		current_ap -= 2
+	if current_ap >= GameBalanceConfig.SEARCH_AP_COST:
+		current_ap -= GameBalanceConfig.SEARCH_AP_COST
 		ap_changed.emit(current_ap)
 		search_triggered.emit(match_type)
-		backend_client.search(query_text, 0.5, 5)
+		backend_client.search(query_text, GameBalanceConfig.SEARCH_SIMILARITY_THRESHOLD, GameBalanceConfig.SEARCH_TOP_K)
 	else:
 		print("Not enough AP to search!")
 
@@ -265,7 +265,7 @@ func _on_search_completed(response: Dictionary) -> void:
 
 func _apply_data_poisoning(card: Resource) -> void:
 	if randf() < data_poisoning_ratio:
-		var type_val = card.get("type") if card.get("type") != null else 1
+		var type_val = card.get("type") if card.get("type") != null else CardData.CardType.ACTION_CARD
 		if type_val == CardData.CardType.DATA_CHIP:
 			card.set("type", CardData.CardType.NOISE_CHIP)
 			var current_title = card.get("title")

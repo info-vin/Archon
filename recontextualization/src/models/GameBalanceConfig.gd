@@ -4,6 +4,19 @@ class_name GameBalanceConfig
 const MAX_SLA_TIME = 300.0
 const HALLUCINATION_DAMAGE_PER_NOISE = 20.0
 const SLA_PENALTY_PER_DELIVERY = 2.0
+const BASE_FIREPOWER = 1000.0
+const SAFE_PURITY_THRESHOLD = 0.5
+const DELIVERY_AP_COST = 1
+const SEARCH_AP_COST = 2
+
+# --- Mechanic Constants ---
+const MAX_POISON_RATIO_LIMIT = 0.8
+const POISON_TIME_SCALE = 0.5
+const SEARCH_SIMILARITY_THRESHOLD = 0.5
+const SEARCH_TOP_K = 5
+const RATE_LIMIT_COMPRESSION_BASE = 1.0
+const RATE_LIMIT_COMPRESSION_STEP = 0.1
+const RATE_LIMIT_COMPRESSION_MIN = 0.5
 
 # --- Sector Difficulty Constants ---
 const SECTOR_1_BASE_HP = 10000.0
