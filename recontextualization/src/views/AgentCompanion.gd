@@ -44,14 +44,10 @@ func _on_typewriter_step() -> void:
             typewriter_timer.stop()
         _start_next_message()
 
-var ChaosEventPool = preload("res://src/models/events/ChaosEventPool.gd")
-var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
+
 
 func trigger_chaos_event(event_id: String) -> void:
-    if ChaosEventPool:
-        var ev = ChaosEventPool.get_event(event_id)
-        if ev:
-            push_message("[color=red]" + ev["dialogue"] + "[/color]")
-            
-            if CombatJuice:
-                CombatJuice.glitch_effect(self)
+    var ev = ChaosEventPool.get_event(event_id)
+    if ev:
+        push_message("[color=red]" + ev["dialogue"] + "[/color]")
+        CombatJuice.glitch_effect(self)

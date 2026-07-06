@@ -14,7 +14,7 @@ extends HBoxContainer
 @export var style_red: StyleBox
 @export var style_dark_red: StyleBox
 
-var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
+
 
 func _ready() -> void:
 	if style_green:

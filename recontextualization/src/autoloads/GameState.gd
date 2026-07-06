@@ -30,8 +30,8 @@ var delivery_count: int = 0
 var agent_planning_state: String = "idle"
 var combo_multiplier: float = 1.0
 
-var active_context = preload("res://src/models/DeckData.gd").new()
-var hand_context = preload("res://src/models/HandData.gd").new()
+var active_context = DeckData.new()
+var hand_context = HandData.new()
 
 var match_builder: Node
 var search_ctrl: Node
@@ -45,9 +45,9 @@ func _safe_get_node(singleton_name: String) -> Node:
 	return null
 
 func _ready() -> void:
-	match_builder = preload("res://src/managers/MatchBuilder.gd").new()
-	search_ctrl = preload("res://src/managers/SearchController.gd").new()
-	env_mgr = preload("res://src/managers/EnvironmentManager.gd").new()
+	match_builder = MatchBuilder.new()
+	search_ctrl = SearchController.new()
+	env_mgr = EnvironmentManager.new()
 	
 	env_mgr.game_state = self
 	search_ctrl.game_state = self

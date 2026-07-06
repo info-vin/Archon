@@ -22,7 +22,7 @@ signal request_quit_game
 @export var video_defeat_shutdown: VideoStream
 
 var card_chip_scene = preload("res://src/views/CardChip.tscn")
-var CombatJuice = preload("res://src/views/components/CombatJuice.gd")
+
 
 @onready var game_hud: HBoxContainer = $MarginContainer/VBoxContainer/GameHUD
 @onready var agent_companion: Control = $AgentCompanion

@@ -5,7 +5,7 @@ signal sla_changed(new_sla: float)
 signal poisoning_updated(ratio: float)
 
 var game_state: Node
-var GameBalanceConfig = preload("res://src/models/GameBalanceConfig.gd")
+
 
 func _ready() -> void:
 	game_state = get_parent()

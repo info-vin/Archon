@@ -1,5 +1,5 @@
 extends RefCounted
-
+class_name CombatJuice
 ## Applies a damage shake effect to a UI Control node.
 static func shake_ui_element(node: Control, intensity: float = 10.0, duration: float = 0.2) -> Tween:
 	var tween = node.create_tween()

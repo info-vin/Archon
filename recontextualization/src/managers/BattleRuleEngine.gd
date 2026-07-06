@@ -23,7 +23,7 @@ static func calculate_context_purity(cards: Array, safe_threshold: float = GameB
 
 	
 	for card in cards:
-		var type_val = card.get("type") if card.get("type") != null else CardData.CardType.DATA_CHIP
+		var type_val = card.get("type") if "type" in card else CardData.CardType.DATA_CHIP
 		if type_val == CardData.CardType.DATA_CHIP or type_val == CardData.CardType.NOISE_CHIP:
 			data_cards_count += 1
 			if not card.is_noise(safe_threshold):
@@ -38,7 +38,7 @@ static func get_noise_chips(cards: Array, safe_threshold: float = GameBalanceCon
 
 	
 	for card in cards:
-		var type_val = card.get("type") if card.get("type") != null else CardData.CardType.DATA_CHIP
+		var type_val = card.get("type") if "type" in card else CardData.CardType.DATA_CHIP
 		if type_val == CardData.CardType.DATA_CHIP or type_val == CardData.CardType.NOISE_CHIP:
 			if card.is_noise(safe_threshold):
 				noise_count += 1

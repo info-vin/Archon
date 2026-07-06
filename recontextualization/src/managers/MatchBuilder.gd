@@ -33,8 +33,7 @@ func _setup_difficulty(game_state: Node, sm: Node) -> void:
 		game_state.max_player_hp = sm.max_player_hp
 		game_state.player_hp = game_state.max_player_hp
 		
-		var ProgressionSystem = preload("res://src/managers/ProgressionSystem.gd")
-		var GameBalanceConfig = preload("res://src/models/GameBalanceConfig.gd")
+
 		
 		var sec = ProgressionSystem.get_current_sector(sm)
 		
