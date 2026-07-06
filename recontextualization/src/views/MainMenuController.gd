@@ -1,15 +1,20 @@
 extends Node
 
-# Reference to the View (Parent node)
+const TRANSITION_SCENE_PATH = "res://src/views/TransitionVideo.tscn"
+const CARD_MENU_SCENE_PATH = "res://src/views/CardManagementMenu.tscn"
+
 @onready var view = get_parent()
 
-func _ready() -> void:
-	# 1. Initialize View from Data/State
-	var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-	if sm != null:
-		view.set_initial_settings(sm.language, sm.bgm_volume)
+var save_manager: Node:
+	get:
+		if Engine.has_singleton("SaveManager"):
+			return Engine.get_singleton("SaveManager")
+		return get_node_or_null("/root/SaveManager")
 
-	# 2. Connect View Signals to Controller Logic
+func _ready() -> void:
+	if save_manager != null:
+		view.set_initial_settings(save_manager.language, save_manager.bgm_volume)
+
 	view.request_new_career.connect(_on_new_career_requested)
 	view.request_continue.connect(_on_continue_requested)
 	view.request_card_management.connect(_on_card_management_requested)
@@ -18,32 +23,30 @@ func _ready() -> void:
 	view.request_volume_change.connect(_on_volume_change_requested)
 
 func _on_new_career_requested() -> void:
-	var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-	if sm != null:
-		sm.max_player_hp = 100.0
-		sm.has_completed_tutorial = false
-		sm.save_progress()
-	get_tree().change_scene_to_file("res://src/views/TransitionVideo.tscn")
+	if save_manager != null:
+		save_manager.max_player_hp = 100.0
+		save_manager.has_completed_tutorial = false
+		save_manager.save_progress()
+	get_tree().change_scene_to_file(TRANSITION_SCENE_PATH)
 
 func _on_continue_requested() -> void:
-	get_tree().change_scene_to_file("res://src/views/TransitionVideo.tscn")
+	get_tree().change_scene_to_file(TRANSITION_SCENE_PATH)
 
 func _on_card_management_requested() -> void:
-	get_tree().change_scene_to_file("res://src/views/CardManagementMenu.tscn")
+	get_tree().change_scene_to_file(CARD_MENU_SCENE_PATH)
 
 func _on_quit_requested() -> void:
 	get_tree().quit()
 
 func _on_language_change_requested(new_lang: String) -> void:
-	var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-	if sm != null:
-		sm.language = new_lang
-		sm.save_progress()
-		sm._apply_settings()
+	if save_manager != null:
+		save_manager.language = new_lang
+		save_manager.save_progress()
+		save_manager._apply_settings()
 
 func _on_volume_change_requested(new_volume: float) -> void:
-	var sm: Node = (Engine.get_singleton("SaveManager") if Engine.has_singleton("SaveManager") else get_node_or_null("/root/SaveManager"))
-	if sm != null:
-		sm.bgm_volume = new_volume
-		sm.save_progress()
-		sm._apply_settings()
+	if save_manager != null:
+		save_manager.bgm_volume = new_volume
+		save_manager.save_progress()
+		save_manager._apply_settings()
+
