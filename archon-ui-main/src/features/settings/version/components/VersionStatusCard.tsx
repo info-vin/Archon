@@ -6,6 +6,13 @@ import { motion } from "framer-motion";
 import { AlertCircle, CheckCircle, Info, RefreshCw } from "lucide-react";
 import { useClearVersionCache, useVersionCheck } from "../hooks/useVersionQueries";
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat();
+const safeFormatDate = (dateVal: any) => {
+  const date = new Date(dateVal);
+  return isNaN(date.getTime()) ? "Invalid Date" : dateFormatter.format(date);
+};
+
 export function VersionStatusCard() {
   const { data, isLoading, error, refetch } = useVersionCheck();
   const clearCache = useClearVersionCache();
@@ -82,7 +89,7 @@ export function VersionStatusCard() {
         {data?.published_at && (
           <div className="flex items-center justify-between">
             <span className="text-gray-400 text-sm">Released</span>
-            <span className="text-gray-300 text-sm">{new Date(data.published_at).toLocaleDateString()}</span>
+            <span className="text-gray-300 text-sm">{safeFormatDate(data.published_at)}</span>
           </div>
         )}
       </div>

@@ -122,3 +122,6 @@
 ## 2026-06-20 - Expensive Intl.DateTimeFormat Instantiations
 **Learning:** The `Intl.DateTimeFormat` constructor is a known slow operation in JavaScript. Instantiating it repeatedly inside render loops, like in `VictoryFeedList`'s map or `LiveClock`'s 1-second interval, causes massive CPU overhead and memory churn.
 **Action:** Always hoist `Intl.DateTimeFormat` (and similarly expensive constructors like `Intl.NumberFormat` or `RegExp`) outside of React components and loop iterations to instantiate them exactly once upon module load.
+## 2026-07-06 - Intl.DateTimeFormat RangeError Handling
+**Learning:** `Intl.DateTimeFormat.prototype.format()` throws a `RangeError` when passed an invalid date (evaluating to NaN), unlike `Date.prototype.toLocaleDateString()` which safely returns "Invalid Date". When optimizing render loops by hoisting `Intl.DateTimeFormat`, failing to handle invalid dates will cause unhandled exceptions that crash the entire React component tree.
+**Action:** Always wrap the hoisted `.format()` call in a helper function that explicitly checks for invalid dates (e.g., `isNaN(date.getTime())`) before formatting, preserving the safe fallback behavior of `toLocaleDateString()`.

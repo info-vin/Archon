@@ -15,6 +15,13 @@ interface DocumentViewerProps {
  * Simple read-only document viewer
  * Displays document content in a reliable way without complex editing
  */
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat();
+const safeFormatDate = (dateVal: any) => {
+  const date = new Date(dateVal);
+  return isNaN(date.getTime()) ? "Invalid Date" : dateFormatter.format(date);
+};
+
 export const DocumentViewer = ({ document, onSave }: DocumentViewerProps) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedContent, setEditedContent] = useState("");
@@ -208,7 +215,7 @@ export const DocumentViewer = ({ document, onSave }: DocumentViewerProps) => {
               </span>
               {document.updated_at && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  Last updated: {new Date(document.updated_at).toLocaleDateString()}
+                  Last updated: {safeFormatDate(document.updated_at)}
                 </span>
               )}
             </div>
