@@ -11,25 +11,16 @@ func _safe_get_node(singleton_name: String) -> Node:
 		return get_node_or_null("/root/" + singleton_name)
 	return null
 
-func _ready() -> void:
-	load_all_cards(cards_dir)
+var _preloaded_cards: Array[Resource] = [
+	preload("res://src/models/cards/resources/keyword_search.tres"),
+	preload("res://src/models/cards/resources/dense_search.tres"),
+	preload("res://src/models/cards/resources/reranker.tres")
+]
 
-func load_all_cards(path: String) -> void:
-	var dir = DirAccess.open(path)
-	if dir:
-		dir.list_dir_begin()
-		var file_name = dir.get_next()
-		while file_name != "":
-			if not dir.current_is_dir() and file_name.ends_with(".tres"):
-				var full_path = path + file_name if path.ends_with("/") else path + "/" + file_name
-				var resource = load(full_path)
-				print("Attempting to load card: ", full_path)
-				if resource and resource.get("id") != null: # Duck typing check
-					print("Loaded card successfully: ", resource.get("id"))
-					register_card(resource)
-			file_name = dir.get_next()
-	else:
-		push_warning("Directory not found or error accessing: " + path)
+func _ready() -> void:
+	for card in _preloaded_cards:
+		if card and card.get("id") != null:
+			register_card(card)
 
 func register_card(card: Resource) -> void:
 	if card.id == "":

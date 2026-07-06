@@ -24,7 +24,6 @@ SaveManager="*res://src/autoloads/SaveManager.gd"
 EventBus="*res://src/autoloads/EventBus.gd"
 GameState="*res://src/autoloads/GameState.gd"
 CardRegistry="*res://src/managers/CardRegistry.gd"
-PlayerProfile="*res://src/managers/PlayerProfile.gd"
 
 [display]
 

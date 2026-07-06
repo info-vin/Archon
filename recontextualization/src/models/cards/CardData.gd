@@ -31,7 +31,7 @@ const HYBRID_MASTERY_REQ = 3
 @export var base_card_id: String = ""
 @export var level: int = 1
 
-func get_rag_parameters() -> Dictionary:
+func get_rag_parameters(unlocked_talents: Array) -> Dictionary:
 	var params = {
 		"match_count": min(10, 1 + (level - 1)),
 		"min_score": min(0.9, 0.0 + (level - 1) * 0.1),
@@ -39,16 +39,12 @@ func get_rag_parameters() -> Dictionary:
 		"use_reranking": (level >= 8)
 	}
 	
-	var tree = Engine.get_main_loop() as SceneTree
-	if tree:
-		var sm = tree.root.get_node_or_null("SaveManager")
-		if sm:
-			if TALENT_WIDE_NET in sm.unlocked_talents:
-				params["match_count"] += WIDE_NET_BONUS
-			if TALENT_STRICT_PURITY in sm.unlocked_talents:
-				params["min_score"] = min(0.99, params["min_score"] + STRICT_PURITY_BONUS)
-			if TALENT_HYBRID_MASTERY in sm.unlocked_talents:
-				params["use_hybrid"] = (level >= HYBRID_MASTERY_REQ)
+	if TALENT_WIDE_NET in unlocked_talents:
+		params["match_count"] += WIDE_NET_BONUS
+	if TALENT_STRICT_PURITY in unlocked_talents:
+		params["min_score"] = min(0.99, params["min_score"] + STRICT_PURITY_BONUS)
+	if TALENT_HYBRID_MASTERY in unlocked_talents:
+		params["use_hybrid"] = (level >= HYBRID_MASTERY_REQ)
 	
 	if id == "dense_search":
 		params["use_hybrid"] = false
