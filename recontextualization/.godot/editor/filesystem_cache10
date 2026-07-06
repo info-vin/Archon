@@ -1,5 +1,5 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1783308436
+::res://::1783309449
 Art_Asset_Prompts.md::TextFile::-1::1783243024::0::1::::<><><>0<>0<><>::
 bake_topology.gd::GDScript::5182325639732816516::1783308464::0::1::::<>SceneTree<><>0<>0<><>::
 env.json::JSON::-1::1783239695::0::1::::<><><>0<>0<><>::
@@ -643,12 +643,14 @@ translations.en.translation::OptimizedTranslation::7537628930506385385::17828745
 translations.zh_TW.translation::OptimizedTranslation::1173469463007988838::1782874542::0::1::::<><><>0<>0<><>::
 ::res://src/::1783075222
 ::res://src/autoloads/::1783241107
-EnvConfig.gd::GDScript::1436774006162950364::1783239704::0::1::::<>Node<><>0<>0<><>::
+EnvConfig.gd::GDScript::1436774006162950364::1783309656::0::1::::<>Node<><>0<>0<><>::
 EventBus.gd::GDScript::8638012008994797471::1783233042::0::1::::<>Node<><>0<>0<><>::
-GameState.gd::GDScript::2199860791077462491::1783238439::0::1::::<>Node<><>0<>0<><>::
-SaveManager.gd::GDScript::4724236169794096980::1783238431::0::1::::<>Node<><>0<>0<><>::
-::res://src/managers/::1783309391
+GameState.gd::GDScript::2199860791077462491::1783310774::0::1::::<>Node<><>0<>0<><>::
+SaveManager.gd::GDScript::4724236169794096980::1783310735::0::1::::<>Node<><>0<>0<><>::
+::res://src/managers/::1783310695
+BattleRuleEngine.gd::GDScript::7221791765056045191::1783310695::0::1::::BattleRuleEngine<>RefCounted<><>0<>0<><>::
 CardRegistry.gd::GDScript::8938936671780083628::1783309428::0::1::::<>Node<><>0<>0<><>::
+ProgressionSystem.gd::GDScript::3537720231233865597::1783310687::0::1::::ProgressionSystem<>RefCounted<><>0<>0<><>::
 ::res://src/managers/tutorial/::1782874542
 FocusFrame.gd::GDScript::2397192817398713887::1782873810::0::1::::<>ReferenceRect<><>0<>0<><>::
 FocusFrame.tscn::PackedScene::-1::1782873816::0::1::::<><><>0<>0<><>::res://src/managers/tutorial/FocusFrame.gd
@@ -659,8 +661,9 @@ State_01_Welcome.gd::GDScript::366759699186638840::1782793010::0::1::::<>Node<><
 State_02_Search.gd::GDScript::358622665238389527::1783213788::0::1::::<>Node<><>0<>0<><>::
 State_03_DragData.gd::GDScript::1795475329337617360::1783233617::0::1::::<>Node<><>0<>0<><>::
 State_04_Deliver.gd::GDScript::5935548330886819946::1783213788::0::1::::<>Node<><>0<>0<><>::
-::res://src/models/::1783241107
+::res://src/models/::1783310667
 DeckData.gd::GDScript::268094361860937345::1782781117::0::1::::DeckData<>Resource<><>0<>0<><>::
+GameBalanceConfig.gd::GDScript::1018193622584790503::1783310667::0::1::::GameBalanceConfig<>RefCounted<><>0<>0<><>::
 HandData.gd::GDScript::1374229183340577886::1783233070::0::1::::HandData<>Resource<><>0<>0<><>::
 ::res://src/models/cards/::1783241107
 CardData.gd::GDScript::6356671591719224::1783309409::0::1::::CardData<>Resource<><>0<>0<><>::
@@ -671,8 +674,9 @@ keyword_search.tres::Resource::-1::1782781117::0::1::::<><><>0<>0<><>::res://src
 reranker.tres::Resource::-1::1782781117::0::1::::<><><>0<>0<><>::res://src/models/cards/CardData.gd
 ::res://src/models/events/::1783241107
 ChaosEventPool.gd::GDScript::4177628981299612599::1783240877::0::1::::ChaosEventPool<>Node<><>0<>0<><>::
-::res://src/network/::1782781117
-BackendClient.gd::GDScript::1999943278772600360::1783240273::0::1::::<>Node<><>0<>0<><>::
+::res://src/network/::1783310703
+BackendClient.gd::GDScript::1999943278772600360::1783309666::0::1::::<>Node<><>0<>0<><>::
+MockDataGenerator.gd::GDScript::297131890419852876::1783310703::0::1::::MockDataGenerator<>RefCounted<><>0<>0<><>::
 ::res://src/shaders/::1783075222
 DataFlowLine.gdshader::Shader::423802116350477875::1783075222::0::1::::<><><>0<>0<><>::
 TargetingArrow.gdshader::Shader::7582100769355854134::1783075222::0::1::::<><><>0<>0<><>::
@@ -704,7 +708,7 @@ PauseMenu.tscn::PackedScene::-1::1782873767::0::1::::<><><>0<>0<><>::res://src/v
 PlayArea.gd::GDScript::5956010528752848523::1783233827::0::1::::<>Control<><>0<>0<><>::
 TeammateDashboard.gd::GDScript::1710187489722571177::1783307557::0::1::::<>Control<><>0<>0<><>::
 TeammateDashboard.tscn::PackedScene::131542970753750652::1783307624::0::1::::<><><>0<>0<><>::res://src/views/TeammateDashboard.gd<>res://src/views/TeammateDashboardController.gd<>uid://cxgb456xy0::::res://src/views/GameBoard.tscn<>res://src/views/CardManagementMenu.tscn<>res://src/views/MainMenu.tscn
-TeammateDashboardController.gd::GDScript::2464058418546727698::1783307611::0::1::::TeammateDashboardController<>Node<><>0<>0<><>::
+TeammateDashboardController.gd::GDScript::2464058418546727698::1783309686::0::1::::TeammateDashboardController<>Node<><>0<>0<><>::
 TransitionVideo.gd::GDScript::5882721299963759742::1783307732::0::1::::<>Control<><>0<>0<><>::
 TransitionVideo.tscn::PackedScene::6054464392731229::1783308051::0::1::::<><><>0<>0<><>::res://src/views/TransitionVideo.gd<>res://assets/vfx/transition_battle_intro.ogv<>uid://cxgb456xy0::::res://src/views/GameBoard.tscn
 ::res://src/views/components/::1783308504

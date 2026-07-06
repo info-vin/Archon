@@ -13,16 +13,6 @@ signal search_triggered(match_type: int)
 signal context_purified(remaining_card_instances: Array)
 signal chaos_event_triggered(event_id: String)
 
-# --- Sector Difficulty Constants ---
-const SECTOR_1_BASE_HP = 10000.0
-const SECTOR_2_BASE_HP = 15000.0
-const SECTOR_3_BASE_HP = 20000.0
-
-const SECTOR_1_POISON = 0.0
-const SECTOR_2_POISON = 0.2
-const SECTOR_3_POISON = 0.4
-# ---------------------------------
-
 var current_ap: int = 10
 var crisis_hp: float = 10000.0
 var max_crisis_hp: float = 10000.0
@@ -30,9 +20,8 @@ var max_crisis_hp: float = 10000.0
 var player_hp: float = 100.0
 var max_player_hp: float = 100.0
 
-# Composite Threat Mechanics
-var sla_timer: float = 300.0
-var max_sla: float = 300.0
+var sla_timer: float = GameBalanceConfig.MAX_SLA_TIME
+var max_sla: float = GameBalanceConfig.MAX_SLA_TIME
 var is_game_active: bool = false
 var is_tutorial_active: bool = false
 var rate_limit_compression: float = 1.0
@@ -50,7 +39,6 @@ var backend_client: Node
 var t_mgr_scene = preload("res://src/managers/tutorial/TutorialManager.gd")
 var CardData = preload("res://src/models/cards/CardData.gd")
 
-
 func _safe_get_node(singleton_name: String) -> Node:
 	if Engine.has_singleton(singleton_name):
 		return Engine.get_singleton(singleton_name)
@@ -59,7 +47,6 @@ func _safe_get_node(singleton_name: String) -> Node:
 	return null
 
 func _ready() -> void:
-	# Instantiate BackendClient
 	backend_client = backend_client_script.new()
 	add_child(backend_client)
 	backend_client.request_completed.connect(_on_search_completed)
@@ -81,7 +68,6 @@ func _process(delta: float) -> void:
 		sla_timer -= delta
 		sla_changed.emit(sla_timer)
 		
-		# Data Poisoning increases as SLA decreases. 
 		var elapsed = max_sla - sla_timer
 		var target_poison = min(0.8, base_poisoning_ratio + (elapsed / max_sla * 0.5))
 		if abs(target_poison - data_poisoning_ratio) > 0.01:
@@ -94,6 +80,13 @@ func _process(delta: float) -> void:
 			game_over.emit(false, "")
 
 func start_game() -> void:
+	_reset_stats()
+	_setup_tutorial()
+	_setup_difficulty()
+	_emit_initial_signals()
+	_draw_starting_hand()
+
+func _reset_stats() -> void:
 	is_game_active = true
 	sla_timer = max_sla
 	player_hp = max_player_hp
@@ -104,7 +97,8 @@ func start_game() -> void:
 	agent_planning_state = "idle"
 	combo_multiplier = 1.0
 	hand_context.clear()
-	
+
+func _setup_tutorial() -> void:
 	var sm = _safe_get_node("SaveManager")
 	var has_completed_tutorial = false
 	if sm != null:
@@ -116,36 +110,32 @@ func start_game() -> void:
 		add_child(t_mgr)
 	else:
 		is_tutorial_active = false
-	
+
+func _setup_difficulty() -> void:
+	var sm = _safe_get_node("SaveManager")
 	if sm != null:
 		max_player_hp = sm.max_player_hp
 		player_hp = max_player_hp
-		var sec = sm.get_current_sector()
-		if sec == 2:
-			base_poisoning_ratio = SECTOR_2_POISON
-			data_poisoning_ratio = SECTOR_2_POISON
-			max_crisis_hp = SECTOR_2_BASE_HP
-			crisis_hp = SECTOR_2_BASE_HP
-		elif sec == 3:
-			base_poisoning_ratio = SECTOR_3_POISON
-			data_poisoning_ratio = SECTOR_3_POISON
-			max_crisis_hp = SECTOR_3_BASE_HP
-			crisis_hp = SECTOR_3_BASE_HP
-		else:
-			base_poisoning_ratio = SECTOR_1_POISON
-			data_poisoning_ratio = SECTOR_1_POISON
-			max_crisis_hp = SECTOR_1_BASE_HP
-			crisis_hp = SECTOR_1_BASE_HP
+		var sec = ProgressionSystem.get_current_sector(sm)
+		
+		base_poisoning_ratio = GameBalanceConfig.get_sector_poison(sec)
+		data_poisoning_ratio = base_poisoning_ratio
+		
+		max_crisis_hp = GameBalanceConfig.get_sector_base_hp(sec)
+		crisis_hp = max_crisis_hp
 
+func _emit_initial_signals() -> void:
 	hp_changed.emit(crisis_hp)
 	player_hp_changed.emit(player_hp)
 	sla_changed.emit(sla_timer)
 	poisoning_updated.emit(data_poisoning_ratio)
 	rate_limit_updated.emit(rate_limit_compression)
-	
-	# Draw starting action cards based on SaveManager
+
+func _draw_starting_hand() -> void:
 	var card_reg = _safe_get_node("CardRegistry")
 	var event_bus = _safe_get_node("EventBus")
+	var sm = _safe_get_node("SaveManager")
+	
 	if card_reg != null and event_bus != null:
 		var equipped = ["keyword_search", "dense_search", "reranker"]
 		if sm != null:
@@ -174,7 +164,6 @@ func _on_request_play_card(card: Resource) -> void:
 		print("Not enough AP to play card!")
 		return
 		
-	# Verify and remove from hand
 	if not hand_context.remove_card(card):
 		print("Card not in hand!")
 		return
@@ -185,16 +174,13 @@ func _on_request_play_card(card: Resource) -> void:
 	var type_val = card.get("type") if card.get("type") != null else 1
 	
 	if type_val == 2 or type_val == 3:
-		# Context Chips (Data/Noise)
 		active_context.add_card(card)
 		var purity = active_context.calculate_context_purity(0.5)
 		context_updated.emit(purity)
 		
 	elif type_val == 1:
-		# ACTION CARD
 		CardEffectResolver.resolve_action_card(self, card)
 		
-	# Emit confirmed card_played so View can animate
 	var event_bus = _safe_get_node("EventBus")
 	if event_bus != null and event_bus.has_signal("card_played"):
 		event_bus.card_played.emit(card)
@@ -203,23 +189,21 @@ func deliver_context() -> void:
 	if not is_game_active:
 		return
 		
-	# Delivery cost 1 AP
 	current_ap -= 1
 	ap_changed.emit(current_ap)
-	deduct_sla(2.0) # SLA penalty: 2.0s
+	deduct_sla(GameBalanceConfig.SLA_PENALTY_PER_DELIVERY)
 	
 	delivery_count += 1
 	rate_limit_compression = max(0.5, 1.0 - (delivery_count * 0.1))
 	rate_limit_updated.emit(rate_limit_compression)
 	
 	var purity = active_context.calculate_context_purity(0.5)
-	
 	var damage = 0.0
+	
 	if purity < 1.0:
-		# Hallucination Penalty: D = 0, player HP damage based on noise chips
 		var noise_count = active_context.get_noise_chips(0.5)
-		# TDD alignment: noise_count * 20.0 (5 chips = 100 HP dead)
-		player_hp -= noise_count * 20.0
+		var damage_taken = BattleRuleEngine.calculate_hallucination_damage(noise_count)
+		player_hp -= damage_taken
 		if player_hp <= 0:
 			player_hp = 0
 			is_game_active = false
@@ -227,10 +211,9 @@ func deliver_context() -> void:
 			game_over.emit(false, "")
 		player_hp_changed.emit(player_hp)
 	else:
-		# Check for GraphRAG KG multiplier
 		var has_chain = false
 		for card in active_context.cards:
-			if card.get("id") == "graph_rag":
+			if card.get("id") == GameBalanceConfig.CARD_GRAPH_RAG:
 				has_chain = true
 				break
 		damage = active_context.calculate_delivery_damage(1000.0, 0.5, has_chain)
@@ -239,12 +222,11 @@ func deliver_context() -> void:
 		if crisis_hp <= 0:
 			crisis_hp = 0
 			is_game_active = false
-			var rank = calculate_battle_rank()
+			var rank = BattleRuleEngine.evaluate_battle_rank(sla_timer, player_hp, max_player_hp, delivery_count)
 			print("Battle Won with Rank: ", rank)
 			game_over.emit(true, rank)
 		hp_changed.emit(crisis_hp)
 		
-	# Reset context
 	active_context.clear()
 	context_updated.emit(0.0)
 	context_purified.emit([])
@@ -282,21 +264,6 @@ func _on_search_completed(response: Dictionary) -> void:
 
 func _on_search_failed(error_code: int, message: String) -> void:
 	print("Search failed (Code: %d, Message: %s). Activating Standalone Fallback!" % [error_code, message])
-	var num_cards = randi_range(3, 4)
-	
-	for i in range(num_cards):
-		var card = CardData.new()
-		card.type = CardData.CardType.DATA_CHIP
-		card.similarity = randf_range(0.3, 0.98)
-		card.title = "[MOCK] RAG Chunk #%d" % [i + 1]
-		card.match_type = randi_range(1, 3)
-		
+	var mock_cards = MockDataGenerator.generate_mock_rag_chunks()
+	for card in mock_cards:
 		hand_context.add_card(card, data_poisoning_ratio)
-
-func calculate_battle_rank() -> String:
-	if sla_timer > 150.0 and player_hp >= max_player_hp and delivery_count <= 2:
-		return "S"
-	elif sla_timer > 60.0 and player_hp >= max_player_hp * 0.5:
-		return "A"
-	else:
-		return "B"
