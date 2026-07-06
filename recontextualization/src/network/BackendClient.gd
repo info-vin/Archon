@@ -48,14 +48,19 @@ func search(query: String, similarity_threshold: float = 0.5, match_count: int =
 		call_deferred("emit_signal", "request_failed", 404, "Tutorial dataset missing")
 		return
 
-	var eq_model = "gemini-1.5-flash"
+	var eq_model = ""
+	var env_config = _safe_get_node("EnvConfig")
+	if env_config:
+		eq_model = env_config.default_model
+		
 	var al_react = false
 	
 	var save_manager = _safe_get_node("SaveManager")
 	if save_manager and save_manager.teammates.size() > 0:
 		# Use the first selected teammate for now or active logic
 		var active_t = save_manager.teammates[0]
-		eq_model = active_t.get("equipped_model", eq_model)
+		if active_t.get("equipped_model") != null and active_t.get("equipped_model") != "":
+			eq_model = active_t.get("equipped_model")
 		al_react = active_t.get("allow_react", al_react)
 
 	_current_payload = {

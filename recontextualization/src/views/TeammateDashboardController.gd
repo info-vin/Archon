@@ -57,7 +57,7 @@ func _initialize_view() -> void:
 
 func _init_default_teammates() -> void:
 	if save_manager:
-		var def_model = "gemini-1.5-flash"
+		var def_model = ""
 		if env_config: def_model = env_config.default_model
 		
 		save_manager.teammates.append({
@@ -85,7 +85,7 @@ func _on_teammate_selected(idx: int) -> void:
 		return
 		
 	var t = save_manager.teammates[idx]
-	var def_model = "gemini-1.5-flash"
+	var def_model = ""
 	if env_config: def_model = env_config.default_model
 	var equipped = t.get("equipped_model", def_model)
 	var model_idx = 0
@@ -95,7 +95,7 @@ func _on_teammate_selected(idx: int) -> void:
 
 func _on_model_selected(idx: int, model_idx: int) -> void:
 	if not save_manager or idx >= save_manager.teammates.size(): return
-	var model_str = "gemini-1.5-flash"
+	var model_str = ""
 	if env_config: model_str = env_config.get_model_id_by_index(model_idx)
 	save_manager.teammates[idx]["equipped_model"] = model_str
 	save_manager.save_progress()
