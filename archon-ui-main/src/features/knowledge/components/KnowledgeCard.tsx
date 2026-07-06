@@ -34,6 +34,13 @@ interface KnowledgeCardProps {
   onRefreshStarted?: (progressId: string) => void;
 }
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat();
+const safeFormatDate = (dateVal: any) => {
+  const date = new Date(dateVal);
+  return isNaN(date.getTime()) ? "Invalid Date" : dateFormatter.format(date);
+};
+
 export const KnowledgeCard: React.FC<KnowledgeCardProps> = ({
   item,
   onViewDocument,
@@ -238,7 +245,7 @@ export const KnowledgeCard: React.FC<KnowledgeCardProps> = ({
                   try {
                     return `Updated: ${format(new Date(updated), "M/d/yyyy")}`;
                   } catch {
-                    return `Updated: ${new Date(updated).toLocaleDateString()}`;
+                    return `Updated: ${safeFormatDate(updated)}`;
                   }
                 })()}
               </span>
