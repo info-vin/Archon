@@ -6,6 +6,11 @@ var overlay_instance: Node
 var states: Dictionary = {}
 var current_state: Node
 
+var State01Welcome = preload("res://src/managers/tutorial/states/State_01_Welcome.gd")
+var State02Search = preload("res://src/managers/tutorial/states/State_02_Search.gd")
+var State03DragData = preload("res://src/managers/tutorial/states/State_03_DragData.gd")
+var State04Deliver = preload("res://src/managers/tutorial/states/State_04_Deliver.gd")
+
 func _ready() -> void:
     # Add to group for easy access
     add_to_group("tutorial_manager")
@@ -15,16 +20,16 @@ func _ready() -> void:
     add_child(overlay_instance)
     
     # Load and setup states
-    _register_state("Welcome", "res://src/managers/tutorial/states/State_01_Welcome.gd")
-    _register_state("Search", "res://src/managers/tutorial/states/State_02_Search.gd")
-    _register_state("DragData", "res://src/managers/tutorial/states/State_03_DragData.gd")
-    _register_state("Deliver", "res://src/managers/tutorial/states/State_04_Deliver.gd")
+    _register_state("Welcome", State01Welcome)
+    _register_state("Search", State02Search)
+    _register_state("DragData", State03DragData)
+    _register_state("Deliver", State04Deliver)
     
     # Wait a frame to let UI settle, then start
     call_deferred("_start_tutorial")
 
-func _register_state(state_name: String, script_path: String) -> void:
-    var state = load(script_path).new()
+func _register_state(state_name: String, state_class: GDScript) -> void:
+    var state = state_class.new()
     state.name = state_name
     add_child(state)
     state.setup(self)

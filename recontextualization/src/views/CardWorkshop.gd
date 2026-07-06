@@ -22,12 +22,14 @@ func _ready() -> void:
     if return_btn:
         return_btn.pressed.connect(func(): request_return_battle.emit())
 
+var list_item_scene = preload("res://src/views/components/ListItemButton.tscn")
+
 func populate_inventory(inventory: Array) -> void:
     for child in inventory_container.get_children():
         child.queue_free()
         
     for card_data in inventory:
-        var btn = Button.new()
+        var btn = list_item_scene.instantiate()
         btn.text = "%s Lv.%d" % [card_data.get("base_id", "Unknown"), card_data.get("level", 1)]
         btn.pressed.connect(func(): request_add_to_furnace.emit(card_data))
         inventory_container.add_child(btn)
