@@ -77,6 +77,31 @@ func _run_tests():
 	else:
 		tests_failed += 1
 		
+	# Phase 5.8.9 Verification Tests
+	var test_token = preload("res://tests/test_token_capping.gd").new()
+	if test_token.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
+	var test_progression = preload("res://tests/test_teammate_progression.gd").new()
+	if test_progression.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
+	var test_adaptation = preload("res://tests/test_behavior_adaptation.gd").new()
+	if test_adaptation.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
+	var test_dual_brain = preload("res://tests/test_dual_brain_logic.gd").new()
+	if test_dual_brain.run_tests(self):
+		tests_passed += 1
+	else:
+		tests_failed += 1
+		
 	print("--- Test Results ---")
 	print("Passed: ", tests_passed)
 	print("Failed: ", tests_failed)
