@@ -31,7 +31,8 @@ export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & {
       <div className={`
         flex items-center backdrop-blur-md bg-gradient-to-b dark:from-white/10 dark:to-black/30 from-white/80 to-white/60 
         border dark:border-zinc-800/80 border-gray-200 rounded-md px-3 py-2
-        transition-all duration-200 ${accentColorMap[accentColor]}
+        focus-within:ring-2 focus-within:ring-offset-2 ${accentColorMap[accentColor]?.ring}
+        transition-all duration-200
       `}>
         {icon && <div className="mr-2 text-gray-500 dark:text-zinc-500">{icon}</div>}
         <input
