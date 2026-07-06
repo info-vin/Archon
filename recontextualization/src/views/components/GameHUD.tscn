@@ -1,0 +1,80 @@
+[gd_scene load_steps=2 format=3 uid="uid://cxgb456hud1"]
+
+[ext_resource type="Script" path="res://src/views/components/GameHUD.gd" id="1_hud"]
+
+[node name="GameHUD" type="HBoxContainer"]
+theme_override_constants/separation = 40
+alignment = 1
+script = ExtResource("1_hud")
+
+[node name="PoisonBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(120, 20)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "tooltip_poisoning"
+max_value = 50.0
+value = 0.0
+
+[node name="RateLimitLabel" type="Label" parent="."]
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+text = "[RATE LIMITED]"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CareerLabel" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+text = "L3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerHPBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(150, 20)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+max_value = 100.0
+value = 100.0
+show_percentage = true
+
+[node name="APLabel" type="Label" parent="."]
+layout_mode = 2
+text = "AP: 10"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PurityBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(150, 20)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "tooltip_purity"
+value = 0.0
+
+[node name="CrisisHPBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(150, 20)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "tooltip_crisis_hp"
+max_value = 10000.0
+value = 10000.0
+
+[node name="SLAPorgressBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 300.0
+value = 300.0
+show_percentage = false
+
+[node name="SLAText" type="Label" parent="SLAPorgressBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "SLA: 05:00"
+horizontal_alignment = 1
+vertical_alignment = 1

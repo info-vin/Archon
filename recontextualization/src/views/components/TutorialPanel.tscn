@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://cxgb456tut1"]
+
+[ext_resource type="Script" path="res://src/views/components/TutorialPanel.gd" id="1_tut"]
+
+[node name="TutorialPanel" type="ColorRect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.8)
+script = ExtResource("1_tut")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -150.0
+offset_right = 300.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+text = "⚠️ 系統危機發生！"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+
+[node name="Body" type="Label" parent="VBox"]
+layout_mode = 2
+text = "身為 RAG 工程師，你必須在 SLA 倒數結束前，透過卡牌過濾雜訊並精準交付資料來解除危機 (Crisis HP)。
+
+記住：如果你將混雜著錯誤資訊的卡牌交付給 LLM，模型將產生『幻覺 (Hallucination)』，不只危機無法解除，你還會受到反噬傷害！"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="StartButton" type="Button" parent="VBox"]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "開始防禦"
