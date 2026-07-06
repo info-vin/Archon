@@ -175,7 +175,7 @@ func _on_request_play_card(card: Resource) -> void:
 	
 	if type_val == 2 or type_val == 3:
 		active_context.add_card(card)
-		var purity = active_context.calculate_context_purity(0.5)
+		var purity = BattleRuleEngine.calculate_context_purity(active_context.cards, 0.5)
 		context_updated.emit(purity)
 		
 	elif type_val == 1:
@@ -197,11 +197,11 @@ func deliver_context() -> void:
 	rate_limit_compression = max(0.5, 1.0 - (delivery_count * 0.1))
 	rate_limit_updated.emit(rate_limit_compression)
 	
-	var purity = active_context.calculate_context_purity(0.5)
+	var purity = BattleRuleEngine.calculate_context_purity(active_context.cards, 0.5)
 	var damage = 0.0
 	
 	if purity < 1.0:
-		var noise_count = active_context.get_noise_chips(0.5)
+		var noise_count = BattleRuleEngine.get_noise_chips(active_context.cards, 0.5)
 		var damage_taken = BattleRuleEngine.calculate_hallucination_damage(noise_count)
 		player_hp -= damage_taken
 		if player_hp <= 0:
@@ -216,7 +216,7 @@ func deliver_context() -> void:
 			if card.get("id") == GameBalanceConfig.CARD_GRAPH_RAG:
 				has_chain = true
 				break
-		damage = active_context.calculate_delivery_damage(1000.0, 0.5, has_chain)
+		damage = BattleRuleEngine.calculate_delivery_damage(active_context.cards, 1000.0, 0.5, has_chain)
 		damage = damage * rate_limit_compression
 		crisis_hp -= damage
 		if crisis_hp <= 0:
@@ -260,10 +260,21 @@ func _on_search_completed(response: Dictionary) -> void:
 		else:
 			card.match_type = CardData.MatchType.HYBRID
 			
-		hand_context.add_card(card, data_poisoning_ratio)
+		_apply_data_poisoning(card)
+		hand_context.add_card(card)
+
+func _apply_data_poisoning(card: Resource) -> void:
+	if randf() < data_poisoning_ratio:
+		var type_val = card.get("type") if card.get("type") != null else 1
+		if type_val == CardData.CardType.DATA_CHIP:
+			card.set("type", CardData.CardType.NOISE_CHIP)
+			var current_title = card.get("title")
+			if current_title != null and not current_title.begins_with("[CORRUPTED]"):
+				card.set("title", "[CORRUPTED] " + current_title)
 
 func _on_search_failed(error_code: int, message: String) -> void:
 	print("Search failed (Code: %d, Message: %s). Activating Standalone Fallback!" % [error_code, message])
 	var mock_cards = MockDataGenerator.generate_mock_rag_chunks()
 	for card in mock_cards:
-		hand_context.add_card(card, data_poisoning_ratio)
+		_apply_data_poisoning(card)
+		hand_context.add_card(card)
