@@ -1,31 +1,67 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="1_4kdsc"]
-[ext_resource type="Shader" path="res://src/shaders/OctagonMask.gdshader" id="2_a0leu"]
-[ext_resource type="Texture2D" path="res://assets/images/chip_green_target.png" id="3_sbcvx"]
+[ext_resource type="Script" path="res://src/views/CardChip.gd" id="1_cc5pi"]
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="2_4qbhy"]
+[ext_resource type="Shader" path="res://src/shaders/HexagonMask.gdshader" id="3_t21gb"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_0j86r"]
-shader = ExtResource("2_a0leu")
-shader_parameter/chamfer_ratio = 0.18
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_nkt36"]
+shader = ExtResource("3_t21gb")
+shader_parameter/taper_amount = 0.15
+shader_parameter/smoothing = 0.01
 
-[node name="CardChip" type="MarginContainer" unique_id=941476013]
+[node name="CardChip" type="MarginContainer" unique_id=942555624]
+custom_minimum_size = Vector2(250, 368)
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource("1_cc5pi")
 
-[node name="BackgroundFrame" type="TextureRect" parent="." unique_id=984072880]
+[node name="BackgroundFrame" type="TextureRect" parent="." unique_id=1297105839]
 layout_mode = 2
-texture = ExtResource("1_4kdsc")
+texture = ExtResource("2_4qbhy")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ChipSlot" type="Control" parent="." unique_id=1449446158]
+[node name="ChipSlot" type="Control" parent="." unique_id=466841322]
 layout_mode = 2
 
-[node name="ChipIcon" type="TextureRect" parent="ChipSlot" unique_id=764542850]
-material = SubResource("ShaderMaterial_0j86r")
+[node name="ChipIcon" type="TextureRect" parent="ChipSlot" unique_id=465324447]
+material = SubResource("ShaderMaterial_nkt36")
 layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
-texture = ExtResource("3_sbcvx")
+anchor_left = 0.26
+anchor_top = 0.226
+anchor_right = 0.74
+anchor_bottom = 0.564
 expand_mode = 1
 stretch_mode = 5
+
+[node name="TitleContainer" type="MarginContainer" parent="ChipSlot" unique_id=1960204552]
+layout_mode = 0
+anchor_left = 0.15
+anchor_top = 0.082
+anchor_right = 0.85
+anchor_bottom = 0.142
+
+[node name="TitleLabel" type="Label" parent="ChipSlot/TitleContainer" unique_id=487075742]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.9, 0.95, 0.9, 1)
+text = "Card Title"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="DescriptionContainer" type="MarginContainer" parent="ChipSlot" unique_id=1464335739]
+layout_mode = 0
+anchor_left = 0.15
+anchor_top = 0.69
+anchor_right = 0.85
+anchor_bottom = 0.95
+
+[node name="DescriptionLabel" type="RichTextLabel" parent="ChipSlot/DescriptionContainer" unique_id=724580045]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 14
+theme_override_colors/default_color = Color(0.7, 0.9, 0.8, 1)
+bbcode_enabled = true
+text = "[center]Card Stats[/center]"
+fit_content = true
+scroll_active = false

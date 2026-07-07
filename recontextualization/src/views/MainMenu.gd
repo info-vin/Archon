@@ -31,4 +31,3 @@ func set_initial_settings(language: String, volume: float) -> void:
 func _on_lang_selected(index: int) -> void:
 	var lang_code = "en" if index == 0 else "zh_TW"
 	request_language_change.emit(lang_code)
-

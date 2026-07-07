@@ -17,3 +17,14 @@ tooltip_crisis_hp,System Crisis Level. Reduce to 0 to win.,系統危機值。這
 tooltip_purity,Context Purity. Higher purity means safer LLM response.,資料純淨度。數值越高，代表交付給 LLM 的資料越乾淨，能造成更多傷害。
 tooltip_poisoning,Poisoning Rate. Chance of drawing corrupted data.,投毒率。SLA 時間越少，投毒率越高，抽出紅色雜訊晶片的機率就越大。
 tooltip_ap,Action Points. Required to play cards.,行動力 (AP)。每次出牌都會消耗行動力。
+card_name_action_graphrag,GraphRAG Navigation,知識圖譜檢索
+card_name_action_reranker,Semantic Reranker,語意重排
+card_name_action_keyword,Keyword Search,關鍵字檢索
+card_name_action_dense,Dense Vector Search,密集向量檢索
+card_name_chip_green_target,Target Data,目標資料
+card_name_chip_red_noise,Corrupted Noise,受損雜訊
+card_stat_cost,Cost: %d RAM,消耗: %d RAM
+card_stat_effect,Effect: +%d Search Power,效果: 增加 %d 點算力
+card_stat_size,Size: %s,容量: %s
+card_stat_status_pure,Status: Pure,狀態: 純淨
+card_stat_status_corrupted,Status: Corrupted,狀態: 受損

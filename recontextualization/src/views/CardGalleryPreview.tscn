@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/views/CardGalleryPreview.gd" id="1_i2ywq"]
+
+[node name="CardGalleryPreview" type="ScrollContainer" unique_id=1111477149]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_i2ywq")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=458584124]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 50
+theme_override_constants/margin_top = 50
+theme_override_constants/margin_right = 50
+theme_override_constants/margin_bottom = 50
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer" unique_id=285849065]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 30
+theme_override_constants/v_separation = 30
+columns = 3
