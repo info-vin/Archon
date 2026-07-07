@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://itembtn1234"]
+[gd_scene format=3]
 
 [node name="ListItemButton" type="Button"]
 custom_minimum_size = Vector2(200, 50)

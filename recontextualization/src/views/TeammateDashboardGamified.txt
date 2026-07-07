@@ -1,0 +1,3 @@
+The user is right.
+I used standard UI controls: CheckButton, OptionButton, HSlider.
+It looks like a Windows 95 settings menu.

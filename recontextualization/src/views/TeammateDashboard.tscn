@@ -1,13 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://b4yq1q5x9b3a"]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/images/icon_equipment_slot.png" id="slot_icon"]
 [ext_resource type="Script" path="res://src/views/TeammateDashboard.gd" id="1_dash"]
 [ext_resource type="Script" path="res://src/views/TeammateDashboardController.gd" id="2_ctrl"]
-[ext_resource type="PackedScene" uid="uid://cxgb456xyz" path="res://src/views/GameBoard.tscn" id="3_gb"]
-[ext_resource type="PackedScene" uid="uid://card_manage_id" path="res://src/views/CardManagementMenu.tscn" id="4_cm"]
-[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="5_mm"]
 
-[node name="TeammateDashboard" type="Control" node_paths=PackedStringArray("teammate_list", "model_option", "react_check", "budget_slider", "budget_label", "ingested_docs_label", "back_btn", "card_menu_btn", "dive_btn")]
+[node name="TeammateDashboard" type="Control" node_paths=PackedStringArray("teammate_list", "model_option", "react_check", "budget_slider", "budget_label", "ingested_docs_label")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,21 +12,15 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dash")
-teammate_list = NodePath("MarginContainer/VBoxContainer/HBoxContainer/LeftVBox/ItemList")
-model_option = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox/OptionButton")
-react_check = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox/CheckButton")
-budget_slider = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/HSlider")
+teammate_list = NodePath("MarginContainer/VBoxContainer/HBoxContainer/LeftVBox/AgentsGrid")
+model_option = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox/EngineSlot")
+react_check = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox/OverclockToggle")
+budget_slider = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/EnergyBar")
 budget_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/Label")
 ingested_docs_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/IngestedLabel")
-back_btn = NodePath("MarginContainer/VBoxContainer/NavHBox/BackButton")
-card_menu_btn = NodePath("MarginContainer/VBoxContainer/NavHBox/CardMenuButton")
-dive_btn = NodePath("MarginContainer/VBoxContainer/NavHBox/DiveButton")
 
 [node name="TeammateDashboardController" type="Node" parent="."]
 script = ExtResource("2_ctrl")
-game_board_scene = ExtResource("3_gb")
-card_menu_scene = ExtResource("4_cm")
-main_menu_scene = ExtResource("5_mm")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -49,7 +40,7 @@ theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "隊員編制與戰術中樞"
+text = "特務編制中心"
 horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
@@ -63,11 +54,14 @@ size_flags_horizontal = 3
 
 [node name="ListTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
 layout_mode = 2
-text = "已入隊特務 (Recruited Agents)"
+text = "待命特務"
 
-[node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
+[node name="AgentsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+columns = 2
+theme_override_constants/h_separation = 15
+theme_override_constants/v_separation = 15
 
 [node name="ConfigVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
@@ -76,17 +70,20 @@ theme_override_constants/separation = 20
 
 [node name="ConfigTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
-text = "戰術設定 (Tactical Settings)"
+text = "戰術設定"
 
 [node name="ModelHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
 layout_mode = 2
-text = "核心引擎 (Core Engine)"
+text = "核心引擎"
 
-[node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
+[node name="EngineSlot" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
+custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="EquipmentSlot" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
 layout_mode = 2
@@ -98,49 +95,31 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
 layout_mode = 2
-text = "戰術覆寫 (Tactical Override - ReAct)"
+text = "戰術覆寫"
 
-[node name="CheckButton" type="CheckButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
+[node name="OverclockToggle" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
+custom_minimum_size = Vector2(80, 40)
 layout_mode = 2
+toggle_mode = true
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="BudgetVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
 layout_mode = 2
-text = "行動體力 (Stamina / AP Budget): 500"
+text = "預算上限: 10 Token"
 
-[node name="HSlider" type="HSlider" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
+[node name="EnergyBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
 layout_mode = 2
-min_value = 100.0
-max_value = 2000.0
-step = 100.0
-value = 500.0
+theme_override_constants/separation = 5
 
 [node name="IngestedLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
-text = "知識同步率 (Knowledge Sync Rate)"
+text = "特務情報"
 
 [node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="NavHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
-
-[node name="BackButton" type="Button" parent="MarginContainer/VBoxContainer/NavHBox"]
-custom_minimum_size = Vector2(200, 50)
-layout_mode = 2
-text = "menu_return"
-
-[node name="CardMenuButton" type="Button" parent="MarginContainer/VBoxContainer/NavHBox"]
-custom_minimum_size = Vector2(200, 50)
-layout_mode = 2
-text = "menu_card_management"
-
-[node name="DiveButton" type="Button" parent="MarginContainer/VBoxContainer/NavHBox"]
-custom_minimum_size = Vector2(200, 50)
-layout_mode = 2
-text = "menu_start_dive"

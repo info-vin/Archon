@@ -17,7 +17,8 @@ signal request_return_menu
 @export var topology_panel: Control
 @export var lines_container: Node2D
 @export var nodes_container: Control
-@export var back_button: Button
+@export var terminal_lore: RichTextLabel
+@export var back_button: TextureButton
 
 var line_shader = preload("res://src/shaders/DataFlowLine.gdshader")
 var _controller: Node
@@ -86,6 +87,23 @@ func _ready() -> void:
 	
 	if back_button:
 		back_button.pressed.connect(func(): request_return_menu.emit())
+        
+	var profile_panel = get_node_or_null("HBoxContainer/ProfilePanel")
+	var terminal_panel = get_node_or_null("HBoxContainer/TerminalPanel")
+	for panel in [profile_panel, terminal_panel]:
+		if panel:
+			var style = StyleBoxFlat.new()
+			style.bg_color = Color(0.05, 0.1, 0.15, 0.8)
+			style.border_width_left = 2
+			style.border_width_top = 2
+			style.border_width_right = 2
+			style.border_width_bottom = 2
+			style.border_color = Color(0.0, 0.8, 0.8, 0.5)
+			style.corner_radius_top_left = 16
+			style.corner_radius_top_right = 16
+			style.corner_radius_bottom_left = 16
+			style.corner_radius_bottom_right = 16
+			panel.add_theme_stylebox_override("panel", style)
 
 func update_profile(sector: int, account_xp: int) -> void:
 	# Determine badge and avatar tint
@@ -113,65 +131,102 @@ func update_profile(sector: int, account_xp: int) -> void:
 	rank_label.text = rank_text
 	xp_bar.value = account_xp
 
+var _typewriter_tween: Tween
+
+func _print_to_terminal(text: String) -> void:
+	if not terminal_lore: return
+	terminal_lore.visible_characters = 0
+	terminal_lore.text = text
+	
+	if _typewriter_tween:
+		_typewriter_tween.kill()
+	_typewriter_tween = create_tween()
+	var duration = text.length() * 0.02 # Fast typing
+	_typewriter_tween.tween_property(terminal_lore, "visible_ratio", 1.0, duration)
+	
+	# Glitch effect on terminal
+	var glitch_tween = create_tween()
+	for i in range(4):
+		glitch_tween.tween_property(terminal_lore, "modulate", Color(randf_range(0.5, 1.5), randf_range(0.5, 1.5), randf_range(0.5, 1.5), 1.0), 0.05)
+	glitch_tween.tween_property(terminal_lore, "modulate", Color.WHITE, 0.05)
+
 func setup_topology_web() -> void:
-	# Convert topology into a Relics Grid
 	for c in lines_container.get_children(): c.queue_free()
 	for c in nodes_container.get_children(): c.queue_free()
-	
-	var main_vbox = VBoxContainer.new()
-	main_vbox.set_anchors_preset(Control.PRESET_CENTER)
-	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	nodes_container.add_child(main_vbox)
-	
-	var title = Label.new()
-	title.text = "外掛擴充槽 (Active Implants)"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 24)
-	main_vbox.add_child(title)
-	
-	var grid = GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override("h_separation", 20)
-	grid.add_theme_constant_override("v_separation", 20)
-	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	main_vbox.add_child(grid)
-	
-	var stat_label = Label.new()
-	stat_label.text = "\n[ 晶片共鳴 (Resonance) ]\nMax AP: +40%  |  Draw Rate: +2"
-	stat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stat_label.modulate = Color(0.2, 1.0, 0.4) # Cyber green
-	main_vbox.add_child(stat_label)
 	
 	var node_icon = preload("res://assets/images/chip_green_target.png")
 	var slot_bg = preload("res://assets/images/icon_equipment_slot.png")
 	
-	var implant_names = ["超頻核心 (Overclock)", "神經加速器 (Neural Accel)", "量子算力 (Quantum Compute)", "記憶擴充 (Mem Expansion)"]
-	var implant_effects = ["AP Recovery +5/turn", "Draw 1 extra card", "Reasoning Depth +1", "Max Hand Size +2"]
+	var implant_names = ["超頻核心 (Overclock)", "神經加速器 (Neural Accel)", "量子算力 (Quantum Compute)", "記憶擴充 (Mem Expansion)", "終極協定 (Root Protocol)"]
+	var implant_effects = ["AP Recovery +5/turn", "Draw 1 extra card", "Reasoning Depth +1", "Max Hand Size +2", "Unlock Admin Privileges"]
+	var implant_lore = [
+		"A standard issue military grade overclock module. Tends to run hot. Prolonged use may cause neural burnout.",
+		"Illegal neural lace modification. Increases reaction time by 300% but voids warranty.",
+		"Miniaturized Q-bit processor array. Directly interfaces with the frontal lobe for instantaneous calculations.",
+		"Extra terabytes of cold storage for your brain. Perfect for hoarding encrypted corporate data.",
+		"The holy grail of netrunners. Grants root access to reality itself. Use with extreme caution."
+	]
 	
-	for i in range(8):
+	# Topology positions relative to center
+	var positions = [
+		Vector2(0, -120),
+		Vector2(-100, -30),
+		Vector2(100, -30),
+		Vector2(-70, 80),
+		Vector2(70, 80)
+	]
+	
+	var center = Vector2(250, 200) # Topology center
+	
+	# Draw Lines
+	for pos in positions:
+		var line = Line2D.new()
+		line.add_point(center)
+		line.add_point(center + pos)
+		line.width = 4
+		line.default_color = Color(0.2, 0.6, 0.8, 0.5)
+		
+		# Apply shader material if available (we'll just use a glowing color here for robustness)
+		var mat = CanvasItemMaterial.new()
+		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		line.material = mat
+		lines_container.add_child(line)
+		
+	# Draw Root Node
+	var root_slot = TextureRect.new()
+	root_slot.texture = slot_bg
+	root_slot.custom_minimum_size = Vector2(80, 80)
+	root_slot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	root_slot.position = center - Vector2(40, 40)
+	root_slot.modulate = Color(1.0, 0.8, 0.2) # Gold core
+	nodes_container.add_child(root_slot)
+	
+	for i in range(positions.size()):
+		var pos = center + positions[i]
+		
 		var slot = TextureRect.new()
 		slot.texture = slot_bg
-		slot.custom_minimum_size = Vector2(80, 80)
+		slot.custom_minimum_size = Vector2(64, 64)
 		slot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		slot.position = pos - Vector2(32, 32)
 		
-		# Only first 4 have relics
-		if i < 4:
-			var btn = TextureButton.new()
-			btn.texture_normal = node_icon
-			btn.ignore_texture_size = true
-			btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-			btn.custom_minimum_size = Vector2(64, 64)
-			btn.set_anchors_preset(Control.PRESET_CENTER)
-			btn.pivot_offset = Vector2(32, 32)
-			btn.tooltip_text = "【%s】\n%s" % [implant_names[i], implant_effects[i]]
-			btn.pressed.connect(_on_node_pressed.bind(i, btn))
-			btn.mouse_entered.connect(_on_node_hovered.bind(btn, true))
-			btn.mouse_exited.connect(_on_node_hovered.bind(btn, false))
-			slot.add_child(btn)
-			
-		grid.add_child(slot)
+		var btn = TextureButton.new()
+		btn.texture_normal = node_icon
+		btn.ignore_texture_size = true
+		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+		btn.custom_minimum_size = Vector2(48, 48)
+		btn.set_anchors_preset(Control.PRESET_CENTER)
+		btn.pivot_offset = Vector2(24, 24)
+		
+		var lore_text = "【%s】\n\n[ EFFECT ]\n%s\n\n[ LORE ]\n%s" % [implant_names[i], implant_effects[i], implant_lore[i]]
+		btn.pressed.connect(_on_node_pressed.bind(i, btn, lore_text))
+		btn.mouse_entered.connect(_on_node_hovered.bind(btn, true))
+		btn.mouse_exited.connect(_on_node_hovered.bind(btn, false))
+		
+		slot.add_child(btn)
+		nodes_container.add_child(slot)
+		
+	_print_to_terminal("系統就緒... 等待神經網路節點連線。")
 
 func _on_node_hovered(btn: TextureButton, is_hovered: bool) -> void:
 	var tween = create_tween()
@@ -182,10 +237,11 @@ func _on_node_hovered(btn: TextureButton, is_hovered: bool) -> void:
 		tween.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.1)
 		tween.parallel().tween_property(btn, "modulate", Color.WHITE, 0.1)
 
-func _on_node_pressed(node_idx: int, btn: TextureButton) -> void:
-	print("Relic %d clicked! Emitting pulse..." % node_idx)
+func _on_node_pressed(node_idx: int, btn: TextureButton, lore_text: String) -> void:
 	var tween = create_tween()
 	tween.tween_property(btn, "scale", Vector2(1.5, 1.5), 0.05)
 	tween.parallel().tween_property(btn, "modulate", Color(3.0, 3.0, 3.0, 1.0), 0.05) # Extreme HDR Glow
 	tween.tween_property(btn, "scale", Vector2(1.2, 1.2), 0.3).set_trans(Tween.TRANS_BOUNCE)
 	tween.parallel().tween_property(btn, "modulate", Color(1.5, 1.5, 1.5, 1.0), 0.3)
+	
+	_print_to_terminal(lore_text)

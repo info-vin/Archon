@@ -1,7 +1,7 @@
 extends Node
 class_name CharacterDashboardController
 
-@export var main_menu_scene: PackedScene
+var main_menu_scene = "res://src/views/MainMenu.tscn"
 
 var view: Control
 var save_manager: Node
@@ -34,4 +34,4 @@ func _update_profile() -> void:
 
 func _on_return_menu() -> void:
 	if main_menu_scene:
-		view.get_tree().change_scene_to_packed(main_menu_scene)
+		view.get_tree().change_scene_to_file(main_menu_scene)

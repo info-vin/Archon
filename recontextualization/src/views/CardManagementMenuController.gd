@@ -1,9 +1,9 @@
 extends Node
 class_name CardManagementMenuController
 
-@export var game_board_scene: PackedScene
-@export var teammate_dash_scene: PackedScene
-@export var main_menu_scene: PackedScene
+var game_board_scene = "res://src/views/GameBoard.tscn"
+var teammate_dash_scene = "res://src/views/TeammateDashboard.tscn"
+var main_menu_scene = "res://src/views/MainMenu.tscn"
 
 var view: Control
 var save_manager: Node
@@ -65,12 +65,12 @@ func _on_unequip_card(card_id: String) -> void:
 
 func _on_return_menu() -> void:
 	if main_menu_scene:
-		view.get_tree().change_scene_to_packed(main_menu_scene)
+		view.get_tree().change_scene_to_file(main_menu_scene)
 
 func _on_teammate_dash() -> void:
 	if teammate_dash_scene:
-		view.get_tree().change_scene_to_packed(teammate_dash_scene)
+		view.get_tree().change_scene_to_file(teammate_dash_scene)
 
 func _on_start_dive() -> void:
 	if game_board_scene:
-		view.get_tree().change_scene_to_packed(game_board_scene)
+		view.get_tree().change_scene_to_file(game_board_scene)

@@ -1,8 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://c5xk3j7l9g1"]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/views/IntroVideo.gd" id="1_intro"]
 [ext_resource type="VideoStream" path="res://assets/vfx/transition_os_boot.ogv" id="2_video"]
-[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="3_mm"]
 
 [node name="IntroVideo" type="Control"]
 layout_mode = 3
@@ -12,7 +11,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_intro")
-next_scene = ExtResource("3_mm")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1

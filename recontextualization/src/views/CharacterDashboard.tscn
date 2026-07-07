@@ -1,16 +1,16 @@
-[gd_scene load_steps=10 format=3 uid="uid://char_dashboard_uid"]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/views/CharacterDashboard.gd" id="1_dash"]
 [ext_resource type="Script" path="res://src/views/CharacterDashboardController.gd" id="2_ctrl"]
-[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="3_mm"]
 [ext_resource type="Texture2D" path="res://assets/images/bg_talent_web.png" id="2_bg"]
 [ext_resource type="Texture2D" path="res://assets/images/avatar_default.png" id="3_avatar"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_c.png" id="4_badge"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_b.png" id="badge_b"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_a.png" id="badge_a"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_s.png" id="badge_s"]
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="frame_blank"]
 
-[node name="CharacterDashboard" type="Control" node_paths=PackedStringArray("bg_texture", "avatar_rect", "badge_rect", "rank_label", "xp_bar", "topology_panel", "lines_container", "nodes_container", "back_button")]
+[node name="CharacterDashboard" type="Control" node_paths=PackedStringArray("bg_texture", "avatar_rect", "badge_rect", "rank_label", "xp_bar", "topology_panel", "lines_container", "nodes_container", "back_button", "terminal_lore")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,14 +30,13 @@ xp_bar = NodePath("HBoxContainer/ProfilePanel/VBox/XPBar")
 topology_panel = NodePath("HBoxContainer/TopologyPanel")
 lines_container = NodePath("HBoxContainer/TopologyPanel/LinesContainer")
 nodes_container = NodePath("HBoxContainer/TopologyPanel/NodesContainer")
+terminal_lore = NodePath("HBoxContainer/TerminalPanel/VBox/LoreText")
 back_button = NodePath("BackButton")
 
 [node name="CharacterDashboardController" type="Node" parent="."]
 script = ExtResource("2_ctrl")
-main_menu_scene = ExtResource("3_mm")
 
 [node name="Background" type="TextureRect" parent="."]
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,22 +61,45 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 40
 alignment = 1
 
-[node name="ProfilePanel" type="PanelContainer" parent="HBoxContainer"]
-custom_minimum_size = Vector2(300, 0)
+[node name="ProfilePanel" type="TextureRect" parent="HBoxContainer"]
+custom_minimum_size = Vector2(300, 500)
 layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="VBox" type="VBoxContainer" parent="HBoxContainer/ProfilePanel"]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 30.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_constants/separation = 20
 alignment = 1
 
+[node name="Badge" type="TextureRect" parent="HBoxContainer/ProfilePanel/VBox"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("4_badge")
+expand_mode = 1
+stretch_mode = 5
+
 [node name="Avatar" type="TextureRect" parent="HBoxContainer/ProfilePanel/VBox"]
-custom_minimum_size = Vector2(200, 200)
+custom_minimum_size = Vector2(250, 250)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = ExtResource("3_avatar")
@@ -88,14 +110,7 @@ stretch_mode = 5
 layout_mode = 2
 text = "Rank C: Script Kiddie"
 horizontal_alignment = 1
-
-[node name="Badge" type="TextureRect" parent="HBoxContainer/ProfilePanel/VBox"]
-custom_minimum_size = Vector2(100, 100)
-layout_mode = 2
-size_flags_horizontal = 4
-texture = ExtResource("4_badge")
-expand_mode = 1
-stretch_mode = 5
+theme_override_font_sizes/font_size = 20
 
 [node name="XPLabel" type="Label" parent="HBoxContainer/ProfilePanel/VBox"]
 layout_mode = 2
@@ -103,17 +118,16 @@ text = "Account XP"
 horizontal_alignment = 1
 
 [node name="XPBar" type="ProgressBar" parent="HBoxContainer/ProfilePanel/VBox"]
-custom_minimum_size = Vector2(250, 20)
+custom_minimum_size = Vector2(200, 20)
 layout_mode = 2
 size_flags_horizontal = 4
 max_value = 1000.0
 value = 100.0
 
-
-
 [node name="TopologyPanel" type="Control" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.5
 
 [node name="LinesContainer" type="Node2D" parent="HBoxContainer/TopologyPanel"]
 
@@ -125,14 +139,60 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="BackButton" type="Button" parent="."]
+[node name="TerminalPanel" type="TextureRect" parent="HBoxContainer"]
+custom_minimum_size = Vector2(300, 400)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="HBoxContainer/TerminalPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 30.0
+offset_right = -20.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="HBoxContainer/TerminalPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+text = "> 系統終端 [SYS_TERM]"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="LoreText" type="RichTextLabel" parent="HBoxContainer/TerminalPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.8, 1, 0.8, 1)
+text = "等待神經連接..."
+
+[node name="BackButton" type="TextureButton" parent="."]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = -60.0
-offset_right = 120.0
-offset_bottom = -20.0
+offset_top = -80.0
+offset_right = 220.0
+offset_bottom = -30.0
 grow_vertical = 0
-text = "menu_return"
+texture_normal = ExtResource("frame_blank")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="BackButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "返回主選單"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 24

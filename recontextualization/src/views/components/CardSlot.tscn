@@ -1,0 +1,46 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/views/components/CardSlot.gd" id="1_cslot"]
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="2_tex"]
+
+[node name="CardSlot" type="MarginContainer"]
+custom_minimum_size = Vector2(120, 160)
+offset_right = 120.0
+offset_bottom = 160.0
+script = ExtResource("1_cslot")
+
+[node name="TextureButton" type="TextureButton" parent="."]
+layout_mode = 2
+texture_normal = ExtResource("2_tex")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TextureButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CardName" type="Label" parent="TextureButton/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Card Name"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="CardType" type="Label" parent="TextureButton/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Action"
+horizontal_alignment = 1
+
+[node name="ActionIndicator" type="Label" parent="TextureButton/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_font_sizes/font_size = 20
+text = "[+]"
+horizontal_alignment = 1

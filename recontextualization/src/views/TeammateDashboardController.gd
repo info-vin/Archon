@@ -1,9 +1,9 @@
 extends Node
 class_name TeammateDashboardController
 
-@export var game_board_scene: PackedScene
-@export var card_menu_scene: PackedScene
-@export var main_menu_scene: PackedScene
+var game_board_scene = "res://src/views/GameBoard.tscn"
+var card_menu_scene = "res://src/views/CardManagementMenu.tscn"
+var main_menu_scene = "res://src/views/MainMenu.tscn"
 
 var view: Control
 var save_manager: Node
@@ -78,6 +78,15 @@ func _init_default_teammates() -> void:
 			"allow_react": true,
 			"token_cap": 1500
 		})
+		save_manager.teammates.append({
+			"id": "charlie_tank",
+			"name": "Charlie (Enforcer)",
+			"level": 2,
+			"ingested_docs": 5,
+			"equipped_model": def_model,
+			"allow_react": false,
+			"token_cap": 800
+		})
 		save_manager.save_progress()
 
 func _on_teammate_selected(idx: int) -> void:
@@ -112,12 +121,12 @@ func _on_budget_changed(idx: int, val: float) -> void:
 
 func _on_start_dive() -> void:
 	if game_board_scene:
-		view.get_tree().change_scene_to_packed(game_board_scene)
+		view.get_tree().change_scene_to_file(game_board_scene)
 
 func _on_card_menu() -> void:
 	if card_menu_scene:
-		view.get_tree().change_scene_to_packed(card_menu_scene)
+		view.get_tree().change_scene_to_file(card_menu_scene)
 
 func _on_return_menu() -> void:
 	if main_menu_scene:
-		view.get_tree().change_scene_to_packed(main_menu_scene)
+		view.get_tree().change_scene_to_file(main_menu_scene)

@@ -4,7 +4,7 @@ const SAVE_PATH = "user://archon_progress.json"
 
 var career_level: int = 3
 var max_player_hp: float = 100.0
-var unlocked_action_cards: Array = ["keyword_search", "dense_search", "reranker"]
+var unlocked_action_cards: Array = ["keyword_search", "dense_search", "reranker", "filter_by_date", "author_query", "web_crawler"]
 var equipped_action_cards: Array = ["keyword_search", "dense_search", "reranker"]
 var has_completed_tutorial: bool = false
 var language: String = "zh_TW"
@@ -86,7 +86,7 @@ func _parse_loaded_data(data) -> void:
     if typeof(data) == TYPE_DICTIONARY:
         career_level = data.get("career_level", 3)
         max_player_hp = data.get("max_player_hp", 100.0)
-        unlocked_action_cards = data.get("unlocked_action_cards", ["keyword_search", "dense_search", "reranker"])
+        unlocked_action_cards = data.get("unlocked_action_cards", ["keyword_search", "dense_search", "reranker", "filter_by_date", "author_query", "web_crawler"])
         equipped_action_cards = data.get("equipped_action_cards", ["keyword_search", "dense_search", "reranker"])
         has_completed_tutorial = data.get("has_completed_tutorial", false)
         language = data.get("language", "zh_TW")
@@ -129,7 +129,7 @@ func _enforce_equipment_limit() -> void:
 func _reset_to_default() -> void:
     career_level = 3
     max_player_hp = 100.0
-    unlocked_action_cards = ["keyword_search", "dense_search", "reranker"]
+    unlocked_action_cards = ["keyword_search", "dense_search", "reranker", "filter_by_date", "author_query", "web_crawler"]
     equipped_action_cards = ["keyword_search", "dense_search", "reranker"]
     has_completed_tutorial = false
     language = "zh_TW"

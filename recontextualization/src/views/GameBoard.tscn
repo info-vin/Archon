@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://cxgb456xyz"]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="VideoStream" path="res://assets/vfx/transition_victory.ogv" id="vid_vic"]
 [ext_resource type="VideoStream" path="res://assets/vfx/transition_defeat_glitch.ogv" id="vid_glitch"]
@@ -8,15 +8,7 @@
 [ext_resource type="Script" path="res://src/views/components/HandLayout.gd" id="hand_layout_script"]
 [ext_resource type="Texture2D" path="res://assets/images/bg_vector_grid.png" id="bg_tex"]
 [ext_resource type="Script" path="res://src/views/EventQueue.gd" id="2_eq"]
-[ext_resource type="PackedScene" path="res://src/views/PauseMenu.tscn" id="3_pause"]
 [ext_resource type="Script" path="res://src/views/PlayArea.gd" id="3_pa"]
-[ext_resource type="PackedScene" path="res://src/views/AgentCompanion.tscn" id="4_agent"]
-[ext_resource type="PackedScene" uid="uid://cxgb456hud1" path="res://src/views/components/GameHUD.tscn" id="1_hud"]
-[ext_resource type="PackedScene" uid="uid://cxgb456tut1" path="res://src/views/components/TutorialPanel.tscn" id="2_tut"]
-[ext_resource type="PackedScene" uid="uid://cxgb456gov1" path="res://src/views/components/GameOverPanel.tscn" id="3_gov"]
-[ext_resource type="PackedScene" uid="uid://char_dashboard_uid" path="res://src/views/CharacterDashboard.tscn" id="6_dash"]
-[ext_resource type="PackedScene" uid="uid://b1x2y3z4a5b6c" path="res://src/views/CardWorkshop.tscn" id="7_work"]
-[ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="8_mm"]
 
 [node name="GameBoard" type="Control"]
 layout_mode = 3
