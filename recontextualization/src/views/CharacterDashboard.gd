@@ -71,8 +71,8 @@ func _ready() -> void:
 	var tab4 = MarginContainer.new()
 	tab4.name = "TeammateTab"
 	var teammate = teammate_scene.instantiate()
-	if teammate.has_node("NavHBox"): teammate.get_node("NavHBox").hide()
-	if teammate.has_node("ColorRect"): teammate.get_node("ColorRect").hide()
+	if teammate.has_node("MarginContainer/VBoxContainer/NavHBox"): 
+		teammate.get_node("MarginContainer/VBoxContainer/NavHBox").hide()
 	tab4.add_child(teammate)
 	tab_container.add_child(tab4)
 	tab_container.set_tab_title(3, tr("tab_teammates"))
