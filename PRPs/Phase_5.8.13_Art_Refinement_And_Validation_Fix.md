@@ -52,3 +52,17 @@
 ## 4. 驗證計畫 (Verification Plan)
 * 執行 `make build-headless` 或以 Godot Headless 模式啟動編譯，確保沒有 `.tscn` 依賴錯誤或 Null Reference 崩潰。
 * 手動檢查所有涉及修改的檔案，確保邏輯與 UI 掛載正確無誤。
+
+
+### 3.5 (P0) 遊戲迴圈崩潰修復與 L2 架構對齊 (Lifecycle Architecture Hardening)
+* **目標檔案**：`recontextualization/src/views/MainMenu.gd`, `MainMenu.tscn`, `CharacterDashboard.gd`, `CharacterDashboard.tscn`
+* **動作**：
+    1. 根除 `@onready` 在場景切換時導致的 `Invalid assignment on Nil` 崩潰。
+    2. 將 UI 控制節點全面轉換為 `@export var` 並透過 `.tscn` 的 `node_paths` 屬性陣列進行物理綁定，落實真正的 MVC 架構單向資料流，打通導航迴圈。
+
+### 3.6 (P2) 玩家面板 UX 檢討與互動性補強 (Dashboard UX & Interactivity)
+* **目標檔案**：`recontextualization/src/views/CharacterDashboard.gd`, `CharacterDashboard.tscn`
+* **動作**：
+    1. **隱藏干擾性背景**：因目前的 `bg_texture` 缺乏明確的 UX 意義，導致介面混亂且「無聊」，暫時設定 `visible = false`，將介面還原至乾淨狀態，等待後續專業 UX 設計。
+    2. **拓樸網實體化**：將原本隱形的假節點賦予實體圖示 (`chip_green_target.png`)，並實裝滑鼠懸停 (Hover) 的放大微光特效與點擊引爆 (Click Pulse) 的 HDR 閃光，讓介面脫離死氣沉沉的切版狀態。
+
