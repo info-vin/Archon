@@ -59,7 +59,7 @@ size_flags_stretch_ratio = 0.4
 [node name="Title" type="Label" parent="HBoxContainer/InventoryPanel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Inventory / 玩家牌庫"
+text = "卡牌素材庫 (Material Inventory)"
 horizontal_alignment = 1
 
 [node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/InventoryPanel"]
@@ -77,7 +77,7 @@ size_flags_horizontal = 3
 [node name="Title" type="Label" parent="HBoxContainer/FurnacePanel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "Synthesizer / 卡牌合成爐"
+text = "終極融合矩陣 (Ultimate Synthesis Matrix)"
 horizontal_alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/FurnacePanel"]

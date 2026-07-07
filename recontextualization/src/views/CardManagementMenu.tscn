@@ -44,7 +44,7 @@ offset_right = 200.0
 offset_bottom = 100.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 48
-text = "Card Management"
+text = "牌組構築矩陣 (Deck Matrix)"
 horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
@@ -68,7 +68,7 @@ layout_mode = 2
 [node name="Label" type="Label" parent="HBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Unlocked"
+text = "可用資料塊 (Available Data Blocks)"
 horizontal_alignment = 1
 
 [node name="UnlockedList" type="VBoxContainer" parent="HBoxContainer/VBoxContainer"]
@@ -81,7 +81,7 @@ layout_mode = 2
 [node name="LimitLabel" type="Label" parent="HBoxContainer/VBoxContainer2"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "Equipped (0 / 3)"
+text = "掛載插槽 (Equipped) (0 / 3)"
 horizontal_alignment = 1
 
 [node name="EquippedList" type="VBoxContainer" parent="HBoxContainer/VBoxContainer2"]

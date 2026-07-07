@@ -49,7 +49,7 @@ theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "menu_teammate_dashboard"
+text = "隊員編制與戰術中樞"
 horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
@@ -63,7 +63,7 @@ size_flags_horizontal = 3
 
 [node name="ListTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
 layout_mode = 2
-text = "label_recruited_agents"
+text = "已入隊特務 (Recruited Agents)"
 
 [node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
 layout_mode = 2
@@ -76,14 +76,14 @@ theme_override_constants/separation = 20
 
 [node name="ConfigTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
-text = "label_reasoning_strategy"
+text = "戰術設定 (Tactical Settings)"
 
 [node name="ModelHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
 layout_mode = 2
-text = "label_equipped_model"
+text = "核心引擎 (Core Engine)"
 
 [node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
 layout_mode = 2
@@ -98,7 +98,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
 layout_mode = 2
-text = "label_react_reasoning"
+text = "戰術覆寫 (Tactical Override - ReAct)"
 
 [node name="CheckButton" type="CheckButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
 layout_mode = 2
@@ -108,7 +108,7 @@ layout_mode = 2
 
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
 layout_mode = 2
-text = "label_token_cap_500"
+text = "行動體力 (Stamina / AP Budget): 500"
 
 [node name="HSlider" type="HSlider" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
 layout_mode = 2
@@ -119,7 +119,7 @@ value = 500.0
 
 [node name="IngestedLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2
-text = "label_ingested_docs_0"
+text = "知識同步率 (Knowledge Sync Rate)"
 
 [node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2

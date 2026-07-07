@@ -38,40 +38,44 @@ func _ready() -> void:
 	var hbox = $HBoxContainer
 	remove_child(hbox)
 	var tab1 = MarginContainer.new()
-	tab1.name = "Profile & Relics"
+	tab1.name = "ProfileTab"
 	tab1.add_theme_constant_override("margin_left", 20)
 	tab1.add_theme_constant_override("margin_top", 20)
 	tab1.add_theme_constant_override("margin_right", 20)
 	tab1.add_theme_constant_override("margin_bottom", 20)
 	tab1.add_child(hbox)
 	tab_container.add_child(tab1)
+	tab_container.set_tab_title(0, tr("tab_profile_relics"))
 	
 	# 3. Inject Card Management
 	var tab2 = MarginContainer.new()
-	tab2.name = "Deck Management"
+	tab2.name = "DeckTab"
 	var deck = card_manage_scene.instantiate()
 	if deck.has_node("NavBox"): deck.get_node("NavBox").hide()
 	if deck.has_node("ColorRect"): deck.get_node("ColorRect").hide()
 	tab2.add_child(deck)
 	tab_container.add_child(tab2)
+	tab_container.set_tab_title(1, tr("tab_deck_management"))
 	
 	# 4. Inject Workshop
 	var tab3 = MarginContainer.new()
-	tab3.name = "Card Workshop"
+	tab3.name = "WorkshopTab"
 	var workshop = card_workshop_scene.instantiate()
-	if workshop.has_node("BackButton"): workshop.get_node("BackButton").hide()
+	if workshop.has_node("ReturnButton"): workshop.get_node("ReturnButton").hide()
 	if workshop.has_node("Background"): workshop.get_node("Background").hide()
 	tab3.add_child(workshop)
 	tab_container.add_child(tab3)
+	tab_container.set_tab_title(2, tr("tab_card_workshop"))
 	
 	# 5. Inject Teammates
 	var tab4 = MarginContainer.new()
-	tab4.name = "Teammates"
+	tab4.name = "TeammateTab"
 	var teammate = teammate_scene.instantiate()
-	if teammate.has_node("BackButton"): teammate.get_node("BackButton").hide()
+	if teammate.has_node("NavHBox"): teammate.get_node("NavHBox").hide()
 	if teammate.has_node("ColorRect"): teammate.get_node("ColorRect").hide()
 	tab4.add_child(teammate)
 	tab_container.add_child(tab4)
+	tab_container.set_tab_title(3, tr("tab_teammates"))
 	
 	# 6. Ensure BackButton stays on top
 	if back_button:
@@ -114,17 +118,37 @@ func setup_topology_web() -> void:
 	for c in lines_container.get_children(): c.queue_free()
 	for c in nodes_container.get_children(): c.queue_free()
 	
+	var main_vbox = VBoxContainer.new()
+	main_vbox.set_anchors_preset(Control.PRESET_CENTER)
+	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	nodes_container.add_child(main_vbox)
+	
+	var title = Label.new()
+	title.text = "外掛擴充槽 (Active Implants)"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	main_vbox.add_child(title)
+	
 	var grid = GridContainer.new()
 	grid.columns = 4
 	grid.add_theme_constant_override("h_separation", 20)
 	grid.add_theme_constant_override("v_separation", 20)
-	grid.set_anchors_preset(Control.PRESET_CENTER)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	nodes_container.add_child(grid)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	main_vbox.add_child(grid)
+	
+	var stat_label = Label.new()
+	stat_label.text = "\n[ 晶片共鳴 (Resonance) ]\nMax AP: +40%  |  Draw Rate: +2"
+	stat_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stat_label.modulate = Color(0.2, 1.0, 0.4) # Cyber green
+	main_vbox.add_child(stat_label)
 	
 	var node_icon = preload("res://assets/images/chip_green_target.png")
 	var slot_bg = preload("res://assets/images/icon_equipment_slot.png")
+	
+	var implant_names = ["超頻核心 (Overclock)", "神經加速器 (Neural Accel)", "量子算力 (Quantum Compute)", "記憶擴充 (Mem Expansion)"]
+	var implant_effects = ["AP Recovery +5/turn", "Draw 1 extra card", "Reasoning Depth +1", "Max Hand Size +2"]
 	
 	for i in range(8):
 		var slot = TextureRect.new()
@@ -141,7 +165,7 @@ func setup_topology_web() -> void:
 			btn.custom_minimum_size = Vector2(64, 64)
 			btn.set_anchors_preset(Control.PRESET_CENTER)
 			btn.pivot_offset = Vector2(32, 32)
-			btn.tooltip_text = "【Relic %d】: Boosts stats by %d%%" % [i, (i+1)*10]
+			btn.tooltip_text = "【%s】\n%s" % [implant_names[i], implant_effects[i]]
 			btn.pressed.connect(_on_node_pressed.bind(i, btn))
 			btn.mouse_entered.connect(_on_node_hovered.bind(btn, true))
 			btn.mouse_exited.connect(_on_node_hovered.bind(btn, false))

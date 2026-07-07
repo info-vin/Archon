@@ -21,6 +21,26 @@ func _ready() -> void:
         synthesize_btn.pressed.connect(func(): request_synthesize.emit())
     if return_btn:
         return_btn.pressed.connect(func(): request_return_battle.emit())
+        
+    # Inject Glassmorphism for Inventory Panel to remove black void
+    var scroll = inventory_container.get_parent()
+    if scroll and scroll is ScrollContainer:
+        var style = StyleBoxFlat.new()
+        style.bg_color = Color(0.05, 0.1, 0.15, 0.6)
+        style.border_width_left = 2
+        style.border_width_top = 2
+        style.border_width_right = 2
+        style.border_width_bottom = 2
+        style.border_color = Color(0.0, 0.8, 0.8, 0.5)
+        style.corner_radius_top_left = 12
+        style.corner_radius_top_right = 12
+        style.corner_radius_bottom_left = 12
+        style.corner_radius_bottom_right = 12
+        scroll.add_theme_stylebox_override("panel", style)
+        
+    # Theme Catalyst block
+    if catalyst_slot and catalyst_slot is ColorRect:
+        catalyst_slot.color = Color(0.3, 0.1, 0.4, 0.8) # Deep purple glass
 
 var list_item_scene = preload("res://src/views/components/ListItemButton.tscn")
 
