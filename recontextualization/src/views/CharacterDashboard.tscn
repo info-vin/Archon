@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_a.png" id="badge_a"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_s.png" id="badge_s"]
 
-[node name="CharacterDashboard" type="Control"]
+[node name="CharacterDashboard" type="Control" node_paths=PackedStringArray("bg_texture", "avatar_rect", "badge_rect", "rank_label", "xp_bar", "topology_panel", "lines_container", "nodes_container", "back_button")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,6 +22,15 @@ badge_rank_c = ExtResource("4_badge")
 badge_rank_b = ExtResource("badge_b")
 badge_rank_a = ExtResource("badge_a")
 badge_rank_s = ExtResource("badge_s")
+bg_texture = NodePath("Background")
+avatar_rect = NodePath("HBoxContainer/ProfilePanel/VBox/Avatar")
+badge_rect = NodePath("HBoxContainer/ProfilePanel/VBox/Badge")
+rank_label = NodePath("HBoxContainer/ProfilePanel/VBox/RankLabel")
+xp_bar = NodePath("HBoxContainer/ProfilePanel/VBox/XPBar")
+topology_panel = NodePath("HBoxContainer/TopologyPanel")
+lines_container = NodePath("HBoxContainer/TopologyPanel/LinesContainer")
+nodes_container = NodePath("HBoxContainer/TopologyPanel/NodesContainer")
+back_button = NodePath("BackButton")
 
 [node name="CharacterDashboardController" type="Node" parent="."]
 script = ExtResource("2_ctrl")

@@ -7,16 +7,17 @@ signal request_return_menu
 @export var badge_rank_a: Texture2D
 @export var badge_rank_s: Texture2D
 
-@onready var bg_texture: TextureRect = $Background
-@onready var avatar_rect: TextureRect = $HBoxContainer/ProfilePanel/VBox/Avatar
-@onready var badge_rect: TextureRect = $HBoxContainer/ProfilePanel/VBox/Badge
-@onready var rank_label: Label = $HBoxContainer/ProfilePanel/VBox/RankLabel
-@onready var xp_bar: ProgressBar = $HBoxContainer/ProfilePanel/VBox/XPBar
+@export var bg_texture: TextureRect
+@export var avatar_rect: TextureRect
+@export var badge_rect: TextureRect
+@export var rank_label: Label
+@export var xp_bar: ProgressBar
 
 # Topology Web
-@onready var topology_panel: Control = $HBoxContainer/TopologyPanel
-@onready var lines_container: Node2D = $HBoxContainer/TopologyPanel/LinesContainer
-@onready var nodes_container: Control = $HBoxContainer/TopologyPanel/NodesContainer
+@export var topology_panel: Control
+@export var lines_container: Node2D
+@export var nodes_container: Control
+@export var back_button: Button
 
 var line_shader = preload("res://src/shaders/DataFlowLine.gdshader")
 var _controller: Node
@@ -24,8 +25,8 @@ var _controller: Node
 func _ready() -> void:
 	setup_topology_web()
 	
-	if has_node("BackButton"):
-		$BackButton.pressed.connect(func(): request_return_menu.emit())
+	if back_button:
+		back_button.pressed.connect(func(): request_return_menu.emit())
 
 func update_profile(sector: int, account_xp: int) -> void:
 	# Determine badge and avatar tint
