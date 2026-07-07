@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://b4yq1q5x9b3a" path="res://src/views/TeammateDashboard.tscn" id="4_td"]
 [ext_resource type="PackedScene" uid="uid://main_menu_id" path="res://src/views/MainMenu.tscn" id="5_mm"]
 
-[node name="CardManagementMenu" type="Control"]
+[node name="CardManagementMenu" type="Control" node_paths=PackedStringArray("unlocked_list", "equipped_list", "limit_label")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,6 +14,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_cardmanage")
+unlocked_list = NodePath("HBoxContainer/VBoxContainer/UnlockedList")
+equipped_list = NodePath("HBoxContainer/VBoxContainer2/EquippedList")
+limit_label = NodePath("HBoxContainer/VBoxContainer2/LimitLabel")
 
 [node name="CardManagementMenuController" type="Node" parent="."]
 script = ExtResource("2_ctrl")

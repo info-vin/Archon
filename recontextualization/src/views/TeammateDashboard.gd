@@ -79,8 +79,8 @@ func populate_models(models: Array) -> void:
     for m in models:
         model_option.add_item(m)
 
-func update_teammate_details(model_idx: int, allow_react: bool, token_cap: float, ingested_docs: int) -> void:
-    if model_option: model_option.select(model_idx)
+func update_teammate_details(model_idx: int, allow_react: bool, token_cap: float, ingested_docs: Variant) -> void:
+    if model_option and model_option.item_count > model_idx: model_option.select(model_idx)
     if react_check: react_check.button_pressed = allow_react
     if budget_slider: budget_slider.value = token_cap
     if ingested_docs_label:

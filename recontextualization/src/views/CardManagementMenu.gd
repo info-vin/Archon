@@ -6,9 +6,9 @@ signal request_return_menu()
 signal request_teammate_dash()
 signal request_start_dive()
 
-@onready var unlocked_list = $HBoxContainer/VBoxContainer/UnlockedList
-@onready var equipped_list = $HBoxContainer/VBoxContainer2/EquippedList
-@onready var limit_label = $HBoxContainer/VBoxContainer2/LimitLabel
+@export var unlocked_list: Control
+@export var equipped_list: Control
+@export var limit_label: Label
 
 var _controller: Node
 

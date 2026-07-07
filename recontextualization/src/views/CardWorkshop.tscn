@@ -14,10 +14,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_wshop")
-
-[node name="CardWorkshopController" type="Node" parent="."]
-script = ExtResource("2_ctrl")
-game_board_scene = "res://src/views/GameBoard.tscn"
 inventory_container = NodePath("HBoxContainer/InventoryPanel/ScrollContainer/InventoryContainer")
 slot_1 = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot1")
 slot_2 = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot2")
@@ -26,6 +22,10 @@ catalyst_slot = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/CatalystSlot"
 synthesize_btn = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/SynthesizeBtn")
 status_label = NodePath("HBoxContainer/FurnacePanel/VBoxContainer/StatusLabel")
 return_btn = NodePath("ReturnButton")
+
+[node name="CardWorkshopController" type="Node" parent="."]
+script = ExtResource("2_ctrl")
+game_board_scene = "res://src/views/GameBoard.tscn"
 
 [node name="Background" type="TextureRect" parent="."]
 layout_mode = 1

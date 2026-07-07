@@ -66,3 +66,12 @@
     1. **隱藏干擾性背景**：因目前的 `bg_texture` 缺乏明確的 UX 意義，導致介面混亂且「無聊」，暫時設定 `visible = false`，將介面還原至乾淨狀態，等待後續專業 UX 設計。
     2. **拓樸網實體化**：將原本隱形的假節點賦予實體圖示 (`chip_green_target.png`)，並實裝滑鼠懸停 (Hover) 的放大微光特效與點擊引爆 (Click Pulse) 的 HDR 閃光，讓介面脫離死氣沉沉的切版狀態。
 
+
+
+### 3.7 (P0) 玩家大一統中樞重構與遺物網格 (Unified Hub & Relics Grid)
+* **目標檔案**：`recontextualization/src/views/CharacterDashboard.gd`, `CardManagementMenu.gd`, `CardWorkshop.tscn`, `TeammateDashboard.gd`
+* **動作**：
+    1. **消除孤島**：在 `CharacterDashboard.gd` 動態實例化 `TabContainer`，將原有的基本資訊 (Tab 1)、卡牌組 (Tab 2)、合成爐 (Tab 3)、隊友管理 (Tab 4) 全部收納為子分頁，根除反覆在 MainMenu 跳轉的 UX 迷航。
+    2. **L2 架構自癒**：修復了因直接嵌入子場景而暴露出的底層 `@onready` 崩潰與路徑綁定錯誤（修正 `CardManagementMenu` 的導航綁定、`CardWorkshop` 的路徑漂移、`TeammateDashboard` 的型別錯誤）。
+    3. **卡牌遊戲 UX 對齊**：徹底廢棄假科技拓樸，實作卡牌遊戲標準的「晶片遺物網格 (Relics Grid)」，並掛載 Tooltip 與 HDR 點擊回饋，賦予其實際遊戲意義。
+
