@@ -91,6 +91,8 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       disabled={disabled || isLoading}
+      aria-disabled={disabled || isLoading}
+      aria-busy={isLoading}
       className={`
         inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500
         ${variantClasses[variant]}
