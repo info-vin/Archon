@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://src/views/MainMenu.gd" id="1_mainmenu"]
 [ext_resource type="Script" path="res://src/views/MainMenuController.gd" id="2_controller"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" node_paths=PackedStringArray("lang_button", "vol_slider")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,6 +11,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_mainmenu")
+lang_button = NodePath("VBoxContainer/SettingsBox/LangBox/LangButton")
+vol_slider = NodePath("VBoxContainer/SettingsBox/VolBox/VolSlider")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1

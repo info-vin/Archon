@@ -8,8 +8,8 @@ signal request_quit
 signal request_language_change(new_lang: String)
 signal request_volume_change(new_volume: float)
 
-@onready var lang_button: OptionButton = $VBoxContainer/SettingsBox/LangBox/LangButton
-@onready var vol_slider: HSlider = $VBoxContainer/SettingsBox/VolBox/VolSlider
+@export var lang_button: OptionButton
+@export var vol_slider: HSlider
 
 func _ready() -> void:
 	_connect_ui_signals()

@@ -83,16 +83,36 @@ func setup_topology_web() -> void:
 			
 		lines_container.add_child(line)
 		
+	var node_icon = preload("res://assets/images/chip_green_target.png")
+	
 	for i in range(node_positions.size()):
 		var btn = TextureButton.new()
+		btn.texture_normal = node_icon
+		btn.ignore_texture_size = true
+		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		btn.position = node_positions[i] - Vector2(32, 32)
 		btn.custom_minimum_size = Vector2(64, 64)
+		btn.size = Vector2(64, 64)
+		btn.pivot_offset = Vector2(32, 32)
 		btn.pressed.connect(_on_node_pressed.bind(i))
+		btn.mouse_entered.connect(_on_node_hovered.bind(btn, true))
+		btn.mouse_exited.connect(_on_node_hovered.bind(btn, false))
 		nodes_container.add_child(btn)
+
+func _on_node_hovered(btn: TextureButton, is_hovered: bool) -> void:
+	var tween = create_tween()
+	if is_hovered:
+		tween.tween_property(btn, "scale", Vector2(1.2, 1.2), 0.1)
+		tween.parallel().tween_property(btn, "modulate", Color(1.5, 1.5, 1.5, 1.0), 0.1)
+	else:
+		tween.tween_property(btn, "scale", Vector2(1.0, 1.0), 0.1)
+		tween.parallel().tween_property(btn, "modulate", Color.WHITE, 0.1)
 
 func _on_node_pressed(node_idx: int) -> void:
 	print("Topology Node %d clicked! Emitting pulse..." % node_idx)
 	var btn = nodes_container.get_child(node_idx)
 	var tween = create_tween()
-	tween.tween_property(btn, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.1) # HDR Glow
-	tween.tween_property(btn, "modulate", Color.WHITE, 0.4)
+	tween.tween_property(btn, "scale", Vector2(1.5, 1.5), 0.05)
+	tween.parallel().tween_property(btn, "modulate", Color(3.0, 3.0, 3.0, 1.0), 0.05) # Extreme HDR Glow
+	tween.tween_property(btn, "scale", Vector2(1.2, 1.2), 0.3).set_trans(Tween.TRANS_BOUNCE)
+	tween.parallel().tween_property(btn, "modulate", Color(1.5, 1.5, 1.5, 1.0), 0.3)
