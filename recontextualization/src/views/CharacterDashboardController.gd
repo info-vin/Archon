@@ -27,8 +27,8 @@ func _connect_signals() -> void:
 func _update_profile() -> void:
 	if save_manager == null: return
 	
-	var sector = save_manager.get_current_sector()
-	var account_xp = save_manager.account_xp
+	var sector = save_manager.highest_sector if "highest_sector" in save_manager else 1
+	var account_xp = save_manager.current_xp if "current_xp" in save_manager else 0
 	
 	view.update_profile(sector, account_xp)
 
