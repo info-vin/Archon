@@ -1,5 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://b1x2y3z4a5b6c"]
+[gd_scene load_steps=6 format=3 uid="uid://b1x2y3z4a5b6c"]
 
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="frame_blank"]
 [ext_resource type="Script" path="res://src/views/CardWorkshop.gd" id="1_wshop"]
 [ext_resource type="Script" path="res://src/views/CardWorkshopController.gd" id="2_ctrl"]
 [ext_resource type="PackedScene" uid="uid://cxgb456xyz" path="res://src/views/GameBoard.tscn" id="3_gb"]
@@ -90,10 +91,12 @@ layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Slot1" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
+[node name="Slot1" type="TextureRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
 custom_minimum_size = Vector2(150, 200)
 layout_mode = 2
-color = Color(0.2, 0.2, 0.2, 1)
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot1"]
 layout_mode = 1
@@ -104,10 +107,12 @@ text = "Card 1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Slot2" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
+[node name="Slot2" type="TextureRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
 custom_minimum_size = Vector2(150, 200)
 layout_mode = 2
-color = Color(0.2, 0.2, 0.2, 1)
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot2"]
 layout_mode = 1
@@ -118,10 +123,12 @@ text = "Card 2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Slot3" type="ColorRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
+[node name="Slot3" type="TextureRect" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox"]
 custom_minimum_size = Vector2(150, 200)
 layout_mode = 2
-color = Color(0.2, 0.2, 0.2, 1)
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/VBoxContainer/SlotsHBox/Slot3"]
 layout_mode = 1

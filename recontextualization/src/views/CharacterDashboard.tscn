@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://char_dashboard_uid"]
+[gd_scene load_steps=10 format=3 uid="uid://char_dashboard_uid"]
 
 [ext_resource type="Script" path="res://src/views/CharacterDashboard.gd" id="1_dash"]
 [ext_resource type="Script" path="res://src/views/CharacterDashboardController.gd" id="2_ctrl"]
@@ -6,6 +6,9 @@
 [ext_resource type="Texture2D" path="res://assets/images/bg_talent_web.png" id="2_bg"]
 [ext_resource type="Texture2D" path="res://assets/images/avatar_default.png" id="3_avatar"]
 [ext_resource type="Texture2D" path="res://assets/images/badge_rank_c.png" id="4_badge"]
+[ext_resource type="Texture2D" path="res://assets/images/badge_rank_b.png" id="badge_b"]
+[ext_resource type="Texture2D" path="res://assets/images/badge_rank_a.png" id="badge_a"]
+[ext_resource type="Texture2D" path="res://assets/images/badge_rank_s.png" id="badge_s"]
 
 [node name="CharacterDashboard" type="Control"]
 layout_mode = 3
@@ -15,6 +18,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dash")
+badge_rank_c = ExtResource("4_badge")
+badge_rank_b = ExtResource("badge_b")
+badge_rank_a = ExtResource("badge_a")
+badge_rank_s = ExtResource("badge_s")
 
 [node name="CharacterDashboardController" type="Node" parent="."]
 script = ExtResource("2_ctrl")

@@ -1,5 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://b4yq1q5x9b3a"]
+[gd_scene load_steps=7 format=3 uid="uid://b4yq1q5x9b3a"]
 
+[ext_resource type="Texture2D" path="res://assets/images/icon_equipment_slot.png" id="slot_icon"]
 [ext_resource type="Script" path="res://src/views/TeammateDashboard.gd" id="1_dash"]
 [ext_resource type="Script" path="res://src/views/TeammateDashboardController.gd" id="2_ctrl"]
 [ext_resource type="PackedScene" uid="uid://cxgb456xyz" path="res://src/views/GameBoard.tscn" id="3_gb"]
@@ -86,6 +87,11 @@ text = "label_equipped_model"
 
 [node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
 layout_mode = 2
+
+[node name="EquipmentSlot" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
+layout_mode = 2
+texture = ExtResource("slot_icon")
+stretch_mode = 5
 
 [node name="ReactHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
 layout_mode = 2

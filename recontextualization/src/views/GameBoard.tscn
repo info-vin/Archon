@@ -1,5 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://cxgb456xyz"]
+[gd_scene load_steps=11 format=3 uid="uid://cxgb456xyz"]
 
+[ext_resource type="VideoStream" path="res://assets/vfx/transition_victory.ogv" id="vid_vic"]
+[ext_resource type="VideoStream" path="res://assets/vfx/transition_defeat_glitch.ogv" id="vid_glitch"]
+[ext_resource type="VideoStream" path="res://assets/vfx/transition_defeat_shutdown.ogv" id="vid_shut"]
 [ext_resource type="Script" path="res://src/views/GameBoard.gd" id="1_gb"]
 [ext_resource type="Script" path="res://src/views/GameBoardController.gd" id="5_controller"]
 [ext_resource type="Script" path="res://src/views/components/HandLayout.gd" id="hand_layout_script"]
@@ -26,6 +29,9 @@ script = ExtResource("1_gb")
 main_menu_scene = "res://src/views/MainMenu.tscn"
 dashboard_scene = "res://src/views/CharacterDashboard.tscn"
 workshop_scene = "res://src/views/CardWorkshop.tscn"
+video_victory = ExtResource("vid_vic")
+video_defeat_glitch = ExtResource("vid_glitch")
+video_defeat_shutdown = ExtResource("vid_shut")
 
 [node name="Background" type="TextureRect" parent="."]
 layout_mode = 1

@@ -22,6 +22,10 @@ signal budget_changed(teammate_idx: int, val: float)
 var _controller: Node
 var _current_teammate_idx: int = 0
 
+var icon_alice = preload("res://assets/images/avatar_alice.png")
+var icon_bob = preload("res://assets/images/avatar_bob.png")
+var icon_charlie = preload("res://assets/images/avatar_charlie.png")
+
 func _ready() -> void:
     if teammate_list:
         teammate_list.item_selected.connect(_on_teammate_item_selected)
@@ -58,7 +62,12 @@ func populate_teammates(data: Array) -> void:
     if not teammate_list: return
     teammate_list.clear()
     for t in data:
-        teammate_list.add_item(t["name"] + " - Lv." + str(t["level"]))
+        var icon = null
+        var tname = str(t["name"])
+        if "Alice" in tname: icon = icon_alice
+        elif "Bob" in tname: icon = icon_bob
+        elif "Charlie" in tname: icon = icon_charlie
+        teammate_list.add_item(tname + " - Lv." + str(t["level"]), icon)
     if teammate_list.item_count > 0:
         teammate_list.select(0)
         _current_teammate_idx = 0
