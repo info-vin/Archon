@@ -43,9 +43,14 @@ func _initialize_view() -> void:
 		for t in save_manager.teammates:
 			teammate_data.append({
 				"name": t.get("name", t.get("id", "Unknown")),
-				"level": t.get("level", 1)
+				"level": t.get("level", 1),
+				"description": t.get("description", "高級戰術特務，擅長特殊作戰與滲透任務。")
 			})
 		view.populate_teammates(teammate_data)
+		
+		# Set budget dynamically based on player level (default 10, +5 per level)
+		var player_lvl = save_manager.get("player_level") if save_manager and "player_level" in save_manager else 1
+		view.set_max_token_budget(int(player_lvl) * 5 + 5)
 		
 		var models = []
 		if env_config and env_config.models.size() > 0:

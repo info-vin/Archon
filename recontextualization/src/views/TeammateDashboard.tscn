@@ -1,10 +1,30 @@
 [gd_scene load_steps=7 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/images/icon_equipment_slot.png" id="slot_icon"]
+[ext_resource type="Texture2D" path="res://assets/images/bg_vector_grid.png" id="bg_img"]
 [ext_resource type="Script" path="res://src/views/TeammateDashboard.gd" id="1_dash"]
 [ext_resource type="Script" path="res://src/views/TeammateDashboardController.gd" id="2_ctrl"]
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="frame_img"]
+[ext_resource type="Script" path="res://src/views/CarouselContainer.gd" id="carousel_script"]
 
-[node name="TeammateDashboard" type="Control" node_paths=PackedStringArray("teammate_list", "model_option", "react_check", "budget_slider", "budget_label", "ingested_docs_label")]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_glass"]
+bg_color = Color(0.05, 0.08, 0.12, 0.8)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+shadow_color = Color(0, 0.8, 1, 0.1)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_glass_left"]
+bg_color = Color(0.05, 0.08, 0.12, 0.2)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+shadow_color = Color(0, 0.8, 1, 0.1)
+shadow_size = 10
+
+[node name="TeammateDashboard" type="Control" node_paths=PackedStringArray("teammate_list", "budget_slider", "budget_label", "intel_label", "level_up_btn", "toggle_deploy_btn", "warning_label")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,15 +32,28 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dash")
-teammate_list = NodePath("MarginContainer/VBoxContainer/HBoxContainer/LeftVBox/AgentsGrid")
-model_option = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox/EngineSlot")
-react_check = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox/OverclockToggle")
-budget_slider = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/EnergyBar")
-budget_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox/Label")
-ingested_docs_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/IngestedLabel")
+teammate_list = NodePath("MarginContainer/VBoxContainer/HBoxContainer/RosterPanel/MarginContainer/VBoxContainer/CarouselContainer")
+budget_slider = NodePath("MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox/EnergyBar")
+budget_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox/HBoxContainer/Label")
+intel_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/IntelText")
+level_up_btn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/ActionHBox/LevelUpBtn")
+toggle_deploy_btn = NodePath("MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/ActionHBox/ToggleDeployBtn")
+warning_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox/HBoxContainer/WarningLabel")
 
 [node name="TeammateDashboardController" type="Node" parent="."]
 script = ExtResource("2_ctrl")
+
+[node name="Background" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("bg_img")
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(0.5, 0.5, 0.5, 1)
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -29,97 +62,218 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 40
+theme_override_constants/margin_left = 50
 theme_override_constants/margin_top = 40
-theme_override_constants/margin_right = 40
+theme_override_constants/margin_right = 50
 theme_override_constants/margin_bottom = 40
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="HeaderHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0, 1, 0.8, 1)
 text = "特務編制中心"
-horizontal_alignment = 1
+horizontal_alignment = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 40
+theme_override_constants/separation = 10
 
-[node name="LeftVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="SquadPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass_left")
 
-[node name="ListTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel"]
 layout_mode = 2
-text = "待命特務"
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
 
-[node name="AgentsGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/LeftVBox"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer"]
 layout_mode = 2
-size_flags_vertical = 3
-columns = 2
-theme_override_constants/h_separation = 15
-theme_override_constants/v_separation = 15
+theme_override_constants/separation = 25
 
-[node name="ConfigVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="BudgetVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox"]
+layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="ConfigTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox/HBoxContainer"]
 layout_mode = 2
-text = "戰術設定"
+theme_override_font_sizes/font_size = 24
+text = "戰術預算: 0 / 10"
 
-[node name="ModelHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+[node name="WarningLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox/HBoxContainer"]
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "指揮官算力等級不足，拒絕編制！"
+visible = false
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
-layout_mode = 2
-text = "核心引擎"
-
-[node name="EngineSlot" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
-custom_minimum_size = Vector2(150, 40)
-layout_mode = 2
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="EquipmentSlot" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ModelHBox"]
-layout_mode = 2
-texture = ExtResource("slot_icon")
-stretch_mode = 5
-
-[node name="ReactHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
-layout_mode = 2
-text = "戰術覆寫"
-
-[node name="OverclockToggle" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/ReactHBox"]
-custom_minimum_size = Vector2(80, 40)
-layout_mode = 2
-toggle_mode = true
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="BudgetVBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
-layout_mode = 2
-text = "預算上限: 10 Token"
-
-[node name="EnergyBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox/BudgetVBox"]
+[node name="EnergyBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/BudgetVBox"]
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="IngestedLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
+
+[node name="IntelTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 text = "特務情報"
 
-[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer/ConfigVBox"]
+[node name="IntelPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+size_flags_stretch_ratio = 1.5
 
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="IntelText" type="RichTextLabel" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 24
+theme_override_font_sizes/bold_font_size = 24
+theme_override_colors/default_color = Color(0.9, 0.9, 0.9, 1)
+bbcode_enabled = true
+text = "等待選擇特務..."
+fit_content = true
+
+[node name="ActionHBox" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="LevelUpBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/ActionHBox"]
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+texture_normal = ExtResource("frame_img")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/ActionHBox/LevelUpBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "▲ 強化特務"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="ToggleDeployBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/ActionHBox"]
+custom_minimum_size = Vector2(250, 60)
+layout_mode = 2
+texture_normal = ExtResource("frame_img")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/SquadPanel/MarginContainer/VBoxContainer/IntelPanel/MarginContainer/VBoxContainer/ActionHBox/ToggleDeployBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "✔ 編制出戰"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 1, 0.8, 1)
+
+[node name="RosterPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/RosterPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/RosterPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="ListTitle" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/RosterPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "待命特務"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/HBoxContainer/RosterPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="CarouselContainer" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer/RosterPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("carousel_script")
+is_vertical = true
+ellipse_radius = Vector2(24, 150)
+
+[node name="BottomNav" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ReturnBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomNav"]
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+texture_normal = ExtResource("frame_img")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/BottomNav/ReturnBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "返回作戰室"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/BottomNav"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SaveBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/BottomNav"]
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 2
+texture_normal = ExtResource("frame_img")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/BottomNav/SaveBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "確認編制"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0, 1, 0.8, 1)

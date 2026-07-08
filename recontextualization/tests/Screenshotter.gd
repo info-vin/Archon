@@ -35,6 +35,26 @@ func run_screenshots() -> void:
         var img = root.get_texture().get_image()
         var path_out = output_dir + "screenshot_%s.png" % scene_name
         
+        if scene_name == "TeammateDashboard":
+            var ctrl = instance.get_node("TeammateDashboardController")
+            if ctrl:
+                var mock_teammates = [
+                    {"name": "Alice", "level": 5},
+                    {"name": "Bob", "level": 4},
+                    {"name": "Charlie", "level": 3},
+                    {"name": "Default", "level": 1}
+                ]
+                instance.populate_teammates(mock_teammates)
+                instance.set_max_token_budget(15)
+                
+            if instance.has_method("_on_teammate_item_selected") and instance.has_method("_on_toggle_deploy_clicked"):
+                instance._on_teammate_item_selected(1) # Focus Bob
+                instance._on_toggle_deploy_clicked()   # Deploy Bob (Cost 8)
+                instance._on_teammate_item_selected(0) # Focus Alice
+                instance._on_toggle_deploy_clicked()   # Deploy Alice (Cost 10) -> Warning!
+            await create_timer(0.4).timeout
+            img = root.get_texture().get_image()
+            
         if scene_name == "CardWorkshop":
             instance.get_node("CardWorkshopController").current_cards_in_furnace = [{"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}]
             instance.update_furnace_slots([{"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}])
