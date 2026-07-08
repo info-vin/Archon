@@ -10,15 +10,15 @@ var save_manager: Node
 
 # Mock Database (Mapped from legacy DB IDs to Cyberpunk theme)
 var mock_database = {
-	"keyword_search": {"id": "keyword_search", "name": "基礎覆寫", "stats": "Cost: 1\n效果: 破解基礎防火牆", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
-	"dense_search": {"id": "dense_search", "name": "深度注入", "stats": "Cost: 2\n效果: 取得節點最高權限", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
-	"reranker": {"id": "reranker", "name": "量子護盾", "stats": "Cost: 2\n效果: 抵擋一次追蹤", "texture": "res://assets/images/chip_red_noise.png", "cost": 2},
-	"filter_by_date": {"id": "filter_by_date", "name": "神經毒素", "stats": "Cost: 3\n效果: 每秒損毀目標節點", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
-	"author_query": {"id": "author_query", "name": "透視掃描", "stats": "Cost: 1\n效果: 顯示隱藏路徑", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
-	"web_crawler": {"id": "web_crawler", "name": "核心超頻", "stats": "Cost: 3\n效果: 技能冷卻減半", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
-	"rootkit_v1": {"id": "rootkit_v1", "name": "隱匿木馬", "stats": "Cost: 2\n效果: 降低被偵測機率 20%", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
-	"emp_blast": {"id": "emp_blast", "name": "電磁脈衝", "stats": "Cost: 4\n效果: 癱瘓區域內所有防禦", "texture": "res://assets/images/chip_red_noise.png", "cost": 4},
-	"data_leech": {"id": "data_leech", "name": "資料虹吸", "stats": "Cost: 1\n效果: 竊取額外記憶體碎片", "texture": "res://assets/images/chip_green_target.png", "cost": 1}
+	"keyword_search": {"id": "keyword_search", "name_key": "card_name_keyword_search", "desc_key": "card_desc_keyword_search", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
+	"dense_search": {"id": "dense_search", "name_key": "card_name_dense_search", "desc_key": "card_desc_dense_search", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
+	"reranker": {"id": "reranker", "name_key": "card_name_reranker", "desc_key": "card_desc_reranker", "texture": "res://assets/images/chip_red_noise.png", "cost": 2},
+	"filter_by_date": {"id": "filter_by_date", "name_key": "card_name_filter_by_date", "desc_key": "card_desc_filter_by_date", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
+	"author_query": {"id": "author_query", "name_key": "card_name_author_query", "desc_key": "card_desc_author_query", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
+	"web_crawler": {"id": "web_crawler", "name_key": "card_name_web_crawler", "desc_key": "card_desc_web_crawler", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
+	"rootkit_v1": {"id": "rootkit_v1", "name_key": "card_name_rootkit_v1", "desc_key": "card_desc_rootkit_v1", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
+	"emp_blast": {"id": "emp_blast", "name_key": "card_name_emp_blast", "desc_key": "card_desc_emp_blast", "texture": "res://assets/images/chip_red_noise.png", "cost": 4},
+	"data_leech": {"id": "data_leech", "name_key": "card_name_data_leech", "desc_key": "card_desc_data_leech", "texture": "res://assets/images/chip_green_target.png", "cost": 1}
 }
 
 func _init(v: Control = null) -> void:
@@ -75,13 +75,19 @@ func _refresh_lists() -> void:
 	var equipped_cards = []
 	for cid in equipped_ids:
 		if mock_database.has(cid):
-			equipped_cards.append(mock_database[cid])
-			current_cost += mock_database[cid]["cost"]
+			var c = mock_database[cid].duplicate()
+			c["name"] = tr(c["name_key"])
+			c["stats"] = "%s: %d\n%s: %s" % [tr("menu_cost_limit"), c["cost"], tr("menu_effect"), tr(c["desc_key"])]
+			equipped_cards.append(c)
+			current_cost += c["cost"]
 			
 	var equipable_cards = []
 	for cid in unlocked_ids:
 		if not cid in equipped_ids and mock_database.has(cid):
-			equipable_cards.append(mock_database[cid])
+			var c = mock_database[cid].duplicate()
+			c["name"] = tr(c["name_key"])
+			c["stats"] = "%s: %d\n%s: %s" % [tr("menu_cost_limit"), c["cost"], tr("menu_effect"), tr(c["desc_key"])]
+			equipable_cards.append(c)
 			
 	if view.has_method("update_limit_label"):
 		view.update_limit_label(equipped_cards.size(), max_cards, current_cost, max_tokens)

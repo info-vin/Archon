@@ -5,8 +5,9 @@
 [ext_resource type="Script" path="res://src/views/CardWorkshopController.gd" id="2_ctrl"]
 [ext_resource type="Texture2D" path="res://assets/images/bg_synthesizer.png" id="bg_tex2"]
 [ext_resource type="Texture2D" path="res://assets/images/icon_equipment_slot.png" id="catalyst_tex"]
+[ext_resource type="Script" path="res://src/views/CarouselContainer.gd" id="4_carousel"]
 
-[node name="CardWorkshop" type="Control" node_paths=PackedStringArray("inventory_container", "slot_1", "slot_2", "slot_3", "catalyst_slot", "synthesize_btn", "status_label", "return_btn", "mode_toggle_btn", "buy_catalyst_btn", "lines_container")]
+[node name="CardWorkshop" type="Control" node_paths=PackedStringArray("inventory_container", "slot_1", "slot_2", "slot_3", "catalyst_slot", "synthesize_btn", "status_label", "return_btn", "buy_catalyst_btn", "output_slot")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,17 +15,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_wshop")
-inventory_container = NodePath("HBoxContainer/InventoryPanel/ScrollContainer/InventoryContainer")
-slot_1 = NodePath("HBoxContainer/FurnacePanel/MatrixArea/Slot1")
-slot_2 = NodePath("HBoxContainer/FurnacePanel/MatrixArea/Slot2")
-slot_3 = NodePath("HBoxContainer/FurnacePanel/MatrixArea/Slot3")
-catalyst_slot = NodePath("HBoxContainer/FurnacePanel/MatrixArea/CatalystSlot")
-lines_container = NodePath("HBoxContainer/FurnacePanel/MatrixArea/LinesContainer")
+inventory_container = NodePath("HBoxContainer/InventoryPanel/MarginContainer/VBoxContainer/InventoryContainer")
+slot_1 = NodePath("HBoxContainer/FurnacePanel/InputSlots/Slot1")
+slot_2 = NodePath("HBoxContainer/FurnacePanel/InputSlots/Slot2")
+slot_3 = NodePath("HBoxContainer/FurnacePanel/InputSlots/Slot3")
+catalyst_slot = NodePath("HBoxContainer/FurnacePanel/ArrowContainer/CatalystSlot")
 synthesize_btn = NodePath("HBoxContainer/FurnacePanel/SynthesizeBtn")
 status_label = NodePath("HBoxContainer/FurnacePanel/StatusLabel")
 return_btn = NodePath("ReturnButton")
-mode_toggle_btn = NodePath("ModeToggleButton")
-buy_catalyst_btn = NodePath("HBoxContainer/FurnacePanel/MatrixArea/CatalystSlot/BuyCatalystBtn")
+buy_catalyst_btn = NodePath("HBoxContainer/FurnacePanel/ArrowContainer/CatalystSlot/BuyCatalystBtn")
+output_slot = NodePath("OutputContainer/OutputSlot")
 
 [node name="CardWorkshopController" type="Node" parent="."]
 script = ExtResource("2_ctrl")
@@ -54,152 +54,151 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 50
 
-[node name="InventoryPanel" type="VBoxContainer" parent="HBoxContainer"]
+[node name="InventoryPanel" type="PanelContainer" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_stretch_ratio = 0.4
+size_flags_stretch_ratio = 0.3
 
-[node name="Title" type="Label" parent="HBoxContainer/InventoryPanel"]
+[node name="BackgroundRect" type="ColorRect" parent="HBoxContainer/InventoryPanel"]
+layout_mode = 2
+color = Color(0, 0, 0, 0.1)
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer/InventoryPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer/InventoryPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="HBoxContainer/InventoryPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "卡牌素材庫"
+text = "備用記憶體庫存"
 horizontal_alignment = 1
 
-[node name="ScrollContainer" type="ScrollContainer" parent="HBoxContainer/InventoryPanel"]
+[node name="InventoryContainer" type="Control" parent="HBoxContainer/InventoryPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+size_flags_horizontal = 3
+script = ExtResource("4_carousel")
+is_vertical = true
+ellipse_radius = Vector2(40, 150)
 
-[node name="InventoryContainer" type="VBoxContainer" parent="HBoxContainer/InventoryPanel/ScrollContainer"]
+[node name="FurnacePanel" type="Control" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="FurnacePanel" type="VBoxContainer" parent="HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.7
 
 [node name="Title" type="Label" parent="HBoxContainer/FurnacePanel"]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -30.0
+offset_bottom = 30.0
+grow_horizontal = 2
 theme_override_font_sizes/font_size = 32
-text = "高階指令卡牌合成所"
+text = "卡牌融合"
 horizontal_alignment = 1
 
-[node name="MatrixArea" type="Control" parent="HBoxContainer/FurnacePanel"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="LinesContainer" type="Node2D" parent="HBoxContainer/FurnacePanel/MatrixArea"]
-
-[node name="Slot1" type="TextureRect" parent="HBoxContainer/FurnacePanel/MatrixArea"]
-custom_minimum_size = Vector2(150, 200)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -250.0
-offset_top = -250.0
-offset_right = -100.0
-offset_bottom = -50.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("frame_blank")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/MatrixArea/Slot1"]
+[node name="InputSlots" type="Control" parent="HBoxContainer/FurnacePanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-text = "素材_A"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Slot2" type="TextureRect" parent="HBoxContainer/FurnacePanel/MatrixArea"]
-custom_minimum_size = Vector2(150, 200)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -250.0
-offset_top = 50.0
-offset_right = -100.0
-offset_bottom = 250.0
 grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Slot1" type="TextureRect" parent="HBoxContainer/FurnacePanel/InputSlots"]
+custom_minimum_size = Vector2(170, 227)
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -130.0
+offset_top = -113.0
+offset_right = 40.0
+offset_bottom = 114.0
+grow_horizontal = 0
 grow_vertical = 2
 texture = ExtResource("frame_blank")
 expand_mode = 1
 stretch_mode = 5
+pivot_offset = Vector2(75, 100)
+modulate = Color(1, 1, 1, 1)
 
-[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/MatrixArea/Slot2"]
+[node name="Slot2" type="TextureRect" parent="HBoxContainer/FurnacePanel/InputSlots"]
+custom_minimum_size = Vector2(165, 220)
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "素材_B"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="Slot3" type="TextureRect" parent="HBoxContainer/FurnacePanel/MatrixArea"]
-custom_minimum_size = Vector2(150, 200)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
+anchors_preset = 6
+anchor_left = 1.0
 anchor_top = 0.5
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = 100.0
-offset_top = -100.0
-offset_right = 250.0
-offset_bottom = 100.0
-grow_horizontal = 2
+offset_left = -290.0
+offset_top = -110.0
+offset_right = -125.0
+offset_bottom = 110.0
+grow_horizontal = 0
 grow_vertical = 2
 texture = ExtResource("frame_blank")
 expand_mode = 1
 stretch_mode = 5
+pivot_offset = Vector2(60, 80)
+modulate = Color(1, 1, 1, 1)
 
-[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/MatrixArea/Slot3"]
+[node name="Slot3" type="TextureRect" parent="HBoxContainer/FurnacePanel/InputSlots"]
+custom_minimum_size = Vector2(160, 213)
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -445.0
+offset_top = -106.0
+offset_right = -285.0
+offset_bottom = 107.0
+grow_horizontal = 0
+grow_vertical = 2
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
+pivot_offset = Vector2(45, 60)
+modulate = Color(1, 1, 1, 1)
+
+[node name="ArrowContainer" type="Control" parent="HBoxContainer/FurnacePanel"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -150.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="CatalystSlot" type="TextureRect" parent="HBoxContainer/FurnacePanel/ArrowContainer"]
+custom_minimum_size = Vector2(150, 150)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-text = "產物"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="CatalystSlot" type="TextureRect" parent="HBoxContainer/FurnacePanel/MatrixArea"]
-custom_minimum_size = Vector2(100, 100)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -50.0
-offset_right = 50.0
-offset_bottom = 50.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("catalyst_tex")
 expand_mode = 1
 stretch_mode = 5
-modulate = Color(1.0, 0.8, 0.2, 1.0)
+modulate = Color(1, 0.8, 0.2, 1)
 
-[node name="Label" type="Label" parent="HBoxContainer/FurnacePanel/MatrixArea/CatalystSlot"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "催化媒介"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-
-[node name="BuyCatalystBtn" type="TextureButton" parent="HBoxContainer/FurnacePanel/MatrixArea/CatalystSlot"]
+[node name="BuyCatalystBtn" type="TextureButton" parent="HBoxContainer/FurnacePanel/ArrowContainer/CatalystSlot"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -207,16 +206,43 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+
+
 [node name="StatusLabel" type="Label" parent="HBoxContainer/FurnacePanel"]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -75.0
+offset_right = 150.0
+offset_bottom = -35.0
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_font_sizes/font_size = 20
-text = "等待置入素材"
+text = "卡牌數量不足"
 horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 
 [node name="SynthesizeBtn" type="TextureButton" parent="HBoxContainer/FurnacePanel"]
-custom_minimum_size = Vector2(250, 60)
-layout_mode = 2
-size_flags_horizontal = 4
+custom_minimum_size = Vector2(200, 60)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -30.0
+offset_right = 100.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = ExtResource("frame_blank")
+texture_pressed = ExtResource("frame_blank")
+texture_disabled = ExtResource("frame_blank")
 ignore_texture_size = true
 stretch_mode = 0
 
@@ -225,10 +251,13 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 20
 text = "執行轉換"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 24
 
 [node name="ReturnButton" type="TextureButton" parent="."]
 layout_mode = 1
@@ -248,33 +277,56 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-text = "返回上一層"
+text = "返回作戰室"
 horizontal_alignment = 1
 vertical_alignment = 1
 theme_override_font_sizes/font_size = 24
 
-[node name="ModeToggleButton" type="TextureButton" parent="."]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -300.0
-offset_top = -80.0
-offset_right = -20.0
-offset_bottom = -30.0
-grow_horizontal = 0
-grow_vertical = 0
-ignore_texture_size = true
-stretch_mode = 0
-
-[node name="Label" type="Label" parent="ModeToggleButton"]
+[node name="EmptyStateLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-text = "當前模式: 融合 (3進1)"
+offset_left = 50.0
+offset_top = 100.0
+offset_right = -700.0
+offset_bottom = -50.0
+text = "您需要至少 3 張相同階級的備用記憶體卡牌才能進行融合。"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 24
+autowrap_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+
+[node name="OutputContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OutputSlot" type="TextureRect" parent="OutputContainer"]
+visible = false
+custom_minimum_size = Vector2(240, 330)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -165.0
+offset_right = 120.0
+offset_bottom = 165.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.5, 0.5)
+pivot_offset = Vector2(120, 165)
+texture = ExtResource("frame_blank")
+expand_mode = 1
+stretch_mode = 5
+modulate = Color(1, 1, 0.5, 1)

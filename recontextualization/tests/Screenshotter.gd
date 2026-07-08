@@ -30,17 +30,33 @@ func run_screenshots() -> void:
             
         # Wait for Godot to render the frame
         await process_frame
-        await process_frame
         await create_timer(0.2).timeout
         
+        var img = root.get_texture().get_image()
+        var path_out = output_dir + "screenshot_%s.png" % scene_name
+        
+        if scene_name == "CardWorkshop":
+            instance.get_node("CardWorkshopController").current_cards_in_furnace = [{"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}]
+            instance.update_furnace_slots([{"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}])
+            await process_frame
+            await create_timer(0.2).timeout
+            # Save Before Screenshot
+            var img_before = root.get_texture().get_image()
+            img_before.save_png(output_dir + "screenshot_CardWorkshop_Before.png")
+            
+            instance.play_success_anim()
+            await create_timer(0.6).timeout
+            # Save After Screenshot
+            path_out = output_dir + "screenshot_CardWorkshop_After.png"
+            img = root.get_texture().get_image()
+            
         if scene_name == "CharacterDashboard" and instance.has_method("debug_trigger_node"):
             instance.debug_trigger_node(0)
             await create_timer(1.5).timeout
-        
-        var img = root.get_texture().get_image()
-        var out_path = output_dir + "screenshot_" + scene_name + ".png"
-        img.save_png(out_path)
-        print("Saved to %s" % out_path)
+            img = root.get_texture().get_image()
+            
+        img.save_png(path_out)
+        print("Saved to %s" % path_out)
         
         instance.queue_free()
         await process_frame

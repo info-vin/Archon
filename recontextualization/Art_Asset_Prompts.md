@@ -80,6 +80,7 @@
   A minimalist futuristic sniper crosshair symbol, glowing neon cyan, geometric shapes, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
   --no text, typography, letters, words
   --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
   ```
 
 ### 3.2 Dense Vector (L2)
@@ -90,6 +91,7 @@
   A futuristic glowing laser beam piercing through digital layers, neon purple and blue, geometric cyberpunk UI element, dark background, sharp lines, dynamic composition, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
   --no text, typography, letters, words
   --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
   ```
 
 ### 3.3 Reranker (L3)
@@ -100,6 +102,7 @@
   A glowing neon gold hexagonal energy shield, complex geometric fractal patterns inside, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
   --no text, typography, letters, words
   --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
   ```
 
 ### 3.4 GraphRAG Navigation (L5)
@@ -110,6 +113,73 @@
   A glowing neon data node constellation structure showing multi-hop connections, complex glowing fiber optic network, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
   --no text, typography, letters, words
   --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+### 3.5 Neurotoxin (L4)
+* **目標檔案**：`recontextualization/assets/images/action_neurotoxin.png`
+* **主題**：滴落的綠色或紫色劇毒液體、溶解的代碼。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  A glowing neon toxic biohazard symbol dissolving into dripping corrupted digital code, green and purple acid theme, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+### 3.6 X-Ray Scan (L1)
+* **目標檔案**：`recontextualization/assets/images/action_xray.png`
+* **主題**：透視掃描的雷達波或發光眼睛。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  A futuristic glowing cybernetic eye scanning through digital layers, radar waves emitting, neon cyan and white, geometric cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+### 3.7 Core Overclock (L4)
+* **目標檔案**：`recontextualization/assets/images/action_overclock.png`
+* **主題**：高溫燃燒的時鐘、或閃電纏繞的超頻晶片。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  A glowing fiery core overheating with intense electrical lightning arcs around a digital clock dial, neon orange and yellow, overclocked CPU concept, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+### 3.8 Stealth Trojan (L2)
+* **目標檔案**：`recontextualization/assets/images/action_trojan.png`
+* **主題**：披著光學迷彩的木馬或幽靈面具。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  A glowing neon stealth phantom mask or digital trojan horse partially cloaked in pixelated optical camouflage, dark violet and magenta, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+### 3.9 EMP Blast (L5)
+* **目標檔案**：`recontextualization/assets/images/action_emp.png`
+* **主題**：向外擴散的強烈電磁衝擊波。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  An explosive neon blue electromagnetic pulse shockwave radiating outwards, intense energy blast, geometric cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+### 3.10 Data Leech (L1)
+* **目標檔案**：`recontextualization/assets/images/action_leech.png`
+* **主題**：虹吸能量的機械水蛭或資料觸手。
+* **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
+  ```text
+  A glowing neon green robotic leech or cybernetic tentacle siphoning digital data streams, parasitic cyber-ware, cyberpunk UI element, dark background, sharp lines, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  --no text, typography, letters, words
+  --ar 1:1
+  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
   ```
 
 ---

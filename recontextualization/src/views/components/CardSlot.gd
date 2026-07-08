@@ -16,6 +16,7 @@ func setup(id: String, equipped: bool) -> void:
     var name_label: Label = $TextureButton/VBoxContainer/CardName
     var type_label: Label = $TextureButton/VBoxContainer/CardType
     var indicator: Label = $TextureButton/VBoxContainer/ActionIndicator
+    var icon_node: TextureRect = $TextureButton/Icon
     
     name_label.text = "【" + id.to_upper() + "】"
     type_label.text = "Type: Action\nCost: 1 AP"
@@ -26,6 +27,15 @@ func setup(id: String, equipped: bool) -> void:
     else:
         indicator.text = "[+]"
         indicator.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+        
+    var icon_path = "res://assets/images/chip_green_target.png"
+    if id == "KEYWORD_SEARCH":
+        icon_path = "res://assets/images/action_keyword.png"
+    elif id == "DENSE_RETRIEVAL":
+        icon_path = "res://assets/images/action_dense.png"
+    
+    if ResourceLoader.exists(icon_path):
+        icon_node.texture = load(icon_path)
 
 func play_fly_anim(target_pos: Vector2) -> void:
     var tween = get_tree().create_tween()

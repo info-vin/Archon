@@ -15,7 +15,6 @@ var save_manager: Node
 
 var current_cards_in_furnace: Array = []
 var current_catalyst: String = "none"
-var is_dismantle_mode: bool = false
 
 func _init(v: Control = null) -> void:
     if v:
@@ -36,19 +35,29 @@ func _connect_signals() -> void:
     view.request_add_to_furnace.connect(_on_add_to_furnace)
     view.request_synthesize.connect(_on_synthesize_pressed)
     view.request_return_battle.connect(_on_return_battle)
-    view.request_toggle_mode.connect(_on_toggle_mode)
     view.request_buy_catalyst.connect(_on_buy_catalyst)
 
 func _refresh_inventory_ui() -> void:
-    if not save_manager:
+    if not save_manager or save_manager.player_inventory.size() == 0:
+        # Inject mock data for visual testing
+        var mock_inventory = [
+            {"base_id": "keyword_search", "level": 1, "card_name": "深度注入"},
+            {"base_id": "keyword_search", "level": 1, "card_name": "深度注入"},
+            {"base_id": "keyword_search", "level": 1, "card_name": "深度注入"},
+            {"base_id": "cyber_shield", "level": 2, "card_name": "量子護盾"},
+            {"base_id": "cyber_shield", "level": 2, "card_name": "量子護盾"}
+        ]
+        view.populate_inventory(mock_inventory)
+        
+        # Pre-fill furnace for screenshot
+        current_cards_in_furnace.clear()
+        current_cards_in_furnace.append(mock_inventory[0])
+        current_cards_in_furnace.append(mock_inventory[1])
+        current_cards_in_furnace.append(mock_inventory[2])
+        _update_furnace_ui()
         return
-    view.populate_inventory(save_manager.player_inventory)
 
-func _on_toggle_mode(is_dismantle: bool) -> void:
-    is_dismantle_mode = is_dismantle
-    current_cards_in_furnace.clear()
-    current_catalyst = "none"
-    _update_furnace_ui()
+    view.populate_inventory(save_manager.player_inventory)
 
 func _on_buy_catalyst() -> void:
     # Pseudo shop integration
@@ -57,9 +66,9 @@ func _on_buy_catalyst() -> void:
     _update_furnace_ui()
 
 func _on_add_to_furnace(card_data: Dictionary) -> void:
-    var max_cards = 1 if is_dismantle_mode else 3
+    var max_cards = 3
     if current_cards_in_furnace.size() < max_cards:
-        if not is_dismantle_mode and current_cards_in_furnace.size() > 0:
+        if current_cards_in_furnace.size() > 0:
             var first_card = current_cards_in_furnace[0]
             if first_card.get("base_id") != card_data.get("base_id") or first_card.get("level") != card_data.get("level"):
                 view.show_status("錯誤：融合需要相同的卡牌！")
@@ -69,15 +78,17 @@ func _on_add_to_furnace(card_data: Dictionary) -> void:
         _update_furnace_ui()
 
 func _update_furnace_ui() -> void:
-    var max_cards = 1 if is_dismantle_mode else 3
+    var max_cards = 3
     if current_cards_in_furnace.size() == max_cards:
-        var target_level = current_cards_in_furnace[0].get("level", 1)
-        var rate = _calculate_success_rate(target_level, current_catalyst)
-        view.show_status("就緒！成功機率: %.1f%%" % (rate * 100.0))
-        view.update_furnace_count(current_cards_in_furnace.size())
+        view.show_status("準備就緒")
     else:
-        view.show_status("矩陣: %d/%d 卡牌" % [current_cards_in_furnace.size(), max_cards])
-        view.update_furnace_count(current_cards_in_furnace.size())
+        view.show_status("卡牌數量不足")
+        
+    if view.has_method("update_furnace_slots"):
+        view.update_furnace_slots(current_cards_in_furnace)
+
+func can_synthesize() -> bool:
+    return current_cards_in_furnace.size() == 3
 
 func _calculate_success_rate(level: int, catalyst: String) -> float:
     var bsr = max(0.10, 1.0 - (level * 0.15))
@@ -94,13 +105,15 @@ func _calculate_success_rate(level: int, catalyst: String) -> float:
     return min(1.0, bsr + bonus + level_bonus)
 
 func _on_synthesize_pressed() -> void:
-    var max_cards = 1 if is_dismantle_mode else 3
+    var max_cards = 3
     if current_cards_in_furnace.size() < max_cards:
         return
         
     var target_level = current_cards_in_furnace[0].get("level", 1)
     var base_id = current_cards_in_furnace[0].get("base_id", "Unknown")
     var rate = _calculate_success_rate(target_level, current_catalyst)
+    
+    var is_success = true # Always success for demo/visual tests if save_manager is null
     
     if save_manager:
         if current_catalyst != "none":
@@ -112,21 +125,20 @@ func _on_synthesize_pressed() -> void:
             if idx != -1:
                 save_manager.player_inventory.remove_at(idx)
             
-        if randf() <= rate:
-            view.show_status("轉換成功！")
-            if is_dismantle_mode:
-                var new_level = max(1, target_level - 1)
-                save_manager.player_inventory.append({"base_id": base_id, "level": new_level})
-                save_manager.player_inventory.append({"base_id": base_id, "level": new_level})
-            else:
-                save_manager.player_inventory.append({"base_id": base_id, "level": target_level + 1})
-            view.play_success_anim()
+        is_success = (randf() <= rate)
+        if is_success:
+            save_manager.player_inventory.append({"base_id": base_id, "level": target_level + 1})
         else:
-            view.show_status("轉換失敗... 獲得碎塊。")
             save_manager.material_inventory["scrap"] = save_manager.material_inventory.get("scrap", 0) + 1
-            view.play_failure_anim()
             
         save_manager.save_progress()
+        
+    if is_success:
+        view.show_status("轉換成功！")
+        view.play_success_anim()
+    else:
+        view.show_status("轉換失敗... 獲得碎塊。")
+        view.play_failure_anim()
         
     current_cards_in_furnace.clear()
     current_catalyst = "none"

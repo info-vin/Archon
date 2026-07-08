@@ -4,7 +4,6 @@ class_name CardWorkshop
 signal request_add_to_furnace(card_data: Dictionary)
 signal request_synthesize
 signal request_return_battle
-signal request_toggle_mode(is_dismantle: bool)
 signal request_buy_catalyst
 
 @export var inventory_container: Control
@@ -15,104 +14,92 @@ signal request_buy_catalyst
 @export var synthesize_btn: TextureButton
 @export var status_label: Label
 @export var return_btn: TextureButton
-@export var mode_toggle_btn: TextureButton
 @export var buy_catalyst_btn: TextureButton
-@export var lines_container: Node2D
+@export var output_slot: TextureRect
+@onready var empty_state_label: Label = $EmptyStateLabel
 
 var _controller: Node
-var is_dismantle_mode: bool = false
 var card_slot_scene = preload("res://src/views/components/CardSlot.tscn")
 var tex_btn_bg = preload("res://assets/images/card_frame_blank.png")
 
+func _update_synthesis_button() -> void:
+    if not synthesize_btn: return
+    
+    var can_synthesize = _controller.can_synthesize() if _controller else false
+    synthesize_btn.disabled = not can_synthesize
+    
+    var label = synthesize_btn.get_node_or_null("Label")
+    if can_synthesize:
+        synthesize_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+        if label:
+            label.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2, 1.0)) # Green
+    else:
+        synthesize_btn.mouse_default_cursor_shape = Control.CURSOR_FORBIDDEN
+        if label:
+            label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4, 1.0)) # Gray
+
 func _ready() -> void:
+    _controller = get_node_or_null("CardWorkshopController")
     if synthesize_btn:
         synthesize_btn.texture_normal = tex_btn_bg
         synthesize_btn.pressed.connect(func(): request_synthesize.emit())
     if return_btn:
         return_btn.texture_normal = tex_btn_bg
         return_btn.pressed.connect(func(): request_return_battle.emit())
-    if mode_toggle_btn:
-        mode_toggle_btn.texture_normal = tex_btn_bg
-        mode_toggle_btn.pressed.connect(_on_toggle_mode)
     if buy_catalyst_btn:
         buy_catalyst_btn.pressed.connect(func(): request_buy_catalyst.emit())
         
-    _setup_lines()
+    if output_slot:
+        # Simple drag simulation: click to collect
+        output_slot.gui_input.connect(_on_output_slot_gui_input)
 
-func _on_toggle_mode() -> void:
-    is_dismantle_mode = not is_dismantle_mode
-    if mode_toggle_btn and mode_toggle_btn.has_node("Label"):
-        var txt = "當前模式: 分解 (1進2)" if is_dismantle_mode else "當前模式: 融合 (3進1)"
-        mode_toggle_btn.get_node("Label").text = txt
-        
-    request_toggle_mode.emit(is_dismantle_mode)
-    _setup_lines()
-
-func _setup_lines() -> void:
-    if not lines_container: return
-    for c in lines_container.get_children():
-        c.queue_free()
-        
-    var center = catalyst_slot.position + catalyst_slot.size / 2.0
-    var p1 = slot_1.position + slot_1.size / 2.0
-    var p2 = slot_2.position + slot_2.size / 2.0
-    var p3 = slot_3.position + slot_3.size / 2.0
-    
-    if is_dismantle_mode:
-        slot_1.visible = true
-        slot_2.visible = true
-        slot_3.visible = true
-        
-        slot_1.position = Vector2(-250, 0)
-        slot_2.position = Vector2(150, -120)
-        slot_3.position = Vector2(150, 120)
-        p1 = slot_1.position + slot_1.size / 2.0
-        p2 = slot_2.position + slot_2.size / 2.0
-        p3 = slot_3.position + slot_3.size / 2.0
-        
-        _draw_line(p1, center, Color(0.8, 0.4, 0.2))
-        _draw_line(center, p2, Color(0.2, 0.8, 0.4))
-        _draw_line(center, p3, Color(0.2, 0.8, 0.4))
-    else:
-        slot_1.visible = true
-        slot_2.visible = true
-        slot_3.visible = true
-        
-        slot_1.position = Vector2(-250, -150)
-        slot_2.position = Vector2(-250, 150)
-        
-        var p4 = Vector2(-300, 0) + slot_1.size / 2.0
-        
-        slot_3.position = Vector2(150, 0)
-        p1 = slot_1.position + slot_1.size / 2.0
-        p2 = slot_2.position + slot_2.size / 2.0
-        p3 = slot_3.position + slot_3.size / 2.0
-        
-        _draw_line(p1, center, Color(0.2, 0.6, 0.8))
-        _draw_line(p2, center, Color(0.2, 0.6, 0.8))
-        _draw_line(p4, center, Color(0.2, 0.6, 0.8))
-        _draw_line(center, p3, Color(0.8, 0.6, 0.2))
-
-func _draw_line(from: Vector2, to: Vector2, color: Color) -> void:
-    var line = Line2D.new()
-    line.add_point(from)
-    line.add_point(to)
-    line.width = 4
-    line.default_color = color
-    var mat = CanvasItemMaterial.new()
-    mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-    line.material = mat
-    lines_container.add_child(line)
+func _on_output_slot_gui_input(event: InputEvent) -> void:
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        # Simulate dropping into inventory with shrink animation
+        var tween = create_tween()
+        tween.tween_property(output_slot, "scale", Vector2(0.2, 0.2), 0.4).set_trans(Tween.TRANS_CUBIC)
+        if inventory_container:
+            tween.parallel().tween_property(output_slot, "global_position", inventory_container.global_position + Vector2(50, 100), 0.4)
+            
+        tween.tween_callback(func():
+            output_slot.visible = false
+            # Reset position for next time
+            output_slot.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_KEEP_SIZE)
+            show_status("已儲存至庫存！")
+            request_synthesize.emit() # fake signal to controller to reset
+        )
 
 func populate_inventory(cards: Array) -> void:
     if not inventory_container: return
     for c in inventory_container.get_children(): c.queue_free()
     
+    var group_by_id_level = {}
+    for c in cards:
+        var key = str(c["base_id"]) + "_" + str(c.get("level", 1))
+        group_by_id_level[key] = group_by_id_level.get(key, 0) + 1
+        
+    var has_synthesizable = false
+    for k in group_by_id_level:
+        if group_by_id_level[k] >= 3:
+            has_synthesizable = true
+            break
+            
+    if empty_state_label:
+        empty_state_label.visible = not has_synthesizable
+    
     for c in cards:
         var slot = card_slot_scene.instantiate()
+        slot.custom_minimum_size = Vector2(160, 220)
         inventory_container.add_child(slot)
         slot.setup(c["base_id"], false)
-        slot.card_clicked.connect(_on_inventory_card_clicked.bind(c))
+        if slot.has_signal("card_clicked"):
+            slot.card_clicked.connect(_on_inventory_card_clicked.bind(c))
+        else:
+            slot.gui_input.connect(func(event: InputEvent):
+                if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+                    if event.double_click:
+                        _on_inventory_card_clicked("", c)
+            )
 
 func _on_inventory_card_clicked(card_id: String, card_data: Dictionary) -> void:
     request_add_to_furnace.emit(card_data)
@@ -124,10 +111,63 @@ func show_status(text: String) -> void:
 func update_furnace_count(count: int) -> void:
     pass
 
+func update_furnace_slots(cards: Array) -> void:
+    var slots = [slot_1, slot_2, slot_3]
+    for i in range(3):
+        if not slots[i]: continue
+        # Clear existing CardSlot instances
+        for c in slots[i].get_children():
+            c.queue_free()
+        
+        if i < cards.size():
+            var slot = card_slot_scene.instantiate()
+            slots[i].add_child(slot)
+            slot.setup(cards[i]["base_id"], false)
+            var p_size = slots[i].custom_minimum_size
+            if p_size.x == 0: p_size = slots[i].size
+            var scale_factor = min(p_size.x / 120.0, p_size.y / 160.0)
+            slot.scale = Vector2(scale_factor, scale_factor)
+            slot.position = (p_size - (Vector2(120.0, 160.0) * scale_factor)) / 2.0
+            slots[i].self_modulate.a = 0.0 # Hide parent frame to prevent overlap
+        else:
+            slots[i].self_modulate.a = 1.0 # Restore frame
+            
+    if output_slot:
+        output_slot.visible = false
+        
+    _update_synthesis_button()
+
 func play_success_anim() -> void:
+    if not output_slot: return
+    output_slot.scale = Vector2(0.5, 0.5)
+    output_slot.visible = true
+    
+    # Show the real output card graphic inside the slot
+    for c in output_slot.get_children():
+        c.queue_free()
+    var result_slot = card_slot_scene.instantiate()
+    output_slot.add_child(result_slot)
+    var base_id = "KEYWORD_SEARCH"
+    if _controller and _controller.get("current_cards_in_furnace") and _controller.current_cards_in_furnace.size() > 0:
+        base_id = _controller.current_cards_in_furnace[0]["base_id"]
+    result_slot.setup(base_id, false)
+    var p_size = output_slot.custom_minimum_size
+    if p_size.x == 0: p_size = output_slot.size
+    var scale_factor = min(p_size.x / 120.0, p_size.y / 160.0)
+    result_slot.scale = Vector2(scale_factor, scale_factor)
+    result_slot.position = (p_size - (Vector2(120.0, 160.0) * scale_factor)) / 2.0
+
     var tween = create_tween()
-    tween.tween_property(self, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.1)
-    tween.tween_property(self, "modulate", Color.WHITE, 0.3)
+    tween.tween_property(output_slot, "scale", Vector2(1.1875, 1.1875), 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+    tween.parallel().tween_property(output_slot, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.2)
+    tween.tween_property(output_slot, "modulate", Color.WHITE, 0.4)
+    
+    tween.tween_callback(func():
+        # Setup simulated drag interaction after pop-in
+        output_slot.mouse_filter = Control.MOUSE_FILTER_STOP
+    )
+    
+    show_status("請將產物拖曳(點擊)回庫存區")
 
 func play_failure_anim() -> void:
     var tween = create_tween()

@@ -43,3 +43,22 @@ menu_save_loadout,Save Loadout,儲存至當前配置
 menu_equipped_limit,Equipped,核心武裝
 menu_cost_limit,Cost,算力負載
 menu_inventory,INVENTORY,備用記憶體庫存
+menu_effect,Effect,效果
+card_name_keyword_search,Basic Override,基礎覆寫
+card_desc_keyword_search,Bypass basic firewall,破解基礎防火牆
+card_name_dense_search,Deep Injection,深度注入
+card_desc_dense_search,Acquire node root access,取得節點最高權限
+card_name_reranker,Quantum Shield,量子護盾
+card_desc_reranker,Block one trace attempt,抵擋一次追蹤
+card_name_filter_by_date,Neurotoxin,神經毒素
+card_desc_filter_by_date,Corrupt target node per second,每秒損毀目標節點
+card_name_author_query,X-Ray Scan,透視掃描
+card_desc_author_query,Reveal hidden paths,顯示隱藏路徑
+card_name_web_crawler,Core Overclock,核心超頻
+card_desc_web_crawler,Halve skill cooldown,技能冷卻減半
+card_name_rootkit_v1,Stealth Trojan,隱匿木馬
+card_desc_rootkit_v1,Reduce detection chance by 20%,降低被偵測機率 20%
+card_name_emp_blast,EMP Blast,電磁脈衝
+card_desc_emp_blast,Paralyze all area defenses,癱瘓區域內所有防禦
+card_name_data_leech,Data Leech,資料虹吸
+card_desc_data_leech,Steal extra memory fragments,竊取額外記憶體碎片
