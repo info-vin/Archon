@@ -198,14 +198,14 @@ func setup_topology_web() -> void:
 	]
 	
 	var center = Vector2(380, 260)
-	var radius_x = 260
-	var radius_y = 200
+	var radius_x = 300
+	var radius_y = 300
 	
 	# 3 Nodes around the card
 	var positions = [
 		Vector2(-radius_x, -radius_y * 0.2), # Left
 		Vector2(radius_x, -radius_y * 0.5),  # Top Right
-		Vector2(radius_x * 1.1, radius_y * 0.5) # Bottom Right
+		Vector2(radius_x * 1.05, radius_y * 0.7) # Bottom Right
 	]
 	
 	# Draw ComfyUI style Bezier curves with neon gradient

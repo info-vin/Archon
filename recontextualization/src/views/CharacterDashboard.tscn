@@ -83,17 +83,17 @@ size_flags_stretch_ratio = 1.8
 [node name="LinesContainer" type="Node2D" parent="HBoxContainer/TopologyPanel"]
 
 [node name="PlayerCard" type="TextureRect" parent="HBoxContainer/TopologyPanel"]
-custom_minimum_size = Vector2(320, 480)
+custom_minimum_size = Vector2(384, 576)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -240.0
-offset_right = 160.0
-offset_bottom = 240.0
+offset_left = -192.0
+offset_top = -288.0
+offset_right = 192.0
+offset_bottom = 288.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("frame_blank")
@@ -115,15 +115,32 @@ theme_override_constants/margin_bottom = 0
 [node name="CardContent" type="Control" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin"]
 layout_mode = 2
 
-[node name="AvatarContainer" type="Control" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent"]
+[node name="NameLabel" type="Label" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = 265.0
+offset_left = 30.0
+offset_top = 15.0
+offset_right = -30.0
+offset_bottom = 50.0
 grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "特務代號：愛麗絲"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AvatarContainer" type="Control" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 32.0
+offset_top = 70.0
+offset_right = -32.0
+offset_bottom = -260.0
+grow_horizontal = 2
+grow_vertical = 2
 clip_contents = true
 
 [node name="Avatar" type="TextureRect" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent/AvatarContainer"]
@@ -151,42 +168,27 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 1, 0.8, 1)
 
-[node name="NameLabel" type="Label" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 30.0
-offset_top = 270.0
-offset_right = -30.0
-offset_bottom = 305.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "特務代號：愛麗絲"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="InfoContainer" type="Control" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent"]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 25.0
-offset_top = -160.0
-offset_right = -25.0
-offset_bottom = -25.0
+offset_left = 30.0
+offset_top = -240.0
+offset_right = -30.0
+offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 0
 
 [node name="RankLabel" type="Label" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent/InfoContainer"]
 layout_mode = 1
-offset_left = 10.0
-offset_top = 15.0
+offset_left = 20.0
+offset_top = 20.0
 offset_right = 200.0
-offset_bottom = 38.0
+offset_bottom = 43.0
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "權限階級：C級節點行者"
 
 [node name="Badge" type="TextureRect" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent/InfoContainer"]
@@ -196,10 +198,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -70.0
-offset_top = -70.0
-offset_right = -10.0
-offset_bottom = -10.0
+offset_left = -80.0
+offset_top = -80.0
+offset_right = -20.0
+offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
 texture = ExtResource("4_badge")
@@ -211,24 +213,24 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -60.0
-offset_right = 95.0
-offset_bottom = -37.0
+offset_left = 20.0
+offset_top = -70.0
+offset_right = 105.0
+offset_bottom = -47.0
 grow_vertical = 0
 theme_override_font_sizes/font_size = 14
 text = "神經經驗值"
 
 [node name="XPBar" type="ProgressBar" parent="HBoxContainer/TopologyPanel/PlayerCard/Margin/CardContent/InfoContainer"]
-custom_minimum_size = Vector2(160, 10)
+custom_minimum_size = Vector2(180, 12)
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -30.0
-offset_right = 170.0
-offset_bottom = -20.0
+offset_left = 20.0
+offset_top = -40.0
+offset_right = 200.0
+offset_bottom = -28.0
 grow_vertical = 0
 max_value = 1000.0
 value = 100.0
@@ -242,23 +244,26 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TerminalPanel" type="TextureRect" parent="HBoxContainer"]
-custom_minimum_size = Vector2(400, 480)
+[node name="TerminalPanel" type="NinePatchRect" parent="HBoxContainer"]
+custom_minimum_size = Vector2(420, 504)
 layout_mode = 2
 size_flags_vertical = 4
 texture = ExtResource("frame_blank")
-expand_mode = 1
-stretch_mode = 5
+region_rect = Rect2(10, 260, 300, 210)
+patch_margin_left = 20
+patch_margin_top = 20
+patch_margin_right = 20
+patch_margin_bottom = 20
 
 [node name="ColorBg" type="ColorRect" parent="HBoxContainer/TerminalPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 10.0
-offset_right = -10.0
-offset_bottom = -10.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.8)
@@ -270,10 +275,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 25
-theme_override_constants/margin_top = 25
-theme_override_constants/margin_right = 25
-theme_override_constants/margin_bottom = 25
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 30
 
 [node name="VBox" type="VBoxContainer" parent="HBoxContainer/TerminalPanel/Margin"]
 layout_mode = 2
