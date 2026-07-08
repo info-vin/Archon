@@ -8,14 +8,14 @@ var main_menu_scene = "res://src/views/MainMenu.tscn"
 var view: Control
 var save_manager: Node
 
-# Mock Database
+# Mock Database (Mapped from legacy DB IDs to Cyberpunk theme)
 var mock_database = {
-	"hack_basic": {"id": "hack_basic", "name": "基礎覆寫", "stats": "Cost: 1\n效果: 破解基礎防火牆", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
-	"hack_adv": {"id": "hack_adv", "name": "深度注入", "stats": "Cost: 2\n效果: 取得節點最高權限", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
-	"def_shield": {"id": "def_shield", "name": "量子護盾", "stats": "Cost: 2\n效果: 抵擋一次追蹤", "texture": "res://assets/images/chip_red_noise.png", "cost": 2},
-	"atk_virus": {"id": "atk_virus", "name": "神經毒素", "stats": "Cost: 3\n效果: 每秒損毀目標節點", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
-	"util_scan": {"id": "util_scan", "name": "透視掃描", "stats": "Cost: 1\n效果: 顯示隱藏路徑", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
-	"util_overclock": {"id": "util_overclock", "name": "核心超頻", "stats": "Cost: 3\n效果: 技能冷卻減半", "texture": "res://assets/images/chip_red_noise.png", "cost": 3}
+	"keyword_search": {"id": "keyword_search", "name": "基礎覆寫", "stats": "Cost: 1\n效果: 破解基礎防火牆", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
+	"dense_search": {"id": "dense_search", "name": "深度注入", "stats": "Cost: 2\n效果: 取得節點最高權限", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
+	"reranker": {"id": "reranker", "name": "量子護盾", "stats": "Cost: 2\n效果: 抵擋一次追蹤", "texture": "res://assets/images/chip_red_noise.png", "cost": 2},
+	"filter_by_date": {"id": "filter_by_date", "name": "神經毒素", "stats": "Cost: 3\n效果: 每秒損毀目標節點", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
+	"author_query": {"id": "author_query", "name": "透視掃描", "stats": "Cost: 1\n效果: 顯示隱藏路徑", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
+	"web_crawler": {"id": "web_crawler", "name": "核心超頻", "stats": "Cost: 3\n效果: 技能冷卻減半", "texture": "res://assets/images/chip_red_noise.png", "cost": 3}
 }
 
 func _init(v: Control = null) -> void:
@@ -56,7 +56,7 @@ func _refresh_lists() -> void:
 	if save_manager:
 		max_cards = save_manager.get_max_equipped_cards()
 		
-	var equipped_ids = save_manager.equipped_action_cards if save_manager else ["hack_basic", "def_shield"]
+	var equipped_ids = save_manager.equipped_action_cards if save_manager else ["keyword_search", "reranker"]
 	var unlocked_ids = save_manager.unlocked_action_cards if save_manager else mock_database.keys()
 	
 	var current_cost = 0

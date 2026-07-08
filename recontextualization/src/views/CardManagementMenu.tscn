@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/views/CardManagementMenu.gd" id="1_cardmanage"]
 [ext_resource type="Script" path="res://src/views/CardManagementMenuController.gd" id="2_ctrl"]
-[ext_resource type="Texture2D" uid="uid://bd3gvw2gks8b1" path="res://assets/images/bg_vector_grid.png" id="3_bg"]
+[ext_resource type="Texture2D" path="res://assets/images/bg_vector_grid.png" id="3_bg"]
 
 [node name="CardManagementMenu" type="Control" node_paths=PackedStringArray("unlocked_list", "equipped_list", "limit_label")]
 layout_mode = 3

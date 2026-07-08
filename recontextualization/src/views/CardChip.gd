@@ -9,38 +9,33 @@ extends MarginContainer
 @export var chip_texture: Texture2D:
     set(val):
         chip_texture = val
-        if is_inside_tree() and chip_icon:
+        if is_inside_tree() and chip_icon != null:
             chip_icon.texture = val
 
 @export var card_name: String = "Card Name":
     set(val):
         card_name = val
-        if is_inside_tree() and title_label:
+        if is_inside_tree() and title_label != null:
             title_label.text = val
 
 @export var stats_text: String = "":
     set(val):
         stats_text = val
-        if is_inside_tree() and desc_label:
+        if is_inside_tree() and desc_label != null:
             desc_label.text = val
 
 func _ready():
-    if chip_texture and chip_icon:
+    if chip_texture != null and chip_icon != null:
         chip_icon.texture = chip_texture
-    if card_name and title_label:
+    if title_label != null:
         title_label.text = card_name
-    if stats_text != "" and desc_label:
+    if desc_label != null and stats_text != "":
         desc_label.text = stats_text
 
 func setup(p_texture: Texture2D, p_card_name: String, p_stats: String = ""):
     chip_texture = p_texture
     card_name = p_card_name
     stats_text = p_stats
-    if is_inside_tree():
-        chip_icon.texture = chip_texture
-        title_label.text = card_name
-        if desc_label and stats_text != "":
-            desc_label.text = stats_text
 
 func _get_drag_data(_at_position: Vector2):
     var preview = duplicate()
