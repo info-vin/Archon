@@ -97,21 +97,6 @@ offset_bottom = 288.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Avatar" type="TextureRect" parent="HBoxContainer/TopologyPanel/PlayerCard"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 40.0
-offset_top = 90.0
-offset_right = -40.0
-offset_bottom = -210.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("3_avatar")
-expand_mode = 1
-stretch_mode = 6
-
 [node name="Frame" type="TextureRect" parent="HBoxContainer/TopologyPanel/PlayerCard"]
 layout_mode = 1
 anchors_preset = 15
@@ -123,14 +108,38 @@ texture = ExtResource("frame_blank")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="AvatarContainer" type="Control" parent="HBoxContainer/TopologyPanel/PlayerCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 55.0
+offset_top = 94.0
+offset_right = -55.0
+offset_bottom = -216.0
+grow_horizontal = 2
+grow_vertical = 2
+clip_contents = true
+
+[node name="Avatar" type="TextureRect" parent="HBoxContainer/TopologyPanel/PlayerCard/AvatarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_avatar")
+expand_mode = 1
+stretch_mode = 6
+
 [node name="NameLabel" type="Label" parent="HBoxContainer/TopologyPanel/PlayerCard"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 60.0
-offset_top = 35.0
+offset_top = 50.0
 offset_right = -60.0
-offset_bottom = 70.0
+offset_bottom = 85.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
@@ -154,9 +163,9 @@ grow_vertical = 0
 [node name="RankLabel" type="Label" parent="HBoxContainer/TopologyPanel/PlayerCard/InfoContainer"]
 layout_mode = 1
 offset_left = 20.0
-offset_top = 30.0
+offset_top = 20.0
 offset_right = 200.0
-offset_bottom = 53.0
+offset_bottom = 43.0
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 theme_override_font_sizes/font_size = 16
 text = "權限階級：C級節點行者"
@@ -219,24 +228,24 @@ custom_minimum_size = Vector2(420, 504)
 layout_mode = 2
 size_flags_vertical = 4
 texture = ExtResource("frame_blank")
-region_rect = Rect2(15, 305, 290, 165)
-patch_margin_left = 50
-patch_margin_top = 40
-patch_margin_right = 50
-patch_margin_bottom = 40
+region_rect = Rect2(30, 680, 635, 300)
+patch_margin_left = 60
+patch_margin_top = 60
+patch_margin_right = 60
+patch_margin_bottom = 60
 
 [node name="ColorBg" type="ColorRect" parent="HBoxContainer/TerminalPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = -12.0
-offset_bottom = -12.0
+offset_left = 18.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = -18.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.7)
+color = Color(0, 0, 0, 0.4)
 
 [node name="Margin" type="MarginContainer" parent="HBoxContainer/TerminalPanel"]
 layout_mode = 1
