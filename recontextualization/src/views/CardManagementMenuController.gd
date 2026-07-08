@@ -8,6 +8,16 @@ var main_menu_scene = "res://src/views/MainMenu.tscn"
 var view: Control
 var save_manager: Node
 
+# Mock Database
+var mock_database = {
+	"hack_basic": {"id": "hack_basic", "name": "基礎覆寫", "stats": "Cost: 1\n效果: 破解基礎防火牆", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
+	"hack_adv": {"id": "hack_adv", "name": "深度注入", "stats": "Cost: 2\n效果: 取得節點最高權限", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
+	"def_shield": {"id": "def_shield", "name": "量子護盾", "stats": "Cost: 2\n效果: 抵擋一次追蹤", "texture": "res://assets/images/chip_red_noise.png", "cost": 2},
+	"atk_virus": {"id": "atk_virus", "name": "神經毒素", "stats": "Cost: 3\n效果: 每秒損毀目標節點", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
+	"util_scan": {"id": "util_scan", "name": "透視掃描", "stats": "Cost: 1\n效果: 顯示隱藏路徑", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
+	"util_overclock": {"id": "util_overclock", "name": "核心超頻", "stats": "Cost: 3\n效果: 技能冷卻減半", "texture": "res://assets/images/chip_red_noise.png", "cost": 3}
+}
+
 func _init(v: Control = null) -> void:
 	if v:
 		_setup_with_view(v)
@@ -30,27 +40,44 @@ func _connect_signals() -> void:
 	view.request_teammate_dash.connect(_on_teammate_dash)
 	view.request_start_dive.connect(_on_start_dive)
 
-func _refresh_lists() -> void:
+func _inject_mock_data():
 	if not save_manager: return
+	if save_manager.unlocked_action_cards.size() == 0:
+		save_manager.unlocked_action_cards = ["hack_basic", "hack_adv", "def_shield", "atk_virus", "util_scan", "util_overclock"]
+		save_manager.equipped_action_cards = ["hack_basic", "def_shield"]
+		save_manager.save_progress()
+
+func _refresh_lists() -> void:
+	_inject_mock_data() # Force inject if empty
 	
-	var max_cards = save_manager.get_max_equipped_cards()
-	var current_cards = save_manager.equipped_action_cards.size()
-	view.update_limit_label(current_cards, max_cards)
+	var max_cards = 3
+	var max_tokens = 10 # Default squad tokens
 	
-	var equipable_cards = []
-	for card_id in save_manager.unlocked_action_cards:
-		if not card_id in save_manager.equipped_action_cards:
-			equipable_cards.append(card_id)
-			
-	var equipped_cards = []
-	for card_id in save_manager.equipped_action_cards:
-		equipped_cards.append(card_id)
+	if save_manager:
+		max_cards = save_manager.get_max_equipped_cards()
 		
+	var equipped_ids = save_manager.equipped_action_cards if save_manager else ["hack_basic", "def_shield"]
+	var unlocked_ids = save_manager.unlocked_action_cards if save_manager else mock_database.keys()
+	
+	var current_cost = 0
+	var equipped_cards = []
+	for cid in equipped_ids:
+		if mock_database.has(cid):
+			equipped_cards.append(mock_database[cid])
+			current_cost += mock_database[cid]["cost"]
+			
+	var equipable_cards = []
+	for cid in unlocked_ids:
+		if not cid in equipped_ids and mock_database.has(cid):
+			equipable_cards.append(mock_database[cid])
+			
+	view.update_limit_label(equipped_cards.size(), max_cards, current_cost, max_tokens)
 	view.populate_lists(equipable_cards, equipped_cards)
 
 func _on_equip_card(card_id: String) -> void:
 	if not save_manager: return
-	if save_manager.equipped_action_cards.size() < save_manager.get_max_equipped_cards():
+	var max_cards = save_manager.get_max_equipped_cards()
+	if save_manager.equipped_action_cards.size() < max_cards:
 		if not card_id in save_manager.equipped_action_cards:
 			save_manager.equipped_action_cards.append(card_id)
 			save_manager.save_progress()
