@@ -48,7 +48,11 @@ func _ready() -> void:
 	tab_bg.texture_margin_right = 10
 	tab_bg.texture_margin_top = 10
 	tab_bg.texture_margin_bottom = 5
-	tab_bg.modulate_color = Color(0.3, 0.5, 0.5, 0.8) # Dimmed when unselected
+	tab_bg.content_margin_left = 30
+	tab_bg.content_margin_right = 30
+	tab_bg.content_margin_top = 15
+	tab_bg.content_margin_bottom = 10
+	tab_bg.modulate_color = Color(0.4, 0.6, 0.6, 0.9) # Dimmed when unselected
 	
 	var tab_selected = StyleBoxTexture.new()
 	tab_selected.texture = tab_frame_tex
@@ -56,7 +60,11 @@ func _ready() -> void:
 	tab_selected.texture_margin_right = 10
 	tab_selected.texture_margin_top = 10
 	tab_selected.texture_margin_bottom = 5
-	tab_selected.modulate_color = Color(1.0, 1.0, 1.0, 1.0) # Bright when selected
+	tab_selected.content_margin_left = 30
+	tab_selected.content_margin_right = 30
+	tab_selected.content_margin_top = 15
+	tab_selected.content_margin_bottom = 10
+	tab_selected.modulate_color = Color(1.2, 1.2, 1.2, 1.0) # Bright when selected
 	
 	var panel_bg = StyleBoxFlat.new()
 	panel_bg.bg_color = Color(0.0, 0.0, 0.0, 0.0)
@@ -66,7 +74,7 @@ func _ready() -> void:
 	tab_container.add_theme_stylebox_override("panel", panel_bg)
 	tab_container.add_theme_color_override("font_selected_color", Color(0.2, 1.0, 0.8))
 	tab_container.add_theme_color_override("font_unselected_color", Color(0.5, 0.7, 0.7))
-	tab_container.add_theme_font_size_override("font_size", 22)
+	tab_container.add_theme_font_size_override("font_size", 24)
 	
 	add_child(tab_container)
 	
@@ -127,24 +135,25 @@ func _ready() -> void:
 func update_profile(sector: int, account_xp: int) -> void:
 	# Determine badge and avatar tint
 	var badge_tex: Texture2D = badge_rank_c
-	var avatar_tint = Color(0.8, 0.8, 0.8)
+	var avatar_tint = Color(1.0, 1.0, 1.0) # Fully bright character
 	var rank_text = "權限階級：C級節點行者"
 	
 	if sector == 2:
 		badge_tex = badge_rank_b
-		avatar_tint = Color(0.6, 1.0, 0.6)
+		avatar_tint = Color(1.0, 1.0, 1.0)
 		rank_text = "權限階級：B級網路行者"
 	elif sector == 3:
 		badge_tex = badge_rank_a
-		avatar_tint = Color(0.6, 0.8, 1.0)
+		avatar_tint = Color(1.0, 1.0, 1.0)
 		rank_text = "權限階級：A級菁英駭客"
 	elif sector >= 4:
 		badge_tex = badge_rank_s
-		avatar_tint = Color(1.0, 0.9, 0.6)
+		avatar_tint = Color(1.0, 1.0, 1.0)
 		rank_text = "權限階級：S級系統管理員"
 		
 	if badge_tex and badge_rect:
 		badge_rect.texture = badge_tex
+		badge_rect.modulate = Color(1.2, 1.2, 1.2, 1.0) # Brighten badge
 		
 	if avatar_rect:
 		avatar_rect.modulate = avatar_tint
@@ -189,29 +198,44 @@ func setup_topology_web() -> void:
 	]
 	
 	var center = Vector2(380, 260)
-	var radius_x = 220
-	var radius_y = 180
+	var radius_x = 260
+	var radius_y = 200
 	
 	# 3 Nodes around the card
 	var positions = [
-		Vector2(-radius_x, -radius_y * 0.5), # Top Left
-		Vector2(radius_x, -radius_y * 0.5),  # Top Right
+		Vector2(-radius_x, -radius_y * 0.4), # Top Left
+		Vector2(radius_x, -radius_y * 0.4),  # Top Right
 		Vector2(0, radius_y * 1.3)           # Bottom Center
 	]
 	
-	# Draw Circuitry Lines
+	# Draw ComfyUI style Bezier curves
 	for pos in positions:
 		var line = Line2D.new()
-		line.add_point(center)
-		# Add a midway point for tech circuitry look
-		var mid_point = center + Vector2(pos.x, 0)
-		if abs(pos.x) > abs(pos.y):
-			mid_point = center + Vector2(0, pos.y)
-		line.add_point(mid_point)
-		line.add_point(center + pos)
+		var start = center
+		var end = center + pos
 		
-		line.width = 3
-		line.default_color = Color(0.0, 0.8, 0.5, 0.7)
+		# Cubic Bezier control points for a smooth horizontal-ish S-curve
+		var dist = abs(end.x - start.x) * 0.6
+		var p1 = start + Vector2(dist, 0) if end.y > start.y + 100 else start + Vector2(0, dist*0.5)
+		var p2 = end - Vector2(dist, 0) if end.y > start.y + 100 else end - Vector2(0, dist*0.5)
+		
+		# If vertical layout is dominant, change control vectors to vertical
+		if abs(end.y - start.y) > abs(end.x - start.x):
+			dist = abs(end.y - start.y) * 0.5
+			p1 = start + Vector2(0, dist)
+			p2 = end - Vector2(0, dist)
+		else:
+			p1 = start + Vector2(dist * sign(end.x - start.x), 0)
+			p2 = end - Vector2(dist * sign(end.x - start.x), 0)
+			
+		var curve = Curve2D.new()
+		curve.add_point(start, Vector2.ZERO, p1 - start)
+		curve.add_point(end, p2 - end, Vector2.ZERO)
+		
+		line.points = curve.get_baked_points()
+		line.width = 4
+		line.default_color = Color(0.0, 1.0, 0.7, 0.8)
+		line.antialiased = true
 		
 		var mat = CanvasItemMaterial.new()
 		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
