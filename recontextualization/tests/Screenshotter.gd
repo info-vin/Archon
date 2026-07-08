@@ -33,6 +33,10 @@ func run_screenshots() -> void:
         await process_frame
         await create_timer(0.2).timeout
         
+        if scene_name == "CharacterDashboard" and instance.has_method("debug_trigger_node"):
+            instance.debug_trigger_node(0)
+            await create_timer(1.5).timeout
+        
         var img = root.get_texture().get_image()
         var out_path = output_dir + "screenshot_" + scene_name + ".png"
         img.save_png(out_path)
