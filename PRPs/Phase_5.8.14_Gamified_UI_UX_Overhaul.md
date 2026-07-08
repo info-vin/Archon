@@ -55,3 +55,10 @@
     1. 在 `CardManagementMenu.gd` 與 `CardWorkshop.gd` 中，必須先執行 `add_child()` 再呼叫 `setup()`。
     2. 使用 `Line2D` 實作 `CardWorkshop` 的融合 (3進1) 與分解 (1進2) 真實射線排版，不再只是空殼 Button。
     3. 在 `CharacterDashboard` 中真正解放 `TopologyPanel`，繪製環繞特務卡面的實體發光插槽與星狀拓樸網。
+
+## 6. 最新開發進度 (Progress Updates)
+*   **Tab 1: 駭客檔案 (Character Dashboard) UI 極致微調完成**：
+    *   完成終端機防變形切圖 (NinePatchRect 邊距擴展至 60px)，解決比例扭曲問題，並加上了 0.4 半透明玻璃背板內縮。
+    *   完成 Avatar 圖層反轉與 HexagonMask Shader (`taper_amount = 0.25`)，套用著色器數學演算法切出完美的六角形實體頭像，完美鑲嵌於金屬套圖內。
+    *   精確對齊標題與神經經驗值 (100 XP)，完美歸位 C 級節點行者勳章。
+*   **【未來擴充備註】天賦拓樸互動**: 目前右側星盤拓樸的綠色/紅色天賦節點仍為靜態圖像。若未來需要實作如 ComfyUI 般的自由排版與即時連線功能，**【需要新增 拖曳.gd (Draggable Script)】** 來專門處理節點的滑鼠拖曳與 `Line2D` 即時重繪邏輯。
