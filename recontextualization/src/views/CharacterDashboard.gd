@@ -48,8 +48,8 @@ func _ready() -> void:
 	tab_bg.texture_margin_right = 10
 	tab_bg.texture_margin_top = 10
 	tab_bg.texture_margin_bottom = 5
-	tab_bg.content_margin_left = 30
-	tab_bg.content_margin_right = 30
+	tab_bg.content_margin_left = 45
+	tab_bg.content_margin_right = 45
 	tab_bg.content_margin_top = 15
 	tab_bg.content_margin_bottom = 10
 	tab_bg.modulate_color = Color(0.4, 0.6, 0.6, 0.9) # Dimmed when unselected
@@ -60,8 +60,8 @@ func _ready() -> void:
 	tab_selected.texture_margin_right = 10
 	tab_selected.texture_margin_top = 10
 	tab_selected.texture_margin_bottom = 5
-	tab_selected.content_margin_left = 30
-	tab_selected.content_margin_right = 30
+	tab_selected.content_margin_left = 45
+	tab_selected.content_margin_right = 45
 	tab_selected.content_margin_top = 15
 	tab_selected.content_margin_bottom = 10
 	tab_selected.modulate_color = Color(1.2, 1.2, 1.2, 1.0) # Bright when selected
@@ -203,23 +203,21 @@ func setup_topology_web() -> void:
 	
 	# 3 Nodes around the card
 	var positions = [
-		Vector2(-radius_x, -radius_y * 0.4), # Top Left
-		Vector2(radius_x, -radius_y * 0.4),  # Top Right
-		Vector2(0, radius_y * 1.3)           # Bottom Center
+		Vector2(-radius_x, -radius_y * 0.2), # Left
+		Vector2(radius_x, -radius_y * 0.5),  # Top Right
+		Vector2(radius_x * 1.1, radius_y * 0.5) # Bottom Right
 	]
 	
-	# Draw ComfyUI style Bezier curves
+	# Draw ComfyUI style Bezier curves with neon gradient
 	for pos in positions:
 		var line = Line2D.new()
 		var start = center
 		var end = center + pos
 		
-		# Cubic Bezier control points for a smooth horizontal-ish S-curve
 		var dist = abs(end.x - start.x) * 0.6
 		var p1 = start + Vector2(dist, 0) if end.y > start.y + 100 else start + Vector2(0, dist*0.5)
 		var p2 = end - Vector2(dist, 0) if end.y > start.y + 100 else end - Vector2(0, dist*0.5)
 		
-		# If vertical layout is dominant, change control vectors to vertical
 		if abs(end.y - start.y) > abs(end.x - start.x):
 			dist = abs(end.y - start.y) * 0.5
 			p1 = start + Vector2(0, dist)
@@ -233,8 +231,14 @@ func setup_topology_web() -> void:
 		curve.add_point(end, p2 - end, Vector2.ZERO)
 		
 		line.points = curve.get_baked_points()
-		line.width = 4
-		line.default_color = Color(0.0, 1.0, 0.7, 0.8)
+		line.width = 2
+		
+		# Directional Neon Gradient
+		var grad = Gradient.new()
+		grad.add_point(0.0, Color(0.0, 1.0, 0.7, 0.0)) # Transparent at card
+		grad.add_point(1.0, Color(0.0, 1.0, 0.7, 1.0)) # Bright at node
+		line.gradient = grad
+		
 		line.antialiased = true
 		
 		var mat = CanvasItemMaterial.new()
@@ -246,7 +250,6 @@ func setup_topology_web() -> void:
 		var pos = center + positions[i]
 		
 		var btn = TextureButton.new()
-		# First one is green (unlocked), others red (locked) as an example
 		btn.texture_normal = node_icon_green if i == 0 else node_icon_red
 		btn.ignore_texture_size = true
 		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
