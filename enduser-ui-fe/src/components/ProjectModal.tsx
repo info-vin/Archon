@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../services/api';
 import { Project } from '../types';
-import { XIcon } from './Icons';
+import { XIcon, RefreshCwIcon } from './Icons';
 
 interface ProjectModalProps {
   onClose: () => void;
@@ -83,10 +83,12 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ onClose, onProjectCr
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
               disabled={isSubmitting}
+              aria-busy={isSubmitting}
               aria-label={isSubmitting ? 'Creating project...' : 'Create project'}
             >
+              {isSubmitting && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
               {isSubmitting ? 'Creating...' : 'Create Project'}
             </button>
           </div>
