@@ -11,6 +11,12 @@
 [ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="frame_blank"]
 [ext_resource type="Texture2D" path="res://assets/images/chip_green_target.png" id="chip_green"]
 [ext_resource type="Texture2D" path="res://assets/images/chip_red_noise.png" id="chip_red"]
+[ext_resource type="Shader" path="res://src/shaders/HexagonMask.gdshader" id="hex_mask"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_avatar"]
+shader = ExtResource("hex_mask")
+shader_parameter/taper_amount = 0.25
+shader_parameter/smoothing = 0.01
 
 [node name="CharacterDashboard" type="Control" node_paths=PackedStringArray("bg_texture", "avatar_rect", "badge_rect", "rank_label", "xp_bar", "topology_panel", "lines_container", "nodes_container", "back_button", "terminal_lore", "player_card", "terminal_panel")]
 layout_mode = 3
@@ -122,6 +128,7 @@ grow_vertical = 2
 clip_contents = true
 
 [node name="Avatar" type="TextureRect" parent="HBoxContainer/TopologyPanel/PlayerCard/AvatarContainer"]
+material = SubResource("ShaderMaterial_avatar")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
