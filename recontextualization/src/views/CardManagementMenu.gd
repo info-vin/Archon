@@ -10,6 +10,13 @@ signal request_start_dive()
 @export var equipped_list: Control
 @export var limit_label: Label
 
+@onready var btn_save: Button = $MainLayout/LeftPanel/LoadoutPanel/VBox/BtnSave
+@onready var input_loadout: LineEdit = $MainLayout/LeftPanel/LoadoutPanel/VBox/InputLoadoutName
+@onready var stat_cost: Label = $MainLayout/LeftPanel/StatsPanel/VBox/Stat1
+@onready var stat_upload: Label = $MainLayout/LeftPanel/StatsPanel/VBox/Stat2
+@onready var stat_cdr: Label = $MainLayout/LeftPanel/StatsPanel/VBox/Stat3
+@onready var stat_stealth: Label = $MainLayout/LeftPanel/StatsPanel/VBox/Stat4
+
 var _controller: Node
 
 func _ready() -> void:
@@ -21,7 +28,7 @@ func _ready() -> void:
 		$NavBox/StartDiveButton.pressed.connect(func(): request_start_dive.emit())
 
 func update_limit_label(current_cards: int, max_cards: int, current_cost: int, max_tokens: int) -> void:
-	limit_label.text = "核心武裝 (%d / %d)   |   算力負載: %d / %d Token" % [current_cards, max_cards, current_cost, max_tokens]
+	limit_label.text = "%s (%d / %d)\n%s: %d / %d Token" % [tr("menu_equipped_limit"), current_cards, max_cards, tr("menu_cost_limit"), current_cost, max_tokens]
 	if current_cost > max_tokens:
 		limit_label.modulate = Color.RED
 	else:
@@ -38,15 +45,21 @@ func populate_lists(equipable_cards: Array, equipped_cards: Array) -> void:
 	for card_dict in equipable_cards:
 		var slot = card_chip_scene.instantiate()
 		unlocked_list.add_child(slot)
+		slot.custom_minimum_size = Vector2(160, 235)
+		slot.size = Vector2(160, 235)
 		var tex = load(card_dict["texture"]) if card_dict.has("texture") else null
 		slot.setup(tex, card_dict["name"], card_dict["stats"])
+		slot.set_meta("card_id", card_dict["id"])
 		slot.gui_input.connect(_on_chip_gui_input.bind(card_dict["id"], slot, false))
 		
 	for card_dict in equipped_cards:
 		var slot = card_chip_scene.instantiate()
 		equipped_list.add_child(slot)
+		slot.custom_minimum_size = Vector2(160, 235)
+		slot.size = Vector2(160, 235)
 		var tex = load(card_dict["texture"]) if card_dict.has("texture") else null
 		slot.setup(tex, card_dict["name"], card_dict["stats"])
+		slot.set_meta("card_id", card_dict["id"])
 		slot.gui_input.connect(_on_chip_gui_input.bind(card_dict["id"], slot, true))
 
 func _on_chip_gui_input(event: InputEvent, card_id: String, slot: Node, is_equipped: bool):

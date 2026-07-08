@@ -28,3 +28,18 @@ card_stat_effect,Effect: +%d Search Power,效果: 增加 %d 點算力
 card_stat_size,Size: %s,容量: %s
 card_stat_status_pure,Status: Pure,狀態: 純淨
 card_stat_status_corrupted,Status: Corrupted,狀態: 受損
+menu_neural_deck,NEURAL DECK,核心武裝矩陣
+menu_deck_synergy,DECK SYNERGY,預估試算說明
+menu_base_cost,Base Cost,基礎算力負載
+menu_upload_rate,Upload Rate,上傳速率
+menu_cdr,CDR,冷卻縮減
+menu_stealth,Stealth,隱匿增幅
+menu_presets,MEMORY PRESETS,記憶體群組
+menu_preset_alpha,Preset Alpha (Stealth),配置 Alpha (潛入型)
+menu_preset_beta,Preset Beta (Assault),配置 Beta (強攻型)
+menu_preset_gamma,Preset Gamma (Undefined),配置 Gamma (未定義)
+menu_input_loadout,Enter loadout name...,輸入卡組名稱...
+menu_save_loadout,Save Loadout,儲存至當前配置
+menu_equipped_limit,Equipped,核心武裝
+menu_cost_limit,Cost,算力負載
+menu_inventory,INVENTORY,備用記憶體庫存
