@@ -709,7 +709,7 @@ CardManagementMenu.gd::GDScript::9078803094014751570::1783487049::0::1::::<>Cont
 CardManagementMenu.tscn::PackedScene::-1::1783486675::0::1::::<><><>0<>0<><>::res://src/views/CardManagementMenu.gd<>res://src/views/CardManagementMenuController.gd<>res://assets/images/bg_vector_grid.png<>res://src/views/CarouselContainer.gd
 CardManagementMenuController.gd::GDScript::7322102453087002477::1783494979::0::1::::CardManagementMenuController<>Node<><>0<>0<><>::
 CardWorkshop.gd::GDScript::5798060398067944425::1783507464::0::1::::CardWorkshop<>Control<><>0<>0<><>::
-CardWorkshop.tscn::PackedScene::-1::1783507052::0::1::::<><><>0<>0<><>::res://assets/images/card_frame_blank.png<>res://src/views/CardWorkshop.gd<>res://src/views/CardWorkshopController.gd<>res://assets/images/bg_synthesizer.png<>res://assets/images/icon_equipment_slot.png<>res://src/views/CarouselContainer.gd
+CardWorkshop.tscn::PackedScene::-1::1783508320::0::1::::<><><>0<>0<><>::res://assets/images/card_frame_blank.png<>res://src/views/CardWorkshop.gd<>res://src/views/CardWorkshopController.gd<>res://assets/images/bg_synthesizer.png<>res://assets/images/icon_equipment_slot.png<>res://src/views/CarouselContainer.gd
 CardWorkshopController.gd::GDScript::729435381783674624::1783503139::0::1::::CardWorkshopController<>Node<><>0<>0<><>::
 CarouselContainer.gd::GDScript::5898251647021483338::1783486292::0::1::::CarouselContainer<>Control<><>0<>1<><>::
 CharacterDashboard.gd::GDScript::9093318217842206453::1783475382::0::1::::<>Control<><>0<>0<><>::
