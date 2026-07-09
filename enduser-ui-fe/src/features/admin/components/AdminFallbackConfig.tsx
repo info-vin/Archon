@@ -12,8 +12,10 @@ export const AdminFallbackConfig: React.FC = () => {
     useEffect(() => {
         const loadSettings = async () => {
             try {
-                const apiKeys = await api.getSystemSettings('api_keys');
-                const ragSettings = await api.getSystemSettings('rag_strategy');
+                const [apiKeys, ragSettings] = await Promise.all([
+                    api.getSystemSettings('api_keys'),
+                    api.getSystemSettings('rag_strategy')
+                ]);
                 
                 const tokenSetting = apiKeys.find((s: any) => s.key === 'HF_TOKEN');
                 if (tokenSetting) {
