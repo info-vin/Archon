@@ -8,7 +8,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	var game_board = game_board_scene.instantiate()
 	scene_tree.root.add_child(game_board)
 	
-	var card = load("res://src/models/cards/resources/keyword_search.tres")
+	var card = load("res://src/models/cards/resources/action_keyword.tres")
 	
 	# Simulate drawing a card directly
 	game_board.anim_draw_card(card)

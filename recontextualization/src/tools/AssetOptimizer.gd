@@ -1,5 +1,4 @@
-@tool
-extends EditorScript
+extends SceneTree
 
 ## Phase 5.8.12 Art Asset Optimizer
 ## Replaces the external Python script with a native Godot tool.
@@ -38,12 +37,12 @@ func _init() -> void:
 	rules.append(AssetRule.new("avatar_", 256, CropMode.SQUARE_CENTER))
 	rules.append(AssetRule.new("icon_", 256, CropMode.SQUARE_CENTER))
 
-func _run() -> void:
 	print("=== Starting Asset Optimizer ===")
 	
 	var dir := DirAccess.open(ASSET_DIR)
 	if dir == null:
 		printerr("[Fatal Error] Cannot open directory: ", ASSET_DIR, ". Directory may not exist.")
+		quit()
 		return
 	
 	dir.list_dir_begin()
@@ -58,11 +57,7 @@ func _run() -> void:
 		file_name = dir.get_next()
 		
 	print("=== Optimization Complete! Processed ", processed_count, " PNGs ===")
-	
-	# 強制要求編輯器重新掃描 filesystem 確保 .ctex 被正確更新
-	var fs := EditorInterface.get_resource_filesystem()
-	if fs:
-		fs.scan()
+	quit()
 
 func _process_file(file_name: String) -> void:
 	# 尋找第一條符合的規則 (規則順序影響優先權，例如 avatar_default 必須在 avatar_ 之前)

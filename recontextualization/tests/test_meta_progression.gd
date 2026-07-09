@@ -23,7 +23,7 @@ func run_tests(tree = null) -> bool:
     # Mock some basic progression data
     sm.career_level = 4
     sm.max_player_hp = 110.0
-    sm.equipped_action_cards = ["keyword_search", "reranker"] # only equip 2
+    sm.equipped_action_cards = ["action_keyword", "action_reranker"] # only equip 2
     
     var drawn_cards = []
     eb.card_drawn.connect(func(c): drawn_cards.append(c))
@@ -42,11 +42,11 @@ func run_tests(tree = null) -> bool:
     if drawn_cards.size() != 2:
         print("FAIL: Should only draw the 2 equipped cards")
         return false
-    if drawn_cards[0].get("id") != "keyword_search":
-        print("FAIL: First card should be keyword_search")
+    if drawn_cards[0].get("id") != "action_keyword":
+        print("FAIL: First card should be action_keyword")
         return false
-    if drawn_cards[1].get("id") != "reranker":
-        print("FAIL: Second card should be reranker")
+    if drawn_cards[1].get("id") != "action_reranker":
+        print("FAIL: Second card should be action_reranker")
         return false
     
     # Cleanup

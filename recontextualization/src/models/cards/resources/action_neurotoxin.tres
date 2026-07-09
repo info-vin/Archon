@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/images/action_neurotoxin.png" id="1_jqmyp"]
+[ext_resource type="Script" path="res://src/models/cards/CardData.gd" id="2_h3yax"]
+
+[resource]
+script = ExtResource("2_h3yax")
+id = "action_neurotoxin"
+title = "Action Neurotoxin"
+icon = ExtResource("1_jqmyp")
+type = 1

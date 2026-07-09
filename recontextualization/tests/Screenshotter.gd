@@ -56,8 +56,8 @@ func run_screenshots() -> void:
             img = root.get_texture().get_image()
             
         if scene_name == "CardWorkshop":
-            instance.get_node("CardWorkshopController").current_cards_in_furnace = [{"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}]
-            instance.update_furnace_slots([{"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}, {"base_id": "KEYWORD_SEARCH", "level": 1}])
+            instance.get_node("CardWorkshopController").current_cards_in_furnace = [{"base_id": "action_keyword", "level": 1}, {"base_id": "action_keyword", "level": 1}, {"base_id": "action_keyword", "level": 1}]
+            instance.update_furnace_slots([{"base_id": "action_keyword", "level": 1}, {"base_id": "action_keyword", "level": 1}, {"base_id": "action_keyword", "level": 1}])
             await process_frame
             await create_timer(0.2).timeout
             # Save Before Screenshot

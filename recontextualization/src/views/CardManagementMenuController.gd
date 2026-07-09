@@ -10,15 +10,11 @@ var save_manager: Node
 
 # Mock Database (Mapped from legacy DB IDs to Cyberpunk theme)
 var mock_database = {
-	"keyword_search": {"id": "keyword_search", "name_key": "card_name_keyword_search", "desc_key": "card_desc_keyword_search", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
-	"dense_search": {"id": "dense_search", "name_key": "card_name_dense_search", "desc_key": "card_desc_dense_search", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
-	"reranker": {"id": "reranker", "name_key": "card_name_reranker", "desc_key": "card_desc_reranker", "texture": "res://assets/images/chip_red_noise.png", "cost": 2},
-	"filter_by_date": {"id": "filter_by_date", "name_key": "card_name_filter_by_date", "desc_key": "card_desc_filter_by_date", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
-	"author_query": {"id": "author_query", "name_key": "card_name_author_query", "desc_key": "card_desc_author_query", "texture": "res://assets/images/chip_green_target.png", "cost": 1},
-	"web_crawler": {"id": "web_crawler", "name_key": "card_name_web_crawler", "desc_key": "card_desc_web_crawler", "texture": "res://assets/images/chip_red_noise.png", "cost": 3},
-	"rootkit_v1": {"id": "rootkit_v1", "name_key": "card_name_rootkit_v1", "desc_key": "card_desc_rootkit_v1", "texture": "res://assets/images/chip_green_target.png", "cost": 2},
-	"emp_blast": {"id": "emp_blast", "name_key": "card_name_emp_blast", "desc_key": "card_desc_emp_blast", "texture": "res://assets/images/chip_red_noise.png", "cost": 4},
-	"data_leech": {"id": "data_leech", "name_key": "card_name_data_leech", "desc_key": "card_desc_data_leech", "texture": "res://assets/images/chip_green_target.png", "cost": 1}
+	"action_keyword": {"id": "action_keyword", "name_key": "card_name_keyword_search", "desc_key": "card_desc_keyword_search", "texture": "res://assets/images/action_keyword.png", "cost": 1},
+	"action_dense": {"id": "action_dense", "name_key": "card_name_dense_search", "desc_key": "card_desc_dense_search", "texture": "res://assets/images/action_dense.png", "cost": 2},
+	"action_reranker": {"id": "action_reranker", "name_key": "card_name_reranker", "desc_key": "card_desc_reranker", "texture": "res://assets/images/action_reranker.png", "cost": 3},
+	"action_emp": {"id": "action_emp", "name_key": "card_name_emp_blast", "desc_key": "card_desc_emp_blast", "texture": "res://assets/images/action_emp.png", "cost": 5},
+	"action_leech": {"id": "action_leech", "name_key": "card_name_data_leech", "desc_key": "card_desc_data_leech", "texture": "res://assets/images/action_leech.png", "cost": 1}
 }
 
 func _init(v: Control = null) -> void:
@@ -56,7 +52,7 @@ func _inject_mock_data():
 	if not save_manager: return
 	if save_manager.unlocked_action_cards.size() == 0:
 		save_manager.unlocked_action_cards = mock_database.keys()
-		save_manager.equipped_action_cards = ["keyword_search", "dense_search", "reranker"]
+		save_manager.equipped_action_cards = ["action_keyword", "action_dense", "action_reranker"]
 		save_manager.save_progress()
 
 func _refresh_lists() -> void:
@@ -68,7 +64,7 @@ func _refresh_lists() -> void:
 	if save_manager:
 		max_cards = save_manager.get_max_equipped_cards()
 		
-	var equipped_ids = save_manager.equipped_action_cards if save_manager else ["keyword_search", "reranker"]
+	var equipped_ids = save_manager.equipped_action_cards if save_manager else ["action_keyword", "action_reranker"]
 	var unlocked_ids = mock_database.keys() # Force show all cards for UI preview
 	
 	var current_cost = 0

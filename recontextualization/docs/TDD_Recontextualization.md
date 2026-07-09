@@ -26,6 +26,13 @@
     *   **動態工廠模式 (`CardRegistry`)**：捨棄寫死的資源清單，自動掃描目錄註冊卡牌，實現真正的 OCP (開閉原則)。
 3.  **零延遲結算與 Event Queue 視覺化**：
     `DeckData` 僅處理陣列移轉並瞬間結算 (0 毫秒延遲，完美支援無頭測試)；而 `EventQueue` 扮演動畫佇列，視覺層（`GameBoard` 與 `CardChip`）只負責消耗佇列播放動畫。
+4.  **捨棄的 Maaack 核心與 RAG 替代方案 (架構淨化)**：
+    為確保 RAG 主題的純粹性與輕量化，我們刻意捨棄了以下傳統卡牌框架包袱，並實施了替代方案：
+    *   **捨棄傳統敵人回合制與 AI (Enemy AI)**：剔除 `TurnManager.gd` 與 `EnemyData.gd`。改以 `EnvironmentManager.gd` (SLA Timer 倒數) 與 `ChaosEventPool.gd` (隨機網路危機) 取代實體敵人。
+    *   **捨棄本地 JSON 靜態關卡存檔**：剔除本地關卡加載器。改由 `BackendClient.gd` 即時向 FastAPI/Supabase 請求動態 RAG 資料，並由 `MockDataGenerator.gd` 負責離線雙軌自癒。
+    *   **捨棄節點式前進地圖 (Node-based Map)**：剔除傳統 2D 選路系統。改以 `ProgressionSystem.gd` 透過駭客階級晉升與領域專長解鎖來推動遊戲進度。
+    *   **捨棄遺物/被動道具系統 (Relics)**：剔除 `RelicData.gd`。全域 Buff 機制轉由解鎖領域專長與 `TeammateDashboard.gd` (AI 代理編制) 提供。
+    *   **捨棄硬編碼卡牌註冊表**：改由 `managers/CardRegistry.gd` 實施 OCP 原則，遊戲啟動時自動掃描並載入 `.tres` 目錄，而非手寫陣列。
 
 #### 【硬編碼優化方案 (Godot 4 官方規範最佳實踐)】
 依據 Godot 4 官方最佳實踐，為避免路徑與設定硬編碼 (Hardcoding)，本專案實施以下優化：
@@ -180,69 +187,25 @@ sequenceDiagram
 
 ### 5.1 卡片模組說明表 (Card Module Explanation Table)
 
-| 卡牌類型 | 卡牌名稱 | 遊戲功能描述 | 測試期 Maaack 佔位圖 (Placeholder) | 最終 SDXL / Flux 提示詞目標 (對應下方 JSON) |
-|---|---|---|---|---|
-| **晶片卡** | 🟢 黃金命中晶片 (Target Chunk) | 相似度 > 0.5 的乾淨資料，增加 Context 純淨度 | `res://assets/maaack/ui/icons/data_green.png` | `target_chunk` |
-| **晶片卡** | 🔴 紅幽靈雜訊晶片 (False Positive) | 相似度 < 0.5 的被污染雜訊，會導致幻覺扣血 | `res://assets/maaack/ui/icons/data_red_corrupted.png` | `noise_chip` |
-| **基礎行動卡** | 🔫 BM25 關鍵字實彈卡 (Keyword Search) | 消耗 1 AP。字面精準匹配，雜訊機率中等 | `res://assets/maaack/ui/icons/skill_sniper.png` | `keyword_search` |
-| **進階行動卡** | ☄️ Dense 向量雷射卡 (Dense Search) | 消耗 2 AP。高召回率語意穿透，雜訊機率極高 | `res://assets/maaack/ui/icons/skill_laser.png` | `dense_search` |
-| **進階行動卡** | 🛡️ Reranker 電漿護盾卡 (Rerank/Filter) | 消耗 3 AP。物理抹除手牌區所有 < 0.5 的雜訊卡 | `res://assets/maaack/ui/icons/skill_shield.png` | `reranker` |
-| **L5擴充卡** | 🗜️ Matryoshka 降維壓縮卡 (Dimension Shrink) | 消耗 4 AP。壓縮檢索維度，降低後續 AP 消耗 | `res://assets/maaack/ui/icons/skill_cube_fold.png` | `matryoshka` |
-| **L5擴充卡** | 🕸️ 知識圖譜連鎖卡 (GraphRAG Navigation) | 消耗 5 AP。將所有黃金晶片組成連鎖，傷害 1.5 倍 | `res://assets/maaack/ui/icons/skill_network.png` | `graph_rag` |
+| 卡牌類型 | 卡牌名稱 | 遊戲功能描述 (規格) | 目標檔案名稱 (SSOT) |
+|---|---|---|---|
+| **晶片卡** | 🟢 黃金資料晶片 (Data Core) | 相似度 > 0.5 的乾淨資料，提升手牌區純淨度，保證輸出傷害。 | `chip_green_target.png` |
+| **晶片卡** | 🔴 毒性雜訊晶片 (Noise / Corrupted) | 相似度 < 0.5 的被污染雜訊。交付時會導致傷害歸零並觸發幻覺反噬。 | `chip_red_noise.png` |
+| **L1 行動卡** | 🔫 Keyword Search (關鍵字檢索) | 消耗 1 AP。字面精準匹配，雜訊機率中等。 | `action_keyword.png` |
+| **L2 行動卡** | ☄️ Dense Vector (向量雷射) | 消耗 2 AP。高召回率語意穿透，雜訊機率極高。 | `action_dense.png` |
+| **L3 行動卡** | 🛡️ Reranker (電漿護盾) | 消耗 3 AP。強制發動 Cross-Encoder 權重重排，物理抹除手牌區所有 similarity < 0.5 的雜訊卡。 | `action_reranker.png` |
+| **L5 行動卡** | 🕸️ GraphRAG Navigation (圖譜連鎖) | 消耗 5 AP。將所有黃金晶片組成多跳連鎖，交付傷害乘以 1.5 倍。 | `action_graphrag.png` |
+| **L1 擴充卡** | 👁️ X-Ray Scan (透視掃描) | [數值平衡中] 探測資料源的真實性，預覽並過濾隱藏的雜訊威脅。 | `action_xray.png` |
+| **L1 擴充卡** | 🪱 Data Leech (資料水蛭) | [數值平衡中] 虹吸能量，用於從雜訊或系統池中榨取微量 AP 回復。 | `action_leech.png` |
+| **L2 擴充卡** | 👻 Stealth Trojan (隱形木馬) | [數值平衡中] 規避檢測，交付資料時免疫高併發限流或警報懲罰。 | `action_trojan.png` |
+| **L4 擴充卡** | 🧪 Neurotoxin (神經毒素) | [數值平衡中] 溶解代碼，對系統危機 (Crisis HP) 造成持續性的腐蝕傷害。 | `action_neurotoxin.png` |
+| **L4 擴充卡** | ⏱️ Core Overclock (核心超頻) | [數值平衡中] 短暫突破 AP 上限進行爆發輸出，但附帶高風險的副作用。 | `action_overclock.png` |
+| **L5 擴充卡** | 💥 EMP Blast (電磁衝擊波) | [數值平衡中] 消耗大量資源發動大規模重置，一次性清除手牌區所有卡片。 | `action_emp.png` |
 
 ### 5.2 美術設計 AI 提示詞資料庫 (SDXL / Flux Prompts Database)
-為方便未來快速複製與動態解析，本專案將所有美術資產提示詞整合為標準的 JSON 格式：
-
-```json
-{
-  "backgrounds": {
-    "vector_grid": {
-      "purpose": "遊戲主畫面背景底圖，用以模擬 RAG 高維度向量資料庫的立體網絡空間並建立沉浸感",
-      "prompt": "A mesmerizing, infinitely deep 3D wireframe grid, retro-futuristic synthwave style, glowing neon cyan and dark purple, representing a high-dimensional vector database space. Hacker aesthetic, floating glowing data points in the far distance, cinematic lighting, 8k resolution, Into the Grid style, clean lines, aspect ratio 16:9"
-    }
-  },
-  "ui_elements": {
-    "server_rack": {
-      "purpose": "手牌區 (Context Window) 的伺服器插槽背景圖，物理上承載各個裝載的資料與行動晶片",
-      "prompt": "A high-tech server rack interface, empty glowing motherboard RAM slots, cyberpunk aesthetic, dark metallic textures, neon green indicator lights, retro CRT monitor elements, UI design, flat front-facing perspective, highly detailed, transparent background layout, aspect ratio 16:9"
-    }
-  },
-  "cards": {
-    "data_chips": {
-      "target_chunk": {
-        "purpose": "出現在 Context Window (手牌區)，代表相似度高於安全閥值且能解鎖 Combo 的綠色黃金數據晶片",
-        "prompt": "A futuristic rectangular data chip, glowing neon green circuit board lines, holographic text projecting 'MATCH', clean cyberpunk aesthetic, aspect ratio 2:3"
-      },
-      "noise_chip": {
-        "purpose": "出現在 Context Window (手牌區)，代表已被投毒或相似度過低、會觸發幻覺懲罰的紅色雜訊晶片 ([CORRUPTED])",
-        "prompt": "A corrupted dark rectangular data chip, rust red and crimson glowing edges, digital glitch effects, torn circuits, menacing virus aesthetic, aspect ratio 2:3"
-      }
-    },
-    "action_cards": {
-      "keyword_search": {
-        "purpose": "BM25 關鍵字實彈卡 (Keyword Search) 技能圖標，用於展示精準字面匹配",
-        "prompt": "A tactical cyberpunk ability card, metallic grey and orange aesthetic, showing a sniper crosshair locking onto data text, mechanical and precise, retro-arcade style, aspect ratio 2:3"
-      },
-      "dense_search": {
-        "purpose": "Dense 向量雷射卡 (Dense Search) 技能圖標，用於展示高召回率語意穿透效果",
-        "prompt": "A dynamic sci-fi ability card, shooting a massive glowing cyan laser beam through a matrix of numbers, high energy, neon vaporwave aesthetic, aspect ratio 2:3"
-      },
-      "reranker": {
-        "purpose": "Reranker 電漿護盾卡 (Rerank/Filter) 技能圖標，展示抹除假陽性雜訊的物理屏障效果",
-        "prompt": "A defensive cyberpunk ability card, showing a glowing hexagonal energy shield repelling red corrupted data bugs, glowing blue forcefield, high tech, aspect ratio 2:3"
-      },
-      "matryoshka": {
-        "purpose": "Matryoshka 降維壓縮卡 (Dimension Shrink) 技能圖標，展示將肥大維度高能物理壓縮的折疊效果",
-        "prompt": "A futuristic ability card, showing a glowing holographic cube folding and compressing into a smaller hypercube, neon purple and green, physics manipulation aesthetic, aspect ratio 2:3"
-      },
-      "graph_rag": {
-        "purpose": "知識圖譜連鎖卡 (GraphRAG Navigation) 技能圖標，展示數據節點多跳關聯的纖維星座結構",
-        "prompt": "A network-themed ability card, showing glowing nodes and laser fiber-optic connections forming a constellation, data networking, neon blue and gold, cybernetic web, aspect ratio 2:3"
-      }
-    }
-  }
-}
-```
+> **【資源已外部化】**
+> 為方便未來快速複製與動態解析，本專案已將所有的 AI 美術生成提示詞 (Prompts)、畫布比例規範、與自動化壓縮腳本，完整分離並整合至專屬文件：[Art_Asset_Prompts.md](file:///Users/vincenta/GoogleKwok022/Archon/recontextualization/docs/Art_Asset_Prompts.md)。
+> 請參閱該文件以取得最新的背景、晶片、行動卡、階級徽章與轉場動畫提示詞。
 
 ---
 
@@ -266,58 +229,53 @@ sequenceDiagram
 archon/
 ├── recontextualization/                # Godot 4.3 卡牌遊戲客戶端
 │   ├── project.godot
-│   ├── assets/                         # 視覺與音效資源目錄
-│   │   ├── maaack/                     # 移植之開源 UI/音效資源
-│   │   ├── sfx/                        # 音效資產
-│   │   ├── ui_cyber/                   # 賽博龐克 UI 資產
-│   │   ├── vfx/                        # 視覺過場特效
-│   │   └── videos/                     # 影片資產
-│   ├── locale/                         # 多國語系翻譯檔
 │   ├── env.json                        # 全域模型配置 SSOT 檔
 │   ├── src/
 │   │   ├── autoloads/                  # 全域單例
 │   │   │   ├── EventBus.gd             # 事件分發總線
 │   │   │   ├── EnvConfig.gd            # 全域設定管理單例 (SSOT)
-│   │   │   ├── GameState.gd            # 核心遊戲狀態機與危機結算
+│   │   │   ├── GameState.gd            # 核心組合根 (Composition Root) 與跨模組事件派發
 │   │   │   └── SaveManager.gd          # 遊戲進度保存管理
-│   │   ├── managers/                   # 管理工廠
-│   │   │   ├── tutorial/               # 新手教學狀態機與管理
-│   │   │   ├── CardRegistry.gd         # 動態卡牌資源掃描器
-│   │   │   └── PlayerProfile.gd        # 玩家個人資料與進度管理
-│   │   ├── models/                     # 純數據層
-│   │   │   ├── cards/
+│   │   ├── managers/                   # L2 微控制器與解耦邏輯
+│   │   │   ├── BattleRuleEngine.gd     # 戰鬥數值結算引擎
+│   │   │   ├── EnvironmentManager.gd   # SLA 計時器與動態環境危機管理
+│   │   │   ├── SearchController.gd     # Query 解析與手牌抽取控制器
+│   │   │   ├── ProgressionSystem.gd    # 職等與領域專長解鎖
+│   │   │   └── tutorial/               # 新手教學狀態機與管理
+│   │   ├── models/                     # 純數據層 (Data-Driven MVC)
+│   │   │   ├── GameBalanceConfig.gd    # 戰鬥數值、機率與平衡性全域參數 (Magic Numbers)
+│   │   │   ├── DeckData.gd             # 手牌 context 陣列與 RAG 數學公式
+│   │   │   ├── HandData.gd             # 玩家手牌區數據
+│   │   │   ├── cards/                  # 卡牌定義與效果
 │   │   │   │   ├── CardData.gd         # 卡牌 Resource 定義
+│   │   │   │   ├── CardEffectResolver.gd
 │   │   │   │   └── resources/          # 實體行動卡資源 (.tres)
-│   │   │   ├── events/
-│   │   │   │   └── ChaosEventPool.gd   # 網路危機隨機事件池
-│   │   │   └── DeckData.gd             # 手牌 context 陣列與 RAG 數學公式
+│   │   │   └── events/
+│   │   │       └── ChaosEventPool.gd   # 網路危機隨機事件池
 │   │   ├── network/                    # 網路通訊層
-│   │   │   └── BackendClient.gd        # FastAPI 異步 RAG 請求
+│   │   │   ├── BackendClient.gd        # FastAPI 異步 RAG 請求
+│   │   │   └── MockDataGenerator.gd    # 本地雙軌自癒發牌器 (Fallback)
 │   │   ├── shaders/                    # 著色器 (Shader) 目錄
-│   │   │   ├── DataFlowLine.gdshader
-│   │   │   └── TargetingArrow.gdshader
-│   │   └── views/                      # 視覺 UI 特效層
-│   │       ├── components/             # 共用 UI 元件 (HandLayout, CombatJuice 等)
+│   │   ├── utils/                      # 工具與定位器
+│   │   │   └── AutoloadLocator.gd      # 依賴注入封裝 (解決三元運算子污染)
+│   │   └── views/                      # 視覺 UI 特效層 (L2 Unified Hub)
+│   │       ├── components/             # 共用 UI 元件 (CardSlot, HandLayout 等)
 │   │       ├── tutorial/               # 新手教學 UI 覆蓋層
-│   │       ├── CardManagementMenu.gd   # 卡牌管理介面
-│   │       ├── CardWorkshop.gd         # 卡牌升級/工作坊介面
-│   │       ├── CharacterDashboard.gd   # 角色面板介面
+│   │       ├── CharacterDashboard.gd   # 駭客個人檔案與拓樸網 (Tab 1)
+│   │       ├── CardManagementMenu.gd   # 卡牌構築/核心武裝 (Tab 2)
+│   │       ├── CardWorkshop.gd         # 卡牌工坊/合成爐 (Tab 3)
+│   │       ├── TeammateDashboard.gd    # 特務編制中心 (Tab 4)
 │   │       ├── AgentCompanion.gd       # 代理終端介面 (打字機/網路危機)
-│   │       ├── AgentCompanion.tscn
-│   │       ├── TeammateDashboard.gd    # 隊友管理與模型/預算調配介面
-│   │       ├── TeammateDashboard.tscn
 │   │       ├── EventQueue.gd           # 動畫佇列處理
-│   │       ├── GameBoard.tscn          # 主遊戲場景 UI
-│   │       ├── GameBoard.gd            # 綁定狀態機信號與播放視覺動畫
-│   │       ├── CardChip.tscn           # 卡牌 UI 實體
-│   │       ├── MainMenu.gd             # 遊戲主選單
+│   │       ├── GameBoard.gd            # 主遊戲場景 UI 與視覺轉場
+│   │       ├── CarouselContainer.gd    # 3D 深度輪播 UI 組件
 │   │       └── PlayArea.gd             # 拖曳投放判定區
-│   └── tests/                          # 自動化無頭測試
+│   └── tests/                          # 自動化無頭測試 (Zero-Dependency)
 │       ├── HeadlessRunner.gd           # 測試執行入口
-│       ├── test_composite_threats.gd   # 測試高壓複合危機機制
-│       ├── test_deck_math.gd           # 測試 RAG 數學公式
-│       ├── test_state_machine.gd       # 測試出牌狀態扣除與傷害
-│       └── ...                         # 及其他 8 個擴充模組測試
+│       ├── TestHubUX.gd                # UI/UX 反模式與結構公證 (Anti-Pattern Assertion)
+│       ├── Screenshotter.gd            # 實體視覺公證抓圖工具
+│       ├── test_state_machine.gd       # 測試出牌狀態與數值
+│       └── ...                         # 及其他 12 個核心模組測試
 ```
 
 ---

@@ -20,7 +20,7 @@ static func resolve_action_card(game_state: Node, card: Resource) -> void:
 		game_state.context_updated.emit(purity)
 		game_state.context_purified.emit(remaining_cards)
 		
-	elif card_id == "keyword_search":
+	elif card_id == "action_keyword":
 		game_state.search_ctrl.search_triggered.emit(3) # KEYWORD
 		# Draw back so it's reusable
 		var event_bus = game_state._safe_get_node("EventBus")

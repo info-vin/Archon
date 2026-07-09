@@ -10,6 +10,12 @@
 [ext_resource type="Script" path="res://src/views/EventQueue.gd" id="2_eq"]
 [ext_resource type="Script" path="res://src/views/PlayArea.gd" id="3_pa"]
 
+[ext_resource type="PackedScene" path="res://src/views/components/GameHUD.tscn" id="1_hud"]
+[ext_resource type="PackedScene" path="res://src/views/AgentCompanion.tscn" id="4_agent"]
+[ext_resource type="PackedScene" path="res://src/views/components/TutorialPanel.tscn" id="2_tut"]
+[ext_resource type="PackedScene" path="res://src/views/components/GameOverPanel.tscn" id="3_gov"]
+[ext_resource type="PackedScene" path="res://src/views/PauseMenu.tscn" id="3_pause"]
+
 [node name="GameBoard" type="Control"]
 layout_mode = 3
 anchors_preset = 15

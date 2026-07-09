@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/images/action_trojan.png" id="1_qvd0b"]
+[ext_resource type="Script" path="res://src/models/cards/CardData.gd" id="2_q3hak"]
+
+[resource]
+script = ExtResource("2_q3hak")
+id = "action_trojan"
+title = "Action Trojan"
+icon = ExtResource("1_qvd0b")
+type = 1

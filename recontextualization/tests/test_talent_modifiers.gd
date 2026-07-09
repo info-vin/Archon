@@ -11,7 +11,7 @@ func _init():
 	
 	var card = preload("res://src/models/cards/CardData.gd").new()
 	card.level = 1
-	card.id = "keyword_search"
+	card.id = "action_keyword"
 	
 	print("1. Baseline Parameters:")
 	var params = card.get_rag_parameters(sm.unlocked_talents)

@@ -41,9 +41,9 @@ func _refresh_inventory_ui() -> void:
     if not save_manager or save_manager.player_inventory.size() == 0:
         # Inject mock data for visual testing
         var mock_inventory = [
-            {"base_id": "keyword_search", "level": 1, "card_name": "深度注入"},
-            {"base_id": "keyword_search", "level": 1, "card_name": "深度注入"},
-            {"base_id": "keyword_search", "level": 1, "card_name": "深度注入"},
+            {"base_id": "action_keyword", "level": 1, "card_name": "深度注入"},
+            {"base_id": "action_keyword", "level": 1, "card_name": "深度注入"},
+            {"base_id": "action_keyword", "level": 1, "card_name": "深度注入"},
             {"base_id": "cyber_shield", "level": 2, "card_name": "量子護盾"},
             {"base_id": "cyber_shield", "level": 2, "card_name": "量子護盾"}
         ]

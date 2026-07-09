@@ -21,8 +21,8 @@ func run_tests(tree = null) -> bool:
     # 3. Test Save and Load
     sm.career_level = 6
     sm.max_player_hp = 120.0
-    sm.unlocked_action_cards = ["keyword_search", "dense_search", "reranker", "graph_rag"]
-    sm.equipped_action_cards = ["keyword_search", "dense_search", "reranker", "graph_rag"]
+    sm.unlocked_action_cards = ["action_keyword", "action_dense", "action_reranker", "action_graphrag"]
+    sm.equipped_action_cards = ["action_keyword", "action_dense", "action_reranker", "action_graphrag"]
     sm.save_progress()
     
     var sm2 = preload("res://src/autoloads/SaveManager.gd").new()

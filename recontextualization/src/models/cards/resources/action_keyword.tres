@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/images/action_keyword.png" id="1_0yeco"]
+[ext_resource type="Script" path="res://src/models/cards/CardData.gd" id="2_xm4yf"]
+
+[resource]
+script = ExtResource("2_xm4yf")
+id = "action_keyword"
+title = "Action Keyword"
+icon = ExtResource("1_0yeco")
+type = 1

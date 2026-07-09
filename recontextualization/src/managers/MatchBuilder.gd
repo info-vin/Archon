@@ -48,7 +48,7 @@ func _draw_starting_hand(game_state: Node, sm: Node) -> void:
 	var event_bus = _safe_get_node(game_state, "EventBus")
 	
 	if card_reg != null and event_bus != null:
-		var equipped = ["keyword_search", "dense_search", "reranker"]
+		var equipped = ["action_keyword", "action_dense", "action_reranker"]
 		if sm != null:
 			equipped = sm.equipped_action_cards
 			

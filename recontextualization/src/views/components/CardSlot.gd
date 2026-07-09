@@ -29,7 +29,7 @@ func setup(id: String, equipped: bool) -> void:
         indicator.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
         
     var icon_path = "res://assets/images/chip_green_target.png"
-    if id == "KEYWORD_SEARCH":
+    if id == "action_keyword":
         icon_path = "res://assets/images/action_keyword.png"
     elif id == "DENSE_RETRIEVAL":
         icon_path = "res://assets/images/action_dense.png"

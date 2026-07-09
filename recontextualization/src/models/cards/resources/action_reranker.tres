@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/images/action_reranker.png" id="1_6dbuc"]
+[ext_resource type="Script" path="res://src/models/cards/CardData.gd" id="2_vpjvr"]
+
+[resource]
+script = ExtResource("2_vpjvr")
+id = "action_reranker"
+title = "Action Reranker"
+icon = ExtResource("1_6dbuc")
+type = 1

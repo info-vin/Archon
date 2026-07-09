@@ -24,6 +24,16 @@ extends MarginContainer
         if is_inside_tree() and desc_label != null:
             desc_label.text = val
 
+var card_data: Resource = null
+
+func set_card_data(p_card: Resource) -> void:
+    card_data = p_card
+    if p_card:
+        setup(p_card.icon, p_card.title, "Cost: " + str(p_card.ap_cost))
+
+func get_card_data() -> Resource:
+    return card_data
+
 func _ready():
     if chip_texture != null and chip_icon != null:
         chip_icon.texture = chip_texture

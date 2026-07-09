@@ -52,7 +52,7 @@ const REWARD_B_XP = 25.0
 const LOSS_CR_PENALTY = 15
 
 # --- Card Identifiers ---
-const CARD_KEYWORD = "keyword_search"
+const CARD_KEYWORD = "action_keyword"
 const CARD_DENSE = "dense_search"
 const CARD_RERANKER = "reranker"
 const CARD_GRAPH_RAG = "graph_rag"

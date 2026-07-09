@@ -147,7 +147,7 @@ func play_success_anim() -> void:
         c.queue_free()
     var result_slot = card_slot_scene.instantiate()
     output_slot.add_child(result_slot)
-    var base_id = "KEYWORD_SEARCH"
+    var base_id = "action_keyword"
     if _controller and _controller.get("current_cards_in_furnace") and _controller.current_cards_in_furnace.size() > 0:
         base_id = _controller.current_cards_in_furnace[0]["base_id"]
     result_slot.setup(base_id, false)

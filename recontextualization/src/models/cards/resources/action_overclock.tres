@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/images/action_overclock.png" id="1_qr5w4"]
+[ext_resource type="Script" path="res://src/models/cards/CardData.gd" id="2_aotid"]
+
+[resource]
+script = ExtResource("2_aotid")
+id = "action_overclock"
+title = "Action Overclock"
+icon = ExtResource("1_qr5w4")
+type = 1
