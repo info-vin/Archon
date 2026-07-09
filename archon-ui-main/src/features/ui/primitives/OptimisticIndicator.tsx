@@ -1,5 +1,4 @@
 import { Loader2 } from "lucide-react";
-import type { ComponentType } from "react";
 import { cn } from "./styles";
 
 interface OptimisticIndicatorProps {
@@ -27,21 +26,4 @@ export function OptimisticIndicator({
       {pulseAnimation && <span className="text-xs text-cyan-400/50 animate-pulse">Saving...</span>}
     </div>
   );
-}
-
-/**
- * HOC to wrap components with optimistic styling
- */
-export function withOptimisticStyles<T extends { className?: string }>(
-  Component: ComponentType<T>,
-  isOptimistic: boolean,
-) {
-  const WithOptimisticStylesComponent = (props: T) => (
-    <Component
-      {...props}
-      className={cn(props.className, isOptimistic && "opacity-70 animate-pulse ring-1 ring-cyan-400/20")}
-    />
-  );
-  WithOptimisticStylesComponent.displayName = `WithOptimisticStyles(${Component.displayName || Component.name || "Component"})`;
-  return WithOptimisticStylesComponent;
 }
