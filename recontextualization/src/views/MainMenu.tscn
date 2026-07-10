@@ -1,100 +1,195 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3 uid="uid://cxab"]
 
 [ext_resource type="Script" path="res://src/views/MainMenu.gd" id="1_mainmenu"]
 [ext_resource type="Script" path="res://src/views/MainMenuController.gd" id="2_controller"]
+[ext_resource type="Texture2D" path="res://assets/images/bg_main_menu.png" id="3_bg"]
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="4_frame"]
+[ext_resource type="VideoStream" path="res://assets/videos/hero_animation.ogv" id="5_video"]
 
-[node name="MainMenu" type="Control" node_paths=PackedStringArray("lang_button", "vol_slider")]
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn"]
+texture = ExtResource("4_frame")
+texture_margin_left = 20.0
+texture_margin_top = 10.0
+texture_margin_right = 20.0
+texture_margin_bottom = 10.0
+modulate_color = Color(0, 1, 0.8, 0.8)
+
+[sub_resource type="Animation" id="Animation_intro"]
+resource_name = "intro_sequence"
+length = 6.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("VideoStreamPlayer:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("VideoStreamPlayer:scale")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 5, 6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1, 1), Vector2(0.8, 0.8)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("UIPanel:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 5.5, 6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_intro"]
+_data = {
+"intro_sequence": SubResource("Animation_intro")
+}
+
+[node name="MainMenu" type="Control" node_paths=PackedStringArray("lang_button", "vol_slider", "btn_new_career", "btn_continue", "btn_teammate_dashboard", "btn_card_management", "btn_quit")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("1_mainmenu")
-lang_button = NodePath("VBoxContainer/SettingsBox/LangBox/LangButton")
-vol_slider = NodePath("VBoxContainer/SettingsBox/VolBox/VolSlider")
+lang_button = NodePath("UIPanel/VBoxContainer/SettingsBox/LangBox/LangButton")
+vol_slider = NodePath("UIPanel/VBoxContainer/SettingsBox/VolBox/VolSlider")
+btn_new_career = NodePath("UIPanel/VBoxContainer/NewCareerButton")
+btn_continue = NodePath("UIPanel/VBoxContainer/ContinueButton")
+btn_teammate_dashboard = NodePath("UIPanel/VBoxContainer/TeammateDashboardButton")
+btn_card_management = NodePath("UIPanel/VBoxContainer/CardManagementButton")
+btn_quit = NodePath("UIPanel/VBoxContainer/QuitButton")
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="Controller" type="Node" parent="."]
+script = ExtResource("2_controller")
+
+[node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.05, 0.05, 0.08, 1)
+mouse_filter = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Title" type="Label" parent="."]
+[node name="VideoStreamPlayer" type="VideoStreamPlayer" parent="."]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -300.0
-offset_top = 100.0
-offset_right = 300.0
-offset_bottom = 180.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 64
-text = "ARCHON ENGINEERING TERMINAL"
-horizontal_alignment = 1
+grow_vertical = 2
+mouse_filter = 2
+pivot_offset = Vector2(640, 360)
+stream = ExtResource("5_video")
+autoplay = true
+expand = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="UIPanel" type="Control" parent="."]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIPanel"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -100.0
-offset_right = 150.0
-offset_bottom = 150.0
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 theme_override_constants/separation = 20
 
-[node name="NewCareerButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
+[node name="NewCareerButton" type="Button" parent="UIPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
 text = "menu_new_career"
 
-[node name="ContinueButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
+[node name="ContinueButton" type="Button" parent="UIPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
 text = "menu_continue"
 
-[node name="TeammateDashboardButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
+[node name="TeammateDashboardButton" type="Button" parent="UIPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
 text = "menu_teammate_dashboard"
 
-[node name="CardManagementButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
+[node name="CardManagementButton" type="Button" parent="UIPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
 text = "menu_card_management"
 
-[node name="QuitButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
+[node name="QuitButton" type="Button" parent="UIPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "menu_quit"
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
+text = "menu_quit_game"
 
-[node name="SettingsBox" type="VBoxContainer" parent="VBoxContainer"]
+[node name="SettingsBox" type="VBoxContainer" parent="UIPanel/VBoxContainer"]
 layout_mode = 2
+mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="LangBox" type="HBoxContainer" parent="VBoxContainer/SettingsBox"]
+[node name="LangBox" type="HBoxContainer" parent="UIPanel/VBoxContainer/SettingsBox"]
 layout_mode = 2
+mouse_filter = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="VBoxContainer/SettingsBox/LangBox"]
+[node name="Label" type="Label" parent="UIPanel/VBoxContainer/SettingsBox/LangBox"]
 layout_mode = 2
 text = "menu_language"
 
-[node name="LangButton" type="OptionButton" parent="VBoxContainer/SettingsBox/LangBox"]
+[node name="LangButton" type="OptionButton" parent="UIPanel/VBoxContainer/SettingsBox/LangBox"]
 layout_mode = 2
 item_count = 2
 popup/item_0/text = "English"
@@ -102,20 +197,25 @@ popup/item_0/id = 0
 popup/item_1/text = "繁體中文"
 popup/item_1/id = 1
 
-[node name="VolBox" type="HBoxContainer" parent="VBoxContainer/SettingsBox"]
+[node name="VolBox" type="HBoxContainer" parent="UIPanel/VBoxContainer/SettingsBox"]
 layout_mode = 2
+mouse_filter = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="VBoxContainer/SettingsBox/VolBox"]
+[node name="Label" type="Label" parent="UIPanel/VBoxContainer/SettingsBox/VolBox"]
 layout_mode = 2
-text = "menu_bgm_volume"
+text = "menu_volume"
 
-[node name="VolSlider" type="HSlider" parent="VBoxContainer/SettingsBox/VolBox"]
+[node name="VolSlider" type="HSlider" parent="UIPanel/VBoxContainer/SettingsBox/VolBox"]
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_vertical = 4
 max_value = 1.0
 step = 0.05
-value = 1.0
+value = 0.5
 
-[node name="MainMenuController" type="Node" parent="."]
-script = ExtResource("2_controller")
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_intro")
+}
+autoplay = "intro_sequence"

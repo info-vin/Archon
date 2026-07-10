@@ -1,6 +1,6 @@
 extends Node
 
-var transition_scene = "res://src/views/transition.tscn"
+var transition_scene = "res://src/views/TransitionVideo.tscn"
 var card_menu_scene = "res://src/views/CardManagementMenu.tscn"
 var teammate_dashboard_scene = "res://src/views/TeammateDashboard.tscn"
 

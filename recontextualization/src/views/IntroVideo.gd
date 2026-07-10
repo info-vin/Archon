@@ -18,3 +18,5 @@ func _on_video_finished() -> void:
 func _skip_intro() -> void:
     if next_scene:
         get_tree().change_scene_to_packed(next_scene)
+    else:
+        get_tree().change_scene_to_file("res://src/views/MainMenu.tscn")

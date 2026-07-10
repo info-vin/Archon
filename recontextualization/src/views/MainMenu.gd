@@ -11,18 +11,24 @@ signal request_volume_change(new_volume: float)
 @export var lang_button: OptionButton
 @export var vol_slider: HSlider
 
+@export var btn_new_career: BaseButton
+@export var btn_continue: BaseButton
+@export var btn_teammate_dashboard: BaseButton
+@export var btn_card_management: BaseButton
+@export var btn_quit: BaseButton
+
 func _ready() -> void:
 	_connect_ui_signals()
 
 func _connect_ui_signals() -> void:
-	$VBoxContainer/NewCareerButton.pressed.connect(func(): request_new_career.emit())
-	$VBoxContainer/ContinueButton.pressed.connect(func(): request_continue.emit())
-	$VBoxContainer/TeammateDashboardButton.pressed.connect(func(): request_teammate_dashboard.emit())
-	$VBoxContainer/CardManagementButton.pressed.connect(func(): request_card_management.emit())
-	$VBoxContainer/QuitButton.pressed.connect(func(): request_quit.emit())
+	if btn_new_career: btn_new_career.pressed.connect(func(): request_new_career.emit())
+	if btn_continue: btn_continue.pressed.connect(func(): request_continue.emit())
+	if btn_teammate_dashboard: btn_teammate_dashboard.pressed.connect(func(): request_teammate_dashboard.emit())
+	if btn_card_management: btn_card_management.pressed.connect(func(): request_card_management.emit())
+	if btn_quit: btn_quit.pressed.connect(func(): request_quit.emit())
 	
-	lang_button.item_selected.connect(_on_lang_selected)
-	vol_slider.value_changed.connect(func(v): request_volume_change.emit(v))
+	if lang_button: lang_button.item_selected.connect(_on_lang_selected)
+	if vol_slider: vol_slider.value_changed.connect(func(v): request_volume_change.emit(v))
 
 func set_initial_settings(language: String, volume: float) -> void:
 	lang_button.selected = 0 if language == "en" else 1
