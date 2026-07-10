@@ -247,7 +247,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
       <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative my-8 md:my-0 max-h-none md:max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Task' : 'Create New Task'}</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary" aria-label="Close">
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary focus-visible:outline-none focus-visible:ring-2" aria-label="Close" title="Close">
             <XIcon className="w-6 h-6" />
           </button>
         </div>
@@ -261,7 +261,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
               role="tab"
               aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex-1 px-2 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors text-center whitespace-nowrap ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 px-2 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors text-center whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             >
               {tab.label}
             </button>
@@ -323,8 +323,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
                   type="button" 
                   onClick={handleDelete} 
                   disabled={isSubmitting}
+                  aria-disabled={isSubmitting}
+                  aria-busy={isSubmitting}
                   aria-label={isSubmitting ? 'Archiving task...' : 'Archive Task'}
-                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                  className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 text-sm flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2"
                 >
                   {isSubmitting && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
                   {isSubmitting ? 'Archiving...' : 'Archive Task'}
@@ -332,10 +334,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
               )}
             </div>
             <div className="flex space-x-3">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80">
+              <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2">
                 Cancel
               </button>
-              <button type="submit" disabled={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2" aria-label={isSubmitting ? 'Saving task...' : (isEditMode ? 'Save changes' : 'Create task')}>
+              <button type="submit" disabled={isSubmitting} aria-disabled={isSubmitting} aria-busy={isSubmitting} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2" aria-label={isSubmitting ? 'Saving task...' : (isEditMode ? 'Save changes' : 'Create task')}>
                 {isSubmitting && <RefreshCwIcon className="w-4 h-4 animate-spin" />}
                 {isSubmitting ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Task')}
               </button>
