@@ -1,10 +1,13 @@
-[gd_scene load_steps=8 format=3 uid="uid://cxab"]
+[gd_scene load_steps=11 format=3 uid="uid://cxab"]
 
 [ext_resource type="Script" path="res://src/views/MainMenu.gd" id="1_mainmenu"]
 [ext_resource type="Script" path="res://src/views/MainMenuController.gd" id="2_controller"]
 [ext_resource type="Texture2D" path="res://assets/images/bg_main_menu.png" id="3_bg"]
 [ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="4_frame"]
 [ext_resource type="VideoStream" path="res://assets/videos/hero_animation.ogv" id="5_video"]
+[ext_resource type="PackedScene" path="res://src/views/TransitionVideo.tscn" id="6_transition"]
+[ext_resource type="PackedScene" path="res://src/views/CardManagementMenu.tscn" id="7_card_menu"]
+[ext_resource type="PackedScene" path="res://src/views/TeammateDashboard.tscn" id="8_teammate"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn"]
 texture = ExtResource("4_frame")
@@ -78,6 +81,9 @@ btn_quit = NodePath("UIPanel/VBoxContainer/QuitButton")
 
 [node name="Controller" type="Node" parent="."]
 script = ExtResource("2_controller")
+transition_scene = ExtResource("6_transition")
+card_menu_scene = ExtResource("7_card_menu")
+teammate_dashboard_scene = ExtResource("8_teammate")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 1
