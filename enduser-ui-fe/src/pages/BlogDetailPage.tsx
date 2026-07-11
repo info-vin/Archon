@@ -71,7 +71,7 @@ const BlogDetailPage: React.FC = () => {
                 <div className="flex items-center text-muted-foreground mb-8 text-sm">
                     <span className="font-semibold text-foreground mr-2">{post.authorName}</span>
                     <span>&middot;</span>
-                    <span className="ml-2">{dateFormatter.format(new Date(post.publishDate))}</span>
+                    <span className="ml-2">{isNaN(new Date(post.publishDate).getTime()) ? "Invalid Date" : dateFormatter.format(new Date(post.publishDate))}</span>
                 </div>
 
                 <div className="markdown-content">

@@ -125,3 +125,7 @@
 ## 2026-07-06 - Intl.DateTimeFormat RangeError Handling
 **Learning:** `Intl.DateTimeFormat.prototype.format()` throws a `RangeError` when passed an invalid date (evaluating to NaN), unlike `Date.prototype.toLocaleDateString()` which safely returns "Invalid Date". When optimizing render loops by hoisting `Intl.DateTimeFormat`, failing to handle invalid dates will cause unhandled exceptions that crash the entire React component tree.
 **Action:** Always wrap the hoisted `.format()` call in a helper function that explicitly checks for invalid dates (e.g., `isNaN(date.getTime())`) before formatting, preserving the safe fallback behavior of `toLocaleDateString()`.
+
+## 2026-07-11 - Inline Regex Micro-Optimizations
+**Learning:** Replacing string operations like `.toLowerCase().includes()` with inline case-insensitive regex (e.g., `/pattern/i.test()`) in standard UI render paths (e.g., small components or state machine transitions) is a rejected micro-optimization. It yields no measurable performance impact and carries a high risk of introducing TypeScript type coercion errors (e.g., `str && /pattern/.test(str)` evaluating to an empty string instead of a boolean when `str` is empty).
+**Action:** Never propose inline regex as a replacement for simple string matching in cold paths. Focus on systemic memory allocations, like avoiding unhandled `Intl.DateTimeFormat` crashes or hoisting expensive loop allocations.
