@@ -178,7 +178,7 @@ const CreatePostForm: React.FC<{ post?: BlogPost | null, onSuccess: () => void, 
                 <label htmlFor="post-content" className="sr-only">Content</label>
                 <textarea id="post-content" value={content} onChange={e => setContent(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl min-h-[200px] outline-none focus:ring-2 focus:ring-indigo-500 custom-scrollbar resize-none" placeholder="Content" />
             </div>
-            <button type="submit" disabled={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none">
+            <button type="submit" disabled={loading} aria-disabled={loading} aria-busy={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none">
                 {loading ? 'Saving...' : 'SAVE CHANGES'}
             </button>
         </form>
