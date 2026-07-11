@@ -1,5 +1,12 @@
 import React from 'react';
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat instance outside the component to prevent expensive re-instantiations during list rendering.
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+const safeFormatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'Invalid Date' : timeFormatter.format(d);
+};
+
 export interface TokenUsageDetail {
   id: string;
   timestamp: string;
@@ -32,7 +39,7 @@ const TokenUsageTable: React.FC<TokenUsageTableProps> = ({ details }) => {
           {details.map((row) => (
             <tr key={row.id} className="text-sm hover:bg-muted/30 transition-colors">
               <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                {new Date(row.timestamp).toLocaleTimeString()}
+                {safeFormatTime(row.timestamp)}
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-col">

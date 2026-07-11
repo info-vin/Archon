@@ -11,6 +11,13 @@ import {
 } from '@/components/Icons';
 import { UnifiedProposal } from '../hooks/useApprovalInbox';
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat instance outside the component to prevent expensive re-instantiations during list rendering.
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+const safeFormatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'Invalid Date' : timeFormatter.format(d);
+};
+
 interface ApprovalSidebarListProps {
     proposals: UnifiedProposal[];
     loading: boolean;
@@ -62,7 +69,7 @@ export const ApprovalSidebarList: React.FC<ApprovalSidebarListProps> = ({ propos
                         {item.change_summary || (item.request_payload?.file_path ? `Update ${item.request_payload.file_path.split('/').pop()}` : 'Proposed Change')}
                         </h4>
                         <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
-                        <UserIcon className="w-3 h-3" /> {item.is_marketing ? item.marketing_author : 'DevBot'} • <ClockIcon className="w-3 h-3" /> {new Date(item.created_at).toLocaleTimeString()}
+                        <UserIcon className="w-3 h-3" /> {item.is_marketing ? item.marketing_author : 'DevBot'} • <ClockIcon className="w-3 h-3" /> {safeFormatTime(item.created_at)}
                         </p>
                     </div>
                     <ChevronRightIcon className="w-4 h-4 text-gray-300" />
