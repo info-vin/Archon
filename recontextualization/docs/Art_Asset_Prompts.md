@@ -85,13 +85,68 @@
 
 ### 3.2 Dense Vector (L2)
 * **目標檔案**：`recontextualization/assets/images/action_dense.png`
-* **主題**：深層穿透的雷射光束。
+* **主題**：一擊必殺、威力驚人的實體子彈或動能武器。
 * **【唯一產圖選項：純圖示 (配合共用卡牌框)】**
   ```text
-  A futuristic glowing laser beam piercing through digital layers, neon purple and blue, geometric cyberpunk UI element, dark background, sharp lines, dynamic composition, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
+  A futuristic hyper-kinetic sniper bullet in slow motion piercing digital armor, shattering glass effects, metallic dark silver and glowing cyan energy, extremely high detail, cinematic lighting, dark background, dynamic composition, straight front view, centered, symmetrical, slight 3D depth, highly detailed 2d vector art style.
   --no text, typography, letters, words
   --ar 1:1
-  (⚠️ 畫師/產圖工具注意：匯出解析度限制 512x512, 背景建議為純黑或透明的 .png/.webp)
+  ```
+
+---
+
+## 4. 主選單寶石圖示 (Main Menu Gems)
+> 專為全新 3D 輪播主選單設計的 5 款核心功能寶石。
+> **要求**：光影極致寫實 (photorealistic, real lighting)，完全不需要邊框 (frameless, no borders)，純淨的寶石本體。
+
+### 4.1 新遊戲 (New Career)
+* **目標檔案**：`recontextualization/assets/images/gem_new_career.png`
+* **主題**：創世資料核心 (Genesis Data Core)
+* **Prompt & Settings**:
+  ```text
+  A hyper-realistic glowing emerald green and cyan genesis data core gem, floating in a pure black void. Extreme photorealism, physically based rendering, real light refraction, internal glowing matrix structure, subsurface scattering, frameless, no borders, isolated on black background, 8k resolution, cinematic real lighting, macro photography.
+  --no text, letters, UI, borders, frames, human, background elements
+  --ar 1:1
+  ```
+
+### 4.2 繼續遊戲 (Continue)
+* **目標檔案**：`recontextualization/assets/images/gem_continue.png`
+* **主題**：時空記憶矩陣 (Temporal Memory Matrix)
+* **Prompt & Settings**:
+  ```text
+  A hyper-realistic golden amber gem shaped like an hourglass or temporal matrix, floating in a pure black void. Extreme photorealism, physically based rendering, real light refraction, internal glowing golden sand-like energy, subsurface scattering, frameless, no borders, isolated on black background, 8k resolution, cinematic real lighting, macro photography.
+  --no text, letters, UI, borders, frames, human, background elements
+  --ar 1:1
+  ```
+
+### 4.3 夥伴儀表板 (Teammate Dashboard)
+* **目標檔案**：`recontextualization/assets/images/gem_teammate.png`
+* **主題**：群體智慧稜鏡 (Hive-mind Prism)
+* **Prompt & Settings**:
+  ```text
+  A hyper-realistic sapphire blue prism gem with interconnected glowing neural nodes inside, floating in a pure black void. Extreme photorealism, physically based rendering, real light refraction, internal pulsing blue energy network, subsurface scattering, frameless, no borders, isolated on black background, 8k resolution, cinematic real lighting, macro photography.
+  --no text, letters, UI, borders, frames, human, background elements
+  --ar 1:1
+  ```
+
+### 4.4 卡牌管理 (Card Management)
+* **目標檔案**：`recontextualization/assets/images/gem_card_management.png`
+* **主題**：架構師黑曜石 (Architect Obsidian)
+* **Prompt & Settings**:
+  ```text
+  A hyper-realistic sharp geometric obsidian diamond gem, emitting sleek purple and silver neon light, floating in a pure black void. Extreme photorealism, physically based rendering, real light refraction, sharp flawless facets, frameless, no borders, isolated on black background, 8k resolution, cinematic real lighting, macro photography.
+  --no text, letters, UI, borders, frames, human, background elements
+  --ar 1:1
+  ```
+
+### 4.5 離開遊戲 (Quit Game)
+* **目標檔案**：`recontextualization/assets/images/gem_quit.png`
+* **主題**：終止執行晶體 (Termination Crystal)
+* **Prompt & Settings**:
+  ```text
+  A hyper-realistic fractured dark ruby red crystal gem, glowing with a dangerous intense crimson heat, floating in a pure black void. Extreme photorealism, physically based rendering, real light refraction, cracking and slowly shattering, frameless, no borders, isolated on black background, 8k resolution, cinematic real lighting, macro photography.
+  --no text, letters, UI, borders, frames, human, background elements
+  --ar 1:1
   ```
 
 ### 3.3 Reranker (L3)

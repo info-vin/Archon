@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://blijldj0avdts"
-path="res://.godot/imported/bg_main_menu.png-db6cd1ae7f0b1d622cd6e028d530c11b.ctex"
+uid="uid://cwk51aux6ktif"
+path="res://.godot/imported/gem_teammate.png-94fcb6ad4cee1445e8c1956147a6da11.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/bg_main_menu.png"
-dest_files=["res://.godot/imported/bg_main_menu.png-db6cd1ae7f0b1d622cd6e028d530c11b.ctex"]
+source_file="res://assets/images/gem_teammate.png"
+dest_files=["res://.godot/imported/gem_teammate.png-94fcb6ad4cee1445e8c1956147a6da11.ctex"]
 
 [params]
 

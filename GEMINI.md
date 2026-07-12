@@ -137,6 +137,11 @@
     *   **修復技術債**: 透過日誌法醫追溯，揪出並修復了先前 UI 重構意外刪除 `ext_resource` 導致的 `GameBoard.tscn` 解析崩潰。
     *   **100% 物理公證**: 成功通過 `godot --headless -s tests/HeadlessRunner.gd`，確保 15 項 E2E 與單元測試全數亮綠燈。
 
+6.  **主選單 3D 輪播與賽博龐克升級 (Ref: Phase 5.8.17)**:
+    *   **物理斷層修復**: 直接於 `TransitionVideo.tscn` 綁定 `next_scene`，徹底根除影片播放完畢後的黑畫面死結。
+    *   **卡牌輪播整合**: 捨棄靜態垂直按鈕，導入 `CarouselContainer` 打造具備景深的實體卡牌水平輪播系統，並將語言/音量設定移至畫面右下角作為半透明背板。
+    *   **觸覺與聽覺 (Juice)**: 新增 `BGMPlayer` 播放授權神曲《Ganxta》；透過 `Tween` 實作選中卡牌時的快速物理抖動 (Elastic Shake)，並同步播放清脆的翻牌音效。
+    *   **無頭截圖公證**: 強化 `MainMenu_Screenshotter.gd`，支援動畫延遲等待，成功於無頭環境中截取包含全新 `gem_*.png` 美術圖的正確 UI 狀態。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 

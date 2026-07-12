@@ -292,3 +292,28 @@ archon/
 | **Hallucination** | 模型幻覺 | LLM 產生自信但錯誤的回答 | 當 Context Window 含有雜訊時交付會觸發，對玩家造成直接扣血傷害。 |
 | **Rate Limit** | 限流警告 / AP 壓縮 | API 因請求頻繁被服務商強制節流 | 交付次數越多，攻擊限流度越高。會自動壓縮玩家在當次交付造成的最終傷害輸出。 |
 | **Data Poisoning** | 資料庫投毒 | 惡意攻擊者向檢索池中寫入大量垃圾數據 | 隨著 SLA 條降低，抽牌時原本合法的 Data Chip 機率轉變為 Noise Chip 的污染機率攀セン。 |
+
+---
+
+## 附錄 B：雙棲生態系 SSOT 物理對齊報告 (Dual-Client Ecosystem SSOT Audit)
+> **[驗證日期: 2026-07-12]**
+> 本附錄確立了 Archon 專案在「Web 企業端」與「Godot 遊戲端」雙軌並行的架構合約，消除文件間的假性斷層。
+
+### B.1 RAG 混合架構之共用與分流
+Python 後端的 RAG 核心搜尋引擎（基於 Supabase `hybrid_match_chunks` 預存程序）為**唯一的、完全共用的底層設施**。
+系統僅在 API 路由的最後一哩路進行分流：
+*   **工程師 (Web 5173)**：呼叫 `/api/rag/query`，後端搜尋資料後，會進一步消耗 Token 交由 LLM 總結成人類可讀之報告，屬於**重型生成式 RAG**。
+*   **遊戲玩家 (Godot 4.3)**：呼叫 `/api/rag/hybrid-search`，後端搜尋資料後，**不經過 LLM 生成**，直接將原始 JSON 碎塊 (Chunks) 結合 GitHub CDN 實體文本回傳給客戶端。這是為遊戲極致優化的** 0 成本無頭檢索代理 (Headless Retrieval Proxy)**。
+
+### B.2 Knowledge 與 CMS 規格的 100% 同步
+兩大生態系**完全共用同一個 PostgreSQL 資料庫**，Admin Web UI (5173) 物理上即為遊戲的 CMS 後台：
+*   **爬蟲路徑與資料集共用**：工程師在 5173 介面建立爬蟲任務抓取（如醫療或法規）資料後，系統會自動切片存入 `archon_crawled_pages` 並賦予 `source_id`。遊戲設計師**無需修改後端代碼**，只需在 Godot 設定 `source_filter`，玩家就能立刻檢索該知識庫。
+*   **提示詞共用**：兩邊的 AI 提示詞皆統一存放於 `archon_prompts` 資料表。設計師登入 5173 修改對話風格後，遊戲端即時生效。
+
+### B.3 後端 RAG Pipeline 的 L5 架構擴展現況
+Archon 的後端並非「可以擴充」，而是物理上**「已經擴充完畢」**。後端 API (`rag_api.py` 與 `28_graphrag_and_mrl.sql`) 已經實裝了 5 級架構，完美支援遊戲的後期卡牌解鎖機制：
+*   **L1 (基礎)**：FTS 關鍵字文本檢索。
+*   **L2 (進階)**：Dense 向量餘弦相似度檢索。
+*   **L3 (專業)**：ONNX Runtime 零成本本地重排 (Cross-Encoder Reranker)。
+*   **L4 (專家 - MRL)**：支援 Matryoshka Representation Learning 俄羅斯娃娃表示法，SQL 內建 `truncate_dim` 切片計算，大幅節省客戶端頻寬。
+*   **L5 (大師 - GraphRAG)**：具備 `/graph-search` 端點與實體的 `RagService.graph_search`，支援 `max_hops` 知識圖譜跳躍推理。

@@ -11,50 +11,79 @@
 
 Archon 的後端採用微服務化 (Microservice-like) 的模組設計，基於 **FastAPI** 框架，並深度整合 **Supabase** (PostgreSQL + Auth + Vector) 作為核心資料與身份驗證層。
 
+### 系統模組目錄結構 (Directory Structure)
+
+```text
+### 雙前端 (Frontend Apps)
+enduser-ui-fe/ (Admin UI - Port 5173)
+└── src/features/admin/
+    ├── components/PromptManagement.tsx  # Prompt 管理介面
+    └── machines/promptMachine.ts        # XState 狀態機
+
+archon-ui-main/ (EndUser App - Port 3737)
+└── src/features/
+
+### 後端 (Backend - Port 8181)
+python/src/server/
+├── api_routes/
+│   └── system_api.py      # /api/system/prompts 等系統路由
+└── services/
+    └── system_service.py  # 處理 public.archon_prompts
+```
+
 ### 核心服務交互圖 (Service Interaction)
 
 ```mermaid
-graph TD
-    subgraph ClientLayer ["Client Layer"]
-        U["前端應用 (Archon UI)"]
-        Client["外部 API Client"]
+graph LR
+    %% Define Styles
+    classDef frontend fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff;
+    classDef backend fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff;
+    classDef gateway fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff;
+    classDef database fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef external fill:#6b7280,stroke:#4b5563,stroke-width:2px,color:#fff;
+
+    subgraph ClientLayer ["🖥️ Client Layer"]
+        direction TB
+        AdminUI["Admin UI (Port 5173)"]:::frontend
+        EndUserUI["EndUser App (Port 3737)"]:::frontend
+        Client["外部 API Client"]:::external
     end
 
-    subgraph BackendLayer ["Backend Layer (Port 8181)"]
-        Gateway["API Gateway / Router"]
-        Auth["Auth Service"]
-        Projects["Project Service"]
-        Know["Knowledge Service"]
-        Mkt["Marketing Service"]
-        Agents["Agent Service"]
+    Gateway["API Gateway / Router"]:::gateway
+
+    subgraph BackendLayer ["⚙️ Backend Layer (Port 8181)"]
+        direction TB
+        Auth["Auth Service"]:::backend
+        Projects["Project Service"]:::backend
+        Know["Knowledge Service"]:::backend
+        Mkt["Marketing Service"]:::backend
+        Agents["Agent Service"]:::backend
+        Sys["System Service"]:::backend
     end
 
-    subgraph Infrastructure ["Infrastructure"]
-        DB[("Supabase (PostgreSQL)")]
-        Vector[("Supabase (Vector)")]
-        LLM["LLM Providers (OpenAI/Gemini)"]
-        Crawlers["Crawler Service"]
+    subgraph Infrastructure ["🗄️ Infrastructure"]
+        direction TB
+        DB[("Supabase (PostgreSQL)")]:::database
+        Vector[("Supabase (Vector)")]:::database
+        LLM["LLM Providers (OpenAI/Gemini)"]:::external
+        Crawlers["Crawler Service"]:::external
     end
 
-    U -- HTTPS/REST --> Gateway
-    Client --> Gateway
-    Gateway -- JWT/RBAC --> Auth
-    Gateway --> Projects
-    Gateway --> Know
-    Gateway --> Mkt
+    %% Client to Gateway
+    AdminUI & EndUserUI & Client -- HTTPS --> Gateway
     
+    %% Gateway to Microservices
+    Gateway --> Auth & Projects & Know & Mkt & Sys
+    
+    %% Service Interactions
     Projects -- Async --> Agents
     Know -- Queue --> Crawlers
     Mkt -- RAG --> Vector
-    Mkt -- RAG --> Vector
     Agents -- Tools --> LLM
-    Agents -- GitBranch --> Agents : Self-Healing Loop (Sandboxed)
+    Agents -- "GitBranch" --> Agents
     
     %% Database Connections
-    Auth --> DB
-    Projects --> DB
-    Know --> DB
-    Mkt --> DB
+    Auth & Projects & Know & Mkt & Sys --> DB
 ```
 
 ---
@@ -149,6 +178,47 @@ sequenceDiagram
     Storage->>Vector: Generate Embeddings (OpenAI/Gemini)
     Storage->>Tracker: Update Progress (100%)
 ```
+
+### 3.3 RAG Pipeline (語意檢索與生成)
+
+描述 RAG API (`/api/rag/query`) 接收請求後，進行向量檢索、重排與 LLM 生成的過程。架構上具備容災降階與重排機制。
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend App
+    participant API as RAG API
+    participant RAG as RAG Service
+    participant Vector as Vector Store (Supabase)
+    participant Reranker as ONNX Reranker
+    participant LLM as LLM Provider (Gemini/Ollama)
+
+    FE->>API: POST /api/rag/query { query, source_ids }
+    API->>API: 檢查權限 (TASK_READ_OWN)
+    API->>RAG: perform_rag_query()
+    RAG->>Vector: Vector Similarity Search
+    Vector-->>RAG: 回傳 Top-K Document Chunks
+    
+    opt Reranker Phase (若啟用)
+        RAG->>Reranker: 傳入 Query + Chunks 重新排序
+        Reranker-->>RAG: 回傳高相關性 Chunks
+    end
+
+    RAG->>LLM: 注入 System Prompt + Chunks + User Query
+    LLM-->>RAG: 生成最終回答
+    RAG-->>API: 整理回答與參考文獻
+    API-->>FE: 回傳 JSON { success, answer, references }
+```
+
+### 3.4 Prompt Manager 流程與機制 (Prompt Governance)
+
+為達到 100% 的業務數據對齊與動態調整能力，系統實作了**資料庫驅動**的系統提示詞管理架構。
+
+- **存儲層**: 所有 Agent 與系統的 Prompt 統一存放在 `public.archon_prompts` 資料表中，具備 `is_system_protected` 欄位以防非管理員誤改。
+- **後端 API**: 由 `System Service` 提供 `/api/system/prompts`，支援獲取與更新，並在更新後主動使後端的 RAG/Agent 快取失效。
+- **前端介面 (Admin UI - Port 5173)**:
+  - 核心組件為 `PromptManagement.tsx`。
+  - 使用 **XState 狀態機 (`promptMachine.ts`)** 來嚴格控制狀態的流轉 (例如：`FETCH_SUCCESS`、`SELECT_PROMPT`)，徹底解耦 UI 渲染與業務邏輯。
+  - 透過 `opsApi` 直接與後端通訊，儲存後的 Prompt 會即時套用到所有背後運行的 Agent 上，無需重啟伺服器。
 
 ---
 
@@ -258,10 +328,29 @@ sequenceDiagram
 }
 ```
 
+### 4.4 系統管理模組 (System Module)
+**Base Path**: `/api/system`
+
+| Method | Endpoint | Description | Request Body | Response Model |
+| :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/prompts` | 獲取全域系統提示詞 | - | `List[PromptData]` |
+| **POST** | `/prompts/{promptName}` | 更新系統提示詞 | `UpdatePromptRequest` | `Status` |
+
+#### 關鍵資料模型 (Data Models)
+
+**UpdatePromptRequest**
+```json
+{
+  "prompt": "string",
+  "description": "string (optional)"
+}
+```
+
 ---
 
 ## 5. 前端整合架構 (Frontend Integration)
 
+### 5.1 EndUser App (archon-ui-main, Port 3737)
 此圖說明前端 (`api.ts` Service Layer) 如何對應後端路由。
 
 ```mermaid
@@ -300,4 +389,34 @@ classDiagram
         orchestrate_crawl()
         manage_vectors()
     }
+```
+
+### 5.2 Admin UI (enduser-ui-fe, Port 5173) - Prompt Manager 架構
+Admin UI 採用 XState 作為狀態機驅動，分離了 UI 元件與業務邏輯，並直接透過 `opsApi` 與 `/api/system/prompts` 通訊。
+
+```mermaid
+classDiagram
+    direction LR
+    class PromptManagement {
+        <<React Component>>
+        +useMachine(promptMachine)
+    }
+    class promptMachine {
+        <<XState>>
+        +FETCH_SUCCESS
+        +SELECT_PROMPT
+    }
+    class opsApi {
+        <<enduser-ui-fe/src/services/api/ops.ts>>
+        +getSystemPrompts()
+        +updateSystemPrompt()
+    }
+    class System_API {
+        <<python/src/server/api_routes>>
+        POST /api/system/prompts
+    }
+
+    PromptManagement --> promptMachine : 驅動狀態
+    promptMachine --> opsApi : API 請求
+    opsApi ..> System_API : HTTP
 ```

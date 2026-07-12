@@ -8,6 +8,14 @@
 [ext_resource type="PackedScene" path="res://src/views/TransitionVideo.tscn" id="6_transition"]
 [ext_resource type="PackedScene" path="res://src/views/CardManagementMenu.tscn" id="7_card_menu"]
 [ext_resource type="PackedScene" path="res://src/views/TeammateDashboard.tscn" id="8_teammate"]
+[ext_resource type="Script" path="res://src/views/CarouselContainer.gd" id="9_carousel"]
+[ext_resource type="Texture2D" path="res://assets/images/gem_new_career.png" id="10_gem1"]
+[ext_resource type="Texture2D" path="res://assets/images/gem_continue.png" id="11_gem2"]
+[ext_resource type="Texture2D" path="res://assets/images/gem_teammate.png" id="12_gem3"]
+[ext_resource type="Texture2D" path="res://assets/images/gem_card_management.png" id="13_gem4"]
+[ext_resource type="Texture2D" path="res://assets/images/gem_quit.png" id="14_gem5"]
+[ext_resource type="AudioStream" path="res://assets/maaack/Sourced/Music/OfFarDifferentNature/Of Far Different Nature - Ganxta (CC-BY).ogg" id="15_bgm"]
+[ext_resource type="AudioStream" path="res://assets/maaack/Sourced/Sounds/240776__f4ngy__card-flip_1.ogg" id="16_sfx"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_btn"]
 texture = ExtResource("4_frame")
@@ -71,13 +79,13 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_mainmenu")
-lang_button = NodePath("UIPanel/VBoxContainer/SettingsBox/LangBox/LangButton")
-vol_slider = NodePath("UIPanel/VBoxContainer/SettingsBox/VolBox/VolSlider")
-btn_new_career = NodePath("UIPanel/VBoxContainer/NewCareerButton")
-btn_continue = NodePath("UIPanel/VBoxContainer/ContinueButton")
-btn_teammate_dashboard = NodePath("UIPanel/VBoxContainer/TeammateDashboardButton")
-btn_card_management = NodePath("UIPanel/VBoxContainer/CardManagementButton")
-btn_quit = NodePath("UIPanel/VBoxContainer/QuitButton")
+lang_button = NodePath("UIPanel/SettingsPanel/SettingsBox/LangBox/LangButton")
+vol_slider = NodePath("UIPanel/SettingsPanel/SettingsBox/VolBox/VolSlider")
+btn_new_career = NodePath("UIPanel/CarouselContainer/NewCareerButton")
+btn_continue = NodePath("UIPanel/CarouselContainer/ContinueButton")
+btn_teammate_dashboard = NodePath("UIPanel/CarouselContainer/TeammateDashboardButton")
+btn_card_management = NodePath("UIPanel/CarouselContainer/CardManagementButton")
+btn_quit = NodePath("UIPanel/CarouselContainer/QuitButton")
 
 [node name="Controller" type="Node" parent="."]
 script = ExtResource("2_controller")
@@ -120,82 +128,312 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UIPanel"]
+[node name="CarouselContainer" type="Control" parent="UIPanel"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -150.0
-offset_right = 200.0
-offset_bottom = 200.0
+offset_left = -700.0
+offset_top = -500.0
+offset_right = 500.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("9_carousel")
+is_vertical = false
+ellipse_radius = Vector2(450, 100)
+min_scale = 0.4
+max_scale = 0.85
+animation_speed = 8.0
+
+[node name="NewCareerButton" type="Button" parent="UIPanel/CarouselContainer"]
+custom_minimum_size = Vector2(240, 336)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -168.0
+offset_right = 120.0
+offset_bottom = 168.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 168)
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
+
+[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/NewCareerButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("10_gem1")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UIPanel/CarouselContainer/NewCareerButton"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 28
+text = "menu_new_career"
+horizontal_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="UIPanel/CarouselContainer"]
+custom_minimum_size = Vector2(240, 336)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -168.0
+offset_right = 120.0
+offset_bottom = 168.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 168)
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
+
+[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/ContinueButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("11_gem2")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UIPanel/CarouselContainer/ContinueButton"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 28
+text = "menu_continue"
+horizontal_alignment = 1
+
+[node name="TeammateDashboardButton" type="Button" parent="UIPanel/CarouselContainer"]
+custom_minimum_size = Vector2(240, 336)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -168.0
+offset_right = 120.0
+offset_bottom = 168.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 168)
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
+
+[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/TeammateDashboardButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("12_gem3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UIPanel/CarouselContainer/TeammateDashboardButton"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "menu_teammate_dashboard"
+horizontal_alignment = 1
+
+[node name="CardManagementButton" type="Button" parent="UIPanel/CarouselContainer"]
+custom_minimum_size = Vector2(240, 336)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -168.0
+offset_right = 120.0
+offset_bottom = 168.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 168)
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
+
+[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/CardManagementButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("13_gem4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UIPanel/CarouselContainer/CardManagementButton"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "menu_card_management"
+horizontal_alignment = 1
+
+[node name="QuitButton" type="Button" parent="UIPanel/CarouselContainer"]
+custom_minimum_size = Vector2(240, 336)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -168.0
+offset_right = 120.0
+offset_bottom = 168.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(120, 168)
+theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
+theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
+
+[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/QuitButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("14_gem5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="UIPanel/CarouselContainer/QuitButton"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 28
+text = "menu_quit_game"
+horizontal_alignment = 1
+
+[node name="SettingsPanel" type="ColorRect" parent="UIPanel"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -140.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+color = Color(0, 0, 0, 0.4)
+mouse_filter = 2
+
+[node name="SettingsBox" type="VBoxContainer" parent="UIPanel/SettingsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 20
-
-[node name="NewCareerButton" type="Button" parent="UIPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
-text = "menu_new_career"
-
-[node name="ContinueButton" type="Button" parent="UIPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
-text = "menu_continue"
-
-[node name="TeammateDashboardButton" type="Button" parent="UIPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
-text = "menu_teammate_dashboard"
-
-[node name="CardManagementButton" type="Button" parent="UIPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
-text = "menu_card_management"
-
-[node name="QuitButton" type="Button" parent="UIPanel/VBoxContainer"]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
-text = "menu_quit_game"
-
-[node name="SettingsBox" type="VBoxContainer" parent="UIPanel/VBoxContainer"]
-layout_mode = 2
-mouse_filter = 2
 theme_override_constants/separation = 10
+alignment = 1
 
-[node name="LangBox" type="HBoxContainer" parent="UIPanel/VBoxContainer/SettingsBox"]
+[node name="LangBox" type="HBoxContainer" parent="UIPanel/SettingsPanel/SettingsBox"]
 layout_mode = 2
 mouse_filter = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UIPanel/VBoxContainer/SettingsBox/LangBox"]
+[node name="Label" type="Label" parent="UIPanel/SettingsPanel/SettingsBox/LangBox"]
 layout_mode = 2
 text = "menu_language"
 
-[node name="LangButton" type="OptionButton" parent="UIPanel/VBoxContainer/SettingsBox/LangBox"]
+[node name="LangButton" type="OptionButton" parent="UIPanel/SettingsPanel/SettingsBox/LangBox"]
 layout_mode = 2
 item_count = 2
 popup/item_0/text = "English"
@@ -203,22 +441,31 @@ popup/item_0/id = 0
 popup/item_1/text = "繁體中文"
 popup/item_1/id = 1
 
-[node name="VolBox" type="HBoxContainer" parent="UIPanel/VBoxContainer/SettingsBox"]
+[node name="VolBox" type="HBoxContainer" parent="UIPanel/SettingsPanel/SettingsBox"]
 layout_mode = 2
 mouse_filter = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UIPanel/VBoxContainer/SettingsBox/VolBox"]
+[node name="Label" type="Label" parent="UIPanel/SettingsPanel/SettingsBox/VolBox"]
 layout_mode = 2
 text = "menu_volume"
 
-[node name="VolSlider" type="HSlider" parent="UIPanel/VBoxContainer/SettingsBox/VolBox"]
+[node name="VolSlider" type="HSlider" parent="UIPanel/SettingsPanel/SettingsBox/VolBox"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.05
 value = 0.5
+
+[node name="BGMPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("15_bgm")
+autoplay = true
+bus = &"Music"
+
+[node name="SFXClick" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("16_sfx")
+bus = &"SFX"
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
