@@ -34,9 +34,18 @@ export const IdentityNewUserModal: React.FC<{ onClose: () => void; onSave: (newU
                 <h2 className="text-2xl font-bold mb-4">Create New User</h2>
                 <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} className={inputClass} required />
-                    <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} required />
-                    <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className={inputClass} required />
+                    <div>
+                        <label htmlFor="name-new" className="block text-sm font-medium mb-1">Full Name</label>
+                        <input id="name-new" type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} className={inputClass} required />
+                    </div>
+                    <div>
+                        <label htmlFor="email-new" className="block text-sm font-medium mb-1">Email Address</label>
+                        <input id="email-new" type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} required />
+                    </div>
+                    <div>
+                        <label htmlFor="password-new" className="block text-sm font-medium mb-1">Password</label>
+                        <input id="password-new" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className={inputClass} required />
+                    </div>
                     <div>
                         <label htmlFor="role-new" className="block text-sm font-medium mb-1">Role Assignment</label>
                         <select id="role-new" value={role} onChange={e => setRole(e.target.value as EmployeeRole)} className={inputClass}>
@@ -53,7 +62,7 @@ export const IdentityNewUserModal: React.FC<{ onClose: () => void; onSave: (newU
                     </div>
                     <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-4">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
-                        <button type="submit" disabled={isLoading} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all font-bold">{isLoading ? 'Creating...' : 'Create User'}</button>
+                        <button type="submit" disabled={isLoading} aria-disabled={isLoading} aria-busy={isLoading} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all font-bold">{isLoading ? 'Creating...' : 'Create User'}</button>
                     </div>
                 </form>
             </div>
