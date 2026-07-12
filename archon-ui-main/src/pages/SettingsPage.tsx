@@ -74,13 +74,13 @@ export const SettingsPage = (): JSX.Element => {
       setLoading(true);
       setError(null);
 
-      // Load RAG settings
-      const ragSettingsData = await credentialsService.getRagSettings();
-      setRagSettings(ragSettingsData);
+      // PERFORMANCE: Execute independent network requests concurrently to eliminate waterfall delays
+      const [ragSettingsData, codeExtractionSettingsData] = await Promise.all([
+        credentialsService.getRagSettings(),
+        credentialsService.getCodeExtractionSettings()
+      ]);
 
-      // Load Code Extraction settings
-      const codeExtractionSettingsData =
-        await credentialsService.getCodeExtractionSettings();
+      setRagSettings(ragSettingsData);
       setCodeExtractionSettings(codeExtractionSettingsData);
     } catch (err) {
       setError("Failed to load settings");
