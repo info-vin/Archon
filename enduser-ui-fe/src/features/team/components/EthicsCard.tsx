@@ -3,6 +3,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/services/api';
 import { ShieldCheckIcon } from '@/components/Icons';
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat instance outside the component to prevent expensive re-instantiations during list rendering.
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric', month: 'numeric', day: 'numeric',
+  hour: 'numeric', minute: 'numeric', second: 'numeric'
+});
+
+const safeFormatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
+
 interface EthicsEvent {
   id: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -86,7 +97,7 @@ export function EthicsCard() {
                 {events.map((event) => (
                   <tr key={event.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-3 whitespace-nowrap text-gray-500 font-mono text-xs">
-                      {new Date(event.created_at).toLocaleString()}
+                      {safeFormatDate(event.created_at)}
                     </td>
                     <td className="px-6 py-3 font-medium text-gray-900">{event.event_type}</td>
                     <td className="px-6 py-3">
