@@ -148,7 +148,13 @@ async def analyze_token_usage():
         data_weekly = res_weekly.data or []
         weekly_cost = sum(float(row.get("cost_usd", 0)) for row in data_weekly)
 
-        cost_threshold = 0.05
+        from src.server.services.settings_service import SettingsService
+        settings = SettingsService(supabase)
+        try:
+            cost_threshold = float(str(settings.get_setting("WEEKLY_BUDGET_THRESHOLD", "0.05") or "0.05"))
+        except ValueError:
+            cost_threshold = 0.05
+
         if weekly_cost > cost_threshold:
             msg = f"[CRITICAL] Weekly Budget Exceeded: ${weekly_cost:.4f} USD (Threshold: ${cost_threshold:.2f} USD)"
             logger.error(f"💰 Sentinel: {msg}")

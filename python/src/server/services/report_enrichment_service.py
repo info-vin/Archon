@@ -13,10 +13,13 @@ class ReportEnrichmentService:
         """Invokes NexusOracleAgent and appends its insights to the context."""
         logger.info("🔮 ReportEnrichmentService: Invoking NexusOracleAgent for high-level insights...")
         try:
+            from src.server.services.prompt_service import prompt_service
+            system_prompt = prompt_service.get_prompt("nexus_oracle_agent") or "Please provide a strategic overview of the current system and business state, focusing on 104 data trends."
+
             from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
             oracle = NexusOracleAgent()
             oracle_res = await oracle.run(
-                "Please provide a strategic overview of the current system and business state, focusing on 104 data trends.",
+                system_prompt,
                 deps=NexusDependencies()
             )
             state_data = oracle_res
@@ -40,10 +43,21 @@ class ReportEnrichmentService:
     async def attach_podcast_audio(task_desc: str) -> str:
         """Generates TTS audio from the task description and appends the URL."""
         try:
+            from src.server.services.settings_service import SettingsService
             from src.server.services.text_to_speech_service import text_to_speech_service
+            from src.server.utils import get_supabase_client
+
+            supabase = get_supabase_client()
+            settings = SettingsService(supabase)
+
+            try:
+                tts_limit = int(str(settings.get_setting("TTS_TRUNCATION_LIMIT", "4000") or "4000"))
+            except ValueError:
+                tts_limit = 4000
+
             logger.info("🎙️ ReportEnrichmentService: Generating TTS Podcast...")
             clean_text = task_desc.replace("*", "").replace("#", "")
-            audio_url = await text_to_speech_service.generate_audio(clean_text[:4000])
+            audio_url = await text_to_speech_service.generate_audio(clean_text[:tts_limit])
             if audio_url:
                 task_desc += f"\n\n🎧 **Listen to Podcast**: [Audio Link]({audio_url})"
                 logger.info("✅ ReportEnrichmentService: TTS Podcast generated and attached.")
