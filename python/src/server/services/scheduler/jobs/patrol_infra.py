@@ -4,22 +4,10 @@ Handles monitoring of Vercel, Supabase, and Hugging Face infrastructure.
 """
 
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.settings import PruningConfig
 
 logger = get_logger(__name__)
 
-DEFAULT_THRESHOLDS = {
-    "PRUNING_MAX_SIZE_MB": 500.0,
-    "PRUNING_L1_PCT": 50.0,
-    "PRUNING_L2_PCT": 80.0,
-    "PRUNING_L1_LOGS_DAYS": 90,
-    "PRUNING_L1_TOKENS_DAYS": 180,
-    "PRUNING_L2_LOGS_DAYS": 30,
-    "PRUNING_L2_LEADS_DAYS": 90,
-    "PRUNING_L3_LOGS_DAYS": 14,
-    "PRUNING_L3_CRAWLED_DAYS": 30,
-    "PRUNING_L3_TOKENS_DAYS": 30,  # Level 3 tokens
-    "PRUNING_L2_TOKENS_DAYS": 90   # Level 2 tokens
-}
 
 async def run_infrastructure_audit():
     """Phase 6.1 (now 5.9.2): Patrols the 3 main infrastructures (Vercel, Supabase, HF)."""
@@ -91,43 +79,28 @@ async def run_infrastructure_audit():
         if size_data and hasattr(size_data, 'data') and size_data.data is not None:
             db_size_mb = float(size_data.data)
 
-            # Fetch dynamic thresholds
+            # Fetch dynamic thresholds using Pydantic SSOT
+            raw_settings = settings.get_all_settings()
             try:
-                max_size_mb = float(str(settings.get_setting("PRUNING_MAX_SIZE_MB", str(DEFAULT_THRESHOLDS["PRUNING_MAX_SIZE_MB"])) or DEFAULT_THRESHOLDS["PRUNING_MAX_SIZE_MB"]))
-                l1_pct = float(str(settings.get_setting("PRUNING_L1_PCT", str(DEFAULT_THRESHOLDS["PRUNING_L1_PCT"])) or DEFAULT_THRESHOLDS["PRUNING_L1_PCT"]))
-                l2_pct = float(str(settings.get_setting("PRUNING_L2_PCT", str(DEFAULT_THRESHOLDS["PRUNING_L2_PCT"])) or DEFAULT_THRESHOLDS["PRUNING_L2_PCT"]))
+                config = PruningConfig.model_validate(raw_settings)
+            except Exception as e:
+                logger.warning(f"Failed to parse PruningConfig, falling back to defaults: {e}")
+                config = PruningConfig()
 
-                l1_logs_days = int(str(settings.get_setting("PRUNING_L1_LOGS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L1_LOGS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L1_LOGS_DAYS"]))
-                l1_tokens_days = int(str(settings.get_setting("PRUNING_L1_TOKENS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L1_TOKENS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L1_TOKENS_DAYS"]))
-
-                l2_logs_days = int(str(settings.get_setting("PRUNING_L2_LOGS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L2_LOGS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L2_LOGS_DAYS"]))
-                l2_leads_days = int(str(settings.get_setting("PRUNING_L2_LEADS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L2_LEADS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L2_LEADS_DAYS"]))
-                l2_tokens_days = int(str(settings.get_setting("PRUNING_L2_TOKENS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L2_TOKENS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L2_TOKENS_DAYS"]))
-
-                l3_logs_days = int(str(settings.get_setting("PRUNING_L3_LOGS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L3_LOGS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L3_LOGS_DAYS"]))
-                l3_crawled_days = int(str(settings.get_setting("PRUNING_L3_CRAWLED_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L3_CRAWLED_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L3_CRAWLED_DAYS"]))
-                l3_tokens_days = int(str(settings.get_setting("PRUNING_L3_TOKENS_DAYS", str(DEFAULT_THRESHOLDS["PRUNING_L3_TOKENS_DAYS"])) or DEFAULT_THRESHOLDS["PRUNING_L3_TOKENS_DAYS"]))
-            except ValueError:
-                max_size_mb, l1_pct, l2_pct = DEFAULT_THRESHOLDS["PRUNING_MAX_SIZE_MB"], DEFAULT_THRESHOLDS["PRUNING_L1_PCT"], DEFAULT_THRESHOLDS["PRUNING_L2_PCT"]
-                l1_logs_days, l1_tokens_days = int(DEFAULT_THRESHOLDS["PRUNING_L1_LOGS_DAYS"]), int(DEFAULT_THRESHOLDS["PRUNING_L1_TOKENS_DAYS"])
-                l2_logs_days, l2_leads_days = int(DEFAULT_THRESHOLDS["PRUNING_L2_LOGS_DAYS"]), int(DEFAULT_THRESHOLDS["PRUNING_L2_LEADS_DAYS"])
-                l3_logs_days, l3_crawled_days = int(DEFAULT_THRESHOLDS["PRUNING_L3_LOGS_DAYS"]), int(DEFAULT_THRESHOLDS["PRUNING_L3_CRAWLED_DAYS"])
-                l2_tokens_days, l3_tokens_days = int(DEFAULT_THRESHOLDS["PRUNING_L2_TOKENS_DAYS"]), int(DEFAULT_THRESHOLDS["PRUNING_L3_TOKENS_DAYS"])
-
-            capacity_pct = (db_size_mb / max_size_mb) * 100
+            capacity_pct = (db_size_mb / config.max_size_mb) * 100
 
             logger.info(f"Database Capacity: {db_size_mb:.2f}MB ({capacity_pct:.1f}%)")
 
             # Default Level 1
-            threshold_logs = l1_logs_days
-            threshold_tokens = l1_tokens_days
+            threshold_logs = config.l1_logs_days
+            threshold_tokens = config.l1_tokens_days
             is_level_3 = False
 
             # Level 2
-            if capacity_pct >= l1_pct:
-                threshold_logs = l2_logs_days
-                threshold_tokens = l2_tokens_days
-                dormant_date = (datetime.now(UTC) - timedelta(days=l2_leads_days)).isoformat()
+            if capacity_pct >= config.l1_pct:
+                threshold_logs = config.l2_logs_days
+                threshold_tokens = config.l2_tokens_days
+                dormant_date = (datetime.now(UTC) - timedelta(days=config.l2_leads_days)).isoformat()
                 repo.execute_query(
                     lambda: supabase.table("leads").delete().eq("status", "dormant").lt("created_at", dormant_date).execute(),
                     "Prune dormant leads",
@@ -135,9 +108,9 @@ async def run_infrastructure_audit():
                 )
 
             # Level 3 (Survival)
-            if capacity_pct >= l2_pct:
-                threshold_logs = l3_logs_days
-                threshold_tokens = l3_tokens_days
+            if capacity_pct >= config.l2_pct:
+                threshold_logs = config.l3_logs_days
+                threshold_tokens = config.l3_tokens_days
                 is_level_3 = True
 
                 orphan_res = repo.execute_query(
@@ -149,7 +122,7 @@ async def run_infrastructure_audit():
                 if orphan_count:
                     logger.warning(f"Survival Pruning: Deleted {orphan_count} orphan vectors.")
 
-                crawled_date = (datetime.now(UTC) - timedelta(days=l3_crawled_days)).isoformat()
+                crawled_date = (datetime.now(UTC) - timedelta(days=config.l3_crawled_days)).isoformat()
                 repo.execute_query(
                     lambda: supabase.table("archon_crawled_pages").delete().lt("created_at", crawled_date).execute(),
                     "Prune crawled pages",

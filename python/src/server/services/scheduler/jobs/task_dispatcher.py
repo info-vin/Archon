@@ -17,14 +17,23 @@ async def run_task_dispatcher():
     logger.info("📡 Clockwork: Starting Task Dispatcher (Physical Alignment Mode)...")
     try:
         from src.server.repositories.base_repository import BaseRepository
+        from src.server.schemas.settings import TaskDispatcherConfig
         from src.server.services.agent_service import agent_service
-        from src.server.services.credential_service import credential_service
+        from src.server.services.settings_service import SettingsService
 
         supabase = get_supabase_client()
         repo = BaseRepository(supabase)
+        settings = SettingsService(supabase)
 
         # 1. Reclaim stuck tasks (Zombie management)
-        timeout_mins = int(await credential_service.get_credential("TASK_RECLAIM_TIMEOUT", 60))
+        raw_settings = settings.get_all_settings()
+        try:
+            config = TaskDispatcherConfig.model_validate(raw_settings)
+        except Exception as e:
+            logger.warning(f"Failed to parse TaskDispatcherConfig, falling back to defaults: {e}")
+            config = TaskDispatcherConfig()
+
+        timeout_mins = config.task_reclaim_timeout
         threshold = (datetime.now(UTC) - timedelta(minutes=timeout_mins)).isoformat()
 
         success, reclaim_res = repo.execute_query(

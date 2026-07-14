@@ -239,14 +239,18 @@ async def run_model_verification():
         if not is_hf_awake():
             logger.info("🤖 Clockwork: HF Sleep Mode active. Skipping verification probe.")
             try:
-                supabase.table("archon_logs").insert(
-                    {
-                        "source": "clockwork-scheduler",
-                        "level": "INFO",
-                        "message": "Model Verification [Sleep Mode]",
-                        "details": {"status": "skipped_due_to_sleep_mode"},
-                    }
-                ).execute()
+                from src.server.repositories.base_repository import BaseRepository
+                BaseRepository(supabase).execute_query(
+                    lambda: supabase.table("archon_logs").insert(
+                        {
+                            "source": "clockwork-scheduler",
+                            "level": "INFO",
+                            "message": "Model Verification [Sleep Mode]",
+                            "details": {"status": "skipped_due_to_sleep_mode"},
+                        }
+                    ).execute(),
+                    "Log model verification sleep"
+                )
             except Exception as db_err:
                 logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")
             return
@@ -268,14 +272,18 @@ async def run_model_verification():
         logger.info(f"{'✅' if is_safe else '⚠️'} Clockwork: {msg}")
 
         try:
-            supabase.table("archon_logs").insert(
-                {
-                    "source": "clockwork-scheduler",
-                    "level": log_level,
-                    "message": msg,
-                    "details": {"DEFAULT_PRO": default_pro, "DEFAULT_TEXT": default_text},
-                }
-            ).execute()
+            from src.server.repositories.base_repository import BaseRepository
+            BaseRepository(supabase).execute_query(
+                lambda: supabase.table("archon_logs").insert(
+                    {
+                        "source": "clockwork-scheduler",
+                        "level": log_level,
+                        "message": msg,
+                        "details": {"DEFAULT_PRO": default_pro, "DEFAULT_TEXT": default_text},
+                    }
+                ).execute(),
+                "Log model verification result"
+            )
         except Exception as db_err:
             logger.error(f"❌ Clockwork: Failed to write to archon_logs: {db_err}")
 
@@ -290,16 +298,31 @@ async def run_tech_debt_audit():
         import glob
         import os
         import time
+        from pathlib import Path
 
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
         from src.server.services.shared_constants import AI_AGENT_ROLES
         from src.server.utils import get_supabase_client
 
+        # Multi-path detection (Host vs Docker)
+        possible_roots = [
+            Path("/app"),  # Docker
+            Path.cwd(),    # Host (Archon root)
+            Path.cwd().parent, # Host (Archon/python root)
+        ]
+
+        project_root = Path("/app")
+        for root in possible_roots:
+            if (root / "PRPs").exists():
+                project_root = root
+                break
+
         warnings = []
 
         # 1. Check unarchived PRPs
-        prp_files = glob.glob("/app/PRPs/Phase_*.md")
+        prp_dir = project_root / "PRPs"
+        prp_files = list(prp_dir.glob("Phase_*.md")) if prp_dir.exists() else []
         if len(prp_files) >= 5:
             warnings.append(
                 f"PRPs directory is cluttered ({len(prp_files)} unarchived files). Please archive completed phases."
@@ -309,13 +332,18 @@ async def run_tech_debt_audit():
         fourteen_days_ago = time.time() - (14 * 24 * 3600)
         stale_scripts = []
 
-        script_patterns = ["/app/scripts/*.py", "/app/scripts/*.sh", "/app/python/scripts/*.py"]
+        script_patterns = [
+            str(project_root / "scripts" / "*.py"),
+            str(project_root / "scripts" / "*.sh"),
+            str(project_root / "python" / "scripts" / "*.py")
+        ]
+
         for pattern in script_patterns:
             for filepath in glob.glob(pattern):
                 if os.path.isfile(filepath):
                     mtime = os.path.getmtime(filepath)
                     if mtime < fourteen_days_ago:
-                        stale_scripts.append(os.path.relpath(filepath, "/app"))
+                        stale_scripts.append(os.path.relpath(filepath, str(project_root)))
 
         if stale_scripts:
             stale_msg = f"Found {len(stale_scripts)} stale script(s) (no modifications in > 14 days):\n"

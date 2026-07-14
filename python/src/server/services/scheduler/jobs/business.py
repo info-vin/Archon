@@ -6,10 +6,9 @@ Handles leads, market reports, and token analysis.
 from datetime import UTC, datetime, timedelta
 
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.settings import BudgetConfig
 from src.server.services.shared_constants import AgentUUIDs
 from src.server.utils import get_supabase_client
-
-DEFAULT_WEEKLY_BUDGET_THRESHOLD = 0.05
 
 logger = get_logger(__name__)
 
@@ -152,10 +151,14 @@ async def analyze_token_usage():
 
         from src.server.services.settings_service import SettingsService
         settings = SettingsService(supabase)
+        raw_settings = settings.get_all_settings()
         try:
-            cost_threshold = float(str(settings.get_setting("WEEKLY_BUDGET_THRESHOLD", str(DEFAULT_WEEKLY_BUDGET_THRESHOLD)) or DEFAULT_WEEKLY_BUDGET_THRESHOLD))
-        except ValueError:
-            cost_threshold = DEFAULT_WEEKLY_BUDGET_THRESHOLD
+            config = BudgetConfig.model_validate(raw_settings)
+        except Exception as e:
+            logger.warning(f"Failed to parse BudgetConfig, falling back to defaults: {e}")
+            config = BudgetConfig()
+
+        cost_threshold = config.weekly_budget_threshold
 
         if weekly_cost > cost_threshold:
             msg = f"[CRITICAL] Weekly Budget Exceeded: ${weekly_cost:.4f} USD (Threshold: ${cost_threshold:.2f} USD)"

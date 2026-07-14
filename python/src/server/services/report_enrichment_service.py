@@ -4,11 +4,9 @@ Handles optional high-value additions to reports like Nexus Oracle insights and 
 """
 
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.settings import TTSConfig
 
 logger = get_logger(__name__)
-
-DEFAULT_TTS_TRUNCATION_LIMIT = 4000
-
 class ReportEnrichmentService:
 
     @staticmethod
@@ -53,10 +51,14 @@ class ReportEnrichmentService:
             supabase = get_supabase_client()
             settings = SettingsService(supabase)
 
+            raw_settings = settings.get_all_settings()
             try:
-                tts_limit = int(str(settings.get_setting("TTS_TRUNCATION_LIMIT", str(DEFAULT_TTS_TRUNCATION_LIMIT)) or DEFAULT_TTS_TRUNCATION_LIMIT))
-            except ValueError:
-                tts_limit = DEFAULT_TTS_TRUNCATION_LIMIT
+                config = TTSConfig.model_validate(raw_settings)
+            except Exception as e:
+                logger.warning(f"Failed to parse TTSConfig, falling back to defaults: {e}")
+                config = TTSConfig()
+
+            tts_limit = config.tts_truncation_limit
 
             logger.info("🎙️ ReportEnrichmentService: Generating TTS Podcast...")
             clean_text = task_desc.replace("*", "").replace("#", "")
