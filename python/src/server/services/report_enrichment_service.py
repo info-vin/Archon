@@ -7,7 +7,10 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+DEFAULT_TTS_TRUNCATION_LIMIT = 4000
+
 class ReportEnrichmentService:
+
     @staticmethod
     async def inject_nexus_oracle_insights(context_md: str) -> str:
         """Invokes NexusOracleAgent and appends its insights to the context."""
@@ -51,9 +54,9 @@ class ReportEnrichmentService:
             settings = SettingsService(supabase)
 
             try:
-                tts_limit = int(str(settings.get_setting("TTS_TRUNCATION_LIMIT", "4000") or "4000"))
+                tts_limit = int(str(settings.get_setting("TTS_TRUNCATION_LIMIT", str(DEFAULT_TTS_TRUNCATION_LIMIT)) or DEFAULT_TTS_TRUNCATION_LIMIT))
             except ValueError:
-                tts_limit = 4000
+                tts_limit = DEFAULT_TTS_TRUNCATION_LIMIT
 
             logger.info("🎙️ ReportEnrichmentService: Generating TTS Podcast...")
             clean_text = task_desc.replace("*", "").replace("#", "")
