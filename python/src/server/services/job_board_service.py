@@ -2,7 +2,7 @@ import asyncio
 import random
 from typing import cast
 
-import httpx
+from curl_cffi import requests as curl_requests
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger
@@ -11,6 +11,11 @@ from ..utils import get_supabase_client
 from ..utils.retry_utils import retry_with_backoff
 
 logger = get_logger(__name__)
+
+
+class CrawlerBlockedException(Exception):
+    """Raised when the crawler is blocked by WAF or CAPTCHA."""
+    pass
 
 
 class JobData(BaseModel):
@@ -85,16 +90,15 @@ class JobBoardService:
         # CRITICAL: Using SYNC Client inside async thread pool to bypass WAF TLS fingerprinting
         def _fetch_all():
             headers = self.HEADERS.copy()
-            headers["User-Agent"] = random.choice(self.USER_AGENTS)
+            # User-Agent rotation is natively handled by curl_cffi impersonate="chrome120"
 
-            with httpx.Client(headers=headers, follow_redirects=True, timeout=20.0) as client:
+            with curl_requests.Session(impersonate="chrome120", headers=headers, timeout=20.0) as client:
+                warmup_res = None
                 try:
                     # 1. Warm-up
                     warmup_res = client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
                     if warmup_res.status_code == 403:
-                        logger.warning("403 Detected during warm-up. UA rotation triggered.")
-                        headers["User-Agent"] = random.choice(self.USER_AGENTS)
-                        client.headers.update(headers)
+                        logger.warning("403 Detected during warm-up. WAF might be blocking curl_cffi.")
                         import time
 
                         time.sleep(5)
@@ -104,6 +108,8 @@ class JobBoardService:
                 # 2. Fetch List
                 jobs = self._fetch_from_104_sync(client, keyword, limit)
                 if not jobs:
+                    if warmup_res and warmup_res.status_code == 403:
+                        raise CrawlerBlockedException("104 WAF Blocked access.")
                     return []
 
                 # 3. Fetch Details
@@ -130,6 +136,8 @@ class JobBoardService:
 
             logger.info(f"Job search completed | count={len(jobs)}")
             return jobs
+        except CrawlerBlockedException:
+            raise
         except Exception as e:
             logger.error(f"Job search failed: {e}")
             return []
@@ -143,6 +151,14 @@ class JobBoardService:
                 jobs = await self.search_jobs(keyword, limit=4)
                 if jobs:
                     total_new_leads += await self.identify_leads_and_save(jobs)
+            except CrawlerBlockedException as e:
+                logger.error(f"Crawler blocked by WAF for '{keyword}': {e}")
+                self.supabase.table("archon_logs").insert({
+                    "source": "job_board_service",
+                    "level": "ALERT",
+                    "message": f"104 Crawler Blocked by WAF: {e}"
+                }).execute()
+                break  # Stop crawling other keywords if blocked
             except Exception as e:
                 logger.error(f"Error auto-fetching for '{keyword}': {e}")
             await asyncio.sleep(random.uniform(2.0, 4.0))
@@ -156,18 +172,28 @@ class JobBoardService:
 
         leads_to_insert = []
         jobs_to_insert = []
-        for job in jobs:
+        
+        # FIX N+1 SELECT: Bulk query existing URLs
+        job_urls = [job.url for job in jobs if job.url]
+        existing_urls = set()
+        if job_urls:
             try:
                 existing = (
                     self.supabase.table("leads")
-                    .select("id")
-                    .eq("company_name", job.company)
-                    .eq("source_job_url", job.url)
+                    .select("source_job_url")
+                    .in_("source_job_url", job_urls)
                     .execute()
                 )
                 if existing.data:
-                    continue
+                    existing_urls = {row["source_job_url"] for row in existing.data}
+            except Exception as e:
+                logger.error(f"Failed to fetch existing leads: {e}")
 
+        for job in jobs:
+            if job.url in existing_urls:
+                continue
+
+            try:
                 lead_data = {
                     "company_name": job.company,
                     "job_title": job.title,
@@ -186,15 +212,22 @@ class JobBoardService:
                 res = self.supabase.table("leads").insert(leads_to_insert).execute()
                 if res.data:
                     new_leads_count += len(res.data)
-                    for idx, inserted_lead in enumerate(res.data):
-                        job = jobs_to_insert[idx]
+                    
+                    async def _log_action(job, content):
                         await stats_service.add_agent_action_log(
                             agent_name="Alice",
                             xp_change=10,
                             message=f"Identified new lead: {job.company}",
                             details={"company": job.company},
-                            content=inserted_lead.get("identified_need", job.identified_need),
+                            content=content,
                         )
+
+                    tasks = [
+                        _log_action(jobs_to_insert[idx], inserted_lead.get("identified_need", jobs_to_insert[idx].identified_need))
+                        for idx, inserted_lead in enumerate(res.data)
+                    ]
+                    if tasks:
+                        await asyncio.gather(*tasks)
             except Exception as e:
                 logger.error(f"Failed to bulk insert leads: {e}")
 
@@ -240,7 +273,7 @@ class JobBoardService:
             logger.error(f"Need inference failed: {e}")
             return f"Hiring for {job.title}"
 
-    def _fetch_from_104_sync(self, client: httpx.Client, keyword: str, limit: int) -> list[JobData]:
+    def _fetch_from_104_sync(self, client: curl_requests.Session, keyword: str, limit: int) -> list[JobData]:
         params = {
             "ro": "0",
             "kwop": "7",
@@ -279,7 +312,7 @@ class JobBoardService:
         except Exception:
             return []
 
-    def _fetch_job_detail_sync(self, client: httpx.Client, job_id: str, job_url: str | None) -> str | None:
+    def _fetch_job_detail_sync(self, client: curl_requests.Session, job_id: str, job_url: str | None) -> str | None:
         try:
             url = f"{self.DEFAULT_DETAIL_BASE_URL}{job_id}"
             headers = self.HEADERS.copy()

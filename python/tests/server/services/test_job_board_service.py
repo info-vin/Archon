@@ -37,9 +37,9 @@ async def test_identify_leads_and_save(mock_supabase):
     # Setup mock jobs
     jobs = [JobData(title="Data Scientist", company="Test Corp", url="http://test/1", identified_need="Need AI")]
 
-    # Setup Supabase Mock chain: table().select().eq().eq().execute() -> data
+    # Setup Supabase Mock chain: table().select().in_().execute() -> data
     mock_select_builder = Mock()
-    mock_select_builder.eq.return_value.eq.return_value.execute.return_value = Mock(data=[])  # No existing lead
+    mock_select_builder.in_.return_value.execute.return_value = Mock(data=[])  # No existing lead
 
     mock_insert_builder = Mock()
     mock_insert_builder.execute.return_value = Mock(data=[{"id": "new-id"}])
@@ -79,7 +79,7 @@ async def test_identify_leads_skips_existing(mock_supabase):
 
     # Mock finding an existing lead
     mock_select_builder = Mock()
-    mock_select_builder.eq.return_value.eq.return_value.execute.return_value = Mock(data=[{"id": "existing-id"}])
+    mock_select_builder.in_.return_value.execute.return_value = Mock(data=[{"source_job_url": "http://test/1"}])
 
     mock_table = Mock()
     mock_supabase.table.return_value = mock_table

@@ -1,19 +1,18 @@
-import httpx
 import pytest
+from curl_cffi import requests
 
 from src.server.services.job_board_service import JobBoardService
 
 
 @pytest.mark.asyncio
 @pytest.mark.external
-@pytest.mark.xfail(reason="104.com.tw blocks automated requests occasionally leading to 403")
 async def test_104_crawler_reliability():
     """物理驗證與 104 的真實連通性 (預熱 + AJAX)"""
     service = JobBoardService()
     # 測試一個確定的職缺 ID
     job_id = "8pws1"
 
-    async with httpx.AsyncClient(timeout=15.0, headers=service.HEADERS, follow_redirects=True) as client:
+    async with requests.AsyncSession(impersonate="chrome120", timeout=15.0, headers=service.HEADERS) as client:
         # 1. 預熱
         await client.get(f"https://www.104.com.tw/job/{job_id}")
 

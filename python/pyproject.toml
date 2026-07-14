@@ -56,6 +56,7 @@ server = [
     "slowapi>=0.1.9",
     # Core utilities
     "httpx>=0.24.0",
+    "curl-cffi>=0.7.3",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
     "docker>=6.1.0",
@@ -143,6 +144,7 @@ all = [
     "pydantic-ai==1.44.0",
     "structlog>=23.1.0",
     "httpx>=0.24.0",
+    "curl-cffi>=0.7.3",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
     "pytest>=8.0.0",
