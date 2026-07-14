@@ -153,6 +153,12 @@
     *   **JobBoard 提示詞解耦**: 將 `job_board_service.py` 中的系統提示詞徹底從 Python 硬編碼中抽離，建立 `29_seed_job_board_prompts.sql` 交由資料庫動態管理，落實 Model SSOT 精神。
     *   **動態環境變數防呆**: 為 `JobBoardService` 引入 `SettingsService` 動態配置與 `AgentRegistry` 績效歸屬機制，解決硬編碼的 N+1 Query 與 NoneType 報錯問題。
 
+9.  **動態配置與排程器公證 (Ref: 07-14)**:
+    *   **徹底消滅硬編碼**: 將 `job_board_service.py` 的 RAG 相似度門檻，以及 `patrol_infra.py` 的資料庫階層式清理 (Tiered Pruning) 規則，全面改由 `SettingsService` 讀取 `archon_settings` 資料表。
+    *   **Fallback 韌性設計**: 型別轉換時 (`float(str(...))`) 提供安全預設值，確保若資料庫缺少該設定，系統仍能 Fail-Safe 運行而不崩潰，這不屬於硬編碼，而是防禦性編程。
+    *   **測試斷言對齊物理現實**: 修正 `test_patrol_infra.py` 的 Mock 斷言，因為真實引入了容量探測 (`Get DB Size`)，`execute_query` 的呼叫次數會改變。這教會我們「不可死守舊的單元測試，測試必須隨真實邏輯演進」。
+    *   **實體資料表對帳**: 解決了 SQL 遷移檔找不到 `documents` 表的錯誤，透過實體檢視 Schema，確認真正的向量表為 `archon_crawled_pages`，徹底拒絕幻想路徑。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**

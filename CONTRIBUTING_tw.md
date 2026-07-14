@@ -28,6 +28,7 @@
 | 16. **拒絕路由幻想 (API Route Sovereignty)** | 嚴禁假設 API 路由存在（如 `/login`）。必須讀取 `main.py` 與 `api_routes/` 檔案公證實體路徑。目前 Archon Server **不處理** 登入請求（由前端與 Supabase 直連），僅處理具備 JWT 的業務邏輯與管理操作。 |
 | 17. **角色連通性稽核 (Persona Smoke Test Audit)** | 拒絕因「文件標示 Done」或「後端 API 綠燈」就宣佈功能完成。必須針對每個角色 (Alice, Bob, Charlie, David)，從 **UI 實體元件 (`.tsx`)** 開始往下物理尋線，確認該按鈕是否真實呼叫 `api.ts`，並能打通後端 Endpoint。嚴禁「空殼 (Stubbed)」UI 與「複製貼上」的假象混充落地功能。 |
 | 18. **杜絕迴圈內單筆寫入 (Enforce Bulk Insert)** | 嚴禁在 `for` 或 `while` 迴圈內部直接呼叫 `client.table(...).insert().execute()`。必須在迴圈內收集 payload (如 `batch_data.append(row)`)，並在迴圈外一次性使用 Bulk Insert，以杜絕 Event Loop 與資料庫 I/O 阻塞。 |
+| 19. **消滅硬編碼與 Fallback 韌性** | 系統的閾值、限制與提示詞必須從資料庫 `SettingsService` 或 `archon_settings` 動態讀取，落實 Model SSOT 精神。同時，在讀取配置時必須提供安全的回退預設值 (Fallback Default, 如 `value or "default"`)，確保資料缺失時系統能 Fail-Safe，這屬於防禦性編程，不應視為硬編碼。 |
 
 ---
 
@@ -192,7 +193,7 @@
 | **數位忿生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
 | **數位忿生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
 | **數位雙生百關動態模擬** | `make twin-simulator` | **時機**: 驗證極端混沌環境下的 UI 自癒能力時。<br>**說明**: 跑百關 E2E 模擬矩陣驗證（限額執行前幾關防超時），會搭配 `make twin-gen-levels` 生成與 `make twin-record` 單關錄影除錯。 |
-| **終極自動化品質門禁** | `make audit-qa` | **時機**: Major Release、PR 合併至主幹前的最終驗收。<br>**說明**: 執行最嚴格的串流驗證，包含 DNS 洩漏掃描、UI 巢狀死鎖檢查、Migration 驗證、LLM 語意裁判、後端測試與前端 E2E 邊界測試。 |
+| **終極自動化品質門禁** | `make audit-qa` | **時機**: Major Release、PR 合併至主幹前的最終驗收。<br>**說明**: 執行最嚴格的串流驗證，包含 DNS 洩漏掃描、UI 巢狀死鎖檢查、Migration 驗證 (⚠️**宿主機必須啟動 Docker**)、LLM 語意裁判、後端測試與前端 E2E 邊界測試。 |
 | **毀滅性 E2E 測試門禁** | `make audit-qa-e2e` | **時機**: PR 合併至主幹前的 E2E 重點驗收。<br>**說明**: 執行會破壞並重置資料庫的 Playwright 關鍵 spec 測試門禁。 |
 | **終極物理同步與重建** | `make sync-grounding` | **時機**: 代碼基線嚴重混亂或依賴損毀時。<br>**說明**: 強制重新拉取分支，全新 build 全 Docker 容器，清理並初始化資料庫，實施實體映像檔大小監控。 |
 | **自動化技術債巡邏** | `make tech-debt-audit` | **時機**: 定期檢查（排程）或專案整理時。<br>**說明**: 掃描未歸檔的歷史文件 (PRPs) 與過期殭屍腳本，輸出任務供 DevBot 處理。 |
