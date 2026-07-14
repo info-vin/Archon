@@ -147,10 +147,22 @@ class JobBoardService:
     async def auto_fetch_daily_leads(self) -> int:
         logger.info("Starting daily lead auto-fetch...")
         total_new_leads = 0
-        keywords = ["Python", "AI", "Marketing", "Sales"]
+
+        from ..services.settings_service import SettingsService
+        settings = SettingsService(self.supabase)
+
+        kw_string = settings.get_setting("CRAWLER_JOB_KEYWORDS", "Python,AI,Marketing,Sales")
+        keywords = [k.strip() for k in str(kw_string).split(",")]
+
+        try:
+            limit_setting = settings.get_setting("CRAWLER_JOB_LIMIT", "4")
+            limit = int(limit_setting) if limit_setting is not None else 4
+        except (ValueError, TypeError):
+            limit = 4
+
         for keyword in keywords:
             try:
-                jobs = await self.search_jobs(keyword, limit=4)
+                jobs = await self.search_jobs(keyword, limit=limit)
                 if jobs:
                     total_new_leads += await self.identify_leads_and_save(jobs)
             except CrawlerBlockedException as e:
@@ -215,9 +227,13 @@ class JobBoardService:
                 if res.data:
                     new_leads_count += len(res.data)
 
+                    from ..services.agent_registry import get_agent_config
+                    market_bot_config = get_agent_config("market-bot") or {}
+                    agent_name = market_bot_config.get("name", "Archon MarketBot")
+
                     async def _log_action(job, content):
                         await stats_service.add_agent_action_log(
-                            agent_name="Alice",
+                            agent_name=agent_name,
                             xp_change=10,
                             message=f"Identified new lead: {job.company}",
                             details={"company": job.company},
@@ -252,12 +268,11 @@ class JobBoardService:
             client = genai.Client(api_key=api_key)
 
             default_prompt = (
-                "You are a sales assistant helping Alice (Sales Rep) analyze a job posting quickly on her mobile phone.\n"
+                "你是一位銷售助理。請用繁體中文列出該職缺的：\n"
+                "- **技術棧**\n"
+                "- **痛點預測**\n\n"
                 "Job: {title} at {company}\n"
-                "Desc: {desc}\n\n"
-                "Output exactly 2 short markdown bullet points (max 50 words each) using Traditional Chinese (繁體中文):\n"
-                "- **技術棧**: [關鍵字與技術需求]\n"
-                "- **痛點預測**: [可能面臨的業務痛點與需求]"
+                "Desc: {desc}"
             )
 
             prompt_template = prompt_service.get_prompt("ALICE_INFER_NEED", default=default_prompt)

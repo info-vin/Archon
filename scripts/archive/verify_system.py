@@ -24,7 +24,7 @@ BLUE = "\033[0;34m"
 CYAN = "\033[0;36m"
 NC = "\033[0m"
 
-WORKSPACE_DIR = Path(__file__).resolve().parent.parent
+WORKSPACE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(WORKSPACE_DIR / "python"))
 sys.path.insert(0, str(WORKSPACE_DIR))
 

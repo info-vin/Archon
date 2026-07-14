@@ -17,7 +17,7 @@ def main():
     print(f"{CYAN}=========================================================={NC}")
 
     from pathlib import Path
-    workspace_dir = Path(__file__).resolve().parent.parent
+    workspace_dir = Path(__file__).resolve().parent.parent.parent
 
     default_dirs = ["enduser-ui-fe/dist", "archon-ui-main/dist"]
     dirs_to_scan = sys.argv[1:] if len(sys.argv) > 1 else default_dirs

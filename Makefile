@@ -98,13 +98,13 @@ audit-qa:
 	@cd enduser-ui-fe && $(PNPM) run test:unit
 	@cd archon-ui-main && $(PNPM) test
 	@echo "Step 3: Running DNS Leak Probe static scan..."
-	@cd python && $(UV) run python ../scripts/probe_dns_leak.py
+	@cd python && $(UV) run python ../scripts/archive/probe_dns_leak.py
 	@echo "Step 4: Running Mobile Viewport Scroll Lockup static scan..."
-	@cd python && $(UV) run python ../scripts/check_scroll_lockup.py
+	@cd python && $(UV) run python ../scripts/archive/check_scroll_lockup.py
 	@echo "Step 5: Running Shadow DB Migration verifier..."
-	@cd python && $(UV) run python ../scripts/verify_system.py --check migrations
+	@cd python && $(UV) run python ../scripts/archive/verify_system.py --check migrations
 	@echo "Step 6: Running LLM Content Judge Semantic checks..."
-	@cd python && $(UV) run python ../scripts/llm_judge_content.py
+	@cd python && $(UV) run python ../scripts/archive/llm_judge_content.py
 	@echo "Step 7: Running Backend FAST Unit Tests (Skipping Integration)..."
 	@make test-be-fast
 	@echo "Step 8: Running Persona Physical Audit inside Docker..."

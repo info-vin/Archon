@@ -32,11 +32,17 @@ def is_hf_awake() -> bool:
     cst_now = datetime.now(UTC).astimezone(timezone(timedelta(hours=8)))
     current_time = cst_now.time()
 
-    sleep_start = time(0, 18)
-    sleep_end = time(6, 41)
+    sleep_start = time(20, 35)
+    sleep_end = time(6, 32)
 
-    if sleep_start <= current_time <= sleep_end:
-        return False
+    if sleep_start <= sleep_end:
+        if sleep_start <= current_time <= sleep_end:
+            return False
+    else:
+        # Crosses midnight
+        if current_time >= sleep_start or current_time <= sleep_end:
+            return False
+
     return True
 
 

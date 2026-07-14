@@ -13,7 +13,7 @@ for p in [".env", "python/.env", "../.env", "../python/.env"]:
         load_dotenv(p)
 
 # Dynamically align python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "python")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "python")))
 
 from google import genai
 from google.genai import types

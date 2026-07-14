@@ -687,7 +687,16 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ---
 
-## 附錄 A：系統分析 (System Analysis)
+### 6.5 爬蟲與 WAF 403 錯誤防禦 (Proxy Pool)
+
+**症狀**: `JobBoardService` 在擷取資料或進行暖機 (Warm-up) 時遭遇 `403 Forbidden`。
+**根源**: 目標網站的 WAF (Web Application Firewall) 偵測到來自同一 IP 短時間內的大量無 Session/Cookie 軌跡的請求，將其判定為爬蟲行為而阻擋。即便使用 `curl_cffi` 偽裝 TLS 指紋也無法完全避免。
+**解決方案與未來架構**:
+1. **短期防禦**: 目前已實作速率限制 (RateLimiter) 與亂數延遲 (`time.sleep`)。
+2. **Cookie 管理優化**: 確保 `curl_requests.Session` 能夠在 warm-up 失敗時妥善處理並繼承 WAF 挑戰 (Challenge) 所核發的 Cookie。
+3. **引入代理池 (Proxy Pool)**: 若未來爬蟲規模與頻率增加，**必須**導入動態代理池架構，分散來源 IP 以繞過單一 IP 的流量封鎖。
+
+---
 
 (請參閱 `PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`)
 

@@ -147,6 +147,12 @@
     *   **WAF 繞過與速率節流**: 成功修復 104 爬蟲，並為 `JobBoardService` 掛載 `RateLimiter`，解決爬蟲瞬間湧入大量資料導致 Gemini API 觸發 429 TooManyRequests 錯誤。
     *   **500 Internal Error 自癒**: 發現 `retry_utils` 漏接 500/502/504 伺服器錯誤的漏洞，將其納入指數退避重試白名單，並透過 `google.genai` SDK 實體驗證其異常字串物理格式，確保雲端不穩定時的系統韌性。
 
+8.  **排程系統重構與 UI 介面物理公證 (Ref: 07-14)**:
+    *   **報表命名 UX 優化**: 徹底修正 `report_service.py` 中的報表標題命名邏輯，從單一生成日期 (`2026-06-01`) 改為明確的資料區間 (`2026-05-25 ~ 2026-06-01`)，消滅使用者的時間認知斷層。
+    *   **UI 終端物理公證**: 糾正了長久以來的錯誤上下文。透過實體掃描前端元件，證實 **Port 5173 (`enduser-ui-fe`)** 才是日報、週報、系統警報 (archon_logs) 與行銷部落格的真實終端呈現處，而 3737 僅為單純的內部開發區。
+    *   **JobBoard 提示詞解耦**: 將 `job_board_service.py` 中的系統提示詞徹底從 Python 硬編碼中抽離，建立 `29_seed_job_board_prompts.sql` 交由資料庫動態管理，落實 Model SSOT 精神。
+    *   **動態環境變數防呆**: 為 `JobBoardService` 引入 `SettingsService` 動態配置與 `AgentRegistry` 績效歸屬機制，解決硬編碼的 N+1 Query 與 NoneType 報錯問題。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**

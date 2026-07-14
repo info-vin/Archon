@@ -137,7 +137,9 @@ class ReportService(BaseRepository):
                 logger.warning("ReportService: No projects found to attach summary task.")
                 return
 
-            task_title = f"[Daily Report] Executive Summary ({datetime.now().strftime('%Y-%m-%d')})"
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=1)
+            task_title = f"[Daily Report] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = (
                 f"昨日系統運行數據如下：\n\n{context_md}\n\n"
                 "請啟動星環群聊，協調 Alice, Bob, DevBot 進行討論，最後由 Supervisor (Charlie) 彙整並提供每日執行摘要報告。"
@@ -231,7 +233,9 @@ class ReportService(BaseRepository):
                 logger.warning("ReportService: No internal project found to attach weekly summary task.")
                 return
 
-            task_title = f"[Weekly Report] Executive Summary ({datetime.now().strftime('%Y-%m-%d')})"
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=7)
+            task_title = f"[Weekly Report] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = str(output)
 
             # Get Charlie's ID for assignment
@@ -312,7 +316,9 @@ class ReportService(BaseRepository):
                 logger.warning("ReportService: No projects found to attach monthly summary task.")
                 return
 
-            task_title = f"[Monthly Report] Executive Summary ({datetime.now().strftime('%Y-%m-%d')})"
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=30)
+            task_title = f"[Monthly Report] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = str(output)
 
             # Get Charlie's ID for assignment

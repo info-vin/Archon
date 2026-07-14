@@ -11,28 +11,28 @@ def test_is_hf_awake_boundary_conditions():
     """
     Test boundary conditions for Hugging Face Sleep Awareness (00:18 ~ 06:41 CST).
     """
-    # 00:17 CST -> Awake (True)
-    cst_00_17 = datetime(2026, 6, 8, 0, 17, tzinfo=timezone(timedelta(hours=8)))
+    # 20:34 CST -> Awake (True)
+    cst_20_34 = datetime(2026, 6, 8, 20, 34, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_00_17.astimezone(UTC)
+        mock_datetime.now.return_value = cst_20_34.astimezone(UTC)
         assert is_hf_awake() is True
 
-    # 00:18 CST -> Sleep (False)
-    cst_00_18 = datetime(2026, 6, 8, 0, 18, tzinfo=timezone(timedelta(hours=8)))
+    # 20:35 CST -> Sleep (False)
+    cst_20_35 = datetime(2026, 6, 8, 20, 35, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_00_18.astimezone(UTC)
+        mock_datetime.now.return_value = cst_20_35.astimezone(UTC)
         assert is_hf_awake() is False
 
-    # 06:41 CST -> Sleep (False)
-    cst_06_41 = datetime(2026, 6, 8, 6, 41, tzinfo=timezone(timedelta(hours=8)))
+    # 06:32 CST -> Sleep (False)
+    cst_06_32 = datetime(2026, 6, 8, 6, 32, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_06_41.astimezone(UTC)
+        mock_datetime.now.return_value = cst_06_32.astimezone(UTC)
         assert is_hf_awake() is False
 
-    # 06:42 CST -> Awake (True)
-    cst_06_42 = datetime(2026, 6, 8, 6, 42, tzinfo=timezone(timedelta(hours=8)))
+    # 06:33 CST -> Awake (True)
+    cst_06_33 = datetime(2026, 6, 8, 6, 33, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_06_42.astimezone(UTC)
+        mock_datetime.now.return_value = cst_06_33.astimezone(UTC)
         assert is_hf_awake() is True
 
 

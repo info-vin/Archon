@@ -78,7 +78,8 @@ def scan_file(file_path):
     return violations
 
 def main():
-    target_dir = Path("/Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src")
+    workspace_dir = Path(__file__).resolve().parent.parent.parent
+    target_dir = workspace_dir / "enduser-ui-fe" / "src"
     if len(sys.argv) > 1:
         target_dir = Path(sys.argv[1])
 
