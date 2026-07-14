@@ -45,6 +45,8 @@ class JobBoardService:
 
     def __init__(self):
         self.supabase = get_supabase_client()
+        from ..utils.rate_limiter import RateLimitConfig, RateLimiter
+        self.rate_limiter = RateLimiter(RateLimitConfig())
 
     async def _get_base_url(self) -> str:
         try:
@@ -172,7 +174,7 @@ class JobBoardService:
 
         leads_to_insert = []
         jobs_to_insert = []
-        
+
         # FIX N+1 SELECT: Bulk query existing URLs
         job_urls = [job.url for job in jobs if job.url]
         existing_urls = set()
@@ -212,7 +214,7 @@ class JobBoardService:
                 res = self.supabase.table("leads").insert(leads_to_insert).execute()
                 if res.data:
                     new_leads_count += len(res.data)
-                    
+
                     async def _log_action(job, content):
                         await stats_service.add_agent_action_log(
                             agent_name="Alice",
@@ -263,10 +265,11 @@ class JobBoardService:
                 title=job.title, company=job.company, desc=(job.description_full or job.description)
             )
 
-            @retry_with_backoff(max_retries=2)
+            @retry_with_backoff(max_retries=4, initial_delay=2.0)
             async def _call_gemini():
                 return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
 
+            await self.rate_limiter.acquire(estimated_tokens=400)
             response = await _call_gemini()
             return str(response.text).strip() if response.text else f"Hiring for {job.title}"
         except Exception as e:
