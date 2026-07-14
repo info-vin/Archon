@@ -46,18 +46,36 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.repositories.base_repository.get_supabase_client")
 @patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
+@patch("src.server.services.text_to_speech_service.text_to_speech_service", new_callable=AsyncMock)
+@patch("src.agents.nexus_oracle_agent.NexusOracleAgent.run", new_callable=AsyncMock)
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
-async def test_run_weekly_executive_summary_success(mock_gather, mock_beta_graph, mock_get_supabase, mock_task_service):
+async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run, mock_tts, mock_beta_graph, mock_get_supabase, mock_task_service):
     """
-    Test that weekly executive summary executes Map-Reduce, creates task,
+    Test that weekly executive summary executes Map-Reduce, Oracle, TTS, creates task,
     and updates status to done.
     """
     mock_gather.return_value = "Mocked Context for Weekly"
+    
+    class MockOracleData:
+        health_score = 95
+        system_status = "GREEN"
+        main_bottleneck = "No issues"
+        class MockTrends:
+            monthly_budget_forecast = "Under budget"
+            roi_trend = "Positive"
+        long_term_trends = MockTrends()
+        recommended_actions = []
+        
+    class MockOracleResult:
+        data = MockOracleData()
+    mock_oracle_run.return_value = MockOracleResult()
 
     class MockResult:
         def __init__(self, output):
             self.output = output
     mock_beta_graph.run.return_value = MockResult("Mocked Weekly Map-Reduce Output")
+    
+    mock_tts.generate_audio.return_value = "https://mock.supabase.co/storage/audio.mp3"
 
     mock_supabase = MagicMock()
     report_service.supabase_client = mock_supabase
@@ -80,13 +98,24 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_beta_graph
     await report_service.generate_weekly_executive_summary()
 
     mock_gather.assert_awaited_once_with(7)
+    mock_oracle_run.assert_awaited_once()
     mock_beta_graph.run.assert_awaited_once()
+    mock_tts.generate_audio.assert_awaited_once_with("Mocked Weekly Map-Reduce Output")
     mock_task_service.create_task.assert_awaited_once()
     mock_task_service.update_task.assert_awaited_once_with("test-task-weekly", {"status": "done"})
+
+    # Check state injection
+    state_arg = mock_beta_graph.run.call_args.kwargs["state"]
+    prompt_content = state_arg.shared.messages[0]["content"]
+    assert "Mocked Context for Weekly" in prompt_content
+    assert "Nexus Oracle Insight" in prompt_content
+    assert "95" in prompt_content
+    assert "GREEN" in prompt_content
 
     call_kwargs = mock_task_service.create_task.call_args.kwargs
     assert "[Weekly Report] Executive Summary" in call_kwargs["title"]
     assert "Mocked Weekly Map-Reduce Output" in call_kwargs["description"]
+    assert "🎧 **Listen to Podcast**: [Audio Link](https://mock.supabase.co/storage/audio.mp3)" in call_kwargs["description"]
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)

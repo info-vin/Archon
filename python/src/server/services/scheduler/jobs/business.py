@@ -118,36 +118,48 @@ async def run_monthly_executive_summary():
 
 
 async def analyze_token_usage():
-    """Token Usage Analysis & Proactive Alerting (Phase 4.6.46: Proactive)"""
-    logger.info("🤖 Clockwork: Starting Token Usage Analysis...")
+    """Token Usage Analysis & Proactive Alerting (Phase 6.1: Cost Sentinel)"""
+    logger.info("🤖 Clockwork: Starting Token Usage Analysis & Cost Sentinel...")
     try:
+        from src.server.services.system.telegram_service import telegram_service
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
-        # Physical Fix: table is token_usage
-        res = (
+        seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
+        
+        # 1. Daily Analysis
+        res_daily = (
             supabase.table("token_usage")
             .select("input_tokens, output_tokens, cost_usd")
             .gt("created_at", one_day_ago)
             .execute()
         )
-        data = res.data or []
-
-        total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data)
-        total_cost = sum(float(row.get("cost_usd", 0)) for row in data)
-
-        # 1. INFO Log
+        data_daily = res_daily.data or []
+        total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data_daily)
+        total_cost = sum(float(row.get("cost_usd", 0)) for row in data_daily)
         logger.info(f"📊 Daily Token Analysis: {total_tokens} physical tokens, ${total_cost:.4f} USD.")
 
-        # 2. PROACTIVE ALERT (Restored Milestone)
-        # Alert if cost exceeds threshold (Default $1.0)
-        cost_threshold = 1.0
-        if total_cost > cost_threshold:
+        # 2. Phase 6.1 Cost Sentinel (7-day check)
+        res_weekly = (
+            supabase.table("token_usage")
+            .select("cost_usd")
+            .gt("created_at", seven_days_ago)
+            .execute()
+        )
+        data_weekly = res_weekly.data or []
+        weekly_cost = sum(float(row.get("cost_usd", 0)) for row in data_weekly)
+        
+        cost_threshold = 0.05
+        if weekly_cost > cost_threshold:
+            msg = f"[CRITICAL] Weekly Budget Exceeded: ${weekly_cost:.4f} USD (Threshold: ${cost_threshold:.2f} USD)"
+            logger.error(f"💰 Sentinel: {msg}")
+            await telegram_service.send_message(msg)
+            
             supabase.table("archon_logs").insert(
                 {
                     "source": "sentinel-cost",
                     "level": "ALERT",
-                    "message": f"💰 Cost Spike Detected: 24h spend ${total_cost:.2f} > threshold ${cost_threshold:.2f}",
-                    "details": {"total_cost": total_cost, "total_tokens": total_tokens, "request_count": len(data)},
+                    "message": msg,
+                    "details": {"weekly_cost": weekly_cost, "threshold": cost_threshold},
                 }
             ).execute()
 
@@ -161,7 +173,8 @@ async def analyze_token_usage():
                     "period": "24h",
                     "total_tokens": total_tokens,
                     "total_cost": total_cost,
-                    "request_count": len(data),
+                    "weekly_cost": weekly_cost,
+                    "request_count": len(data_daily),
                 },
             }
         ).execute()
