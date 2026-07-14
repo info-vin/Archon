@@ -1,5 +1,7 @@
 import os
+
 import httpx
+
 from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
@@ -12,7 +14,7 @@ class TelegramService:
 
     async def send_message(self, text: str, parse_mode: str = "Markdown") -> bool:
         """Sends a message via Telegram Bot API."""
-        if not self.bot_token or not self.chat_id:
+        if not self.bot_token or not self.chat_id or not self.api_url:
             logger.warning("TelegramService: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured. Skipping alert.")
             return False
 

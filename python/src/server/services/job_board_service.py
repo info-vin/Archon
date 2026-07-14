@@ -43,6 +43,42 @@ class JobBoardService:
     DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
     DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
 
+    @staticmethod
+    def _cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
+        import math
+        dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
+        norm1 = math.sqrt(sum(a * a for a in vec1))
+        norm2 = math.sqrt(sum(b * b for b in vec2))
+        return dot / (norm1 * norm2) if norm1 and norm2 else 0.0
+
+    async def _get_baseline_embedding(self) -> list[float] | None:
+        if getattr(self, "_baseline_embedding_cache", None) is not None:
+            return self._baseline_embedding_cache # type: ignore
+
+        import os
+
+        from ..services.embeddings.embedding_service import create_embedding
+
+        # Read AGENTS.md
+        # Using correct path for docker/local context (root dir)
+        agents_md_path = os.path.join(os.getcwd(), "AGENTS.md")
+        if not os.path.exists(agents_md_path):
+            agents_md_path = os.path.join(os.getcwd(), "..", "AGENTS.md")
+
+        try:
+            with open(agents_md_path, encoding="utf-8") as f:
+                content = f.read()
+                # Extract the core capabilities (MCP Tools Available) to avoid embedding too much noise
+                if "## MCP Tools Available" in content:
+                    core_text = "Archon Core Capabilities:\n" + content.split("## MCP Tools Available")[1][:2000]
+                else:
+                    core_text = content[:2000]
+                self._baseline_embedding_cache = await create_embedding(core_text)
+                return self._baseline_embedding_cache
+        except Exception as e:
+            logger.error(f"Failed to read or embed AGENTS.md: {e}")
+            return None
+
     def __init__(self):
         self.supabase = get_supabase_client()
         from ..utils.rate_limiter import RateLimitConfig, RateLimiter
@@ -203,18 +239,44 @@ class JobBoardService:
             except Exception as e:
                 logger.error(f"Failed to fetch existing leads: {e}")
 
+        baseline_embedding = await self._get_baseline_embedding()
+
         for job in jobs:
             if job.url in existing_urls:
                 continue
 
             try:
+                identified_need = job.identified_need or await self._infer_need(job)
+
+                # RAG Vector Matching
+                if baseline_embedding:
+                    from ..services.embeddings.embedding_service import create_embedding
+                    from ..services.settings_service import SettingsService
+                    need_embedding = await create_embedding(identified_need)
+                    if need_embedding:
+                        sim = self._cosine_similarity(baseline_embedding, need_embedding)
+                        settings = SettingsService(self.supabase)
+                        try:
+                            threshold = float(str(settings.get_setting("LEAD_GEN_SIMILARITY_THRESHOLD", "0.65") or "0.65"))
+                        except (ValueError, TypeError):
+                            threshold = 0.65
+
+                        if sim < threshold:
+                            # Log discarded
+                            self.supabase.table("archon_logs").insert({
+                                "source": "job_board_service_rag",
+                                "level": "DEBUG",
+                                "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
+                            }).execute()
+                            continue
+
                 lead_data = {
                     "company_name": job.company,
                     "job_title": job.title,
                     "description_snippet": job.description[:500] if job.description else None,
                     "source_job_url": job.url,
                     "status": "new",
-                    "identified_need": job.identified_need or await self._infer_need(job),
+                    "identified_need": identified_need,
                 }
                 leads_to_insert.append(lead_data)
                 jobs_to_insert.append(job)

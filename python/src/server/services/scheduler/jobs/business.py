@@ -125,7 +125,7 @@ async def analyze_token_usage():
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
-        
+
         # 1. Daily Analysis
         res_daily = (
             supabase.table("token_usage")
@@ -147,13 +147,13 @@ async def analyze_token_usage():
         )
         data_weekly = res_weekly.data or []
         weekly_cost = sum(float(row.get("cost_usd", 0)) for row in data_weekly)
-        
+
         cost_threshold = 0.05
         if weekly_cost > cost_threshold:
             msg = f"[CRITICAL] Weekly Budget Exceeded: ${weekly_cost:.4f} USD (Threshold: ${cost_threshold:.2f} USD)"
             logger.error(f"💰 Sentinel: {msg}")
             await telegram_service.send_message(msg)
-            
+
             supabase.table("archon_logs").insert(
                 {
                     "source": "sentinel-cost",

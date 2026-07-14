@@ -55,7 +55,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
     and updates status to done.
     """
     mock_gather.return_value = "Mocked Context for Weekly"
-    
+
     class MockOracleData:
         health_score = 95
         system_status = "GREEN"
@@ -65,16 +65,14 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
             roi_trend = "Positive"
         long_term_trends = MockTrends()
         recommended_actions = []
-        
-    class MockOracleResult:
-        data = MockOracleData()
-    mock_oracle_run.return_value = MockOracleResult()
+
+    mock_oracle_run.return_value = MockOracleData()
 
     class MockResult:
         def __init__(self, output):
             self.output = output
     mock_beta_graph.run.return_value = MockResult("Mocked Weekly Map-Reduce Output")
-    
+
     mock_tts.generate_audio.return_value = "https://mock.supabase.co/storage/audio.mp3"
 
     mock_supabase = MagicMock()

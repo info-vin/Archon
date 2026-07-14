@@ -18,7 +18,7 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from src.server.config.logfire_config import get_logger
-from src.server.services.scheduler.jobs import business, patrol, task_dispatcher
+from src.server.services.scheduler.jobs import business, patrol, patrol_infra, task_dispatcher
 
 logger = get_logger(__name__)
 
@@ -254,7 +254,6 @@ class SchedulerService:
         # --- Category 2: Stateful Daily Jobs (5-35 mins) ---
         await self._schedule_stateful_daily(self._cleanup_system_probes, "system_probe_cleanup", 5, 7, 20)
         await self._schedule_stateful_daily(self._run_auto_fetch_leads, "alice_auto_fetch", 6, 7, 0)
-        await self._schedule_stateful_daily(self._run_infrastructure_audit, "infrastructure_audit", 8, 7, 10)
         await self._schedule_stateful_daily(self._run_daily_market_report, "bob_market_report", 10, 7, 40)
         await self._schedule_stateful_daily(self._run_prune_stale_leads, "prune_stale_leads", 15, 7, 20)
         await self._schedule_stateful_daily(self._analyze_token_usage, "token_analysis", 20, 8, 20)
@@ -266,6 +265,7 @@ class SchedulerService:
         await self._schedule_stateful_monthly(self._run_monthly_executive_summary, "monthly_executive_summary", 42, 1, 9, 0)
 
         # --- Category 4: Stateful Bi-weekly Maintenance (45-50 mins) ---
+        await self._schedule_stateful_biweekly(self._run_infrastructure_audit, "infrastructure_audit", 48, "sat", 7, 10)
         await self._schedule_stateful_biweekly(self._run_api_deprecation_scan, "api_deprecation_scan", 50, "sat", 9, 0)
 
         self._scheduler.remove_job("tech_debt_audit") if self._scheduler.get_job("tech_debt_audit") else None
@@ -288,7 +288,7 @@ class SchedulerService:
         await patrol.run_model_verification()
 
     async def _run_infrastructure_audit(self):
-        await patrol.run_infrastructure_audit()
+        await patrol_infra.run_infrastructure_audit()
 
     async def _run_prune_stale_leads(self):
         await business.run_prune_stale_leads()

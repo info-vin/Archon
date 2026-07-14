@@ -1,6 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from src.server.services.scheduler.jobs.patrol import run_infrastructure_audit
+
+from src.server.services.scheduler.jobs.patrol_infra import run_infrastructure_audit
+
 
 @pytest.mark.asyncio
 @patch("src.server.utils.get_supabase_client")
@@ -20,21 +23,26 @@ async def test_run_infrastructure_audit_success(mock_getenv, mock_get, mock_repo
     mock_resp = MagicMock()
     mock_resp.status_code = 200
     mock_get.return_value = mock_resp
-    
+
     mock_supabase = MagicMock()
     mock_get_supabase.return_value = mock_supabase
-    
+
     mock_repo = MagicMock()
     mock_repo_class.return_value = mock_repo
-    
+
     class MockCount:
         count = 10
-    mock_repo.execute_query.return_value = (True, MockCount())
-    
+        data = 100.0
+
+    mock_repo.execute_query.side_effect = [
+        (True, MockCount()), # Check Supabase Connections
+        (True, MockCount()), # Get DB Size
+    ]
+
     await run_infrastructure_audit()
-    
+
     assert mock_get.call_count == 2
-    mock_repo.execute_query.assert_called_once()
+    assert mock_repo.execute_query.call_count == 2
 
 
 @pytest.mark.asyncio
@@ -55,23 +63,25 @@ async def test_run_infrastructure_audit_failure(mock_getenv, mock_get, mock_repo
     mock_resp = MagicMock()
     mock_resp.status_code = 503
     mock_get.return_value = mock_resp
-    
+
     mock_supabase = MagicMock()
     mock_get_supabase.return_value = mock_supabase
-    
+
     mock_repo = MagicMock()
     mock_repo_class.return_value = mock_repo
-    
+
     class MockCount:
         count = 60
-    
+        data = 100.0
+
     mock_repo.execute_query.side_effect = [
-        (True, MockCount()),
-        (True, None) 
+        (True, MockCount()), # Check Supabase Connections
+        (True, MockCount()), # Get DB Size
+        (True, None)         # Log infra errors
     ]
-    
+
     await run_infrastructure_audit()
-    
-    assert mock_repo.execute_query.call_count == 2
-    log_call = mock_repo.execute_query.call_args_list[1]
+
+    assert mock_repo.execute_query.call_count == 3
+    log_call = mock_repo.execute_query.call_args_list[2]
     assert "Log infra errors" in str(log_call)
