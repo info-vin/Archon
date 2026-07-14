@@ -112,6 +112,9 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
           onClick={() => !disabled && setIsOpen(!isOpen)}
           className={`w-full flex items-center justify-between px-3 py-2 border border-border rounded-md bg-input text-sm text-left focus:outline-none focus:ring-2 focus:ring-ring ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           disabled={disabled}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-controls="knowledge-dropdown"
         >
           <span className={selectedIds.length === 0 ? "text-muted-foreground" : "text-foreground"}>
             {selectedIds.length === 0 
@@ -123,7 +126,7 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-hidden flex flex-col">
+          <div id="knowledge-dropdown" role="listbox" aria-label="Available knowledge items" className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-hidden flex flex-col">
             <div className="p-2 border-b border-border">
               <input
                 type="text"
@@ -147,6 +150,8 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
                     <button
                       key={item.source_id}
                       type="button"
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => toggleItem(item.source_id)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-accent transition-colors ${isSelected ? 'bg-accent/50' : ''}`}
                     >
