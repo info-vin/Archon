@@ -25,7 +25,16 @@ T = TypeVar("T")
 def _is_rate_limit_or_overloaded(e: Exception) -> bool:
     """Check if the exception is a 429 Rate Limit or 503 Overloaded error."""
     err_msg = str(e).lower()
-    is_retryable = "429" in err_msg or "rate limit" in err_msg or "503" in err_msg or "overloaded" in err_msg
+    is_retryable = (
+        "429" in err_msg
+        or "rate limit" in err_msg
+        or "503" in err_msg
+        or "overloaded" in err_msg
+        or "500" in err_msg
+        or "internal server error" in err_msg
+        or "502" in err_msg
+        or "504" in err_msg
+    )
     if is_retryable:
         logger.warning(f"API Rate Limit/Overloaded encountered. Triggering backoff. Details: {str(e)[:100]}")
     return is_retryable
