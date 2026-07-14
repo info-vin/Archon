@@ -143,6 +143,10 @@
     *   **觸覺與聽覺 (Juice)**: 新增 `BGMPlayer` 播放授權神曲《Ganxta》；透過 `Tween` 實作選中卡牌時的快速物理抖動 (Elastic Shake)，並同步播放清脆的翻牌音效。
     *   **無頭截圖公證**: 強化 `MainMenu_Screenshotter.gd`，支援動畫延遲等待，成功於無頭環境中截取包含全新 `gem_*.png` 美術圖的正確 UI 狀態。
 
+7.  **104 爬蟲與 Gemini API 防護硬化 (Ref: 07-14)**:
+    *   **WAF 繞過與速率節流**: 成功修復 104 爬蟲，並為 `JobBoardService` 掛載 `RateLimiter`，解決爬蟲瞬間湧入大量資料導致 Gemini API 觸發 429 TooManyRequests 錯誤。
+    *   **500 Internal Error 自癒**: 發現 `retry_utils` 漏接 500/502/504 伺服器錯誤的漏洞，將其納入指數退避重試白名單，並透過 `google.genai` SDK 實體驗證其異常字串物理格式，確保雲端不穩定時的系統韌性。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
