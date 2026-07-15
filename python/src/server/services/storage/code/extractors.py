@@ -2,9 +2,8 @@
 Logic for extracting code blocks from markdown content using regex and pattern matching.
 """
 
-import os
 import re
-from typing import Any, cast
+from typing import Any
 
 from src.server.config.logfire_config import search_logger
 
@@ -88,22 +87,22 @@ def extract_code_blocks_logic(markdown_content: str, min_length: int | None = No
     Restored with FULL Jules Performance Optimizations.
     """
     try:
-        from src.server.services.credential_service import credential_service
+        from src.server.schemas.settings import CodeExtractionConfig
+        from src.server.services.settings_service import SettingsService
+        from src.server.utils import get_supabase_client
 
-        def _get_setting_fallback(key: str, default: str) -> str:
-            if credential_service._cache_initialized and key in credential_service._cache:
-                return cast(str, credential_service._cache[key])
-            return os.getenv(key, default)
+        settings_service = SettingsService(get_supabase_client())
+        config = CodeExtractionConfig.model_validate(settings_service.get_all_settings())
 
         if min_length is None:
-            min_length = int(_get_setting_fallback("MIN_CODE_BLOCK_LENGTH", "250"))
+            min_length = config.min_code_block_length
 
-        max_length = int(_get_setting_fallback("MAX_CODE_BLOCK_LENGTH", "5000"))
-        enable_prose_filtering = _get_setting_fallback("ENABLE_PROSE_FILTERING", "true").lower() == "true"
-        max_prose_ratio = float(_get_setting_fallback("MAX_PROSE_RATIO", "0.15"))
-        min_code_indicators = int(_get_setting_fallback("MIN_CODE_INDICATORS", "3"))
-        enable_diagram_filtering = _get_setting_fallback("ENABLE_DIAGRAM_FILTERING", "true").lower() == "true"
-        context_window_size = int(_get_setting_fallback("CONTEXT_WINDOW_SIZE", "1000"))
+        max_length = config.max_code_block_length
+        enable_prose_filtering = config.enable_prose_filtering
+        max_prose_ratio = config.max_prose_ratio
+        min_code_indicators = config.min_code_indicators
+        enable_diagram_filtering = config.enable_diagram_filtering
+        context_window_size = config.context_window_size
 
     except Exception as e:
         search_logger.warning(f"Failed to get code extraction settings: {e}, using defaults")

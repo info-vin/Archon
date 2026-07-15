@@ -30,10 +30,15 @@ async def create_info_request_task_logic(
             description += f"**Related Lead**: {lead_id}"
 
         # 2. Get Project ID Dynamically (Phase 4.6.23 Hardening)
+        from src.server.schemas.settings import ProjectConfig
         from src.server.services.settings_service import SettingsService
 
         settings = SettingsService(task_service_instance.supabase_client)
-        project_id = settings.get_setting("default_business_project")
+        try:
+            config = ProjectConfig.model_validate(settings.get_all_settings())
+        except Exception:
+            config = ProjectConfig()
+        project_id = config.default_business_project
 
         # Fallback logic: if no setting, find the first available project
         if not project_id:

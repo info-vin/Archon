@@ -72,10 +72,17 @@ class EnrichmentService:
 
             settings_service = SettingsService(supabase)
 
-            # Fetch rules (with defaults)
-            score_vital = int(settings_service.get_setting("SCORING_VITAL_CONTACT", "20") or "20")
-            score_funding = int(settings_service.get_setting("SCORING_NEWS_FUNDING", "30") or "30")
-            score_job = int(settings_service.get_setting("SCORING_HAS_JOB_URL", "15") or "15")
+            # Fetch rules (with defaults via SSOT)
+            from ..schemas.settings import EnrichmentConfig
+            try:
+                config = EnrichmentConfig.model_validate(settings_service.get_all_settings())
+            except Exception as e:
+                logger.warning(f"Failed to parse EnrichmentConfig, using defaults: {e}")
+                config = EnrichmentConfig()
+
+            score_vital = config.scoring_vital_contact
+            score_funding = config.scoring_news_funding
+            score_job = config.scoring_has_job_url
 
             base_score = 20  # Baseline for existing
             if mock_email:

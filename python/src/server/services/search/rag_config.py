@@ -2,24 +2,18 @@ import os
 
 
 def get_setting(key: str, default: str = "false") -> str:
-    """Get a setting from the credential service or fall back to environment variable."""
+    """Get a setting from credential service (deprecated, use RagConfig)."""
     try:
-        from ..credential_service import credential_service
+        from src.server.schemas.settings import RagConfig
+        from src.server.services.settings_service import SettingsService
+        from src.server.utils import get_supabase_client
 
-        if hasattr(credential_service, "_cache") and credential_service._cache_initialized:
-            cached_value = credential_service._cache.get(key)
-            if isinstance(cached_value, dict) and cached_value.get("is_encrypted"):
-                encrypted_value = cached_value.get("encrypted_value")
-                if encrypted_value:
-                    try:
-                        from src.server.services.credentials.crypto_utils import CryptoUtils
-
-                        return CryptoUtils.decrypt_value(encrypted_value)
-                    except Exception:
-                        pass
-            elif cached_value:
-                return str(cached_value)
-        # Fallback to environment variable
+        settings_service = SettingsService(get_supabase_client())
+        config = RagConfig.model_validate(settings_service.get_all_settings())
+        if key == "AGENTS_ENABLED":
+            return str(config.agents_enabled)
+        elif key == "USE_RERANKING":
+            return str(config.use_reranking)
         return os.getenv(key, default)
     except Exception:
         return os.getenv(key, default)

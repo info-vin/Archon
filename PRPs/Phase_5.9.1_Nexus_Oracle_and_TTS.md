@@ -13,6 +13,7 @@
   - 實作 `Librarian_TTS` 整合至 `report_service.py`。
   - 將產生好的週報文字，透過 `beta_graph` 的 `text_to_speech_service` 轉換為廣播音檔 (Podcast)。
   - 在最終的工作任務描述 (Task Description) 中附加音檔下載連結，提供聽覺化的戰情摘要。
+  - **架構硬化**: 導入 Pydantic `TTSConfig` 作為單一事實來源 (SSOT)，消除硬編碼的 `TTS_TRUNCATION_LIMIT` (預設 4000)，確保配置型別安全。
 
 ## 🛡️ 驗證與公證 (Verification)
 - `[x]` 透過自動化測試驗證 `NexusOracleAgent` 與 TTS 服務的回呼流程。

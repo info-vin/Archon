@@ -12,11 +12,16 @@
   - 實體對帳：使用資料庫的 `token_usage` 紀錄進行物理計算，絕不盲猜。
 
 - `[x]` **基礎設施巡檢 (Infrastructure Patrol)**:
-  - 於 `patrol.py` 實作 `run_infrastructure_audit`。
+  - 於 `patrol_infra.py` 實作 `run_infrastructure_audit`。
   - **Vercel**: 發送 HTTP GET 請求至前端 URL，確保無 500+ 錯誤。
   - **Supabase**: 執行原生 SQL (`pg_stat_activity`) 計算活躍連線數，避免連線數爆表 (>50 觸發警告)。
   - **Hugging Face**: 定期呼叫 Endpoint，防止 Serverless 機制陷入深眠導致 503/504 Timeout。
   - 於 `scheduler_service.py` 註冊為每日自動執行之常駐工作。
+
+- `[x]` **排程器防禦與架構硬化 (Pydantic SSOT)**:
+  - 引入 `BudgetConfig`, `TaskDispatcherConfig` 等 Pydantic 模型，徹底拔除排程模組 (`business.py`, `task_dispatcher.py`) 中的魔法數字與硬編碼。
+  - 修正 `patrol.py` 中寫死的 Docker 實體路徑 (`/app/PRPs`)，改採多路徑陣列探測法以支援跨平台 (Docker/macOS) 開發環境。
+  - 實施實體對帳，將所有裸奔的 Supabase API (`insert`, `update`) 呼叫，封裝入 `BaseRepository.execute_query` 以獲得全局連線自癒能力。
 
 ## 🛡️ 驗證與公證 (Verification)
 - `[x]` 撰寫 `test_telegram_cost_sentinel.py` 確保 Telegram 告警邏輯與金額計算門檻正確。

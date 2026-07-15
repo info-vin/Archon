@@ -187,14 +187,16 @@ class JobBoardService:
         from ..services.settings_service import SettingsService
         settings = SettingsService(self.supabase)
 
-        kw_string = settings.get_setting("CRAWLER_JOB_KEYWORDS", "Python,AI,Marketing,Sales")
-        keywords = [k.strip() for k in str(kw_string).split(",")]
-
         try:
-            limit_setting = settings.get_setting("CRAWLER_JOB_LIMIT", "4")
-            limit = int(limit_setting) if limit_setting is not None else 4
-        except (ValueError, TypeError):
-            limit = 4
+            from ..schemas.settings import CrawlerJobConfig
+            config = CrawlerJobConfig.model_validate(settings.get_all_settings())
+        except Exception as e:
+            logger.warning(f"Failed to parse CrawlerJobConfig, falling back to defaults: {e}")
+            from ..schemas.settings import CrawlerJobConfig
+            config = CrawlerJobConfig()
+
+        keywords = [k.strip() for k in config.crawler_job_keywords.split(",")]
+        limit = config.crawler_job_limit
 
         for keyword in keywords:
             try:
@@ -251,15 +253,18 @@ class JobBoardService:
                 # RAG Vector Matching
                 if baseline_embedding:
                     from ..services.embeddings.embedding_service import create_embedding
-                    from ..services.settings_service import SettingsService
                     need_embedding = await create_embedding(identified_need)
                     if need_embedding:
                         sim = self._cosine_similarity(baseline_embedding, need_embedding)
-                        settings = SettingsService(self.supabase)
+                        from ..schemas.settings import CrawlerJobConfig
+                        from ..services.settings_service import SettingsService
                         try:
-                            threshold = float(str(settings.get_setting("LEAD_GEN_SIMILARITY_THRESHOLD", "0.65") or "0.65"))
-                        except (ValueError, TypeError):
-                            threshold = 0.65
+                            settings = SettingsService(self.supabase)
+                            config = CrawlerJobConfig.model_validate(settings.get_all_settings())
+                        except Exception:
+                            config = CrawlerJobConfig()
+
+                        threshold = config.lead_gen_similarity_threshold
 
                         if sim < threshold:
                             # Log discarded

@@ -296,16 +296,26 @@ class ReportService(BaseRepository):
             from src.agents.workflow.engine_beta_graph import BetaState, beta_graph
             from src.agents.workflow.state import SharedState
             from src.server.services.projects.task_service import task_service
+            from src.server.services.prompt_service import prompt_service
 
             # 1. Gather 30-day context
             context_md = await self.gather_report_context(30)
 
+            # 1.5 Phase 6.1: Nexus Oracle Injection (Delegated)
+            from src.server.services.report_enrichment_service import report_enrichment_service
+            context_md = await report_enrichment_service.inject_nexus_oracle_insights(context_md)
+
             # 2. Initialize State with context as first message
             state = BetaState(shared=SharedState())
+
+            default_monthly_prompt = "這是過去 30 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。"
+            prompt_template = prompt_service.get_prompt("MONTHLY_EXECUTIVE_SUMMARY", default=default_monthly_prompt)
+            prompt_content = prompt_template.replace("{context_md}", context_md)
+
             state.shared.messages = [
                 {
                     "role": "user",
-                    "content": f"這是過去 30 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。",
+                    "content": prompt_content,
                 }
             ]
 
@@ -327,6 +337,9 @@ class ReportService(BaseRepository):
             start_date = end_date - timedelta(days=30)
             task_title = f"[Monthly Report] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = str(output)
+
+            # 3.5 Phase 6.1: TTS Podcast Generation (Delegated)
+            task_desc = await report_enrichment_service.attach_podcast_audio(task_desc)
 
             # Get Charlie's ID for assignment
             success, charlie_res = self.execute_query(

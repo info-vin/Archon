@@ -11,7 +11,6 @@ from typing import Any
 
 from src.server.config.logfire_config import safe_logfire_error
 from src.server.repositories.base_repository import BaseRepository
-from src.server.services.credential_service import credential_service
 from src.server.services.storage.code_storage_service import (
     add_code_examples_to_supabase,
     generate_code_summaries_batch,
@@ -36,44 +35,40 @@ class CodeExtractionService(BaseRepository):
         super().__init__(supabase_client)
         self._settings_cache = {}
 
-    async def _get_setting(self, key: str, default: Any) -> Any:
-        if key in self._settings_cache:
-            return self._settings_cache[key]
-        try:
-            val = await credential_service.get_credential(key, default)
-            if isinstance(default, bool):
-                val = str(val).lower() == "true" if val is not None else default
-            elif isinstance(default, int):
-                val = int(val) if val is not None else default
-            elif isinstance(default, float):
-                val = float(val) if val is not None else default
-            self._settings_cache[key] = val
-            return val
-        except Exception as e:
-            safe_logfire_error(f"Setting {key} error: {e}")
-            return default
+    async def _get_config(self):
+        if not hasattr(self, "_config_cache"):
+            from src.server.schemas.settings import CodeExtractionConfig
+            from src.server.services.settings_service import SettingsService
+            try:
+                settings_service = SettingsService(self.supabase_client)
+                self._config_cache = CodeExtractionConfig.model_validate(settings_service.get_all_settings())
+            except Exception as e:
+                from src.server.config.logfire_config import safe_logfire_error
+                safe_logfire_error(f"Failed to parse CodeExtractionConfig: {e}")
+                self._config_cache = CodeExtractionConfig()
+        return self._config_cache
 
     # --- Setting Accessors ---
     async def _get_min_code_length(self) -> int:
-        return int(await self._get_setting("MIN_CODE_BLOCK_LENGTH", 250))
+        return int((await self._get_config()).min_code_block_length)
 
     async def _get_max_code_length(self) -> int:
-        return int(await self._get_setting("MAX_CODE_BLOCK_LENGTH", 5000))
+        return int((await self._get_config()).max_code_block_length)
 
     async def _is_prose_filtering_enabled(self) -> bool:
-        return bool(await self._get_setting("ENABLE_PROSE_FILTERING", True))
+        return bool((await self._get_config()).enable_prose_filtering)
 
     async def _get_max_prose_ratio(self) -> float:
-        return float(await self._get_setting("MAX_PROSE_RATIO", 0.15))
+        return float((await self._get_config()).max_prose_ratio)
 
     async def _get_min_code_indicators(self) -> int:
-        return int(await self._get_setting("MIN_CODE_INDICATORS", 3))
+        return int((await self._get_config()).min_code_indicators)
 
     async def _is_diagram_filtering_enabled(self) -> bool:
-        return bool(await self._get_setting("ENABLE_DIAGRAM_FILTERING", True))
+        return bool((await self._get_config()).enable_diagram_filtering)
 
     async def _is_contextual_length_enabled(self) -> bool:
-        return bool(await self._get_setting("ENABLE_CONTEXTUAL_LENGTH", True))
+        return bool((await self._get_config()).enable_contextual_length)
 
     async def extract_and_store_code_examples(
         self,
@@ -243,7 +238,7 @@ class CodeExtractionService(BaseRepository):
         )
 
     async def _generate_code_summaries(self, blocks, callback, start, end, cancel) -> list[dict[str, str]]:
-        if not await self._get_setting("ENABLE_CODE_SUMMARIES", True):
+        if not (await self._get_config()).enable_code_summaries:
             return [{"example_name": "Code", "summary": "Demo"}] * len(blocks)
         return await generate_code_summaries_batch([b["block"] for b in blocks], 3, progress_callback=callback)
 

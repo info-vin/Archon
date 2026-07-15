@@ -67,7 +67,8 @@ class TestRAGService:
 
     def test_get_bool_setting(self, rag_service):
         """Test boolean settings retrieval"""
-        with patch.dict("os.environ", {"USE_RERANKING": "true"}):
+        with patch("src.server.services.settings_service.SettingsService.get_all_settings") as mock_settings:
+            mock_settings.return_value = {"USE_RERANKING": True}
             result = rag_service.get_bool_setting("USE_RERANKING", False)
             assert result is True
 
@@ -412,14 +413,16 @@ class TestRAGConfiguration:
         return RAGService(supabase_client=mock_client)
 
     def test_environment_variable_settings(self, rag_service):
-        """Test reading settings from environment variables"""
-        with patch.dict(
-            "os.environ",
-            {"USE_HYBRID_SEARCH": "true", "USE_RERANKING": "false", "USE_AGENTIC_RAG": "true"},
-        ):
-            assert rag_service.get_bool_setting("USE_HYBRID_SEARCH") is True
-            assert rag_service.get_bool_setting("USE_RERANKING") is False
-            assert rag_service.get_bool_setting("USE_AGENTIC_RAG") is True
+        """Test reading settings from SSOT/environment variables"""
+        with patch("src.server.services.settings_service.SettingsService.get_all_settings") as mock_settings:
+            mock_settings.return_value = {"USE_RERANKING": False}
+            with patch.dict(
+                "os.environ",
+                {"USE_HYBRID_SEARCH": "true", "USE_AGENTIC_RAG": "true"},
+            ):
+                assert rag_service.get_bool_setting("USE_HYBRID_SEARCH") is True
+                assert rag_service.get_bool_setting("USE_RERANKING") is False
+                assert rag_service.get_bool_setting("USE_AGENTIC_RAG") is True
 
     def test_default_settings(self, rag_service):
         """Test default settings when environment variables not set"""

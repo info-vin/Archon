@@ -120,10 +120,17 @@ class LeadHandler:
             from ..settings_service import SettingsService
 
             settings = SettingsService(self.supabase_client)
-            w_strat = int(settings.get_setting("SCORE_STRATEGIC") or "95")
-            w_tech = int(settings.get_setting("SCORE_TECHNICAL") or "85")
-            w_ops = int(settings.get_setting("SCORE_OPERATIONAL") or "70")
-            w_base = int(settings.get_setting("SCORE_BASE") or "40")
+            from ...schemas.settings import LeadScoringConfig
+            try:
+                config = LeadScoringConfig.model_validate(settings.get_all_settings())
+            except Exception as e:
+                logger.warning(f"Failed to parse LeadScoringConfig, using defaults: {e}")
+                config = LeadScoringConfig()
+
+            w_strat = config.score_strategic
+            w_tech = config.score_technical
+            w_ops = config.score_operational
+            w_base = config.score_base
 
             title = str(job_title or "").upper()
             if any(kw in title for kw in ["DIRECTOR", "VP", "HEAD", "CHIEF", "ARCHITECT", "FOUNDER"]):

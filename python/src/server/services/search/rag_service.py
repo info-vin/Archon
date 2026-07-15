@@ -54,12 +54,20 @@ class RAGService(BaseRepository):
         self.agentic_strategy = AgenticRAGStrategy(self.supabase_client, self.base_strategy)
 
         # Phase 4.6.28: Neural Bridge Configuration
-        self.agents_enabled = self.get_bool_setting("AGENTS_ENABLED", False)
+        from src.server.schemas.settings import RagConfig
+        from src.server.services.settings_service import SettingsService
+        try:
+            settings_service = SettingsService(self.supabase_client)
+            config = RagConfig.model_validate(settings_service.get_all_settings())
+        except Exception:
+            config = RagConfig()
+
+        self.agents_enabled = config.agents_enabled
         self.agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
 
         # Initialize reranking strategy based on settings
         self.reranking_strategy = None
-        use_reranking = self.get_bool_setting("USE_RERANKING", False)
+        use_reranking = config.use_reranking
 
         if use_reranking:
             # Physical Optimization: Use the singleton to avoid 15s loading delay
