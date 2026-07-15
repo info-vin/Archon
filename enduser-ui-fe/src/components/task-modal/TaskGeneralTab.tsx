@@ -53,7 +53,9 @@ export const TaskGeneralTab: React.FC<TaskGeneralTabProps> = ({
                 type="button" 
                 onClick={handleRefineWithAI} 
                 disabled={isRefining || !title}
-                className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors font-medium"
+                aria-busy={isRefining}
+                aria-label={isRefining ? 'AI is thinking...' : 'Refine with AI'}
+                className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
             >
                 <SparklesIcon className="w-3 h-3" />
                 {isRefining ? 'POBot is thinking...' : 'Refine with AI'}
