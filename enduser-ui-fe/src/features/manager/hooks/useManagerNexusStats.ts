@@ -57,6 +57,9 @@ export const useManagerNexusStats = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
+            // Initiate non-critical fetch concurrently to avoid waterfall, but don't block Promise.all
+            const trendPromise = api.getHealthTrend().catch(e => { console.error("Trend Load Failed", e); return null; });
+
             const [consolidatedRes, employeesRes, settingsRes] = await Promise.all([
                 api.getConsolidatedNexusState(),
                 api.getEmployees(),
@@ -133,10 +136,10 @@ export const useManagerNexusStats = () => {
                  }
             }
             
-            // Separated for resilience
-            api.getHealthTrend().then(trendData => {
-                setHealthTrend(trendData);
-            }).catch(e => console.error("Trend Load Failed", e));
+            // Set trend data when it arrives
+            trendPromise.then(trendData => {
+                if (trendData) setHealthTrend(trendData);
+            });
 
         } catch (e) {
             console.error("Nexus Fatal Load Failure", e);
