@@ -25,21 +25,23 @@ export const ProviderStep = ({ onSaved, onSkip }: ProviderStepProps) => {
 
     setSaving(true);
     try {
-      // Save the API key
-      await credentialsService.createCredential({
-        key: "OPENAI_API_KEY",
-        value: apiKey,
-        is_encrypted: true,
-        category: "api_keys",
-      });
-
-      // Update the provider setting if needed
-      await credentialsService.updateCredential({
-        key: "LLM_PROVIDER",
-        value: "openai",
-        is_encrypted: false,
-        category: "rag_strategy",
-      });
+      // PERFORMANCE: Execute independent network requests concurrently to eliminate waterfall delays
+      await Promise.all([
+        // Save the API key
+        credentialsService.createCredential({
+          key: "OPENAI_API_KEY",
+          value: apiKey,
+          is_encrypted: true,
+          category: "api_keys",
+        }),
+        // Update the provider setting if needed
+        credentialsService.updateCredential({
+          key: "LLM_PROVIDER",
+          value: "openai",
+          is_encrypted: false,
+          category: "rag_strategy",
+        })
+      ]);
 
       showToast("API key saved successfully!", "success");
       // Mark onboarding as dismissed when API key is saved
