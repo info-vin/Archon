@@ -79,7 +79,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
 
     mock_supabase = MagicMock()
     report_service.supabase_client = mock_supabase
-    
+
     # Fix: Mock the enrichment service's supabase client and its storage upload
     mock_enrichment_sb = MagicMock()
     mock_utils_supabase.return_value = mock_enrichment_sb

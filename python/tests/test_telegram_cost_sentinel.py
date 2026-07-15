@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.server.services.scheduler.jobs.business import analyze_token_usage
+from src.server.services.scheduler.jobs.sentinel_patrol import analyze_token_usage
 from src.server.services.system.telegram_service import TelegramService
 
 
@@ -25,7 +25,7 @@ async def test_telegram_service_send_message(monkeypatch):
 
 @pytest.mark.asyncio
 @patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
-@patch("src.server.services.scheduler.jobs.business.get_supabase_client")
+@patch("src.server.services.scheduler.jobs.sentinel_patrol.get_supabase_client")
 async def test_analyze_token_usage_triggers_alert_when_exceeded(mock_get_supabase, mock_send_message):
     # Mock supabase client and response for 7-day cost > 0.05
     mock_supabase = MagicMock()
@@ -53,7 +53,7 @@ async def test_analyze_token_usage_triggers_alert_when_exceeded(mock_get_supabas
 
 @pytest.mark.asyncio
 @patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
-@patch("src.server.services.scheduler.jobs.business.get_supabase_client")
+@patch("src.server.services.scheduler.jobs.sentinel_patrol.get_supabase_client")
 async def test_analyze_token_usage_no_alert_when_safe(mock_get_supabase, mock_send_message):
     # Mock supabase client and response for 7-day cost <= 0.05
     mock_supabase = MagicMock()

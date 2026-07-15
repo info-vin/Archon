@@ -18,7 +18,16 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from src.server.config.logfire_config import get_logger
-from src.server.services.scheduler.jobs import business, patrol, patrol_infra, task_dispatcher
+from src.server.services.report_service import report_service
+from src.server.services.scheduler.jobs import (
+    cleanup_patrol,
+    leads_patrol,
+    patrol,
+    patrol_infra,
+    sentinel_patrol,
+    task_dispatcher,
+    tech_debt_patrol,
+)
 
 logger = get_logger(__name__)
 
@@ -279,10 +288,10 @@ class SchedulerService:
         await patrol.run_log_patrol()
 
     async def _cleanup_system_probes(self):
-        await patrol.cleanup_system_probes()
+        await cleanup_patrol.cleanup_system_probes()
 
     async def _run_tech_debt_audit(self):
-        await patrol.run_tech_debt_audit()
+        await tech_debt_patrol.run_tech_debt_audit()
 
     async def _run_model_verification(self):
         await patrol.run_model_verification()
@@ -291,35 +300,35 @@ class SchedulerService:
         await patrol_infra.run_infrastructure_audit()
 
     async def _run_prune_stale_leads(self):
-        await business.run_prune_stale_leads()
+        await leads_patrol.run_prune_stale_leads()
 
     async def _run_auto_fetch_leads(self):
-        await business.run_auto_fetch_leads()
+        await leads_patrol.run_auto_fetch_leads()
 
     async def _analyze_token_usage(self):
-        await business.analyze_token_usage()
+        await sentinel_patrol.analyze_token_usage()
 
     async def _run_business_sentinel(self):
-        await business.run_business_sentinel()
+        await sentinel_patrol.run_business_sentinel()
 
     async def run_business_sentinel(self):
         """Public alias for manual triggering from other services."""
-        await business.run_business_sentinel()
+        await sentinel_patrol.run_business_sentinel()
 
     async def _run_daily_market_report(self):
-        await business.run_daily_market_report()
+        await leads_patrol.run_daily_market_report()
 
     async def _run_daily_executive_summary(self):
-        await business.run_daily_executive_summary()
+        await report_service.generate_daily_executive_summary()
 
     async def _run_weekly_executive_summary(self):
-        await business.run_weekly_executive_summary()
+        await report_service.generate_weekly_executive_summary()
 
     async def _run_monthly_executive_summary(self):
-        await business.run_monthly_executive_summary()
+        await report_service.generate_monthly_executive_summary()
 
     async def _run_api_deprecation_scan(self):
-        await business.run_api_deprecation_scan()
+        await sentinel_patrol.run_api_deprecation_scan()
 
     async def _run_task_dispatcher(self):
         await task_dispatcher.run_task_dispatcher()
