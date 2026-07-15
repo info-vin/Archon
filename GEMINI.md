@@ -106,10 +106,29 @@
         3. **資料模型對齊**：Mock 數據結構必須與前端介面 100% 物理對齊，缺少必填欄位將引發 React `TypeError`。
         4. **空值與日誌穿透**：後端嚴禁使用 `.single()` 獲取資料，改用安全陣列查詢防禦 HTTP 500。Playwright 必須穿透捕捉瀏覽器 `error`，杜絕盲人摸象。
 
+* **13. 防範虛假測試與型別斷層 (False Mock & Signature Sync)**
+    * **核心**: 單元測試通過不代表代碼安全。修改任何核心服務 (Service/Repository) 的**回傳型別 (Return Type)**（例如將字串改為 Tuple）時，**必須**使用全域搜尋 (`grep`) 同步更新所有依賴該服務的測試 Mock，確保 `mock_service.return_value` 與物理現實 100% 一致。否則單元測試會淪為掩護 `too many values to unpack` 或寫入亂碼的遮羞布。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+
+### 2026年7月：Phase 5.9.x 週期作業與架構硬化 (Cost Sentinel, Tiered Pruning & L2 Refactor)
+七月中旬，我們將系統從「功能導向」推升至「韌性導向」，完成了週報 TTS、成本守門員、基礎設施巡檢與資料庫三級瘦身的實作，並成功消除了近 900 行的架構技術債。
+
+**核心主題歸類**:
+1.  **TTS 額度防護與虛假測試消除 (Ref: Phase 5.9.4)**:
+    *   **型別斷層修復**: 發現 TTS 服務的回傳型別改為 Tuple `(success, bytes)` 後，測試環境仍使用 `str` 導致「虛假測試」。成功修復斷層，並將音檔直接上傳至 `archon_documents` 解決記憶體與 Markdown 亂碼危機。
+    *   **確立第 13 條黃金律**: 將防範「虛假測試 (False Test)」正式列入核心開發紀律。
+2.  **SSOT 升級與魔法數字拔除 (Ref: Phase 5.9.1, 5.9.2)**:
+    *   建立 `schemas/settings.py`，將所有排程任務、RAG 門檻與 TTS 限制，全面遷移至 Pydantic 強型別校驗，消滅 10+ 處空指標風險。
+3.  **L2 模組化與 104 爬蟲解耦 (Ref: Phase 5.9.3, 5.9.4)**:
+    *   成功拆分超過 400 行的 `job_board_service.py`，獨立出 `job104_client.py` 處理 WAF 繞過。單次重構淨清除 646 行技術債與 3 個幽靈檔案。
+    *   實體掛載全域 `RateLimiter` 阻斷爬蟲高併發導致的 Gemini 429 攻擊。
+4.  **網路與資料庫防禦降維打擊**:
+    *   為巡檢系統加入 500/502/504 指數退避重試，增強網路自癒力。
+    *   建立 `100_add_tiered_pruning_rpcs.sql`，將 Python 端的 N+1 容量檢測下放為原生 RPC (`get_db_size_mb`)。
 
 ### 2026年7月：Phase 5.8.7 全域美術遷移與角色介面
 七月份我們專注於將高品質的 SDXL/Flux 美術素材整合進 Godot 專案中，替換了先前的佔位色塊，並引入 CGF 頂級視覺工藝。
