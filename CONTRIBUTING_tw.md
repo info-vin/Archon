@@ -249,6 +249,15 @@ def test_some_endpoint():
     *   **正確**: 應使用普通的 `Mock` 或配置 `execute` 的 `return_value` 為直接的結果。
 *   **Patch 路徑原則**: 應 Patch Service 的 **Class** (例如 `patch('...TaskService')`) 而非全域實例，以確保在 API 函數內部實例化時能正確被 Mock 取代。
 
+#### 3.2.4 防範虛假測試與型別斷層 (False Mock & Signature Sync - ⚠️ 核心防禦)
+
+> **血淚教訓**: 在 Phase 5.9.4 中，我們發現 `text_to_speech_service` 的回傳型別早已從 `str` 改為 Tuple `(success, bytes)`，但 `test_report_service.py` 中的 Mock 卻依然回傳 `str`。這導致單元測試全數綠燈，但實際運行時卻因為 `too many values to unpack` 或寫入亂碼而崩潰。這就是標準的**「虛假測試 (False Test)」**。
+
+**防禦規範**:
+1. **型別簽章同步 (Signature Sync)**: 當您修改任何核心服務 (Service/Repository) 的**回傳型別 (Return Type)** 或**參數結構 (Argument Structure)** 時，**必須**使用全域搜尋 (`grep`) 找出所有依賴該服務的測試檔案 (`tests/`)。
+2. **消滅陳舊 Mock (Eradicate Stale Mocks)**: 強制將所有測試中的 `mock_service.return_value` 更新為與物理現實 100% 一致的資料結構。
+3. **拒絕測試偽證**: 單元測試通過不代表代碼安全，如果 Mock 的資料結構與物理現實脫節，單元測試就會淪為掩護 Bug 的遮羞布。修改型別後，務必執行 `make test-be` 並確認沒有出現 `too many values to unpack` 或 `TypeError`。
+
 ### 3.3 前端 E2E 測試 (`enduser-ui-fe`)
 
 #### 3.3.1 E2E 測試核心架構
