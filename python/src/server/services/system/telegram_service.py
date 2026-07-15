@@ -8,14 +8,26 @@ logger = get_logger(__name__)
 
 class TelegramService:
     def __init__(self):
-        self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
-        self.api_url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage" if self.bot_token else None
+        # We don't read os.getenv here to avoid module-load time evaluation gaps (dotenv might load later).
+        pass
+
+    @property
+    def bot_token(self):
+        return os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
+
+    @property
+    def chat_id(self):
+        return os.getenv("TELEGRAM_TO") or os.getenv("TELEGRAM_CHAT_ID")
+
+    @property
+    def api_url(self):
+        token = self.bot_token
+        return f"https://api.telegram.org/bot{token}/sendMessage" if token else None
 
     async def send_message(self, text: str, parse_mode: str = "Markdown") -> bool:
         """Sends a message via Telegram Bot API."""
         if not self.bot_token or not self.chat_id or not self.api_url:
-            logger.warning("TelegramService: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured. Skipping alert.")
+            logger.warning("TelegramService: TELEGRAM_TOKEN or TELEGRAM_TO not configured. Skipping alert.")
             return False
 
         payload = {
