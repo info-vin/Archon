@@ -45,11 +45,12 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.repositories.base_repository.get_supabase_client")
+@patch("src.server.utils.get_supabase_client")
 @patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
 @patch("src.server.services.text_to_speech_service.text_to_speech_service", new_callable=AsyncMock)
 @patch("src.agents.nexus_oracle_agent.NexusOracleAgent.run", new_callable=AsyncMock)
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
-async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run, mock_tts, mock_beta_graph, mock_get_supabase, mock_task_service):
+async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run, mock_tts, mock_beta_graph, mock_utils_supabase, mock_get_supabase, mock_task_service):
     """
     Test that weekly executive summary executes Map-Reduce, Oracle, TTS, creates task,
     and updates status to done.
@@ -73,10 +74,16 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
             self.output = output
     mock_beta_graph.run.return_value = MockResult("Mocked Weekly Map-Reduce Output")
 
-    mock_tts.generate_audio.return_value = "https://mock.supabase.co/storage/audio.mp3"
+    # Fix: generate_audio now returns a tuple (success, result_bytes)
+    mock_tts.generate_audio.return_value = (True, b"mock_audio_bytes")
 
     mock_supabase = MagicMock()
     report_service.supabase_client = mock_supabase
+    
+    # Fix: Mock the enrichment service's supabase client and its storage upload
+    mock_enrichment_sb = MagicMock()
+    mock_utils_supabase.return_value = mock_enrichment_sb
+    mock_enrichment_sb.storage.from_().get_public_url.return_value = "https://mock.supabase.co/storage/audio.wav"
 
     mock_p_res = MagicMock()
     mock_p_res.data = [{"id": "test-project-123"}]
@@ -113,7 +120,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
     call_kwargs = mock_task_service.create_task.call_args.kwargs
     assert "[Weekly Report] Executive Summary" in call_kwargs["title"]
     assert "Mocked Weekly Map-Reduce Output" in call_kwargs["description"]
-    assert "🎧 **Listen to Podcast**: [Audio Link](https://mock.supabase.co/storage/audio.mp3)" in call_kwargs["description"]
+    assert "🎧 **Listen to Podcast**: [Audio Link](https://mock.supabase.co/storage/audio.wav)" in call_kwargs["description"]
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)

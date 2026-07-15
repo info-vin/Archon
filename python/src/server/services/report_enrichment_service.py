@@ -62,10 +62,26 @@ class ReportEnrichmentService:
 
             logger.info("🎙️ ReportEnrichmentService: Generating TTS Podcast...")
             clean_text = task_desc.replace("*", "").replace("#", "")
-            audio_url = await text_to_speech_service.generate_audio(clean_text[:tts_limit])
-            if audio_url:
-                task_desc += f"\n\n🎧 **Listen to Podcast**: [Audio Link]({audio_url})"
-                logger.info("✅ ReportEnrichmentService: TTS Podcast generated and attached.")
+            success, result = await text_to_speech_service.generate_audio(clean_text[:tts_limit])
+
+            if success and isinstance(result, bytes):
+                import uuid
+                filename = f"podcast_{uuid.uuid4().hex[:8]}.wav"
+                try:
+                    # Upload to existing archon_documents bucket
+                    supabase.storage.from_("archon_documents").upload(
+                        path=filename,
+                        file=result,
+                        file_options={"content-type": "audio/wav"}
+                    )
+                    audio_url = supabase.storage.from_("archon_documents").get_public_url(filename)
+                    task_desc += f"\n\n🎧 **Listen to Podcast**: [Audio Link]({audio_url})"
+                    logger.info("✅ ReportEnrichmentService: TTS Podcast generated and attached.")
+                except Exception as upload_err:
+                    logger.error(f"❌ ReportEnrichmentService: Failed to upload TTS Podcast to Supabase: {upload_err}")
+            else:
+                logger.warning(f"⚠️ ReportEnrichmentService: TTS generation skipped or failed (Quota exceeded?): {result}")
+
         except Exception as e:
             logger.error(f"❌ ReportEnrichmentService: Failed to generate TTS Podcast: {e}")
         return task_desc

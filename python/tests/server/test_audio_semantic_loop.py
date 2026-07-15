@@ -74,7 +74,7 @@ async def test_audio_semantic_loop_live(client):
             )
         except Exception as e:
             err_msg = str(e)
-            if any(msg in err_msg for msg in ["leaked", "PERMISSION_DENIED", "API key was reported as leaked", "API_KEY_INVALID", "500 INTERNAL"]):
+            if any(msg in err_msg for msg in ["leaked", "PERMISSION_DENIED", "API key was reported as leaked", "API_KEY_INVALID", "500 INTERNAL", "429", "quota", "ResourceExhausted", "Too Many Requests"]):
                 pytest.skip(f"Skipping live integration test: API key/Upstream issue ({e})")
             raise
 

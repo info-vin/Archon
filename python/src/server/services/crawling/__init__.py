@@ -5,7 +5,6 @@ This package contains services for web crawling, document processing,
 and related orchestration operations.
 """
 
-from .code_extraction_service import CodeExtractionService
 from .crawling_service import (
     CrawlingService,
     CrawlOrchestrationService,
@@ -30,7 +29,6 @@ from .strategies.sitemap import SitemapCrawlStrategy
 __all__ = [
     "CrawlingService",
     "CrawlOrchestrationService",
-    "CodeExtractionService",
     "ProgressMapper",
     "BatchCrawlStrategy",
     "RecursiveCrawlStrategy",

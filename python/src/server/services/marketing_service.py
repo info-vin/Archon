@@ -2,7 +2,7 @@ import asyncio
 
 from ..config.logfire_config import get_logger
 from ..repositories.base_repository import BaseRepository
-from ..services.job_board_service import JobData
+from ..services.crawling.clients.job104_client import JobData
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)

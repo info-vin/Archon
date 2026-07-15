@@ -31,7 +31,7 @@ class DocumentStorageFacade(BaseRepository):
         super().__init__(supabase_client)
         self.repo = DocumentRepository(self.supabase_client)
         self.chunking_utils = ChunkingUtils(self.supabase_client)
-        from src.server.services.crawling.code_extraction_service import CodeExtractionService
+        from src.server.services.code_extraction.code_extraction_service import CodeExtractionService
 
         self.code_extraction_service = CodeExtractionService(self.supabase_client)
 

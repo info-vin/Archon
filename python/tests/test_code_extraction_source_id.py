@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from src.server.services.crawling.code_extraction_service import CodeExtractionService
+from src.server.services.code_extraction.code_extraction_service import CodeExtractionService
 from src.server.services.storage.document_storage import DocumentStorageFacade
 
 
@@ -153,7 +153,7 @@ class TestCodeExtractionSourceId:
 
     def test_urlparse_not_imported(self):
         """Test that urlparse is not imported in code_extraction_service."""
-        import src.server.services.crawling.code_extraction_service as module
+        import src.server.services.code_extraction.code_extraction_service as module
 
         # Check that urlparse is not in the module's namespace
         assert not hasattr(module, "urlparse"), "urlparse should not be imported in code_extraction_service"

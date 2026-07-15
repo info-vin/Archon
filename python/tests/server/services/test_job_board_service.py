@@ -2,7 +2,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.server.services.job_board_service import JobBoardService, JobData
+from src.server.services.crawling.clients.job104_client import JobData
+from src.server.services.job_board_service import JobBoardService
 
 
 @pytest.fixture
@@ -20,8 +21,8 @@ async def test_search_jobs_fallback_to_mock():
     and correctly infers needs.
     """
     service = JobBoardService()
-    # Mock _fetch_from_104_sync to raise an exception
-    with patch.object(JobBoardService, "_fetch_from_104_sync", side_effect=Exception("Network Error")):
+    from src.server.services.crawling.clients.job104_client import Job104Crawler
+    with patch.object(Job104Crawler, "_fetch_from_104_sync", side_effect=Exception("Network Error")):
         jobs = await service.search_jobs("Data Analyst")
 
         # In Sync-Thru Real Data Mode, errors return empty list (No mock fallback)
