@@ -1,6 +1,7 @@
 [gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://src/views/tutorial/TutorialOverlay.gd" id="1_xxx"]
+[ext_resource type="Texture2D" path="res://assets/images/avatar_alice.png" id="tex_alice"]
 
 [node name="TutorialOverlay" type="CanvasLayer"]
 layer = 100
@@ -22,9 +23,9 @@ anchor_top = 0.0
 anchor_right = 0.5
 anchor_bottom = 0.0
 offset_left = -300.0
-offset_top = 80.0
+offset_top = 140.0
 offset_right = 300.0
-offset_bottom = 230.0
+offset_bottom = 290.0
 grow_horizontal = 2
 mouse_filter = 2
 
@@ -41,11 +42,13 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 16
 
-[node name="CharacterIcon" type="ColorRect" parent="DialogBox/MarginContainer/HBoxContainer"]
+[node name="CharacterIcon" type="TextureRect" parent="DialogBox/MarginContainer/HBoxContainer"]
 mouse_filter = 2
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(88, 88)
 layout_mode = 2
-color = Color(0.2, 0.6, 1, 1)
+texture = ExtResource("tex_alice")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="DialogLabel" type="Label" parent="DialogBox/MarginContainer/HBoxContainer"]
 layout_mode = 2

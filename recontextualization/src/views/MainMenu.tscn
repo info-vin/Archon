@@ -70,7 +70,7 @@ _data = {
 "intro_sequence": SubResource("Animation_intro")
 }
 
-[node name="MainMenu" type="Control" node_paths=PackedStringArray("lang_button", "vol_slider", "btn_new_career", "btn_continue", "btn_teammate_dashboard", "btn_card_management", "btn_quit")]
+[node name="MainMenu" type="Control" node_paths=PackedStringArray("lang_button", "vol_slider", "btn_new_career", "btn_continue", "btn_quit")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -83,8 +83,6 @@ lang_button = NodePath("UIPanel/SettingsPanel/SettingsBox/LangBox/LangButton")
 vol_slider = NodePath("UIPanel/SettingsPanel/SettingsBox/VolBox/VolSlider")
 btn_new_career = NodePath("UIPanel/CarouselContainer/NewCareerButton")
 btn_continue = NodePath("UIPanel/CarouselContainer/ContinueButton")
-btn_teammate_dashboard = NodePath("UIPanel/CarouselContainer/TeammateDashboardButton")
-btn_card_management = NodePath("UIPanel/CarouselContainer/CardManagementButton")
 btn_quit = NodePath("UIPanel/CarouselContainer/QuitButton")
 
 [node name="Controller" type="Node" parent="."]
@@ -246,103 +244,7 @@ theme_override_font_sizes/font_size = 28
 text = "menu_continue"
 horizontal_alignment = 1
 
-[node name="TeammateDashboardButton" type="Button" parent="UIPanel/CarouselContainer"]
-custom_minimum_size = Vector2(240, 336)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -120.0
-offset_top = -168.0
-offset_right = 120.0
-offset_bottom = 168.0
-grow_horizontal = 2
-grow_vertical = 2
-pivot_offset = Vector2(120, 168)
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
 
-[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/TeammateDashboardButton"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -80.0
-offset_top = -100.0
-offset_right = 80.0
-offset_bottom = 60.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("12_gem3")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="UIPanel/CarouselContainer/TeammateDashboardButton"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -80.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_font_sizes/font_size = 24
-text = "menu_teammate_dashboard"
-horizontal_alignment = 1
-
-[node name="CardManagementButton" type="Button" parent="UIPanel/CarouselContainer"]
-custom_minimum_size = Vector2(240, 336)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -120.0
-offset_top = -168.0
-offset_right = 120.0
-offset_bottom = 168.0
-grow_horizontal = 2
-grow_vertical = 2
-pivot_offset = Vector2(120, 168)
-theme_override_styles/normal = SubResource("StyleBoxTexture_btn")
-theme_override_styles/hover = SubResource("StyleBoxTexture_btn")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_btn")
-
-[node name="Gem" type="TextureRect" parent="UIPanel/CarouselContainer/CardManagementButton"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -80.0
-offset_top = -100.0
-offset_right = 80.0
-offset_bottom = 60.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("13_gem4")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="UIPanel/CarouselContainer/CardManagementButton"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -80.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_font_sizes/font_size = 24
-text = "menu_card_management"
-horizontal_alignment = 1
 
 [node name="QuitButton" type="Button" parent="UIPanel/CarouselContainer"]
 custom_minimum_size = Vector2(240, 336)

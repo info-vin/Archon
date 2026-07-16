@@ -13,6 +13,10 @@ hud_crisis_hp,Crisis HP,系統危機
 hud_purity,Purity,純淨度
 hud_poisoning,Poisoning,投毒率
 hud_ap,AP,行動力
+agent_terminal_title,Agent Terminal,代理人終端
+hud_player_hp,Agent HP,特務血量
+hud_rank,RANK,職級
+hud_sla,SLA,SLA
 tooltip_crisis_hp,System Crisis Level. Reduce to 0 to win.,系統危機值。這代表系統遭受的故障嚴重度，將其降至 0 即可過關。
 tooltip_purity,Context Purity. Higher purity means safer LLM response.,資料純淨度。數值越高，代表交付給 LLM 的資料越乾淨，能造成更多傷害。
 tooltip_poisoning,Poisoning Rate. Chance of drawing corrupted data.,投毒率。SLA 時間越少，投毒率越高，抽出紅色雜訊晶片的機率就越大。
@@ -63,3 +67,5 @@ card_desc_emp_blast,Paralyze all area defenses,癱瘓區域內所有防禦
 card_name_data_leech,Data Leech,資料虹吸
 card_desc_data_leech,Steal extra memory fragments,竊取額外記憶體碎片
 menu_teammate_dashboard,Teammate Dashboard,夥伴儀表板
+menu_character_dashboard,Character Dashboard,角色儀表板
+menu_workshop,Card Workshop,卡牌工坊

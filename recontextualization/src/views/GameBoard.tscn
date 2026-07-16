@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://src/views/components/GameHUD.tscn" id="1_hud"]
 [ext_resource type="PackedScene" path="res://src/views/AgentCompanion.tscn" id="4_agent"]
 [ext_resource type="PackedScene" path="res://src/views/components/TutorialPanel.tscn" id="2_tut"]
+[ext_resource type="Texture2D" path="res://assets/images/card_frame_blank.png" id="frame_blank"]
 [ext_resource type="PackedScene" path="res://src/views/components/GameOverPanel.tscn" id="3_gov"]
 [ext_resource type="PackedScene" path="res://src/views/PauseMenu.tscn" id="3_pause"]
 
@@ -62,6 +63,79 @@ layout_mode = 2
 
 [node name="GameHUD" parent="MarginContainer/VBoxContainer" instance=ExtResource("1_hud")]
 
+[node name="HubNavigation" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 20
+
+[node name="CharacterButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+texture_normal = ExtResource("frame_blank")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/CharacterButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "menu_character_dashboard"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 14
+
+[node name="CardManagementButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+texture_normal = ExtResource("frame_blank")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/CardManagementButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "menu_card_management"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 14
+
+[node name="WorkshopButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+texture_normal = ExtResource("frame_blank")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/WorkshopButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "menu_workshop"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 14
+
+[node name="TeammateButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+texture_normal = ExtResource("frame_blank")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/TeammateButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "menu_teammate_dashboard"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 14
+
 [node name="QueryBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 20
@@ -75,9 +149,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "輸入 RAG 檢索關鍵字..."
 
-[node name="WorkshopButton" type="Button" parent="MarginContainer/VBoxContainer/QueryBar"]
-layout_mode = 2
-text = "menu_workshop"
+
 
 [node name="DeliverButton" type="Button" parent="MarginContainer/VBoxContainer/QueryBar"]
 layout_mode = 2
@@ -127,7 +199,7 @@ anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -300.0
-offset_top = 40.0
+offset_top = 170.0
 offset_right = -20.0
 offset_bottom = -40.0
 grow_horizontal = 0

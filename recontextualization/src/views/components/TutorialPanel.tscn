@@ -45,4 +45,5 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(150, 40)
 layout_mode = 2
 size_flags_horizontal = 4
+theme_type_variation = &"cyber_button"
 text = "開始防禦"

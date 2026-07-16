@@ -49,8 +49,10 @@ func _draw_starting_hand(game_state: Node, sm: Node) -> void:
 	
 	if card_reg != null and event_bus != null:
 		var equipped = ["action_keyword", "action_dense", "action_reranker"]
-		if sm != null:
+		if sm != null and not sm.equipped_action_cards.is_empty():
 			equipped = sm.equipped_action_cards
+		elif sm != null and sm.equipped_action_cards.is_empty():
+			equipped = ["action_keyword"]
 			
 		for card_id in equipped:
 			var card = card_reg.get_card(card_id)

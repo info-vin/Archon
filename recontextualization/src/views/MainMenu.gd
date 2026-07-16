@@ -2,8 +2,6 @@ extends Control
 
 signal request_new_career
 signal request_continue
-signal request_teammate_dashboard
-signal request_card_management
 signal request_quit
 signal request_language_change(new_lang: String)
 signal request_volume_change(new_volume: float)
@@ -13,8 +11,6 @@ signal request_volume_change(new_volume: float)
 
 @export var btn_new_career: BaseButton
 @export var btn_continue: BaseButton
-@export var btn_teammate_dashboard: BaseButton
-@export var btn_card_management: BaseButton
 @export var btn_quit: BaseButton
 
 @onready var carousel = $UIPanel/CarouselContainer
@@ -38,9 +34,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _connect_ui_signals() -> void:
 	if btn_new_career: btn_new_career.pressed.connect(func(): _trigger_action(0))
 	if btn_continue: btn_continue.pressed.connect(func(): _trigger_action(1))
-	if btn_teammate_dashboard: btn_teammate_dashboard.pressed.connect(func(): _trigger_action(2))
-	if btn_card_management: btn_card_management.pressed.connect(func(): _trigger_action(3))
-	if btn_quit: btn_quit.pressed.connect(func(): _trigger_action(4))
+	if btn_quit: btn_quit.pressed.connect(func(): _trigger_action(2))
 	
 	if lang_button: lang_button.item_selected.connect(_on_lang_selected)
 	if vol_slider: vol_slider.value_changed.connect(func(v): request_volume_change.emit(v))
@@ -62,14 +56,14 @@ func _trigger_action(index: int) -> void:
 			target_node = btn_continue
 			target_signal = func(): request_continue.emit()
 		2: 
-			target_node = btn_teammate_dashboard
-			target_signal = func(): request_teammate_dashboard.emit()
-		3: 
-			target_node = btn_card_management
-			target_signal = func(): request_card_management.emit()
-		4: 
 			target_node = btn_quit
-			target_signal = func(): request_quit.emit()
+			target_signal = func(): 
+				var dlg = ConfirmationDialog.new()
+				dlg.title = "確認離開 (Confirm Quit)"
+				dlg.dialog_text = "您確定要關閉神經網絡系統嗎？\n(Are you sure you want to exit?)"
+				dlg.confirmed.connect(func(): request_quit.emit())
+				add_child(dlg)
+				dlg.popup_centered()
 			
 	if target_node:
 		var original_x = target_node.position.x
@@ -80,11 +74,11 @@ func _trigger_action(index: int) -> void:
 		tween.tween_property(target_node, "position:x", original_x, 0.1)
 		tween.finished.connect(func():
 			_is_animating = false
-			target_signal.call()
+			target_signal.call_deferred()
 		)
 	else:
 		_is_animating = false
-		target_signal.call()
+		target_signal.call_deferred()
 
 func set_initial_settings(language: String, volume: float) -> void:
 	if lang_button: lang_button.selected = 0 if language == "en" else 1

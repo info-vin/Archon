@@ -1,8 +1,6 @@
 extends Node
 
 @export var transition_scene: PackedScene
-@export var card_menu_scene: PackedScene
-@export var teammate_dashboard_scene: PackedScene
 
 @onready var view = get_parent()
 
@@ -18,8 +16,6 @@ func _ready() -> void:
 
 	view.request_new_career.connect(_on_new_career_requested)
 	view.request_continue.connect(_on_continue_requested)
-	view.request_teammate_dashboard.connect(_on_teammate_dashboard_requested)
-	view.request_card_management.connect(_on_card_management_requested)
 	view.request_quit.connect(_on_quit_requested)
 	view.request_language_change.connect(_on_language_change_requested)
 	view.request_volume_change.connect(_on_volume_change_requested)
@@ -34,11 +30,7 @@ func _on_new_career_requested() -> void:
 func _on_continue_requested() -> void:
 	if transition_scene: get_tree().change_scene_to_packed(transition_scene)
 
-func _on_card_management_requested() -> void:
-	if card_menu_scene: get_tree().change_scene_to_packed(card_menu_scene)
 
-func _on_teammate_dashboard_requested() -> void:
-	if teammate_dashboard_scene: get_tree().change_scene_to_packed(teammate_dashboard_scene)
 
 func _on_quit_requested() -> void:
 	get_tree().quit()

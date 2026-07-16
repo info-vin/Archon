@@ -95,9 +95,20 @@ func _on_request_play_card(card: Resource) -> void:
 	if not is_game_active:
 		return
 		
+	var type_val = card.get("type") if card.get("type") != null else CardData.CardType.ACTION
+	
+	if type_val == CardData.CardType.DATA_CHIP or type_val == CardData.CardType.NOISE_CHIP:
+		if active_context.cards.size() >= 5:
+			var event_bus = _safe_get_node("EventBus")
+			if event_bus and event_bus.has_signal("system_message"):
+				event_bus.system_message.emit("Context Window Full")
+			return
+		
 	var cost = card.get("ap_cost") if card.get("ap_cost") != null else 1
 	if current_ap < cost:
-		print("Not enough AP to play card!")
+		var event_bus = _safe_get_node("EventBus")
+		if event_bus and event_bus.has_signal("system_message"):
+			event_bus.system_message.emit("Not enough AP!")
 		return
 		
 	if not hand_context.remove_card(card):
@@ -107,8 +118,6 @@ func _on_request_play_card(card: Resource) -> void:
 	current_ap -= cost
 	ap_changed.emit(current_ap)
 	
-	var type_val = card.get("type") if card.get("type") != null else CardData.CardType.ACTION
-	
 	if type_val == CardData.CardType.DATA_CHIP or type_val == CardData.CardType.NOISE_CHIP:
 		active_context.add_card(card)
 		var purity = BattleRuleEngine.calculate_context_purity(active_context.cards)
@@ -117,9 +126,9 @@ func _on_request_play_card(card: Resource) -> void:
 	elif type_val == CardData.CardType.ACTION:
 		CardEffectResolver.resolve_action_card(self, card)
 		
-	var event_bus = _safe_get_node("EventBus")
-	if event_bus != null and event_bus.has_signal("card_played"):
-		event_bus.card_played.emit(card)
+	var ev_bus = _safe_get_node("EventBus")
+	if ev_bus != null and ev_bus.has_signal("card_played"):
+		ev_bus.card_played.emit(card)
 
 func deliver_context() -> void:
 	if not is_game_active:

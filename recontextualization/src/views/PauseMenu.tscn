@@ -29,20 +29,37 @@ theme_override_constants/separation = 20
 
 [node name="ResumeButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+theme_type_variation = &"cyber_button"
 text = "menu_resume"
 
 [node name="SaveButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+theme_type_variation = &"cyber_button"
 text = "menu_save"
 
 [node name="LoadButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+theme_type_variation = &"cyber_button"
 text = "menu_load"
 
 [node name="MenuButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+theme_type_variation = &"cyber_button"
 text = "menu_quit"
 
 [node name="QuitButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
+theme_type_variation = &"cyber_button"
 text = "menu_quit_game"
+
+[node name="QuitConfirm" type="ConfirmationDialog" parent="."]
+title = "確認離開"
+dialog_text = "您確定要離開遊戲並回到桌面嗎？未儲存的進度將會遺失。"
+cancel_button_text = "取消"
+confirm_button_text = "確認離開"
+
+[node name="MenuConfirm" type="ConfirmationDialog" parent="."]
+title = "返回主選單"
+dialog_text = "您確定要返回主選單嗎？未儲存的進度將會遺失。"
+cancel_button_text = "取消"
+confirm_button_text = "返回主選單"

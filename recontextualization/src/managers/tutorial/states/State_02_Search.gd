@@ -7,7 +7,7 @@ func enter() -> void:
         event_bus.card_drawn.connect(_on_card_drawn)
     
     manager.set_mask_transparent()
-    await manager.show_dialog("第一步：從資料庫中檢索知識。請在下方輸入框輸入 Query，並按下 Enter 搜尋！", false)
+    await manager.show_dialog("第一步：在左側輸入你想解決的問題（例如：『伺服器連線中斷怎麼辦？』），然後將手牌區的『檢索卡』拖曳至中央發動！", false)
     var current_scene: Node = manager.get_tree().current_scene
     if current_scene:
         var query_bar: Node = current_scene.find_child("QueryBar", true, false)

@@ -13,6 +13,7 @@ shader_parameter/smoothing = 0.01
 custom_minimum_size = Vector2(160, 235)
 offset_right = 160.0
 offset_bottom = 235.0
+pivot_offset = Vector2(80, 117.5)
 script = ExtResource("1_cc5pi")
 
 [node name="BackgroundFrame" type="TextureRect" parent="." unique_id=1297105839]

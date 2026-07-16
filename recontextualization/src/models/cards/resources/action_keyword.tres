@@ -6,6 +6,11 @@
 [resource]
 script = ExtResource("2_xm4yf")
 id = "action_keyword"
-title = "Action Keyword"
+title = "BM25 關鍵字實彈卡"
+description = "執行精準字面搜尋，消耗 1 AP。"
 icon = ExtResource("1_0yeco")
+ap_cost = 1
 type = 1
+match_type = 3
+similarity = 0.0
+chunk_metadata = {}

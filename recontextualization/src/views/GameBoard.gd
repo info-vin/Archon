@@ -5,11 +5,12 @@ signal request_workshop
 signal request_start
 signal request_restart
 signal request_deliver
-signal request_query(text: String)
 signal request_save_progress
 signal request_load_progress
 signal request_main_menu
 signal request_quit_game
+signal request_card_management
+signal request_teammate_dashboard
 
 @onready var hand_container: Container = $MarginContainer/VBoxContainer/HandContainer
 @onready var event_queue: Node = $EventQueue
@@ -17,6 +18,8 @@ signal request_quit_game
 @export_file("*.tscn") var main_menu_scene: String
 @export_file("*.tscn") var dashboard_scene: String
 @export_file("*.tscn") var workshop_scene: String
+@export_file("*.tscn") var card_menu_scene: String
+@export_file("*.tscn") var teammate_dashboard_scene: String
 @export var video_victory: VideoStream
 @export var video_defeat_glitch: VideoStream
 @export var video_defeat_shutdown: VideoStream
@@ -25,6 +28,10 @@ var card_chip_scene = preload("res://src/views/CardChip.tscn")
 
 
 @onready var game_hud: HBoxContainer = $MarginContainer/VBoxContainer/GameHUD
+@onready var btn_character: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/CharacterButton
+@onready var btn_cards: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/CardManagementButton
+@onready var btn_workshop: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/WorkshopButton
+@onready var btn_teammate: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/TeammateButton
 @onready var agent_companion: Control = $AgentCompanion
 @onready var query_input: LineEdit = $MarginContainer/VBoxContainer/QueryBar/QueryInput
 @onready var deliver_button: Button = $MarginContainer/VBoxContainer/QueryBar/DeliverButton
@@ -37,9 +44,12 @@ func _ready() -> void:
 	tutorial_panel.request_start.connect(func(): request_start.emit())
 	game_over_panel.request_dashboard.connect(func(): request_dashboard.emit())
 
-	$MarginContainer/VBoxContainer/QueryBar/WorkshopButton.pressed.connect(func(): request_workshop.emit())
+	btn_character.pressed.connect(func(): request_dashboard.emit())
+	btn_cards.pressed.connect(func(): request_card_management.emit())
+	btn_workshop.pressed.connect(func(): request_workshop.emit())
+	btn_teammate.pressed.connect(func(): request_teammate_dashboard.emit())
+	
 	deliver_button.pressed.connect(func(): request_deliver.emit())
-	query_input.text_submitted.connect(func(text): request_query.emit(text))
 	
 	if pause_menu:
 		pause_menu.resume_game.connect(func(): pause_menu.hide())
@@ -52,7 +62,47 @@ func _ready() -> void:
 			pause_menu.hide()
 			request_main_menu.emit()
 		)
-		pause_menu.quit_game.connect(func(): request_quit_game.emit())
+		pause_menu.quit_game.connect(func(): 
+			var dlg = ConfirmationDialog.new()
+			dlg.title = "確認離開 (Confirm Quit)"
+			dlg.dialog_text = "您確定要離開戰場嗎？進度將會自動保存。\n(Are you sure you want to quit? Progress will be saved automatically.)"
+			dlg.confirmed.connect(func(): request_quit_game.emit())
+			add_child(dlg)
+			dlg.popup_centered()
+		)
+
+	if query_input:
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0, 0, 0, 0.8)
+		style.set_corner_radius_all(4)
+		style.content_margin_left = 10
+		style.content_margin_right = 10
+		query_input.add_theme_stylebox_override("normal", style)
+		query_input.add_theme_stylebox_override("focus", style)
+
+	var hint_label = $MarginContainer/VBoxContainer/PlayArea/HintLabel
+	if hint_label:
+		hint_label.modulate = Color(1, 1, 1, 0.85) # Increase from 0.3 to 0.85
+		var hint_style = StyleBoxFlat.new()
+		hint_style.bg_color = Color(0, 0, 0, 0.6)
+		hint_style.set_corner_radius_all(8)
+		hint_label.add_theme_stylebox_override("normal", hint_style)
+
+	var ev_bus = get_node_or_null("/root/EventBus")
+	if ev_bus and ev_bus.has_signal("system_message"):
+		ev_bus.system_message.connect(show_toast_message)
+
+func show_toast_message(msg: String) -> void:
+	var lbl = Label.new()
+	lbl.text = msg
+	lbl.add_theme_color_override("font_color", Color.RED)
+	lbl.add_theme_font_size_override("font_size", 32)
+	add_child(lbl)
+	lbl.position = size / 2.0 - Vector2(100, 0)
+	var tween = create_tween()
+	tween.tween_property(lbl, "position", lbl.position + Vector2(0, -100), 1.5).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(lbl, "modulate:a", 0.0, 1.5)
+	tween.tween_callback(lbl.queue_free)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
@@ -66,6 +116,10 @@ func _input(event: InputEvent) -> void:
 
 func initialize_career(level: int, max_player_hp: float) -> void:
 	game_hud.initialize_career(level, max_player_hp)
+	btn_character.visible = true
+	btn_cards.visible = (level >= 3)
+	btn_workshop.visible = (level >= 3)
+	btn_teammate.visible = (level >= 3)
 
 func setup_tutorial(has_completed: bool) -> void:
 	if has_completed:

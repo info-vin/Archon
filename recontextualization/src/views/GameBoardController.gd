@@ -26,11 +26,12 @@ func _ready() -> void:
 
 	# 1. Connect View signals to Controller actions
 	view.request_dashboard.connect(_on_dashboard_requested)
+	view.request_card_management.connect(_on_card_management_requested)
 	view.request_workshop.connect(_on_workshop_requested)
+	view.request_teammate_dashboard.connect(_on_teammate_dashboard_requested)
 	view.request_start.connect(_on_request_start)
 	view.request_restart.connect(_on_request_restart)
 	view.request_deliver.connect(_on_request_deliver)
-	view.request_query.connect(_on_request_query)
 	view.request_save_progress.connect(_on_request_save_progress)
 	view.request_load_progress.connect(_on_request_load_progress)
 	view.request_main_menu.connect(_on_request_main_menu)
@@ -58,8 +59,10 @@ func _ready() -> void:
 				game_state.is_tutorial_active = true
 				game_state.start_game()
 			else:
+				view.hide_tutorial()
 				game_state.is_tutorial_active = false
-				view.setup_tutorial(true)
+				if not game_state.is_game_active:
+					game_state.start_game()
 		else:
 			view.setup_tutorial(true)
 
@@ -76,6 +79,7 @@ func _ready() -> void:
 			event_bus.card_drawn.connect(view.anim_draw_card)
 		if event_bus.has_signal("card_played"):
 			event_bus.card_played.connect(view.anim_play_card)
+			event_bus.card_played.connect(_on_card_played_for_search)
 
 # ================================
 # Actions triggered by View
@@ -95,9 +99,22 @@ func _on_request_deliver() -> void:
 	if game_state != null:
 		game_state.deliver_context()
 
-func _on_request_query(text: String) -> void:
-	if game_state != null:
-		game_state.search_ctrl.trigger_search(1) # 1 = KEYWORD
+func _on_card_played_for_search(card: Resource) -> void:
+	if game_state == null:
+		return
+		
+	var type_val = card.get("type") if card.get("type") != null else CardData.CardType.ACTION
+	if type_val == CardData.CardType.ACTION:
+		var match_type = card.get("match_type") if card.get("match_type") != null else CardData.MatchType.KEYWORD
+		
+		# Only trigger search for KEYWORD and VECTOR (and HYBRID if supported)
+		if match_type in [CardData.MatchType.KEYWORD, CardData.MatchType.VECTOR, CardData.MatchType.HYBRID]:
+			var query = view.query_input.text
+			if query == "":
+				query = "default query"
+			
+			game_state.search_ctrl.search_triggered.emit(match_type)
+			game_state.search_ctrl.backend_client.search(query, GameBalanceConfig.SEARCH_SIMILARITY_THRESHOLD, GameBalanceConfig.SEARCH_TOP_K)
 
 func _on_request_save_progress() -> void:
 	if save_manager != null:
@@ -111,14 +128,26 @@ func _on_workshop_requested() -> void:
 	if view.workshop_scene:
 		get_tree().change_scene_to_file(view.workshop_scene)
 
+func _on_card_management_requested() -> void:
+	if view.card_menu_scene:
+		get_tree().change_scene_to_file(view.card_menu_scene)
+
+func _on_teammate_dashboard_requested() -> void:
+	if view.teammate_dashboard_scene:
+		get_tree().change_scene_to_file(view.teammate_dashboard_scene)
+
 func _on_request_load_progress() -> void:
 	if save_manager != null:
 		save_manager.load_progress()
 	get_tree().reload_current_scene()
 
 func _on_request_main_menu() -> void:
+	if save_manager != null:
+		save_manager.save_progress()
 	if view.main_menu_scene:
 		get_tree().change_scene_to_file(view.main_menu_scene)
 
 func _on_request_quit_game() -> void:
+	if save_manager != null:
+		save_manager.save_progress()
 	get_tree().quit()

@@ -37,7 +37,7 @@ vertical_alignment = 1
 [node name="CareerLabel" type="Label" parent="."]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
-text = "L3"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -52,7 +52,7 @@ show_percentage = true
 
 [node name="APLabel" type="Label" parent="."]
 layout_mode = 2
-text = "AP: 10"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -86,6 +86,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "SLA: 05:00"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1

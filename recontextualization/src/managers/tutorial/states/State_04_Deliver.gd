@@ -24,4 +24,4 @@ func update(_delta: float) -> void:
 
 func exit() -> void:
     manager.unfocus()
-    manager.show_dialog("防禦成功！現在你已經了解基礎了，去接下你的任務吧！", true)
+    manager.show_dialog("防禦成功！現在你可以點擊上方的『角色儀表板』來強化特務。未來晉升後，還會陸續解鎖卡牌工坊等進階功能，去接下你的任務吧！", true)

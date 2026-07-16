@@ -66,7 +66,7 @@ func run_tests(scene_tree: SceneTree) -> bool:
 	# Play Reranker Card
 	var reranker_card = card_script.new()
 	reranker_card.set("type", 1) # ACTION
-	reranker_card.set("id", "reranker")
+	reranker_card.set("id", "action_reranker")
 	reranker_card.set("ap_cost", 3)
 	
 	game_state.hand_context.add_card(reranker_card)

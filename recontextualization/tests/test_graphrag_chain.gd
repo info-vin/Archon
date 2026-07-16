@@ -46,7 +46,7 @@ func run_tests(runner) -> bool:
 	# 2. Create the GraphRAG card (5 AP)
 	var graph_rag_card = card_script.new()
 	graph_rag_card.set("type", 1) # ACTION
-	graph_rag_card.set("id", "graph_rag")
+	graph_rag_card.set("id", "action_graphrag")
 	graph_rag_card.set("ap_cost", 5)
 	
 	game_state.hand_context.add_card(graph_rag_card)

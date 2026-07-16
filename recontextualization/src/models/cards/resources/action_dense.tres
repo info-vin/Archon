@@ -6,6 +6,11 @@
 [resource]
 script = ExtResource("2_p45df")
 id = "action_dense"
-title = "Action Dense"
+title = "Dense 向量雷射卡"
+description = "解鎖跨領域語意推理，消耗 2 AP。可能因為語意模糊而帶入紅幽靈雜訊晶片。"
 icon = ExtResource("1_yaidm")
+ap_cost = 2
 type = 1
+match_type = 2
+similarity = 0.0
+chunk_metadata = {}

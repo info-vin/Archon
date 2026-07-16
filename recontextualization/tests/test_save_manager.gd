@@ -12,7 +12,7 @@ func run_tests(tree = null) -> bool:
     sm.load_progress()
     if sm.career_level != 3: return false
     if sm.max_player_hp != 100.0: return false
-    if sm.equipped_action_cards.size() != 3: return false
+    if sm.equipped_action_cards.size() != 1: return false
     
     # 2. Test Max Equipped Cards Logic
     sm.career_level = 5

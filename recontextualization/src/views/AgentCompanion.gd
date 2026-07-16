@@ -10,6 +10,9 @@ var _current_text: String = ""
 var _char_index: int = 0
 
 func _ready() -> void:
+    var title_label = $Panel/VBoxContainer/Header
+    if title_label:
+        title_label.text = tr("agent_terminal_title")
     if typewriter_timer:
         typewriter_timer.timeout.connect(_on_typewriter_step)
     

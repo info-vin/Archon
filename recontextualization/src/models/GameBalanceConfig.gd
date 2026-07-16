@@ -53,9 +53,9 @@ const LOSS_CR_PENALTY = 15
 
 # --- Card Identifiers ---
 const CARD_KEYWORD = "action_keyword"
-const CARD_DENSE = "dense_search"
-const CARD_RERANKER = "reranker"
-const CARD_GRAPH_RAG = "graph_rag"
+const CARD_DENSE = "action_dense"
+const CARD_RERANKER = "action_reranker"
+const CARD_GRAPH_RAG = "action_graphrag"
 
 static func get_sector_base_hp(sector: int) -> float:
 	if sector == 3: return SECTOR_3_BASE_HP
