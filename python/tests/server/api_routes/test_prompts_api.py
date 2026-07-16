@@ -65,7 +65,9 @@ def test_update_prompt_admin_success(mock_admin_user, mock_prompt_service):
 
     # Assert
     assert response.status_code == 200
-    mock_prompt_service.update_prompt.assert_called_once_with("agent-1", "New Prompt", description="New Desc")
+    mock_prompt_service.update_prompt.assert_called_once_with(
+        "agent-1", "New Prompt", description="New Desc", category=None, metadata=None
+    )
 
 
 def test_update_prompt_user_forbidden(mock_user, mock_prompt_service):

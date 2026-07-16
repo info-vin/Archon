@@ -1,6 +1,3 @@
-## 2025-03-05 - Button Accessibility Pattern
-**Learning:** Found that custom buttons in the UI library rely on HTML `disabled` attribute but omitted `aria-disabled` and `aria-busy`. Screen readers benefit from explicitly mirroring these states, especially `aria-busy` for loading states to announce asynchronous operations properly.
-**Action:** Always verify `aria-disabled` and `aria-busy` accompany visually disabled/loading components, particularly for reusable core components.
-## 2026-07-14 - Redundant ARIA Labels on Buttons
-**Learning:** Adding an `aria-label` to a button that already has visible text (like "Refine with AI") is often redundant or confusing, as screen readers will already read the button's inner text.
-**Action:** When adding accessibility features to text-bearing buttons, prioritize state indicators (like `aria-busy` and `aria-disabled`) over `aria-label`, unless the visible text is completely non-descriptive. `aria-label` is best reserved for icon-only buttons.
+## 2026-07-15 - Found Missing ARIA Loading States
+**Learning:** Found that loading/disabled buttons (like the ClockInWidget button) often use standard HTML `disabled` but lack the corresponding `aria-disabled` and `aria-busy` attributes necessary for screen readers to announce loading states effectively. They also sometimes lack visible keyboard focus rings.
+**Action:** Always verify that interactive loading states include `aria-busy` and `aria-disabled` alongside standard `disabled` and ensure `focus-visible` is implemented.

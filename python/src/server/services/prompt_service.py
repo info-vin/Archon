@@ -69,15 +69,19 @@ class PromptService(BaseRepository):
         return default or "You are a helpful AI assistant."
 
     async def update_prompt(
-        self, prompt_name: str, content: str, description: str | None = None
+        self, prompt_name: str, content: str, description: str | None = None, category: str | None = None, metadata: dict[str, Any] | None = None
     ) -> tuple[bool, dict[str, Any]]:
         """Update a system prompt."""
 
         def _query():
             # DB schema uses 'prompt' for the content and 'prompt_name' for identity
-            update_data = {"prompt": content}
+            update_data: dict[str, Any] = {"prompt": content}
             if description:
                 update_data["description"] = description
+            if category:
+                update_data["category"] = category
+            if metadata is not None:
+                update_data["metadata"] = metadata
             return (
                 self.supabase_client.table("archon_prompts")
                 .update(update_data)
