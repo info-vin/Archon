@@ -133,6 +133,11 @@
     *   **L2 業務拆解**: 成功將超過 370 行的巨型 `business.py` 拆分為精簡的 `leads_patrol.py` (96行) 與 `sentinel_patrol.py` (266行)。
     *   **無斷層對接**: 保留 `scheduler_service.py` 的外部別名 (Alias) 以確保與 `admin_api`/`internal_api` 100% 物理對齊，拒絕任何盲目樂觀的重構。
     *   **徹底消滅虛假測試**: 嚴格盤點並更新所有受影響的單元測試，確保 Mock 路徑精準對齊物理現實 (604 項測試全數通過)，落實「絕不容忍假綠燈」鐵律。
+6.  **Phase 5.9.7 提示詞 SSOT 與 Pydantic 降維防禦**:
+    *   **Model SSOT 落地**: 建立 `30_alter_archon_prompts_schema.sql` 與 `31_seed_art_asset_prompts.sql`，將原本散落於 Markdown 文件的 34 個美術提示詞全數遷移至 Supabase `archon_prompts` 資料表，由資料庫統一控管。
+    *   **強型別校驗**: 在 `schemas/prompts.py` 導入 Pydantic 進行嚴格校驗 (`str | None`)，並重構 `PromptService` 以支援 metadata 與 group 更新。
+    *   **消滅幽靈文件**: 徹底清空並廢棄舊版 `Art_Asset_Prompts.md` 的提示詞區塊，掛載棄用警告，從物理層面拔除「文件與代碼不一致」的根源。
+    *   **完美公證**: 通過嚴格的 `make phase-audit` 審查，無任何 Ghost Documents 與巨型技術債，為 Phase 5.9.x 劃下完美的句點。
 
 ### 2026年7月：Phase 5.8.7 全域美術遷移與角色介面
 七月份我們專注於將高品質的 SDXL/Flux 美術素材整合進 Godot 專案中，替換了先前的佔位色塊，並引入 CGF 頂級視覺工藝。
