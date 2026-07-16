@@ -427,6 +427,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `07_logic_indexes.sql`
 > - `08_logic_triggers.sql`
 > - `09_constraints_fkeys.sql`
+> - `100_add_tiered_pruning_rpcs.sql`
 > - `10_security_rls.sql`
 > - `11_seed_config.sql`
 > - `12_seed_rbac.sql`
@@ -441,6 +442,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `26_rag_hybrid_match_chunks.sql`
 > - `27_enable_missing_rls.sql`
 > - `28_graphrag_and_mrl.sql`
+> - `29_seed_job_board_prompts.sql`
 > - `99_rescue_live_data.sql`
 > - `RESET_DB.sql`
 > - `seed_blog_posts.sql`

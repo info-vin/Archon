@@ -106,7 +106,9 @@ export const ClockInWidget: React.FC = () => {
             <button 
                 onClick={toggleClock}
                 disabled={loading}
-                className={`w-full mt-4 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 ${
+                aria-disabled={loading}
+                aria-busy={loading}
+                className={`w-full mt-4 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-md transition-all active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                     status === 'out' 
                     ? 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 shadow-indigo-200' 
                     : 'bg-gray-800 hover:bg-gray-900 shadow-gray-200'
