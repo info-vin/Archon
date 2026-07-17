@@ -4,8 +4,4 @@
 
 [resource]
 shader = ExtResource("1_hud")
-shader_parameter/base_color = Color(0.2, 0.8, 0.7, 0.5)
-shader_parameter/accent_color = Color(0.9, 0.3, 0.2, 0.5)
-shader_parameter/bg_color = Color(0.02, 0.08, 0.1, 0.0)
-shader_parameter/line_thickness = 0.005
-shader_parameter/time_scale = 1.0
+

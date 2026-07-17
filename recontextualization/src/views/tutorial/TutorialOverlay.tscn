@@ -44,7 +44,7 @@ theme_override_constants/separation = 16
 
 [node name="CharacterIcon" type="TextureRect" parent="DialogBox/MarginContainer/HBoxContainer"]
 mouse_filter = 2
-custom_minimum_size = Vector2(88, 88)
+custom_minimum_size = Vector2(97, 97)
 layout_mode = 2
 texture = ExtResource("tex_alice")
 expand_mode = 1

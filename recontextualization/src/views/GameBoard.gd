@@ -117,9 +117,9 @@ func _input(event: InputEvent) -> void:
 func initialize_career(level: int, max_player_hp: float) -> void:
 	game_hud.initialize_career(level, max_player_hp)
 	btn_character.visible = true
-	btn_cards.visible = (level >= 3)
-	btn_workshop.visible = (level >= 3)
-	btn_teammate.visible = (level >= 3)
+	btn_cards.visible = true
+	btn_workshop.visible = true
+	btn_teammate.visible = true
 
 func setup_tutorial(has_completed: bool) -> void:
 	if has_completed:
