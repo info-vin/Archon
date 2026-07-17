@@ -138,6 +138,11 @@
     *   **強型別校驗**: 在 `schemas/prompts.py` 導入 Pydantic 進行嚴格校驗 (`str | None`)，並重構 `PromptService` 以支援 metadata 與 group 更新。
     *   **消滅幽靈文件**: 徹底清空並廢棄舊版 `Art_Asset_Prompts.md` 的提示詞區塊，掛載棄用警告，從物理層面拔除「文件與代碼不一致」的根源。
     *   **完美公證**: 通過嚴格的 `make phase-audit` 審查，無任何 Ghost Documents 與巨型技術債，為 Phase 5.9.x 劃下完美的句點。
+7.  **104 爬蟲防禦硬化與斷層修復 (Ref: Phase 5.9.x, 07-17)**:
+    *   **NoneType 崩潰自癒**: 修正 `Job104Crawler` 因內部非同步委派 (`_fetch_all`) 未被執行而返回 `None` 的嚴重 Bug。導入 `asyncio.to_thread` 將同步的 `curl_cffi` 安全橋接至外部迴圈，防止阻塞主線程。
+    *   **Schema Mapping 容錯**: 104 API 回傳欄位更動。透過防禦性的 `item.get("description", "")` 與 Pydantic 雙重綁定，防止未來因欄位變更而引發 `KeyError` 崩潰。
+    *   **落實第 13 條黃金律 (防範虛假測試)**: 當底層加入 `try-except` 攔截網路例外並 Fallback 回傳 `[]` 時，同步追溯並修正了依賴拋出例外的 Mock 測試，確保單元測試與物理現實 100% 對齊。
+    *   **日誌探針**: 建立 `scripts/check_crawler_logs.py` 直接對帳 Supabase，用實體證據監控 429/503 異常，拒絕盲目猜測。
 
 ### 2026年7月：Phase 5.8.7 全域美術遷移與角色介面
 七月份我們專注於將高品質的 SDXL/Flux 美術素材整合進 Godot 專案中，替換了先前的佔位色塊，並引入 CGF 頂級視覺工藝。
