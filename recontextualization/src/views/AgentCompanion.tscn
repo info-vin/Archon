@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/views/AgentCompanion.gd" id="1_agent"]
+[ext_resource type="Material" path="res://src/views/shaders/TerminalHUD.tres" id="2_term"]
 
 [node name="AgentCompanion" type="Control" node_paths=PackedStringArray("rich_text_label", "typewriter_timer")]
 custom_minimum_size = Vector2(300, 400)
@@ -14,7 +15,8 @@ script = ExtResource("1_agent")
 rich_text_label = NodePath("Panel/VBoxContainer/RichTextLabel")
 typewriter_timer = NodePath("TypewriterTimer")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Panel" type="ColorRect" parent="."]
+material = ExtResource("2_term")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,6 +29,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 50.0
+offset_right = -20.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 

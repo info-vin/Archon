@@ -1,6 +1,6 @@
 extends SceneTree
 
-var output_dir = "/Users/vincenta/.gemini/antigravity/brain/5a96097b-d2b1-413f-bca7-2e7470174942/"
+var output_dir = "./"
 
 func _init() -> void:
 	call_deferred("run_flow")
