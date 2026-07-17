@@ -23,6 +23,15 @@
    - 同步修正 `GameBoard.gd` 內的強型別標註 (Type Hinting)，確保 TDD 自動化測試不因節點型別變更而崩潰。
    - 在 `PauseMenu` 中加入 `ConfirmationDialog` 雙重確認機制，防止玩家誤觸「返回主選單」或「離開遊戲」導致進度遺失。
 
+5. **教學文字對比度與排版 (Tutorial Text Contrast & Layout)**
+   - 建立 `PlayAreaHUD.tres` ShaderMaterial，並透過 `PlayArea.gd` 動態將 `ColorRect` 加入為最底層背景，將左側 Query 輸入框周圍加上些微暗色毛玻璃遮罩效果，並調高 10% 顏色對比度。
+   - 教學文字的出現邏輯進行深度分析，確保不會與其他 UI 元素嚴重重疊，提供更乾淨的引導體驗。
+
+6. **起始手牌與教學流程修復 (Starting Hand & Tutorial Fix)**
+   - 發現當教學流程完成後，若玩家身上的裝備卡牌為空，會導致沒有手牌可用的死胡同。在 `MatchBuilder.gd` 中修復此問題，當 `equipped_action_cards` 為空時，強制提供預設的 `action_keyword` 卡片。
+   - 修正 `GameBoardController.gd` 邏輯，確保即使 `has_completed_tutorial` 為 `true`，依然會正確呼叫 `game_state.start_game()` 觸發發牌動畫。
+   - 移除 `GameState.gd` 中冗餘的手動塞牌邏輯，將發牌權責完全交還給 `MatchBuilder` 與 `EventBus`，統一架構。
+
 ## 視覺公證 (Visual Proof)
 透過自動化截圖腳本產生了實機截圖，驗證了 `GameBoard` HUD 的修復以及 4 大 Hub 子場景的按鈕視覺統一性：
 
