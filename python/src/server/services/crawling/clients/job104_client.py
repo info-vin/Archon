@@ -1,6 +1,5 @@
 import asyncio
 import random
-from typing import cast
 
 from curl_cffi import requests as curl_requests
 from pydantic import BaseModel
@@ -39,12 +38,19 @@ class Job104Crawler:
     DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
     DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
 
-    HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://www.104.com.tw/jobs/search/",
-        "Accept": "application/json, text/plain, */*",
-        "X-Requested-With": "XMLHttpRequest",
-    }
+    USER_AGENTS = [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    ]
+
+    def get_headers(self) -> dict:
+        return {
+            "User-Agent": random.choice(self.USER_AGENTS),
+            "Referer": "https://www.104.com.tw/jobs/search/",
+            "Accept": "application/json, text/plain, */*",
+            "X-Requested-With": "XMLHttpRequest",
+        }
 
     def __init__(self, base_url: str = DEFAULT_BASE_URL, detail_base_url: str = DEFAULT_DETAIL_BASE_URL):
         self.base_url = base_url
@@ -63,6 +69,10 @@ class Job104Crawler:
         }
         try:
             response = client.get(self.base_url, params=params)
+            if response.status_code == 429 or response.status_code == 503:
+                logger.warning(f"Temporary block detected: {response.status_code}")
+                return []
+
             if response.status_code != 200 or "application/json" not in response.headers.get("content-type", ""):
                 return []
 
@@ -78,68 +88,75 @@ class Job104Crawler:
                         title=item.get("jobName", "Unknown"),
                         company=item.get("custName", "Unknown"),
                         url=url,
-                        description=item.get("jobDesc", ""),
+                        description=item.get("description", ""),
                         source="104",
                         real_id=real_id,
                     )
                 )
             return parsed_jobs
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Error fetching jobs: {e}")
             return []
 
     def _fetch_job_detail_sync(self, client: curl_requests.Session, job_id: str, job_url: str | None) -> str | None:
         try:
             url = f"{self.detail_base_url}{job_id}"
-            headers = self.HEADERS.copy()
+            headers = self.get_headers()
             if job_url:
                 headers["Referer"] = job_url
                 client.get(job_url, headers=headers)
             response = client.get(url, headers=headers)
+            if response.status_code == 429:
+                logger.warning("429 Too Many Requests detected during detail fetch. Backing off.")
+                return None
+            if response.status_code == 503:
+                logger.warning("503 Service Unavailable during detail fetch.")
+                return None
             return (
                 response.json().get("data", {}).get("jobDetail", {}).get("jobDescription")
                 if response.status_code == 200
                 else None
             )
-        except Exception:
+        except Exception as e:
+            logger.exception(f"Error fetching job detail: {e}")
             return None
 
     async def search_jobs(self, keyword: str, limit: int = 8) -> list[JobData]:
         logger.info(f"Searching jobs (Sync-Thru Mode) | keyword={keyword}")
 
         def _fetch_all():
-            headers = self.HEADERS.copy()
-            with curl_requests.Session(impersonate="chrome120", headers=headers, timeout=20.0) as client:
-                warmup_res = None
-                try:
-                    warmup_res = client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
-                    if warmup_res.status_code == 403:
-                        logger.warning("403 Detected during warm-up. WAF might be blocking curl_cffi.")
-                        import time
-                        time.sleep(5)
-                except Exception as e:
-                    logger.warning(f"Warm-up failed: {e}")
-
-                jobs = self._fetch_from_104_sync(client, keyword, limit)
-                if not jobs:
-                    if warmup_res and warmup_res.status_code == 403:
-                        raise CrawlerBlockedException("104 WAF Blocked access.")
-                    return []
-
-                for i, job in enumerate(jobs):
-                    if job.real_id:
-                        if i > 0:
+            try:
+                headers = self.get_headers()
+                with curl_requests.Session(impersonate="chrome120", headers=headers, timeout=20.0) as client:
+                    warmup_res = None
+                    try:
+                        warmup_res = client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
+                        if warmup_res.status_code == 403:
+                            logger.warning("403 Detected during warm-up. WAF might be blocking curl_cffi.")
                             import time
-                            time.sleep(random.uniform(2.0, 5.0))
-                        detail = self._fetch_job_detail_sync(client, job.real_id, job.url)
-                        job.description_full = detail or f"[Snippet Only] {job.description}"
-                return jobs
+                            time.sleep(10) # Increased backoff
+                    except Exception as e:
+                        logger.warning(f"Warm-up failed: {e}")
 
-        try:
-            loop = asyncio.get_event_loop()
-            jobs = cast(list[JobData], await loop.run_in_executor(None, _fetch_all))
-            return jobs
-        except CrawlerBlockedException:
-            raise
-        except Exception as e:
-            logger.error(f"Job search failed: {e}")
-            return []
+                    jobs = self._fetch_from_104_sync(client, keyword, limit)
+                    if not jobs:
+                        if warmup_res and warmup_res.status_code == 403:
+                            raise CrawlerBlockedException("104 WAF Blocked access.")
+                        return []
+
+                    for i, job in enumerate(jobs):
+                        if job.real_id:
+                            if i > 0:
+                                import time
+                                time.sleep(random.uniform(3.0, 7.0)) # Increased jitter
+                            detail = self._fetch_job_detail_sync(client, job.real_id, job.url)
+                            job.description_full = detail or f"[Snippet Only] {job.description}"
+                    return jobs
+            except CrawlerBlockedException:
+                raise
+            except Exception as e:
+                logger.error(f"Error in 104 crawler _fetch_all: {e}")
+                return []
+
+        return await asyncio.to_thread(_fetch_all)
+

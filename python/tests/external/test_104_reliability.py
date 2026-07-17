@@ -12,7 +12,7 @@ async def test_104_crawler_reliability():
     # 測試一個確定的職缺 ID
     job_id = "8pws1"
 
-    async with requests.AsyncSession(impersonate="chrome120", timeout=15.0, headers=crawler.HEADERS) as client:
+    async with requests.AsyncSession(impersonate="chrome120", timeout=15.0, headers=crawler.get_headers()) as client:
         # 1. 預熱
         await client.get(f"https://www.104.com.tw/job/{job_id}")
 
