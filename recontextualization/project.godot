@@ -39,3 +39,8 @@ project/assembly_name="Archon Recontextualization"
 [internationalization]
 
 locale/translations=PackedStringArray("res://locale/translations.en.translation", "res://locale/translations.zh_TW.translation")
+
+[debug]
+
+file_logging/enable_file_logging=false
+file_logging/max_log_files=0
