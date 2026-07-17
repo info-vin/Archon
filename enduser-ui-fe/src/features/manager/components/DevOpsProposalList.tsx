@@ -1,6 +1,16 @@
 import React from 'react';
 import { SearchIcon, RefreshCwIcon } from '../../../components/Icons';
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+});
+
+const formatDateTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
+
 interface DevOpsProposalListProps {
     proposals: any[];
     processingId: string | null;
@@ -21,7 +31,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                                 <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/50">
                                     {prop.type} proposal
                                 </span>
-                                <span className="text-[10px] text-gray-400 font-mono">{new Date(prop.created_at).toLocaleString()}</span>
+                                <span className="text-[10px] text-gray-400 font-mono">{formatDateTime(prop.created_at)}</span>
                             </div>
                             <p className="text-gray-800 dark:text-slate-200 font-mono text-sm bg-gray-50 dark:bg-slate-950 p-4 rounded-xl border border-gray-100 dark:border-slate-800 shadow-inner">
                                 {prop.request_payload?.description || 'Infrastructure change request detected.'}
