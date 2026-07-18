@@ -3,6 +3,16 @@ import { SearchIcon, RefreshCwIcon } from '../../../components/Icons';
 import { ConfigDrivenInput } from './ConfigDrivenInput';
 import { useDocumentVersions } from '../hooks/useAdminDashboard';
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+});
+
+const formatDateTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
+
 export const AdminAuditLogs: React.FC = () => {
     const { filteredVersions, searchTerm, setSearchTerm, loading } = useDocumentVersions();
     
@@ -54,7 +64,7 @@ export const AdminAuditLogs: React.FC = () => {
                             filteredVersions.map(log => (
                                 <tr key={log.id} className="hover:bg-muted/30 transition-colors group text-sm">
                                     <td className="px-6 py-4 whitespace-nowrap text-[10px] text-muted-foreground font-mono">
-                                        {new Date(log.created_at).toLocaleString()}
+                                        {formatDateTime(log.created_at)}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-bold flex items-center gap-2">

@@ -129,3 +129,7 @@
 ## 2026-07-11 - Inline Regex Micro-Optimizations
 **Learning:** Replacing string operations like `.toLowerCase().includes()` with inline case-insensitive regex (e.g., `/pattern/i.test()`) in standard UI render paths (e.g., small components or state machine transitions) is a rejected micro-optimization. It yields no measurable performance impact and carries a high risk of introducing TypeScript type coercion errors (e.g., `str && /pattern/.test(str)` evaluating to an empty string instead of a boolean when `str` is empty).
 **Action:** Never propose inline regex as a replacement for simple string matching in cold paths. Focus on systemic memory allocations, like avoiding unhandled `Intl.DateTimeFormat` crashes or hoisting expensive loop allocations.
+
+## 2024-05-24 - Intl.DateTimeFormat configuration for toLocaleString replacement
+**Learning:** When optimizing render loops by hoisting `Intl.DateTimeFormat` to replace `Date.prototype.toLocaleString()`, the default `new Intl.DateTimeFormat(undefined)` only outputs the date (e.g., "10/24/2023"). This causes a functional regression for components that rely on exact timestamps (e.g., Audit Logs, System Health logs).
+**Action:** Always pass explicit options (e.g., `{ year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }`) when replacing `.toLocaleString()` to preserve the time component, and abstract this into a reusable helper function.

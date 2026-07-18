@@ -10,6 +10,15 @@ import { StatusCard } from './StatusCard';
 import { AgentRow } from './AgentRow';
 import { ClockworkJobsTable } from './ClockworkJobsTable';
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+});
+
+const formatDateTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
 
 export const SystemHealthDashboard: React.FC = () => {
     const [overview, setOverview] = useState<SystemOverview | null>(null);
@@ -214,7 +223,7 @@ export const SystemHealthDashboard: React.FC = () => {
                             <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="font-black text-red-600 uppercase tracking-tighter bg-red-100 px-1.5 py-0.5 rounded">{log.source}</span>
-                                    <span className="text-[10px] text-gray-400 font-mono">{new Date(log.created_at).toLocaleString()}</span>
+                                    <span className="text-[10px] text-gray-400 font-mono">{formatDateTime(log.created_at)}</span>
                                 </div>
                                 <p className="text-gray-700 font-medium">{log.message}</p>
                                 {log.details?.model && <p className="text-[10px] text-red-400 mt-1 font-mono">Target Model: {log.details.model}</p>}

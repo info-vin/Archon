@@ -5,6 +5,16 @@ import { api } from '../../../services/api.ts';
 import { CheckCircleIcon, KeyIcon, RefreshCwIcon, SaveIcon, ShieldCheckIcon, EyeIcon, Edit2Icon, UndoIcon } from '../../../components/Icons.tsx';
 import DiffViewer from '../../../components/DiffViewer';
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+});
+
+const formatDateTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
+
 export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManagerMode }) => {
     const [state, send] = useMachine(promptMachine);
     const { prompts, selectedPrompt, editValue, viewMode } = state.context;
@@ -108,7 +118,7 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
                                     {selectedPrompt.prompt_name.replace(/_/g, ' ').toUpperCase()}
                                     {isLocked && <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200">READ ONLY</span>}
                                 </h3>
-                                <p className="text-xs text-muted-foreground">Last updated: {new Date(selectedPrompt.updated_at).toLocaleString()}</p>
+                                <p className="text-xs text-muted-foreground">Last updated: {formatDateTime(selectedPrompt.updated_at)}</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 {!isLocked && hasChanges && (
