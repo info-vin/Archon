@@ -445,6 +445,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `29_seed_job_board_prompts.sql`
 > - `30_alter_archon_prompts_schema.sql`
 > - `31_seed_art_asset_prompts.sql`
+> - `32_seed_nav_icons_prompts.sql`
 > - `99_rescue_live_data.sql`
 > - `RESET_DB.sql`
 > - `seed_blog_posts.sql`
