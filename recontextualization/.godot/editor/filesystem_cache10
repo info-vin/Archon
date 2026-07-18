@@ -1,7 +1,11 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1784257253
+::res://::1784339207
 env.json::JSON::-1::1783992799::0::1::::<><><>0<>0<><>::
 export_presets.cfg::TextFile::-1::1783992799::0::1::::<><><>0<>0<><>::
+flow_01_NewPlayer_Level1.png::CompressedTexture2D::3986373127453814853::1784264385::1784339329::1::::<><><>0<>0<>02316457b1e54859a3919a121c94d11c<>res://.godot/imported/flow_01_NewPlayer_Level1.png-b256ed52c68146c4a63200d187b93dff.ctex::
+flow_02_AdvancedPlayer_Level5.png::CompressedTexture2D::2425558244675799079::1784264387::1784339329::1::::<><><>0<>0<>001c28a45d07dad676f8f9beda934dae<>res://.godot/imported/flow_02_AdvancedPlayer_Level5.png-79a4a29fc89702a9547836e98d1ade9a.ctex::
+flow_03_CardPlayed_Search.png::CompressedTexture2D::9096143823566630611::1784264387::1784339329::1::::<><><>0<>0<>399e1f398f2ad18469d6ca81b52ceac2<>res://.godot/imported/flow_03_CardPlayed_Search.png-05051d2ad62deb9048a1e24750800b4f.ctex::
+godot_test.log::TextFile::-1::1784339207::0::1::::<><><>0<>0<><>::
 ::res://assets/::1783992799
 ::res://assets/data/::1783992796
 chaos_events.json::JSON::-1::1783992796::0::1::::<><><>0<>0<><>::
@@ -649,6 +653,161 @@ hero_animation.ogv::VideoStreamTheora::2944301835445362361::1783992799::0::1::::
 Art_Asset_Prompts.md::TextFile::-1::1784252372::0::1::::<><><>0<>0<><>::
 player_journey_uml.md::TextFile::-1::1783992799::0::1::::<><><>0<>0<><>::
 TDD_Recontextualization.md::TextFile::-1::1783992799::0::1::::<><><>0<>0<><>::
+::res://fake_home/::1784260251
+::res://fake_home/Library/::1784260251
+::res://fake_home/Library/Application Support/::1784260251
+::res://fake_home/Library/Application Support/Godot/::1784260251
+::res://fake_home/Library/Application Support/Godot/app_userdata/::1784260251
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/::1784260323
+archon_progress.json::JSON::-1::1784260252::0::1::::<><><>0<>0<><>::
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/logs/::1784260251
+godot.log::TextFile::-1::1784260381::0::1::::<><><>0<>0<><>::
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/::1784260336
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/ff55ede486711a617cfa6eca8952f824e1de5c6fd727c4514cd603e8e7c9264e/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BlitShaderRD/::1784260336
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BlitShaderRD/cff12a2b56a5c7d70f6de186c786c80ec84b1844045fdaf13152862c6a82baf6/::1784260336
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BokehDofShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BokehDofShaderRD/3d294ab0ec5302046ff36ecad7f72d70d1c4b3efbc3ca1bb29fe6a80be9abb65/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasOcclusionShaderRD/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasOcclusionShaderRD/e397c50e1a9e03519ccb486acfdaddf8be9986511a5738dd0fa77e62980f0ad0/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/::1784260323
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/f5163131ffbf6578b3e403ae4a2e93b16c3b4d4f74b7d313965240c9159ca4a3/::1784260323
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/f30a5b440b1341c6eaa19af108108f7adb605232e31fd6aeac74e4825e07ec28/::1784260376
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/2775e502fff54bad7c5a36ee96cb93f9bb26a0835936a36809e0142a020d1da5/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterRenderShaderRD/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterRenderShaderRD/d7d33a009d89531a62355652a94a4bbbcb6ecafd4849629a6a81ebc41fb55f82/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterStoreShaderRD/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterStoreShaderRD/04f77ac6fc3ac39e10dba3d8b90afbac54f16ae6134a60264841ff0154dd1be9/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyShaderRD/bef3ebc581956c1e4cad1b19a4c57b168d4fd3a373a0481f33e26003ca1fa6c6/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyToFbShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyToFbShaderRD/d2ff28d6e27943750d2e72da5da60d486f9b37ab66241467d62296b893eb4cd0/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToDpShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToDpShaderRD/a1c0c9b7619044d7ba83959f645735ee8e1d34ad23904a6ac0af8e55d7ba00db/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToOctmapShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToOctmapShaderRD/c8b61d04732bfd2b54191babf0cd12bfae13c795c34c47b484abdf9f06f00205/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AccumulatePassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AccumulatePassShaderRD/59eaf5aa5dab2091f9920fd2cd38d17b2ebcab91baa70d1238410844bbecbb5b/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AutogenReactivePassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AutogenReactivePassShaderRD/ec5d678440f2691e5fbe9f077b20a0af3ac3b7c57459658136fe928187f8dc45/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ComputeLuminancePyramidPassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ComputeLuminancePyramidPassShaderRD/fcbae19c9e34620536c2ff16b1c22459d168d05f8f04ee0408268eac446353db/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2DepthClipPassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2DepthClipPassShaderRD/6b9a59f55a7acc18aef6c6065544923fc586af3364f631a64dd6335e5a1f5085/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2LockPassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2LockPassShaderRD/6ba09946c77cf589f8525522562375ceabd82a1bd0e28cdaa6da7d5afe48777a/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2RcasPassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2RcasPassShaderRD/b2b9c2dbcf61b422fa22aadbfefd75dcf73120ffcc9b6d6b3ae251a1c3b091a7/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ReconstructPreviousDepthPassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ReconstructPreviousDepthPassShaderRD/696549826dfa212243f6aaca43553fe1b4e35f3b0f848a30cac71af75c979104/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2TcrAutogenPassShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2TcrAutogenPassShaderRD/1ddf023abd1d246190d528e8d06b38da222148c759ca42852bd25aa4d9dc48cb/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/FsrUpscaleShaderRD/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/FsrUpscaleShaderRD/d659c02701a99861f3054fa8c67cabb79f0491aa3388020f008051107cf1fec5/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/GiShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/GiShaderRD/0a1109506856e7902e872dda83faa67adac822d90e694417c64c101b2b904810/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/GiShaderRD/9e900b11fb1fd59f00f233f459e572b3bff5d0c8f622f0ddf9ee855771977bab/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/IntegrateDfgShaderRD/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/IntegrateDfgShaderRD/6d20d114a76402f30530dc6983c20cd78a5bdebe815ba021289a607f6c4541f5/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/LuminanceReduceShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/LuminanceReduceShaderRD/3484522051e094e151b4a7cbd88cfc9eb2721ea1d26cd66d6ebdd36e30657cc2/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/MotionVectorsShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/MotionVectorsShaderRD/00e39c95d2d9272edadd9be2db6dbe65b3460f21d2341c92a77371c843cf4d00/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapDownsamplerShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapDownsamplerShaderRD/ffe6788f20aa023afaf7e888e2cf33c840f3084c8fbb309ed784918a44ebcf23/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapFilterShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapFilterShaderRD/5fc5fea9e3fe54191ff165540faa285b099e7909be69e7349c971f7ab0a609cc/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapRoughnessShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapRoughnessShaderRD/15e894f5c1a4917d83d34012ecf1ede2bee251fefc7b887b728834d4d817ad55/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesCopyShaderRD/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesCopyShaderRD/bcec80ba01e935ed0dc85d792ce6064d3b9920ff6f4ad7f021c39739c998092c/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesShaderRD/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesShaderRD/527b8e067ac0ad8d5ca4af3230efbc7edb63fc49fd10c48dd765f7d4134c2606/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ResolveShaderRD/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ResolveShaderRD/27dd92d92212d9fee97e14b2c5e5e102610e3124706ce6710bb99bb01c1723a2/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/4a7f175f195e498d54512dc7a67639a3d15bd9ea5194743007a58b5b22b4b699/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/8ab1aa3c06e5871372c06699ba414dca9059b8eb313a79a1ec17202d4c8f34d9/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/72441e69a5110c34824334c2d7284287eeb225010e6fb8c9f80ad241154df663/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/cb9170726728c08dc698861873bcf2c044b0f42ba767496a6fb9315fd7d62b58/::1784260329
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionDownsampleShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionDownsampleShaderRD/e2b08e2f67ca3648565b1054827dd95ce07c1b31c4deeb5c87adb959b48c3662/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionFilterShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionFilterShaderRD/3e7cbd9d8999cd16cf5e5b03b2bc462b40767703140a0757280c95895703123d/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionHizShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionHizShaderRD/baf8f4bfe602462ece1270390433485b1e3018fbbd45bae7c8bbedf320c26cd6/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionResolveShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionResolveShaderRD/e628cc87f903d3043b8b7a44bb5d54638465b46e0ab7bb37b1ddb9b91f4f1b3a/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionShaderRD/4ec3777007532ddcd638ae82ef6adc97739054897ed48a2ef8401e7a025ee2da/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugProbesShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugProbesShaderRD/5e74420cdc840f19f82244b066217b3888799930df17d31ff133420b1a916076/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugShaderRD/4597a244d5202b1178081479b348d60a48501cb16fc54b1fea4c8395c5e68675/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDirectLightShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDirectLightShaderRD/16f822b671cd6f4a687e51e33b1c8c2148121c1c091f7ff39f76127556ff3ec3/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiIntegrateShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiIntegrateShaderRD/c5e82715048eb54d931afaa6dadaca3cb48a98f8c3376dd7913485bd1ce2989f/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiPreprocessShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiPreprocessShaderRD/f3ef78a3d2f1c9d4496e3afe61867e94fb32829809548b265a8a1154b66aec33/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ShadowFrustumShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ShadowFrustumShaderRD/b56bc1e62633ec9304336b7e957397468d55950f317fcf5a6473439810432caa/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkeletonShaderRD/::1784260324
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkeletonShaderRD/54e50a68f8252031f493dd1ea6200e9ef718d5bd8693e28030efe1b120eb7905/::1784260324
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkyShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkyShaderRD/21f924306eb18caac3ace30e495c78ba40ae7b2f490d5e4f3b13a79479216b9c/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaBlendingShaderRD/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaBlendingShaderRD/3d0a167a9f66fe724550ee422e5f78e94ee25cd28f8d2dd9770c61d98fee5f61/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaEdgeDetectionShaderRD/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaEdgeDetectionShaderRD/d5021a9d8471f798a9fea1996ea85751035ea859c7fdd21721cc24e149d1e4fe/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaWeightCalculationShaderRD/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaWeightCalculationShaderRD/96902d6fbf74206adb55a50fd070fc6de4aaf8dc634f04f92751ac8b307948c7/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SortShaderRD/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SortShaderRD/967234006fae085a9579b3ffd489cee602c4f145dc18ff2bf240e4d8c13498cd/::1784260325
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SpecularMergeShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SpecularMergeShaderRD/d91816cf1f28c63908a9133ffc50683b675ef9859b0616c7436f475405b22c27/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoBlurShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoBlurShaderRD/9821a28f9d156aaaed0a7fab3de6738b2c4022738da0a9b7cb77ffb499f40e38/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoImportanceMapShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoImportanceMapShaderRD/09886b051a7294522d484a6b5de82ee75778fa16804f3f4f13d1605e7f39b69d/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoInterleaveShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoInterleaveShaderRD/5762f4757375a26f8fda6d1bcb2a452f1c2c429e857969bb128d7270760b56f7/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoShaderRD/6e8f8fd45ceab920597432cb2a5447c53291203857121f3a3b38a4b9b27c2c50/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsEffectsDownsampleShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsEffectsDownsampleShaderRD/bd37175ba48fdd02099abbbeee5452079e89a3727fd5fe1de649551c99081c36/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilBlurShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilBlurShaderRD/e74ed13ec93f83efa28f3bba922e68d5e345173ff5670ca6f557df8d614a782f/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilImportanceMapShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilImportanceMapShaderRD/a4219fd46be62ae37b0e06fd10ebbd2798ad85088678db4c0b425f823042d4be/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilInterleaveShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilInterleaveShaderRD/88e29bdd44daa6cf920ee2050e7a7237fd88bfa9c8880c62168f4b0a4502f4d0/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilShaderRD/af35f1233e4d0591e9dad8d6301cf258931ca4d79c210c67076cd8fb624c6da0/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SubsurfaceScatteringShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SubsurfaceScatteringShaderRD/69df93a2334ebca4dc3af3f7aef99cad7870b6623865bd4671963fae81796b41/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TaaResolveShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TaaResolveShaderRD/21a8f8e3a65237efe11f4640388d4d1a1fac34dfb3102a6aa4c5b6bf6c85e8ea/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TonemapShaderRD/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TonemapShaderRD/c3f5c8110f44921262b756899cc7d2c51c74e9333ffe1f8450a95bbd12872516/::1784260333
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/5a983dd19d944f10c1d3634e2ec4509c330fc708754b14d4216b9f5704a71a62/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/c323a941682e364f2ac33c4d96c03f043ff01d2d1a8ec923fb6520953aed2e93/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/d263a12d61ecbbe0abb0e8af30814fc94808c4c8674479fab02d545dff96f7e1/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/e0e2495360f4e94ec75835ceb7dd861bc7bc3723cd957e130405596c82b92def/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/37d5a85d63465587de4d65fe8624123b742fbec2de5ee217d24a400c1d1c8087/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/98adc80de8af184c1c906595dc32e59c8336c9e57624854a778398ac7b65a69e/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/48422ca2db267dec13a7aa41ba356cdfc7cbfa667e28e02e98b968145e4cc2f5/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/212858dee8b411c576ca1a8745c401347c3dbbf88f247ca2270e8ff0b1093507/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiDebugShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiDebugShaderRD/4e91a9ddbecad298ed67c31222afae9756053363f06befd837e376dd85b639aa/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/44b979a30a4cc4de0f731a25d26286e14abc01718fe9a838d597bd153538c665/::1784260330
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/vulkan/::1784260381
 ::res://godot_user_data/::1784256892
 ::res://godot_user_data/Archon Recontextualization/::1784256892
 ::res://godot_user_data/Archon Recontextualization/logs/::1784256892
@@ -657,6 +816,7 @@ TDD_Recontextualization.md::TextFile::-1::1783992799::0::1::::<><><>0<>0<><>::
 translations.csv::Translation::8336262614127477177::1784252372::1784198747::1::::<><><>0<>0<>271787f2b2a87f30c92310e3a8e7b7b6<>res://locale/translations.en.translation<*>res://locale/translations.zh_TW.translation::
 translations.en.translation::OptimizedTranslation::607290930571045636::1784252372::0::1::::<><><>0<>0<><>::
 translations.zh_TW.translation::OptimizedTranslation::6170685996934377574::1784252372::0::1::::<><><>0<>0<><>::
+::res://scratch/::1784339057
 ::res://src/::1783992799
 ::res://src/autoloads/::1784252372
 EnvConfig.gd::GDScript::1436774006162950364::1783992799::0::1::::<>Node<><>0<>0<><>::
@@ -718,7 +878,7 @@ GenerateCardResources.gd::GDScript::270345591538317499::1783992799::0::1::::<>Sc
 AutoloadLocator.gd::GDScript::527461839146115353::1783992799::0::1::::AutoloadLocator<>RefCounted<><>0<>0<><>::
 ::res://src/views/::1784253742
 AgentCompanion.gd::GDScript::9059536470992474393::1784252372::0::1::::AgentCompanion<>Control<><>0<>0<><>::
-AgentCompanion.tscn::PackedScene::-1::1783992799::0::1::::<><><>0<>0<><>::res://src/views/AgentCompanion.gd
+AgentCompanion.tscn::PackedScene::-1::1784263466::0::1::::<><><>0<>0<><>::res://src/views/AgentCompanion.gd<>res://src/views/shaders/TerminalHUD.tres
 CardChip.gd::GDScript::9210102573972730741::1783992799::0::1::::<>MarginContainer<><>0<>1<><>::
 CardChip.tscn::PackedScene::-1::1784252372::0::1::::<><><>0<>0<><>::res://src/views/CardChip.gd<>res://assets/images/card_frame_blank.png<>res://src/shaders/HexagonMask.gdshader
 CardGalleryPreview.gd::GDScript::7501152027985349252::1783992799::0::1::::<>ScrollContainer<><>0<>1<><>::
@@ -734,8 +894,8 @@ CharacterDashboard.gd::GDScript::9093318217842206453::1783992799::0::1::::<>Cont
 CharacterDashboard.tscn::PackedScene::266850077443226771::1783992799::0::1::::<><><>0<>0<><>::res://src/views/CharacterDashboard.gd<>res://src/views/CharacterDashboardController.gd<>res://assets/images/bg_vector_grid.png<>res://assets/images/avatar_alice.png<>res://assets/images/badge_rank_c.png<>res://assets/images/badge_rank_b.png<>res://assets/images/badge_rank_a.png<>res://assets/images/badge_rank_s.png<>res://assets/images/card_frame_blank.png<>res://assets/images/chip_green_target.png<>res://assets/images/chip_red_noise.png<>res://src/shaders/HexagonMask.gdshader
 CharacterDashboardController.gd::GDScript::3417035077609670513::1783992799::0::1::::CharacterDashboardController<>Node<><>0<>0<><>::
 EventQueue.gd::GDScript::3176009371058998968::1783992799::0::1::::EventQueue<>Node<><>0<>0<><>::
-GameBoard.gd::GDScript::5341665864304548411::1784252372::0::1::::<>Control<><>0<>0<><>::
-GameBoard.tscn::PackedScene::-1::1784252372::0::1::::<><><>0<>0<><>::res://assets/vfx/transition_victory.ogv<>res://assets/vfx/transition_defeat_glitch.ogv<>res://assets/vfx/transition_defeat_shutdown.ogv<>res://src/views/GameBoard.gd<>res://src/views/GameBoardController.gd<>res://src/views/components/HandLayout.gd<>res://assets/images/bg_vector_grid.png<>res://src/views/EventQueue.gd<>res://src/views/PlayArea.gd<>res://src/views/components/GameHUD.tscn<>res://src/views/AgentCompanion.tscn<>res://src/views/components/TutorialPanel.tscn<>res://assets/images/card_frame_blank.png<>res://src/views/components/GameOverPanel.tscn<>res://src/views/PauseMenu.tscn
+GameBoard.gd::GDScript::5341665864304548411::1784260731::0::1::::<>Control<><>0<>0<><>::
+GameBoard.tscn::PackedScene::-1::1784260737::0::1::::<><><>0<>0<><>::res://assets/vfx/transition_victory.ogv<>res://assets/vfx/transition_defeat_glitch.ogv<>res://assets/vfx/transition_defeat_shutdown.ogv<>res://src/views/GameBoard.gd<>res://src/views/GameBoardController.gd<>res://src/views/components/HandLayout.gd<>res://assets/images/bg_vector_grid.png<>res://src/views/EventQueue.gd<>res://src/views/PlayArea.gd<>res://src/views/components/GameHUD.tscn<>res://src/views/AgentCompanion.tscn<>res://src/views/components/TutorialPanel.tscn<>res://assets/images/card_frame_blank.png<>res://src/views/components/GameOverPanel.tscn<>res://src/views/PauseMenu.tscn
 GameBoardController.gd::GDScript::1896659700809216115::1784252372::0::1::::<>Node<><>0<>0<><>::
 IntroVideo.gd::GDScript::2625749005910946516::1783992799::0::1::::<>Control<><>0<>0<><>::
 IntroVideo.tscn::PackedScene::-1::1783992799::0::1::::<><><>0<>0<><>::res://src/views/IntroVideo.gd<>res://assets/vfx/transition_os_boot.ogv
@@ -751,31 +911,37 @@ TeammateDashboardController.gd::GDScript::2464058418546727698::1783992800::0::1:
 TeammateDashboardGamified.txt::TextFile::-1::1783992800::0::1::::<><><>0<>0<><>::
 TransitionVideo.gd::GDScript::5882721299963759742::1783992800::0::1::::<>Control<><>0<>0<><>::
 TransitionVideo.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::res://src/views/TransitionVideo.gd<>res://assets/vfx/transition_battle_intro.ogv<>res://src/views/GameBoard.tscn
-::res://src/views/components/::1784252372
+::res://src/views/components/::1784339093
 CardSlot.gd::GDScript::6113947152913809067::1783992800::0::1::::<>MarginContainer<><>0<>0<><>::
 CardSlot.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::res://src/views/components/CardSlot.gd<>res://assets/images/card_frame_blank.png
 CombatJuice.gd::GDScript::2621805845194611154::1783992800::0::1::::CombatJuice<>RefCounted<><>0<>0<><>::
-GameHUD.gd::GDScript::5996169693402384363::1784252372::0::1::::<>HBoxContainer<><>0<>0<><>::
-GameHUD.tscn::PackedScene::-1::1784252372::0::1::::<><><>0<>0<><>::res://src/views/components/GameHUD.gd
+EnemyThreatHUD.tscn::PackedScene::-1::1784339093::0::1::::<><><>0<>0<><>::res://src/views/shaders/SciFiHUD.gdshader
+GameHUD.gd::GDScript::5996169693402384363::1784339113::0::1::::<>HBoxContainer<><>0<>0<><>::
+GameHUD.tscn::PackedScene::-1::1784339113::0::1::::<><><>0<>0<><>::res://src/views/components/GameHUD.gd<>res://src/views/components/PlayerStatusHUD.tscn<>res://src/views/components/EnemyThreatHUD.tscn
 GameOverPanel.gd::GDScript::9034953038075178408::1783992800::0::1::::<>ColorRect<><>0<>0<><>::
 GameOverPanel.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::res://src/views/components/GameOverPanel.gd
 HandLayout.gd::GDScript::5241731739247128758::1783992800::0::1::::HandLayout<>Container<><>0<>0<><>::
 ListItemButton.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::
+PlayerStatusHUD.tscn::PackedScene::-1::1784339092::0::1::::<><><>0<>0<><>::res://src/views/shaders/SciFiHUD.gdshader
 TargetingArrow.gd::GDScript::7085885293974244805::1783992800::0::1::::TargetingArrow<>Line2D<><>0<>0<><>::
 TutorialPanel.gd::GDScript::570065335494367509::1783992800::0::1::::<>ColorRect<><>0<>0<><>::
 TutorialPanel.tscn::PackedScene::-1::1784252372::0::1::::<><><>0<>0<><>::res://src/views/components/TutorialPanel.gd
-::res://src/views/shaders/::1784257200
-PlayAreaHUD.gdshader::Shader::1267819540091837859::1784253786::0::1::::<><><>0<>0<><>::
-PlayAreaHUD.tres::ShaderMaterial::-1::1784253807::0::1::::<><><>0<>0<><>::res://src/views/shaders/PlayAreaHUD.gdshader
+::res://src/views/shaders/::1784339092
+PlayAreaHUD.gdshader::Shader::1267819540091837859::1784264320::0::1::::<><><>0<>0<><>::
+PlayAreaHUD.tres::ShaderMaterial::-1::1784262075::0::1::::<><><>0<>0<><>::res://src/views/shaders/PlayAreaHUD.gdshader
+PlayerStatusHUD.gdshader::Shader::7170295266961162244::1784274172::0::1::::<><><>0<>0<><>::
+SciFiHUD.gdshader::Shader::7040623135199394916::1784339092::0::1::::<><><>0<>0<><>::
+TerminalHUD.gdshader::Shader::8959951495057112518::1784264337::0::1::::<><><>0<>0<><>::
+TerminalHUD.tres::ShaderMaterial::-1::1784262899::0::1::::<><><>0<>0<><>::res://src/views/shaders/TerminalHUD.gdshader
 ::res://src/views/tutorial/::1784252372
 TutorialOverlay.gd::GDScript::1591444187627522709::1783992800::0::1::::<>CanvasLayer<><>0<>0<><>::
-TutorialOverlay.tscn::PackedScene::-1::1784252372::0::1::::<><><>0<>0<><>::res://src/views/tutorial/TutorialOverlay.gd<>res://assets/images/avatar_alice.png
+TutorialOverlay.tscn::PackedScene::-1::1784260801::0::1::::<><><>0<>0<><>::res://src/views/tutorial/TutorialOverlay.gd<>res://assets/images/avatar_alice.png
 ::res://tests/::1784252372
 HeadlessRunner.gd::GDScript::4656820146736531584::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 MainMenu_Screenshotter.gd::GDScript::829873347635846444::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 Screenshotter.gd::GDScript::4716673305685145682::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 Screenshotter_GameBoard.gd::GDScript::1500906305682009098::1784252372::0::1::::<>SceneTree<><>0<>0<><>::
-Screenshotter_GameBoardFlow.gd::GDScript::2380297326658722066::1784252372::0::1::::<>SceneTree<><>0<>0<><>::
+Screenshotter_GameBoardFlow.gd::GDScript::2380297326658722066::1784261406::0::1::::<>SceneTree<><>0<>0<><>::
 Screenshotter_Hubs.gd::GDScript::6121135674128756882::1784252372::0::1::::<>SceneTree<><>0<>0<><>::
 TestHubUX.gd::GDScript::7746085152549438854::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 test_backend_client.gd::GDScript::5988696668426940907::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
@@ -797,3 +963,159 @@ test_teammate_progression.gd::GDScript::2534536338621738831::1783992800::0::1:::
 test_token_capping.gd::GDScript::395007416727365612::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
 test_tutorial_fsm.gd::GDScript::937491395204751588::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
 test_visual_integration.gd::GDScript::2574369956127176204::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
+::res://tmp_home/::1784261328
+::res://tmp_home/Library/::1784261328
+::res://tmp_home/Library/Application Support/::1784261328
+::res://tmp_home/Library/Application Support/Godot/::1784261328
+::res://tmp_home/Library/Application Support/Godot/app_userdata/::1784261328
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/::1784261355
+archon_progress.json::JSON::-1::1784261328::0::1::::<><><>0<>0<><>::
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/logs/::1784261328
+godot.log::TextFile::-1::1784264387::0::1::::<><><>0<>0<><>::
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/::1784261363
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/ff55ede486711a617cfa6eca8952f824e1de5c6fd727c4514cd603e8e7c9264e/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BlitShaderRD/::1784261363
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BlitShaderRD/cff12a2b56a5c7d70f6de186c786c80ec84b1844045fdaf13152862c6a82baf6/::1784261363
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BokehDofShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BokehDofShaderRD/3d294ab0ec5302046ff36ecad7f72d70d1c4b3efbc3ca1bb29fe6a80be9abb65/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasOcclusionShaderRD/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasOcclusionShaderRD/e397c50e1a9e03519ccb486acfdaddf8be9986511a5738dd0fa77e62980f0ad0/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/::1784261355
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/f5163131ffbf6578b3e403ae4a2e93b16c3b4d4f74b7d313965240c9159ca4a3/::1784261355
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/f30a5b440b1341c6eaa19af108108f7adb605232e31fd6aeac74e4825e07ec28/::1784264384
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/2775e502fff54bad7c5a36ee96cb93f9bb26a0835936a36809e0142a020d1da5/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterRenderShaderRD/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterRenderShaderRD/d7d33a009d89531a62355652a94a4bbbcb6ecafd4849629a6a81ebc41fb55f82/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterStoreShaderRD/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterStoreShaderRD/04f77ac6fc3ac39e10dba3d8b90afbac54f16ae6134a60264841ff0154dd1be9/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyShaderRD/bef3ebc581956c1e4cad1b19a4c57b168d4fd3a373a0481f33e26003ca1fa6c6/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyToFbShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CopyToFbShaderRD/d2ff28d6e27943750d2e72da5da60d486f9b37ab66241467d62296b893eb4cd0/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToDpShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToDpShaderRD/a1c0c9b7619044d7ba83959f645735ee8e1d34ad23904a6ac0af8e55d7ba00db/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToOctmapShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CubeToOctmapShaderRD/c8b61d04732bfd2b54191babf0cd12bfae13c795c34c47b484abdf9f06f00205/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AccumulatePassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AccumulatePassShaderRD/59eaf5aa5dab2091f9920fd2cd38d17b2ebcab91baa70d1238410844bbecbb5b/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AutogenReactivePassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2AutogenReactivePassShaderRD/ec5d678440f2691e5fbe9f077b20a0af3ac3b7c57459658136fe928187f8dc45/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ComputeLuminancePyramidPassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ComputeLuminancePyramidPassShaderRD/fcbae19c9e34620536c2ff16b1c22459d168d05f8f04ee0408268eac446353db/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2DepthClipPassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2DepthClipPassShaderRD/6b9a59f55a7acc18aef6c6065544923fc586af3364f631a64dd6335e5a1f5085/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2LockPassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2LockPassShaderRD/6ba09946c77cf589f8525522562375ceabd82a1bd0e28cdaa6da7d5afe48777a/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2RcasPassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2RcasPassShaderRD/b2b9c2dbcf61b422fa22aadbfefd75dcf73120ffcc9b6d6b3ae251a1c3b091a7/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ReconstructPreviousDepthPassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2ReconstructPreviousDepthPassShaderRD/696549826dfa212243f6aaca43553fe1b4e35f3b0f848a30cac71af75c979104/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2TcrAutogenPassShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/Fsr2TcrAutogenPassShaderRD/1ddf023abd1d246190d528e8d06b38da222148c759ca42852bd25aa4d9dc48cb/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/FsrUpscaleShaderRD/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/FsrUpscaleShaderRD/d659c02701a99861f3054fa8c67cabb79f0491aa3388020f008051107cf1fec5/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/GiShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/GiShaderRD/0a1109506856e7902e872dda83faa67adac822d90e694417c64c101b2b904810/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/GiShaderRD/9e900b11fb1fd59f00f233f459e572b3bff5d0c8f622f0ddf9ee855771977bab/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/IntegrateDfgShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/IntegrateDfgShaderRD/6d20d114a76402f30530dc6983c20cd78a5bdebe815ba021289a607f6c4541f5/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/LuminanceReduceShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/LuminanceReduceShaderRD/3484522051e094e151b4a7cbd88cfc9eb2721ea1d26cd66d6ebdd36e30657cc2/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/MotionVectorsShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/MotionVectorsShaderRD/00e39c95d2d9272edadd9be2db6dbe65b3460f21d2341c92a77371c843cf4d00/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapDownsamplerShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapDownsamplerShaderRD/ffe6788f20aa023afaf7e888e2cf33c840f3084c8fbb309ed784918a44ebcf23/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapFilterShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapFilterShaderRD/5fc5fea9e3fe54191ff165540faa285b099e7909be69e7349c971f7ab0a609cc/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapRoughnessShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/OctmapRoughnessShaderRD/15e894f5c1a4917d83d34012ecf1ede2bee251fefc7b887b728834d4d817ad55/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesCopyShaderRD/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesCopyShaderRD/bcec80ba01e935ed0dc85d792ce6064d3b9920ff6f4ad7f021c39739c998092c/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesShaderRD/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ParticlesShaderRD/527b8e067ac0ad8d5ca4af3230efbc7edb63fc49fd10c48dd765f7d4134c2606/::1784261356
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ResolveShaderRD/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ResolveShaderRD/27dd92d92212d9fee97e14b2c5e5e102610e3124706ce6710bb99bb01c1723a2/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/4a7f175f195e498d54512dc7a67639a3d15bd9ea5194743007a58b5b22b4b699/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/8ab1aa3c06e5871372c06699ba414dca9059b8eb313a79a1ec17202d4c8f34d9/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/72441e69a5110c34824334c2d7284287eeb225010e6fb8c9f80ad241154df663/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SceneForwardClusteredShaderRD/cb9170726728c08dc698861873bcf2c044b0f42ba767496a6fb9315fd7d62b58/::1784261359
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionDownsampleShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionDownsampleShaderRD/e2b08e2f67ca3648565b1054827dd95ce07c1b31c4deeb5c87adb959b48c3662/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionFilterShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionFilterShaderRD/3e7cbd9d8999cd16cf5e5b03b2bc462b40767703140a0757280c95895703123d/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionHizShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionHizShaderRD/baf8f4bfe602462ece1270390433485b1e3018fbbd45bae7c8bbedf320c26cd6/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionResolveShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionResolveShaderRD/e628cc87f903d3043b8b7a44bb5d54638465b46e0ab7bb37b1ddb9b91f4f1b3a/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ScreenSpaceReflectionShaderRD/4ec3777007532ddcd638ae82ef6adc97739054897ed48a2ef8401e7a025ee2da/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugProbesShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugProbesShaderRD/5e74420cdc840f19f82244b066217b3888799930df17d31ff133420b1a916076/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDebugShaderRD/4597a244d5202b1178081479b348d60a48501cb16fc54b1fea4c8395c5e68675/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDirectLightShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiDirectLightShaderRD/16f822b671cd6f4a687e51e33b1c8c2148121c1c091f7ff39f76127556ff3ec3/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiIntegrateShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiIntegrateShaderRD/c5e82715048eb54d931afaa6dadaca3cb48a98f8c3376dd7913485bd1ce2989f/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiPreprocessShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SdfgiPreprocessShaderRD/f3ef78a3d2f1c9d4496e3afe61867e94fb32829809548b265a8a1154b66aec33/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ShadowFrustumShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ShadowFrustumShaderRD/b56bc1e62633ec9304336b7e957397468d55950f317fcf5a6473439810432caa/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkeletonShaderRD/::1784261355
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkeletonShaderRD/54e50a68f8252031f493dd1ea6200e9ef718d5bd8693e28030efe1b120eb7905/::1784261355
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkyShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SkyShaderRD/21f924306eb18caac3ace30e495c78ba40ae7b2f490d5e4f3b13a79479216b9c/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaBlendingShaderRD/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaBlendingShaderRD/3d0a167a9f66fe724550ee422e5f78e94ee25cd28f8d2dd9770c61d98fee5f61/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaEdgeDetectionShaderRD/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaEdgeDetectionShaderRD/d5021a9d8471f798a9fea1996ea85751035ea859c7fdd21721cc24e149d1e4fe/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaWeightCalculationShaderRD/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SmaaWeightCalculationShaderRD/96902d6fbf74206adb55a50fd070fc6de4aaf8dc634f04f92751ac8b307948c7/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SortShaderRD/::1784261355
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SortShaderRD/967234006fae085a9579b3ffd489cee602c4f145dc18ff2bf240e4d8c13498cd/::1784261355
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SpecularMergeShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SpecularMergeShaderRD/d91816cf1f28c63908a9133ffc50683b675ef9859b0616c7436f475405b22c27/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoBlurShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoBlurShaderRD/9821a28f9d156aaaed0a7fab3de6738b2c4022738da0a9b7cb77ffb499f40e38/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoImportanceMapShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoImportanceMapShaderRD/09886b051a7294522d484a6b5de82ee75778fa16804f3f4f13d1605e7f39b69d/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoInterleaveShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoInterleaveShaderRD/5762f4757375a26f8fda6d1bcb2a452f1c2c429e857969bb128d7270760b56f7/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsaoShaderRD/6e8f8fd45ceab920597432cb2a5447c53291203857121f3a3b38a4b9b27c2c50/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsEffectsDownsampleShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsEffectsDownsampleShaderRD/bd37175ba48fdd02099abbbeee5452079e89a3727fd5fe1de649551c99081c36/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilBlurShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilBlurShaderRD/e74ed13ec93f83efa28f3bba922e68d5e345173ff5670ca6f557df8d614a782f/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilImportanceMapShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilImportanceMapShaderRD/a4219fd46be62ae37b0e06fd10ebbd2798ad85088678db4c0b425f823042d4be/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilInterleaveShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilInterleaveShaderRD/88e29bdd44daa6cf920ee2050e7a7237fd88bfa9c8880c62168f4b0a4502f4d0/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SsilShaderRD/af35f1233e4d0591e9dad8d6301cf258931ca4d79c210c67076cd8fb624c6da0/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SubsurfaceScatteringShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/SubsurfaceScatteringShaderRD/69df93a2334ebca4dc3af3f7aef99cad7870b6623865bd4671963fae81796b41/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TaaResolveShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TaaResolveShaderRD/21a8f8e3a65237efe11f4640388d4d1a1fac34dfb3102a6aa4c5b6bf6c85e8ea/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TonemapShaderRD/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/TonemapShaderRD/c3f5c8110f44921262b756899cc7d2c51c74e9333ffe1f8450a95bbd12872516/::1784261362
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/5a983dd19d944f10c1d3634e2ec4509c330fc708754b14d4216b9f5704a71a62/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/c323a941682e364f2ac33c4d96c03f043ff01d2d1a8ec923fb6520953aed2e93/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/d263a12d61ecbbe0abb0e8af30814fc94808c4c8674479fab02d545dff96f7e1/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogProcessShaderRD/e0e2495360f4e94ec75835ceb7dd861bc7bc3723cd957e130405596c82b92def/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/37d5a85d63465587de4d65fe8624123b742fbec2de5ee217d24a400c1d1c8087/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/98adc80de8af184c1c906595dc32e59c8336c9e57624854a778398ac7b65a69e/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/48422ca2db267dec13a7aa41ba356cdfc7cbfa667e28e02e98b968145e4cc2f5/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VolumetricFogShaderRD/212858dee8b411c576ca1a8745c401347c3dbbf88f247ca2270e8ff0b1093507/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiDebugShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiDebugShaderRD/4e91a9ddbecad298ed67c31222afae9756053363f06befd837e376dd85b639aa/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/44b979a30a4cc4de0f731a25d26286e14abc01718fe9a838d597bd153538c665/::1784261360
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/vulkan/::1784261396
+::res://tmp_user_data/::1784261319
