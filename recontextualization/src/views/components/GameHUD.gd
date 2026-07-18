@@ -90,3 +90,13 @@ func update_rate_limit(compression: float, event_queue: Node = null) -> void:
 		rate_limit_label.text = "[ SYSTEM STABLE ]"
 		rate_limit_label.remove_theme_color_override("font_color")
 		enemy_shader.material.set_shader_parameter("glitch_intensity", 0.0)
+
+func set_mode(mode_name: String) -> void:
+	if mode_name == "search_active":
+		if enemy_shader and enemy_shader.material:
+			enemy_shader.material.set_shader_parameter("glitch_intensity", 1.5)
+			get_tree().create_timer(0.5).timeout.connect(func():
+				if is_inside_tree() and enemy_shader and enemy_shader.material:
+					enemy_shader.material.set_shader_parameter("glitch_intensity", 0.0)
+			)
+

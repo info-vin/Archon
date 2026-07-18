@@ -1,5 +1,9 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=15 format=3]
 
+[ext_resource type="Texture2D" path="res://assets/images/icon_nav_character.png" id="icon_char"]
+[ext_resource type="Texture2D" path="res://assets/images/icon_nav_card.png" id="icon_card"]
+[ext_resource type="Texture2D" path="res://assets/images/icon_nav_workshop.png" id="icon_work"]
+[ext_resource type="Texture2D" path="res://assets/images/icon_nav_teammate.png" id="icon_team"]
 [ext_resource type="VideoStream" path="res://assets/vfx/transition_victory.ogv" id="vid_vic"]
 [ext_resource type="VideoStream" path="res://assets/vfx/transition_defeat_glitch.ogv" id="vid_glitch"]
 [ext_resource type="VideoStream" path="res://assets/vfx/transition_defeat_shutdown.ogv" id="vid_shut"]
@@ -58,110 +62,58 @@ theme_override_constants/margin_top = 40
 theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 40
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="RootHBox" type="HBoxContainer" parent="MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 20
 
-[node name="GameHUD" parent="MarginContainer/VBoxContainer" instance=ExtResource("1_hud")]
-
-[node name="HubNavigation" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+[node name="HubNavigation" type="VBoxContainer" parent="MarginContainer/RootHBox"]
+custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 20
 
-[node name="CharacterButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
-custom_minimum_size = Vector2(160, 40)
+[node name="CharacterButton" type="TextureButton" parent="MarginContainer/RootHBox/HubNavigation"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-texture_normal = ExtResource("frame_blank")
+texture_normal = ExtResource("icon_char")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/CharacterButton"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "menu_character_dashboard"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 14
-
-[node name="CardManagementButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
-custom_minimum_size = Vector2(160, 40)
+[node name="CardManagementButton" type="TextureButton" parent="MarginContainer/RootHBox/HubNavigation"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-texture_normal = ExtResource("frame_blank")
+texture_normal = ExtResource("icon_card")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/CardManagementButton"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "menu_card_management"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 14
-
-[node name="WorkshopButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
-custom_minimum_size = Vector2(160, 40)
+[node name="WorkshopButton" type="TextureButton" parent="MarginContainer/RootHBox/HubNavigation"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-texture_normal = ExtResource("frame_blank")
+texture_normal = ExtResource("icon_work")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/WorkshopButton"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "menu_workshop"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 14
-
-[node name="TeammateButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HubNavigation"]
-custom_minimum_size = Vector2(160, 40)
+[node name="TeammateButton" type="TextureButton" parent="MarginContainer/RootHBox/HubNavigation"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-texture_normal = ExtResource("frame_blank")
+texture_normal = ExtResource("icon_team")
 ignore_texture_size = true
 stretch_mode = 0
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HubNavigation/TeammateButton"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "menu_teammate_dashboard"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 14
-
-[node name="QueryBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="QueryLabel" type="Label" parent="MarginContainer/VBoxContainer/QueryBar"]
-layout_mode = 2
-text = "Query:"
-
-[node name="QueryInput" type="LineEdit" parent="MarginContainer/VBoxContainer/QueryBar"]
+[node name="MainColumn" type="VBoxContainer" parent="MarginContainer/RootHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "輸入 RAG 檢索關鍵字..."
 
-
-
-[node name="DeliverButton" type="Button" parent="MarginContainer/VBoxContainer/QueryBar"]
+[node name="GameHUD" parent="MarginContainer/RootHBox/MainColumn" instance=ExtResource("1_hud")]
 layout_mode = 2
-text = "交付 LLM (Deliver)"
 
-[node name="PlayArea" type="Control" parent="MarginContainer/VBoxContainer"]
+[node name="PlayArea" type="Control" parent="MarginContainer/RootHBox/MainColumn"]
 mouse_filter = 0
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3_pa")
 
-[node name="HintLabel" type="Label" parent="MarginContainer/VBoxContainer/PlayArea"]
+[node name="HintLabel" type="Label" parent="MarginContainer/RootHBox/MainColumn/PlayArea"]
 mouse_filter = 2
 layout_mode = 1
 anchors_preset = 8
@@ -181,16 +133,45 @@ horizontal_alignment = 1
 vertical_alignment = 1
 modulate = Color(1, 1, 1, 0.3)
 
-[node name="HandContainer" type="Container" parent="MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 3
-size_flags_stretch_ratio = 0.3
+[node name="HandContainer" type="Container" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
 script = ExtResource("hand_layout_script")
 radius = 800.0
 angle_spread_degrees = 40.0
 vertical_offset = 600.0
 hover_scale = 1.2
 hover_y_offset = -40.0
+
+[node name="QueryBar" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 180.0
+offset_top = -80.0
+offset_right = -40.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+
+[node name="QueryLabel" type="Label" parent="QueryBar"]
+layout_mode = 2
+text = "Query:"
+
+[node name="QueryInput" type="LineEdit" parent="QueryBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "輸入 RAG 檢索關鍵字..."
+
+[node name="DeliverButton" type="Button" parent="QueryBar"]
+layout_mode = 2
+text = "交付 LLM (Deliver)"
 
 [node name="AgentCompanion" parent="." instance=ExtResource("4_agent")]
 layout_mode = 1

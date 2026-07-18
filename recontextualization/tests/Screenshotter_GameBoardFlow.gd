@@ -1,6 +1,6 @@
 extends SceneTree
 
-var output_dir = "./"
+var output_dir = "/Users/vincenta/.gemini/antigravity/brain/5a96097b-d2b1-413f-bca7-2e7470174942/"
 
 func _init() -> void:
 	call_deferred("run_flow")
@@ -21,7 +21,6 @@ func run_flow() -> void:
 	event_bus.name = "EventBus"
 	save_manager.name = "SaveManager"
 	
-	game_state._ready()
 	game_state.start_game()
 	
 	var board_packed = load("res://src/views/GameBoard.tscn")
@@ -41,6 +40,7 @@ func run_flow() -> void:
 	if img1: img1.save_png(output_dir + "flow_01_NewPlayer_Level1.png")
 	
 	# Step 2: Advanced Player Flow (Level 5)
+	if board.has_node("TutorialPanel"): board.get_node("TutorialPanel").hide()
 	board.initialize_career(5, 100.0)
 	await process_frame
 	await create_timer(1.0).timeout
@@ -48,9 +48,14 @@ func run_flow() -> void:
 	if img2: img2.save_png(output_dir + "flow_02_AdvancedPlayer_Level5.png")
 	
 	# Step 3: Simulate dropping an Action Card
-	var query_input = board.get_node("MarginContainer/VBoxContainer/QueryBar/QueryInput")
+	var query_input = board.get_node("QueryBar/QueryInput")
 	if query_input:
 		query_input.text = "How to automate testing?"
+		query_input.grab_focus() # Triggers the dynamic Z-Swap
+		
+	var game_hud = board.get_node("MarginContainer/RootHBox/MainColumn/GameHUD")
+	if game_hud and game_hud.has_method("set_mode"):
+		game_hud.set_mode("search_active")
 		
 	var card_script = preload("res://src/models/cards/CardData.gd")
 	var action_card = card_script.new()

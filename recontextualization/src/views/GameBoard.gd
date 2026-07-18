@@ -12,7 +12,7 @@ signal request_quit_game
 signal request_card_management
 signal request_teammate_dashboard
 
-@onready var hand_container: Container = $MarginContainer/VBoxContainer/HandContainer
+@onready var hand_container: Container = $HandContainer
 @onready var event_queue: Node = $EventQueue
 
 @export_file("*.tscn") var main_menu_scene: String
@@ -27,14 +27,14 @@ signal request_teammate_dashboard
 var card_chip_scene = preload("res://src/views/CardChip.tscn")
 
 
-@onready var game_hud: HBoxContainer = $MarginContainer/VBoxContainer/GameHUD
-@onready var btn_character: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/CharacterButton
-@onready var btn_cards: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/CardManagementButton
-@onready var btn_workshop: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/WorkshopButton
-@onready var btn_teammate: TextureButton = $MarginContainer/VBoxContainer/HubNavigation/TeammateButton
+@onready var game_hud: HBoxContainer = $MarginContainer/RootHBox/MainColumn/GameHUD
+@onready var btn_character: TextureButton = $MarginContainer/RootHBox/HubNavigation/CharacterButton
+@onready var btn_cards: TextureButton = $MarginContainer/RootHBox/HubNavigation/CardManagementButton
+@onready var btn_workshop: TextureButton = $MarginContainer/RootHBox/HubNavigation/WorkshopButton
+@onready var btn_teammate: TextureButton = $MarginContainer/RootHBox/HubNavigation/TeammateButton
 @onready var agent_companion: Control = $AgentCompanion
-@onready var query_input: LineEdit = $MarginContainer/VBoxContainer/QueryBar/QueryInput
-@onready var deliver_button: Button = $MarginContainer/VBoxContainer/QueryBar/DeliverButton
+@onready var query_input: LineEdit = $QueryBar/QueryInput
+@onready var deliver_button: Button = $QueryBar/DeliverButton
 @onready var tutorial_panel: ColorRect = $TutorialPanel
 @onready var game_over_panel: ColorRect = $GameOverPanel
 @onready var end_game_video: VideoStreamPlayer = $EndGameVideoPlayer
@@ -79,8 +79,14 @@ func _ready() -> void:
 		style.content_margin_right = 10
 		query_input.add_theme_stylebox_override("normal", style)
 		query_input.add_theme_stylebox_override("focus", style)
+		query_input.focus_entered.connect(func():
+			$QueryBar.z_index = 100
+		)
+		query_input.focus_exited.connect(func():
+			$QueryBar.z_index = 0
+		)
 
-	var hint_label = $MarginContainer/VBoxContainer/PlayArea/HintLabel
+	var hint_label = $MarginContainer/RootHBox/MainColumn/PlayArea/HintLabel
 	if hint_label:
 		hint_label.modulate = Color(1, 1, 1, 0.85) # Increase from 0.3 to 0.85
 		var hint_style = StyleBoxFlat.new()
@@ -159,7 +165,7 @@ func play_deliver_blast() -> void:
 	CombatJuice.deliver_blast(deliver_button)
 
 func purify_context(remaining_cards: Array) -> void:
-	var play_area = $MarginContainer/VBoxContainer/PlayArea
+	var play_area = $MarginContainer/RootHBox/MainColumn/PlayArea
 	if not play_area: return
 	for child in play_area.get_children():
 		if child.name == "HintLabel":
@@ -197,15 +203,49 @@ func anim_play_card(card: Resource) -> void:
 			
 	if target_child != null:
 		event_queue.add_animation(func():
-			var play_area = $MarginContainer/VBoxContainer/PlayArea
+			var play_area = $MarginContainer/RootHBox/MainColumn/PlayArea
+			
+			# Hide hint text when a card is played
+			if play_area.has_node("HintLabel"):
+				play_area.get_node("HintLabel").hide()
+				
 			target_child.get_parent().remove_child(target_child)
 			play_area.add_child(target_child)
 			
-			var tween = create_tween()
-			var target_pos = (play_area.size / 2.0) - (target_child.size / 2.0)
-			tween.tween_property(target_child, "position", target_pos, 0.4).set_trans(Tween.TRANS_SPRING)
-			tween.parallel().tween_property(target_child, "scale", Vector2(0.8, 0.8), 0.3)
-			await get_tree().create_timer(0.4).timeout
+			# Dynamic Z-Swap stack: stack cards with an offset
+			var played_cards = []
+			for c in play_area.get_children():
+				if c.has_method("get_card_data"):
+					played_cards.append(c)
+					
+			for i in range(played_cards.size()):
+				var c = played_cards[i]
+				var base_x = (play_area.size.x / 2.0) - (c.size.x / 2.0)
+				var base_y = (play_area.size.y / 2.0) - (c.size.y / 2.0)
+				
+				# Offset each card slightly to create a 3D stack effect
+				var offset = Vector2(i * 30.0, i * 20.0)
+				var target_pos = Vector2(base_x, base_y) + offset
+				
+				# Set default Z-index to stack order (0, 1, 2, 3)
+				c.z_index = i
+				c.set_meta("base_z_index", i)
+				
+				# Hook up dynamic Z-Swap on hover
+				if not c.has_meta("play_area_hover"):
+					c.mouse_entered.connect(func():
+						c.z_index = 100
+					)
+					c.mouse_exited.connect(func():
+						c.z_index = c.get_meta("base_z_index", 0)
+					)
+					c.set_meta("play_area_hover", true)
+				
+				var tween = create_tween()
+				tween.tween_property(c, "position", target_pos, 0.4).set_trans(Tween.TRANS_SPRING)
+				tween.parallel().tween_property(c, "scale", Vector2(0.8, 0.8), 0.3)
+				
+			await get_tree().create_timer(0.3).timeout
 		)
 
 func show_game_over(is_victory: bool, rank: String = "") -> void:

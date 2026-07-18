@@ -1,16 +1,16 @@
 63f7b34db8d8cdea90c76aacccf841ec
-::res://::1784339207
+::res://::1784366367
 env.json::JSON::-1::1783992799::0::1::::<><><>0<>0<><>::
 export_presets.cfg::TextFile::-1::1783992799::0::1::::<><><>0<>0<><>::
-flow_01_NewPlayer_Level1.png::CompressedTexture2D::3986373127453814853::1784264385::1784339329::1::::<><><>0<>0<>02316457b1e54859a3919a121c94d11c<>res://.godot/imported/flow_01_NewPlayer_Level1.png-b256ed52c68146c4a63200d187b93dff.ctex::
-flow_02_AdvancedPlayer_Level5.png::CompressedTexture2D::2425558244675799079::1784264387::1784339329::1::::<><><>0<>0<>001c28a45d07dad676f8f9beda934dae<>res://.godot/imported/flow_02_AdvancedPlayer_Level5.png-79a4a29fc89702a9547836e98d1ade9a.ctex::
-flow_03_CardPlayed_Search.png::CompressedTexture2D::9096143823566630611::1784264387::1784339329::1::::<><><>0<>0<>399e1f398f2ad18469d6ca81b52ceac2<>res://.godot/imported/flow_03_CardPlayed_Search.png-05051d2ad62deb9048a1e24750800b4f.ctex::
-godot_test.log::TextFile::-1::1784339207::0::1::::<><><>0<>0<><>::
+flow_01_NewPlayer_Level1.png::CompressedTexture2D::3986373127453814853::1784359675::1784366439::1::::<><><>0<>0<>02316457b1e54859a3919a121c94d11c<>res://.godot/imported/flow_01_NewPlayer_Level1.png-b256ed52c68146c4a63200d187b93dff.ctex::
+flow_02_AdvancedPlayer_Level5.png::CompressedTexture2D::2425558244675799079::1784359676::1784366440::1::::<><><>0<>0<>001c28a45d07dad676f8f9beda934dae<>res://.godot/imported/flow_02_AdvancedPlayer_Level5.png-79a4a29fc89702a9547836e98d1ade9a.ctex::
+flow_03_CardPlayed_Search.png::CompressedTexture2D::9096143823566630611::1784359677::1784366440::1::::<><><>0<>0<>399e1f398f2ad18469d6ca81b52ceac2<>res://.godot/imported/flow_03_CardPlayed_Search.png-05051d2ad62deb9048a1e24750800b4f.ctex::
+godot_test.log::TextFile::-1::1784358297::0::1::::<><><>0<>0<><>::
 ::res://assets/::1783992799
 ::res://assets/data/::1783992796
 chaos_events.json::JSON::-1::1783992796::0::1::::<><><>0<>0<><>::
 tutorial_dataset.json::JSON::-1::1783992796::0::1::::<><><>0<>0<><>::
-::res://assets/images/::1784191533
+::res://assets/images/::1784365231
 action_dense.png::CompressedTexture2D::1001744932483170454::1783992796::1783992796::1::::<><><>0<>0<>b605c1bd887ee84a65a01b67002f80a1<>res://.godot/imported/action_dense.png-d51afb12f91b38e32386585c6be71f31.ctex::
 action_emp.png::CompressedTexture2D::6763997335608228754::1783992796::1783992796::1::::<><><>0<>0<>8f8d0ec809d4830652b9c5a66b7cc7e3<>res://.godot/imported/action_emp.png-47140b64c7070b7dce15c2b658171431.ctex::
 action_graphrag.png::CompressedTexture2D::6267381101854105175::1783992796::1783992796::1::::<><><>0<>0<>36775c210c311e50864e9af068fc3961<>res://.godot/imported/action_graphrag.png-b688dc57bb72aa7a2850843fd030da3b.ctex::
@@ -42,6 +42,10 @@ gem_new_career.png::CompressedTexture2D::7916213867419294670::1783992797::178419
 gem_quit.png::CompressedTexture2D::3641912700559120687::1783992797::1784191533::1::::<><><>0<>0<>9fefdfdcfe0ddfe62139fae4fa34bd13<>res://.godot/imported/gem_quit.png-9e7305eb49c1ffe8fe6c1b5874210737.ctex::
 gem_teammate.png::CompressedTexture2D::6339507677370978305::1783992798::1784191533::1::::<><><>0<>0<>545f00361e2c14e106d6da87133acbd0<>res://.godot/imported/gem_teammate.png-94fcb6ad4cee1445e8c1956147a6da11.ctex::
 icon_equipment_slot.png::CompressedTexture2D::2697418861314989309::1783992798::1783992798::1::::<><><>0<>0<>d71594df93594c3778887e2febcdcf61<>res://.godot/imported/icon_equipment_slot.png-02b993427c3cb88ffc779524173d9e60.ctex::
+icon_nav_card.png::CompressedTexture2D::1996265391020789632::1784365137::1784366438::1::::<><><>0<>0<>b9883cb246879bc86bc34842490ccabf<>res://.godot/imported/icon_nav_card.png-343b5c701da79bc87f8810023a45ba30.ctex::
+icon_nav_character.png::CompressedTexture2D::8263658882000301673::1784365172::1784366437::1::::<><><>0<>0<>fed0eabe1455a8792ba0e34dfffc1b59<>res://.godot/imported/icon_nav_character.png-04ea6073c8bc6cab34d0f7e9f85e74c6.ctex::
+icon_nav_teammate.png::CompressedTexture2D::2217414144445698765::1784365032::1784366439::1::::<><><>0<>0<>3c7c4f46b9d0e1e8c466ec9d0c7a30d1<>res://.godot/imported/icon_nav_teammate.png-f186c6640ce19a69db239a2eaf44f115.ctex::
+icon_nav_workshop.png::CompressedTexture2D::4717163396529102891::1784365057::1784366442::1::::<><><>0<>0<>804e04e10015a0956eb2ac868789b1b1<>res://.godot/imported/icon_nav_workshop.png-0903c57781f437e7bda34fc7483c7803.ctex::
 mockup_sample_card.png::CompressedTexture2D::898113169435019405::1783992798::1783992798::1::::<><><>0<>0<>351df899a1bf2d6336c293746756ff9d<>res://.godot/imported/mockup_sample_card.png-bf0322a2b1399a5b366cc7cdfcaf8555.ctex::
 ::res://assets/maaack/::1783992799
 ::res://assets/maaack/Mixed/::1783992798
@@ -658,11 +662,11 @@ TDD_Recontextualization.md::TextFile::-1::1783992799::0::1::::<><><>0<>0<><>::
 ::res://fake_home/Library/Application Support/::1784260251
 ::res://fake_home/Library/Application Support/Godot/::1784260251
 ::res://fake_home/Library/Application Support/Godot/app_userdata/::1784260251
-::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/::1784260323
-archon_progress.json::JSON::-1::1784260252::0::1::::<><><>0<>0<><>::
-::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/logs/::1784260251
-godot.log::TextFile::-1::1784260381::0::1::::<><><>0<>0<><>::
-::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/::1784260336
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/::1784358297
+archon_progress.json::JSON::-1::1784358297::0::1::::<><><>0<>0<><>::
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/logs/::1784358297
+godot.log::TextFile::-1::1784358297::0::1::::<><><>0<>0<><>::
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/::1784358297
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/::1784260329
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/ff55ede486711a617cfa6eca8952f824e1de5c6fd727c4514cd603e8e7c9264e/::1784260329
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BlitShaderRD/::1784260336
@@ -673,8 +677,8 @@ godot.log::TextFile::-1::1784260381::0::1::::<><><>0<>0<><>::
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasOcclusionShaderRD/e397c50e1a9e03519ccb486acfdaddf8be9986511a5738dd0fa77e62980f0ad0/::1784260325
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/::1784260323
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/f5163131ffbf6578b3e403ae4a2e93b16c3b4d4f74b7d313965240c9159ca4a3/::1784260323
-::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/::1784260325
-::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/f30a5b440b1341c6eaa19af108108f7adb605232e31fd6aeac74e4825e07ec28/::1784260376
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/::1784358297
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/f30a5b440b1341c6eaa19af108108f7adb605232e31fd6aeac74e4825e07ec28/::1784358297
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/::1784260329
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/2775e502fff54bad7c5a36ee96cb93f9bb26a0835936a36809e0142a020d1da5/::1784260329
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterRenderShaderRD/::1784260329
@@ -807,7 +811,7 @@ godot.log::TextFile::-1::1784260381::0::1::::<><><>0<>0<><>::
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiDebugShaderRD/4e91a9ddbecad298ed67c31222afae9756053363f06befd837e376dd85b639aa/::1784260330
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/::1784260330
 ::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/44b979a30a4cc4de0f731a25d26286e14abc01718fe9a838d597bd153538c665/::1784260330
-::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/vulkan/::1784260381
+::res://fake_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/vulkan/::1784358297
 ::res://godot_user_data/::1784256892
 ::res://godot_user_data/Archon Recontextualization/::1784256892
 ::res://godot_user_data/Archon Recontextualization/logs/::1784256892
@@ -816,7 +820,7 @@ godot.log::TextFile::-1::1784260381::0::1::::<><><>0<>0<><>::
 translations.csv::Translation::8336262614127477177::1784252372::1784198747::1::::<><><>0<>0<>271787f2b2a87f30c92310e3a8e7b7b6<>res://locale/translations.en.translation<*>res://locale/translations.zh_TW.translation::
 translations.en.translation::OptimizedTranslation::607290930571045636::1784252372::0::1::::<><><>0<>0<><>::
 translations.zh_TW.translation::OptimizedTranslation::6170685996934377574::1784252372::0::1::::<><><>0<>0<><>::
-::res://scratch/::1784339057
+::res://scratch/::1784358297
 ::res://src/::1783992799
 ::res://src/autoloads/::1784252372
 EnvConfig.gd::GDScript::1436774006162950364::1783992799::0::1::::<>Node<><>0<>0<><>::
@@ -876,7 +880,7 @@ bake_topology.gd::GDScript::5182325639732816516::1783992799::0::1::::<>SceneTree
 GenerateCardResources.gd::GDScript::270345591538317499::1783992799::0::1::::<>SceneTree<><>0<>0<><>::
 ::res://src/utils/::1783992799
 AutoloadLocator.gd::GDScript::527461839146115353::1783992799::0::1::::AutoloadLocator<>RefCounted<><>0<>0<><>::
-::res://src/views/::1784253742
+::res://src/views/::1784365818
 AgentCompanion.gd::GDScript::9059536470992474393::1784252372::0::1::::AgentCompanion<>Control<><>0<>0<><>::
 AgentCompanion.tscn::PackedScene::-1::1784263466::0::1::::<><><>0<>0<><>::res://src/views/AgentCompanion.gd<>res://src/views/shaders/TerminalHUD.tres
 CardChip.gd::GDScript::9210102573972730741::1783992799::0::1::::<>MarginContainer<><>0<>1<><>::
@@ -894,8 +898,8 @@ CharacterDashboard.gd::GDScript::9093318217842206453::1783992799::0::1::::<>Cont
 CharacterDashboard.tscn::PackedScene::266850077443226771::1783992799::0::1::::<><><>0<>0<><>::res://src/views/CharacterDashboard.gd<>res://src/views/CharacterDashboardController.gd<>res://assets/images/bg_vector_grid.png<>res://assets/images/avatar_alice.png<>res://assets/images/badge_rank_c.png<>res://assets/images/badge_rank_b.png<>res://assets/images/badge_rank_a.png<>res://assets/images/badge_rank_s.png<>res://assets/images/card_frame_blank.png<>res://assets/images/chip_green_target.png<>res://assets/images/chip_red_noise.png<>res://src/shaders/HexagonMask.gdshader
 CharacterDashboardController.gd::GDScript::3417035077609670513::1783992799::0::1::::CharacterDashboardController<>Node<><>0<>0<><>::
 EventQueue.gd::GDScript::3176009371058998968::1783992799::0::1::::EventQueue<>Node<><>0<>0<><>::
-GameBoard.gd::GDScript::5341665864304548411::1784260731::0::1::::<>Control<><>0<>0<><>::
-GameBoard.tscn::PackedScene::-1::1784260737::0::1::::<><><>0<>0<><>::res://assets/vfx/transition_victory.ogv<>res://assets/vfx/transition_defeat_glitch.ogv<>res://assets/vfx/transition_defeat_shutdown.ogv<>res://src/views/GameBoard.gd<>res://src/views/GameBoardController.gd<>res://src/views/components/HandLayout.gd<>res://assets/images/bg_vector_grid.png<>res://src/views/EventQueue.gd<>res://src/views/PlayArea.gd<>res://src/views/components/GameHUD.tscn<>res://src/views/AgentCompanion.tscn<>res://src/views/components/TutorialPanel.tscn<>res://assets/images/card_frame_blank.png<>res://src/views/components/GameOverPanel.tscn<>res://src/views/PauseMenu.tscn
+GameBoard.gd::GDScript::5341665864304548411::1784365538::0::1::::<>Control<><>0<>0<><>::
+GameBoard.tscn::PackedScene::-1::1784365880::0::1::::<><><>0<>0<><>::res://assets/images/icon_nav_character.png<>res://assets/images/icon_nav_card.png<>res://assets/images/icon_nav_workshop.png<>res://assets/images/icon_nav_teammate.png<>res://assets/vfx/transition_victory.ogv<>res://assets/vfx/transition_defeat_glitch.ogv<>res://assets/vfx/transition_defeat_shutdown.ogv<>res://src/views/GameBoard.gd<>res://src/views/GameBoardController.gd<>res://src/views/components/HandLayout.gd<>res://assets/images/bg_vector_grid.png<>res://src/views/EventQueue.gd<>res://src/views/PlayArea.gd<>res://src/views/components/GameHUD.tscn<>res://src/views/AgentCompanion.tscn<>res://src/views/components/TutorialPanel.tscn<>res://assets/images/card_frame_blank.png<>res://src/views/components/GameOverPanel.tscn<>res://src/views/PauseMenu.tscn
 GameBoardController.gd::GDScript::1896659700809216115::1784252372::0::1::::<>Node<><>0<>0<><>::
 IntroVideo.gd::GDScript::2625749005910946516::1783992799::0::1::::<>Control<><>0<>0<><>::
 IntroVideo.tscn::PackedScene::-1::1783992799::0::1::::<><><>0<>0<><>::res://src/views/IntroVideo.gd<>res://assets/vfx/transition_os_boot.ogv
@@ -911,38 +915,40 @@ TeammateDashboardController.gd::GDScript::2464058418546727698::1783992800::0::1:
 TeammateDashboardGamified.txt::TextFile::-1::1783992800::0::1::::<><><>0<>0<><>::
 TransitionVideo.gd::GDScript::5882721299963759742::1783992800::0::1::::<>Control<><>0<>0<><>::
 TransitionVideo.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::res://src/views/TransitionVideo.gd<>res://assets/vfx/transition_battle_intro.ogv<>res://src/views/GameBoard.tscn
-::res://src/views/components/::1784339093
+::res://src/views/components/::1784358297
 CardSlot.gd::GDScript::6113947152913809067::1783992800::0::1::::<>MarginContainer<><>0<>0<><>::
 CardSlot.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::res://src/views/components/CardSlot.gd<>res://assets/images/card_frame_blank.png
 CombatJuice.gd::GDScript::2621805845194611154::1783992800::0::1::::CombatJuice<>RefCounted<><>0<>0<><>::
-EnemyThreatHUD.tscn::PackedScene::-1::1784339093::0::1::::<><><>0<>0<><>::res://src/views/shaders/SciFiHUD.gdshader
-GameHUD.gd::GDScript::5996169693402384363::1784339113::0::1::::<>HBoxContainer<><>0<>0<><>::
-GameHUD.tscn::PackedScene::-1::1784339113::0::1::::<><><>0<>0<><>::res://src/views/components/GameHUD.gd<>res://src/views/components/PlayerStatusHUD.tscn<>res://src/views/components/EnemyThreatHUD.tscn
+EnemyThreatHUD.tscn::PackedScene::-1::1784365375::0::1::::<><><>0<>0<><>::res://src/views/shaders/SciFiHUD.gdshader
+GameHUD.gd::GDScript::5996169693402384363::1784358297::0::1::::<>HBoxContainer<><>0<>0<><>::
+GameHUD.tscn::PackedScene::-1::1784358297::0::1::::<><><>0<>0<><>::res://src/views/components/GameHUD.gd<>res://src/views/components/PlayerStatusHUD.tscn<>res://src/views/components/EnemyThreatHUD.tscn
 GameOverPanel.gd::GDScript::9034953038075178408::1783992800::0::1::::<>ColorRect<><>0<>0<><>::
 GameOverPanel.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::res://src/views/components/GameOverPanel.gd
 HandLayout.gd::GDScript::5241731739247128758::1783992800::0::1::::HandLayout<>Container<><>0<>0<><>::
 ListItemButton.tscn::PackedScene::-1::1783992800::0::1::::<><><>0<>0<><>::
-PlayerStatusHUD.tscn::PackedScene::-1::1784339092::0::1::::<><><>0<>0<><>::res://src/views/shaders/SciFiHUD.gdshader
+PlayerStatusHUD.tscn::PackedScene::-1::1784365375::0::1::::<><><>0<>0<><>::res://src/views/shaders/SciFiHUD.gdshader
 TargetingArrow.gd::GDScript::7085885293974244805::1783992800::0::1::::TargetingArrow<>Line2D<><>0<>0<><>::
 TutorialPanel.gd::GDScript::570065335494367509::1783992800::0::1::::<>ColorRect<><>0<>0<><>::
 TutorialPanel.tscn::PackedScene::-1::1784252372::0::1::::<><><>0<>0<><>::res://src/views/components/TutorialPanel.gd
-::res://src/views/shaders/::1784339092
+::res://src/views/shaders/::1784358297
 PlayAreaHUD.gdshader::Shader::1267819540091837859::1784264320::0::1::::<><><>0<>0<><>::
 PlayAreaHUD.tres::ShaderMaterial::-1::1784262075::0::1::::<><><>0<>0<><>::res://src/views/shaders/PlayAreaHUD.gdshader
-PlayerStatusHUD.gdshader::Shader::7170295266961162244::1784274172::0::1::::<><><>0<>0<><>::
-SciFiHUD.gdshader::Shader::7040623135199394916::1784339092::0::1::::<><><>0<>0<><>::
+PlayerStatusHUD.gdshader::Shader::7170295266961162244::1784358297::0::1::::<><><>0<>0<><>::
+SciFiHUD.gdshader::Shader::7040623135199394916::1784358297::0::1::::<><><>0<>0<><>::
 TerminalHUD.gdshader::Shader::8959951495057112518::1784264337::0::1::::<><><>0<>0<><>::
 TerminalHUD.tres::ShaderMaterial::-1::1784262899::0::1::::<><><>0<>0<><>::res://src/views/shaders/TerminalHUD.gdshader
 ::res://src/views/tutorial/::1784252372
 TutorialOverlay.gd::GDScript::1591444187627522709::1783992800::0::1::::<>CanvasLayer<><>0<>0<><>::
 TutorialOverlay.tscn::PackedScene::-1::1784260801::0::1::::<><><>0<>0<><>::res://src/views/tutorial/TutorialOverlay.gd<>res://assets/images/avatar_alice.png
-::res://tests/::1784252372
+::res://tests/::1784365793
+empty_test.gd::GDScript::794608143583884351::1784365793::0::1::::<>SceneTree<><>0<>0<><>::
 HeadlessRunner.gd::GDScript::4656820146736531584::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 MainMenu_Screenshotter.gd::GDScript::829873347635846444::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 Screenshotter.gd::GDScript::4716673305685145682::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 Screenshotter_GameBoard.gd::GDScript::1500906305682009098::1784252372::0::1::::<>SceneTree<><>0<>0<><>::
-Screenshotter_GameBoardFlow.gd::GDScript::2380297326658722066::1784261406::0::1::::<>SceneTree<><>0<>0<><>::
+Screenshotter_GameBoardFlow.gd::GDScript::2380297326658722066::1784365524::0::1::::<>SceneTree<><>0<>0<><>::
 Screenshotter_Hubs.gd::GDScript::6121135674128756882::1784252372::0::1::::<>SceneTree<><>0<>0<><>::
+Screenshotter_HUDs.gd::GDScript::1927370782072629290::1784358297::0::1::::<>SceneTree<><>0<>0<><>::
 TestHubUX.gd::GDScript::7746085152549438854::1783992800::0::1::::<>SceneTree<><>0<>0<><>::
 test_backend_client.gd::GDScript::5988696668426940907::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
 test_behavior_adaptation.gd::GDScript::3084442600424179805::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
@@ -963,16 +969,17 @@ test_teammate_progression.gd::GDScript::2534536338621738831::1783992800::0::1:::
 test_token_capping.gd::GDScript::395007416727365612::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
 test_tutorial_fsm.gd::GDScript::937491395204751588::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
 test_visual_integration.gd::GDScript::2574369956127176204::1783992800::0::1::::<>RefCounted<><>0<>0<><>::
+::res://test_user_data/::1784366367
 ::res://tmp_home/::1784261328
 ::res://tmp_home/Library/::1784261328
 ::res://tmp_home/Library/Application Support/::1784261328
 ::res://tmp_home/Library/Application Support/Godot/::1784261328
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/::1784261328
-::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/::1784261355
-archon_progress.json::JSON::-1::1784261328::0::1::::<><><>0<>0<><>::
-::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/logs/::1784261328
-godot.log::TextFile::-1::1784264387::0::1::::<><><>0<>0<><>::
-::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/::1784261363
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/::1784358297
+archon_progress.json::JSON::-1::1784358297::0::1::::<><><>0<>0<><>::
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/logs/::1784358297
+godot.log::TextFile::-1::1784358297::0::1::::<><><>0<>0<><>::
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/::1784358297
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/::1784261360
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BestFitNormalShaderRD/ff55ede486711a617cfa6eca8952f824e1de5c6fd727c4514cd603e8e7c9264e/::1784261360
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/BlitShaderRD/::1784261363
@@ -983,8 +990,8 @@ godot.log::TextFile::-1::1784264387::0::1::::<><><>0<>0<><>::
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasOcclusionShaderRD/e397c50e1a9e03519ccb486acfdaddf8be9986511a5738dd0fa77e62980f0ad0/::1784261356
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/::1784261355
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasSdfShaderRD/f5163131ffbf6578b3e403ae4a2e93b16c3b4d4f74b7d313965240c9159ca4a3/::1784261355
-::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/::1784261356
-::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/f30a5b440b1341c6eaa19af108108f7adb605232e31fd6aeac74e4825e07ec28/::1784264384
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/::1784358297
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/CanvasShaderRD/f30a5b440b1341c6eaa19af108108f7adb605232e31fd6aeac74e4825e07ec28/::1784358297
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/::1784261359
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterDebugShaderRD/2775e502fff54bad7c5a36ee96cb93f9bb26a0835936a36809e0142a020d1da5/::1784261359
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/ClusterRenderShaderRD/::1784261359
@@ -1117,5 +1124,5 @@ godot.log::TextFile::-1::1784264387::0::1::::<><><>0<>0<><>::
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiDebugShaderRD/4e91a9ddbecad298ed67c31222afae9756053363f06befd837e376dd85b639aa/::1784261360
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/::1784261360
 ::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/shader_cache/VoxelGiShaderRD/44b979a30a4cc4de0f731a25d26286e14abc01718fe9a838d597bd153538c665/::1784261360
-::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/vulkan/::1784261396
+::res://tmp_home/Library/Application Support/Godot/app_userdata/Archon Recontextualization/vulkan/::1784358297
 ::res://tmp_user_data/::1784261319

@@ -94,16 +94,16 @@ void fragment() {
     vec2 bracket_pos = vec2(0.55, 0.35);
     
     // Outer L-shape
-    if (abs_uv.x > bracket_pos.x && abs_uv.x < bracket_pos.x + 0.005 && abs_uv.y < bracket_pos.y + 0.005) {
+    if (abs_uv.x > bracket_pos.x && abs_uv.x < bracket_pos.x + 0.003 && abs_uv.y < bracket_pos.y + 0.003) {
         cyan_elements = 1.0;
     }
-    if (abs_uv.y > bracket_pos.y && abs_uv.y < bracket_pos.y + 0.005 && abs_uv.x > bracket_pos.x - 0.06 && abs_uv.x < bracket_pos.x + 0.005) {
+    if (abs_uv.y > bracket_pos.y && abs_uv.y < bracket_pos.y + 0.003 && abs_uv.x > bracket_pos.x - 0.06 && abs_uv.x < bracket_pos.x + 0.003) {
         cyan_elements = 1.0;
     }
     // Add glow to brackets based on distance
     float cb_dist = min(abs(abs_uv.x - bracket_pos.x), abs(abs_uv.y - bracket_pos.y));
     if (abs_uv.x > bracket_pos.x - 0.08 && abs_uv.y < bracket_pos.y + 0.03) {
-        cyan_glow = max(cyan_glow, smoothstep(0.03, 0.0, cb_dist));
+        cyan_glow = max(cyan_glow, smoothstep(0.008, 0.0, cb_dist));
     }
     
     // Inner angled accent (thinner)
