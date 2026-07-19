@@ -7,6 +7,9 @@ const safeFormatTime = (dateStr: string) => {
     return isNaN(d.getTime()) ? 'Invalid Date' : timeFormatter.format(d);
 };
 
+// PERFORMANCE: Hoisted Intl.NumberFormat to avoid expensive re-instantiations during render
+const numberFormatter = new Intl.NumberFormat();
+
 interface TokenUsageDetail {
   id: string;
   timestamp: string;
@@ -52,7 +55,7 @@ const TokenUsageTable: React.FC<TokenUsageTableProps> = ({ details }) => {
                 </div>
               </td>
               <td className="px-4 py-3 text-gray-600 font-mono text-xs">{row.model}</td>
-              <td className="px-4 py-3 text-right font-mono text-gray-900">{row.tokens.toLocaleString()}</td>
+              <td className="px-4 py-3 text-right font-mono text-gray-900">{numberFormatter.format(row.tokens)}</td>
               <td className="px-4 py-3 text-right font-mono text-gray-900">${row.cost.toFixed(4)}</td>
             </tr>
           ))}

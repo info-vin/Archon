@@ -1,6 +1,9 @@
 import React from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
+// PERFORMANCE: Hoisted Intl.NumberFormat to avoid expensive re-instantiations during render
+const numberFormatter = new Intl.NumberFormat();
+
 interface AiUsageData {
     total_budget: number;
     total_used: number;
@@ -51,7 +54,7 @@ export const AiCollaborationWidget: React.FC<AiCollaborationWidgetProps> = ({ da
                     <div>
                         <div className="flex justify-between text-sm mb-1">
                             <span className="text-gray-600 font-medium">Used Credits</span>
-                            <span className="font-mono font-bold text-indigo-600">{(data?.total_used || 0).toLocaleString()}</span>
+                            <span className="font-mono font-bold text-indigo-600">{numberFormatter.format(data?.total_used || 0)}</span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                             <div style={{ width: `${data?.usage_percentage || 0}%` }} className="bg-indigo-500 h-full rounded-full transition-all duration-1000"></div>

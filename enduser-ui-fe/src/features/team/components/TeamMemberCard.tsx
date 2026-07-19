@@ -3,6 +3,9 @@ import { Employee } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, FileTextIcon } from '@/components/Icons';
 
+// PERFORMANCE: Hoisted Intl.NumberFormat to avoid expensive re-instantiations during render
+const numberFormatter = new Intl.NumberFormat();
+
 interface TeamMemberCardProps {
     member: Employee;
     aiUsage: any;
@@ -68,7 +71,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                                     <span className="text-gray-600 font-mono">${aiUsage?.total_monthly_usd?.toFixed(4) || "0.0000"} USD</span>
                                 </div>
                                 <div className="text-gray-400">
-                                    {aiUsage?.total_used?.toLocaleString()} / {aiUsage?.total_budget?.toLocaleString()} Credits
+                                    {aiUsage?.total_used != null ? numberFormatter.format(aiUsage.total_used) : undefined} / {aiUsage?.total_budget != null ? numberFormatter.format(aiUsage.total_budget) : undefined} Credits
                                 </div>
                             </div>
                         </div>
