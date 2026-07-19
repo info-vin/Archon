@@ -113,6 +113,8 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                         <button 
                             type="submit" 
                             disabled={isUpdating}
+                            aria-disabled={isUpdating}
+                            aria-busy={isUpdating}
                             className="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                         >
                             {isUpdating ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <ShieldCheckIcon className="w-4 h-4" />}
@@ -139,6 +141,8 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                             <button 
                                 onClick={handleResetPassword}
                                 disabled={isResetting}
+                                aria-disabled={isResetting}
+                                aria-busy={isResetting}
                                 className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg font-bold text-xs hover:bg-amber-100 transition-colors flex items-center gap-2"
                             >
                                 {isResetting ? <RefreshCwIcon className="w-3 h-3 animate-spin" /> : 'RESET'}
