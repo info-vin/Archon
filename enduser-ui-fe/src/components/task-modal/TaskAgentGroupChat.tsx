@@ -2,6 +2,9 @@ import React, { useMemo } from 'react';
 import { Task } from '../../types.ts';
 import { SparklesIcon } from '../Icons.tsx';
 
+// PERFORMANCE: Hoisted Intl.NumberFormat to avoid expensive re-instantiations during render
+const numberFormatter = new Intl.NumberFormat();
+
 interface TaskAgentGroupChatProps {
   task: Task;
 }
@@ -122,7 +125,7 @@ export const TaskAgentGroupChat: React.FC<TaskAgentGroupChatProps> = ({ task }) 
                   ${task.ai_metrics.total_cost_usd.toFixed(4)}
                 </span>
                 <span className="text-[9px] text-slate-400 font-medium">
-                  {task.ai_metrics.total_tokens.toLocaleString()} tokens
+                  {numberFormatter.format(task.ai_metrics.total_tokens)} tokens
                 </span>
               </div>
             )}
