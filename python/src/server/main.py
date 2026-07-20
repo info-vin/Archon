@@ -42,7 +42,7 @@ class UvicornBotFilter(logging.Filter):
         import os
         indicators_str = os.getenv(
             "BOT_SCANNER_INDICATORS", 
-            ".env,.php,.yaml,.yml,.json,.toml,.bak,.old,.swp,/config,/actuator,/admin,/swagger,/api-docs,/wp-,/Procfile,/_predict,/.git,/app.py,/main.py,/internal,/metrics,/prometheus,/graphql,.axd,/telescope,/horizon,/proc/"
+            ".env,.php,.yaml,.yml,.json,.toml,.bak,.old,.swp,/config,/actuator,/admin,/swagger,/api-docs,/wp-,/Procfile,/_,/predict,/.git,/app.py,/main.py,/internal,/metrics,/prometheus,/graphql,.axd,/telescope,/horizon,/proc/,phpinfo,file="
         )
         self.bot_indicators = [i.strip() for i in indicators_str.split(',') if i.strip()]
 
