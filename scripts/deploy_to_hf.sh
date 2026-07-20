@@ -61,6 +61,7 @@ echo "4. Copying Dockerfile.server to root Dockerfile..."
 cp Dockerfile.server Dockerfile
 
 echo "4.5 Enabling MCP and Agents in Dockerfile for Hugging Face..."
+echo "" >> Dockerfile
 echo "ENV START_MCP=true" >> Dockerfile
 echo "ENV START_AGENTS=true" >> Dockerfile
 
