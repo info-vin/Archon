@@ -1,0 +1,32 @@
+name: Deploy to Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - dev/twins
+
+jobs:
+  deploy-to-hf:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Configure Git and Hugging Face remote
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 設定 Git 使用者
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 加入 HF remote，動態注入 Token
+          git remote add hf https://user:${HF_TOKEN}@huggingface.co/spaces/chiawei6/myrmidon
+          
+      - name: Run Deployment Script
+        run: |
+          # 執行既有的孤兒分支打包與發佈腳本
+          bash scripts/deploy_to_hf.sh
