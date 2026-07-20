@@ -23,8 +23,8 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # 加入 HF remote，動態注入 Token
-          git remote add hf https://user:${HF_TOKEN}@huggingface.co/spaces/chiawei6/myrmidon
+          # 加入 HF remote，動態注入 Token 與 Space 倉庫名稱
+          git remote add hf https://user:${HF_TOKEN}@huggingface.co/spaces/${{ secrets.HF_SPACE_REPO }}
           
       - name: Run Deployment Script
         run: |

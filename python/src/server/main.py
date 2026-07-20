@@ -201,8 +201,9 @@ async def get_mcp_logs():
     import os
 
     from fastapi.responses import FileResponse
-    if os.path.exists("/tmp/mcp_server.log"):
-        return FileResponse("/tmp/mcp_server.log")
+    log_path = os.getenv("ARCHON_MCP_LOG_PATH", "/tmp/mcp_server.log")
+    if os.path.exists(log_path):
+        return FileResponse(log_path)
     return {"error": "Log file not found"}
 
 
