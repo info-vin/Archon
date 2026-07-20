@@ -114,48 +114,15 @@
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 
-### 2026年7月：Phase 5.10.x Hugging Face Monolith 部署與神經網路修復 (Race Condition)
-七月下旬，我們成功排除了阻礙 Hugging Face 自動化部署長達一個半月的致命技術債，實現了雲端單一容器 (Monolith) 的完美運行。
+*(目前無近期日誌，等待新週期開始)*
 
-**核心主題歸類**:
-1.  **實體公證與幽靈防禦 (Ref: 07-20)**:
-    *   **指令換行修復**: 修復 `deploy_to_hf.sh` 在動態修改 `Dockerfile` 時缺少換行符號 (`\n`) 的 Bug，防止 `CMD` 與 `ENV` 參數粘連導致語法錯誤 (ENV: not found)。
-    *   **破除 DNS 迷思**: 發現 `mcp_client.py` 誤判 Docker 環境而強制使用 `archon-mcp` 作為主機名稱，導致在 HF Monolith 環境中解析失敗。引入 `ARCHON_SERVER_HOST` 作為覆蓋變數 (127.0.0.1)，成功將網路請求重新導向至 localhost。
-    *   **消滅啟動競態條件 (Race Condition)**: 解決了 FastAPI 啟動過快，導致 `lifespan.py` 搶在 MCP Server 完全準備好前發起請求並誤判斷線的世紀 Bug。透過在 `start_all.sh` 引入 5 秒緩衝 (`sleep 5`)，並在 Python 端加入 5 次指數退避重試 (Retry Loop)，徹底硬化了系統的啟動韌性。
-    *   **遠端日誌探針**: 建立 `/api/mcp-logs` 後門，將背景程序的標準輸出管線化，成功在無除錯介面的 Hugging Face 雲端環境中取得決定性的實體證據，證實 MCP Server 200 OK 且 29 項工具成功掛載。
+# 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
-### 2026年7月：Phase 5.9.x 週期作業與架構硬化 (Cost Sentinel, Tiered Pruning & L2 Refactor)
-七月中旬，我們將系統從「功能導向」推升至「韌性導向」，完成了週報 TTS、成本守門員、基礎設施巡檢與資料庫三級瘦身的實作，並成功消除了近 900 行的架構技術債。
+> **【封存說明】**
+> 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
 
-**核心主題歸類**:
-1.  **TTS 額度防護與虛假測試消除 (Ref: Phase 5.9.4)**:
-    *   **型別斷層修復**: 發現 TTS 服務的回傳型別改為 Tuple `(success, bytes)` 後，測試環境仍使用 `str` 導致「虛假測試」。成功修復斷層，並將音檔直接上傳至 `archon_documents` 解決記憶體與 Markdown 亂碼危機。
-    *   **確立第 13 條黃金律**: 將防範「虛假測試 (False Test)」正式列入核心開發紀律。
-2.  **SSOT 升級與魔法數字拔除 (Ref: Phase 5.9.1, 5.9.2)**:
-    *   建立 `schemas/settings.py`，將所有排程任務、RAG 門檻與 TTS 限制，全面遷移至 Pydantic 強型別校驗，消滅 10+ 處空指標風險。
-3.  **L2 模組化與 104 爬蟲解耦 (Ref: Phase 5.9.3, 5.9.4)**:
-    *   成功拆分超過 400 行的 `job_board_service.py`，獨立出 `job104_client.py` 處理 WAF 繞過。單次重構淨清除 646 行技術債與 3 個幽靈檔案。
-    *   實體掛載全域 `RateLimiter` 阻斷爬蟲高併發導致的 Gemini 429 攻擊。
-4.  **網路與資料庫防禦降維打擊**:
-    *   為巡檢系統加入 500/502/504 指數退避重試，增強網路自癒力。
-    *   建立 `100_add_tiered_pruning_rpcs.sql`，將 Python 端的 N+1 容量檢測下放為原生 RPC (`get_db_size_mb`)。
-5.  **Phase 5.9.6 模組化極致與測試防禦**:
-    *   **L2 業務拆解**: 成功將超過 370 行的巨型 `business.py` 拆分為精簡的 `leads_patrol.py` (96行) 與 `sentinel_patrol.py` (266行)。
-    *   **無斷層對接**: 保留 `scheduler_service.py` 的外部別名 (Alias) 以確保與 `admin_api`/`internal_api` 100% 物理對齊，拒絕任何盲目樂觀的重構。
-    *   **徹底消滅虛假測試**: 嚴格盤點並更新所有受影響的單元測試，確保 Mock 路徑精準對齊物理現實 (604 項測試全數通過)，落實「絕不容忍假綠燈」鐵律。
-6.  **Phase 5.9.7 提示詞 SSOT 與 Pydantic 降維防禦**:
-    *   **Model SSOT 落地**: 建立 `30_alter_archon_prompts_schema.sql` 與 `31_seed_art_asset_prompts.sql`，將原本散落於 Markdown 文件的 34 個美術提示詞全數遷移至 Supabase `archon_prompts` 資料表，由資料庫統一控管。
-    *   **強型別校驗**: 在 `schemas/prompts.py` 導入 Pydantic 進行嚴格校驗 (`str | None`)，並重構 `PromptService` 以支援 metadata 與 group 更新。
-    *   **消滅幽靈文件**: 徹底清空並廢棄舊版 `Art_Asset_Prompts.md` 的提示詞區塊，掛載棄用警告，從物理層面拔除「文件與代碼不一致」的根源。
-    *   **完美公證**: 通過嚴格的 `make phase-audit` 審查，無任何 Ghost Documents 與巨型技術債，為 Phase 5.9.x 劃下完美的句點。
-7.  **104 爬蟲防禦硬化與斷層修復 (Ref: Phase 5.9.x, 07-17)**:
-    *   **NoneType 崩潰自癒**: 修正 `Job104Crawler` 因內部非同步委派 (`_fetch_all`) 未被執行而返回 `None` 的嚴重 Bug。導入 `asyncio.to_thread` 將同步的 `curl_cffi` 安全橋接至外部迴圈，防止阻塞主線程。
-    *   **Schema Mapping 容錯**: 104 API 回傳欄位更動。透過防禦性的 `item.get("description", "")` 與 Pydantic 雙重綁定，防止未來因欄位變更而引發 `KeyError` 崩潰。
-    *   **落實第 13 條黃金律 (防範虛假測試)**: 當底層加入 `try-except` 攔截網路例外並 Fallback 回傳 `[]` 時，同步追溯並修正了依賴拋出例外的 Mock 測試，確保單元測試與物理現實 100% 對齊。
-    *   **日誌探針**: 建立 `scripts/check_crawler_logs.py` 直接對帳 Supabase，用實體證據監控 429/503 異常，拒絕盲目猜測。
-
-### 2026年7月：Phase 5.8.7 全域美術遷移與角色介面
-七月份我們專注於將高品質的 SDXL/Flux 美術素材整合進 Godot 專案中，替換了先前的佔位色塊，並引入 CGF 頂級視覺工藝。
+### 2026年7月：全域美術遷移、週期排程硬化與雲端單一容器部署
+七月份是專案視覺工藝大躍進，以及後端排程系統與雲端部署高度硬化的月份。我們將高品質的 SDXL/Flux 美術素材整合進 Godot 雙生專案，並在 Python 端完成了成本守門員、TTS 廣播與三級資料瘦身的排程自動化。最終，我們排除了阻礙 Hugging Face 部署的深層技術債，實現了雲端單一容器 (Monolith) 的無縫運行。
 
 **核心主題歸類**:
 1.  **高保真素材遷移與動態圖示 (Ref: 07-03)**:
@@ -186,26 +153,23 @@
     *   **觸覺與聽覺 (Juice)**: 新增 `BGMPlayer` 播放授權神曲《Ganxta》；透過 `Tween` 實作選中卡牌時的快速物理抖動 (Elastic Shake)，並同步播放清脆的翻牌音效。
     *   **無頭截圖公證**: 強化 `MainMenu_Screenshotter.gd`，支援動畫延遲等待，成功於無頭環境中截取包含全新 `gem_*.png` 美術圖的正確 UI 狀態。
 
-7.  **104 爬蟲與 Gemini API 防護硬化 (Ref: 07-14)**:
+7.  **104 爬蟲防禦硬化與 WAF 繞過 (Ref: 07-14, 07-17)**:
     *   **WAF 繞過與速率節流**: 成功修復 104 爬蟲，並為 `JobBoardService` 掛載 `RateLimiter`，解決爬蟲瞬間湧入大量資料導致 Gemini API 觸發 429 TooManyRequests 錯誤。
-    *   **500 Internal Error 自癒**: 發現 `retry_utils` 漏接 500/502/504 伺服器錯誤的漏洞，將其納入指數退避重試白名單，並透過 `google.genai` SDK 實體驗證其異常字串物理格式，確保雲端不穩定時的系統韌性。
+    *   **NoneType 崩潰自癒**: 修正 `Job104Crawler` 因內部非同步委派未被執行而返回 `None` 的嚴重 Bug。導入 `asyncio.to_thread` 安全橋接外部迴圈。
+    *   **Schema Mapping 容錯**: 透過防禦性的 `item.get("description", "")` 與 Pydantic 雙重綁定，防止未來因 API 欄位變更而引發 `KeyError` 崩潰。
 
-8.  **排程系統重構與 UI 介面物理公證 (Ref: 07-14)**:
-    *   **報表命名 UX 優化**: 徹底修正 `report_service.py` 中的報表標題命名邏輯，從單一生成日期 (`2026-06-01`) 改為明確的資料區間 (`2026-05-25 ~ 2026-06-01`)，消滅使用者的時間認知斷層。
-    *   **UI 終端物理公證**: 糾正了長久以來的錯誤上下文。透過實體掃描前端元件，證實 **Port 5173 (`enduser-ui-fe`)** 才是日報、週報、系統警報 (archon_logs) 與行銷部落格的真實終端呈現處，而 3737 僅為單純的內部開發區。
-    *   **JobBoard 提示詞解耦**: 將 `job_board_service.py` 中的系統提示詞徹底從 Python 硬編碼中抽離，建立 `29_seed_job_board_prompts.sql` 交由資料庫動態管理，落實 Model SSOT 精神。
-    *   **動態環境變數防呆**: 為 `JobBoardService` 引入 `SettingsService` 動態配置與 `AgentRegistry` 績效歸屬機制，解決硬編碼的 N+1 Query 與 NoneType 報錯問題。
+8.  **週期作業與排程系統重構 (Ref: Phase 5.9.x, 07-14)**:
+    *   **TTS 額度防護與虛假測試消除**: 發現 TTS 服務的回傳型別改為 Tuple `(success, bytes)` 後測試環境仍使用 `str` 導致「虛假測試」。成功修復斷層，確立第 13 條黃金律，並將週報音檔上傳至 `archon_documents` 解決記憶體危機。
+    *   **L2 業務拆解**: 成功將超過 370 行的巨型 `business.py` 拆分為精簡的 `leads_patrol.py` 與 `sentinel_patrol.py`，徹底解耦 104 爬蟲與 AI 巡檢業務。
+    *   **徹底消滅硬編碼**: 將 `job_board_service.py` 的 RAG 相似度門檻，以及資料庫階層式清理 (Tiered Pruning) 規則，全面改由 `SettingsService` 動態讀取。
+    *   **網路與資料庫防禦降維打擊**: 為巡檢系統加入 500/502/504 指數退避重試，並建立 `100_add_tiered_pruning_rpcs.sql` 將容量檢測下放為原生 RPC。
 
-9.  **動態配置與排程器公證 (Ref: 07-14)**:
-    *   **徹底消滅硬編碼**: 將 `job_board_service.py` 的 RAG 相似度門檻，以及 `patrol_infra.py` 的資料庫階層式清理 (Tiered Pruning) 規則，全面改由 `SettingsService` 讀取 `archon_settings` 資料表。
-    *   **Fallback 韌性設計**: 型別轉換時 (`float(str(...))`) 提供安全預設值，確保若資料庫缺少該設定，系統仍能 Fail-Safe 運行而不崩潰，這不屬於硬編碼，而是防禦性編程。
-    *   **測試斷言對齊物理現實**: 修正 `test_patrol_infra.py` 的 Mock 斷言，因為真實引入了容量探測 (`Get DB Size`)，`execute_query` 的呼叫次數會改變。這教會我們「不可死守舊的單元測試，測試必須隨真實邏輯演進」。
-    *   **實體資料表對帳**: 解決了 SQL 遷移檔找不到 `documents` 表的錯誤，透過實體檢視 Schema，確認真正的向量表為 `archon_crawled_pages`，徹底拒絕幻想路徑。
-
-# 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
-
-> **【封存說明】**
-> 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+9.  **實體公證與 Hugging Face Monolith 部署硬化 (Ref: 07-20)**:
+    *   **指令換行修復**: 修復 `deploy_to_hf.sh` 在動態修改 `Dockerfile` 時缺少換行符號 (`\n`) 的 Bug，防止 `CMD` 與 `ENV` 參數粘連導致語法錯誤 (ENV: not found)。
+    *   **破除 DNS 迷思**: 發現 `mcp_client.py` 誤判 Docker 環境而強制使用 `archon-mcp` 作為主機名稱，導致在 HF Monolith 環境中解析失敗。引入 `ARCHON_SERVER_HOST` 作為覆蓋變數 (127.0.0.1)，成功將網路請求重新導向至 localhost。
+    *   **消滅啟動競態條件 (Race Condition)**: 解決了 FastAPI 啟動過快，導致 `lifespan.py` 搶在 MCP Server 完全準備好前發起請求並誤判斷線的世紀 Bug。透過在 `start_all.sh` 引入 5 秒緩衝 (`sleep 5`)，並在 Python 端加入 5 次指數退避重試 (Retry Loop)，徹底硬化了系統的啟動韌性。
+    *   **遠端日誌探針**: 建立 `/api/mcp-logs` 後門，將背景程序的標準輸出管線化，成功在無除錯介面的 Hugging Face 雲端環境中取得決定性的實體證據，證實 MCP Server 200 OK 且 29 項工具成功掛載。
+    *   **Model SSOT 落地**: 建立 `30_alter_archon_prompts_schema.sql`，將散落於 Markdown 的 34 個提示詞全數遷移至 DB。重構 `PromptService` 並以 Pydantic 嚴格校驗，消滅幽靈文件。
 
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
