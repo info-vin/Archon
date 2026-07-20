@@ -40,14 +40,16 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
             <div className="flex gap-2">
                <button 
                  onClick={() => setShowRejectInput(false)}
-                 className="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                 className="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors focus-visible:ring-2 focus-visible:outline-none"
                >
                  Cancel
                </button>
                <button 
                  onClick={() => handleAction(selectedProposal.id, 'reject')}
                  disabled={!!processingId || !rejectReason.trim()}
-                 className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                 aria-disabled={!!processingId || !rejectReason.trim()}
+                 aria-busy={processingId === selectedProposal.id}
+                 className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none"
                >
                  {processingId === selectedProposal.id ? (
                    <>
@@ -62,8 +64,10 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                 <button 
                   onClick={() => handleAction(selectedProposal.id, 'reject')}
                   disabled={!!processingId}
+                  aria-disabled={!!processingId}
+                  aria-busy={processingId === selectedProposal.id}
                   data-testid="reject-action-button"
-                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/30 text-red-600 text-xs font-black rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-900/30 text-red-600 text-xs font-black rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none"
                 >
                   {processingId === selectedProposal.id ? (
                     <ArrowPathIcon className="w-4 h-4 animate-spin" />
@@ -75,8 +79,10 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                 <button 
                   onClick={() => handleAction(selectedProposal.id, 'approve')}
                   disabled={!!processingId}
+                  aria-disabled={!!processingId}
+                  aria-busy={processingId === selectedProposal.id}
                   data-testid="approve-action-button"
-                  className="px-6 py-2 bg-indigo-600 text-white text-xs font-black rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2"
+                  className="px-6 py-2 bg-indigo-600 text-white text-xs font-black rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2 disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none"
                 >
                   {processingId === selectedProposal.id ? (
                     <ArrowPathIcon className="w-4 h-4 animate-spin" />
