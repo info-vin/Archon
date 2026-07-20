@@ -132,10 +132,7 @@ class JobBoardService:
 
         baseline_embedding = await self._get_baseline_embedding()
 
-        for job in jobs:
-            if job.url in existing_urls:
-                continue
-
+        async def _process_single_job(job: JobData) -> dict | None:
             try:
                 identified_need = job.identified_need or await self._infer_need(job)
 
@@ -162,9 +159,9 @@ class JobBoardService:
                                 "level": "DEBUG",
                                 "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
                             }).execute()
-                            continue
+                            return None
 
-                lead_data = {
+                return {
                     "company_name": job.company,
                     "job_title": job.title,
                     "description_snippet": job.description[:500] if job.description else None,
@@ -172,10 +169,19 @@ class JobBoardService:
                     "status": "new",
                     "identified_need": identified_need,
                 }
-                leads_to_insert.append(lead_data)
-                jobs_to_insert.append(job)
             except Exception as e:
                 logger.error(f"Failed to process lead data: {e}")
+                return None
+
+        # PERFORMANCE: Replaced sequential await self._infer_need(job) with asyncio.gather
+        import asyncio
+        new_jobs = [job for job in jobs if job.url not in existing_urls]
+        if new_jobs:
+            results = await asyncio.gather(*[_process_single_job(job) for job in new_jobs])
+            for job, lead_data in zip(new_jobs, results, strict=False):
+                if lead_data:
+                    leads_to_insert.append(lead_data)
+                    jobs_to_insert.append(job)
 
         if leads_to_insert:
             try:
