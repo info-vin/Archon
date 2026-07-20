@@ -62,9 +62,11 @@ class JobBoardService:
     async def search_jobs(self, keyword: str, limit: int = 8) -> list[JobData]:
         # Delegate search to crawler
         jobs = await self.crawler.search_jobs(keyword, limit)
-        # Infer Needs (Async AI processing)
-        for job in jobs:
-            job.identified_need = await self._infer_need(job)
+        # Infer Needs (Async AI processing concurrently)
+        import asyncio
+        needs = await asyncio.gather(*(self._infer_need(job) for job in jobs))
+        for job, need in zip(jobs, needs):
+            job.identified_need = need
         return jobs
 
     async def auto_fetch_daily_leads(self) -> int:
