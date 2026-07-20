@@ -168,6 +168,7 @@ app.include_router(test_api_router)
 @app.get("/api/mcp-logs")
 async def get_mcp_logs():
     import os
+
     from fastapi.responses import FileResponse
     if os.path.exists("/tmp/mcp_server.log"):
         return FileResponse("/tmp/mcp_server.log")

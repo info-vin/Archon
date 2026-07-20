@@ -65,7 +65,7 @@ class JobBoardService:
         # Infer Needs (Async AI processing concurrently)
         import asyncio
         needs = await asyncio.gather(*(self._infer_need(job) for job in jobs))
-        for job, need in zip(jobs, needs):
+        for job, need in zip(jobs, needs, strict=False):
             job.identified_need = need
         return jobs
 

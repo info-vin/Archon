@@ -114,6 +114,16 @@
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 
+### 2026年7月：Phase 5.10.x Hugging Face Monolith 部署與神經網路修復 (Race Condition)
+七月下旬，我們成功排除了阻礙 Hugging Face 自動化部署長達一個半月的致命技術債，實現了雲端單一容器 (Monolith) 的完美運行。
+
+**核心主題歸類**:
+1.  **實體公證與幽靈防禦 (Ref: 07-20)**:
+    *   **指令換行修復**: 修復 `deploy_to_hf.sh` 在動態修改 `Dockerfile` 時缺少換行符號 (`\n`) 的 Bug，防止 `CMD` 與 `ENV` 參數粘連導致語法錯誤 (ENV: not found)。
+    *   **破除 DNS 迷思**: 發現 `mcp_client.py` 誤判 Docker 環境而強制使用 `archon-mcp` 作為主機名稱，導致在 HF Monolith 環境中解析失敗。引入 `ARCHON_SERVER_HOST` 作為覆蓋變數 (127.0.0.1)，成功將網路請求重新導向至 localhost。
+    *   **消滅啟動競態條件 (Race Condition)**: 解決了 FastAPI 啟動過快，導致 `lifespan.py` 搶在 MCP Server 完全準備好前發起請求並誤判斷線的世紀 Bug。透過在 `start_all.sh` 引入 5 秒緩衝 (`sleep 5`)，並在 Python 端加入 5 次指數退避重試 (Retry Loop)，徹底硬化了系統的啟動韌性。
+    *   **遠端日誌探針**: 建立 `/api/mcp-logs` 後門，將背景程序的標準輸出管線化，成功在無除錯介面的 Hugging Face 雲端環境中取得決定性的實體證據，證實 MCP Server 200 OK 且 29 項工具成功掛載。
+
 ### 2026年7月：Phase 5.9.x 週期作業與架構硬化 (Cost Sentinel, Tiered Pruning & L2 Refactor)
 七月中旬，我們將系統從「功能導向」推升至「韌性導向」，完成了週報 TTS、成本守門員、基礎設施巡檢與資料庫三級瘦身的實作，並成功消除了近 900 行的架構技術債。
 
