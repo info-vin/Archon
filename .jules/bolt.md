@@ -134,10 +134,7 @@
 **Learning:** When optimizing render loops by hoisting `Intl.DateTimeFormat` to replace `Date.prototype.toLocaleString()`, the default `new Intl.DateTimeFormat(undefined)` only outputs the date (e.g., "10/24/2023"). This causes a functional regression for components that rely on exact timestamps (e.g., Audit Logs, System Health logs).
 **Action:** Always pass explicit options (e.g., `{ year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }`) when replacing `.toLocaleString()` to preserve the time component, and abstract this into a reusable helper function.
 
-## 2026-07-20 - Refactoring sequential async AI inference to concurrent asyncio.gather
-**Learning:** When performing independent async AI inferences (like ) inside a loop over a list of items (e.g., job leads), using a sequential  loop with  creates a massive network waterfall bottleneck. This scales the execution time as O(n) instead of O(1) concurrent waiting time, severely slowing down processes like daily background data fetching.
-**Action:** Specifically look for  loops containing independent  calls, especially those hitting external network APIs, and refactor them to execute concurrently using  to eliminate the waterfall delay.
 
-## $(date +%Y-%m-%d) - Refactoring sequential async AI inference to concurrent asyncio.gather
+## 2026-07-20 - Refactoring sequential async AI inference to concurrent asyncio.gather
 **Learning:** When performing independent async AI inferences (like `_infer_need`) inside a loop over a list of items (e.g., job leads), using a sequential `for` loop with `await` creates a massive network waterfall bottleneck. This scales the execution time as O(N) instead of O(1) concurrent waiting time, severely slowing down processes like daily background data fetching.
 **Action:** Specifically look for `for` loops containing independent `await` calls, especially those hitting external network APIs, and refactor them to execute concurrently using `asyncio.gather` to eliminate the waterfall delay.
