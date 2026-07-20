@@ -97,14 +97,18 @@ class ReportService(BaseRepository):
         """Gathers database metrics and events from the last N days to ground periodic summaries."""
         logger.info(f"📊 Gathering report context for the past {days} day(s)...")
         try:
-            cutoff_date = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+            now = datetime.now(UTC)
+            cutoff_date = (now - timedelta(days=days)).isoformat()
 
             leads_summary = self._get_leads_context(cutoff_date)
             token_summary = self._get_token_context(cutoff_date)
             logs_summary = self._get_logs_context(cutoff_date)
             tasks_summary = self._get_tasks_context(cutoff_date)
 
-            return f"""### 系統運行上下文數據 (過去 {days} 天)
+            return f"""### 系統運行上下文數據
+
+**資料區間**：{now.strftime('%Y-%m-%d')} 前推 {days} 天 (從 {(now - timedelta(days=days)).strftime('%Y-%m-%d')} 至 {now.strftime('%Y-%m-%d')})
+**報告產出日期**：{now.strftime('%Y-%m-%d')}
 
 #### 1. 商業開發線告 (Leads)
 {leads_summary}
