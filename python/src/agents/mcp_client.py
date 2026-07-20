@@ -42,6 +42,7 @@ class MCPClient:
                 from pathlib import Path
 
                 mcp_port = os.getenv("ARCHON_MCP_PORT", "8051")
+                mcp_host = os.getenv("ARCHON_MCP_HOST", os.getenv("ARCHON_SERVER_HOST"))
                 # Check for multiple Docker indicators
                 is_docker = (
                     os.getenv("DOCKER_CONTAINER") == "true"
@@ -49,7 +50,9 @@ class MCPClient:
                     or Path("/.dockerenv").exists()
                 )
 
-                if is_docker:
+                if mcp_host:
+                    self.mcp_url = f"http://{mcp_host}:{mcp_port}"
+                elif is_docker:
                     self.mcp_url = f"http://archon-mcp:{mcp_port}"
                 else:
                     self.mcp_url = f"http://localhost:{mcp_port}"
