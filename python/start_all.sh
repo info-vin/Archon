@@ -26,5 +26,7 @@ else
 fi
 
 # 3. 啟動主 FastAPI 服務 (在前景運行，接管對外 PORT)
+echo "Waiting 5 seconds for background services (MCP/Agents) to initialize..."
+sleep 5
 echo "Starting Main FastAPI Server on port ${PORT:-8181}..."
 python -m uvicorn src.server.main:app --host 0.0.0.0 --port ${PORT:-8181} --workers 1

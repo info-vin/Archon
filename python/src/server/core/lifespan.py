@@ -73,8 +73,16 @@ async def lifespan(app: FastAPI):
         api_logger.info("Initializing MCP Client...")
         mcp_client = await get_mcp_client()
 
-        # Initialize tool list to verify connection
-        tools = await mcp_client.list_tools()
+        # Initialize tool list to verify connection (with retries for race conditions)
+        import asyncio
+        tools = []
+        for attempt in range(5):
+            tools = await mcp_client.list_tools()
+            if tools:
+                break
+            api_logger.warning(f"MCP Server not ready yet. Retrying ({attempt+1}/5)...")
+            await asyncio.sleep(2.0)
+
         if not tools:
             log_service.create_log_entry(
                 {
