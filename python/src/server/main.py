@@ -36,16 +36,6 @@ except ImportError:
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
 class UvicornBotFilter(logging.Filter):
-    def __init__(self):
-        super().__init__()
-        # 遵循 SSOT 原則，從環境變數載入，避免寫死在代碼中
-        import os
-        indicators_str = os.getenv(
-            "BOT_SCANNER_INDICATORS", 
-            ".env,.php,.yaml,.yml,.json,.toml,.bak,.old,.swp,/config,/actuator,/admin,/swagger,/api-docs,/wp-,/Procfile,/_,/predict,/.git,/app.py,/main.py,/internal,/metrics,/prometheus,/graphql,.axd,/telescope,/horizon,/proc/,phpinfo,file="
-        )
-        self.bot_indicators = [i.strip() for i in indicators_str.split(',') if i.strip()]
-
     def filter(self, record: logging.LogRecord) -> bool:
         if record.args and len(record.args) >= 3:
             try:
@@ -56,10 +46,10 @@ class UvicornBotFilter(logging.Filter):
                 if path in ["/health", "/api/health", "/"] and status == 200:
                     return False
                     
-                # Hide noisy 404 bot scanners ONLY IF they match the known indicators
-                if status == 404 or status == 401:
-                    if any(indicator in path for indicator in self.bot_indicators):
-                        return False
+                # Best practice: Suppress all 404 and 401 responses in the access log 
+                # to completely silence vulnerability scanners and bots.
+                if status in (404, 401):
+                    return False
             except Exception:
                 pass
         return True
