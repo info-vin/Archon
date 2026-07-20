@@ -35,6 +35,28 @@ except ImportError:
     pass
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
+class UvicornBotFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.args and len(record.args) >= 3:
+            try:
+                status = record.args[4] if len(record.args) >= 5 else None
+                path = record.args[2] if len(record.args) >= 3 else ""
+                
+                # Hide noisy health checks
+                if path in ["/health", "/api/health", "/"] and status == 200:
+                    return False
+                    
+                # Hide noisy 404 bot scanners
+                if status == 404 or status == 401:
+                    bot_indicators = ['.env', '.php', '.yaml', '.yml', '.json', '.toml', '.bak', '.old', '.swp', '/config', '/actuator', '/admin', '/swagger', '/api-docs', '/wp-', '/Procfile', '/_']
+                    if any(indicator in path for indicator in bot_indicators):
+                        return False
+            except Exception:
+                pass
+        return True
+
+logging.getLogger("uvicorn.access").addFilter(UvicornBotFilter())
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
