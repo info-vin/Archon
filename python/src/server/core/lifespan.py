@@ -76,10 +76,10 @@ async def lifespan(app: FastAPI):
         # Initialize tool list to verify connection (with retries for race conditions)
         import asyncio
         import os
-        
+
         retry_limit = int(os.getenv("ARCHON_MCP_RETRY_LIMIT", "5"))
         retry_delay = float(os.getenv("ARCHON_MCP_RETRY_DELAY", "2.0"))
-        
+
         tools = []
         for attempt in range(retry_limit):
             tools = await mcp_client.list_tools()

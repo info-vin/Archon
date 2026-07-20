@@ -37,16 +37,16 @@ logging.getLogger("transformers").setLevel(logging.ERROR)
 
 class UvicornBotFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        if record.args and len(record.args) >= 3:
+        if record.args and isinstance(record.args, tuple) and len(record.args) >= 3:
             try:
                 status = record.args[4] if len(record.args) >= 5 else None
                 path = record.args[2] if len(record.args) >= 3 else ""
-                
+
                 # Hide noisy health checks
                 if path in ["/health", "/api/health", "/"] and status == 200:
                     return False
-                    
-                # Best practice: Suppress all 404 and 401 responses in the access log 
+
+                # Best practice: Suppress all 404 and 401 responses in the access log
                 # to completely silence vulnerability scanners and bots.
                 if status in (404, 401):
                     return False
