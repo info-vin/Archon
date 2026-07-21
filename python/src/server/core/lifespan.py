@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI):
         import asyncio
         import os
 
-        retry_limit = int(os.getenv("ARCHON_MCP_RETRY_LIMIT", "5"))
+        retry_limit = int(os.getenv("ARCHON_MCP_RETRY_LIMIT", "15"))
         retry_delay = float(os.getenv("ARCHON_MCP_RETRY_DELAY", "2.0"))
 
         tools = []
@@ -92,7 +92,7 @@ async def lifespan(app: FastAPI):
             log_service.create_log_entry(
                 {
                     "project_name": "mcp-neural-wiring",
-                    "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client connected but returned 0 tools. Check volumes/permissions.",
+                    "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client failed to connect or returned 0 tools after retries. Check if MCP server started successfully or check volumes/permissions if running locally.",
                     "user_input": f"mcp_url: {mcp_client.mcp_url}",
                 }
             )

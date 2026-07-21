@@ -166,8 +166,10 @@ class SchedulerService:
                 logger.info(f"🕒 Clockwork: Executing daily job '{job_id}'")
                 try:
                     await job_func()
-                finally:
                     await self._update_last_run(job_id)
+                except Exception as e:
+                    logger.error(f"Job {job_id} failed: {e}")
+                    raise
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
@@ -189,8 +191,10 @@ class SchedulerService:
                 logger.info(f"🕒 Clockwork: Executing weekly job '{job_id}'")
                 try:
                     await job_func()
-                finally:
                     await self._update_last_run(job_id)
+                except Exception as e:
+                    logger.error(f"Job {job_id} failed: {e}")
+                    raise
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
@@ -212,8 +216,10 @@ class SchedulerService:
                 logger.info(f"🕒 Clockwork: Executing monthly job '{job_id}'")
                 try:
                     await job_func()
-                finally:
                     await self._update_last_run(job_id)
+                except Exception as e:
+                    logger.error(f"Job {job_id} failed: {e}")
+                    raise
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
@@ -235,8 +241,10 @@ class SchedulerService:
                 logger.info(f"🕒 Clockwork: Executing bi-weekly maintenance '{job_id}'")
                 try:
                     await job_func()
-                finally:
                     await self._update_last_run(job_id)
+                except Exception as e:
+                    logger.error(f"Job {job_id} failed: {e}")
+                    raise
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
