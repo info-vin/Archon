@@ -96,3 +96,16 @@ class SettingsService(BaseRepository):
         if success and result["data"]:
             return {item["key"]: item["value"] for item in result["data"]}
         return {}
+
+    def set_setting(self, key: str, value: str) -> bool:
+        """Upsert a specific setting value."""
+
+        def _query():
+            return self.supabase_client.table("archon_settings").upsert(
+                {"key": key, "value": value}, on_conflict="key"
+            ).execute()
+
+        success, result = self.execute_query(
+            query_func=_query, error_context=f"Error setting {key}", require_data=False
+        )
+        return success

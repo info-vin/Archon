@@ -3,7 +3,8 @@ Patrol Jobs for Scheduler
 Handles system health, log monitoring, and cleanup.
 """
 
-from datetime import UTC, datetime, timedelta
+import os
+from datetime import UTC, datetime, time, timedelta, timezone
 
 from src.server.config.logfire_config import get_logger
 
@@ -139,11 +140,43 @@ async def run_log_patrol():
         logger.error(f"💥 Clockwork: Log Patrol Failed: {e}")
 
 
+def is_hf_awake() -> bool:
+    """
+    判斷當前時間是否在 HF 的上線視窗內。
+    睡眠區間預設為台灣 20:18 ~ 05:32 (CST)。
+    """
+    # 取得 CST (UTC+8) 時間
+    cst_now = datetime.now(UTC).astimezone(timezone(timedelta(hours=8)))
+    current_time = cst_now.time()
+
+    # 從環境變數讀取 (CST HH:MM 格式)
+    start_str = os.getenv("HF_SLEEP_START", "20:18")
+    end_str = os.getenv("HF_SLEEP_END", "05:32")
+
+    try:
+        sh, sm = map(int, start_str.split(":"))
+        eh, em = map(int, end_str.split(":"))
+        sleep_start = time(sh, sm)
+        sleep_end = time(eh, em)
+    except Exception:
+        sleep_start = time(20, 18)
+        sleep_end = time(5, 32)
+
+    if sleep_start <= sleep_end:
+        if sleep_start <= current_time <= sleep_end:
+            return False
+    else:
+        # Crosses midnight
+        if current_time >= sleep_start or current_time <= sleep_end:
+            return False
+
+    return True
+
+
 async def run_model_verification():
     """Verifies that the system is using the safe Lite model to prevent 429 errors."""
     logger.info("🤖 Clockwork: Running Model Verification...")
     try:
-        from src.server.services.scheduler_service import is_hf_awake
         from src.server.utils import get_supabase_client
 
         supabase = get_supabase_client()

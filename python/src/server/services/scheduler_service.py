@@ -9,13 +9,14 @@ Implements a consistent Lifecycle & State-Driven architecture:
 """
 
 from collections.abc import Callable
-from datetime import UTC, datetime, time, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.report_service import report_service
@@ -31,42 +32,7 @@ from src.server.services.scheduler.jobs import (
 
 logger = get_logger(__name__)
 
-
-def is_hf_awake() -> bool:
-    """
-    判斷當前時間是否在 HF 的上線視窗內。
-    睡眠區間預設為台灣 20:18 ~ 05:32 (CST)。
-    """
-    import os
-
-    # 取得 CST (UTC+8) 時間
-    cst_now = datetime.now(UTC).astimezone(timezone(timedelta(hours=8)))
-    current_time = cst_now.time()
-
-    # 從環境變數讀取 (CST HH:MM 格式)
-    start_str = os.getenv("HF_SLEEP_START", "20:18")
-    end_str = os.getenv("HF_SLEEP_END", "05:32")
-
-    try:
-        sh, sm = map(int, start_str.split(":"))
-        eh, em = map(int, end_str.split(":"))
-        sleep_start = time(sh, sm)
-        sleep_end = time(eh, em)
-    except Exception:
-        sleep_start = time(20, 18)
-        sleep_end = time(5, 32)
-
-    if sleep_start <= sleep_end:
-        if sleep_start <= current_time <= sleep_end:
-            return False
-    else:
-        # Crosses midnight
-        if current_time >= sleep_start or current_time <= sleep_end:
-            return False
-
-    return True
-
-
+DEFAULT_TIMEZONE = ZoneInfo("Asia/Taipei")
 class SchedulerService:
     _instance = None
     _scheduler = None
@@ -93,29 +59,25 @@ class SchedulerService:
     async def _update_last_run(self, job_id: str):
         """Persists the last run timestamp to the database."""
         try:
-            from src.server.utils import get_supabase_client
+            from src.server.services.settings_service import SettingsService
 
-            supabase = get_supabase_client()
+            settings = SettingsService()
             db_key = f"LAST_RUN_{job_id.upper()}"
             now_iso = datetime.now(UTC).isoformat()
-            res = supabase.table("archon_settings").select("key").eq("key", db_key).execute()
-            if res.data:
-                supabase.table("archon_settings").update({"value": now_iso}).eq("key", db_key).execute()
-            else:
-                supabase.table("archon_settings").insert({"key": db_key, "value": now_iso}).execute()
+            settings.set_setting(db_key, now_iso)
         except Exception as e:
             logger.error(f"Scheduler: Failed to update last run for {job_id}: {e}")
 
     async def _get_last_run(self, job_id: str) -> datetime | None:
         """Retrieves the last run timestamp from the database."""
         try:
-            from src.server.utils import get_supabase_client
+            from src.server.services.settings_service import SettingsService
 
-            supabase = get_supabase_client()
+            settings = SettingsService()
             db_key = f"LAST_RUN_{job_id.upper()}"
-            res = supabase.table("archon_settings").select("value").eq("key", db_key).execute()
-            if res.data:
-                return datetime.fromisoformat(res.data[0]["value"].replace("Z", "+00:00"))
+            val = settings.get_setting(db_key)
+            if val:
+                return datetime.fromisoformat(val.replace("Z", "+00:00"))
         except Exception:
             pass
         return None
@@ -187,7 +149,7 @@ class SchedulerService:
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
         self._scheduler.add_job(
             wrapper,
-            trigger=CronTrigger(hour=hour, minute=minute, timezone=ZoneInfo("Asia/Taipei")),
+            trigger=CronTrigger(hour=hour, minute=minute, timezone=DEFAULT_TIMEZONE),
             id=f"{job_id}_recurring",
             replace_existing=True,
         )
@@ -212,7 +174,7 @@ class SchedulerService:
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
         self._scheduler.add_job(
             wrapper,
-            trigger=CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute, timezone=ZoneInfo("Asia/Taipei")),
+            trigger=CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute, timezone=DEFAULT_TIMEZONE),
             id=f"{job_id}_recurring",
             replace_existing=True,
         )
@@ -237,7 +199,7 @@ class SchedulerService:
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
         self._scheduler.add_job(
             wrapper,
-            trigger=CronTrigger(day=day, hour=hour, minute=minute, timezone=ZoneInfo("Asia/Taipei")),
+            trigger=CronTrigger(day=day, hour=hour, minute=minute, timezone=DEFAULT_TIMEZONE),
             id=f"{job_id}_recurring",
             replace_existing=True,
         )
@@ -262,11 +224,31 @@ class SchedulerService:
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
         self._scheduler.add_job(
             wrapper,
-            trigger=CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute, timezone=ZoneInfo("Asia/Taipei")),
+            trigger=CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute, timezone=DEFAULT_TIMEZONE),
             id=f"{job_id}_recurring",
             replace_existing=True,
         )
         logger.info(f"✅ Scheduled Bi-weekly: {job_id} (Catchup: +{delay_mins}m, Cron: {day_of_week} {hour:02d}:{minute:02d} CST)")
+
+    def _trigger_stateful_daily_event(self, job_func: Callable, job_id: str):
+        """Triggers a stateful daily job immediately as an event, verifying state lock first."""
+        if not self._scheduler:
+            return
+
+        async def wrapper():
+            if await self._should_run_daily(job_id):
+                logger.info(f"🔗 Event-Driven: Executing daily job '{job_id}'")
+                try:
+                    await job_func()
+                    await self._update_last_run(job_id)
+                except Exception as e:
+                    logger.error(f"Job {job_id} failed: {e}")
+                    raise
+            else:
+                logger.info(f"⏭️ Event-Driven: Skipped '{job_id}' (Already run today)")
+
+        # Run immediately
+        self._scheduler.add_job(wrapper, id=f"{job_id}_event", replace_existing=True)
 
     async def _schedule_jobs(self):
         """Phase 5.1.16: Unified Job Lifecycle Strategy including Weekly/Monthly summaries."""
@@ -283,11 +265,9 @@ class SchedulerService:
         # --- Category 2: Stateful Daily Jobs (5-35 mins) ---
         await self._schedule_stateful_daily(self._cleanup_system_probes, "system_probe_cleanup", 5, 7, 20)
         await self._schedule_stateful_daily(self._run_auto_fetch_leads, "alice_auto_fetch", 6, 7, 0)
-        await self._schedule_stateful_daily(self._run_daily_market_report, "bob_market_report", 10, 7, 40)
         await self._schedule_stateful_daily(self._run_prune_stale_leads, "prune_stale_leads", 15, 7, 20)
         await self._schedule_stateful_daily(self._analyze_token_usage, "token_analysis", 20, 8, 20)
         await self._schedule_stateful_daily(self._run_business_sentinel, "business_sentinel", 25, 8, 40)
-        await self._schedule_stateful_daily(self._run_daily_executive_summary, "daily_executive_summary", 35, 8, 0)
 
         # --- Category 3: Stateful Weekly / Monthly Jobs (38-42 mins) ---
         await self._schedule_stateful_weekly(self._run_weekly_executive_summary, "weekly_executive_summary", 38, "mon", 9, 0)
@@ -296,9 +276,8 @@ class SchedulerService:
         # --- Category 4: Stateful Bi-weekly Maintenance (45-50 mins) ---
         await self._schedule_stateful_biweekly(self._run_infrastructure_audit, "infrastructure_audit", 48, "sat", 7, 10)
         await self._schedule_stateful_biweekly(self._run_api_deprecation_scan, "api_deprecation_scan", 50, "sat", 9, 0)
-
-        self._scheduler.remove_job("tech_debt_audit") if self._scheduler.get_job("tech_debt_audit") else None
         await self._schedule_stateful_biweekly(self._run_tech_debt_audit, "tech_debt_audit", 45, "sun", 9, 0)
+        await self._schedule_stateful_biweekly(self._run_ssot_audit, "ssot_audit", 47, "sun", 10, 0)
 
     # Delegation Methods
     async def _run_system_probe(self):
@@ -313,6 +292,9 @@ class SchedulerService:
     async def _run_tech_debt_audit(self):
         await tech_debt_patrol.run_tech_debt_audit()
 
+    async def _run_ssot_audit(self):
+        await tech_debt_patrol.run_ssot_audit()
+
     async def _run_model_verification(self):
         await patrol.run_model_verification()
 
@@ -322,8 +304,12 @@ class SchedulerService:
     async def _run_prune_stale_leads(self):
         await leads_patrol.run_prune_stale_leads()
 
+    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
     async def _run_auto_fetch_leads(self):
         await leads_patrol.run_auto_fetch_leads()
+
+        # EVENT-DRIVEN: Trigger downstream report ONLY on success
+        self._trigger_stateful_daily_event(self._run_daily_market_report, "bob_market_report")
 
     async def _analyze_token_usage(self):
         await sentinel_patrol.analyze_token_usage()
@@ -335,15 +321,22 @@ class SchedulerService:
         """Public alias for manual triggering from other services."""
         await sentinel_patrol.run_business_sentinel()
 
+    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
     async def _run_daily_market_report(self):
         await leads_patrol.run_daily_market_report()
 
+        # EVENT-DRIVEN: Trigger downstream executive summary ONLY on success
+        self._trigger_stateful_daily_event(self._run_daily_executive_summary, "daily_executive_summary")
+
+    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
     async def _run_daily_executive_summary(self):
         await report_service.generate_daily_executive_summary()
 
+    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
     async def _run_weekly_executive_summary(self):
         await report_service.generate_weekly_executive_summary()
 
+    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
     async def _run_monthly_executive_summary(self):
         await report_service.generate_monthly_executive_summary()
 

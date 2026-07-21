@@ -113,8 +113,10 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-
-*(目前無近期日誌，等待新週期開始)*
+### 2026/07/21: Phase 5.9.8~10 排程器事件驅動重構與 L2 淨化
+- **SSOT 稽核防線 (Phase 5.9.8)**: 建立 `tech_debt_patrol.py` 定期比對資料庫 Prompt Schema 與後端實作，消滅硬編碼幻覺。
+- **事件驅動 DAG 排程 (Phase 5.9.9)**: 將下游報告 (`bob_market_report`, `daily_executive_summary`) 的觸發機制，從僵化的 Cron 轉型為依賴 `alice_auto_fetch` (爬蟲) 成功後的事件觸發 (`_trigger_stateful_daily_event`)，透過 Retry 機制完美解決了 WAF 阻擋造成的空報告 Race Condition。
+- **L2 架構淨化與硬編碼消滅 (Phase 5.9.10)**: 徹底根除 `scheduler_service.py` 內部裸寫 Supabase API 的技術債，統一透過 `SettingsService().set_setting` 處理 `LAST_RUN` 狀態。同時將 `is_hf_awake` 物理轉移至 `patrol.py`，並消除 `ZoneInfo` 硬編碼，成功將排程器瘦身至 353 行，全線測試公證通過。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 

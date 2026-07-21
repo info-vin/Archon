@@ -38,11 +38,15 @@ async def test_run_log_patrol_creates_task():
 
     mock_agent_service = AsyncMock()
 
-    # We patch BOTH possible paths to be absolutely sure
+    mock_self_tuning_service = AsyncMock()
+    mock_self_tuning_service.tune_prompt_from_error.return_value = {"success": True, "proposal_id": "prop-1"}
+
+    # We patch ALL possible paths to be absolutely sure
     with (
         patch("src.server.utils.get_supabase_client", return_value=mock_supabase),
         patch("src.server.services.projects.task_service.task_service", mock_task_service),
         patch("src.server.services.agent_service.agent_service", mock_agent_service),
+        patch("src.server.services.system.self_tuning_service.self_tuning_service", mock_self_tuning_service),
     ):
         # Execute
         await scheduler_service._run_log_patrol()
@@ -57,6 +61,8 @@ async def test_run_log_patrol_creates_task():
         _, call_kwargs = mock_agent_service.run_agent_task.call_args
         assert call_kwargs.get("task_id") == "task-repair-1"
         assert call_kwargs.get("agent_id") == "bcb00484-30bd-46fb-9e39-84b2ec4ced31"
+
+        mock_self_tuning_service.tune_prompt_from_error.assert_called_once_with("log-1")
 
 
 @pytest.mark.asyncio
@@ -91,7 +97,7 @@ async def test_model_verification_sleep_mode():
     mock_supabase.table.return_value = mock_logs_chain
 
     with (
-        patch("src.server.services.scheduler_service.is_hf_awake", return_value=False),
+        patch("src.server.services.scheduler.jobs.patrol.is_hf_awake", return_value=False),
         patch("src.server.utils.get_supabase_client", return_value=mock_supabase),
     ):
         await scheduler_service._run_model_verification()
@@ -105,3 +111,52 @@ async def test_model_verification_sleep_mode():
         assert payload["level"] == "INFO"
         assert "[Sleep Mode]" in payload["message"]
 
+
+@pytest.mark.asyncio
+async def test_run_ssot_audit_detects_hardcoding(tmp_path, monkeypatch):
+    """
+    Test that SSOT Audit detects hardcoded models and network hosts, creating a task.
+    """
+    mock_supabase = MagicMock()
+
+    mock_proj_chain = MagicMock()
+    mock_proj_chain.select.return_value.limit.return_value.execute.return_value.data = [{"id": "proj-1"}]
+    mock_supabase.table.return_value = mock_proj_chain
+
+    mock_task_service = AsyncMock()
+    mock_task_service.create_task.return_value = (True, {"task": {"id": "task-ssot-1", "assignee_id": "devbot"}})
+
+    mock_agent_service = AsyncMock()
+
+    # Create dummy files to trigger warnings
+    src_dir = tmp_path / "python" / "src"
+    src_dir.mkdir(parents=True)
+
+    # 1. Hardcoded gemini
+    bad_file = src_dir / "bad.py"
+    bad_file.write_text("model = 'gemini-3.1-flash-lite'")
+
+    # 2. Hardcoded mcp
+    bad_network = src_dir / "bad_net.py"
+    bad_network.write_text("url = 'http://archon-mcp:8000'")
+
+    from src.server.services.scheduler.jobs.tech_debt_patrol import run_ssot_audit
+
+    monkeypatch.chdir(tmp_path)
+
+    with (
+        patch("src.server.utils.get_supabase_client", return_value=mock_supabase),
+        patch("src.server.services.projects.task_service.task_service", mock_task_service),
+        patch("src.server.services.agent_service.agent_service", mock_agent_service),
+    ):
+
+        await run_ssot_audit()
+
+        # Verify
+        mock_task_service.create_task.assert_called_once()
+        _, kwargs = mock_task_service.create_task.call_args
+        assert "Auto-Cleanup: SSOT Hardcoding Audit" in kwargs["title"]
+        assert "gemini-3" in kwargs["description"]
+        assert "archon-mcp" in kwargs["description"]
+
+        mock_agent_service.run_agent_task.assert_called_once()

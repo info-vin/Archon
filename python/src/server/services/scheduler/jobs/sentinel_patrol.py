@@ -221,18 +221,21 @@ async def run_api_deprecation_scan():
     try:
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.prompt_service import prompt_service
         from src.server.services.shared_constants import AI_AGENT_ROLES
 
         supabase = get_supabase_client()
 
         task_title = f"Auto-Scan: Gemini API Deprecations & Quotas ({datetime.now(UTC).strftime('%Y-%m-%d')})"
-        task_desc = (
+
+        default_desc = (
             "Clockwork has initiated the bi-weekly scan of Google's Gemini API documentation.\n\n"
             "Please use your RAG and Web capabilities to extract the latest information regarding:\n"
             "1. Model Deprecations (e.g., gemini-3.1-flash-lite, gemini-3-flash-preview).\n"
             "2. Free Tier API Rate Limits (RPD, RPM) for the Gemini 3/3.1 series.\n\n"
             "Provide a summary of any changes that might affect our system stability."
         )
+        task_desc = prompt_service.get_prompt("API_DEPRECATION_SCAN_PROMPT", default=default_desc)
 
         p_res = supabase.table("archon_projects").select("id").limit(1).execute()
         if not p_res.data:
