@@ -9,30 +9,30 @@ from src.server.services.scheduler_service import is_hf_awake, scheduler_service
 
 def test_is_hf_awake_boundary_conditions():
     """
-    Test boundary conditions for Hugging Face Sleep Awareness (00:18 ~ 06:41 CST).
+    Test boundary conditions for Hugging Face Sleep Awareness (20:18 ~ 05:32 CST).
     """
-    # 20:34 CST -> Awake (True)
-    cst_20_34 = datetime(2026, 6, 8, 20, 34, tzinfo=timezone(timedelta(hours=8)))
+    # 20:17 CST -> Awake (True)
+    cst_20_17 = datetime(2026, 6, 8, 20, 17, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_20_34.astimezone(UTC)
+        mock_datetime.now.return_value = cst_20_17.astimezone(UTC)
         assert is_hf_awake() is True
 
-    # 20:35 CST -> Sleep (False)
-    cst_20_35 = datetime(2026, 6, 8, 20, 35, tzinfo=timezone(timedelta(hours=8)))
+    # 20:18 CST -> Sleep (False)
+    cst_20_18 = datetime(2026, 6, 8, 20, 18, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_20_35.astimezone(UTC)
+        mock_datetime.now.return_value = cst_20_18.astimezone(UTC)
         assert is_hf_awake() is False
 
-    # 06:32 CST -> Sleep (False)
-    cst_06_32 = datetime(2026, 6, 8, 6, 32, tzinfo=timezone(timedelta(hours=8)))
+    # 05:32 CST -> Sleep (False)
+    cst_05_32 = datetime(2026, 6, 8, 5, 32, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_06_32.astimezone(UTC)
+        mock_datetime.now.return_value = cst_05_32.astimezone(UTC)
         assert is_hf_awake() is False
 
-    # 06:33 CST -> Awake (True)
-    cst_06_33 = datetime(2026, 6, 8, 6, 33, tzinfo=timezone(timedelta(hours=8)))
+    # 05:33 CST -> Awake (True)
+    cst_05_33 = datetime(2026, 6, 8, 5, 33, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_06_33.astimezone(UTC)
+        mock_datetime.now.return_value = cst_05_33.astimezone(UTC)
         assert is_hf_awake() is True
 
 

@@ -35,14 +35,26 @@ logger = get_logger(__name__)
 def is_hf_awake() -> bool:
     """
     判斷當前時間是否在 HF 的上線視窗內。
-    HF Space 睡眠時間為台灣 00:18 ~ 06:41 (CST)。
+    睡眠區間預設為台灣 20:18 ~ 05:32 (CST)。
     """
+    import os
+
     # 取得 CST (UTC+8) 時間
     cst_now = datetime.now(UTC).astimezone(timezone(timedelta(hours=8)))
     current_time = cst_now.time()
 
-    sleep_start = time(20, 35)
-    sleep_end = time(6, 32)
+    # 從環境變數讀取 (CST HH:MM 格式)
+    start_str = os.getenv("HF_SLEEP_START", "20:18")
+    end_str = os.getenv("HF_SLEEP_END", "05:32")
+
+    try:
+        sh, sm = map(int, start_str.split(":"))
+        eh, em = map(int, end_str.split(":"))
+        sleep_start = time(sh, sm)
+        sleep_end = time(eh, em)
+    except Exception:
+        sleep_start = time(20, 18)
+        sleep_end = time(5, 32)
 
     if sleep_start <= sleep_end:
         if sleep_start <= current_time <= sleep_end:
