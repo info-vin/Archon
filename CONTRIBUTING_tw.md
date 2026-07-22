@@ -429,6 +429,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `09_constraints_fkeys.sql`
 > - `100_add_tiered_pruning_rpcs.sql`
 > - `101_update_supervisor_prompt.sql`
+> - `102_seed_patrol_prompts.sql`
 > - `10_security_rls.sql`
 > - `11_seed_config.sql`
 > - `12_seed_rbac.sql`
@@ -447,6 +448,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `30_alter_archon_prompts_schema.sql`
 > - `31_seed_art_asset_prompts.sql`
 > - `32_seed_nav_icons_prompts.sql`
+> - `33_create_agent_checkpoints_and_approvals.sql`
 > - `99_rescue_live_data.sql`
 > - `RESET_DB.sql`
 > - `seed_blog_posts.sql`
