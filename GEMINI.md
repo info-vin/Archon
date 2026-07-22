@@ -192,6 +192,11 @@
     *   **動態 API 探勘**: 實作 `discover_google_models` 與 Google API 的即時交集過濾 (Intersection Filter)，確保系統只呈現「活著且計費中」的模型。
     *   **Free Tier 備援自癒**: 於 `model_ssot.py` 中實裝 `get_active_fallback`。當預設免費模型 (如 `gemini-3.1-flash-lite`) 無預警下架時，系統能自動掃描可用清單並無縫切換至下一個可用的 Free Tier 模型。
 
+13. **Agent DB 狀態斷點持久化 (Checkpointing) 與 人工審核 (HITL) 架構實作 (Ref: Phase 5.9.13, 07-22)**:
+    *   **DB Checkpointing 斷點續傳**: 建立 `33_create_agent_checkpoints_and_approvals.sql` 遷移檔與 `AgentCheckpointManager`，在每次 Action/Observation 循環後將狀態快照儲存至 Supabase，避免伺服器重啟或網路超時導致長任務中斷與重複呼叫 LLM。
+    *   **LLM 資源與 Free Tier 額度保護**: 徹底消除了 Agent 中斷重新播放 (Replay) 造成的無效 API 請求與長 Prompt 重複發送，精準防禦 Google Gemini API 的 15 RPM / RPD 速率限制與 429 錯誤。
+    *   **HITL 人工審核防線**: 建立 `AgentApprovalManager` 與 `AgentExecutionEngine` 攔截高風險工具調用 (`execute_shell_command`, `apply_modification` 等)，將狀態轉為 `SUSPENDED_WAITING_FOR_APPROVAL` 並於 `/api/agents` 暴露審核與恢復端點，5 項新增單元測試與 609 項全套後端測試 100% PASS 物理公證通過。
+
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
 
