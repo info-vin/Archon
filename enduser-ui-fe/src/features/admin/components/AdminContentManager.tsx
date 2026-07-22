@@ -5,6 +5,10 @@ import { useBlogPosts } from '../hooks/useAdminDashboard';
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
+const safeFormatContentDate = (dateVal: any) => {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
 
 export const AdminContentManager: React.FC = () => {
     const { posts, deletePost, loading } = useBlogPosts();
@@ -38,7 +42,7 @@ export const AdminContentManager: React.FC = () => {
                                 <td className="px-6 py-4 font-bold">{post.title}</td>
                                 <td className="px-6 py-4">{post.authorName || 'Admin'}</td>
                                 <td className="px-6 py-4 capitalize">{post.status}</td>
-                                <td className="px-6 py-4">{dateFormatter.format(new Date(post.publishDate))}</td>
+                                <td className="px-6 py-4">{safeFormatContentDate(post.publishDate)}</td>
                                 <td className="px-6 py-4 text-right">
                                     <button
                                         onClick={() => deletePost(post.id)}

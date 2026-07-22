@@ -16,13 +16,17 @@ interface TableViewProps {
 
 // PERFORMANCE: Hoisted Intl.DateTimeFormat out of the component to prevent expensive re-instantiation on every render cycle
 const tableDateFormatter = new Intl.DateTimeFormat();
+const safeFormatTableDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? 'Invalid Date' : tableDateFormatter.format(d);
+};
 
 export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditingTask, requestSort, sortConfig, userMap, projectMap }) => {
   // PERFORMANCE: Hoisted expensive date parsing out of the render loop to prevent O(N) allocations
   const formattedDates = React.useMemo(() => {
     const dates: Record<string, string> = {};
     tasks.forEach(t => {
-      if (t.due_date) dates[t.id] = tableDateFormatter.format(new Date(t.due_date));
+      if (t.due_date) dates[t.id] = safeFormatTableDate(t.due_date);
     });
     return dates;
   }, [tasks]);

@@ -38,7 +38,8 @@ export const VictoryFeedList: React.FC<VictoryFeedListProps> = ({
 }) => {
   const formatDate = (dateStr: string) => {
     try {
-      return dateFormatter.format(new Date(dateStr));
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
     } catch (e) {
       return dateStr;
     }
