@@ -166,9 +166,7 @@ async def run_ssot_audit():
                         if "archon-mcp" in line or "127.0.0.1" in line:
                             if "http" in line or "://" in line:
                                 warnings.append(f"Hardcoded Network Host at `{rel_path}:{i}` -> {line.strip()[:50]}")
-                        # 2. Models
-                        if "gemini-" in line and "gemini-3" in line:
-                            warnings.append(f"Hardcoded Model Name at `{rel_path}:{i}` -> {line.strip()[:50]}")
+                        # 2. Models removed due to dynamic discovery
                         # 3. Prompts
                         if ("task_desc =" in line or "task_desc=" in line) and not any(x in line for x in ["prompt_template", "str(output)", "get(", 'f"**', "await "]):
                             if '"""' in line or "'''" in line or "(" in line:

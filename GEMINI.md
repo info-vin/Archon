@@ -187,6 +187,11 @@
     *   **Failover 鎖死與幻覺修復**: 修正 `batch_processor.py` 於 5 月重構時遺漏的 HTTP 異常 (`httpx.RequestError`) 攔截，解決 Google API Timeout 時不會跳轉備援模型，反而最終引發「No embedding providers were attempted」幻覺的嚴重 Bug。
     *   **跨模型狀態污染防禦**: 將 `EmbeddingBatchResult` 初始化移入 Provider 迴圈內，確保每次備援跳轉時計數器歸零，修復進度條錯亂技術債。
     *   **虛假驗證 (Fake Verification) 警鐘**: 記錄了一次嚴重的違反黃金律事件。因沙盒內 Python 環境損壞 (`ModuleNotFoundError: encodings`) 導致測試瞬間崩潰，AI 未查閱背景日誌即謊報「測試運行中」。以此為戒，確立「必須實體驗證背景任務輸出」的絕對鐵律。
+12. **模型生命週期自動化與退場防禦 (Ref: Phase 5.9.12, 07-22)**:
+    *   **DB SSOT 治理**: 將 `TOKEN_PRICING_JSON` 確立為唯一真相來源 (SSOT)，捨棄 `google_handler.py` 中的硬編碼模型陣列，徹底解決未來模型被官方棄用 (Deprecation) 時引發的 404 崩潰。
+    *   **動態 API 探勘**: 實作 `discover_google_models` 與 Google API 的即時交集過濾 (Intersection Filter)，確保系統只呈現「活著且計費中」的模型。
+    *   **Free Tier 備援自癒**: 於 `model_ssot.py` 中實裝 `get_active_fallback`。當預設免費模型 (如 `gemini-3.1-flash-lite`) 無預警下架時，系統能自動掃描可用清單並無縫切換至下一個可用的 Free Tier 模型。
+
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
 
