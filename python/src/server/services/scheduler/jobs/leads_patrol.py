@@ -4,6 +4,7 @@ Handles leads, market reports, and sales operations.
 """
 
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AgentUUIDs
@@ -71,8 +72,9 @@ async def run_daily_market_report():
             logger.info("✍️ Clockwork: No new leads today to report on. (Cycle logged)")
             return
 
+        cst = ZoneInfo("Asia/Taipei")
         lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
-        task_title = f"Daily Market Intelligence ({datetime.now().strftime('%Y-%m-%d')})"
+        task_title = f"Daily Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
         task_desc = f"""Please write an engaging 600-word daily blog post summarizing today's tech job market movements.
 
 Data points ({len(leads)} leads):

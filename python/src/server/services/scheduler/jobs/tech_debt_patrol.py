@@ -4,6 +4,7 @@ Handles scanning for stale PRPs, scripts, and other technical debt.
 """
 
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 
@@ -76,7 +77,8 @@ async def run_tech_debt_audit():
 
         logger.info("⚠️ Clockwork: Detected Tech Debt. Creating task for DevBot...")
 
-        task_title = f"Auto-Cleanup: Technical Debt Audit ({datetime.now(UTC).strftime('%Y-%m-%d')})"
+        cst = ZoneInfo("Asia/Taipei")
+        task_title = f"Auto-Cleanup: Technical Debt Audit ({datetime.now(cst).strftime('%Y-%m-%d')})"
         task_desc = (
             "Clockwork detected the following technical debt that needs archiving or cleanup:\n\n"
             + "\n\n".join(warnings)
@@ -169,7 +171,8 @@ async def run_ssot_audit():
             return
 
         logger.info("⚠️ Clockwork: Detected Hardcoded Tech Debt. Creating task for DevBot...")
-        task_title = f"Auto-Cleanup: SSOT Hardcoding Audit ({datetime.now(UTC).strftime('%Y-%m-%d')})"
+        cst = ZoneInfo("Asia/Taipei")
+        task_title = f"Auto-Cleanup: SSOT Hardcoding Audit ({datetime.now(cst).strftime('%Y-%m-%d')})"
         task_desc = (
             "Clockwork detected the following hardcoded values (Network/Models/Prompts) that violate SSOT rules:\n\n"
             + "\n".join(f"- {w}" for w in warnings)

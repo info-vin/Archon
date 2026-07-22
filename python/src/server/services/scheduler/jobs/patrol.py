@@ -5,6 +5,7 @@ Handles system health, log monitoring, and cleanup.
 
 import os
 from datetime import UTC, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 
@@ -96,7 +97,8 @@ async def run_log_patrol():
 
         logger.info(f"👮 Clockwork: Detected {len(errors)} errors. Analyzing...")
         error_summary = "\n".join([f"- [{e['source']}] {e['message']}" for e in errors])
-        task_title = f"Auto-Repair: System Errors Detected ({datetime.now().strftime('%H:%M')})"
+        cst = ZoneInfo("Asia/Taipei")
+        task_title = f"Auto-Repair: System Errors Detected ({datetime.now(cst).strftime('%H:%M')})"
         task_desc = (
             f"Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
         )

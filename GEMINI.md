@@ -118,6 +118,10 @@
 - **事件驅動 DAG 排程 (Phase 5.9.9)**: 將下游報告 (`bob_market_report`, `daily_executive_summary`) 的觸發機制，從僵化的 Cron 轉型為依賴 `alice_auto_fetch` (爬蟲) 成功後的事件觸發 (`_trigger_stateful_daily_event`)，透過 Retry 機制完美解決了 WAF 阻擋造成的空報告 Race Condition。
 - **L2 架構淨化與硬編碼消滅 (Phase 5.9.10)**: 徹底根除 `scheduler_service.py` 內部裸寫 Supabase API 的技術債，統一透過 `SettingsService().set_setting` 處理 `LAST_RUN` 狀態。同時將 `is_hf_awake` 物理轉移至 `patrol.py`，並消除 `ZoneInfo` 硬編碼，成功將排程器瘦身至 353 行，全線測試公證通過。
 
+### 2026/07/22: Phase 5.9.11 排程器時區幻覺與鎖死修復
+- **排程器鎖死 (State Lockout) 漏洞修復**: 發現並修復了當 Hugging Face 伺服器在 `UTC` 白天重啟並執行 Catch-up 後，會導致原本隔天的 `Asia/Taipei` Cron 任務在檢查 `.date()` 時誤判「今天已執行」而遭靜默跳過的嚴重 Bug。統一將 `_should_run_*` 改為使用 `DEFAULT_TIMEZONE` (Local Time) 進行比較，並導入 ISO 曆週計算確保 Weekly 任務不會因補跑而偏移。
+- **時區幻覺 (Timezone Hallucination) 淨化**: 全面盤點代碼庫，發現在 `report_service.py` 與 `patrol.py` 等報表與任務產生邏輯中，錯誤使用了 `datetime.now()` 或 `datetime.now(UTC)`，導致在 HF 部署時產生的任務標題日期會「倒退一天」。已全面強制寫入 `ZoneInfo("Asia/Taipei")` 確保標題與台灣時間 100% 同步。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**

@@ -5,12 +5,14 @@ Handles business data context gathering, Map-Reduce workflows, and periodic summ
 
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 from src.server.repositories.base_repository import BaseRepository
 from src.server.services.shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
+CST = ZoneInfo("Asia/Taipei")
 
 
 class ReportService(BaseRepository):
@@ -146,9 +148,9 @@ class ReportService(BaseRepository):
                 logger.warning("ReportService: No projects found to attach summary task.")
                 return
 
-            end_date = datetime.now()
+            end_date = datetime.now(CST)
             start_date = end_date - timedelta(days=1)
-            task_title = f"[Daily Report] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
+            task_title = f"[Daily] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = (
                 f"昨日系統運行數據如下：\n\n{context_md}\n\n"
                 "請啟動星環群聊，協調 Alice, Bob, DevBot 進行討論，最後由 Supervisor (Charlie) 彙整並提供每日執行摘要報告。"
@@ -216,7 +218,7 @@ class ReportService(BaseRepository):
                     logger.warning(f"ReportService: No internal project found to attach {title_prefix} summary task.")
                     return
 
-            end_date = datetime.now()
+            end_date = datetime.now(CST)
             start_date = end_date - timedelta(days=days)
             task_title = f"[{title_prefix}] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = str(output)

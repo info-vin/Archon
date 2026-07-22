@@ -33,7 +33,7 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
 
     call_kwargs = mock_task_service.create_task.call_args.kwargs
     assert call_kwargs["project_id"] == "test-project-123"
-    assert "[Daily Report] Executive Summary" in call_kwargs["title"]
+    assert "[Daily] Executive Summary" in call_kwargs["title"]
     assert "Mocked Context for Daily" in call_kwargs["description"]
 
     mock_supabase.table.assert_any_call("archon_logs")
