@@ -7,6 +7,10 @@ import { EmptyState } from '@/components/common/EmptyState';
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
+const safeFormatActivityDate = (dateVal: any) => {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
 
 export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({ member, onClose }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -82,7 +86,7 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                                         </span>
                                     </div>
                                     <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
-                                        <span>Updated: {dateFormatter.format(new Date(task.updated_at || Date.now()))}</span>
+                                        <span>Updated: {safeFormatActivityDate(task.updated_at || Date.now())}</span>
                                         <span>Priority: {task.priority}</span>
                                     </div>
                                 </div>

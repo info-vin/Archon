@@ -6,6 +6,10 @@ import { BlogPost } from '../types.ts';
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
+const safeFormatBlogDate = (dateVal: any) => {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
 
 const BlogPage: React.FC = () => {
     const [posts, setPosts] = useState<BlogPost[]>([]);
@@ -63,7 +67,7 @@ const BlogPage: React.FC = () => {
                                             <p className="text-muted-foreground mb-4 flex-grow line-clamp-3 leading-relaxed">{post.excerpt}</p>
                                             <div className="flex items-center justify-between text-sm text-muted-foreground mt-auto pt-4 border-t border-border">
                                                 <span className="font-medium">{post.authorName}</span>
-                                                <time dateTime={post.publishDate}>{dateFormatter.format(new Date(post.publishDate))}</time>
+                                                <time dateTime={post.publishDate}>{safeFormatBlogDate(post.publishDate)}</time>
                                             </div>
                                         </div>
                                     </Link>
