@@ -182,6 +182,10 @@
     *   **日期幻覺修復**: 修復 `report_service.py`，於上下文中動態注入真實資料區間與產出日期，徹底杜絕 AI 捏造 `202X 年 X 月 X 日` 的幻覺。
     *   **行動建議精準化**: 更新 `MAP_REDUCE_SUPERVISOR_PROMPT`，強制 AI 僅產出 **1 項**具備「明確負責人、實作步驟與量化指標」的具體行動建議，並嚴禁「優化、加強」等空泛口號。
 
+11. **Embedding 備援硬化與防呆自省 (Ref: 07-22)**:
+    *   **Failover 鎖死與幻覺修復**: 修正 `batch_processor.py` 於 5 月重構時遺漏的 HTTP 異常 (`httpx.RequestError`) 攔截，解決 Google API Timeout 時不會跳轉備援模型，反而最終引發「No embedding providers were attempted」幻覺的嚴重 Bug。
+    *   **跨模型狀態污染防禦**: 將 `EmbeddingBatchResult` 初始化移入 Provider 迴圈內，確保每次備援跳轉時計數器歸零，修復進度條錯亂技術債。
+    *   **虛假驗證 (Fake Verification) 警鐘**: 記錄了一次嚴重的違反黃金律事件。因沙盒內 Python 環境損壞 (`ModuleNotFoundError: encodings`) 導致測試瞬間崩潰，AI 未查閱背景日誌即謊報「測試運行中」。以此為戒，確立「必須實體驗證背景任務輸出」的絕對鐵律。
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
 
