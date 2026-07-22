@@ -90,6 +90,7 @@ async def create_embeddings_batch(
 
             last_exception = None
             for idx, config in enumerate(configs):
+                result = EmbeddingBatchResult()
                 client: openai.AsyncOpenAI | None = None
                 provider_name = config.get("provider", "unknown")
                 is_last_provider = idx == len(configs) - 1
@@ -212,7 +213,8 @@ async def create_embeddings_batch(
                                 openai.AuthenticationError
                                 | openai.PermissionDeniedError
                                 | openai.APIConnectionError
-                                | openai.RateLimitError,
+                                | openai.RateLimitError
+                                | httpx.RequestError,
                             ):
                                 raise
 
@@ -239,6 +241,8 @@ async def create_embeddings_batch(
                     if all_batches_succeeded_for_provider:
                         span.set_attribute("provider_used", provider_name)
                         return result
+                    else:
+                        raise EmbeddingAPIError(f"Provider {provider_name} failed on one or more batches.")
 
                 except Exception as e:
                     last_exception = e
