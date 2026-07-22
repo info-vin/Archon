@@ -428,6 +428,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 > - `08_logic_triggers.sql`
 > - `09_constraints_fkeys.sql`
 > - `100_add_tiered_pruning_rpcs.sql`
+> - `101_update_supervisor_prompt.sql`
 > - `10_security_rls.sql`
 > - `11_seed_config.sql`
 > - `12_seed_rbac.sql`
