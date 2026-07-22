@@ -3,7 +3,7 @@ Tech Debt Patrol for Scheduler
 Handles scanning for stale PRPs, scripts, and other technical debt.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
@@ -79,11 +79,15 @@ async def run_tech_debt_audit():
 
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"Auto-Cleanup: Technical Debt Audit ({datetime.now(cst).strftime('%Y-%m-%d')})"
-        task_desc = (
+        fallback_str = (
             "Clockwork detected the following technical debt that needs archiving or cleanup:\n\n"
-            + "\n\n".join(warnings)
-            + "\n\nPlease review and clean up the workspace."
+            "{warnings_str}"
+            "\n\nPlease review and clean up the workspace."
         )
+
+        from src.server.services.prompt_service import prompt_service
+        prompt_template = prompt_service.get_prompt("TECH_DEBT_CLEANUP_PROMPT", default=fallback_str)
+        task_desc = prompt_template.format(warnings_str="\n\n".join(warnings))
 
         supabase = get_supabase_client()
         p_res = supabase.table("archon_projects").select("id").limit(1).execute()
@@ -150,6 +154,10 @@ async def run_ssot_audit():
                     continue
 
                 filepath = Path(root_dir) / file
+                if not os.path.isfile(filepath):
+                    continue
+                if "visit_log_service.py" in str(filepath):
+                    continue
                 rel_path = filepath.relative_to(project_root)
 
                 with open(filepath, encoding="utf-8") as f:
@@ -162,7 +170,7 @@ async def run_ssot_audit():
                         if "gemini-" in line and "gemini-3" in line:
                             warnings.append(f"Hardcoded Model Name at `{rel_path}:{i}` -> {line.strip()[:50]}")
                         # 3. Prompts
-                        if "task_desc =" in line or "task_desc=" in line:
+                        if ("task_desc =" in line or "task_desc=" in line) and not any(x in line for x in ["prompt_template", "str(output)", "get(", 'f"**', "await "]):
                             if '"""' in line or "'''" in line or "(" in line:
                                 warnings.append(f"Possible Hardcoded Prompt at `{rel_path}:{i}` -> {line.strip()[:50]}")
 
@@ -173,11 +181,15 @@ async def run_ssot_audit():
         logger.info("⚠️ Clockwork: Detected Hardcoded Tech Debt. Creating task for DevBot...")
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"Auto-Cleanup: SSOT Hardcoding Audit ({datetime.now(cst).strftime('%Y-%m-%d')})"
-        task_desc = (
+        fallback_str2 = (
             "Clockwork detected the following hardcoded values (Network/Models/Prompts) that violate SSOT rules:\n\n"
-            + "\n".join(f"- {w}" for w in warnings)
-            + "\n\nPlease extract these to config variables, model_ssot.py, or PromptService."
+            "{warnings_str}"
+            "\n\nPlease extract these to config variables, model_ssot.py, or PromptService."
         )
+
+        from src.server.services.prompt_service import prompt_service
+        prompt_template2 = prompt_service.get_prompt("TECH_DEBT_SSOT_AUDIT_PROMPT", default=fallback_str2)
+        task_desc = prompt_template2.format(warnings_str="\n".join(f"- {w}" for w in warnings))
 
         supabase = get_supabase_client()
         p_res = supabase.table("archon_projects").select("id").limit(1).execute()

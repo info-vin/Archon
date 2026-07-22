@@ -151,10 +151,14 @@ class ReportService(BaseRepository):
             end_date = datetime.now(CST)
             start_date = end_date - timedelta(days=1)
             task_title = f"[Daily] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
-            task_desc = (
-                f"昨日系統運行數據如下：\n\n{context_md}\n\n"
+            fallback_str = (
+                "昨日系統運行數據如下：\n\n{context_md}\n\n"
                 "請啟動星環群聊，協調 Alice, Bob, DevBot 進行討論，最後由 Supervisor (Charlie) 彙整並提供每日執行摘要報告。"
             )
+
+            from src.server.services.prompt_service import prompt_service
+            prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT", default=fallback_str)
+            task_desc = prompt_template.format(context_md=context_md)
 
             success, charlie_res = self.execute_query(
                 lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),

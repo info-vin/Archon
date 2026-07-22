@@ -75,13 +75,18 @@ async def run_daily_market_report():
         cst = ZoneInfo("Asia/Taipei")
         lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
         task_title = f"Daily Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
-        task_desc = f"""Please write an engaging 600-word daily blog post summarizing today's tech job market movements.
 
-Data points ({len(leads)} leads):
+        fallback_str = """Please write an engaging 600-word daily blog post summarizing today's tech job market movements.
+
+Data points ({lead_count} leads):
 {lead_summary}
 
 Focus on industry trends and written in Traditional Chinese (繁體中文).
 Use the tool to save this blog post as a DRAFT."""
+
+        from src.server.services.prompt_service import prompt_service
+        prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT", default=fallback_str)
+        task_desc = prompt_template.format(lead_count=len(leads), lead_summary=lead_summary)
 
         p_res = supabase.table("archon_projects").select("id").limit(1).execute()
         if not p_res.data:
