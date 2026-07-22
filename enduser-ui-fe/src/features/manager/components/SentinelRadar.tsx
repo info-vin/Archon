@@ -15,6 +15,10 @@ interface SentinelRadarProps {
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
+const safeFormatSentinelDate = (dateVal: any) => {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
 
 export const SentinelRadar: React.FC<SentinelRadarProps> = ({
     businessRisks, processingId, handleDispatch,
@@ -34,7 +38,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-black px-2 py-0.5 bg-red-100 text-red-700 rounded uppercase tracking-tighter">{alert.details?.type?.replace('_', ' ') || 'RISK'}</span>
-                                        <span className="text-[10px] text-gray-400 font-mono">{isNaN(new Date(alert.created_at).getTime()) ? "Invalid Date" : dateFormatter.format(new Date(alert.created_at))}</span>
+                                        <span className="text-[10px] text-gray-400 font-mono">{safeFormatSentinelDate(alert.created_at)}</span>
                                     </div>
                                     <h5 className="font-bold text-gray-800 text-sm mt-1">{alert.message}</h5>
                                     <p className="text-[10px] text-gray-500 italic mt-0.5">{alert.details?.company || alert.details?.title || 'System context attached'}</p>

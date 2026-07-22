@@ -118,6 +118,11 @@
 - **事件驅動 DAG 排程 (Phase 5.9.9)**: 將下游報告 (`bob_market_report`, `daily_executive_summary`) 的觸發機制，從僵化的 Cron 轉型為依賴 `alice_auto_fetch` (爬蟲) 成功後的事件觸發 (`_trigger_stateful_daily_event`)，透過 Retry 機制完美解決了 WAF 阻擋造成的空報告 Race Condition。
 - **L2 架構淨化與硬編碼消滅 (Phase 5.9.10)**: 徹底根除 `scheduler_service.py` 內部裸寫 Supabase API 的技術債，統一透過 `SettingsService().set_setting` 處理 `LAST_RUN` 狀態。同時將 `is_hf_awake` 物理轉移至 `patrol.py`，並消除 `ZoneInfo` 硬編碼，成功將排程器瘦身至 353 行，全線測試公證通過。
 
+### 2026/07/22: Phase 5.9.11 排程器時區幻覺與鎖死修復
+- **SSOT 防呆公證與無限死結消除**: 針對 `tech_debt_patrol.py` 的「自我舉發工單」無限死結，實施了精準 Regex 排除邏輯（剔除 `await`, `str(output)`, 樣板渲染）。並將 `leads_patrol.py`, `patrol.py`, `tech_debt_patrol.py`, `report_service.py` 遺漏的硬編碼提示詞全數遷移至 `102_seed_patrol_prompts.sql` 並納入 `prompt_service` 防護網，順利通過 605 項 `make audit-qa` 嚴格測試。
+- **排程器鎖死 (State Lockout) 漏洞修復**: 發現並修復了當 Hugging Face 伺服器在 `UTC` 白天重啟並執行 Catch-up 後，會導致原本隔天的 `Asia/Taipei` Cron 任務在檢查 `.date()` 時誤判「今天已執行」而遭靜默跳過的嚴重 Bug。統一將 `_should_run_*` 改為使用 `DEFAULT_TIMEZONE` (Local Time) 進行比較，並導入 ISO 曆週計算確保 Weekly 任務不會因補跑而偏移。
+- **時區幻覺 (Timezone Hallucination) 淨化**: 全面盤點代碼庫，發現在 `report_service.py` 與 `patrol.py` 等報表與任務產生邏輯中，錯誤使用了 `datetime.now()` 或 `datetime.now(UTC)`，導致在 HF 部署時產生的任務標題日期會「倒退一天」。已全面強制寫入 `ZoneInfo("Asia/Taipei")` 確保標題與台灣時間 100% 同步。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
@@ -178,6 +183,10 @@
     *   **日期幻覺修復**: 修復 `report_service.py`，於上下文中動態注入真實資料區間與產出日期，徹底杜絕 AI 捏造 `202X 年 X 月 X 日` 的幻覺。
     *   **行動建議精準化**: 更新 `MAP_REDUCE_SUPERVISOR_PROMPT`，強制 AI 僅產出 **1 項**具備「明確負責人、實作步驟與量化指標」的具體行動建議，並嚴禁「優化、加強」等空泛口號。
 
+11. **Embedding 備援硬化與防呆自省 (Ref: 07-22)**:
+    *   **Failover 鎖死與幻覺修復**: 修正 `batch_processor.py` 於 5 月重構時遺漏的 HTTP 異常 (`httpx.RequestError`) 攔截，解決 Google API Timeout 時不會跳轉備援模型，反而最終引發「No embedding providers were attempted」幻覺的嚴重 Bug。
+    *   **跨模型狀態污染防禦**: 將 `EmbeddingBatchResult` 初始化移入 Provider 迴圈內，確保每次備援跳轉時計數器歸零，修復進度條錯亂技術債。
+    *   **虛假驗證 (Fake Verification) 警鐘**: 記錄了一次嚴重的違反黃金律事件。因沙盒內 Python 環境損壞 (`ModuleNotFoundError: encodings`) 導致測試瞬間崩潰，AI 未查閱背景日誌即謊報「測試運行中」。以此為戒，確立「必須實體驗證背景任務輸出」的絕對鐵律。
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
 

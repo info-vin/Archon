@@ -83,32 +83,40 @@ class SchedulerService:
         return None
 
     async def _should_run_daily(self, job_id: str) -> bool:
-        """Checks if a job has already run today (UTC)."""
+        """Checks if a job has already run today (Local Time)."""
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
-        return last_run.date() < datetime.now(UTC).date()
+        last_run_local = last_run.astimezone(DEFAULT_TIMEZONE).date()
+        now_local = datetime.now(DEFAULT_TIMEZONE).date()
+        return last_run_local < now_local
 
     async def _should_run_weekly(self, job_id: str) -> bool:
-        """Checks if a job has already run in the last 7 days."""
+        """Checks if a job has already run in the current ISO calendar week (Local Time)."""
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
-        return (datetime.now(UTC) - last_run) > timedelta(days=7)
+        last_run_local = last_run.astimezone(DEFAULT_TIMEZONE)
+        now_local = datetime.now(DEFAULT_TIMEZONE)
+        return last_run_local.isocalendar()[:2] < now_local.isocalendar()[:2]
 
     async def _should_run_monthly(self, job_id: str) -> bool:
-        """Checks if a job has already run in the last 30 days."""
+        """Checks if a job has already run this month (Local Time)."""
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
-        return (datetime.now(UTC) - last_run) > timedelta(days=30)
+        last_run_local = last_run.astimezone(DEFAULT_TIMEZONE)
+        now_local = datetime.now(DEFAULT_TIMEZONE)
+        return (last_run_local.year, last_run_local.month) < (now_local.year, now_local.month)
 
     async def _should_run_biweekly(self, job_id: str) -> bool:
-        """Checks if a job has already run in the last 14 days."""
+        """Checks if a job has already run in the last 13 days (Local Time)."""
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
-        return (datetime.now(UTC) - last_run) > timedelta(days=14)
+        last_run_local = last_run.astimezone(DEFAULT_TIMEZONE).date()
+        now_local = datetime.now(DEFAULT_TIMEZONE).date()
+        return (now_local - last_run_local).days >= 13
 
     def _schedule_stateless(self, job_func: Callable, job_id: str, delay_mins: int, interval_mins: int):
         """Schedules high-frequency stateless patrols with an initial delay."""

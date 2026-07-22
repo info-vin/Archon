@@ -4,6 +4,7 @@ Handles Token Usage Analysis (Cost Sentinel), Business Bottlenecks, and API limi
 """
 
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.settings import BudgetConfig
@@ -226,7 +227,8 @@ async def run_api_deprecation_scan():
 
         supabase = get_supabase_client()
 
-        task_title = f"Auto-Scan: Gemini API Deprecations & Quotas ({datetime.now(UTC).strftime('%Y-%m-%d')})"
+        cst = ZoneInfo("Asia/Taipei")
+        task_title = f"Auto-Scan: Gemini API Deprecations & Quotas ({datetime.now(cst).strftime('%Y-%m-%d')})"
 
         default_desc = (
             "Clockwork has initiated the bi-weekly scan of Google's Gemini API documentation.\n\n"

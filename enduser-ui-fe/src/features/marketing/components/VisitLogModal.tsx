@@ -5,6 +5,10 @@ import { XIcon, MapPinIcon, CheckCircleIcon, SparklesIcon, MicrophoneIcon, Trash
 // PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations during render loops
 const dateFormatter = new Intl.DateTimeFormat(undefined);
 const timeFormatter = new Intl.DateTimeFormat([], {hour: '2-digit', minute:'2-digit'});
+const safeFormatVisitDate = (dateVal: any, formatter: Intl.DateTimeFormat) => {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? 'Invalid Date' : formatter.format(d);
+};
 
 interface VisitLogModalProps {
     onClose: () => void;
@@ -129,7 +133,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                             const et = new Date(slot.end_time);
                                             return (
                                                 <div key={idx} className="p-2 bg-purple-50 text-purple-900 border border-purple-100 rounded text-xs">
-                                                    Slot {String.fromCharCode(65 + idx)}: {dateFormatter.format(st)} {timeFormatter.format(st)} ~ {timeFormatter.format(et)}
+                                                    Slot {String.fromCharCode(65 + idx)}: {safeFormatVisitDate(st, dateFormatter)} {safeFormatVisitDate(st, timeFormatter)} ~ {safeFormatVisitDate(et, timeFormatter)}
                                                 </div>
                                             );
                                         })}

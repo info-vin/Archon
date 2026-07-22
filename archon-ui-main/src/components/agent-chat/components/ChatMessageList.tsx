@@ -28,7 +28,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
    * Format timestamp for display in messages
    */
   const formatTime = (date: Date) => {
-    return timeFormatter.format(date);
+    return isNaN(date.getTime()) ? 'Invalid Date' : timeFormatter.format(date);
   };
 
   /**

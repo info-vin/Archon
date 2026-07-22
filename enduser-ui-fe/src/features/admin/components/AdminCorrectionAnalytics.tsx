@@ -5,6 +5,10 @@ import { ActivityIcon, RefreshCwIcon, AlertTriangleIcon, BarChart2Icon } from 'l
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
+const safeFormatCorrectionDate = (dateVal: any) => {
+  const d = new Date(dateVal);
+  return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
+};
 
 export const AdminCorrectionAnalytics: React.FC = () => {
   const [state, send] = useMachine(analyticsMachine);
@@ -106,7 +110,7 @@ export const AdminCorrectionAnalytics: React.FC = () => {
                 <tbody className="divide-y divide-gray-100">
                   {data.map((item, idx) => (
                     <tr key={idx} data-testid="correction-row" className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 text-gray-500">{dateFormatter.format(new Date(item.created_at))}</td>
+                      <td className="px-4 py-3 text-gray-500">{safeFormatCorrectionDate(item.created_at)}</td>
                       <td data-testid="post-id-cell" className="px-4 py-3 font-mono text-xs text-gray-500">
                         {item.post_id?.substring(0,8)}...
                       </td>

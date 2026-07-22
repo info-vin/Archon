@@ -5,6 +5,7 @@ Handles system health, log monitoring, and cleanup.
 
 import os
 from datetime import UTC, datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 
@@ -96,10 +97,15 @@ async def run_log_patrol():
 
         logger.info(f"👮 Clockwork: Detected {len(errors)} errors. Analyzing...")
         error_summary = "\n".join([f"- [{e['source']}] {e['message']}" for e in errors])
-        task_title = f"Auto-Repair: System Errors Detected ({datetime.now().strftime('%H:%M')})"
-        task_desc = (
-            f"Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
+        cst = ZoneInfo("Asia/Taipei")
+        task_title = f"Auto-Repair: System Errors Detected ({datetime.now(cst).strftime('%H:%M')})"
+        fallback_str = (
+            "Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
         )
+
+        from src.server.services.prompt_service import prompt_service
+        prompt_template = prompt_service.get_prompt("SYS_ERROR_PATROL_PROMPT", default=fallback_str)
+        task_desc = prompt_template.format(error_summary=error_summary)
 
         success, p_res = repo.execute_query(
             lambda: supabase.table("archon_projects").select("id").limit(1).execute(),
