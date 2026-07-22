@@ -12,8 +12,8 @@ from .checkpoint_manager import AgentCheckpointManager, CheckpointDTO
 
 logger = logging.getLogger(__name__)
 
-# List of tools categorized as high-risk needing HITL approval
-SENSITIVE_TOOLS = {
+# Default list of tools categorized as high-risk needing HITL approval if not overridden in settings
+DEFAULT_SENSITIVE_TOOLS = {
     "execute_shell_command",
     "apply_modification",
     "delete_file",
@@ -28,6 +28,23 @@ class AgentExecutionEngine:
     def __init__(self, checkpoint_mgr=None, approval_mgr=None) -> None:
         self.checkpoint_mgr = checkpoint_mgr or AgentCheckpointManager()
         self.approval_mgr = approval_mgr or AgentApprovalManager()
+
+    def _get_sensitive_tools(self) -> set[str]:
+        """Dynamically fetch sensitive tool names from SettingsService SSOT."""
+        try:
+            from src.server.services.settings_service import SettingsService
+
+            settings = SettingsService()
+            custom_tools = settings.get_setting("AGENT_SENSITIVE_TOOLS")
+            if custom_tools and isinstance(custom_tools, str):
+                import json
+
+                parsed = json.loads(custom_tools)
+                if isinstance(parsed, list):
+                    return set(parsed)
+        except Exception as e:
+            logger.debug(f"[ExecutionEngine] Using default sensitive tools fallback: {e}")
+        return DEFAULT_SENSITIVE_TOOLS
 
     async def execute_step(
         self,
@@ -48,7 +65,8 @@ class AgentExecutionEngine:
             last_tool = {"name": tool_name, "args": tool_args or {}}
 
         # Check if sensitive tool call
-        if tool_name and tool_name in SENSITIVE_TOOLS:
+        sensitive_tools = self._get_sensitive_tools()
+        if tool_name and tool_name in sensitive_tools:
             logger.warning(f"[ExecutionEngine] Intercepted sensitive tool '{tool_name}' for conv {conversation_id}")
 
             # Save checkpoint with PENDING_APPROVAL status
