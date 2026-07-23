@@ -415,182 +415,73 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 ### 4.3 部署標準作業流程 (SOP)
 
 > **📝 遷移檔更新通知 (Migration Updates)**
-> 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 下的版本子目錄中（如 `migration/0.2.2/`），並依照檔案前綴數字順序執行。
->
-> 最新發現的遷移檔 (v0.2.2):
-> - `01_foundation_types.sql`
-> - `02_tables_core.sql`
-> - `03_tables_business.sql`
-> - `04_tables_ops.sql`
-> - `05_logic_functions.sql`
-> - `06_constraints_main.sql`
-> - `07_logic_indexes.sql`
-> - `08_logic_triggers.sql`
-> - `09_constraints_fkeys.sql`
-> - `100_add_tiered_pruning_rpcs.sql`
-> - `101_update_supervisor_prompt.sql`
-> - `102_seed_patrol_prompts.sql`
-> - `10_security_rls.sql`
-> - `11_seed_config.sql`
-> - `12_seed_rbac.sql`
-> - `18_seed_crawler_targets.sql`
-> - `19_seed_marketing_group_chat_prompts.sql`
-> - `20_seed_supervisor_agent.sql`
-> - `21_seed_reports_workflow_prompts.sql`
-> - `22_seed_devbot_math_prompt.sql`
-> - `23_seed_agent_system_prompts.sql`
-> - `24_create_dynamic_agent_tables.sql`
-> - `25_create_user_game_saves.sql`
-> - `26_rag_hybrid_match_chunks.sql`
-> - `27_enable_missing_rls.sql`
-> - `28_graphrag_and_mrl.sql`
-> - `29_seed_job_board_prompts.sql`
-> - `30_alter_archon_prompts_schema.sql`
-> - `31_seed_art_asset_prompts.sql`
-> - `32_seed_nav_icons_prompts.sql`
-> - `33_create_agent_checkpoints_and_approvals.sql`
-> - `99_rescue_live_data.sql`
-> - `RESET_DB.sql`
-> - `seed_blog_posts.sql`
-> - `seed_mock_data.sql`
-> - `seed_rag_defaults.sql`
+> 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 目錄中，並嚴格依照檔案前綴數字標號順序執行 (如 `01` -> `02` -> `33`)。
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
 1.  **階段一：部署前本地檢查**
-    此步驟提供兩種流程選項：
-    *   **流程一 (快速檢查)**: 至少執行 `make test` 與 `make lint`。
-    *   **流程二 (完整驗證)**: 執行「[2.3 全 Docker 環境手動驗證 SOP](#23-全-docker-環境手動驗證-sop)」，以進行最徹底的檢查。
+    *   **快速檢查**: 執行 `make test` 與 `make lint`。
+    *   **完整驗證**: 執行「[2.3 全 Docker 環境手動驗證 SOP](#23-全-docker-環境手動驗證-sop)」。
 
 2.  **階段二：資料庫遷移 (Database Migration) - v2 (Tracked)**
 
-    此流程的最終目標是安全、可追蹤地更新資料庫結構。
-
     **核心原則**:
-    *   **冪等性**: 所有遷移腳本都必須是冪等的 (`IF NOT EXISTS`)。
-    *   **版本註冊**: 每個腳本都必須在執行成功後，將自己的版本號註冊到 `schema_migrations` 表中。
+    *   **冪等性**: 所有遷移腳本都必須是冪等的 (`IF NOT EXISTS` / `DROP ... IF EXISTS`)。
+    *   **版本註冊**: 每個腳本執行成功後，必須將自己的檔名版本號註冊到 `schema_migrations` 表中。
 
     **開發新遷移腳本的流程**:
-    1.  **建立檔案**: 建立一個新的 SQL 檔案，並使用下一個可用的數字作為前綴 (例如 `003_add_new_feature.sql`)。
-    2.  **撰寫冪等 SQL**: 使用 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` 或 `CREATE TABLE IF NOT EXISTS ...` 等語法。
-    3.  **註冊版本**: 在腳本的結尾，加上註冊指令：
+    1. **建立檔案**: 使用下一個數字前綴建立 SQL 檔 (如 `34_add_new_feature.sql`)。
+    2. **寫入冪等 SQL 與版本註冊**:
         ```sql
-        -- 註冊此遷移腳本的版本
-        INSERT INTO schema_migrations (version) VALUES ('003_add_new_feature') ON CONFLICT (version) DO NOTHING;
+        -- 1. 冪等 DDL/DML 語法
+        CREATE TABLE IF NOT EXISTS my_table (...);
+
+        -- 2. 註冊此遷移腳本的版本 (不含 .sql 副檔名)
+        INSERT INTO schema_migrations (version) VALUES ('34_add_new_feature') ON CONFLICT (version) DO NOTHING;
         ```
-        *(請將 `'003_add_new_feature'` 替換為不含 `.sql` 副檔名的檔名)*
 
     **🛡️ SQL 腳本品質檢查清單 (SQL Quality Checklist)**:
-    在提交任何 `.sql` 檔案前，必須檢查：
     - [ ] **冪等性**: 是否使用了 `IF NOT EXISTS` 或 `DROP ... IF EXISTS`？
     - [ ] **版本追蹤**: 是否包含了 `INSERT INTO schema_migrations` 語句？
-    - [ ] **資料保留**: 如果是修改種子資料 (`seed_*.sql`)，是否確認了是 `APPEND` (追加) 還是 `OVERWRITE` (覆蓋)？**嚴禁**在未讀取原內容的情況下直接覆蓋。
+    - [ ] **資料保留**: 修改種子資料 (`seed_*.sql`) 時是否確認了是 `APPEND` (追加) 還是 `OVERWRITE` (覆蓋)？**嚴禁**在未讀取原內容的情況下直接覆蓋。
 
-    **執行遷移的SOP (部署時)**:
+    **本地開發與救災 SOP**:
+    * **自動化指令 (推薦)**: 執行 `make db-init`（會自動按序執行 `migration/*.sql` -> 填充 Mock Data -> 修復 Auth ID 同步）。
+    * **手動初始化救援**: 若自動化指令失敗，請登入 Supabase SQL Editor，依 `migration/` 資料夾下檔案數字標號前綴（01 核心結構 -> 05 邏輯 -> 10 安全政策 -> 20+ 種子資料）順序手動貼上執行。
 
-    **本地開發首次設定SOP (從零開始)**:
-
-    > **⚡ 自動化指令 (推薦)**:
-    > 專案已支援 `make db-init` 指令，它會自動執行以下所有步驟（遷移 + 種子資料 + ID 同步）。
-    > **⚠️ 注意**: 執行前請確保後端服務已啟動 (`make dev`)，否則會報錯找不到容器。
-    > 僅在自動化指令失敗時，才需要參考下方的檔案列表進行手動除錯。
-
-    當您需要在本地建立一個全新的、乾淨的資料庫時：
-    1.  確保 Docker 後端已啟動 (`make dev`)。
-    2.  執行指令：
-        ```bash
-        make db-init
-        ```
-    3.  **核心功能**: 此指令會自動完成「資料庫重置 (`RESET_DB`) -> 按序執行所有 `migration/*.sql` -> 填充 Mock Data -> 修復 Auth ID 同步」。這是本地開發最快恢復環境的方法。
-
-    > **🚑 資料庫救災指南 (Database Recovery SOP)**
-    >
-    > 若遇到資料庫狀態錯亂或 `make db-init` 失效，請參閱 **[6.1 資料庫與遷移問題](#61-資料庫與遷移問題)** 進行強制重置。
-    
-        **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
-    > **僅當 `make db-init` 失敗時使用**
-    > 若自動腳本無法執行，請登入 Supabase 儀表板並進入 **SQL Editor**，依序執行當前版本資料夾下的 SQL 遷移檔案：
-    >
-    > 1. **基礎與核心結構**：`01_foundation_types.sql` -> `02_tables_core.sql` -> `03_tables_business.sql` -> `04_tables_ops.sql`
-    > 2. **邏輯與約束**：`05_logic_functions.sql` -> `06_constraints_main.sql` -> `07_logic_indexes.sql` -> `08_logic_triggers.sql` -> `09_constraints_fkeys.sql`
-    > 3. **安全政策與種子資料**：`10_security_rls.sql` -> `11_seed_config.sql` -> `12_seed_rbac.sql` -> `18_seed_crawler_targets.sql` -> `19_seed_marketing_group_chat_prompts.sql` -> `20_seed_supervisor_agent.sql` -> `21_seed_reports_workflow_prompts.sql` -> `22_seed_devbot_math_prompt.sql` -> `23_seed_agent_system_prompts.sql` -> `24_create_dynamic_agent_tables.sql` -> `25_create_user_game_saves.sql` -> `26_rag_hybrid_match_chunks.sql` -> `27_enable_missing_rls.sql`
-        
 3.  **階段三：執行部署**
 
-    **3.1 前端服務的路由設定 (重要)**
+    **3.1 前端服務的路由設定 (Render Rewrite 規則)**
 
-    對於單頁應用 (SPA) 前端服務 (如 `archon-ui-main`, `enduser-ui-fe`)，您**必須**在 Render 儀表板上設定以下**兩條**路由規則，才能確保 API 代理和頁面重新整理都正常運作。
+    單頁應用 (SPA) 前端服務 (如 `archon-ui-main`, `enduser-ui-fe`) 必須在 Render **"Redirects/Rewrites"** 區塊依序新增以下**兩條**規則：
 
-    1.  在 Render 儀表板，進入您的前端服務設定頁面。
-    2.  找到 **"Redirects/Rewrites"** 區塊。
-    3.  **依序**新增以下兩條**重寫 (Rewrite)**規則：
+    1. **規則一：API 代理規則 (優先級最高)**
+       * **Source**: `/api/:path*` (或 `/api/*`)
+       * **Destination**: `https://<ARCHON_SERVER_URL>/api/:path*` (替換為後端真實網域)
+       * **說明**: 將 `/api/` 請求代理至後端服務。
+    2. **規則二：SPA 回退規則 (優先級較低)**
+       * **Source**: `/*`
+       * **Destination**: `/index.html`
+       * **說明**: 未匹配到的路由全數導向 `index.html` 由前端 Router 接管。
 
-        **規則一：API 代理規則 (優先級最高)**
-        *   **Source (來源路徑):** `/api/:path*`
-        *   **Destination (目標位址):** `https://<您的後端服務網址>/api/:path*`
-        > **說明**: 此規則將所有 `/api/` 開頭的請求，從前端服務代理到後端服務。
+    **3.2 上線前檢查清單 (Pre-Flight Checklist)**
 
-        **規則二：SPA 回退規則 (優先級較低)**
-        *   **Source (來源路徑):** `/*`
-        *   **Destination (目標位址):** `/index.html`
-        > **說明**: 此規則會將所有**未匹配到**其他規則的請求 (例如 `/settings`, `/projects/123`) 都導向 `index.html`，讓前端路由能夠接管。
-
-    > **注意**: 這兩條規則的**順序至關重要**。必須先設定 API 代理，再設定 SPA 回退規則。請將 `<您的後端服務網址>` 替換為您 `archon-server` 的真實公開網址。
-    > 設定錯誤會導致前端無法正確與後端溝通，或頁面重新整理時出現 404 錯誤，請務必仔細檢查。
-
-    **3.2 上線前檢查清單 (Pre-Flight Checklist) - 經程式碼驗證版**
-
-    在按下部署按鈕前，請務必完成以下檢查。本清單已根據 `scripts/init_db.py`、`render.yaml` 與後端 `config.py` 的實際邏輯進行校對。
-
-    #### 1. 資料庫遷移驗證 (Database Migration)
-    *   **執行驗證**: 在本地執行 `make db-init`。
-    *   **底層邏輯檢查**:
-        *   確認 `scripts/init_db.py` 成功連接資料庫。
-        *   確認 `ensure_schema_migrations_table` 函式已建立 `schema_migrations` 表。
-        *   確認終端機顯示 `Running migration: ...` 且無錯誤，這代表 SQL 腳本的冪等性 (`IF NOT EXISTS`) 運作正常。
-    *   **關鍵指標**: 執行後應看到 `🎉 SQL migrations applied!` 與 `✅ Auth Sync Complete.`。若出現 `RESET_DB.sql` 相關錯誤，請先手動清空資料庫。
-
-    #### 2. 前端路由配置 (Frontend Routing)
-    *   **Render 設定檢查**: 打開 Render 儀表板的 "Redirects/Rewrites" 頁面。
-    *   **關鍵規則 (必須精確匹配)**:
-        *   **規則一 (API Proxy)**:
-            *   **Source**: `/api/*`
-            *   **Destination**: `https://<YOUR_ARCHON_SERVER_URL>/api/*`
-            *   **⚠️ 注意**: 請務必將 `<YOUR_ARCHON_SERVER_URL>` 替換為後端服務的**真實網域** (例如 `archon-server-xyz.onrender.com`)，**切勿保留 `<...>` 佔位符**。
-        *   **規則二 (SPA Fallback)**:
-            *   **Source**: `/*`
-            *   **Destination**: `/index.html`
-    *   **驗證方式**: 部署後訪問 `https://<前端網域>/api/health`。若回傳 JSON 則代表 Proxy 成功；若回傳 HTML 或 404 則代表路由配置錯誤。
-
-    #### 3. 環境變數檢查 (Environment Variables)
-    *   **金鑰類型檢查**:
-        *   根據 `python/src/server/config/config.py` 的 `validate_supabase_key` 邏輯，後端會**強制檢查** `SUPABASE_SERVICE_KEY` 的 JWT Role。
-        *   **❌ 錯誤**: 若使用 `anon` (Public) Key，後端將直接崩潰並報測 `CRITICAL: You are using a Supabase ANON key...`。
-        *   **✅ 正確**: 必須使用 Supabase Dashboard > Settings > API > **service_role** (Secret) Key。
-    *   **必要變數**:
-        *   `SUPABASE_URL`: 必須是 `https://` 開頭 (生產環境強制 HTTPS)。
-        *   `LOGFIRE_ENABLED`: 建議設為 `true` 以啟用與 Logfire 的整合監控。
-
-    #### 4. 功能煙霧測試 (Smoke Test)
-    *   **目標 API**: `GET /api/system/health/rag`
-    *   **權限要求**: 此 API 受 `require_system_admin` 保護 (參考 `system_api.py`)。
-    *   **執行方式**:
-        *   **方法 A (推薦)**: 使用 `make db-init` 輸出中的 **Dev Token**。
-            ```bash
-            curl -H "Authorization: Bearer <DEV_TOKEN>" https://<BACKEND_URL>/api/system/health/rag
-            ```
-        *   **方法 B (CLI)**: 在本地 or 透過 Render Shell 執行 `make probe` (此指令實際上是呼叫 `python scripts/probe_librarian.py` 的舊別名，或新版中對應的 curl 指令)。
-    *   **成功標準**: 回傳 JSON 中包含 `"status": "healthy"` 且 `details` 中無錯誤訊息。這證明了資料庫連線、Vector Extension 與 OpenAI/Gemini Embedding API 皆運作正常。
+    - [ ] **資料庫遷移驗證**: 本地執行 `make db-init` 顯示 `🎉 SQL migrations applied!` 與 `✅ Auth Sync Complete.`。
+    - [ ] **前端路由驗證**: Render 雙重 Rewrite 規則已依序設定，部署後訪問 `/api/health` 回傳 JSON (非 HTML 404)。
+    - [ ] **環境變數金鑰安檢**: 
+      * 後端 `SUPABASE_SERVICE_KEY` **必須使用 `service_role` (Secret) Key**。使用 public `anon` key 後端會崩潰。
+      * `SUPABASE_URL` 強制以 `https://` 開頭。
+    - [ ] **功能煙霧測試 (Smoke Test)**:
+      使用 Dev Token 或執行 `make probe` 打通 `GET /api/system/health/rag`，確認回傳 `"status": "healthy"` 且 DB / Vector / LLM 端點均正常。
 
     **3.3 觸發部署**
-    1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
-    2.  將本地變更推送到 GitHub: `git push origin <your-branch>`
-    3.  Render 會自動偵測到新的提交並開始部署。
+    1. 確認 Render 監控 `dev/twins` 或預期之分支。
+    2. 推送代碼: `git push origin <branch>`，Render 自動觸發 Build。
 
 4.  **階段四：部署後驗證**
-    1.  在 Render 儀表板監控所有服務的部署日誌。
-    2.  存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
-    3.  打開前端服務的公開網址，進行功能驗證 (Smoke Test)。
+    1. 在 Render Dashboard 觀察 Build & Deploy Logs。
+    2. 訪問 `/health` 確認回傳 `{"status":"ok"}`。
+    3. 開啟前端網址進行 Smoke Test 通過。
 
 ### 4.4 AI 開發者協作流程 (AI Developer Workflow)
 
