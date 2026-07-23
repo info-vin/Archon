@@ -716,32 +716,31 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ---
 
-(請參閱 `PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`)
+## 附錄 A：歷史決策與背景導覽 (Historical Context & PRPs)
+
+* 詳情請參閱 [`PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md) 及相關歷史 PRPs 檔案庫。
 
 ---
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-> **結算日期**: 2026-06-18 (Phase 5.6.x Lean Optimization Archive)
-> **狀態**: 🟢 **專案計畫文件 (PRPs) 瘦身完成**。Phase 5.6 系列文件已壓縮至 `archive/` 並提煉至 `docs/` 知識庫。目前全系統巨型檔案持續清零（無超過 400 行之 God Object）。
-> 
-* **長效機制**：技術債改由自動化工具監控。每次提交前或定期運行 `make phase-audit` 與 `make tech-debt-audit`，自動掃描過期腳本與 PRPs 雜亂檔案，確保工作區極簡無雜訊。
+> **結算日期**: Phase 5.9.15 (全後端四大架構動態健康度掃描與 3.3 巡檢戰線型別重構)
+> **狀態**: 🟢 **全系統 0 Monolith 巨型檔案 (>400行)**，由 `make phase-audit` (Step 6) 與 `make tech-debt-audit` 自動化動態監控過期腳本與 PRPs 雜亂檔案。
 
 ---
 
 ## 附錄 C：系統演進現狀 (System Evolution Status)
 
-* **工具與權限 (MCP)**：全面使用 `AgentService` + `MCPClient` 雙階段迴圈（Think -> Tool -> Act），並受 `TOOL_CONFIG` 授權白名單與 XP 動態治理機制保護。
-* **Agent 註冊**：所有 Agent 定義、Prompts、與權限階層集中於 `src/server/services/agent_registry.py`，關閉 LLM 思考指令雙軌制。
-* **長期型別與測試防線**：後端物理性 Zero MyPy Errors，後端測試 554+ 項與前端測試 183+ 項達成 100% 通過率。
+* **工具與權限 (MCP)**：使用 `AgentService` + `MCPClient` 雙階段迴圈（Think -> Tool -> Act），受 `TOOL_CONFIG` 白名單保護。
+* **Agent 註冊**：所有 Agent 定義、Prompts 集中於 `src/server/services/agent_registry.py`，關閉 LLM 思考指令雙軌制。
+* **長期型別與測試防線**：後端物理性 Zero MyPy Errors，後端測試 610+ 項與前端測試 183+ 項達成 100% 通過率。
 
 ---
 
 ## 附錄 D：基礎設施物理審計 (Infrastructure Audit)
 
-> **結算日期**: 2026-05-29 (Phase 5.5.0 Offline Hardening)
-> **狀態**: 🟢 **映像檔體積已大幅最佳化**。目前 `archon-server` 體積已成功由 31.5GB 瘦身至 **5.02GB**。
-> 
+> **結算日期**: Phase 5.5.0 (Offline Hardening) — `archon-server` 體積成功由 31.5GB 瘦身至 **5.02GB**。
+
 * **體積減重核心**：
   1. **CPU PyTorch 強制約束**：安裝時指定 `--extra-index-url https://download.pytorch.org/whl/cpu` 剃除數 GB 的 CUDA 庫死重。
   2. **編譯快取防禦**：Dockerfile 嚴禁 `COPY` 建置快取（如 `/root/.cache`）進入生產映像檔，防範 `ENOSPC` 磁碟耗盡。
@@ -750,16 +749,13 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 E：資料庫表格設計初衷 (Schema Rationale)
 
-為了防止誤刪或誤改，特此記錄看似無即時呼叫的保留表之設計初衷：
-* **`market_insights`** (Phase 4.2)：為 Bob 產出的「戰略級市場分析報告」預留的長期趨勢分析基石。
-* **`subscriptions`** (2025-09 重構)：為未來「商業化付費模式」預留的 API 訂閱與計費數據模型。
+記錄看似無即時呼叫之保留表設計初衷，防止誤刪：
+* **`market_insights`** (Phase 4.2)：為 Bob 產出的「戰略級市場分析報告」預留之長期趨勢分析基石。
+* **`subscriptions`** (2025-09 重構)：為未來「商業化付費模式」預留之 API 訂閱與計費數據模型。
 
 ---
 
 ## 附錄 F：數位雙生與 E2E 驗證規範 (Digital Twin & E2E Standard)
 
-* **IPA 自癒定位原則**：優先使用語意定位（如 `button:has-text('...')`），嚴禁易斷裂的 CSS 階層路徑。具備 Sandbox Idempotency（測試前自動重置）與 Pixelmatch 預篩的 Gemini Vision 視覺評判。
-* **核心工具組**：
-  * `level_generator.py` (`make twin-gen-levels`)：自動動態生成 100+ 個參數化關卡 YAML 腳本。
-  * `simulator_runner.py` (`make twin-simulator`)：百關全自動闖關（預設 limit=3 以防超時），並提供 5% 延遲/500 錯誤的混沌注入驗證。
-  * `twin_scout.py` (`make twin-record`)：單關 `headless=false` 視覺回放、錄影除錯與模擬。
+* **IPA 自癒定位原則**：優先使用語意定位（如 `button:has-text('...')`），嚴禁易斷裂的 CSS 階層路徑。具備 Sandbox Idempotency 與 Pixelmatch 預篩的 Gemini Vision 視覺評判。
+* **核心工具組**：動態關卡生成 (`make twin-gen-levels`)、百關模擬器 (`make twin-simulator`) 與 Headed 視覺對帳 (`make twin-record`)，詳細指令說明請參閱第三章 3.1.2 門禁表格。
