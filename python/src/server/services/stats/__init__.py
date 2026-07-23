@@ -4,6 +4,7 @@ Provides centralized metrics and performance auditing.
 """
 
 import logging
+import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -171,7 +172,7 @@ class StatsService:
                 # Find DB-only jobs that might have completed and been removed from scheduler
                 env_prefix = os.environ.get("ARCHON_ENV", "")
                 last_run_prefix = f"{env_prefix}LAST_RUN_"
-                
+
                 db_keys_res = self.supabase.table("archon_settings").select("key, value").like("key", f"{last_run_prefix}%").execute()
                 for row in (db_keys_res.data or []):
                     job_id = row["key"].replace(last_run_prefix, "").lower()

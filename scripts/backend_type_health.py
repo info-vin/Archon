@@ -81,14 +81,16 @@ def classify_mcp(rel_path):
         return "1.4 行銷、開發與設計工具鏈"
 
 # ------------------------------------------------------------------------------
-# 2. Agents 模組分類器
+# 2. Agents 模組分類器 (修正：workflow/state.py 正確歸類至 2.4)
 # ------------------------------------------------------------------------------
 def classify_agents(rel_path):
     if "checkpoint_manager.py" in rel_path:
         return "2.2 DB 狀態斷點與快照 (Checkpoint)"
     elif "approval_manager.py" in rel_path:
         return "2.3 HITL 人工審核防線 (Approval)"
-    elif any(k in rel_path for k in ["base_agent.py", "execution_engine.py", "server.py", "mcp_client.py", "rerank_router.py", "state"]):
+    elif "workflow" in rel_path:
+        return "2.4 多 Agent 工作流與專屬 Agent"
+    elif any(k in rel_path for k in ["base_agent.py", "execution_engine.py", "server.py", "mcp_client.py", "rerank_router.py"]):
         return "2.1 核心執行與推演引擎"
     else:
         return "2.4 多 Agent 工作流與專屬 Agent"
@@ -190,18 +192,12 @@ def generate_health_report_markdown():
         classifier = mod["classifier"]
         sub_descs = mod.get("sub_descs", {})
 
-        base = baselines.get(name, {})
-        base_health = base.get("baseline_health", "--")
-        base_health_str = f"{base_health}%" if isinstance(base_health, (int, float)) else str(base_health)
-
-        # 容器統計
         total_files = 0
         total_lines = 0
         monolith_files = 0
         total_funcs = 0
         typed_funcs = 0
 
-        # Sub 模組容器
         sub_data = {}
 
         if os.path.exists(path):
@@ -218,7 +214,6 @@ def generate_health_report_markdown():
                         total_funcs += f
                         typed_funcs += tf
 
-                        # 分類至 Sub
                         sub_key = classifier(rel_path)
                         if sub_key not in sub_data:
                             sub_data[sub_key] = {"files": 0, "lines": 0, "monolith": 0, "funcs": 0, "typed_funcs": 0}
@@ -229,11 +224,15 @@ def generate_health_report_markdown():
                         sub_data[sub_key]["funcs"] += f
                         sub_data[sub_key]["typed_funcs"] += tf
 
-        # 計算主模組指標
-        coverage = (typed_funcs / total_funcs * 100) if total_funcs > 0 else 0.0
+        # 無函式定義的純 Schema 檔不計入未標註懲罰 (無函式 = 100%)
+        coverage = (typed_funcs / total_funcs * 100) if total_funcs > 0 else 100.0
         clean_file_rate = ((total_files - monolith_files) / total_files * 100) if total_files > 0 else 100.0
         health_score = round((coverage * 0.5) + (clean_file_rate * 0.3) + 20.0, 1)
         health_score = min(99.0, health_score)
+
+        base = baselines.get(name, {})
+        base_health = base.get("baseline_health", "--")
+        base_health_str = f"{base_health}%" if isinstance(base_health, (int, float)) else str(base_health)
 
         base_lines = base.get("baseline_lines", total_lines)
         lines_arrow = " ↑" if total_lines > base_lines else (" ↓" if total_lines < base_lines else "")
@@ -256,7 +255,8 @@ def generate_health_report_markdown():
             sf_funcs = sinfo["funcs"]
             st_funcs = sinfo["typed_funcs"]
 
-            scov = (st_funcs / sf_funcs * 100) if sf_funcs > 0 else 0.0
+            # Sub 覆蓋率 (無函式為 100.0%)
+            scov = (st_funcs / sf_funcs * 100) if sf_funcs > 0 else 100.0
             sclean_rate = ((sf - sm) / sf * 100) if sf > 0 else 100.0
             shealth = round((scov * 0.5) + (sclean_rate * 0.3) + 20.0, 1)
             shealth = min(99.0, shealth)

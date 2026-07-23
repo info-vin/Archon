@@ -13,7 +13,7 @@ from src.server.utils import get_supabase_client
 logger = get_logger(__name__)
 
 
-async def run_auto_fetch_leads():
+async def run_auto_fetch_leads() -> None:
     """Clockwork task to trigger Alice's daily lead auto-fetch."""
     logger.info("📡 Clockwork: Triggering daily Alice job search...")
     try:
@@ -35,7 +35,7 @@ async def run_auto_fetch_leads():
         logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
 
 
-async def run_prune_stale_leads():
+async def run_prune_stale_leads() -> None:
     """Clockwork task to prune stale leads (Scenario D Pruning Loop)."""
     logger.info("🧹 Clockwork: Triggering hourly prune stale leads...")
     try:
@@ -57,7 +57,7 @@ async def run_prune_stale_leads():
         logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}")
 
 
-async def run_daily_market_report():
+async def run_daily_market_report() -> None:
     """Triggering Bob (MarketingBot) to summarize today's leads."""
     logger.info("✍️ Clockwork: Triggering Bob's Daily Market Report...")
     try:

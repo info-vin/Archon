@@ -12,7 +12,7 @@ from src.server.config.logfire_config import get_logger
 logger = get_logger(__name__)
 
 
-async def run_system_probe():
+async def run_system_probe() -> None:
     """Triggering System Probe via HealthService."""
     logger.info("🤖 Clockwork: Triggering System Probe via HealthService...")
     try:
@@ -68,7 +68,7 @@ async def run_system_probe():
             logger.error(f"Failed to log crash: {inner_e}")
 
 
-async def run_log_patrol():
+async def run_log_patrol() -> None:
     """Scans logs for errors and dispatches DevBot."""
     logger.info("👮 Clockwork: Starting Log Patrol...")
     try:
@@ -179,7 +179,7 @@ def is_hf_awake() -> bool:
     return True
 
 
-async def run_model_verification():
+async def run_model_verification() -> None:
     """Verifies that the system is using the safe Lite model to prevent 429 errors."""
     logger.info("🤖 Clockwork: Running Model Verification...")
     try:

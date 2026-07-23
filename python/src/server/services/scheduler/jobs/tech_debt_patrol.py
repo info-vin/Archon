@@ -10,7 +10,7 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
-async def run_tech_debt_audit():
+async def run_tech_debt_audit() -> None:
     """Scans PRPs and scripts for technical debt, and dispatches DevBot if needed."""
     logger.info("🧹 Clockwork: Starting Tech Debt Patrol...")
     try:
@@ -113,7 +113,7 @@ async def run_tech_debt_audit():
     except Exception as e:
         logger.error(f"💥 Clockwork: Tech Debt Patrol Failed: {e}")
 
-async def run_ssot_audit():
+async def run_ssot_audit() -> None:
     """Scans for hardcoded technical debt based on historical pain points (Network, Models, Paths, Prompts)."""
     logger.info("🔎 Clockwork: Starting SSOT Audit...")
     try:

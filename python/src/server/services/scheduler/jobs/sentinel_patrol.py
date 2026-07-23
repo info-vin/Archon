@@ -14,7 +14,7 @@ from src.server.utils import get_supabase_client
 logger = get_logger(__name__)
 
 
-async def analyze_token_usage():
+async def analyze_token_usage() -> None:
     """Token Usage Analysis & Proactive Alerting (Phase 6.1: Cost Sentinel)"""
     logger.info("🤖 Clockwork: Starting Token Usage Analysis & Cost Sentinel...")
     try:
@@ -89,7 +89,7 @@ async def analyze_token_usage():
         logger.error(f"💥 Clockwork: Token Analysis Failed: {e}")
 
 
-async def run_business_sentinel():
+async def run_business_sentinel() -> None:
     """Scans leads for staleness with Proactive State Intervention (Restored Phase 4.6.46)."""
     logger.info("🛡️ Clockwork: Starting Business Sentinel...")
     try:
@@ -218,7 +218,7 @@ async def run_business_sentinel():
         logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
 
 
-async def run_api_deprecation_scan():
+async def run_api_deprecation_scan() -> None:
     """Bi-weekly scan of Google's Gemini API Docs to check for deprecations and limit changes."""
     logger.info("🔍 Clockwork: Starting API Deprecation & Limit Scan...")
     try:
