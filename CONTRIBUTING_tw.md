@@ -190,8 +190,9 @@
 | :--- | :--- | :--- |
 | **靜態語法與型別分析** | `make lint`<br>`make lint-fe`<br>`make lint-be` | **時機**: 提交程式碼 (Commit/Push) 前。<br>**說明**: 確保代碼符合 Biome/ESLint/Ruff 規範及 MyPy 型別安全。 |
 | **全域 Persona 物理巡檢** | `make persona-audit` | **時機**: 涉及 RBAC 權限或核心流程修改後。<br>**說明**: 確保五大核心角色 (Alice, Bob, Charlie, David, Agents) 的工作流程暢通，且回傳非零退出碼以防錯誤被吞。 |
-| **數位忿生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
-| **數位忿生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
+| **階段與型別健康度稽核** | `make phase-audit` | **時機**: 階段性驗收、開啟新 Phase 或架構重構後。<br>**說明**: 物理掃描 PRPs 斷層，公證後端四大架構 (MCP/Agents/Services/API Routes) 17 個子分區之動態型別健康度。 |
+| **數位雙生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
+| **數位雙生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
 | **數位雙生百關動態模擬** | `make twin-simulator` | **時機**: 驗證極端混沌環境下的 UI 自癒能力時。<br>**說明**: 跑百關 E2E 模擬矩陣驗證（限額執行前幾關防超時），會搭配 `make twin-gen-levels` 生成與 `make twin-record` 單關錄影除錯。 |
 | **終極自動化品質門禁** | `make audit-qa` | **時機**: Major Release、PR 合併至主幹前的最終驗收。<br>**說明**: 執行最嚴格的串流驗證，包含 DNS 洩漏掃描、UI 巢狀死鎖檢查、Migration 驗證 (⚠️**宿主機必須啟動 Docker**)、LLM 語意裁判、後端測試與前端 E2E 邊界測試。 |
 | **毀滅性 E2E 測試門禁** | `make audit-qa-e2e` | **時機**: PR 合併至主幹前的 E2E 重點驗收。<br>**說明**: 執行會破壞並重置資料庫的 Playwright 關鍵 spec 測試門禁。 |
