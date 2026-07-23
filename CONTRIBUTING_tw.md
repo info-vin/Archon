@@ -261,42 +261,23 @@ def test_some_endpoint():
 
 ### 3.3 前端 E2E 測試 (`enduser-ui-fe`)
 
-#### 3.3.1 E2E 測試核心架構
+#### 3.3.1 E2E 測試核心架構與 MSW 規範
 
-為確保前端 E2E 測試的穩定性與可維護性，專案採用了以下架構：
+專案採用獨立 `vitest.e2e.config.ts` 設定檔將 E2E 測試與單元測試完全隔離，並由 `tests/e2e/e2e.setup.ts` 統一管理 API Mocking：
 
-1.  **專屬設定檔**: 使用獨立的 `vitest.e2e.config.ts` 設定檔，將 E2E 測試與單元測試完全隔離。
-2.  **隔離的 Mocking 環境**: 所有 E2E 測試所需的 API Mock 都集中在 `tests/e2e/e2e.setup.ts` 中管理。
-3.  **標準化元件渲染**: 為解決 React Router 的問題，所有測試都直接渲染 `AppRoutes` 元件，並為其提供 `AuthProvider` 和 `MemoryRouter` 作為包裹 (Wrapper)。
-4.  **混合 Mocking 策略**:
-    *   **認證 (Authentication)**: 使用 `vi.mock` 來模擬 `getCurrentUser` 等認證相關函式。
-    *   **數據 (Data)**: 使用 **Mock Service Worker (MSW)** 攔截所有數據相關的 `fetch` 請求。請確保 `src/mocks/handlers.ts` 中的模擬資料結構與前端 `types.ts` 中的類型定義**完全一致**。
-    *   **全域 Server 共用原則**: 在個別測試檔案中，**嚴禁**使用 `setupServer` 建立新的實例。必須引用 `src/mocks/server` 中的全域 `server` 物件，並使用 `server.use()` 來注入該測試專屬的 Handler。這能避免與 `e2e.setup.ts` 中的全域設定發生衝突。
+1. **標準化元件渲染**: 所有測試直接渲染 `AppRoutes` 元件，並提供 `AuthProvider` 和 `MemoryRouter` 作為 Wrapper。
+2. **Hybrid Mocking 策略 (雙軌對齊)**:
+   * **Auth 認證**: `e2e.setup.tsx` 使用 `vi.mock` 攔截 `api.getCurrentUser`，提供穩定的測試用戶身份。
+   * **Data 數據 (Pass-through)**: 其他 API 預設透傳呼叫真實 `api.ts`，由底層 `fetch` 觸發 **Mock Service Worker (MSW)** 攔截。模擬資料結構（`src/mocks/handlers.ts`）必須與 `types.ts` 100% 物理對齊。
+3. **全域 MSW Server 唯一性**: 嚴禁在個別測試檔中使用 `setupServer`。必須引用 `src/mocks/server` 之全域實例，並用 `server.use()` 注入專屬 Handler。
+4. **Spying 與 `this` 綁定**: setup 中包裝 API 方法時，必須使用 `actual.api[key](...args)` 呼叫，確保 `api.ts` 內部的 `this._getHeaders()` 上下文正確綁定。
+5. **關鍵方法時序豁免 (Exclusion)**: 關鍵方法（如 `getTasks`）因涉及複雜 Promise / Loading 狀態，豁免於 `vi.fn` 包裝，直接執行真實代碼防時序卡死。
+6. **MSW 元素等待規範**: 測試 UI 狀態時，務必先 `await waitFor(() => expect(loading).not.toBeInTheDocument())`，避開非同步渲染差。
 
-#### 3.3.2 E2E 架構深度解析 (Architecture Deep Dive)
+#### 3.3.2 完整整合測試之資料庫與憑證準備
 
-*   **Hybrid Strategy (混合策略)**:
-    *   **Auth**: `e2e.setup.tsx` 使用 `vi.mock` 攔截 `api.getCurrentUser`，提供穩定的測試用戶身份。
-    *   **Data**: 其他 API 方法預設為 **Pass-through** (透傳)，直接呼叫真實 `api.ts` 代碼，由底層 `fetch` 觸發 MSW 攔截。這確保了測試與真實運作的高度一致性。
-*   **Spying 與 `this` 綁定**:
-    *   為了讓測試能使用 `expect(api.method).toHaveBeenCalled()`，我們在 setup 中對 API 方法進行了 Spy 包裝。
-    *   **關鍵細節**: 包裝時必須使用 `actual.api[key](...args)` 形式呼叫，以確保 `api.ts` 內部的 `this._getHeaders()` 上下文正確綁定。
-*   **豁免機制 (Exclusion)**:
-    *   某些關鍵方法（如 `getTasks`）因涉及複雜的 Promise 狀態或 Loading 邏輯，若被 `vi.fn` 包裝可能導致時序問題（如 Dashboard 卡在 Loading）。這些方法被明確豁免於 Spy 之外，直接執行真實代碼。
-*   **MSW 最佳實踐**:
-    *   **全域唯一**: 嚴禁在個別測試檔案中 `setupServer`。必須依賴全域 `handlers.ts`。
-    *   **Loading 等待**: 測試 UI 時，務必先 `await waitFor(() => expect(loading).not.toBeInTheDocument())`，再進行元素查找。
-
-#### 3.3.3 完整整合測試的準備工作
-
-為了讓 E2E 測試能針對真實後端運行，專案提供了以下機制：
-
-1.  **自動化資料庫重置**:
-    *   後端提供一個受 `ENABLE_TEST_ENDPOINTS` 環境變數保護的 `POST /api/test/reset-database` 端點。
-    *   E2E 測試套件的 `globalSetup.ts` 會在測試運行前自動呼叫此端點，確保資料庫處於乾淨、可預測的狀態。
-2.  **測試環境中的 Supabase 初始化**:
-    *   E2E 測試設定會以程式化方式，在 `jsdom` 的 `localStorage` 中設定 Supabase 的 URL 和金鑰。
-    *   這使得前端的 Supabase 客戶端能在測試環境中正確初始化，並發出真實的 API 請求。
+1. **自動化資料庫重置**: 後端提供受 `ENABLE_TEST_ENDPOINTS` 保護之 `POST /api/test/reset-database` 端點，由 `globalSetup.ts` 於測試前自動重置資料庫。
+2. **Supabase 憑證初始化**: 測試設定自動於 `jsdom` 之 `localStorage` 寫入 Supabase URL 與金鑰，確保客戶端正確發送請求。
 
 ### 3.4 前端測試常見問題 (FAQ)
 
