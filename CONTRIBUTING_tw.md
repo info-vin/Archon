@@ -336,7 +336,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 #### **序列 A：邏輯與代碼驗證 (Developer/CI Sequence)**
 **重心**: 確保「代碼沒有 Bug」。
 **執行順序**: `make dev-docker` -> `make test` -> `make probe`
-*   **`make test`**: 執行 544+ 項測試，確認 API 邏輯、權限與組件渲染正確。
+*   **`make test`**: 執行 610+ 項測試，確認 API 邏輯、權限與組件渲染正確。
 *   **`make probe`**: 在容器內執行，驗證資料庫連線、AI 金鑰與 RAG 檢索維度。
 *   **適用場景**: 提交代碼前的最後品質把關。
 
