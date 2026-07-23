@@ -398,6 +398,44 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 > **📝 遷移檔更新通知 (Migration Updates)**
 > 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 目錄中，並嚴格依照檔案前綴數字標號順序執行 (如 `01` -> `02` -> `33`)。
+>
+> **近期新增的遷移檔 (24小時內)**:
+> - migration/0.2.2/01_foundation_types.sql
+> - migration/0.2.2/02_tables_core.sql
+> - migration/0.2.2/03_tables_business.sql
+> - migration/0.2.2/04_tables_ops.sql
+> - migration/0.2.2/05_logic_functions.sql
+> - migration/0.2.2/06_constraints_main.sql
+> - migration/0.2.2/07_logic_indexes.sql
+> - migration/0.2.2/08_logic_triggers.sql
+> - migration/0.2.2/09_constraints_fkeys.sql
+> - migration/0.2.2/100_add_tiered_pruning_rpcs.sql
+> - migration/0.2.2/101_update_supervisor_prompt.sql
+> - migration/0.2.2/102_seed_patrol_prompts.sql
+> - migration/0.2.2/10_security_rls.sql
+> - migration/0.2.2/11_seed_config.sql
+> - migration/0.2.2/12_seed_rbac.sql
+> - migration/0.2.2/18_seed_crawler_targets.sql
+> - migration/0.2.2/19_seed_marketing_group_chat_prompts.sql
+> - migration/0.2.2/20_seed_supervisor_agent.sql
+> - migration/0.2.2/21_seed_reports_workflow_prompts.sql
+> - migration/0.2.2/22_seed_devbot_math_prompt.sql
+> - migration/0.2.2/23_seed_agent_system_prompts.sql
+> - migration/0.2.2/24_create_dynamic_agent_tables.sql
+> - migration/0.2.2/25_create_user_game_saves.sql
+> - migration/0.2.2/26_rag_hybrid_match_chunks.sql
+> - migration/0.2.2/27_enable_missing_rls.sql
+> - migration/0.2.2/28_graphrag_and_mrl.sql
+> - migration/0.2.2/29_seed_job_board_prompts.sql
+> - migration/0.2.2/30_alter_archon_prompts_schema.sql
+> - migration/0.2.2/31_seed_art_asset_prompts.sql
+> - migration/0.2.2/32_seed_nav_icons_prompts.sql
+> - migration/0.2.2/33_create_agent_checkpoints_and_approvals.sql
+> - migration/0.2.2/99_rescue_live_data.sql
+> - migration/0.2.2/RESET_DB.sql
+> - migration/0.2.2/seed_blog_posts.sql
+> - migration/0.2.2/seed_mock_data.sql
+> - migration/0.2.2/seed_rag_defaults.sql
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
