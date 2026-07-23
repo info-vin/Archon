@@ -645,74 +645,46 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ## 第六章：常見問題排查 (Troubleshooting SOP)
 
-### 6.1 資料庫與遷移問題
+### 6.1 資料庫災難復原 (RESET_DB.sql)
+* **症狀**: `make db-init` 執行後資料庫仍為空，或 `make test` 後資料未還原。
+* **根源**: E2E 測試重置資料庫時 `schema_migrations` 表未清空，導致初始化腳本誤判已完成。
+* **解法**: 
+  1. 執行手動強重置: 執行 `migration/RESET_DB.sql` (清空包含 `schema_migrations` 在內的所有表)。
+  2. 重新初始化: 執行 `make db-init`。
+  3. 恢復 RAG 知識庫: 若 `make probe` 分數偏低，執行 `docker exec archon-server python scripts/seed_knowledge.py`。
 
-#### 重大災難復原：資料庫狀態錯亂
-**症狀**: `make db-init` 執行後資料庫仍為空，或 `make test` 後資料消失。
-**原因**: E2E 測試重置了資料庫，但 `schema_migrations` 未被清除，欺騙了 Init 腳本。
-
-**解決方案**:
-1.  **強制重置**: 手動執行 `RESET_DB.sql` (這會刪除所有表包含 `schema_migrations`)。
-2.  **重新初始化**: 再次執行 `make db-init`。
-3.  **恢復 RAG 知識**: 若 `make probe` 分數過低，請執行：
-    ```bash
-    docker exec archon-server python scripts/seed_knowledge.py
-    ```
-
-**Docker 快速指令**:
-```bash
-docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.getenv('SUPABASE_DB_URL'); conn=psycopg2.connect(DB); cur=conn.cursor(); f=open('migration/RESET_DB.sql'); cur.execute(f.read()); conn.commit(); conn.close(); print('✅ Reset Complete')" && make db-init
-```
+---
 
 ### 6.2 Supabase Auth 406 Error (Not Acceptable)
+* **症狀**: 前端登入成功，但呼叫 `/profiles` API 時收到 `406 Not Acceptable` 且回傳 Body 為空。
+* **根源**: **ID 不匹配 (ID Mismatch)** — 前端使用 `.single()` 查詢，但 `auth.users` 的 UUID 與 `public.profiles` 的 `id` 不同步。
+* **解法**: 執行 `make db-init`（內建「雙重同步策略 Dual Sync」，會自動執行 `UPDATE profiles SET id = auth_uuid` 強制對齊）。
 
-**症狀**: 前端登入成功，但呼叫 `/profiles` API 時收到 `406 Not Acceptable` 錯誤，且回傳 Body 為空。
+---
 
-**根源**: **ID 不匹配 (ID Mismatch)**。
-- 前端使用 `.single()` 查詢 `profiles` 表，期望獲得單筆資料。
-- `auth.users` 中的 `id` (UUID) 與 `public.profiles` 表中的 `id` 不同步。
+### 6.3 開發者自動登入 (dev-token) 500 Error
+* **症狀**: 存取 `localhost:3737` 時，瀏覽器顯示 `POST /api/auth/dev-token 500`。
+* **排查步驟**:
+  1. **密碼檢查**: 開發環境統一標準密碼為 `qwer45tyuiop` (`auth_api.py`)。
+  2. **相對路徑檢查**: 確保 `main.py` 無 `ModuleNotFoundError` 匯入錯誤。
+  3. **金鑰權限**: 確保 `SUPABASE_SERVICE_KEY` 具備 `service_role` 權限且未過期。
 
-**標準解法**:
-此問題已在 Phase 5.3 透過 `init_db.py` 的自動化修復邏輯解決。
+---
 
-1.  **請執行**: `make db-init`
-2.  **原理**: 腳本內建了「雙重同步策略 (Dual Sync Strategy)」，會自動偵測重複使用者並執行 `UPDATE profiles SET id = auth_uuid`，強制對齊資料庫 ID。
-
-### 6.3 開發者自動登入 (dev-token) 失敗 (500 Error)
-
-**症狀**: 存取 `localhost:3737` 時，瀏覽器控制台顯示 `POST /api/auth/dev-token 500`，導致無法自動登入。
-
-**可能根源與解決方案**:
-1.  **密碼不匹配**: 檢查 `python/src/server/api_routes/auth_api.py` 中的 `password` 變數。開發環境統一標準密碼為 **`qwer45tyuiop`** (參考 `PRPs/Phase_4.6.5_Bug_Checklist.md`)。
-2.  **模組匯入錯誤**: 若日誌顯示 `ModuleNotFoundError: No module named 'src.server.agents'`，需將 `main.py` 中的相對匯入修正為絕對路徑或正確的相對層級 (例如 `from ..agents` 而非 `from .agents`)。
-3.  **Supabase 連線異常**: 確保 `SUPABASE_SERVICE_KEY` 具備 `service_role` 權限且未過期。
-
-### 6.4 Hugging Face 環境字元陷阱 (UnicodeEncodeError) & Secrets 注意事項
-
-**症狀**: 部署至 Hugging Face Spaces 後，伺服器啟動失敗或 ONNX Reranker 無法載入，日誌顯示：
-`UnicodeEncodeError: 'latin-1' codec can't encode character '\u3112' in position 44: ordinal not in range(256)`
-
-**根源解析**:
-這是台灣 Mac 開發者最常踩的「注音輸入法剪貼簿陷阱」！
-`\u3112` 是注音符號「ㄒ」的 Unicode。當您在 Hugging Face 的 Settings -> Secrets 貼上 `HF_TOKEN` 時，若當時輸入法處於注音模式，按下 `Cmd + V` 卻沒按好 `Cmd`，就會在金鑰最尾端多打出一個「ㄒ」（鍵盤 V 鍵在注音對應ㄒ）。
-這會導致伺服器在使用 `huggingface_hub` 套件發送 HTTP Authorization 標頭時，`http.client` 因無法編碼「ㄒ」為 `latin-1` 而發生致命崩潰。
-
-**解決方案**:
-1. 回到 Hugging Face 的 Space Settings -> Secrets。
-2. 將輸入法切換為「純英文」狀態。
-3. 將包含錯誤字元的 `HF_TOKEN` 刪除，重新複製貼上乾淨的金鑰並儲存，Hugging Face 將會自動重啟 Space。
-*(註：目前系統層已加入對部分 HF 內建環境變數如 `SPACE_TITLE` 包含非英數字元的防護，但開發者仍須確保手動填寫的 Secrets 純淨無污染。)*
+### 6.4 Hugging Face UnicodeEncodeError (注音輸入法剪貼簿陷阱)
+* **症狀**: 部署至 HF Spaces 後伺服器崩潰，日誌顯示 `UnicodeEncodeError: 'latin-1' codec can't encode character '\u3112'`。
+* **根源解析**: **台灣 Mac 開發者專屬陷阱** — 在 HF Settings -> Secrets 貼上 `HF_TOKEN` 時未切換至英文輸入法，按 `Cmd+V` 誤將注音符號「ㄒ」(`\u3112`) 帶入金鑰末端。發送 HTTP Header 時 `http.client` 無法編碼「ㄒ」為 `latin-1` 引發致命崩潰。
+* **解法**: 切換為純英文輸入法，刪除舊 Secrets 並重新貼上乾淨金鑰後儲存。
 
 ---
 
 ### 6.5 爬蟲與 WAF 403 錯誤防禦 (Proxy Pool)
-
-**症狀**: `JobBoardService` 在擷取資料或進行暖機 (Warm-up) 時遭遇 `403 Forbidden`。
-**根源**: 目標網站的 WAF (Web Application Firewall) 偵測到來自同一 IP 短時間內的大量無 Session/Cookie 軌跡的請求，將其判定為爬蟲行為而阻擋。即便使用 `curl_cffi` 偽裝 TLS 指紋也無法完全避免。
-**解決方案與未來架構**:
-1. **短期防禦**: 目前已實作速率限制 (RateLimiter) 與亂數延遲 (`time.sleep`)。
-2. **Cookie 管理優化**: 確保 `curl_requests.Session` 能夠在 warm-up 失敗時妥善處理並繼承 WAF 挑戰 (Challenge) 所核發的 Cookie。
-3. **引入代理池 (Proxy Pool)**: 若未來爬蟲規模與頻率增加，**必須**導入動態代理池架構，分散來源 IP 以繞過單一 IP 的流量封鎖。
+* **症狀**: `JobBoardService` 在暖機或爬取時遭遇 `403 Forbidden`。
+* **根源**: 目標 WAF 偵測到同 IP 短時間大量無 Cookie 請求而引發攔截。
+* **防禦策略**:
+  1. **短期**: 啟用 `RateLimiter` 速率限制與亂數延遲 (`time.sleep`)。
+  2. **中期**: 確保 `curl_requests.Session` 在 Warm-up 時正確繼承 WAF Challenge Cookie。
+  3. **長期**: 高頻爬蟲導入動態代理池 (Proxy Pool) 分散 IP 請求。
 
 ---
 
