@@ -127,7 +127,13 @@ class Job104Crawler:
         def _fetch_all():
             try:
                 headers = self.get_headers()
-                with curl_requests.Session(impersonate="chrome120", headers=headers, timeout=20.0) as client:
+                import os
+                proxy_url = os.environ.get("CRAWLER_PROXY_URL")
+                proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+
+                with curl_requests.Session(
+                    impersonate="chrome120", headers=headers, timeout=20.0, proxies=proxies  # type: ignore
+                ) as client:
                     warmup_res = None
                     try:
                         warmup_res = client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")

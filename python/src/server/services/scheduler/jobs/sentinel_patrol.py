@@ -162,11 +162,13 @@ async def run_business_sentinel():
 
                         from src.server.services.projects.task_service import task_service
 
-                        for log_record in log_res.data:
-                            log_id = log_record["id"]
-                            asyncio.create_task(
-                                task_service.generate_task_from_alert(alert_id=str(log_id), assignee_id=None)
-                            )
+                        sem = asyncio.Semaphore(3)
+
+                        async def bounded_generate(alert_id: str):
+                            async with sem:
+                                await task_service.generate_task_from_alert(alert_id=alert_id, assignee_id=None)
+
+                        await asyncio.gather(*(bounded_generate(str(log_record["id"])) for log_record in log_res.data))
                     except Exception as task_err:
                         logger.error(f"🛡️ Sentinel: Failed to auto-generate tasks from alerts: {task_err}")
 

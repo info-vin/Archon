@@ -31,13 +31,17 @@ class JobBoardService:
             return self._baseline_embedding_cache # type: ignore
 
         import os
+        from pathlib import Path
 
         from ..services.embeddings.embedding_service import create_embedding
 
+        # Resolve PROJECT_ROOT dynamically
+        project_root = os.environ.get("PROJECT_ROOT")
+        if not project_root:
+            project_root = str(Path(__file__).resolve().parent.parent.parent.parent)
+
         # Read AGENTS.md
-        agents_md_path = os.path.join(os.getcwd(), "AGENTS.md")
-        if not os.path.exists(agents_md_path):
-            agents_md_path = os.path.join(os.getcwd(), "..", "AGENTS.md")
+        agents_md_path = os.path.join(project_root, "AGENTS.md")
 
         try:
             with open(agents_md_path, encoding="utf-8") as f:

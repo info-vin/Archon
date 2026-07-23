@@ -192,9 +192,16 @@ async def generate_task_from_alert_logic(
 
         # 3. RAG Search
         rag_service = RAGService(task_service_instance.supabase_client)
+        from src.server.services.settings_service import SettingsService
+        try:
+            settings = SettingsService(task_service_instance.supabase_client)
+            match_count = int(settings.get_setting("SENTINEL_RAG_MATCH_COUNT") or "2")
+        except (ValueError, TypeError):
+            match_count = 2
+
         rag_success, rag_result = await rag_service.perform_rag_query(
             query=f"{details.get('company', 'Compliance')} {details.get('type', '')}",
-            match_count=2,
+            match_count=match_count,
         )
         if rag_success and "results" in rag_result:
             context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"

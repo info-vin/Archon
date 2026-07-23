@@ -8,6 +8,7 @@ Implements a consistent Lifecycle & State-Driven architecture:
 3. Stateful Bi-weekly Maintenance (Run once every 14 days)
 """
 
+import os
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -40,7 +41,7 @@ class SchedulerService:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._scheduler = AsyncIOScheduler()
+            cls._instance._scheduler = AsyncIOScheduler(job_defaults={'misfire_grace_time': 60})
         return cls._instance
 
     async def start(self):
@@ -62,7 +63,10 @@ class SchedulerService:
             from src.server.services.settings_service import SettingsService
 
             settings = SettingsService()
-            db_key = f"LAST_RUN_{job_id.upper()}"
+            env_prefix = os.environ.get("ARCHON_ENV", "")
+            if env_prefix and not env_prefix.endswith("_"):
+                env_prefix += "_"
+            db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
             now_iso = datetime.now(UTC).isoformat()
             settings.set_setting(db_key, now_iso)
         except Exception as e:
@@ -74,7 +78,10 @@ class SchedulerService:
             from src.server.services.settings_service import SettingsService
 
             settings = SettingsService()
-            db_key = f"LAST_RUN_{job_id.upper()}"
+            env_prefix = os.environ.get("ARCHON_ENV", "")
+            if env_prefix and not env_prefix.endswith("_"):
+                env_prefix += "_"
+            db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
             val = settings.get_setting(db_key)
             if val:
                 return datetime.fromisoformat(val.replace("Z", "+00:00"))
