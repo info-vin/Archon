@@ -100,9 +100,21 @@ def cloud_audit():
     except Exception as e:
         print(f"❌ Cloud audit failed: {e}")
 
+def architecture_health_audit():
+    print_header("Step 6: Four Major Backend Architectures Health Check")
+    try:
+        sys.path.insert(0, os.path.dirname(__file__))
+        from backend_type_health import generate_health_report_markdown
+        print(generate_health_report_markdown())
+    except Exception as e:
+        print(f"❌ Architecture health audit failed: {e}")
+
+
 if __name__ == "__main__":
     scan_prps()
     git_sync_check()
     monolith_check()
     cloud_audit()
+    architecture_health_audit()
     print_header("Audit Complete")
+
