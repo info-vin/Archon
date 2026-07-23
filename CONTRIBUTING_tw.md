@@ -636,10 +636,14 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 | 情境 | 指令範例 | 說明 |
 | :--- | :--- | :--- |
+| **快速檢視最近修復進程** | `git log -n 20 --oneline` | 顯示最近 20 次簡短提交紀錄，適合快速確認 PR 合併與開發進度。 |
 | **查閱檔案變更歷史** | `git log -p -- Makefile` | 顯示該檔案每次提交的具體差異 (Diff)。 |
-| **搜尋代碼何時被加入** | `git log -S "await task_service"` | 找出包含特定字串的新增或刪除的提交。 |
+| **跨重命名追蹤檔案歷史** | `git log --follow <file>` | 當檔案經過 L2 拆解或更名時，穿透追蹤其重命前的原始歷史。 |
+| **搜尋代碼何時被加入/刪除** | `git log -S "await task_service"` | 找出包含特定字串之新增或刪除的提交。 |
+| **強效 Regex 內容變更搜尋** | `git log -G "def run_.*"` | 使用正規表示式搜尋函式簽署與型別改動的歷史 Commit。 |
+| **追查行數最後修改源頭** | `git blame <file>` | 顯示檔案每一行的最後修改者與提交 Hash。 |
 | **查看特定提交的內容** | `git show <commit_hash>` | 檢視某個 Commit 的完整變更。 |
-| **比較兩個分支的差異** | `git diff main...feature/new-ui" | 檢視 Feature 分支相對於 Main 分支的變更。 |
+| **比較兩個分支的差異** | `git diff main...feature/new-ui` | 檢視 Feature 分支相對於 Main 分支的變更。 |
 
 ---
 
