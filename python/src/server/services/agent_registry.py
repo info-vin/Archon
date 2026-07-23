@@ -4,12 +4,18 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 """
 
 from functools import lru_cache
-from typing import cast
+from typing import NotRequired, TypedDict, cast
 
 from ..utils import get_supabase_client
 from .prompt_service import prompt_service
 
-TOOL_CONFIG_DEFAULT = {
+
+class ToolConfig(TypedDict):
+    min_xp_level: int
+    risk_level: str
+
+
+TOOL_CONFIG_DEFAULT: dict[str, ToolConfig] = {
     "apply_modification": {"min_xp_level": 2, "risk_level": "write"},
     "perform_web_crawl": {"min_xp_level": 1, "risk_level": "write"},
     "search_job_market": {"min_xp_level": 0, "risk_level": "read"},
@@ -44,7 +50,15 @@ def get_tool_min_level(tool_name: str) -> int:
     return static_level
 
 
-FALLBACK_AGENT_CONFIG = {
+class FallbackAgentConfig(TypedDict):
+    name: str
+    model_tier: str
+    system_prompt: str
+    tools: list[str]
+    default_tool: NotRequired[str]
+
+
+FALLBACK_AGENT_CONFIG: dict[str, FallbackAgentConfig] = {
     "supervisor": {
         "name": "Archon Supervisor",
         "model_tier": "pro",
@@ -116,7 +130,15 @@ def get_agent_uuid(agent_key: str) -> str | None:
     return None
 
 
-def get_agent_config(agent_id: str) -> dict | None:
+class DynamicAgentConfig(TypedDict):
+    name: str
+    model_tier: str
+    system_prompt: str
+    tools: list[str]
+    default_tool: NotRequired[str]
+
+
+def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
     """
     Retrieves the configuration for a specific agent dynamically from database.
     Fallback to FALLBACK_AGENT_CONFIG if database is unavailable.
@@ -157,14 +179,19 @@ def get_agent_config(agent_id: str) -> dict | None:
             str_fallback = str(fallback_prompt) if isinstance(fallback_prompt, list) else str(fallback_prompt)
             system_prompt = prompt_service.get_prompt(prompt_key, str_fallback)
 
-            return {
+            config: DynamicAgentConfig = {
                 "name": agent_data["name"],
                 "model_tier": agent_data["model_tier"],
                 "system_prompt": system_prompt,
                 "tools": tools_list,
-                "default_tool": agent_data.get("default_tool"),
             }
+            if agent_data.get("default_tool"):
+                config["default_tool"] = agent_data["default_tool"]
+            return config
     except Exception:
         pass
 
-    return FALLBACK_AGENT_CONFIG.get(key)
+    fallback = FALLBACK_AGENT_CONFIG.get(key)
+    if fallback:
+        return cast(DynamicAgentConfig, fallback)
+    return None
