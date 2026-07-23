@@ -169,9 +169,12 @@ class StatsService:
                         })
 
                 # Find DB-only jobs that might have completed and been removed from scheduler
-                db_keys_res = self.supabase.table("archon_settings").select("key, value").like("key", "LAST_RUN_%").execute()
+                env_prefix = os.environ.get("ARCHON_ENV", "")
+                last_run_prefix = f"{env_prefix}LAST_RUN_"
+                
+                db_keys_res = self.supabase.table("archon_settings").select("key, value").like("key", f"{last_run_prefix}%").execute()
                 for row in (db_keys_res.data or []):
-                    job_id = row["key"].replace("LAST_RUN_", "").lower()
+                    job_id = row["key"].replace(last_run_prefix, "").lower()
                     if not any(j["id"] == job_id for j in clockwork_jobs):
                         # Job is not in memory (likely completed for the day)
                         clockwork_jobs.append({
