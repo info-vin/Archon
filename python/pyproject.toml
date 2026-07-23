@@ -7,9 +7,14 @@ requires-python = ">=3.12"
 # Base dependencies - empty since we're using dependency groups
 dependencies = [
     "browser-use>=0.3.2",
+    "fastapi>=0.136.0",
+    "gotrue>=2.12.4",
     "langchain-google-genai>=2.1.5",
+    "litellm>=1.75.3",
     "mcp>=1.12.2",
     "pydantic-ai==1.44.0",
+    "pydantic-settings>=2.13.1",
+    "supabase>=2.15.1",
     "tenacity>=9.1.4",
 ]
 
