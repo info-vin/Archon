@@ -1,3 +1,4 @@
+-- Source: seed_rag_defaults.sql
 -- RAG Strategy & Code Extraction Default Settings
 -- Fixes cases where critical parameters are 0 or empty or missing
 
@@ -45,3 +46,5 @@ ON CONFLICT (key) DO UPDATE SET
     value = EXCLUDED.value,
     description = EXCLUDED.description,
     updated_at = NOW();
+
+
