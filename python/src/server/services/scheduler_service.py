@@ -8,8 +8,10 @@ Implements a consistent Lifecycle & State-Driven architecture:
 3. Stateful Bi-weekly Maintenance (Run once every 14 days)
 """
 
+import os
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -37,13 +39,13 @@ class SchedulerService:
     _instance = None
     _scheduler = None
 
-    def __new__(cls):
+    def __new__(cls) -> "SchedulerService":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._scheduler = AsyncIOScheduler()
+            cls._instance._scheduler = AsyncIOScheduler(job_defaults={'misfire_grace_time': 60})
         return cls._instance
 
-    async def start(self):
+    async def start(self) -> None:
         if self._scheduler and not self._scheduler.running:
             logger.info("🕒 Clockwork: Starting Lifecycle-Driven Scheduler Service...")
             self._scheduler.start()
@@ -51,18 +53,21 @@ class SchedulerService:
         else:
             logger.warning("Clockwork: Scheduler already running.")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         if self._scheduler and self._scheduler.running:
             logger.info("🛑 Clockwork: Shutting down Scheduler...")
             self._scheduler.shutdown()
 
-    async def _update_last_run(self, job_id: str):
+    async def _update_last_run(self, job_id: str) -> None:
         """Persists the last run timestamp to the database."""
         try:
             from src.server.services.settings_service import SettingsService
 
             settings = SettingsService()
-            db_key = f"LAST_RUN_{job_id.upper()}"
+            env_prefix = os.environ.get("ARCHON_ENV", "")
+            if env_prefix and not env_prefix.endswith("_"):
+                env_prefix += "_"
+            db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
             now_iso = datetime.now(UTC).isoformat()
             settings.set_setting(db_key, now_iso)
         except Exception as e:
@@ -74,7 +79,10 @@ class SchedulerService:
             from src.server.services.settings_service import SettingsService
 
             settings = SettingsService()
-            db_key = f"LAST_RUN_{job_id.upper()}"
+            env_prefix = os.environ.get("ARCHON_ENV", "")
+            if env_prefix and not env_prefix.endswith("_"):
+                env_prefix += "_"
+            db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
             val = settings.get_setting(db_key)
             if val:
                 return datetime.fromisoformat(val.replace("Z", "+00:00"))
@@ -118,7 +126,7 @@ class SchedulerService:
         now_local = datetime.now(DEFAULT_TIMEZONE).date()
         return (now_local - last_run_local).days >= 13
 
-    def _schedule_stateless(self, job_func: Callable, job_id: str, delay_mins: int, interval_mins: int):
+    def _schedule_stateless(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, interval_mins: int) -> None:
         """Schedules high-frequency stateless patrols with an initial delay."""
         if not self._scheduler:
             return
@@ -138,12 +146,12 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Stateless: {job_id} (Start: +{delay_mins}m, Loop: {interval_mins}m)")
 
-    async def _schedule_stateful_daily(self, job_func: Callable, job_id: str, delay_mins: int, hour: int, minute: int):
+    async def _schedule_stateful_daily(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, hour: int, minute: int) -> None:
         """Schedules a daily job if not already run today, catching up if missed."""
         if not self._scheduler:
             return
 
-        async def wrapper():
+        async def wrapper() -> None:
             if await self._should_run_daily(job_id):
                 logger.info(f"🕒 Clockwork: Executing daily job '{job_id}'")
                 try:
@@ -163,12 +171,12 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Daily: {job_id} (Catchup: +{delay_mins}m, Cron: {hour:02d}:{minute:02d} CST)")
 
-    async def _schedule_stateful_weekly(self, job_func: Callable, job_id: str, delay_mins: int, day_of_week: str, hour: int, minute: int):
+    async def _schedule_stateful_weekly(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, day_of_week: str, hour: int, minute: int) -> None:
         """Schedules a weekly job, catching up if missed."""
         if not self._scheduler:
             return
 
-        async def wrapper():
+        async def wrapper() -> None:
             if await self._should_run_weekly(job_id):
                 logger.info(f"🕒 Clockwork: Executing weekly job '{job_id}'")
                 try:
@@ -188,12 +196,12 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Weekly: {job_id} (Catchup: +{delay_mins}m, Cron: {day_of_week} {hour:02d}:{minute:02d} CST)")
 
-    async def _schedule_stateful_monthly(self, job_func: Callable, job_id: str, delay_mins: int, day: int, hour: int, minute: int):
+    async def _schedule_stateful_monthly(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, day: int, hour: int, minute: int) -> None:
         """Schedules a monthly job, catching up if missed."""
         if not self._scheduler:
             return
 
-        async def wrapper():
+        async def wrapper() -> None:
             if await self._should_run_monthly(job_id):
                 logger.info(f"🕒 Clockwork: Executing monthly job '{job_id}'")
                 try:
@@ -213,12 +221,12 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Monthly: {job_id} (Catchup: +{delay_mins}m, Cron: Day {day} {hour:02d}:{minute:02d} CST)")
 
-    async def _schedule_stateful_biweekly(self, job_func: Callable, job_id: str, delay_mins: int, day_of_week: str, hour: int, minute: int):
+    async def _schedule_stateful_biweekly(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, day_of_week: str, hour: int, minute: int) -> None:
         """Schedules a bi-weekly job, catching up if missed."""
         if not self._scheduler:
             return
 
-        async def wrapper():
+        async def wrapper() -> None:
             if await self._should_run_biweekly(job_id):
                 logger.info(f"🕒 Clockwork: Executing bi-weekly maintenance '{job_id}'")
                 try:
@@ -238,12 +246,12 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Bi-weekly: {job_id} (Catchup: +{delay_mins}m, Cron: {day_of_week} {hour:02d}:{minute:02d} CST)")
 
-    def _trigger_stateful_daily_event(self, job_func: Callable, job_id: str):
+    def _trigger_stateful_daily_event(self, job_func: Callable[..., Any], job_id: str) -> None:
         """Triggers a stateful daily job immediately as an event, verifying state lock first."""
         if not self._scheduler:
             return
 
-        async def wrapper():
+        async def wrapper() -> None:
             if await self._should_run_daily(job_id):
                 logger.info(f"🔗 Event-Driven: Executing daily job '{job_id}'")
                 try:
@@ -258,7 +266,7 @@ class SchedulerService:
         # Run immediately
         self._scheduler.add_job(wrapper, id=f"{job_id}_event", replace_existing=True)
 
-    async def _schedule_jobs(self):
+    async def _schedule_jobs(self) -> None:
         """Phase 5.1.16: Unified Job Lifecycle Strategy including Weekly/Monthly summaries."""
         if not self._scheduler:
             return
@@ -288,73 +296,73 @@ class SchedulerService:
         await self._schedule_stateful_biweekly(self._run_ssot_audit, "ssot_audit", 47, "sun", 10, 0)
 
     # Delegation Methods
-    async def _run_system_probe(self):
+    async def _run_system_probe(self) -> None:
         await patrol.run_system_probe()
 
-    async def _run_log_patrol(self):
+    async def _run_log_patrol(self) -> None:
         await patrol.run_log_patrol()
 
-    async def _cleanup_system_probes(self):
+    async def _cleanup_system_probes(self) -> None:
         await cleanup_patrol.cleanup_system_probes()
 
-    async def _run_tech_debt_audit(self):
+    async def _run_tech_debt_audit(self) -> None:
         await tech_debt_patrol.run_tech_debt_audit()
 
-    async def _run_ssot_audit(self):
+    async def _run_ssot_audit(self) -> None:
         await tech_debt_patrol.run_ssot_audit()
 
-    async def _run_model_verification(self):
+    async def _run_model_verification(self) -> None:
         await patrol.run_model_verification()
 
-    async def _run_infrastructure_audit(self):
+    async def _run_infrastructure_audit(self) -> None:
         await patrol_infra.run_infrastructure_audit()
 
-    async def _run_prune_stale_leads(self):
+    async def _run_prune_stale_leads(self) -> None:
         await leads_patrol.run_prune_stale_leads()
 
     @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
-    async def _run_auto_fetch_leads(self):
+    async def _run_auto_fetch_leads(self) -> None:
         await leads_patrol.run_auto_fetch_leads()
 
         # EVENT-DRIVEN: Trigger downstream report ONLY on success
         self._trigger_stateful_daily_event(self._run_daily_market_report, "bob_market_report")
 
-    async def _analyze_token_usage(self):
+    async def _analyze_token_usage(self) -> None:
         await sentinel_patrol.analyze_token_usage()
 
-    async def _run_business_sentinel(self):
+    async def _run_business_sentinel(self) -> None:
         await sentinel_patrol.run_business_sentinel()
 
-    async def run_business_sentinel(self):
+    async def run_business_sentinel(self) -> None:
         """Public alias for manual triggering from other services."""
         await sentinel_patrol.run_business_sentinel()
 
     @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
-    async def _run_daily_market_report(self):
+    async def _run_daily_market_report(self) -> None:
         await leads_patrol.run_daily_market_report()
 
         # EVENT-DRIVEN: Trigger downstream executive summary ONLY on success
         self._trigger_stateful_daily_event(self._run_daily_executive_summary, "daily_executive_summary")
 
     @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
-    async def _run_daily_executive_summary(self):
+    async def _run_daily_executive_summary(self) -> None:
         await report_service.generate_daily_executive_summary()
 
     @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
-    async def _run_weekly_executive_summary(self):
+    async def _run_weekly_executive_summary(self) -> None:
         await report_service.generate_weekly_executive_summary()
 
     @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
-    async def _run_monthly_executive_summary(self):
+    async def _run_monthly_executive_summary(self) -> None:
         await report_service.generate_monthly_executive_summary()
 
-    async def _run_api_deprecation_scan(self):
+    async def _run_api_deprecation_scan(self) -> None:
         await sentinel_patrol.run_api_deprecation_scan()
 
-    async def _run_task_dispatcher(self):
+    async def _run_task_dispatcher(self) -> None:
         await task_dispatcher.run_task_dispatcher()
 
-    async def _run_meta_twin_audit(self):
+    async def _run_meta_twin_audit(self) -> None:
         from .system.meta_twin_service import meta_twin_service
         await meta_twin_service.run_telemetry_audit()
 

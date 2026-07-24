@@ -192,9 +192,19 @@ async def generate_task_from_alert_logic(
 
         # 3. RAG Search
         rag_service = RAGService(task_service_instance.supabase_client)
+        from src.server.schemas.settings import RagConfig
+        from src.server.services.settings_service import SettingsService
+        try:
+            settings_svc = SettingsService(task_service_instance.supabase_client)
+            rag_config = RagConfig.model_validate(settings_svc.get_all_settings())
+            match_count = rag_config.sentinel_rag_match_count
+        except Exception as e:
+            logger.warning(f"Failed to parse RagConfig, using default match_count: {e}")
+            match_count = 2
+
         rag_success, rag_result = await rag_service.perform_rag_query(
             query=f"{details.get('company', 'Compliance')} {details.get('type', '')}",
-            match_count=2,
+            match_count=match_count,
         )
         if rag_success and "results" in rag_result:
             context_str += "\nINTERNAL KNOWLEDGE BASE SNIPPETS:\n"

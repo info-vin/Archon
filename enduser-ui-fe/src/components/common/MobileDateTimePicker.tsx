@@ -37,10 +37,14 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
         setTempDate(newDate);
     };
 
+    // PERFORMANCE: Hoisted Intl.DateTimeFormat instance outside the render loop
+    // to prevent expensive re-instantiations on every component render/update.
+    const displayFormatter = React.useMemo(() => new Intl.DateTimeFormat('zh-TW', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true
+    }), []);
+
     const formatDisplay = (d: Date) => {
-        return d.toLocaleString('zh-TW', { 
-            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true 
-        });
+        return isNaN(d.getTime()) ? 'Invalid Date' : displayFormatter.format(d);
     };
 
     const PickerColumn = ({ label, value, onUp, onDown }: any) => (

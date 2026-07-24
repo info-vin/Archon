@@ -22,7 +22,7 @@ class CrawlerManager:
     _crawler: AsyncWebCrawler | None = None
     _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "CrawlerManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -33,7 +33,7 @@ class CrawlerManager:
             await self.initialize()
         return self._crawler
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the crawler if not already initialized."""
         if self._initialized:
             safe_logfire_info("Crawler already initialized, skipping")
@@ -68,7 +68,7 @@ class CrawlerManager:
             self._initialized = False
             raise Exception(f"Failed to initialize Crawl4AI crawler: {e}") from e
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up the crawler resources."""
         if self._crawler and self._initialized:
             try:
@@ -97,11 +97,11 @@ async def get_crawler() -> AsyncWebCrawler | None:
     return await get_manager().get_crawler()
 
 
-async def initialize_crawler():
+async def initialize_crawler() -> None:
     """Initialize the global crawler."""
     await get_manager().initialize()
 
 
-async def cleanup_crawler():
+async def cleanup_crawler() -> None:
     """Clean up the global crawler."""
     await get_manager().cleanup()

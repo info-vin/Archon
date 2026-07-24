@@ -10,7 +10,7 @@ from src.server.services.shared_constants import AgentUUIDs
 
 logger = get_logger(__name__)
 
-async def cleanup_system_probes():
+async def cleanup_system_probes() -> None:
     """Retention Policy: Deletes Probe data older than 48h."""
     logger.info("🧹 Clockwork: Running System Probe Cleanup...")
     try:

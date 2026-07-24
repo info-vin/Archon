@@ -9,7 +9,7 @@ from src.server.schemas.settings import PruningConfig
 logger = get_logger(__name__)
 
 
-async def run_infrastructure_audit():
+async def run_infrastructure_audit() -> None:
     """Phase 6.1 (now 5.9.2): Patrols the 3 main infrastructures (Vercel, Supabase, HF)."""
     logger.info("🛡️ Clockwork: Starting Infrastructure Patrol...")
     import os

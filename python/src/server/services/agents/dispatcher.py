@@ -4,6 +4,7 @@ Resolves the 'God Method' coupling in agent_service.py by encapsulating
 different agent execution behaviors into independent strategies.
 """
 
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, cast
 
@@ -109,8 +110,11 @@ class DefaultLLMStrategy(BaseAgentStrategy):
                     f"Generating content using SDK for model {active_model} with {len(agent_tools_list)} tools."
                 )
 
-                response = await client.chat.completions.create(
-                    model=active_model, messages=messages, tools=tools_param
+                response = await asyncio.wait_for(
+                    client.chat.completions.create(
+                        model=active_model, messages=messages, tools=tools_param
+                    ),
+                    timeout=300
                 )
                 res_msg = response.choices[0].message
                 if res_msg.tool_calls and agent_service.mcp_client:
@@ -119,8 +123,11 @@ class DefaultLLMStrategy(BaseAgentStrategy):
                         res_msg.tool_calls, agent_id=agent_id
                     )
                     messages.extend(tool_results)
-                    final_response = await client.chat.completions.create(
-                        model=active_model, messages=messages, tools=tools_param
+                    final_response = await asyncio.wait_for(
+                        client.chat.completions.create(
+                            model=active_model, messages=messages, tools=tools_param
+                        ),
+                        timeout=300
                     )
                     final_output = final_response.choices[0].message.content
                 else:

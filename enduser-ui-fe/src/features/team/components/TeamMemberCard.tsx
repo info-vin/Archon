@@ -94,6 +94,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                     <button 
                         onClick={() => onEditRole(member)}
                         disabled={isAgent}
+                        aria-disabled={isAgent}
                         className={`flex-1 min-w-0 text-sm font-medium py-3 rounded-xl transition-colors min-h-[44px] flex items-center justify-center ${isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 active:bg-gray-200'}`}
                         aria-label={`Manage role for ${member.name}`}
                         title="Manage Role"

@@ -1,0 +1,26 @@
+{
+  "1. MCP 協議擴充 (mcp_server)": {
+    "baseline_health": 95,
+    "baseline_files": 28,
+    "baseline_lines": 3211,
+    "baseline_coverage": 84.2
+  },
+  "2. 自主 Agent 引擎 (agents)": {
+    "baseline_health": 90,
+    "baseline_files": 27,
+    "baseline_lines": 3214,
+    "baseline_coverage": 93.8
+  },
+  "3. 核心業務服務 (services)": {
+    "baseline_health": 85,
+    "baseline_files": 205,
+    "baseline_lines": 26314,
+    "baseline_coverage": 61.1
+  },
+  "4. API 門戶與路由 (api_routes)": {
+    "baseline_health": 78,
+    "baseline_files": 49,
+    "baseline_lines": 5323,
+    "baseline_coverage": 38.1
+  }
+}

@@ -190,8 +190,9 @@
 | :--- | :--- | :--- |
 | **靜態語法與型別分析** | `make lint`<br>`make lint-fe`<br>`make lint-be` | **時機**: 提交程式碼 (Commit/Push) 前。<br>**說明**: 確保代碼符合 Biome/ESLint/Ruff 規範及 MyPy 型別安全。 |
 | **全域 Persona 物理巡檢** | `make persona-audit` | **時機**: 涉及 RBAC 權限或核心流程修改後。<br>**說明**: 確保五大核心角色 (Alice, Bob, Charlie, David, Agents) 的工作流程暢通，且回傳非零退出碼以防錯誤被吞。 |
-| **數位忿生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
-| **數位忿生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
+| **階段與型別健康度稽核** | `make phase-audit` | **時機**: 階段性驗收、開啟新 Phase 或架構重構後。<br>**說明**: 物理掃描 PRPs 斷層，公證後端四大架構 (MCP/Agents/Services/API Routes) 17 個子分區之動態型別健康度。 |
+| **數位雙生偵察員 (容器化)** | `make twin-scout` | **時機**: UI 流程大改或部署前。<br>**說明**: 透過 Headless 瀏覽器在容器內進行使用者體驗的盲測公證。 |
+| **數位雙生偵察員 (本機行動)** | `make twin-scout-action` | **時機**: 需肉眼觀察或繼承本機登入狀態時。<br>**說明**: 帶有 UI (Headed) 的原生執行模式，適合測試星型群聊動態渲染等場景。 |
 | **數位雙生百關動態模擬** | `make twin-simulator` | **時機**: 驗證極端混沌環境下的 UI 自癒能力時。<br>**說明**: 跑百關 E2E 模擬矩陣驗證（限額執行前幾關防超時），會搭配 `make twin-gen-levels` 生成與 `make twin-record` 單關錄影除錯。 |
 | **終極自動化品質門禁** | `make audit-qa` | **時機**: Major Release、PR 合併至主幹前的最終驗收。<br>**說明**: 執行最嚴格的串流驗證，包含 DNS 洩漏掃描、UI 巢狀死鎖檢查、Migration 驗證 (⚠️**宿主機必須啟動 Docker**)、LLM 語意裁判、後端測試與前端 E2E 邊界測試。 |
 | **毀滅性 E2E 測試門禁** | `make audit-qa-e2e` | **時機**: PR 合併至主幹前的 E2E 重點驗收。<br>**說明**: 執行會破壞並重置資料庫的 Playwright 關鍵 spec 測試門禁。 |
@@ -260,42 +261,23 @@ def test_some_endpoint():
 
 ### 3.3 前端 E2E 測試 (`enduser-ui-fe`)
 
-#### 3.3.1 E2E 測試核心架構
+#### 3.3.1 E2E 測試核心架構與 MSW 規範
 
-為確保前端 E2E 測試的穩定性與可維護性，專案採用了以下架構：
+專案採用獨立 `vitest.e2e.config.ts` 設定檔將 E2E 測試與單元測試完全隔離，並由 `tests/e2e/e2e.setup.ts` 統一管理 API Mocking：
 
-1.  **專屬設定檔**: 使用獨立的 `vitest.e2e.config.ts` 設定檔，將 E2E 測試與單元測試完全隔離。
-2.  **隔離的 Mocking 環境**: 所有 E2E 測試所需的 API Mock 都集中在 `tests/e2e/e2e.setup.ts` 中管理。
-3.  **標準化元件渲染**: 為解決 React Router 的問題，所有測試都直接渲染 `AppRoutes` 元件，並為其提供 `AuthProvider` 和 `MemoryRouter` 作為包裹 (Wrapper)。
-4.  **混合 Mocking 策略**:
-    *   **認證 (Authentication)**: 使用 `vi.mock` 來模擬 `getCurrentUser` 等認證相關函式。
-    *   **數據 (Data)**: 使用 **Mock Service Worker (MSW)** 攔截所有數據相關的 `fetch` 請求。請確保 `src/mocks/handlers.ts` 中的模擬資料結構與前端 `types.ts` 中的類型定義**完全一致**。
-    *   **全域 Server 共用原則**: 在個別測試檔案中，**嚴禁**使用 `setupServer` 建立新的實例。必須引用 `src/mocks/server` 中的全域 `server` 物件，並使用 `server.use()` 來注入該測試專屬的 Handler。這能避免與 `e2e.setup.ts` 中的全域設定發生衝突。
+1. **標準化元件渲染**: 所有測試直接渲染 `AppRoutes` 元件，並提供 `AuthProvider` 和 `MemoryRouter` 作為 Wrapper。
+2. **Hybrid Mocking 策略 (雙軌對齊)**:
+   * **Auth 認證**: `e2e.setup.tsx` 使用 `vi.mock` 攔截 `api.getCurrentUser`，提供穩定的測試用戶身份。
+   * **Data 數據 (Pass-through)**: 其他 API 預設透傳呼叫真實 `api.ts`，由底層 `fetch` 觸發 **Mock Service Worker (MSW)** 攔截。模擬資料結構（`src/mocks/handlers.ts`）必須與 `types.ts` 100% 物理對齊。
+3. **全域 MSW Server 唯一性**: 嚴禁在個別測試檔中使用 `setupServer`。必須引用 `src/mocks/server` 之全域實例，並用 `server.use()` 注入專屬 Handler。
+4. **Spying 與 `this` 綁定**: setup 中包裝 API 方法時，必須使用 `actual.api[key](...args)` 呼叫，確保 `api.ts` 內部的 `this._getHeaders()` 上下文正確綁定。
+5. **關鍵方法時序豁免 (Exclusion)**: 關鍵方法（如 `getTasks`）因涉及複雜 Promise / Loading 狀態，豁免於 `vi.fn` 包裝，直接執行真實代碼防時序卡死。
+6. **MSW 元素等待規範**: 測試 UI 狀態時，務必先 `await waitFor(() => expect(loading).not.toBeInTheDocument())`，避開非同步渲染差。
 
-#### 3.3.2 E2E 架構深度解析 (Architecture Deep Dive)
+#### 3.3.2 完整整合測試之資料庫與憑證準備
 
-*   **Hybrid Strategy (混合策略)**:
-    *   **Auth**: `e2e.setup.tsx` 使用 `vi.mock` 攔截 `api.getCurrentUser`，提供穩定的測試用戶身份。
-    *   **Data**: 其他 API 方法預設為 **Pass-through** (透傳)，直接呼叫真實 `api.ts` 代碼，由底層 `fetch` 觸發 MSW 攔截。這確保了測試與真實運作的高度一致性。
-*   **Spying 與 `this` 綁定**:
-    *   為了讓測試能使用 `expect(api.method).toHaveBeenCalled()`，我們在 setup 中對 API 方法進行了 Spy 包裝。
-    *   **關鍵細節**: 包裝時必須使用 `actual.api[key](...args)` 形式呼叫，以確保 `api.ts` 內部的 `this._getHeaders()` 上下文正確綁定。
-*   **豁免機制 (Exclusion)**:
-    *   某些關鍵方法（如 `getTasks`）因涉及複雜的 Promise 狀態或 Loading 邏輯，若被 `vi.fn` 包裝可能導致時序問題（如 Dashboard 卡在 Loading）。這些方法被明確豁免於 Spy 之外，直接執行真實代碼。
-*   **MSW 最佳實踐**:
-    *   **全域唯一**: 嚴禁在個別測試檔案中 `setupServer`。必須依賴全域 `handlers.ts`。
-    *   **Loading 等待**: 測試 UI 時，務必先 `await waitFor(() => expect(loading).not.toBeInTheDocument())`，再進行元素查找。
-
-#### 3.3.3 完整整合測試的準備工作
-
-為了讓 E2E 測試能針對真實後端運行，專案提供了以下機制：
-
-1.  **自動化資料庫重置**:
-    *   後端提供一個受 `ENABLE_TEST_ENDPOINTS` 環境變數保護的 `POST /api/test/reset-database` 端點。
-    *   E2E 測試套件的 `globalSetup.ts` 會在測試運行前自動呼叫此端點，確保資料庫處於乾淨、可預測的狀態。
-2.  **測試環境中的 Supabase 初始化**:
-    *   E2E 測試設定會以程式化方式，在 `jsdom` 的 `localStorage` 中設定 Supabase 的 URL 和金鑰。
-    *   這使得前端的 Supabase 客戶端能在測試環境中正確初始化，並發出真實的 API 請求。
+1. **自動化資料庫重置**: 後端提供受 `ENABLE_TEST_ENDPOINTS` 保護之 `POST /api/test/reset-database` 端點，由 `globalSetup.ts` 於測試前自動重置資料庫。
+2. **Supabase 憑證初始化**: 測試設定自動於 `jsdom` 之 `localStorage` 寫入 Supabase URL 與金鑰，確保客戶端正確發送請求。
 
 ### 3.4 前端測試常見問題 (FAQ)
 
@@ -354,7 +336,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 #### **序列 A：邏輯與代碼驗證 (Developer/CI Sequence)**
 **重心**: 確保「代碼沒有 Bug」。
 **執行順序**: `make dev-docker` -> `make test` -> `make probe`
-*   **`make test`**: 執行 544+ 項測試，確認 API 邏輯、權限與組件渲染正確。
+*   **`make test`**: 執行 610+ 項測試，確認 API 邏輯、權限與組件渲染正確。
 *   **`make probe`**: 在容器內執行，驗證資料庫連線、AI 金鑰與 RAG 檢索維度。
 *   **適用場景**: 提交代碼前的最後品質把關。
 
@@ -415,180 +397,73 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 ### 4.3 部署標準作業流程 (SOP)
 
 > **📝 遷移檔更新通知 (Migration Updates)**
-> 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 下的版本子目錄中（如 `migration/0.2.2/`），並依照檔案前綴數字順序執行。
->
-> 最新發現的遷移檔 (v0.2.2):
-> - `01_foundation_types.sql`
-> - `02_tables_core.sql`
-> - `03_tables_business.sql`
-> - `04_tables_ops.sql`
-> - `05_logic_functions.sql`
-> - `06_constraints_main.sql`
-> - `07_logic_indexes.sql`
-> - `08_logic_triggers.sql`
-> - `09_constraints_fkeys.sql`
-> - `100_add_tiered_pruning_rpcs.sql`
-> - `101_update_supervisor_prompt.sql`
-> - `10_security_rls.sql`
-> - `11_seed_config.sql`
-> - `12_seed_rbac.sql`
-> - `18_seed_crawler_targets.sql`
-> - `19_seed_marketing_group_chat_prompts.sql`
-> - `20_seed_supervisor_agent.sql`
-> - `21_seed_reports_workflow_prompts.sql`
-> - `22_seed_devbot_math_prompt.sql`
-> - `23_seed_agent_system_prompts.sql`
-> - `24_create_dynamic_agent_tables.sql`
-> - `25_create_user_game_saves.sql`
-> - `26_rag_hybrid_match_chunks.sql`
-> - `27_enable_missing_rls.sql`
-> - `28_graphrag_and_mrl.sql`
-> - `29_seed_job_board_prompts.sql`
-> - `30_alter_archon_prompts_schema.sql`
-> - `31_seed_art_asset_prompts.sql`
-> - `32_seed_nav_icons_prompts.sql`
-> - `99_rescue_live_data.sql`
-> - `RESET_DB.sql`
-> - `seed_blog_posts.sql`
-> - `seed_mock_data.sql`
-> - `seed_rag_defaults.sql`
+> 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/` 目錄中，並嚴格依照檔案前綴數字標號順序執行 (如 `01` -> `02` -> `33`)。
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
 
 1.  **階段一：部署前本地檢查**
-    此步驟提供兩種流程選項：
-    *   **流程一 (快速檢查)**: 至少執行 `make test` 與 `make lint`。
-    *   **流程二 (完整驗證)**: 執行「[2.3 全 Docker 環境手動驗證 SOP](#23-全-docker-環境手動驗證-sop)」，以進行最徹底的檢查。
+    *   **快速檢查**: 執行 `make test` 與 `make lint`。
+    *   **完整驗證**: 執行「[2.3 全 Docker 環境手動驗證 SOP](#23-全-docker-環境手動驗證-sop)」。
 
 2.  **階段二：資料庫遷移 (Database Migration) - v2 (Tracked)**
 
-    此流程的最終目標是安全、可追蹤地更新資料庫結構。
-
     **核心原則**:
-    *   **冪等性**: 所有遷移腳本都必須是冪等的 (`IF NOT EXISTS`)。
-    *   **版本註冊**: 每個腳本都必須在執行成功後，將自己的版本號註冊到 `schema_migrations` 表中。
+    *   **冪等性**: 所有遷移腳本都必須是冪等的 (`IF NOT EXISTS` / `DROP ... IF EXISTS`)。
+    *   **版本註冊**: 每個腳本執行成功後，必須將自己的檔名版本號註冊到 `schema_migrations` 表中。
 
     **開發新遷移腳本的流程**:
-    1.  **建立檔案**: 建立一個新的 SQL 檔案，並使用下一個可用的數字作為前綴 (例如 `003_add_new_feature.sql`)。
-    2.  **撰寫冪等 SQL**: 使用 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` 或 `CREATE TABLE IF NOT EXISTS ...` 等語法。
-    3.  **註冊版本**: 在腳本的結尾，加上註冊指令：
+    1. **建立檔案**: 使用下一個數字前綴建立 SQL 檔 (如 `34_add_new_feature.sql`)。
+    2. **寫入冪等 SQL 與版本註冊**:
         ```sql
-        -- 註冊此遷移腳本的版本
-        INSERT INTO schema_migrations (version) VALUES ('003_add_new_feature') ON CONFLICT (version) DO NOTHING;
+        -- 1. 冪等 DDL/DML 語法
+        CREATE TABLE IF NOT EXISTS my_table (...);
+
+        -- 2. 註冊此遷移腳本的版本 (不含 .sql 副檔名)
+        INSERT INTO schema_migrations (version) VALUES ('34_add_new_feature') ON CONFLICT (version) DO NOTHING;
         ```
-        *(請將 `'003_add_new_feature'` 替換為不含 `.sql` 副檔名的檔名)*
 
     **🛡️ SQL 腳本品質檢查清單 (SQL Quality Checklist)**:
-    在提交任何 `.sql` 檔案前，必須檢查：
     - [ ] **冪等性**: 是否使用了 `IF NOT EXISTS` 或 `DROP ... IF EXISTS`？
     - [ ] **版本追蹤**: 是否包含了 `INSERT INTO schema_migrations` 語句？
-    - [ ] **資料保留**: 如果是修改種子資料 (`seed_*.sql`)，是否確認了是 `APPEND` (追加) 還是 `OVERWRITE` (覆蓋)？**嚴禁**在未讀取原內容的情況下直接覆蓋。
+    - [ ] **資料保留**: 修改種子資料 (`seed_*.sql`) 時是否確認了是 `APPEND` (追加) 還是 `OVERWRITE` (覆蓋)？**嚴禁**在未讀取原內容的情況下直接覆蓋。
 
-    **執行遷移的SOP (部署時)**:
+    **本地開發與救災 SOP**:
+    * **自動化指令 (推薦)**: 執行 `make db-init`（會自動按序執行 `migration/*.sql` -> 填充 Mock Data -> 修復 Auth ID 同步）。
+    * **手動初始化救援**: 若自動化指令失敗，請登入 Supabase SQL Editor，依 `migration/` 資料夾下檔案數字標號前綴（01 核心結構 -> 05 邏輯 -> 10 安全政策 -> 20+ 種子資料）順序手動貼上執行。
 
-    **本地開發首次設定SOP (從零開始)**:
-
-    > **⚡ 自動化指令 (推薦)**:
-    > 專案已支援 `make db-init` 指令，它會自動執行以下所有步驟（遷移 + 種子資料 + ID 同步）。
-    > **⚠️ 注意**: 執行前請確保後端服務已啟動 (`make dev`)，否則會報錯找不到容器。
-    > 僅在自動化指令失敗時，才需要參考下方的檔案列表進行手動除錯。
-
-    當您需要在本地建立一個全新的、乾淨的資料庫時：
-    1.  確保 Docker 後端已啟動 (`make dev`)。
-    2.  執行指令：
-        ```bash
-        make db-init
-        ```
-    3.  **核心功能**: 此指令會自動完成「資料庫重置 (`RESET_DB`) -> 按序執行所有 `migration/*.sql` -> 填充 Mock Data -> 修復 Auth ID 同步」。這是本地開發最快恢復環境的方法。
-
-    > **🚑 資料庫救災指南 (Database Recovery SOP)**
-    >
-    > 若遇到資料庫狀態錯亂或 `make db-init` 失效，請參閱 **[6.1 資料庫與遷移問題](#61-資料庫與遷移問題)** 進行強制重置。
-    
-        **🚑 緊急備案：手動初始化流程 (Manual Fallback)**
-    > **僅當 `make db-init` 失敗時使用**
-    > 若自動腳本無法執行，請登入 Supabase 儀表板並進入 **SQL Editor**，依序執行當前版本資料夾下的 SQL 遷移檔案：
-    >
-    > 1. **基礎與核心結構**：`01_foundation_types.sql` -> `02_tables_core.sql` -> `03_tables_business.sql` -> `04_tables_ops.sql`
-    > 2. **邏輯與約束**：`05_logic_functions.sql` -> `06_constraints_main.sql` -> `07_logic_indexes.sql` -> `08_logic_triggers.sql` -> `09_constraints_fkeys.sql`
-    > 3. **安全政策與種子資料**：`10_security_rls.sql` -> `11_seed_config.sql` -> `12_seed_rbac.sql` -> `18_seed_crawler_targets.sql` -> `19_seed_marketing_group_chat_prompts.sql` -> `20_seed_supervisor_agent.sql` -> `21_seed_reports_workflow_prompts.sql` -> `22_seed_devbot_math_prompt.sql` -> `23_seed_agent_system_prompts.sql` -> `24_create_dynamic_agent_tables.sql` -> `25_create_user_game_saves.sql` -> `26_rag_hybrid_match_chunks.sql` -> `27_enable_missing_rls.sql`
-        
 3.  **階段三：執行部署**
 
-    **3.1 前端服務的路由設定 (重要)**
+    **3.1 前端服務的路由設定 (Render Rewrite 規則)**
 
-    對於單頁應用 (SPA) 前端服務 (如 `archon-ui-main`, `enduser-ui-fe`)，您**必須**在 Render 儀表板上設定以下**兩條**路由規則，才能確保 API 代理和頁面重新整理都正常運作。
+    單頁應用 (SPA) 前端服務 (如 `archon-ui-main`, `enduser-ui-fe`) 必須在 Render **"Redirects/Rewrites"** 區塊依序新增以下**兩條**規則：
 
-    1.  在 Render 儀表板，進入您的前端服務設定頁面。
-    2.  找到 **"Redirects/Rewrites"** 區塊。
-    3.  **依序**新增以下兩條**重寫 (Rewrite)**規則：
+    1. **規則一：API 代理規則 (優先級最高)**
+       * **Source**: `/api/:path*` (或 `/api/*`)
+       * **Destination**: `https://<ARCHON_SERVER_URL>/api/:path*` (替換為後端真實網域)
+       * **說明**: 將 `/api/` 請求代理至後端服務。
+    2. **規則二：SPA 回退規則 (優先級較低)**
+       * **Source**: `/*`
+       * **Destination**: `/index.html`
+       * **說明**: 未匹配到的路由全數導向 `index.html` 由前端 Router 接管。
 
-        **規則一：API 代理規則 (優先級最高)**
-        *   **Source (來源路徑):** `/api/:path*`
-        *   **Destination (目標位址):** `https://<您的後端服務網址>/api/:path*`
-        > **說明**: 此規則將所有 `/api/` 開頭的請求，從前端服務代理到後端服務。
+    **3.2 上線前檢查清單 (Pre-Flight Checklist)**
 
-        **規則二：SPA 回退規則 (優先級較低)**
-        *   **Source (來源路徑):** `/*`
-        *   **Destination (目標位址):** `/index.html`
-        > **說明**: 此規則會將所有**未匹配到**其他規則的請求 (例如 `/settings`, `/projects/123`) 都導向 `index.html`，讓前端路由能夠接管。
-
-    > **注意**: 這兩條規則的**順序至關重要**。必須先設定 API 代理，再設定 SPA 回退規則。請將 `<您的後端服務網址>` 替換為您 `archon-server` 的真實公開網址。
-    > 設定錯誤會導致前端無法正確與後端溝通，或頁面重新整理時出現 404 錯誤，請務必仔細檢查。
-
-    **3.2 上線前檢查清單 (Pre-Flight Checklist) - 經程式碼驗證版**
-
-    在按下部署按鈕前，請務必完成以下檢查。本清單已根據 `scripts/init_db.py`、`render.yaml` 與後端 `config.py` 的實際邏輯進行校對。
-
-    #### 1. 資料庫遷移驗證 (Database Migration)
-    *   **執行驗證**: 在本地執行 `make db-init`。
-    *   **底層邏輯檢查**:
-        *   確認 `scripts/init_db.py` 成功連接資料庫。
-        *   確認 `ensure_schema_migrations_table` 函式已建立 `schema_migrations` 表。
-        *   確認終端機顯示 `Running migration: ...` 且無錯誤，這代表 SQL 腳本的冪等性 (`IF NOT EXISTS`) 運作正常。
-    *   **關鍵指標**: 執行後應看到 `🎉 SQL migrations applied!` 與 `✅ Auth Sync Complete.`。若出現 `RESET_DB.sql` 相關錯誤，請先手動清空資料庫。
-
-    #### 2. 前端路由配置 (Frontend Routing)
-    *   **Render 設定檢查**: 打開 Render 儀表板的 "Redirects/Rewrites" 頁面。
-    *   **關鍵規則 (必須精確匹配)**:
-        *   **規則一 (API Proxy)**:
-            *   **Source**: `/api/*`
-            *   **Destination**: `https://<YOUR_ARCHON_SERVER_URL>/api/*`
-            *   **⚠️ 注意**: 請務必將 `<YOUR_ARCHON_SERVER_URL>` 替換為後端服務的**真實網域** (例如 `archon-server-xyz.onrender.com`)，**切勿保留 `<...>` 佔位符**。
-        *   **規則二 (SPA Fallback)**:
-            *   **Source**: `/*`
-            *   **Destination**: `/index.html`
-    *   **驗證方式**: 部署後訪問 `https://<前端網域>/api/health`。若回傳 JSON 則代表 Proxy 成功；若回傳 HTML 或 404 則代表路由配置錯誤。
-
-    #### 3. 環境變數檢查 (Environment Variables)
-    *   **金鑰類型檢查**:
-        *   根據 `python/src/server/config/config.py` 的 `validate_supabase_key` 邏輯，後端會**強制檢查** `SUPABASE_SERVICE_KEY` 的 JWT Role。
-        *   **❌ 錯誤**: 若使用 `anon` (Public) Key，後端將直接崩潰並報測 `CRITICAL: You are using a Supabase ANON key...`。
-        *   **✅ 正確**: 必須使用 Supabase Dashboard > Settings > API > **service_role** (Secret) Key。
-    *   **必要變數**:
-        *   `SUPABASE_URL`: 必須是 `https://` 開頭 (生產環境強制 HTTPS)。
-        *   `LOGFIRE_ENABLED`: 建議設為 `true` 以啟用與 Logfire 的整合監控。
-
-    #### 4. 功能煙霧測試 (Smoke Test)
-    *   **目標 API**: `GET /api/system/health/rag`
-    *   **權限要求**: 此 API 受 `require_system_admin` 保護 (參考 `system_api.py`)。
-    *   **執行方式**:
-        *   **方法 A (推薦)**: 使用 `make db-init` 輸出中的 **Dev Token**。
-            ```bash
-            curl -H "Authorization: Bearer <DEV_TOKEN>" https://<BACKEND_URL>/api/system/health/rag
-            ```
-        *   **方法 B (CLI)**: 在本地 or 透過 Render Shell 執行 `make probe` (此指令實際上是呼叫 `python scripts/probe_librarian.py` 的舊別名，或新版中對應的 curl 指令)。
-    *   **成功標準**: 回傳 JSON 中包含 `"status": "healthy"` 且 `details` 中無錯誤訊息。這證明了資料庫連線、Vector Extension 與 OpenAI/Gemini Embedding API 皆運作正常。
+    - [ ] **資料庫遷移驗證**: 本地執行 `make db-init` 顯示 `🎉 SQL migrations applied!` 與 `✅ Auth Sync Complete.`。
+    - [ ] **前端路由驗證**: Render 雙重 Rewrite 規則已依序設定，部署後訪問 `/api/health` 回傳 JSON (非 HTML 404)。
+    - [ ] **環境變數金鑰安檢**: 
+      * 後端 `SUPABASE_SERVICE_KEY` **必須使用 `service_role` (Secret) Key**。使用 public `anon` key 後端會崩潰。
+      * `SUPABASE_URL` 強制以 `https://` 開頭。
+    - [ ] **功能煙霧測試 (Smoke Test)**:
+      使用 Dev Token 或執行 `make probe` 打通 `GET /api/system/health/rag`，確認回傳 `"status": "healthy"` 且 DB / Vector / LLM 端點均正常。
 
     **3.3 觸發部署**
-    1.  確認 Render 儀表板監控的是正確的 `feature/...` 分支。
-    2.  將本地變更推送到 GitHub: `git push origin <your-branch>`
-    3.  Render 會自動偵測到新的提交並開始部署。
+    1. 確認 Render 監控 `dev/twins` 或預期之分支。
+    2. 推送代碼: `git push origin <branch>`，Render 自動觸發 Build。
 
 4.  **階段四：部署後驗證**
-    1.  在 Render 儀表板監控所有服務的部署日誌。
-    2.  存取後端服務的 `/health` 端點，確認回傳 `{"status":"ok"}`。
-    3.  打開前端服務的公開網址，進行功能驗證 (Smoke Test)。
+    1. 在 Render Dashboard 觀察 Build & Deploy Logs。
+    2. 訪問 `/health` 確認回傳 `{"status":"ok"}`。
+    3. 開啟前端網址進行 Smoke Test 通過。
 
 ### 4.4 AI 開發者協作流程 (AI Developer Workflow)
 
@@ -634,112 +509,87 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 | 情境 | 指令範例 | 說明 |
 | :--- | :--- | :--- |
+| **快速檢視最近修復進程** | `git log -n 20 --oneline` | 顯示最近 20 次簡短提交紀錄，適合快速確認 PR 合併與開發進度。 |
 | **查閱檔案變更歷史** | `git log -p -- Makefile` | 顯示該檔案每次提交的具體差異 (Diff)。 |
-| **搜尋代碼何時被加入** | `git log -S "await task_service"` | 找出包含特定字串的新增或刪除的提交。 |
+| **跨重命名追蹤檔案歷史** | `git log --follow <file>` | 當檔案經過 L2 拆解或更名時，穿透追蹤其重命前的原始歷史。 |
+| **搜尋代碼何時被加入/刪除** | `git log -S "await task_service"` | 找出包含特定字串之新增或刪除的提交。 |
+| **強效 Regex 內容變更搜尋** | `git log -G "def run_.*"` | 使用正規表示式搜尋函式簽署與型別改動的歷史 Commit。 |
+| **追查行數最後修改源頭** | `git blame <file>` | 顯示檔案每一行的最後修改者與提交 Hash。 |
 | **查看特定提交的內容** | `git show <commit_hash>` | 檢視某個 Commit 的完整變更。 |
-| **比較兩個分支的差異** | `git diff main...feature/new-ui" | 檢視 Feature 分支相對於 Main 分支的變更。 |
+| **比較兩個分支的差異** | `git diff main...feature/new-ui` | 檢視 Feature 分支相對於 Main 分支的變更。 |
 
 ---
 
 ## 第六章：常見問題排查 (Troubleshooting SOP)
 
-### 6.1 資料庫與遷移問題
+### 6.1 資料庫災難復原 (RESET_DB.sql)
+* **症狀**: `make db-init` 執行後資料庫仍為空，或 `make test` 後資料未還原。
+* **根源**: E2E 測試重置資料庫時 `schema_migrations` 表未清空，導致初始化腳本誤判已完成。
+* **解法**: 
+  1. 執行手動強重置: 執行 `migration/RESET_DB.sql` (清空包含 `schema_migrations` 在內的所有表)。
+  2. 重新初始化: 執行 `make db-init`。
+  3. 恢復 RAG 知識庫: 若 `make probe` 分數偏低，執行 `docker exec archon-server python scripts/seed_knowledge.py`。
 
-#### 重大災難復原：資料庫狀態錯亂
-**症狀**: `make db-init` 執行後資料庫仍為空，或 `make test` 後資料消失。
-**原因**: E2E 測試重置了資料庫，但 `schema_migrations` 未被清除，欺騙了 Init 腳本。
-
-**解決方案**:
-1.  **強制重置**: 手動執行 `RESET_DB.sql` (這會刪除所有表包含 `schema_migrations`)。
-2.  **重新初始化**: 再次執行 `make db-init`。
-3.  **恢復 RAG 知識**: 若 `make probe` 分數過低，請執行：
-    ```bash
-    docker exec archon-server python scripts/seed_knowledge.py
-    ```
-
-**Docker 快速指令**:
-```bash
-docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.getenv('SUPABASE_DB_URL'); conn=psycopg2.connect(DB); cur=conn.cursor(); f=open('migration/RESET_DB.sql'); cur.execute(f.read()); conn.commit(); conn.close(); print('✅ Reset Complete')" && make db-init
-```
+---
 
 ### 6.2 Supabase Auth 406 Error (Not Acceptable)
+* **症狀**: 前端登入成功，但呼叫 `/profiles` API 時收到 `406 Not Acceptable` 且回傳 Body 為空。
+* **根源**: **ID 不匹配 (ID Mismatch)** — 前端使用 `.single()` 查詢，但 `auth.users` 的 UUID 與 `public.profiles` 的 `id` 不同步。
+* **解法**: 執行 `make db-init`（內建「雙重同步策略 Dual Sync」，會自動執行 `UPDATE profiles SET id = auth_uuid` 強制對齊）。
 
-**症狀**: 前端登入成功，但呼叫 `/profiles` API 時收到 `406 Not Acceptable` 錯誤，且回傳 Body 為空。
+---
 
-**根源**: **ID 不匹配 (ID Mismatch)**。
-- 前端使用 `.single()` 查詢 `profiles` 表，期望獲得單筆資料。
-- `auth.users` 中的 `id` (UUID) 與 `public.profiles` 表中的 `id` 不同步。
+### 6.3 開發者自動登入 (dev-token) 500 Error
+* **症狀**: 存取 `localhost:3737` 時，瀏覽器顯示 `POST /api/auth/dev-token 500`。
+* **排查步驟**:
+  1. **密碼檢查**: 開發環境統一標準密碼為 `qwer45tyuiop` (`auth_api.py`)。
+  2. **相對路徑檢查**: 確保 `main.py` 無 `ModuleNotFoundError` 匯入錯誤。
+  3. **金鑰權限**: 確保 `SUPABASE_SERVICE_KEY` 具備 `service_role` 權限且未過期。
 
-**標準解法**:
-此問題已在 Phase 5.3 透過 `init_db.py` 的自動化修復邏輯解決。
+---
 
-1.  **請執行**: `make db-init`
-2.  **原理**: 腳本內建了「雙重同步策略 (Dual Sync Strategy)」，會自動偵測重複使用者並執行 `UPDATE profiles SET id = auth_uuid`，強制對齊資料庫 ID。
-
-### 6.3 開發者自動登入 (dev-token) 失敗 (500 Error)
-
-**症狀**: 存取 `localhost:3737` 時，瀏覽器控制台顯示 `POST /api/auth/dev-token 500`，導致無法自動登入。
-
-**可能根源與解決方案**:
-1.  **密碼不匹配**: 檢查 `python/src/server/api_routes/auth_api.py` 中的 `password` 變數。開發環境統一標準密碼為 **`qwer45tyuiop`** (參考 `PRPs/Phase_4.6.5_Bug_Checklist.md`)。
-2.  **模組匯入錯誤**: 若日誌顯示 `ModuleNotFoundError: No module named 'src.server.agents'`，需將 `main.py` 中的相對匯入修正為絕對路徑或正確的相對層級 (例如 `from ..agents` 而非 `from .agents`)。
-3.  **Supabase 連線異常**: 確保 `SUPABASE_SERVICE_KEY` 具備 `service_role` 權限且未過期。
-
-### 6.4 Hugging Face 環境字元陷阱 (UnicodeEncodeError) & Secrets 注意事項
-
-**症狀**: 部署至 Hugging Face Spaces 後，伺服器啟動失敗或 ONNX Reranker 無法載入，日誌顯示：
-`UnicodeEncodeError: 'latin-1' codec can't encode character '\u3112' in position 44: ordinal not in range(256)`
-
-**根源解析**:
-這是台灣 Mac 開發者最常踩的「注音輸入法剪貼簿陷阱」！
-`\u3112` 是注音符號「ㄒ」的 Unicode。當您在 Hugging Face 的 Settings -> Secrets 貼上 `HF_TOKEN` 時，若當時輸入法處於注音模式，按下 `Cmd + V` 卻沒按好 `Cmd`，就會在金鑰最尾端多打出一個「ㄒ」（鍵盤 V 鍵在注音對應ㄒ）。
-這會導致伺服器在使用 `huggingface_hub` 套件發送 HTTP Authorization 標頭時，`http.client` 因無法編碼「ㄒ」為 `latin-1` 而發生致命崩潰。
-
-**解決方案**:
-1. 回到 Hugging Face 的 Space Settings -> Secrets。
-2. 將輸入法切換為「純英文」狀態。
-3. 將包含錯誤字元的 `HF_TOKEN` 刪除，重新複製貼上乾淨的金鑰並儲存，Hugging Face 將會自動重啟 Space。
-*(註：目前系統層已加入對部分 HF 內建環境變數如 `SPACE_TITLE` 包含非英數字元的防護，但開發者仍須確保手動填寫的 Secrets 純淨無污染。)*
+### 6.4 Hugging Face UnicodeEncodeError (注音輸入法剪貼簿陷阱)
+* **症狀**: 部署至 HF Spaces 後伺服器崩潰，日誌顯示 `UnicodeEncodeError: 'latin-1' codec can't encode character '\u3112'`。
+* **根源解析**: **台灣 Mac 開發者專屬陷阱** — 在 HF Settings -> Secrets 貼上 `HF_TOKEN` 時未切換至英文輸入法，按 `Cmd+V` 誤將注音符號「ㄒ」(`\u3112`) 帶入金鑰末端。發送 HTTP Header 時 `http.client` 無法編碼「ㄒ」為 `latin-1` 引發致命崩潰。
+* **解法**: 切換為純英文輸入法，刪除舊 Secrets 並重新貼上乾淨金鑰後儲存。
 
 ---
 
 ### 6.5 爬蟲與 WAF 403 錯誤防禦 (Proxy Pool)
-
-**症狀**: `JobBoardService` 在擷取資料或進行暖機 (Warm-up) 時遭遇 `403 Forbidden`。
-**根源**: 目標網站的 WAF (Web Application Firewall) 偵測到來自同一 IP 短時間內的大量無 Session/Cookie 軌跡的請求，將其判定為爬蟲行為而阻擋。即便使用 `curl_cffi` 偽裝 TLS 指紋也無法完全避免。
-**解決方案與未來架構**:
-1. **短期防禦**: 目前已實作速率限制 (RateLimiter) 與亂數延遲 (`time.sleep`)。
-2. **Cookie 管理優化**: 確保 `curl_requests.Session` 能夠在 warm-up 失敗時妥善處理並繼承 WAF 挑戰 (Challenge) 所核發的 Cookie。
-3. **引入代理池 (Proxy Pool)**: 若未來爬蟲規模與頻率增加，**必須**導入動態代理池架構，分散來源 IP 以繞過單一 IP 的流量封鎖。
+* **症狀**: `JobBoardService` 在暖機或爬取時遭遇 `403 Forbidden`。
+* **根源**: 目標 WAF 偵測到同 IP 短時間大量無 Cookie 請求而引發攔截。
+* **防禦策略**:
+  1. **短期**: 啟用 `RateLimiter` 速率限制與亂數延遲 (`time.sleep`)。
+  2. **中期**: 確保 `curl_requests.Session` 在 Warm-up 時正確繼承 WAF Challenge Cookie。
+  3. **長期**: 高頻爬蟲導入動態代理池 (Proxy Pool) 分散 IP 請求。
 
 ---
 
-(請參閱 `PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`)
+## 附錄 A：歷史決策與背景導覽 (Historical Context & PRPs)
+
+* 詳情請參閱 [`PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md`](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_4.2_Business_Feature_Expansion_Plan.md) 及相關歷史 PRPs 檔案庫。
 
 ---
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-> **結算日期**: 2026-06-18 (Phase 5.6.x Lean Optimization Archive)
-> **狀態**: 🟢 **專案計畫文件 (PRPs) 瘦身完成**。Phase 5.6 系列文件已壓縮至 `archive/` 並提煉至 `docs/` 知識庫。目前全系統巨型檔案持續清零（無超過 400 行之 God Object）。
-> 
-* **長效機制**：技術債改由自動化工具監控。每次提交前或定期運行 `make phase-audit` 與 `make tech-debt-audit`，自動掃描過期腳本與 PRPs 雜亂檔案，確保工作區極簡無雜訊。
+> **結算日期**: Phase 5.9.15 (全後端四大架構動態健康度掃描與 3.3 巡檢戰線型別重構)
+> **狀態**: 🟢 **全系統 0 Monolith 巨型檔案 (>400行)**，由 `make phase-audit` (Step 6) 與 `make tech-debt-audit` 自動化動態監控過期腳本與 PRPs 雜亂檔案。
 
 ---
 
 ## 附錄 C：系統演進現狀 (System Evolution Status)
 
-* **工具與權限 (MCP)**：全面使用 `AgentService` + `MCPClient` 雙階段迴圈（Think -> Tool -> Act），並受 `TOOL_CONFIG` 授權白名單與 XP 動態治理機制保護。
-* **Agent 註冊**：所有 Agent 定義、Prompts、與權限階層集中於 `src/server/services/agent_registry.py`，關閉 LLM 思考指令雙軌制。
-* **長期型別與測試防線**：後端物理性 Zero MyPy Errors，後端測試 554+ 項與前端測試 183+ 項達成 100% 通過率。
+* **工具與權限 (MCP)**：使用 `AgentService` + `MCPClient` 雙階段迴圈（Think -> Tool -> Act），受 `TOOL_CONFIG` 白名單保護。
+* **Agent 註冊**：所有 Agent 定義、Prompts 集中於 `src/server/services/agent_registry.py`，關閉 LLM 思考指令雙軌制。
+* **長期型別與測試防線**：後端物理性 Zero MyPy Errors，後端測試 610+ 項與前端測試 183+ 項達成 100% 通過率。
 
 ---
 
 ## 附錄 D：基礎設施物理審計 (Infrastructure Audit)
 
-> **結算日期**: 2026-05-29 (Phase 5.5.0 Offline Hardening)
-> **狀態**: 🟢 **映像檔體積已大幅最佳化**。目前 `archon-server` 體積已成功由 31.5GB 瘦身至 **5.02GB**。
-> 
+> **結算日期**: Phase 5.5.0 (Offline Hardening) — `archon-server` 體積成功由 31.5GB 瘦身至 **5.02GB**。
+
 * **體積減重核心**：
   1. **CPU PyTorch 強制約束**：安裝時指定 `--extra-index-url https://download.pytorch.org/whl/cpu` 剃除數 GB 的 CUDA 庫死重。
   2. **編譯快取防禦**：Dockerfile 嚴禁 `COPY` 建置快取（如 `/root/.cache`）進入生產映像檔，防範 `ENOSPC` 磁碟耗盡。
@@ -748,16 +598,13 @@ docker exec -i archon-server /venv/bin/python -c "import os, psycopg2; DB=os.get
 
 ## 附錄 E：資料庫表格設計初衷 (Schema Rationale)
 
-為了防止誤刪或誤改，特此記錄看似無即時呼叫的保留表之設計初衷：
-* **`market_insights`** (Phase 4.2)：為 Bob 產出的「戰略級市場分析報告」預留的長期趨勢分析基石。
-* **`subscriptions`** (2025-09 重構)：為未來「商業化付費模式」預留的 API 訂閱與計費數據模型。
+記錄看似無即時呼叫之保留表設計初衷，防止誤刪：
+* **`market_insights`** (Phase 4.2)：為 Bob 產出的「戰略級市場分析報告」預留之長期趨勢分析基石。
+* **`subscriptions`** (2025-09 重構)：為未來「商業化付費模式」預留之 API 訂閱與計費數據模型。
 
 ---
 
 ## 附錄 F：數位雙生與 E2E 驗證規範 (Digital Twin & E2E Standard)
 
-* **IPA 自癒定位原則**：優先使用語意定位（如 `button:has-text('...')`），嚴禁易斷裂的 CSS 階層路徑。具備 Sandbox Idempotency（測試前自動重置）與 Pixelmatch 預篩的 Gemini Vision 視覺評判。
-* **核心工具組**：
-  * `level_generator.py` (`make twin-gen-levels`)：自動動態生成 100+ 個參數化關卡 YAML 腳本。
-  * `simulator_runner.py` (`make twin-simulator`)：百關全自動闖關（預設 limit=3 以防超時），並提供 5% 延遲/500 錯誤的混沌注入驗證。
-  * `twin_scout.py` (`make twin-record`)：單關 `headless=false` 視覺回放、錄影除錯與模擬。
+* **IPA 自癒定位原則**：優先使用語意定位（如 `button:has-text('...')`），嚴禁易斷裂的 CSS 階層路徑。具備 Sandbox Idempotency 與 Pixelmatch 預篩的 Gemini Vision 視覺評判。
+* **核心工具組**：動態關卡生成 (`make twin-gen-levels`)、百關模擬器 (`make twin-simulator`) 與 Headed 視覺對帳 (`make twin-record`)，詳細指令說明請參閱第三章 3.1.2 門禁表格。

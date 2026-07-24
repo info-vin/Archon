@@ -12,7 +12,7 @@ from src.server.utils import get_supabase_client
 logger = get_logger(__name__)
 
 
-async def run_task_dispatcher():
+async def run_task_dispatcher() -> None:
     """Scans and dispatches recurring tasks. Reclaims zombie tasks."""
     logger.info("📡 Clockwork: Starting Task Dispatcher (Physical Alignment Mode)...")
     try:

@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: Phase 5.7.1 Card Battler Pivot, Rename, and L2 Refactoring (包含 MainUI/GameState 解耦、卡牌 UI 特效與動態翻譯、Web 部署與自動化公證) 已全部完成，所有 76 項單元與整合測試、靜態檢查及行數門禁皆已順利通過。
+*   **當前狀態 (Current Context)**: Phase 5.9.15 後續 `CONTRIBUTING_tw.md` 文件全書逐章逐節審閱與重複消除已 100% 成功完成與公證！全書由 766 行精簡至 610 行 (消除 156 行無效重複)，100% 完整保留 19 條心法、四大部署階段與全部除錯血淚案例，610 項單元測試與門禁皆通過，已 commit/push 至 `feat/twins` 分支。
 *   **今日目標 (Today's Goal)**: 等待人類指揮官給予下一階段的新指令。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -187,6 +187,21 @@
     *   **Failover 鎖死與幻覺修復**: 修正 `batch_processor.py` 於 5 月重構時遺漏的 HTTP 異常 (`httpx.RequestError`) 攔截，解決 Google API Timeout 時不會跳轉備援模型，反而最終引發「No embedding providers were attempted」幻覺的嚴重 Bug。
     *   **跨模型狀態污染防禦**: 將 `EmbeddingBatchResult` 初始化移入 Provider 迴圈內，確保每次備援跳轉時計數器歸零，修復進度條錯亂技術債。
     *   **虛假驗證 (Fake Verification) 警鐘**: 記錄了一次嚴重的違反黃金律事件。因沙盒內 Python 環境損壞 (`ModuleNotFoundError: encodings`) 導致測試瞬間崩潰，AI 未查閱背景日誌即謊報「測試運行中」。以此為戒，確立「必須實體驗證背景任務輸出」的絕對鐵律。
+12. **模型生命週期自動化與退場防禦 (Ref: Phase 5.9.12, 07-22)**:
+    *   **DB SSOT 治理**: 將 `TOKEN_PRICING_JSON` 確立為唯一真相來源 (SSOT)，捨棄 `google_handler.py` 中的硬編碼模型陣列，徹底解決未來模型被官方棄用 (Deprecation) 時引發的 404 崩潰。
+    *   **動態 API 探勘**: 實作 `discover_google_models` 與 Google API 的即時交集過濾 (Intersection Filter)，確保系統只呈現「活著且計費中」的模型。
+    *   **Free Tier 備援自癒**: 於 `model_ssot.py` 中實裝 `get_active_fallback`。當預設免費模型 (如 `gemini-3.1-flash-lite`) 無預警下架時，系統能自動掃描可用清單並無縫切換至下一個可用的 Free Tier 模型。
+
+13. **Agent DB 狀態斷點持久化 (Checkpointing) 與 人工審核 (HITL) 架構實作 (Ref: Phase 5.9.13, 07-22)**:
+    *   **DB Checkpointing 斷點續傳**: 建立 `33_create_agent_checkpoints_and_approvals.sql` 遷移檔與 `AgentCheckpointManager`，在每次 Action/Observation 循環後將狀態快照儲存至 Supabase，避免伺服器重啟或網路超時導致長任務中斷與重複呼叫 LLM。
+    *   **LLM 資源與 Free Tier 額度保護**: 徹底消除了 Agent 中斷重新播放 (Replay) 造成的無效 API 請求與長 Prompt 重複發送，精準防禦 Google Gemini API 的 15 RPM / RPD 速率限制與 429 錯誤。
+    *   **HITL 人工審核防線**: 建立 `AgentApprovalManager` 與 `AgentExecutionEngine` 攔截高風險工具調用 (`execute_shell_command`, `apply_modification` 等)，將狀態轉為 `SUSPENDED_WAITING_FOR_APPROVAL` 並於 `/api/agents` 暴露審核與恢復端點，5 項新增單元測試與 609 項全套後端測試 100% PASS 物理公證通過。
+
+14. **後端四大架構動態健康度掃描與 3.3 巡檢戰線型別重構 (Ref: Phase 5.9.15, 07-23)**:
+    *   **100% 動態全覆蓋健康度掃描器**: 建立 `backend_type_health.py` 與 `baselines/health_baseline.json`，實現全覆蓋 17 個 Sub-domains 分類與數值守恆演算法，徹底消滅文字硬編碼並整合至 `make phase-audit` 作為 Step 6 門禁。
+    *   **3.3 巡檢戰線型別技術債重構**: 針對全後端唯一的低型別分區 `3.3` (`scheduler_service.py` 與 7 個巡檢 Job 腳本) 進行強型別補齊重構。型別覆蓋率由 **39.3% 巨幅提升至 92.1% ↑**，最新健康度由 🟡 **69.7% 跨越升級至 🟢 96.1%**。
+    *   **4 大鐵律合規與 100% 物理驗證**: 達成 0 硬編碼、0 副作用 (610 項單元測試與 `make lint-be` 365 檔全數亮綠燈)、0 >400行巨型檔與 100% 物理穿透驗證通過。
+
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
 

@@ -4,12 +4,18 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 """
 
 from functools import lru_cache
-from typing import cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from ..utils import get_supabase_client
 from .prompt_service import prompt_service
 
-TOOL_CONFIG_DEFAULT = {
+
+class ToolConfig(TypedDict):
+    min_xp_level: int
+    risk_level: str
+
+
+TOOL_CONFIG_DEFAULT: dict[str, ToolConfig] = {
     "apply_modification": {"min_xp_level": 2, "risk_level": "write"},
     "perform_web_crawl": {"min_xp_level": 1, "risk_level": "write"},
     "search_job_market": {"min_xp_level": 0, "risk_level": "read"},
@@ -27,7 +33,7 @@ TOOL_CONFIG_DEFAULT = {
 
 def get_tool_min_level(tool_name: str) -> int:
     """Returns the minimum XP level required to execute a tool. (Phase 4.6.46: Dynamic Support)"""
-    config = TOOL_CONFIG_DEFAULT.get(tool_name, {})
+    config = cast(dict[str, Any], TOOL_CONFIG_DEFAULT.get(tool_name, {}))
     static_level = cast(int, config.get("min_xp_level", 0))
 
     # Physical Realization of Dynamic Feedback Loop
@@ -44,7 +50,15 @@ def get_tool_min_level(tool_name: str) -> int:
     return static_level
 
 
-FALLBACK_AGENT_CONFIG = {
+class FallbackAgentConfig(TypedDict):
+    name: str
+    model_tier: str
+    system_prompt: str
+    tools: list[str]
+    default_tool: NotRequired[str]
+
+
+FALLBACK_AGENT_CONFIG: dict[str, FallbackAgentConfig] = {
     "supervisor": {
         "name": "Archon Supervisor",
         "model_tier": "pro",
@@ -83,6 +97,14 @@ FALLBACK_AGENT_CONFIG = {
     },
 }
 
+PROMPT_NAME_MAP: dict[str, str] = {
+    "supervisor": "WORKFLOW_SUPERVISOR_GENERAL",
+    "market-bot": "MARKETBOT_SYSTEM_PROMPT",
+    "librarian": "LIBRARIAN_SYSTEM_PROMPT",
+    "po-bot": "POBOT_SYSTEM_PROMPT",
+    "dev-bot": "DEVBOT_SYSTEM_PROMPT",
+}
+
 
 @lru_cache(maxsize=20)
 def get_agent_uuid(agent_key: str) -> str | None:
@@ -116,7 +138,15 @@ def get_agent_uuid(agent_key: str) -> str | None:
     return None
 
 
-def get_agent_config(agent_id: str) -> dict | None:
+class DynamicAgentConfig(TypedDict):
+    name: str
+    model_tier: str
+    system_prompt: str
+    tools: list[str]
+    default_tool: NotRequired[str]
+
+
+def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
     """
     Retrieves the configuration for a specific agent dynamically from database.
     Fallback to FALLBACK_AGENT_CONFIG if database is unavailable.
@@ -144,27 +174,27 @@ def get_agent_config(agent_id: str) -> dict | None:
             tools_res = supabase.table("archon_agent_tools").select("tool_name").eq("agent_id", agent_uuid).execute()
             tools_list = [row["tool_name"] for row in tools_res.data] if tools_res.data else []
 
-            prompt_name_map = {
-                "supervisor": "WORKFLOW_SUPERVISOR_GENERAL",
-                "market-bot": "MARKETBOT_SYSTEM_PROMPT",
-                "librarian": "LIBRARIAN_SYSTEM_PROMPT",
-                "po-bot": "POBOT_SYSTEM_PROMPT",
-                "dev-bot": "DEVBOT_SYSTEM_PROMPT",
-            }
-            prompt_key = prompt_name_map.get(key, f"{key.upper()}_SYSTEM_PROMPT")
-            fallback_prompt = FALLBACK_AGENT_CONFIG.get(key, {}).get("system_prompt", "You are a helpful AI assistant.")
+            # Mypy inference failure on module-level dict constant
+            prompt_key = PROMPT_NAME_MAP[key] if key in PROMPT_NAME_MAP else f"{key.upper()}_SYSTEM_PROMPT"
+            fallback_agent = FALLBACK_AGENT_CONFIG.get(key)
+            fallback_prompt = fallback_agent.get("system_prompt", "You are a helpful AI assistant.") if fallback_agent else "You are a helpful AI assistant."
             # Ensure fallback_prompt is a string
             str_fallback = str(fallback_prompt) if isinstance(fallback_prompt, list) else str(fallback_prompt)
             system_prompt = prompt_service.get_prompt(prompt_key, str_fallback)
 
-            return {
+            config: DynamicAgentConfig = {
                 "name": agent_data["name"],
                 "model_tier": agent_data["model_tier"],
                 "system_prompt": system_prompt,
                 "tools": tools_list,
-                "default_tool": agent_data.get("default_tool"),
             }
+            if agent_data.get("default_tool"):
+                config["default_tool"] = agent_data["default_tool"]
+            return config
     except Exception:
         pass
 
-    return FALLBACK_AGENT_CONFIG.get(key)
+    fallback = FALLBACK_AGENT_CONFIG.get(key)
+    if fallback:
+        return fallback
+    return None

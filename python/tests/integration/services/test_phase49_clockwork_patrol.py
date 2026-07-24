@@ -132,10 +132,6 @@ async def test_run_ssot_audit_detects_hardcoding(tmp_path, monkeypatch):
     src_dir = tmp_path / "python" / "src"
     src_dir.mkdir(parents=True)
 
-    # 1. Hardcoded gemini
-    bad_file = src_dir / "bad.py"
-    bad_file.write_text("model = 'gemini-3.1-flash-lite'")
-
     # 2. Hardcoded mcp
     bad_network = src_dir / "bad_net.py"
     bad_network.write_text("url = 'http://archon-mcp:8000'")
@@ -156,7 +152,6 @@ async def test_run_ssot_audit_detects_hardcoding(tmp_path, monkeypatch):
         mock_task_service.create_task.assert_called_once()
         _, kwargs = mock_task_service.create_task.call_args
         assert "Auto-Cleanup: SSOT Hardcoding Audit" in kwargs["title"]
-        assert "gemini-3" in kwargs["description"]
         assert "archon-mcp" in kwargs["description"]
 
         mock_agent_service.run_agent_task.assert_called_once()

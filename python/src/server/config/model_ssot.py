@@ -24,3 +24,30 @@ def get_model_path(key: str, default: str = "DEFAULT_TEXT") -> str:
     # Logic: Fallback to dictionary indexing to satisfy MyPy's str return guarantee
     path = SYSTEM_MODELS.get(key) or SYSTEM_MODELS[default]
     return str(path)
+
+def get_active_fallback(key: str, available_models: list[str]) -> str:
+    """
+    Returns an active fallback model if the default one is not in available_models.
+    Prioritizes Free Tier models (flash-lite).
+    """
+    default_model = SYSTEM_MODELS.get(key) or SYSTEM_MODELS["DEFAULT_TEXT"]
+    default_name = default_model.replace("models/", "")
+
+    if default_name in available_models:
+        return default_model
+
+    # Fallback logic: Find any available flash-lite model (Free Tier priority)
+    for model in available_models:
+        if "flash-lite" in model:
+            return f"models/{model}"
+
+    # Find any available flash model
+    for model in available_models:
+        if "flash" in model:
+            return f"models/{model}"
+
+    # Fallback to whatever is available
+    if available_models:
+        return f"models/{available_models[0]}"
+
+    return default_model

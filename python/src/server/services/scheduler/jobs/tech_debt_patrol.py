@@ -10,7 +10,7 @@ from src.server.config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
-async def run_tech_debt_audit():
+async def run_tech_debt_audit() -> None:
     """Scans PRPs and scripts for technical debt, and dispatches DevBot if needed."""
     logger.info("🧹 Clockwork: Starting Tech Debt Patrol...")
     try:
@@ -113,7 +113,7 @@ async def run_tech_debt_audit():
     except Exception as e:
         logger.error(f"💥 Clockwork: Tech Debt Patrol Failed: {e}")
 
-async def run_ssot_audit():
+async def run_ssot_audit() -> None:
     """Scans for hardcoded technical debt based on historical pain points (Network, Models, Paths, Prompts)."""
     logger.info("🔎 Clockwork: Starting SSOT Audit...")
     try:
@@ -166,9 +166,7 @@ async def run_ssot_audit():
                         if "archon-mcp" in line or "127.0.0.1" in line:
                             if "http" in line or "://" in line:
                                 warnings.append(f"Hardcoded Network Host at `{rel_path}:{i}` -> {line.strip()[:50]}")
-                        # 2. Models
-                        if "gemini-" in line and "gemini-3" in line:
-                            warnings.append(f"Hardcoded Model Name at `{rel_path}:{i}` -> {line.strip()[:50]}")
+                        # 2. Models removed due to dynamic discovery
                         # 3. Prompts
                         if ("task_desc =" in line or "task_desc=" in line) and not any(x in line for x in ["prompt_template", "str(output)", "get(", 'f"**', "await "]):
                             if '"""' in line or "'''" in line or "(" in line:

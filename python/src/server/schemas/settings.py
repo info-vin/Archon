@@ -103,6 +103,7 @@ class CodeExtractionConfig(BaseModel):
 class RagConfig(BaseModel):
     agents_enabled: bool = Field(default=False, alias="AGENTS_ENABLED")
     use_reranking: bool = Field(default=False, alias="USE_RERANKING")
+    sentinel_rag_match_count: int = Field(default=2, alias="SENTINEL_RAG_MATCH_COUNT")
 
 
 class ProjectConfig(BaseModel):
