@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
@@ -15,25 +15,25 @@ def test_is_hf_awake_boundary_conditions():
     # 20:17 CST -> Awake (True)
     cst_20_17 = datetime(2026, 6, 8, 20, 17, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler.jobs.patrol.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_20_17.astimezone(UTC)
+        mock_datetime.now.return_value = cst_20_17
         assert is_hf_awake() is True
 
     # 20:18 CST -> Sleep (False)
     cst_20_18 = datetime(2026, 6, 8, 20, 18, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler.jobs.patrol.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_20_18.astimezone(UTC)
+        mock_datetime.now.return_value = cst_20_18
         assert is_hf_awake() is False
 
     # 05:32 CST -> Sleep (False)
     cst_05_32 = datetime(2026, 6, 8, 5, 32, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler.jobs.patrol.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_05_32.astimezone(UTC)
+        mock_datetime.now.return_value = cst_05_32
         assert is_hf_awake() is False
 
     # 05:33 CST -> Awake (True)
     cst_05_33 = datetime(2026, 6, 8, 5, 33, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler.jobs.patrol.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_05_33.astimezone(UTC)
+        mock_datetime.now.return_value = cst_05_33
         assert is_hf_awake() is True
 
 

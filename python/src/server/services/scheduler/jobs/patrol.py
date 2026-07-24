@@ -4,7 +4,7 @@ Handles system health, log monitoring, and cleanup.
 """
 
 import os
-from datetime import UTC, datetime, time, timedelta, timezone
+from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
