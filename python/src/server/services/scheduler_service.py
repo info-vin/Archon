@@ -160,6 +160,8 @@ class SchedulerService:
                 except Exception as e:
                     logger.error(f"Job {job_id} failed: {e}")
                     raise
+            else:
+                logger.info(f"⏭️ Clockwork: Skipped '{job_id}' (Already run today)")
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
@@ -185,6 +187,8 @@ class SchedulerService:
                 except Exception as e:
                     logger.error(f"Job {job_id} failed: {e}")
                     raise
+            else:
+                logger.info(f"⏭️ Clockwork: Skipped '{job_id}' (Already run this week)")
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
@@ -210,6 +214,8 @@ class SchedulerService:
                 except Exception as e:
                     logger.error(f"Job {job_id} failed: {e}")
                     raise
+            else:
+                logger.info(f"⏭️ Clockwork: Skipped '{job_id}' (Already run this month)")
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
@@ -235,6 +241,8 @@ class SchedulerService:
                 except Exception as e:
                     logger.error(f"Job {job_id} failed: {e}")
                     raise
+            else:
+                logger.info(f"⏭️ Clockwork: Skipped '{job_id}' (Already run recently)")
 
         run_time = datetime.now(UTC) + timedelta(minutes=delay_mins)
         self._scheduler.add_job(wrapper, trigger=DateTrigger(run_date=run_time), id=f"{job_id}_catchup", replace_existing=True)
