@@ -152,7 +152,7 @@ def is_hf_awake() -> bool:
     睡眠區間預設為台灣 20:18 ~ 05:32 (CST)。
     """
     # 取得 CST (UTC+8) 時間
-    cst_now = datetime.now(UTC).astimezone(timezone(timedelta(hours=8)))
+    cst_now = datetime.now(ZoneInfo("Asia/Taipei"))
     current_time = cst_now.time()
 
     # 從環境變數讀取 (CST HH:MM 格式)
