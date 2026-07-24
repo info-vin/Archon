@@ -123,6 +123,16 @@
 - **排程器鎖死 (State Lockout) 漏洞修復**: 發現並修復了當 Hugging Face 伺服器在 `UTC` 白天重啟並執行 Catch-up 後，會導致原本隔天的 `Asia/Taipei` Cron 任務在檢查 `.date()` 時誤判「今天已執行」而遭靜默跳過的嚴重 Bug。統一將 `_should_run_*` 改為使用 `DEFAULT_TIMEZONE` (Local Time) 進行比較，並導入 ISO 曆週計算確保 Weekly 任務不會因補跑而偏移。
 - **時區幻覺 (Timezone Hallucination) 淨化**: 全面盤點代碼庫，發現在 `report_service.py` 與 `patrol.py` 等報表與任務產生邏輯中，錯誤使用了 `datetime.now()` 或 `datetime.now(UTC)`，導致在 HF 部署時產生的任務標題日期會「倒退一天」。已全面強制寫入 `ZoneInfo("Asia/Taipei")` 確保標題與台灣時間 100% 同步。
 
+### 2026/07/23~24: Phase 5.9.17~18 排程器架構重構與 SSOT 巡檢硬化
+- **L2 模組化與架構巡邏 (Phase 5.9.17)**: 將龐大的 `scheduler_service.py` 中的 `architecture_patrol` 抽離為獨立的 L2 模組，徹底落實單一職責原則 (Single Responsibility)，並將原本硬編碼的掃描路徑全數改由設定檔注入。
+- **SSOT 設定檔集中化 (Phase 5.9.18)**: 建立 `SchedulerConfig`，將系統巡邏 (System Probe)、任務分派 (Task Dispatcher) 等所有 Stateless 任務的執行頻率 (Intervals) 抽離至資料庫設定 (`archon_settings`)。
+- **時程漂移修復與殭屍警報**: 修正了清理任務 (Cleanup Patrols) 佔用資源的問題，將清理時間從清晨移至中午 (11:20)，並透過 `DEFAULT_TIMEZONE` 防止雲端 UTC 漂移。同時實作了 Telegram 殭屍任務警報 (Zombie Alert Threshold)，由 DB 動態控管。
+
+### 2026/07/24: Phase 5.9.19 資料庫架構收斂與語義化重構
+- **三層職責分離 (Layered Separation)**: 透過 Python 自動化腳本，將 `0.2.2/` 中因歷史迭代而碎片化的 36 個 SQL 檔案，依照「核心、業務、邏輯與種子」的語義成功收斂至 `0.2.3/` 的 11 個目標檔案，並通過 612 項後端測試公證，實現了 100% 物理對齊。
+- **無痛資料救援機制 (Rescue Pattern)**: 為避免升級時清空現有營運資料，將原先的 `99_rescue_live_data.sql` 切割並隔離至 `rescue/` 資料夾，提供了標準的防禦性執行 (No-Clean Migration) 驗證方法。
+- **環境純淨化**: 修復了 `.jules` 幽靈大小寫目錄殘留問題，確保 Git 版控在不同作業系統間的穩定性。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**

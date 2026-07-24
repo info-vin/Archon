@@ -1,3 +1,4 @@
+-- Source: seed_blog_posts.sql
 -- migration/seed_blog_posts.sql
 -- 向 blog_posts 資料表中插入初始文章資料
 
@@ -445,3 +446,5 @@ AI 的導入不是技術的堆砌，而是業務流程的重組。唯有以 PM �
     publish_date = EXCLUDED.publish_date, 
     image_url = EXCLUDED.image_url,
     status = EXCLUDED.status;
+
+

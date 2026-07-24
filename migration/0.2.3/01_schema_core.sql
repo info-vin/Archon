@@ -1,3 +1,57 @@
+-- Source: 01_foundation_types.sql
+--
+-- PostgreSQL database dump
+--
+
+
+-- Dumped from database version 17.4
+-- Dumped by pg_dump version 17.8 (Debian 17.8-0+deb13u1)
+
+
+--
+-- Name: change_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+DO $$ BEGIN
+    CREATE TYPE public.change_status AS ENUM ('pending', 'approved', 'rejected', 'executed', 'failed');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+--
+-- Name: change_type; Type: TYPE; Schema: public; Owner: postgres
+--
+
+DO $$ BEGIN
+    CREATE TYPE public.change_type AS ENUM ('file', 'git', 'shell');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+--
+-- Name: task_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+DO $$ BEGIN
+    CREATE TYPE public.task_status AS ENUM ('todo', 'doing', 'review', 'done', 'failed', 'processing', 'dispatched', 'pending', 'archived', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+--
+-- Name: project_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+DO $$ BEGIN
+    CREATE TYPE public.project_status AS ENUM ('planning', 'active', 'archived', 'completed');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+--
+-- Name: blog_status; Type: TYPE; Schema: public; Owner: postgres
+--
+
+DO $$ BEGIN
+    CREATE TYPE public.blog_status AS ENUM ('draft', 'review', 'changes_requested', 'published');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+--
+
+
+-- Source: 02_tables_core.sql
 -- Name: archon_settings; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -165,3 +219,56 @@ CREATE TABLE public.archon_extraction_schemas (
 ALTER TABLE public.archon_extraction_schemas OWNER TO postgres;
 
 --
+
+
+-- Source: 25_create_user_game_saves.sql
+-- Migration: Create user_game_saves table for Archon Agency Tycoon cloud saves
+-- Category: Business / Games
+
+CREATE TABLE IF NOT EXISTS public.user_game_saves (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    save_data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Owner assignment
+ALTER TABLE public.user_game_saves OWNER TO postgres;
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.user_game_saves ENABLE ROW LEVEL SECURITY;
+
+-- Grants
+GRANT ALL ON TABLE public.user_game_saves TO authenticated;
+GRANT ALL ON TABLE public.user_game_saves TO service_role;
+
+-- RLS Policies
+DROP POLICY IF EXISTS "Users can manage their own game saves" ON public.user_game_saves;
+CREATE POLICY "Users can manage their own game saves" 
+    ON public.user_game_saves 
+    FOR ALL 
+    TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+
+-- Description comment
+COMMENT ON TABLE public.user_game_saves IS 'Stores serialized tycoon game progress for authenticated users.';
+
+
+-- Source: 30_alter_archon_prompts_schema.sql
+-- Phase 5.9.7: Add category and metadata to archon_prompts
+
+ALTER TABLE public.archon_prompts 
+ADD COLUMN IF NOT EXISTS category text DEFAULT 'SYSTEM_AGENT';
+
+ALTER TABLE public.archon_prompts 
+ADD COLUMN IF NOT EXISTS metadata jsonb DEFAULT '{}'::jsonb;
+
+-- Ensure that existing rows have the default values explicitly set if they were somehow inserted before this migration but after table creation
+UPDATE public.archon_prompts 
+SET category = 'SYSTEM_AGENT' WHERE category IS NULL;
+
+UPDATE public.archon_prompts 
+SET metadata = '{}'::jsonb WHERE metadata IS NULL;
+
+
