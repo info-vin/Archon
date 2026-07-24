@@ -175,17 +175,26 @@ class SchedulerService:
         if not self._scheduler:
             return
 
+        from src.server.schemas.settings import SchedulerConfig
+        from src.server.services.settings_service import SettingsService
+        try:
+            raw_settings = SettingsService().get_all_settings()
+            config = SchedulerConfig.model_validate(raw_settings)
+        except Exception as e:
+            logger.warning(f"Failed to parse SchedulerConfig, falling back to defaults: {e}")
+            config = SchedulerConfig()
+
         # --- Category 1: Stateless Patrols ---
-        self._schedule_stateless(self._run_system_probe, "system_probe", 1, 15)
-        self._schedule_stateless(self._run_log_patrol, "log_patrol", 2, 30)
-        self._schedule_stateless(self._run_task_dispatcher, "task_dispatcher", 3, 30)
-        self._schedule_stateless(self._run_model_verification, "model_verification", 4, 120)
-        self._schedule_stateless(self._run_meta_twin_audit, "meta_twin_audit", 4, 10)
+        self._schedule_stateless(self._run_system_probe, "system_probe", 1, config.system_probe_interval_mins)
+        self._schedule_stateless(self._run_log_patrol, "log_patrol", 2, config.log_patrol_interval_mins)
+        self._schedule_stateless(self._run_task_dispatcher, "task_dispatcher", 3, config.task_dispatcher_interval_mins)
+        self._schedule_stateless(self._run_model_verification, "model_verification", 4, config.model_verification_interval_mins)
+        self._schedule_stateless(self._run_meta_twin_audit, "meta_twin_audit", 4, config.meta_twin_audit_interval_mins)
 
         # --- Category 2: Stateful Daily Jobs ---
-        await self._schedule_stateful_job(self._cleanup_system_probes, "system_probe_cleanup", 5, self._should_run_daily, CronTrigger(hour=7, minute=20, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._cleanup_system_probes, "system_probe_cleanup", 5, self._should_run_daily, CronTrigger(hour=config.system_probe_cleanup_hour, minute=config.system_probe_cleanup_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_daily, CronTrigger(hour=7, minute=0, timezone=DEFAULT_TIMEZONE), "Already run today")
-        await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=7, minute=20, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=8, minute=20, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=8, minute=40, timezone=DEFAULT_TIMEZONE), "Already run today")
 

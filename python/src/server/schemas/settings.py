@@ -67,6 +67,19 @@ class TTSConfig(BaseModel):
 
 class TaskDispatcherConfig(BaseModel):
     task_reclaim_timeout: int = Field(default=60, alias="TASK_RECLAIM_TIMEOUT")
+    zombie_task_alert_threshold: int = Field(default=3, alias="ZOMBIE_TASK_ALERT_THRESHOLD")
+
+class SchedulerConfig(BaseModel):
+    system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")
+    log_patrol_interval_mins: int = Field(default=30, alias="LOG_PATROL_INTERVAL_MINS")
+    task_dispatcher_interval_mins: int = Field(default=15, alias="TASK_DISPATCHER_INTERVAL_MINS")
+    model_verification_interval_mins: int = Field(default=150, alias="MODEL_VERIFICATION_INTERVAL_MINS")
+    meta_twin_audit_interval_mins: int = Field(default=20, alias="META_TWIN_AUDIT_INTERVAL_MINS")
+
+    system_probe_cleanup_hour: int = Field(default=11, alias="SYSTEM_PROBE_CLEANUP_HOUR")
+    system_probe_cleanup_minute: int = Field(default=20, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
+    prune_stale_leads_hour: int = Field(default=11, alias="PRUNE_STALE_LEADS_HOUR")
+    prune_stale_leads_minute: int = Field(default=20, alias="PRUNE_STALE_LEADS_MINUTE")
 
 
 class CrawlerJobConfig(BaseModel):
