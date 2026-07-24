@@ -128,6 +128,11 @@
 - **SSOT 設定檔集中化 (Phase 5.9.18)**: 建立 `SchedulerConfig`，將系統巡邏 (System Probe)、任務分派 (Task Dispatcher) 等所有 Stateless 任務的執行頻率 (Intervals) 抽離至資料庫設定 (`archon_settings`)。
 - **時程漂移修復與殭屍警報**: 修正了清理任務 (Cleanup Patrols) 佔用資源的問題，將清理時間從清晨移至中午 (11:20)，並透過 `DEFAULT_TIMEZONE` 防止雲端 UTC 漂移。同時實作了 Telegram 殭屍任務警報 (Zombie Alert Threshold)，由 DB 動態控管。
 
+### 2026/07/24: Phase 5.9.19 資料庫架構收斂與語義化重構
+- **三層職責分離 (Layered Separation)**: 透過 Python 自動化腳本，將 `0.2.2/` 中因歷史迭代而碎片化的 36 個 SQL 檔案，依照「核心、業務、邏輯與種子」的語義成功收斂至 `0.2.3/` 的 11 個目標檔案，並通過 612 項後端測試公證，實現了 100% 物理對齊。
+- **無痛資料救援機制 (Rescue Pattern)**: 為避免升級時清空現有營運資料，將原先的 `99_rescue_live_data.sql` 切割並隔離至 `rescue/` 資料夾，提供了標準的防禦性執行 (No-Clean Migration) 驗證方法。
+- **環境純淨化**: 修復了 `.jules` 幽靈大小寫目錄殘留問題，確保 Git 版控在不同作業系統間的穩定性。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
