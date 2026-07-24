@@ -20,6 +20,7 @@ async def run_task_dispatcher() -> None:
         from src.server.schemas.settings import TaskDispatcherConfig
         from src.server.services.agent_service import agent_service
         from src.server.services.settings_service import SettingsService
+        from src.server.services.system.telegram_service import telegram_service
 
         supabase = get_supabase_client()
         repo = BaseRepository(supabase)
@@ -61,6 +62,14 @@ async def run_task_dispatcher() -> None:
                 )
             if log_payloads:
                 repo.execute_query(lambda: supabase.table("archon_logs").insert(log_payloads).execute(), "Log task reclamation")
+
+            # Send Telegram Alert
+            alert_threshold = config.zombie_task_alert_threshold
+            if len(reclaim_data) > alert_threshold:
+                alert_msg = f"🚨 *[Archon Alert] Zombie Task Detected*\nReclaimed {len(reclaim_data)} stuck tasks (Timeout > {timeout_mins}m).\n\n"
+                for t in reclaim_data:
+                    alert_msg += f"- `{t['title']}`\n"
+                await telegram_service.send_message(alert_msg)
 
         # 2. Dispatch recurring tasks
         success, res = repo.execute_query(
