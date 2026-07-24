@@ -121,48 +121,54 @@ class Job104Crawler:
             logger.exception(f"Error fetching job detail: {e}")
             return None
 
-    async def search_jobs(self, keyword: str, limit: int = 8) -> list[JobData]:
+    def create_session(self) -> curl_requests.Session:
+        import os
+        proxy_url = os.environ.get("CRAWLER_PROXY_URL")
+        proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+        return curl_requests.Session(
+            impersonate="chrome120", headers=self.get_headers(), timeout=20.0, proxies=proxies  # type: ignore
+        )
+
+    async def search_jobs(self, keyword: str, limit: int = 8, client: curl_requests.Session | None = None) -> list[JobData]:
         logger.info(f"Searching jobs (Sync-Thru Mode) | keyword={keyword}")
 
-        def _fetch_all():
+        def _fetch_all(session: curl_requests.Session) -> list[JobData]:
             try:
-                headers = self.get_headers()
-                import os
-                proxy_url = os.environ.get("CRAWLER_PROXY_URL")
-                proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+                warmup_res = None
+                try:
+                    warmup_res = session.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
+                    if warmup_res.status_code == 403:
+                        logger.warning("403 Detected during warm-up. WAF might be blocking curl_cffi.")
+                        import time
+                        time.sleep(10) # Increased backoff
+                except Exception as e:
+                    logger.warning(f"Warm-up failed: {e}")
 
-                with curl_requests.Session(
-                    impersonate="chrome120", headers=headers, timeout=20.0, proxies=proxies  # type: ignore
-                ) as client:
-                    warmup_res = None
-                    try:
-                        warmup_res = client.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
-                        if warmup_res.status_code == 403:
-                            logger.warning("403 Detected during warm-up. WAF might be blocking curl_cffi.")
+                jobs = self._fetch_from_104_sync(session, keyword, limit)
+                if not jobs:
+                    if warmup_res and warmup_res.status_code == 403:
+                        raise CrawlerBlockedException("104 WAF Blocked access.")
+                    return []
+
+                for i, job in enumerate(jobs):
+                    if job.real_id:
+                        if i > 0:
                             import time
-                            time.sleep(10) # Increased backoff
-                    except Exception as e:
-                        logger.warning(f"Warm-up failed: {e}")
-
-                    jobs = self._fetch_from_104_sync(client, keyword, limit)
-                    if not jobs:
-                        if warmup_res and warmup_res.status_code == 403:
-                            raise CrawlerBlockedException("104 WAF Blocked access.")
-                        return []
-
-                    for i, job in enumerate(jobs):
-                        if job.real_id:
-                            if i > 0:
-                                import time
-                                time.sleep(random.uniform(3.0, 7.0)) # Increased jitter
-                            detail = self._fetch_job_detail_sync(client, job.real_id, job.url)
-                            job.description_full = detail or f"[Snippet Only] {job.description}"
-                    return jobs
+                            time.sleep(random.uniform(3.0, 7.0)) # Increased jitter
+                        detail = self._fetch_job_detail_sync(session, job.real_id, job.url)
+                        job.description_full = detail or f"[Snippet Only] {job.description}"
+                return jobs
             except CrawlerBlockedException:
                 raise
             except Exception as e:
                 logger.error(f"Error in 104 crawler _fetch_all: {e}")
                 return []
 
-        return await asyncio.to_thread(_fetch_all)
+        if client:
+            return await asyncio.to_thread(_fetch_all, client)
+        else:
+            def _with_session():
+                with self.create_session() as new_client:
+                    return _fetch_all(new_client)
+            return await asyncio.to_thread(_with_session)
 

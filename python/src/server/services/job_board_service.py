@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import Any, cast
 
 from ..config.logfire_config import get_logger
 from ..config.model_ssot import SYSTEM_MODELS
@@ -63,9 +64,9 @@ class JobBoardService:
         self.rate_limiter = RateLimiter(RateLimitConfig())
         self.crawler = Job104Crawler()
 
-    async def search_jobs(self, keyword: str, limit: int = 8) -> list[JobData]:
+    async def search_jobs(self, keyword: str, limit: int = 8, client: Any = None) -> list[JobData]:
         # Delegate search to crawler
-        jobs = await self.crawler.search_jobs(keyword, limit)
+        jobs = await self.crawler.search_jobs(keyword, limit, client)
         # Infer Needs (Async AI processing concurrently)
         import asyncio
         needs = await asyncio.gather(*(self._infer_need(job) for job in jobs))
@@ -91,22 +92,27 @@ class JobBoardService:
         keywords = [k.strip() for k in config.crawler_job_keywords.split(",")]
         limit = config.crawler_job_limit
 
-        for keyword in keywords:
-            try:
-                jobs = await self.search_jobs(keyword, limit=limit)
-                if jobs:
-                    total_new_leads += await self.identify_leads_and_save(jobs)
-            except CrawlerBlockedException as e:
-                logger.error(f"Crawler blocked by WAF for '{keyword}': {e}")
-                self.supabase.table("archon_logs").insert({
-                    "source": "job_board_service",
-                    "level": "ALERT",
-                    "message": f"104 Crawler Blocked by WAF: {e}"
-                }).execute()
-                break  # Stop crawling other keywords if blocked
-            except Exception as e:
-                logger.error(f"Error auto-fetching for '{keyword}': {e}")
-            await asyncio.sleep(random.uniform(2.0, 4.0))
+        session = self.crawler.create_session()
+        try:
+            for keyword in keywords:
+                try:
+                    jobs = await self.search_jobs(keyword, limit=limit, client=session)
+                    if jobs:
+                        total_new_leads += await self.identify_leads_and_save(jobs)
+                except CrawlerBlockedException as e:
+                    logger.error(f"Crawler blocked by WAF for '{keyword}': {e}")
+                    self.supabase.table("archon_logs").insert({
+                        "source": "job_board_service",
+                        "level": "ALERT",
+                        "message": f"104 Crawler Blocked by WAF: {e}"
+                    }).execute()
+                    break  # Stop crawling other keywords if blocked
+                except Exception as e:
+                    logger.error(f"Error auto-fetching for '{keyword}': {e}")
+                await asyncio.sleep(random.uniform(2.0, 4.0))
+        finally:
+            session.close()
+
         return total_new_leads
 
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
@@ -194,7 +200,7 @@ class JobBoardService:
                     new_leads_count += len(res.data)
 
                     from ..services.agent_registry import get_agent_config
-                    market_bot_config = get_agent_config("market-bot") or {}
+                    market_bot_config = cast(dict[str, Any], get_agent_config("market-bot") or {})
                     agent_name = market_bot_config.get("name", "Archon MarketBot")
 
                     async def _log_action(job, content):

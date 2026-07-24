@@ -4,7 +4,7 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 """
 
 from functools import lru_cache
-from typing import NotRequired, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from ..utils import get_supabase_client
 from .prompt_service import prompt_service
@@ -33,7 +33,7 @@ TOOL_CONFIG_DEFAULT: dict[str, ToolConfig] = {
 
 def get_tool_min_level(tool_name: str) -> int:
     """Returns the minimum XP level required to execute a tool. (Phase 4.6.46: Dynamic Support)"""
-    config = TOOL_CONFIG_DEFAULT.get(tool_name, {})
+    config = cast(dict[str, Any], TOOL_CONFIG_DEFAULT.get(tool_name, {}))
     static_level = cast(int, config.get("min_xp_level", 0))
 
     # Physical Realization of Dynamic Feedback Loop
@@ -95,6 +95,14 @@ FALLBACK_AGENT_CONFIG: dict[str, FallbackAgentConfig] = {
         "system_prompt": "You are Archon DevBot, an expert software engineer. Solve tasks using tools.",
         "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"],
     },
+}
+
+PROMPT_NAME_MAP: dict[str, str] = {
+    "supervisor": "WORKFLOW_SUPERVISOR_GENERAL",
+    "market-bot": "MARKETBOT_SYSTEM_PROMPT",
+    "librarian": "LIBRARIAN_SYSTEM_PROMPT",
+    "po-bot": "POBOT_SYSTEM_PROMPT",
+    "dev-bot": "DEVBOT_SYSTEM_PROMPT",
 }
 
 
@@ -166,15 +174,10 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
             tools_res = supabase.table("archon_agent_tools").select("tool_name").eq("agent_id", agent_uuid).execute()
             tools_list = [row["tool_name"] for row in tools_res.data] if tools_res.data else []
 
-            prompt_name_map = {
-                "supervisor": "WORKFLOW_SUPERVISOR_GENERAL",
-                "market-bot": "MARKETBOT_SYSTEM_PROMPT",
-                "librarian": "LIBRARIAN_SYSTEM_PROMPT",
-                "po-bot": "POBOT_SYSTEM_PROMPT",
-                "dev-bot": "DEVBOT_SYSTEM_PROMPT",
-            }
-            prompt_key = prompt_name_map.get(key, f"{key.upper()}_SYSTEM_PROMPT")
-            fallback_prompt = FALLBACK_AGENT_CONFIG.get(key, {}).get("system_prompt", "You are a helpful AI assistant.")
+            # Mypy inference failure on module-level dict constant
+            prompt_key = PROMPT_NAME_MAP[key] if key in PROMPT_NAME_MAP else f"{key.upper()}_SYSTEM_PROMPT"
+            fallback_agent = FALLBACK_AGENT_CONFIG.get(key)
+            fallback_prompt = fallback_agent.get("system_prompt", "You are a helpful AI assistant.") if fallback_agent else "You are a helpful AI assistant."
             # Ensure fallback_prompt is a string
             str_fallback = str(fallback_prompt) if isinstance(fallback_prompt, list) else str(fallback_prompt)
             system_prompt = prompt_service.get_prompt(prompt_key, str_fallback)
@@ -193,5 +196,5 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
 
     fallback = FALLBACK_AGENT_CONFIG.get(key)
     if fallback:
-        return cast(DynamicAgentConfig, fallback)
+        return fallback
     return None
