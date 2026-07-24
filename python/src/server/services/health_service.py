@@ -2,13 +2,39 @@
 
 import datetime
 import json
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 from .search.rag_service import RAGService
+
+
+class HealthScoreDetails(TypedDict):
+    error: NotRequired[str]
+    alignment_raw: NotRequired[float]
+    db_connected: NotRequired[bool]
+    search_active: NotRequired[bool]
+    total_sources: NotRequired[int]
+    indexed_sources: NotRequired[int]
+    timestamp: NotRequired[str]
+
+
+class HealthStatusResult(TypedDict):
+    status: str
+    score: float
+    details: HealthScoreDetails
+
+
+class TrendEntry(TypedDict):
+    date: str
+    score: float
+
+
+class HealthHistoryResult(TypedDict):
+    trend: list[TrendEntry]
+    audit: list[dict[str, Any]]
 
 logger = get_logger(__name__)
 
@@ -38,7 +64,7 @@ class HealthService(BaseRepository):
         except Exception:
             return False
 
-    async def check_rag_integrity(self) -> dict[str, Any]:
+    async def check_rag_integrity(self) -> HealthStatusResult:
         """
         Performs a deep integrity check of the RAG system.
         Calculates a weighted System Integrity Score without polluting the DB.
@@ -120,7 +146,7 @@ class HealthService(BaseRepository):
             },
         }
 
-    async def get_health_history(self, days: int = 30) -> dict[str, Any]:
+    async def get_health_history(self, days: int = 30) -> HealthHistoryResult:
         """
         Retrieves historical integrity audit logs from archon_logs table.
         """
@@ -141,8 +167,8 @@ class HealthService(BaseRepository):
             return {"trend": [], "audit": []}
 
         logs = res.get("data") or []
-        trend = []
-        audit_trail = []
+        trend: list[TrendEntry] = []
+        audit_trail: list[dict[str, Any]] = []
 
         for log in logs:
             details = log.get("details", {})
