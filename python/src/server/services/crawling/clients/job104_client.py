@@ -125,8 +125,9 @@ class Job104Crawler:
         import os
         proxy_url = os.environ.get("CRAWLER_PROXY_URL")
         proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
+        impersonates = ["chrome110", "chrome120", "safari15_3", "safari17_0", "edge101"]
         return curl_requests.Session(
-            impersonate="chrome120", headers=self.get_headers(), timeout=20.0, proxies=proxies  # type: ignore
+            impersonate=random.choice(impersonates), headers=self.get_headers(), timeout=20.0, proxies=proxies  # type: ignore
         )
 
     async def search_jobs(self, keyword: str, limit: int = 8, client: curl_requests.Session | None = None) -> list[JobData]:

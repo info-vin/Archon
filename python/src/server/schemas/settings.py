@@ -86,6 +86,8 @@ class CrawlerJobConfig(BaseModel):
     crawler_job_keywords: str = Field(default="Python,AI,Marketing,Sales", alias="CRAWLER_JOB_KEYWORDS")
     crawler_job_limit: int = Field(default=4, alias="CRAWLER_JOB_LIMIT")
     lead_gen_similarity_threshold: float = Field(default=0.65, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
+    crawler_waf_delay_min: float = Field(default=60.0, alias="CRAWLER_WAF_DELAY_MIN")
+    crawler_waf_delay_max: float = Field(default=90.0, alias="CRAWLER_WAF_DELAY_MAX")
 
 
 class LeadScoringConfig(BaseModel):

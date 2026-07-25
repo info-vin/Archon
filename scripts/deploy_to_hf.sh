@@ -51,6 +51,7 @@ git checkout "$SOURCE_BRANCH" -- migration/
 git checkout "$SOURCE_BRANCH" -- scripts/
 git checkout "$SOURCE_BRANCH" -- Makefile
 git checkout "$SOURCE_BRANCH" -- Dockerfile.server
+git checkout "$SOURCE_BRANCH" -- AGENTS.md
 
 echo "3.5 Removing binary artifacts to comply with HF limits..."
 git rm -rf --cached python/.twin/ 2>/dev/null || true
@@ -64,6 +65,7 @@ echo "4.5 Enabling MCP and Agents in Dockerfile for Hugging Face..."
 echo "" >> Dockerfile
 echo "ENV START_MCP=true" >> Dockerfile
 echo "ENV START_AGENTS=true" >> Dockerfile
+echo "ENV AGENTS_SERVICE_URL=http://127.0.0.1:8052" >> Dockerfile
 
 echo "5. Generating metadata README.md..."
 cat << 'EOF' > README.md
