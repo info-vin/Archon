@@ -86,7 +86,7 @@ class HealthService(BaseRepository):
         success, res = self.execute_query(_query_sources, "Error counting sources", require_data=False)
         if not success:
             logger.error("💥 System Integrity Calculation Failed")
-            return {"status": "unhealthy", "score": 0.0, "details": {"error": res.get("error")}}
+            return {"status": "unhealthy", "score": 0.0, "details": {"error": str(res.get("error") or "Unknown database error")}}
 
         # res['count'] is populated by BaseRepository.execute_query
         total_count = int(res.get("count") or 0)
