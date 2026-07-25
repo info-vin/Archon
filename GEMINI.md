@@ -149,6 +149,12 @@
 - **高吞吐量與容錯機制**: 捨棄硬性的「週一至週五」限制，改採「本機每日 10:30」排程。配合「跳過等開機 (Skip and Wait)」策略，將本機 `CRAWLER_JOB_LIMIT` 從 4 動態提升至 6 筆，並將 WAF 延遲退回 3~7 秒。確保平日累積的高抓取量足以彌補週末未開機的資料空窗，為週末的 AI 摘要任務提供充足養分。
 - **虛假測試防禦 (Golden Rule 13)**: 同步校準 `test_scheduler_service.py` 中對於 Cron Trigger 的時間斷言 (07:00 -> 10:30)，通過 612 項後端測試與 `git pre-commit audit` 雙重實體公證。
 
+### 2026/07/25: Phase 5.9.23 系統健康度、SSOT 對齊與資源最佳化 (System Health & Resource Optimization)
+- **向量維度截斷防護 (Zero Dimension Mismatch)**: 發現 Google Gemini API 因相容層問題會無視 768 維度請求，強制回傳 3072 維度，導致寫入 DB 時觸發崩潰。在 `batch_processor.py` 中實作「物理截斷防護 (Physical Truncation)」，強制將外部模型回傳的維度裁切至符合 SSOT 規範的 768 維度，確保資料庫絕對安全。
+- **Agentic RAG SSOT 解鎖**: 修復了 DevBot 呼叫 `rag_search_code_examples` 遭遇 HTTP 500 錯誤的問題，將 `USE_AGENTIC_RAG` 開關納入 `archon_settings` 資料表，徹底由資料庫統一控管。
+- **記憶體資源減肥 (Memory Diet)**: 透過在 `docker-compose.yml` 中為 Node.js 注入 `NODE_OPTIONS=--max-old-space-size=512`，成功在保留熱重載功能的前提下，強迫 Vite 開發伺服器提早進行垃圾回收 (GC)。將前端容器的記憶體用量從近 2GB 成功壓制在 350MB 左右，大幅提升單一容器部署的資源穩定度。
+- **實體公證與清理**: 通過 612 項後端測試公證，並使用 `git rm` 清理開發過程中的一次性驗證腳本，維持專案高度純淨。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
