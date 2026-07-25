@@ -133,6 +133,16 @@
 - **無痛資料救援機制 (Rescue Pattern)**: 為避免升級時清空現有營運資料，將原先的 `99_rescue_live_data.sql` 切割並隔離至 `rescue/` 資料夾，提供了標準的防禦性執行 (No-Clean Migration) 驗證方法。
 - **環境純淨化**: 修復了 `.jules` 幽靈大小寫目錄殘留問題，確保 Git 版控在不同作業系統間的穩定性。
 
+### 2026/07/25: Phase 5.9.20 雲端網路韌性與 WAF 防禦實作
+- **WAF 防禦升級**: 將 104 爬蟲的延遲寫死代碼 (Hardcoded Delays) 移除，徹底抽離至 `SettingsService` 的 `CRAWLER_WAF_DELAY_MIN/MAX`，動態隨機延遲 60~90 秒以迴避資料中心 (Datacenter IP) 存取限流。同時在 `curl_cffi` 實作瀏覽器指紋動態輪替，降低 403 Forbidden 機率。
+- **HF 基礎設施修復**: 修復了 `scripts/deploy_to_hf.sh` 在單一容器打包時遺漏 `AGENTS.md` 的嚴重缺失。同時透過環境變數注入 `AGENTS_SERVICE_URL=http://127.0.0.1:8052`，解決了 Hugging Face 環境中 `WorkflowEngine` 尋找本機 `archon-agents` 網域導致的 DNS 斷線問題。
+- **零副作用公證**: 變更通過全部 612 項後端測試公證，確保與本機 Docker Compose 環境的兼容性，並成功推送至 `dev/twins` 自動觸發 HF 遠端部署。
+
+### 2026/07/25: Phase 5.9.21 API Leakage 阻斷與測試防禦硬化
+- **API Leakage 物理封堵**: 確診並修復了 `make test-be` 執行時引發巨量 `429 Too Many Requests` 的漏洞。該漏洞源於 `batch_processor.py` 中直接使用 `httpx.AsyncClient` 呼叫 Gemini REST API 而成功穿透了測試沙盒。
+- **全域 Mock 防禦升級**: 在 `conftest.py` 中擴充對 `google.genai` 的攔截網，實作 `embed_content` 的動態 AsyncMock，能根據 Batch Size 自適應產生假向量資料，徹底斷絕所有整合測試的真實網路連線。
+- **架構淨化與 SSOT 落地**: 將 `batch_processor.py` 網路逃逸的底層實作拔除，全面回歸 `genai.Client` 官方 SDK。強制從 `rag_settings` 提取 `EMBEDDING_DIMENSIONS`，消滅硬編碼並依據模型版本動態切換降維參數。變更已通過 `make audit-qa` 嚴格公證。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**

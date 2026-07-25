@@ -133,42 +133,41 @@ async def create_embeddings_batch(
                                         embedding_model = config.get("embedding_model")
 
                                         if provider_name == "google":
-                                            # Native Google API call (using proven v1beta + header variant)
-                                            async with httpx.AsyncClient(timeout=20.0) as http_client:
-                                                # Use gemini-embedding-001 which is proven stable
-                                                # Fallback to config model if not explicit, then to a stable default
-                                                stable_model = config.get("embedding_model")
-                                                if not stable_model:
-                                                    raise ValueError(
-                                                        "embedding_model is not configured in provider settings"
-                                                    )
-                                                api_key_to_use = (
-                                                    (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "")
-                                                    .strip()
-                                                    .strip('"')
-                                                    .strip("'")
+                                            from google import genai
+                                            from google.genai import types
+
+                                            stable_model = config.get("embedding_model")
+                                            if not stable_model:
+                                                raise ValueError(
+                                                    "embedding_model is not configured in provider settings"
                                                 )
+                                            api_key_to_use = (
+                                                (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "")
+                                                .strip()
+                                                .strip('"')
+                                                .strip("'")
+                                            )
 
-                                                url = f"https://generativelanguage.googleapis.com/v1beta/models/{stable_model}:embedContent"
-                                                headers = {"x-goog-api-key": api_key_to_use}
+                                            client_g = genai.Client(api_key=api_key_to_use)
 
-                                                for text_item in batch:
-                                                    payload = {
-                                                        "content": {"parts": [{"text": text_item}]},
-                                                        "outputDimensionality": 768,
-                                                    }
-                                                    resp = await http_client.post(url, headers=headers, json=payload)
+                                            # outputDimensionality is not supported for older embedding-001 model
+                                            if stable_model != "models/embedding-001":
+                                                embed_config = types.EmbedContentConfig(output_dimensionality=embedding_dimensions)
+                                            else:
+                                                embed_config = None
 
-                                                    if resp.status_code == 200:
-                                                        data = resp.json()
-                                                        result.add_success(data["embedding"]["values"], text_item)
-                                                    else:
-                                                        search_logger.error(
-                                                            f"Google native API failed: Status {resp.status_code}, Body: {resp.text}"
-                                                        )
-                                                        raise EmbeddingAPIError(
-                                                            f"Google error {resp.status_code}: {resp.text}"
-                                                        )
+                                            resp = await client_g.aio.models.embed_content(
+                                                model=stable_model,
+                                                contents=cast(Any, batch),
+                                                config=embed_config
+                                            )
+
+                                            if not resp.embeddings or len(resp.embeddings) != len(batch):
+                                                raise EmbeddingAPIError("Google API returned unexpected number of embeddings")
+
+                                            for emb, text_item in zip(resp.embeddings, batch, strict=False):
+                                                if emb.values is not None:
+                                                    result.add_success(emb.values, text_item)
                                         else:
                                             # Standard OpenAI-compatible call
                                             if provider_name != "google":

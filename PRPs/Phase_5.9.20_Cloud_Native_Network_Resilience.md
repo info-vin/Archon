@@ -33,3 +33,8 @@
 ## 🧪 驗證計畫 (Verification Plan)
 - 透過 `make test-be` 確保 `CrawlerJobConfig` 的新增欄位不會破壞既有 Pydantic 解析。
 - 推送至 Hugging Face 觀察容器啟動日誌，確認 `AGENTS_SERVICE_URL` 正確生效，且 `job_board_service` 不再報出 `/app/AGENTS.md` missing error。
+
+## ✅ 執行狀態 (Execution Status)
+- **完成日期**：2026-07-25
+- **狀態**：✅ 已完成 (Completed)
+- **備註**：已完成全部實作，通過 612 項後端單元測試，並已成功合併至 `dev/twins` 觸發 GitHub Actions 部署至 Hugging Face 雲端機房。

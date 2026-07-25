@@ -33,6 +33,23 @@ mock_genai_client_instance = MagicMock()
 mock_genai_client_instance.models.generate_content.return_value = mock_genai_response
 mock_genai_client_instance.aio.models.generate_content = AsyncMock(return_value=mock_genai_response)
 
+async def _mock_genai_embed_content(*args, **kwargs):
+    contents = kwargs.get("contents")
+    if contents is None and len(args) >= 2:
+        contents = args[1]
+    count = len(contents) if isinstance(contents, list) else 1
+
+    response = MagicMock()
+    embeddings = []
+    for _ in range(count):
+        emb = MagicMock()
+        emb.values = [0.1] * 768
+        embeddings.append(emb)
+    response.embeddings = embeddings
+    return response
+
+mock_genai_client_instance.aio.models.embed_content = AsyncMock(side_effect=_mock_genai_embed_content)
+
 # Mock OpenAI Response
 mock_openai_response = MagicMock()
 mock_openai_choice = MagicMock()
