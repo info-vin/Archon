@@ -39,11 +39,16 @@ async def _mock_genai_embed_content(*args, **kwargs):
         contents = args[1]
     count = len(contents) if isinstance(contents, list) else 1
 
+    dimension = 768
+    config_obj = kwargs.get("config")
+    if config_obj and hasattr(config_obj, 'output_dimensionality') and config_obj.output_dimensionality:
+        dimension = config_obj.output_dimensionality
+
     response = MagicMock()
     embeddings = []
     for _ in range(count):
         emb = MagicMock()
-        emb.values = [0.1] * 768
+        emb.values = [0.1] * dimension
         embeddings.append(emb)
     response.embeddings = embeddings
     return response

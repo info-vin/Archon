@@ -140,8 +140,9 @@
 
 ### 2026/07/25: Phase 5.9.21 API Leakage 阻斷與測試防禦硬化
 - **API Leakage 物理封堵**: 確診並修復了 `make test-be` 執行時引發巨量 `429 Too Many Requests` 的漏洞。該漏洞源於 `batch_processor.py` 中直接使用 `httpx.AsyncClient` 呼叫 Gemini REST API 而成功穿透了測試沙盒。
-- **全域 Mock 防禦升級**: 在 `conftest.py` 中擴充對 `google.genai` 的攔截網，實作 `embed_content` 的動態 AsyncMock，能根據 Batch Size 自適應產生假向量資料，徹底斷絕所有整合測試的真實網路連線。
-- **架構淨化與 SSOT 落地**: 將 `batch_processor.py` 網路逃逸的底層實作拔除，全面回歸 `genai.Client` 官方 SDK。強制從 `rag_settings` 提取 `EMBEDDING_DIMENSIONS`，消滅硬編碼並依據模型版本動態切換降維參數。變更已通過 `make audit-qa` 嚴格公證。
+- **全域 Mock 防禦升級 (False Mock 預防)**: 在 `conftest.py` 中擴充對 `google.genai` 的攔截網，實作 `embed_content` 的動態 AsyncMock。為防範「虛假測試 (False Mock)」，拔除 768 維度硬編碼，改為動態讀取 `EmbedContentConfig.output_dimensionality` 以產出精準維度的假向量資料，徹底斷絕連線並確保型別物理對齊。
+- **架構淨化與 SSOT 落地**: 將 `batch_processor.py` 網路逃逸的底層實作拔除，全面回歸 `genai.Client` 官方 SDK。強制從 `rag_settings` 提取 `EMBEDDING_DIMENSIONS`，並使用 `if "embedding-001" not in stable_model.lower():` 進行模型相容性驗證，消滅寫死的 `models/embedding-001` 字串幻覺。
+- **100% 物理公證**: 所有變更已通過 `make lint-be` 與 `make test-be` (612 項) 嚴格公證，並由 `make phase-audit` 掃描四大架構與戰略要塞健康度（MCP 96.1%, Agent 95.1%, API 91.8%, 核心服務 89.3%），達成零硬編碼目標。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 

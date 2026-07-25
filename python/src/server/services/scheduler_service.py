@@ -91,6 +91,11 @@ class SchedulerService:
             pass
         return None
 
+    async def _should_run_local_only(self, job_id: str) -> bool:
+        if os.environ.get("SPACE_ID") is not None:
+            return False
+        return await self._should_run_daily(job_id)
+
     async def _should_run_daily(self, job_id: str) -> bool:
         last_run = await self._get_last_run(job_id)
         if not last_run:
@@ -193,7 +198,7 @@ class SchedulerService:
 
         # --- Category 2: Stateful Daily Jobs ---
         await self._schedule_stateful_job(self._cleanup_system_probes, "system_probe_cleanup", 5, self._should_run_daily, CronTrigger(hour=config.system_probe_cleanup_hour, minute=config.system_probe_cleanup_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_daily, CronTrigger(hour=7, minute=0, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_local_only, CronTrigger(hour=10, minute=30, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=8, minute=20, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=8, minute=40, timezone=DEFAULT_TIMEZONE), "Already run today")

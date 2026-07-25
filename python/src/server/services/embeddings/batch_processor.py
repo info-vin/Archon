@@ -151,7 +151,7 @@ async def create_embeddings_batch(
                                             client_g = genai.Client(api_key=api_key_to_use)
 
                                             # outputDimensionality is not supported for older embedding-001 model
-                                            if stable_model != "models/embedding-001":
+                                            if "embedding-001" not in stable_model.lower():
                                                 embed_config = types.EmbedContentConfig(output_dimensionality=embedding_dimensions)
                                             else:
                                                 embed_config = None
