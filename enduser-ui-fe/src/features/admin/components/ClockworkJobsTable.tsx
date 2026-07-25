@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { api } from '@/services/api';
 import { ClockIcon } from '@/components/Icons';
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations during list rendering.
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
 const PlayIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polygon points="5 3 19 12 5 21 5 3"/>
@@ -43,7 +46,7 @@ export const ClockworkJobsTable: React.FC<ClockworkJobsTableProps> = ({ jobs, on
     const formatTime = (isoString: string | null) => {
         if (!isoString) return '-';
         const date = new Date(isoString);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return isNaN(date.getTime()) ? 'Invalid Date' : timeFormatter.format(date);
     };
 
     const getTypeColor = (type: string) => {
