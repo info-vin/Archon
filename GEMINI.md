@@ -144,6 +144,11 @@
 - **架構淨化與 SSOT 落地**: 將 `batch_processor.py` 網路逃逸的底層實作拔除，全面回歸 `genai.Client` 官方 SDK。強制從 `rag_settings` 提取 `EMBEDDING_DIMENSIONS`，並使用 `if "embedding-001" not in stable_model.lower():` 進行模型相容性驗證，消滅寫死的 `models/embedding-001` 字串幻覺。
 - **100% 物理公證**: 所有變更已通過 `make lint-be` 與 `make test-be` (612 項) 嚴格公證，並由 `make phase-audit` 掃描四大架構與戰略要塞健康度（MCP 96.1%, Agent 95.1%, API 91.8%, 核心服務 89.3%），達成零硬編碼目標。
 
+### 2026/07/25: Phase 5.9.22 Cloud-Edge Scheduler (雲地分工排程架構)
+- **雲地物理隔離**: 確立「本機抓取、雲端運算」的物理職責分離。在 `scheduler_service.py` 實作 `_should_run_local_only` 鎖，透過偵測 `SPACE_ID` 徹底封殺 Hugging Face 執行 `alice_auto_fetch` 的權限，避免觸發 104 WAF 導致 0 筆資料的空轉與日誌污染。
+- **高吞吐量與容錯機制**: 捨棄硬性的「週一至週五」限制，改採「本機每日 10:30」排程。配合「跳過等開機 (Skip and Wait)」策略，將本機 `CRAWLER_JOB_LIMIT` 從 4 動態提升至 6 筆，並將 WAF 延遲退回 3~7 秒。確保平日累積的高抓取量足以彌補週末未開機的資料空窗，為週末的 AI 摘要任務提供充足養分。
+- **虛假測試防禦 (Golden Rule 13)**: 同步校準 `test_scheduler_service.py` 中對於 Cron Trigger 的時間斷言 (07:00 -> 10:30)，通過 612 項後端測試與 `git pre-commit audit` 雙重實體公證。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
