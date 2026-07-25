@@ -109,7 +109,7 @@ class JobBoardService:
                     break  # Stop crawling other keywords if blocked
                 except Exception as e:
                     logger.error(f"Error auto-fetching for '{keyword}': {e}")
-                await asyncio.sleep(random.uniform(2.0, 4.0))
+                await asyncio.sleep(random.uniform(config.crawler_waf_delay_min, config.crawler_waf_delay_max))
         finally:
             session.close()
 

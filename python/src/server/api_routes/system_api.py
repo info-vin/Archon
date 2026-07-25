@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import MCP_MANAGE, TASK_READ_TEAM
-from ..services.health_service import HealthService
+from ..services.health_service import HealthService, HealthStatusResult
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
@@ -24,7 +24,7 @@ async def ingest_scout_reports() -> dict[str, Any]:
 
 
 @router.get("/health/rag", dependencies=[Depends(requires_permission(MCP_MANAGE))])
-async def get_rag_health_check() -> dict[str, Any]:
+async def get_rag_health_check() -> HealthStatusResult:
     """
     Performs a deep integrity check of the RAG system.
     Restricted to System Admin to prevent probe data pollution.

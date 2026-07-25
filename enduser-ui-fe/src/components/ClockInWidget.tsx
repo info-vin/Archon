@@ -3,6 +3,9 @@ import { ClockIcon, MapPinIcon } from './Icons';
 
 import { api } from '../services/api';
 
+// PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations during render loops.
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
 export const ClockInWidget: React.FC = () => {
     const [status, setStatus] = useState<'in' | 'out'>('out');
     const [lastTime, setLastTime] = useState<Date | null>(null);
@@ -95,7 +98,7 @@ export const ClockInWidget: React.FC = () => {
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-gray-400 font-mono">
-                        {lastTime ? lastTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--'}
+                        {lastTime ? (isNaN(lastTime.getTime()) ? 'Invalid Date' : timeFormatter.format(lastTime)) : '--:--'}
                     </p>
                     <p className="text-xs font-semibold text-gray-600">
                         {status === 'in' ? 'Clocked In' : 'Clocked Out'}
