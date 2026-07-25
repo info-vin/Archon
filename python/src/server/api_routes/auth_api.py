@@ -3,7 +3,7 @@ import os
 import traceback
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..auth.dependencies import verify_admin_role
 from ..services.auth_service import AuthService
@@ -82,11 +82,15 @@ async def list_permissions(_: bool = Depends(verify_admin_role)):
     return {"permissions": ALL_PERMISSIONS}
 
 
-@router.post("/admin/users")
+class AdminCreateUserResponse(BaseModel):
+    status: str = Field(description="The status of the user creation operation")
+
+
+@router.post("/admin/users", response_model=AdminCreateUserResponse)
 async def admin_create_user(
     request: BaseModel,  # Placeholder for brevity, use real model if needed
     service: AuthService = Depends(get_auth_service),
     _: bool = Depends(verify_admin_role),
-):
+) -> AdminCreateUserResponse:
     # This is a stub, but the dev-token is what matters
-    return {"status": "ok"}
+    return AdminCreateUserResponse(status="ok")
