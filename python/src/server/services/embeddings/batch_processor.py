@@ -167,7 +167,10 @@ async def create_embeddings_batch(
 
                                             for emb, text_item in zip(resp.embeddings, batch, strict=False):
                                                 if emb.values is not None:
-                                                    result.add_success(emb.values, text_item)
+                                                    emb_vals = emb.values
+                                                    if len(emb_vals) > embedding_dimensions:
+                                                        emb_vals = emb_vals[:embedding_dimensions]
+                                                    result.add_success(emb_vals, text_item)
                                         else:
                                             # Standard OpenAI-compatible call
                                             if provider_name != "google":
@@ -182,7 +185,10 @@ async def create_embeddings_batch(
                                                 )
 
                                             for item, text_item in zip(response.data, batch, strict=False):
-                                                result.add_success(item.embedding, text_item)
+                                                emb_vals = item.embedding
+                                                if len(emb_vals) > embedding_dimensions:
+                                                    emb_vals = emb_vals[:embedding_dimensions]
+                                                result.add_success(emb_vals, text_item)
                                         break
                                     except openai.RateLimitError as e:
                                         error_message = str(e)

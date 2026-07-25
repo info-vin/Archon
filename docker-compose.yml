@@ -58,6 +58,7 @@ services:
       - ./PRPs:/app/PRPs # Mount PRPs for Alice's SOP access
       - ./docs:/app/docs # Mount documentation for Knowledge Seeding
       - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Force mount developer guidelines
+      - ./AGENTS.md:/app/AGENTS.md # Mount AI developer guidelines
       - ./.git:/app/.git # Mount Git metadata for CodeModifier
       - ./.twin:/app/.twin # Mount twin diagnostics directory
     extra_hosts:
@@ -174,6 +175,7 @@ services:
     volumes:
       - ./python/src/agents:/app/src/agents
       - ./python/src/server/services/search/reranking_strategy.py:/app/src/server/services/search/reranking_strategy.py
+      - ./AGENTS.md:/app/AGENTS.md
     networks:
       - app-network
     healthcheck:
@@ -236,6 +238,7 @@ services:
       - HOST=${HOST:-localhost}
       - PROD=${PROD:-false}
       - VITE_APP_VERSION=${VITE_APP_VERSION:-0.2.2}
+      - NODE_OPTIONS=--max-old-space-size=512
     networks:
       - app-network
     healthcheck:
