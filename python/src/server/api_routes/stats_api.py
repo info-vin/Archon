@@ -4,6 +4,7 @@ Hardened for Phase 4.6.59 - Ensures no 404s for Admin HUD.
 """
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 
 from ..auth.dependencies import requires_permission
 from ..auth.permissions import TASK_READ_TEAM
@@ -125,8 +126,18 @@ async def get_ethics_audit_queue():
         return {"violations": [], "status": "error"}
 
 
-@router.get("/tasks-by-status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_tasks_by_status():
+class TaskStatusCount(BaseModel):
+    name: str = Field(description="The status name of the task")
+    value: int = Field(description="The count of tasks with this status")
+
+
+class MemberPerformanceStats(BaseModel):
+    name: str = Field(description="The name of the assignee")
+    completed_tasks: int = Field(description="The number of completed tasks by this assignee")
+
+
+@router.get("/tasks-by-status", response_model=list[TaskStatusCount], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_tasks_by_status() -> list[TaskStatusCount]:
     """Get the count of tasks grouped by status."""
     try:
         supabase = get_supabase_client()
@@ -135,17 +146,18 @@ async def get_tasks_by_status():
         for row in response.data:
             s = row.get("status", "unknown")
             counts[s] = counts.get(s, 0) + 1
-        return [{"name": k, "value": v} for k, v in counts.items()]
+        return [TaskStatusCount(name=k, value=v) for k, v in counts.items()]
     except Exception as e:
         logger.error(f"Failed to get task stats: {e}")
         return []
 
 
-@router.get("/member-performance", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_member_performance():
+@router.get("/member-performance", response_model=list[MemberPerformanceStats], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_member_performance() -> list[MemberPerformanceStats]:
     """Get the count of COMPLETED tasks grouped by assignee."""
     try:
-        return await stats_service.get_member_performance()
+        results = await stats_service.get_member_performance()
+        return [MemberPerformanceStats(**result) for result in results]
     except Exception as e:
         logger.error(f"Failed to get performance stats: {e}")
         return []

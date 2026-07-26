@@ -18,8 +18,9 @@ async def test_get_tasks_by_status():
         # Sort result for comparison because dict iteration order is insertion-based (usually) but safer to be explicit
         # Or just check membership
         assert len(result) == 2
-        assert {"name": "todo", "value": 2} in result
-        assert {"name": "done", "value": 1} in result
+        result_dumps = [r.model_dump() for r in result]
+        assert {"name": "todo", "value": 2} in result_dumps
+        assert {"name": "done", "value": 1} in result_dumps
 
 
 @pytest.mark.asyncio
@@ -30,7 +31,7 @@ async def test_get_member_performance():
         result = await get_member_performance()
 
         assert len(result) == 2
-        assert result[0]["name"] == "Alice"
-        assert result[0]["completed_tasks"] == 2
-        assert result[1]["name"] == "Bob"
-        assert result[1]["completed_tasks"] == 1
+        assert result[0].name == "Alice"
+        assert result[0].completed_tasks == 2
+        assert result[1].name == "Bob"
+        assert result[1].completed_tasks == 1
