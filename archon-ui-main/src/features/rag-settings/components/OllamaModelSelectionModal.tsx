@@ -87,6 +87,8 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         if (Date.now() - parsed.timestamp < 300000) {
           setModels(parsed.models);
           setLoadedFromCache(true);
+                    // TECH_DEBT: 採用原生 toLocaleTimeString 以維持顯示需求，暫不遷移至 date-fns 以維持效能基線。
+          // eslint-disable-next-line no-restricted-syntax
           setCacheTimestamp(new Date(parsed.timestamp).toLocaleTimeString());
           setLoading(false);
           return;

@@ -12,10 +12,12 @@ interface ChatMessageListProps {
 }
 
 // PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations
+// eslint-disable-next-line no-restricted-syntax
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
   hour: '2-digit',
   minute: '2-digit'
 });
+// TECH_DEBT: 採用原生 Intl.DateTimeFormat 已在模組級別提升效能最佳化，暫不遷移至 date-fns 以維持效能基線。
 
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,

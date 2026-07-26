@@ -113,47 +113,7 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026/07/21: Phase 5.9.8~10 排程器事件驅動重構與 L2 淨化
-- **SSOT 稽核防線 (Phase 5.9.8)**: 建立 `tech_debt_patrol.py` 定期比對資料庫 Prompt Schema 與後端實作，消滅硬編碼幻覺。
-- **事件驅動 DAG 排程 (Phase 5.9.9)**: 將下游報告 (`bob_market_report`, `daily_executive_summary`) 的觸發機制，從僵化的 Cron 轉型為依賴 `alice_auto_fetch` (爬蟲) 成功後的事件觸發 (`_trigger_stateful_daily_event`)，透過 Retry 機制完美解決了 WAF 阻擋造成的空報告 Race Condition。
-- **L2 架構淨化與硬編碼消滅 (Phase 5.9.10)**: 徹底根除 `scheduler_service.py` 內部裸寫 Supabase API 的技術債，統一透過 `SettingsService().set_setting` 處理 `LAST_RUN` 狀態。同時將 `is_hf_awake` 物理轉移至 `patrol.py`，並消除 `ZoneInfo` 硬編碼，成功將排程器瘦身至 353 行，全線測試公證通過。
 
-### 2026/07/22: Phase 5.9.11 排程器時區幻覺與鎖死修復
-- **SSOT 防呆公證與無限死結消除**: 針對 `tech_debt_patrol.py` 的「自我舉發工單」無限死結，實施了精準 Regex 排除邏輯（剔除 `await`, `str(output)`, 樣板渲染）。並將 `leads_patrol.py`, `patrol.py`, `tech_debt_patrol.py`, `report_service.py` 遺漏的硬編碼提示詞全數遷移至 `102_seed_patrol_prompts.sql` 並納入 `prompt_service` 防護網，順利通過 605 項 `make audit-qa` 嚴格測試。
-- **排程器鎖死 (State Lockout) 漏洞修復**: 發現並修復了當 Hugging Face 伺服器在 `UTC` 白天重啟並執行 Catch-up 後，會導致原本隔天的 `Asia/Taipei` Cron 任務在檢查 `.date()` 時誤判「今天已執行」而遭靜默跳過的嚴重 Bug。統一將 `_should_run_*` 改為使用 `DEFAULT_TIMEZONE` (Local Time) 進行比較，並導入 ISO 曆週計算確保 Weekly 任務不會因補跑而偏移。
-- **時區幻覺 (Timezone Hallucination) 淨化**: 全面盤點代碼庫，發現在 `report_service.py` 與 `patrol.py` 等報表與任務產生邏輯中，錯誤使用了 `datetime.now()` 或 `datetime.now(UTC)`，導致在 HF 部署時產生的任務標題日期會「倒退一天」。已全面強制寫入 `ZoneInfo("Asia/Taipei")` 確保標題與台灣時間 100% 同步。
-
-### 2026/07/23~24: Phase 5.9.17~18 排程器架構重構與 SSOT 巡檢硬化
-- **L2 模組化與架構巡邏 (Phase 5.9.17)**: 將龐大的 `scheduler_service.py` 中的 `architecture_patrol` 抽離為獨立的 L2 模組，徹底落實單一職責原則 (Single Responsibility)，並將原本硬編碼的掃描路徑全數改由設定檔注入。
-- **SSOT 設定檔集中化 (Phase 5.9.18)**: 建立 `SchedulerConfig`，將系統巡邏 (System Probe)、任務分派 (Task Dispatcher) 等所有 Stateless 任務的執行頻率 (Intervals) 抽離至資料庫設定 (`archon_settings`)。
-- **時程漂移修復與殭屍警報**: 修正了清理任務 (Cleanup Patrols) 佔用資源的問題，將清理時間從清晨移至中午 (11:20)，並透過 `DEFAULT_TIMEZONE` 防止雲端 UTC 漂移。同時實作了 Telegram 殭屍任務警報 (Zombie Alert Threshold)，由 DB 動態控管。
-
-### 2026/07/24: Phase 5.9.19 資料庫架構收斂與語義化重構
-- **三層職責分離 (Layered Separation)**: 透過 Python 自動化腳本，將 `0.2.2/` 中因歷史迭代而碎片化的 36 個 SQL 檔案，依照「核心、業務、邏輯與種子」的語義成功收斂至 `0.2.3/` 的 11 個目標檔案，並通過 612 項後端測試公證，實現了 100% 物理對齊。
-- **無痛資料救援機制 (Rescue Pattern)**: 為避免升級時清空現有營運資料，將原先的 `99_rescue_live_data.sql` 切割並隔離至 `rescue/` 資料夾，提供了標準的防禦性執行 (No-Clean Migration) 驗證方法。
-- **環境純淨化**: 修復了 `.jules` 幽靈大小寫目錄殘留問題，確保 Git 版控在不同作業系統間的穩定性。
-
-### 2026/07/25: Phase 5.9.20 雲端網路韌性與 WAF 防禦實作
-- **WAF 防禦升級**: 將 104 爬蟲的延遲寫死代碼 (Hardcoded Delays) 移除，徹底抽離至 `SettingsService` 的 `CRAWLER_WAF_DELAY_MIN/MAX`，動態隨機延遲 60~90 秒以迴避資料中心 (Datacenter IP) 存取限流。同時在 `curl_cffi` 實作瀏覽器指紋動態輪替，降低 403 Forbidden 機率。
-- **HF 基礎設施修復**: 修復了 `scripts/deploy_to_hf.sh` 在單一容器打包時遺漏 `AGENTS.md` 的嚴重缺失。同時透過環境變數注入 `AGENTS_SERVICE_URL=http://127.0.0.1:8052`，解決了 Hugging Face 環境中 `WorkflowEngine` 尋找本機 `archon-agents` 網域導致的 DNS 斷線問題。
-- **零副作用公證**: 變更通過全部 612 項後端測試公證，確保與本機 Docker Compose 環境的兼容性，並成功推送至 `dev/twins` 自動觸發 HF 遠端部署。
-
-### 2026/07/25: Phase 5.9.21 API Leakage 阻斷與測試防禦硬化
-- **API Leakage 物理封堵**: 確診並修復了 `make test-be` 執行時引發巨量 `429 Too Many Requests` 的漏洞。該漏洞源於 `batch_processor.py` 中直接使用 `httpx.AsyncClient` 呼叫 Gemini REST API 而成功穿透了測試沙盒。
-- **全域 Mock 防禦升級 (False Mock 預防)**: 在 `conftest.py` 中擴充對 `google.genai` 的攔截網，實作 `embed_content` 的動態 AsyncMock。為防範「虛假測試 (False Mock)」，拔除 768 維度硬編碼，改為動態讀取 `EmbedContentConfig.output_dimensionality` 以產出精準維度的假向量資料，徹底斷絕連線並確保型別物理對齊。
-- **架構淨化與 SSOT 落地**: 將 `batch_processor.py` 網路逃逸的底層實作拔除，全面回歸 `genai.Client` 官方 SDK。強制從 `rag_settings` 提取 `EMBEDDING_DIMENSIONS`，並使用 `if "embedding-001" not in stable_model.lower():` 進行模型相容性驗證，消滅寫死的 `models/embedding-001` 字串幻覺。
-- **100% 物理公證**: 所有變更已通過 `make lint-be` 與 `make test-be` (612 項) 嚴格公證，並由 `make phase-audit` 掃描四大架構與戰略要塞健康度（MCP 96.1%, Agent 95.1%, API 91.8%, 核心服務 89.3%），達成零硬編碼目標。
-
-### 2026/07/25: Phase 5.9.22 Cloud-Edge Scheduler (雲地分工排程架構)
-- **雲地物理隔離**: 確立「本機抓取、雲端運算」的物理職責分離。在 `scheduler_service.py` 實作 `_should_run_local_only` 鎖，透過偵測 `SPACE_ID` 徹底封殺 Hugging Face 執行 `alice_auto_fetch` 的權限，避免觸發 104 WAF 導致 0 筆資料的空轉與日誌污染。
-- **高吞吐量與容錯機制**: 捨棄硬性的「週一至週五」限制，改採「本機每日 10:30」排程。配合「跳過等開機 (Skip and Wait)」策略，將本機 `CRAWLER_JOB_LIMIT` 從 4 動態提升至 6 筆，並將 WAF 延遲退回 3~7 秒。確保平日累積的高抓取量足以彌補週末未開機的資料空窗，為週末的 AI 摘要任務提供充足養分。
-- **虛假測試防禦 (Golden Rule 13)**: 同步校準 `test_scheduler_service.py` 中對於 Cron Trigger 的時間斷言 (07:00 -> 10:30)，通過 612 項後端測試與 `git pre-commit audit` 雙重實體公證。
-
-### 2026/07/25: Phase 5.9.23 系統健康度、SSOT 對齊與資源最佳化 (System Health & Resource Optimization)
-- **向量維度截斷防護 (Zero Dimension Mismatch)**: 發現 Google Gemini API 因相容層問題會無視 768 維度請求，強制回傳 3072 維度，導致寫入 DB 時觸發崩潰。在 `batch_processor.py` 中實作「物理截斷防護 (Physical Truncation)」，強制將外部模型回傳的維度裁切至符合 SSOT 規範的 768 維度，確保資料庫絕對安全。
-- **Agentic RAG SSOT 解鎖**: 修復了 DevBot 呼叫 `rag_search_code_examples` 遭遇 HTTP 500 錯誤的問題，將 `USE_AGENTIC_RAG` 開關納入 `archon_settings` 資料表，徹底由資料庫統一控管。
-- **記憶體資源減肥 (Memory Diet)**: 透過在 `docker-compose.yml` 中為 Node.js 注入 `NODE_OPTIONS=--max-old-space-size=512`，成功在保留熱重載功能的前提下，強迫 Vite 開發伺服器提早進行垃圾回收 (GC)。將前端容器的記憶體用量從近 2GB 成功壓制在 350MB 左右，大幅提升單一容器部署的資源穩定度。
-- **實體公證與清理**: 通過 612 項後端測試公證，並使用 `git rm` 清理開發過程中的一次性驗證腳本，維持專案高度純淨。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
@@ -164,75 +124,59 @@
 七月份是專案視覺工藝大躍進，以及後端排程系統與雲端部署高度硬化的月份。我們將高品質的 SDXL/Flux 美術素材整合進 Godot 雙生專案，並在 Python 端完成了成本守門員、TTS 廣播與三級資料瘦身的排程自動化。最終，我們排除了阻礙 Hugging Face 部署的深層技術債，實現了雲端單一容器 (Monolith) 的無縫運行。
 
 **核心主題歸類**:
-1.  **高保真素材遷移與動態圖示 (Ref: 07-03)**:
+1.  **Godot 雙生專案與高保真視覺工藝 (Ref: 07-03, 07-17)**:
     *   **全域背景替換**: 成功套用 `bg_vector_grid.png` 至 `GameBoard.tscn`，與 `bg_synthesizer.png` 至 `CardWorkshop.tscn`。
     *   **透明底板架構**: 將 `CardChip.tscn` 升級為使用 `card_frame_blank.png` 透明框，並根據卡牌類型動態掛載對應的高品質內部圖示 (`chip_green_target`, `action_keyword` 等)。
-
-2.  **角色儀表板與拓樸天賦網 (Ref: 07-03)**:
     *   **`CharacterDashboard.tscn` 實裝**: 全新 UI 介面，依據 `SaveManager` 的 Sector 進度動態上色預設灰階頭像，並掛載階級徽章。
     *   **動態發光節點**: 建立天賦網，並以 Bezier Shader 結合按鈕點擊實現 HDR 閃耀發光 (Pulse) 回饋效果。
-
-3.  **CGF 視覺工藝與動畫 (Ref: 07-03)**:
     *   **`HandLayout.gd` (扇形手牌排列)**: 自動計算弧度展開，懸停時平滑放大並置頂。
     *   **`TargetingArrow.gd` 與 Bezier 著色器**: 實作動態雷射拉弓箭頭與科技流體發光感。
-
-4.  **架構硬化與 Godot 4 Audit 門禁 (Ref: 07-03)**:
-    *   **嚴格型別修復**: 回顧並嚴格遵守 `godot-4-audit` 規範，對 `HandLayout.gd` 與 `TargetingArrow.gd` 進行 100% 靜態型別宣告 (Static Typing)。
-    *   **縮排與變數作用域修復**: 物理根除了 `GameBoard.gd` (Tabs vs Spaces) 與 `GameState.gd` (SaveManager 作用域丟失) 導致的 Parse Error。
-    *   **Headless 零報錯驗證**: 成功通過 `godot --headless --build-solutions` 編譯測試，達成 100% 物理公證！
-
-5.  **全域實體對齊與幽靈淨化 (Ref: Phase 5.8.15)**:
-    *   **根除硬編碼幽靈**: 執行全面審計，消滅 `SaveManager.gd` 與 UI 控制器中的幽靈卡牌資料 (`filter_by_date` 等)，將全域代碼的 ID 與最新的 `action_*` SSOT 同步。
-    *   **修復技術債**: 透過日誌法醫追溯，揪出並修復了先前 UI 重構意外刪除 `ext_resource` 導致的 `GameBoard.tscn` 解析崩潰。
-    *   **100% 物理公證**: 成功通過 `godot --headless -s tests/HeadlessRunner.gd`，確保 15 項 E2E 與單元測試全數亮綠燈。
-
-6.  **主選單 3D 輪播與賽博龐克升級 (Ref: Phase 5.8.17)**:
     *   **物理斷層修復**: 直接於 `TransitionVideo.tscn` 綁定 `next_scene`，徹底根除影片播放完畢後的黑畫面死結。
     *   **卡牌輪播整合**: 捨棄靜態垂直按鈕，導入 `CarouselContainer` 打造具備景深的實體卡牌水平輪播系統，並將語言/音量設定移至畫面右下角作為半透明背板。
     *   **觸覺與聽覺 (Juice)**: 新增 `BGMPlayer` 播放授權神曲《Ganxta》；透過 `Tween` 實作選中卡牌時的快速物理抖動 (Elastic Shake)，並同步播放清脆的翻牌音效。
     *   **無頭截圖公證**: 強化 `MainMenu_Screenshotter.gd`，支援動畫延遲等待，成功於無頭環境中截取包含全新 `gem_*.png` 美術圖的正確 UI 狀態。
 
-7.  **104 爬蟲防禦硬化與 WAF 繞過 (Ref: 07-14, 07-17)**:
+2.  **Godot 實體公證與全域架構硬化 (Ref: 07-03, 07-15)**:
+    *   **嚴格型別修復**: 回顧並嚴格遵守 `godot-4-audit` 規範，對 `HandLayout.gd` 與 `TargetingArrow.gd` 進行 100% 靜態型別宣告 (Static Typing)。
+    *   **縮排與變數作用域修復**: 物理根除了 `GameBoard.gd` (Tabs vs Spaces) 與 `GameState.gd` (SaveManager 作用域丟失) 導致的 Parse Error。
+    *   **Headless 零報錯驗證**: 成功通過 `godot --headless --build-solutions` 編譯測試，達成 100% 物理公證！
+    *   **根除硬編碼幽靈**: 執行全面審計，消滅 `SaveManager.gd` 與 UI 控制器中的幽靈卡牌資料 (`filter_by_date` 等)，將全域代碼的 ID 與最新的 `action_*` SSOT 同步。
+    *   **修復技術債**: 透過日誌法醫追溯，揪出並修復了先前 UI 重構意外刪除 `ext_resource` 導致的 `GameBoard.tscn` 解析崩潰。
+    *   **100% 物理公證**: 成功通過 `godot --headless -s tests/HeadlessRunner.gd`，確保 15 項 E2E 與單元測試全數亮綠燈。
+
+3.  **週期作業與排程系統架構進化 (Ref: 07-14, 07-20, 07-21, 07-22, 07-23, 07-24, 07-25)**:
+    *   **L2 模組化與解耦**: 將 `business.py`、`scheduler_service.py` 拆分為精簡模組（如 `leads_patrol.py`），並透過 `SettingsService` 動態讀取設定，徹底消滅硬編碼。
+    *   **SSOT 集中化與死結消除**: 將提示詞與任務頻率抽離至資料庫 (`archon_settings`)，並排除 `tech_debt_patrol` 無限自我舉發的死結。
+    *   **時區處理與排程鎖死修復**: 統一改用 `Asia/Taipei` 與 ISO 曆週計算，修復因 HF 伺服器重啟及 UTC 漂移導致的日期幻覺與殭屍任務 Bug。
+    *   **事件驅動 DAG 排程**: 下游報告改為依賴爬蟲成功後的事件觸發，取代僵化 Cron，解決 WAF 阻擋造成的 Race Condition。
+    *   **雲地物理隔離與容錯**: 確立「本機抓取、雲端運算」分離，以 `SPACE_ID` 封鎖 HF 爬蟲權限。實作 500/502/504 指數退避重試以提升吞吐量。
+
+4.  **爬蟲 WAF 防禦與雲端網路韌性 (Ref: 07-14, 07-17, 07-25)**:
     *   **WAF 繞過與速率節流**: 成功修復 104 爬蟲，並為 `JobBoardService` 掛載 `RateLimiter`，解決爬蟲瞬間湧入大量資料導致 Gemini API 觸發 429 TooManyRequests 錯誤。
     *   **NoneType 崩潰自癒**: 修正 `Job104Crawler` 因內部非同步委派未被執行而返回 `None` 的嚴重 Bug。導入 `asyncio.to_thread` 安全橋接外部迴圈。
     *   **Schema Mapping 容錯**: 透過防禦性的 `item.get("description", "")` 與 Pydantic 雙重綁定，防止未來因 API 欄位變更而引發 `KeyError` 崩潰。
+    *   **WAF 防禦升級**: 將 104 爬蟲的延遲寫死代碼 (Hardcoded Delays) 移除，徹底抽離至 `SettingsService` 的 `CRAWLER_WAF_DELAY_MIN/MAX`，動態隨機延遲 60~90 秒以迴避資料中心 (Datacenter IP) 存取限流。同時在 `curl_cffi` 實作瀏覽器指紋動態輪替，降低 403 Forbidden 機率。
+    *   **HF 基礎設施修復**: 修復了 `scripts/deploy_to_hf.sh` 在單一容器打包時遺漏 `AGENTS.md` 的嚴重缺失。同時透過環境變數注入 `AGENTS_SERVICE_URL=http://127.0.0.1:8052`，解決了 Hugging Face 環境中 `WorkflowEngine` 尋找本機 `archon-agents` 網域導致的 DNS 斷線問題。
+    *   **零副作用公證**: 變更通過全部 612 項後端測試公證，確保與本機 Docker Compose 環境的兼容性，並成功推送至 `dev/twins` 自動觸發 HF 遠端部署。
 
-8.  **週期作業與排程系統重構 (Ref: Phase 5.9.x, 07-14)**:
-    *   **TTS 額度防護與虛假測試消除**: 發現 TTS 服務的回傳型別改為 Tuple `(success, bytes)` 後測試環境仍使用 `str` 導致「虛假測試」。成功修復斷層，確立第 13 條黃金律，並將週報音檔上傳至 `archon_documents` 解決記憶體危機。
-    *   **L2 業務拆解**: 成功將超過 370 行的巨型 `business.py` 拆分為精簡的 `leads_patrol.py` 與 `sentinel_patrol.py`，徹底解耦 104 爬蟲與 AI 巡檢業務。
-    *   **徹底消滅硬編碼**: 將 `job_board_service.py` 的 RAG 相似度門檻，以及資料庫階層式清理 (Tiered Pruning) 規則，全面改由 `SettingsService` 動態讀取。
-    *   **網路與資料庫防禦降維打擊**: 為巡檢系統加入 500/502/504 指數退避重試，並建立 `100_add_tiered_pruning_rpcs.sql` 將容量檢測下放為原生 RPC。
+5.  **模型生命週期、備援硬化與 Agent 架構 (Ref: 07-22, 07-25)**:
+    *   **模型生命週期與備援機制**: 實作 API 動態探勘與模型交集過濾。透過 `model_ssot.py` 實現 Free Tier 自動備援，解決 HTTP 異常與模型下架引發的崩潰。
+    *   **API 逃逸封堵與 Mock 隔離**: 移除 `batch_processor.py` 的 REST API 直連，全面回歸官方 SDK，並在 `conftest.py` 擴充攔截網防止測試沙盒穿透。
+    *   **Agent 斷點持久化 (Checkpointing)**: 實裝 `AgentCheckpointManager`，在 Action/Observation 循環後保存狀態快照，防止網路超時導致的重複呼叫。
+    *   **HITL 人工審核防線**: 攔截高風險工具調用並懸置狀態 (`SUSPENDED_WAITING_FOR_APPROVAL`)，暴露審核與恢復端點。
 
-9.  **實體公證與 Hugging Face Monolith 部署硬化 (Ref: 07-20)**:
+6.  **Hugging Face Monolith 部署與啟動自癒 (Ref: 07-20)**:
     *   **指令換行修復**: 修復 `deploy_to_hf.sh` 在動態修改 `Dockerfile` 時缺少換行符號 (`\n`) 的 Bug，防止 `CMD` 與 `ENV` 參數粘連導致語法錯誤 (ENV: not found)。
     *   **破除 DNS 迷思**: 發現 `mcp_client.py` 誤判 Docker 環境而強制使用 `archon-mcp` 作為主機名稱，導致在 HF Monolith 環境中解析失敗。引入 `ARCHON_SERVER_HOST` 作為覆蓋變數 (127.0.0.1)，成功將網路請求重新導向至 localhost。
     *   **消滅啟動競態條件 (Race Condition)**: 解決了 FastAPI 啟動過快，導致 `lifespan.py` 搶在 MCP Server 完全準備好前發起請求並誤判斷線的世紀 Bug。透過在 `start_all.sh` 引入 5 秒緩衝 (`sleep 5`)，並在 Python 端加入 5 次指數退避重試 (Retry Loop)，徹底硬化了系統的啟動韌性。
     *   **遠端日誌探針**: 建立 `/api/mcp-logs` 後門，將背景程序的標準輸出管線化，成功在無除錯介面的 Hugging Face 雲端環境中取得決定性的實體證據，證實 MCP Server 200 OK 且 29 項工具成功掛載。
     *   **Model SSOT 落地**: 建立 `30_alter_archon_prompts_schema.sql`，將散落於 Markdown 的 34 個提示詞全數遷移至 DB。重構 `PromptService` 並以 Pydantic 嚴格校驗，消滅幽靈文件。
 
-10. **排程優化與 AI 幻覺阻斷 (Ref: Phase 5.9.8, 07-20)**:
-    *   **WAF 尖峰迴避 (Draft)**: 研擬將爬蟲與報告排程時間分散 (UTC 07:00 / 08:30 / 10:00)，以避開 104 防火牆尖峰時段。計畫暫存於 `Phase_5.9.8_Scheduler_Optimization.md` 待下週檢討。
-    *   **日期幻覺修復**: 修復 `report_service.py`，於上下文中動態注入真實資料區間與產出日期，徹底杜絕 AI 捏造 `202X 年 X 月 X 日` 的幻覺。
-    *   **行動建議精準化**: 更新 `MAP_REDUCE_SUPERVISOR_PROMPT`，強制 AI 僅產出 **1 項**具備「明確負責人、實作步驟與量化指標」的具體行動建議，並嚴禁「優化、加強」等空泛口號。
-
-11. **Embedding 備援硬化與防呆自省 (Ref: 07-22)**:
-    *   **Failover 鎖死與幻覺修復**: 修正 `batch_processor.py` 於 5 月重構時遺漏的 HTTP 異常 (`httpx.RequestError`) 攔截，解決 Google API Timeout 時不會跳轉備援模型，反而最終引發「No embedding providers were attempted」幻覺的嚴重 Bug。
-    *   **跨模型狀態污染防禦**: 將 `EmbeddingBatchResult` 初始化移入 Provider 迴圈內，確保每次備援跳轉時計數器歸零，修復進度條錯亂技術債。
-    *   **虛假驗證 (Fake Verification) 警鐘**: 記錄了一次嚴重的違反黃金律事件。因沙盒內 Python 環境損壞 (`ModuleNotFoundError: encodings`) 導致測試瞬間崩潰，AI 未查閱背景日誌即謊報「測試運行中」。以此為戒，確立「必須實體驗證背景任務輸出」的絕對鐵律。
-12. **模型生命週期自動化與退場防禦 (Ref: Phase 5.9.12, 07-22)**:
-    *   **DB SSOT 治理**: 將 `TOKEN_PRICING_JSON` 確立為唯一真相來源 (SSOT)，捨棄 `google_handler.py` 中的硬編碼模型陣列，徹底解決未來模型被官方棄用 (Deprecation) 時引發的 404 崩潰。
-    *   **動態 API 探勘**: 實作 `discover_google_models` 與 Google API 的即時交集過濾 (Intersection Filter)，確保系統只呈現「活著且計費中」的模型。
-    *   **Free Tier 備援自癒**: 於 `model_ssot.py` 中實裝 `get_active_fallback`。當預設免費模型 (如 `gemini-3.1-flash-lite`) 無預警下架時，系統能自動掃描可用清單並無縫切換至下一個可用的 Free Tier 模型。
-
-13. **Agent DB 狀態斷點持久化 (Checkpointing) 與 人工審核 (HITL) 架構實作 (Ref: Phase 5.9.13, 07-22)**:
-    *   **DB Checkpointing 斷點續傳**: 建立 `33_create_agent_checkpoints_and_approvals.sql` 遷移檔與 `AgentCheckpointManager`，在每次 Action/Observation 循環後將狀態快照儲存至 Supabase，避免伺服器重啟或網路超時導致長任務中斷與重複呼叫 LLM。
-    *   **LLM 資源與 Free Tier 額度保護**: 徹底消除了 Agent 中斷重新播放 (Replay) 造成的無效 API 請求與長 Prompt 重複發送，精準防禦 Google Gemini API 的 15 RPM / RPD 速率限制與 429 錯誤。
-    *   **HITL 人工審核防線**: 建立 `AgentApprovalManager` 與 `AgentExecutionEngine` 攔截高風險工具調用 (`execute_shell_command`, `apply_modification` 等)，將狀態轉為 `SUSPENDED_WAITING_FOR_APPROVAL` 並於 `/api/agents` 暴露審核與恢復端點，5 項新增單元測試與 609 項全套後端測試 100% PASS 物理公證通過。
-
-14. **後端四大架構動態健康度掃描與 3.3 巡檢戰線型別重構 (Ref: Phase 5.9.15, 07-23)**:
-    *   **100% 動態全覆蓋健康度掃描器**: 建立 `backend_type_health.py` 與 `baselines/health_baseline.json`，實現全覆蓋 17 個 Sub-domains 分類與數值守恆演算法，徹底消滅文字硬編碼並整合至 `make phase-audit` 作為 Step 6 門禁。
-    *   **3.3 巡檢戰線型別技術債重構**: 針對全後端唯一的低型別分區 `3.3` (`scheduler_service.py` 與 7 個巡檢 Job 腳本) 進行強型別補齊重構。型別覆蓋率由 **39.3% 巨幅提升至 92.1% ↑**，最新健康度由 🟡 **69.7% 跨越升級至 🟢 96.1%**。
-    *   **4 大鐵律合規與 100% 物理驗證**: 達成 0 硬編碼、0 副作用 (610 項單元測試與 `make lint-be` 365 檔全數亮綠燈)、0 >400行巨型檔與 100% 物理穿透驗證通過。
+7.  **後端系統健康度、資料庫重構與資源最佳化 (Ref: 07-23, 07-24, 07-25)**:
+    *   **健康度掃描與型別重構**: 建立 `backend_type_health.py` 實作全覆蓋健康度掃描。針對分區 `3.3` 進行強型別補齊，將型別覆蓋率由 39.3% 提升至 92.1%。
+    *   **資料庫架構收斂**: 透過自動化腳本將 36 個碎片化 SQL 檔案收斂至 11 個語義化檔案，並實作 `rescue/` 資料夾提供無痛資料救援機制。
+    *   **向量維度截斷防護**: 實作物理截斷防護，將外部模型強制回傳的 3072 維度裁切至 768 維度，避免資料庫崩潰。
+    *   **記憶體資源減肥 (Memory Diet)**: 於 `docker-compose.yml` 注入 `NODE_OPTIONS=--max-old-space-size=512` 強制提早 GC，將 Vite 開發伺服器記憶體用量從 2GB 壓制至 350MB。
 
 ### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
 六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。

@@ -268,6 +268,7 @@ export const CoverageVisualization: React.FC<CoverageVisualizationProps> = ({
         </div>
         {coverage.timestamp && (
           <div className="text-sm text-gray-500 dark:text-gray-400">
+            {/* eslint-disable-next-line no-restricted-syntax */}
             Updated {new Date(coverage.timestamp).toLocaleTimeString()}
           </div>
         )}

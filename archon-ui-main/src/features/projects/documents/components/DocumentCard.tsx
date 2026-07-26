@@ -19,7 +19,9 @@ import { cn } from "../../../ui/primitives/styles";
 import type { DocumentCardProps, DocumentType } from "../types";
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+// eslint-disable-next-line no-restricted-syntax
 const dateFormatter = new Intl.DateTimeFormat(undefined);
+// TECH_DEBT: 採用原生 Intl.DateTimeFormat 已在模組級別提升效能最佳化，暫不遷移至 date-fns 以維持效能基線。
 const safeFormatDocumentDate = (dateVal: any) => {
   const date = new Date(dateVal);
   return isNaN(date.getTime()) ? "Invalid Date" : dateFormatter.format(date);
