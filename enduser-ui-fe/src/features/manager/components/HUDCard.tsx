@@ -21,9 +21,12 @@ export const HUDCard: React.FC<HUDCardProps> = ({
                        status === 'warning' ? 'bg-amber-500' : 
                        'bg-slate-400';
     return (
-        <div 
+        <button
+            type="button"
+            aria-pressed={active}
+            aria-label={`${label}: ${value}`}
             onClick={() => onClick(id)} 
-            className={`group relative p-5 rounded-3xl border transition-all cursor-pointer select-none ${
+            className={`w-full text-left group relative p-5 rounded-3xl border transition-all cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
                 active 
                 ? 'bg-white border-indigo-500 shadow-xl scale-[1.02] ring-4 ring-indigo-50/50' 
                 : 'bg-white border-gray-100 hover:border-gray-300 hover:shadow-md'
@@ -49,6 +52,6 @@ export const HUDCard: React.FC<HUDCardProps> = ({
                     <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                 </div>
             )}
-        </div>
+        </button>
     );
 };
