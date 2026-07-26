@@ -138,3 +138,7 @@
 ## 2026-07-20 - Refactoring sequential async AI inference to concurrent asyncio.gather
 **Learning:** When performing independent async AI inferences (like `_infer_need`) inside a loop over a list of items (e.g., job leads), using a sequential `for` loop with `await` creates a massive network waterfall bottleneck. This scales the execution time as O(N) instead of O(1) concurrent waiting time, severely slowing down processes like daily background data fetching.
 **Action:** Specifically look for `for` loops containing independent `await` calls, especially those hitting external network APIs, and refactor them to execute concurrently using `asyncio.gather` to eliminate the waterfall delay.
+
+## 2024-05-18 - Avoid redundant string allocations in Array.prototype.sort() comparators
+**Learning:** Calling string methods like `.toLowerCase()` inside an `Array.prototype.sort()` comparator causes $O(N \log N)$ redundant string allocations during the sorting phase.
+**Action:** When optimizing frontend performance, pre-calculate sorting weights or normalized strings in an $O(N)$ loop or `useMemo` block before executing the sort operation to eliminate redundant allocations.
