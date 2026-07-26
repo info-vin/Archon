@@ -5,6 +5,7 @@ This module provides business logic for logging Gemini interactions.
 """
 
 from datetime import datetime
+from typing import Any, NotRequired, TypedDict
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -12,6 +13,18 @@ from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
+
+
+class LogDataDTO(TypedDict):
+    user_input: NotRequired[str | None]
+    gemini_response: NotRequired[str | None]
+    project_name: NotRequired[str | None]
+    user_name: NotRequired[str | None]
+
+
+class LogEntryResultDTO(TypedDict):
+    log: NotRequired[dict[str, Any]]
+    error: NotRequired[str]
 
 
 class LogService(BaseRepository):
@@ -22,7 +35,7 @@ class LogService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
-    def create_log_entry(self, log_data: dict) -> tuple[bool, dict]:
+    def create_log_entry(self, log_data: LogDataDTO) -> tuple[bool, LogEntryResultDTO]:
         """
         Creates a new log entry in the archon_logs table.
 
@@ -63,12 +76,12 @@ class LogService(BaseRepository):
         logger.error(f"Failed to create log entry in database. Response: {result['error']}")
         return False, {"error": result.get("error", "Failed to insert log into database.")}
 
-    async def record_interaction(self, user_id: str, log_data: dict) -> dict:
+    async def record_interaction(self, user_id: str, log_data: LogDataDTO) -> LogEntryResultDTO:
         """Compatibility wrapper for API routes."""
         success, res = self.create_log_entry(log_data)
         return res if success else {"error": "Failed to log"}
 
-    async def get_active_alerts(self) -> list:
+    async def get_active_alerts(self) -> list[dict[str, Any]]:
         """Physical Placeholder for Charlie's Sentinel Alerts."""
         return []
 
