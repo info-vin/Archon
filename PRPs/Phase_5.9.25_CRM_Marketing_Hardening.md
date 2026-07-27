@@ -39,11 +39,13 @@
 
 ## 3. 實作步驟 (Execution Plan)
 
-### Step 1: 閉包與建構子基礎修補 (Closures & Constructors)
-- **行動**：遍歷所有 Service 檔案。
+### Step 1: 實踐 DRY 原則，徹底消滅巢狀閉包 (DRY Principle & Closure Elimination)
+- **行動**：優化底層 `BaseRepository.execute_query` 並重構所有 Service。
 - **作法**：
+  - 過去我們在每個方法都寫了 `def _query(): return self.supabase...execute()`，這嚴重違反了 **DRY (Don't Repeat Yourself)**，也是造成 57 個未標註函式大量發生的主因。
+  - 我將修改 `BaseRepository` 的 `execute_query`，使其能直接接收 Supabase Query Builder (例如 `self.supabase_client.table("...").select("...")`) 並在底層統一呼叫 `.execute()`。
+  - 接著遍歷 3.5 模組，**徹底移除所有 `_query` 閉包**，改為將 Query Builder 直接傳入 `execute_query`。這不僅消滅了型別死角，還能大幅減少代碼行數。
   - 將所有的 `def __init__(self, ...):` 補齊 `-> None`，並確保 `supabase_client` 標註為 `Any | None`。
-  - 將所有的巢狀查詢閉包 (如 `def _query():`, `def _insert():`) 補齊 `-> Any`。
 
 ### Step 2: 業務邏輯的 SSOT 對齊 (Business Logic SSOT Alignment)
 - **行動**：深度掃描 CRM 與行銷核心 (`marketing_service.py`, `project_service.py` 等)。
