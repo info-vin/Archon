@@ -16,7 +16,7 @@ class RBACService:
 
     _matrix_cache: dict[str, set[str]] | None = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Initial assignment rules (Static fallback)
         self.permissions = {
             "admin": ["admin", "system_admin", "manager", "employee", "member", "marketing", "sales", "ai_agent"],
