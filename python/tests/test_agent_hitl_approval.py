@@ -39,10 +39,10 @@ async def test_execution_engine_sensitive_tool_interception(mock_supabase):
         tool_args={"cmd": "rm -rf /"},
     )
 
-    assert res["status"] == "SUSPENDED_WAITING_FOR_APPROVAL"
-    assert res["checkpoint_id"] == "chk-999"
-    assert res["approval_id"] == "app-777"
-    assert res["tool_name"] == "execute_shell_command"
+    assert res.status == "SUSPENDED_WAITING_FOR_APPROVAL"
+    assert res.checkpoint_id == "chk-999"
+    assert res.approval_id == "app-777"
+    assert res.tool_name == "execute_shell_command"
 
 
 @pytest.mark.asyncio

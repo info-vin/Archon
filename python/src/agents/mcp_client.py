@@ -137,7 +137,15 @@ class MCPClient:
                 parsed_tools = []
                 for item in result:
                     if isinstance(item, dict):
-                        parsed_tools.append(MCPToolSchema(**item))
+                        if item.get("type") == "function" and "function" in item:
+                            func_data = item["function"]
+                            parsed_tools.append(MCPToolSchema(
+                                name=func_data.get("name"),
+                                description=func_data.get("description"),
+                                inputSchema=func_data.get("parameters", {})
+                            ))
+                        else:
+                            parsed_tools.append(MCPToolSchema(**item))
                 return parsed_tools
             return []
         except Exception as e:

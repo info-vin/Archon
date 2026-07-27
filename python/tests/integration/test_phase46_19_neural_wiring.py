@@ -95,7 +95,7 @@ async def test_mcp_client_list_tools_real_rpc_structure():
     tools = await client.list_tools()
 
     assert len(tools) == 1
-    assert tools[0]["function"]["name"] == "real_tool"
+    assert tools[0].name == "real_tool"
     # Verify the RPC call format
     args, kwargs = client.client.post.call_args
     assert kwargs["json"]["method"] == "list_tools"

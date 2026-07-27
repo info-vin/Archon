@@ -79,5 +79,5 @@ async def test_execution_engine_non_sensitive_step(mock_supabase):
         tool_args={"query": "test"},
     )
 
-    assert res["status"] == "RUNNING"
-    assert res["checkpoint_id"] == "chk-101"
+    assert res.status == "RUNNING"
+    assert res.checkpoint_id == "chk-101"
