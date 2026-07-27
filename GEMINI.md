@@ -113,7 +113,10 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-
+### 2026/07/27: 後端 DRY 重構與語法錯誤修復 (Phase 3.5 Hardening)
+- **Legacy Closure 清除**: 成功移除了全域 83 支檔案中的 `_query()` 舊式閉包寫法，全面改用 `BaseRepository.execute_query`，達成 L2 架構的 DRY 原則。
+- **強型別硬化與語法修復**: 清除了自動化腳本遺留的 `None=None` 雙重指派錯誤，並針對 `supabase_client` 注入了嚴格的型別宣告 (`Any = None`)。
+- **物理公證與健康度**: 成功通過 `uv run mypy src/server/` (0 錯誤)，並於 `backend_type_health.py` 中確認核心業務服務（包含 3.2 與 3.6）健康度全面提升至🟢強健/優良。`make test-be` (612 測試) 全數綠燈，確保零回歸副作用。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
