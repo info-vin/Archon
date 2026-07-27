@@ -1,5 +1,7 @@
 # python/src/server/services/profile_service.py
 
+from typing import Any
+
 from src.server.models.auth_models import UserProfileDTO
 from src.server.repositories.base_repository import BaseRepository
 
@@ -12,7 +14,7 @@ logger = get_logger(__name__)
 class ProfileService(BaseRepository):
     """Service for handling business logic related to user profiles."""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         """Initialize with optional supabase client."""
         client = supabase_client or get_supabase_client()
         super().__init__(client)
@@ -25,7 +27,7 @@ class ProfileService(BaseRepository):
             A tuple containing a success boolean and either a list of users or an error message.
         """
 
-        def _query():
+        def _query() -> Any:
             return self.supabase_client.table("profiles").select("id, name, role").execute()
 
         success, result = self.execute_query(
@@ -45,7 +47,7 @@ class ProfileService(BaseRepository):
             A tuple containing a success boolean and either a list of users or an error message.
         """
 
-        def _query():
+        def _query() -> Any:
             return self.supabase_client.table("profiles").select("*").execute()
 
         success, result = self.execute_query(
@@ -67,7 +69,7 @@ class ProfileService(BaseRepository):
             A tuple containing a success boolean and the user's role or None if not found.
         """
 
-        def _query():
+        def _query() -> Any:
             return self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1).execute()
 
         # Returning True, None instead of False when no role is found.
@@ -92,7 +94,7 @@ class ProfileService(BaseRepository):
             A tuple containing success boolean and the profile data (with flattened permissions).
         """
 
-        def _query():
+        def _query() -> Any:
             return self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1).execute()
 
         success, result = self.execute_query(
@@ -122,7 +124,7 @@ class ProfileService(BaseRepository):
 
         logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
 
-        def _query():
+        def _query() -> Any:
             return self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
 
         success, result = self.execute_query(

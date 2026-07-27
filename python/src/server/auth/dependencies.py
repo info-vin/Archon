@@ -97,7 +97,7 @@ async def get_current_admin(current_user: Annotated[UserProfileDTO, Depends(get_
     return current_user
 
 
-async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]):
+async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> bool:
     """Secure boolean-style dependency for Admin enforcement via JWT."""
     role = current_user.role.lower()
     if role not in ["admin", "system_admin"]:
@@ -105,7 +105,7 @@ async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_
     return True
 
 
-async def verify_manager_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]):
+async def verify_manager_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> bool:
     """Secure dependency ensuring the user is at least a Manager or Admin."""
     role = current_user.role.lower()
     if role not in ["admin", "system_admin", "manager"]:
@@ -125,13 +125,13 @@ async def get_propose_change_service() -> Any:
     return ProposeChangeService()
 
 
-def requires_permission(permission: str):
+def requires_permission(permission: str) -> Any:
     """
     Factory for creating a dependency that checks if the user has a specific permission.
     Usage: @router.get("/", dependencies=[Depends(requires_permission(TASK_CREATE))])
     """
 
-    async def permission_checker(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]):
+    async def permission_checker(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> UserProfileDTO:
         from ..services.rbac_service import RBACService
 
         role = current_user.role.lower()
