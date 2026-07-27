@@ -8,11 +8,17 @@ instead of direct database access or service imports.
 
 import json
 import logging
-from typing import Any, cast
+from typing import Any
 
 import httpx
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+class MCPToolSchema(BaseModel):
+    name: str
+    description: str | None = None
+    input_schema: dict[str, Any] | None = Field(default_factory=dict, alias="inputSchema")
 
 
 class MCPClient:
@@ -62,11 +68,11 @@ class MCPClient:
         self.client = httpx.AsyncClient(timeout=timeout_val)
         logger.info(f"MCP Client initialized with URL: {self.mcp_url}, agent_type: {self.agent_type}, timeout: {timeout_val}s")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "MCPClient":
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit."""
         await self.close()
 
@@ -74,7 +80,7 @@ class MCPClient:
         """Close the HTTP client."""
         await self.client.aclose()
 
-    async def call_tool(self, tool_name: str, **kwargs) -> Any:
+    async def call_tool(self, tool_name: str, **kwargs: Any) -> Any:
         """
         Call an MCP tool via HTTP.
 
@@ -117,7 +123,7 @@ class MCPClient:
             logger.error(f"Error calling MCP tool {tool_name}: {e}")
             raise
 
-    async def list_tools(self) -> list[dict[str, Any]]:
+    async def list_tools(self) -> list[MCPToolSchema]:
         """
         Dynamically list all registered MCP tools from the server.
 
@@ -128,7 +134,11 @@ class MCPClient:
             # list_tools is a special method handled by the /rpc fast path
             result = await self.call_tool("list_tools")
             if isinstance(result, list):
-                return cast(list[dict[str, Any]], result)
+                parsed_tools = []
+                for item in result:
+                    if isinstance(item, dict):
+                        parsed_tools.append(MCPToolSchema(**item))
+                return parsed_tools
             return []
         except Exception as e:
             logger.error(f"Failed to fetch tool list from MCP: {e}")

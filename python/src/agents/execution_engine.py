@@ -7,6 +7,8 @@ Integrates state persistence (AgentCheckpointManager) and HITL approval gates (A
 import logging
 from typing import Any
 
+from src.server.models.agent_models import ExecutionStepResult, ResumeExecutionResult
+
 from .approval_manager import AgentApprovalManager, ApprovalRequestDTO
 from .checkpoint_manager import AgentCheckpointManager, CheckpointDTO
 
@@ -25,7 +27,11 @@ DEFAULT_SENSITIVE_TOOLS = {
 class AgentExecutionEngine:
     """Agent execution orchestrator with state checkpointing and HITL interception."""
 
-    def __init__(self, checkpoint_mgr=None, approval_mgr=None) -> None:
+    def __init__(
+        self,
+        checkpoint_mgr: AgentCheckpointManager | None = None,
+        approval_mgr: AgentApprovalManager | None = None,
+    ) -> None:
         self.checkpoint_mgr = checkpoint_mgr or AgentCheckpointManager()
         self.approval_mgr = approval_mgr or AgentApprovalManager()
 
@@ -54,7 +60,7 @@ class AgentExecutionEngine:
         state_snapshot: dict[str, Any],
         tool_name: str | None = None,
         tool_args: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    ) -> ExecutionStepResult:
         """
         Executes a single step for an Agent.
         - If tool_name is sensitive, saves a PENDING_APPROVAL checkpoint and creates HITL request.
@@ -93,14 +99,15 @@ class AgentExecutionEngine:
                 )
             )
 
-            return {
-                "status": "SUSPENDED_WAITING_FOR_APPROVAL",
-                "checkpoint_id": checkpoint_id,
-                "approval_id": approval_id,
-                "tool_name": tool_name,
-                "tool_args": tool_args,
-                "message": f"Sensitive tool '{tool_name}' requires human approval before execution.",
-            }
+            return ExecutionStepResult(
+                status="SUSPENDED_WAITING_FOR_APPROVAL",
+                checkpoint_id=checkpoint_id,
+                step_index=step_index,
+                approval_id=approval_id,
+                tool_name=tool_name,
+                tool_args=tool_args,
+                message=f"Sensitive tool '{tool_name}' requires human approval before execution.",
+            )
 
         # Non-sensitive tool or standard step -> Save RUNNING checkpoint
         checkpoint_id = await self.checkpoint_mgr.save_checkpoint(
@@ -114,33 +121,33 @@ class AgentExecutionEngine:
             )
         )
 
-        return {
-            "status": "RUNNING",
-            "checkpoint_id": checkpoint_id,
-            "step_index": step_index,
-            "message": "Step executed and state checkpoint saved successfully.",
-        }
+        return ExecutionStepResult(
+            status="RUNNING",
+            checkpoint_id=checkpoint_id,
+            step_index=step_index,
+            message="Step executed and state checkpoint saved successfully.",
+        )
 
-    async def resume_execution(self, conversation_id: str) -> dict[str, Any]:
+    async def resume_execution(self, conversation_id: str) -> ResumeExecutionResult:
         """Resumes agent execution from the latest checkpoint snapshot."""
         latest = await self.checkpoint_mgr.load_latest_checkpoint(conversation_id)
         if not latest:
             raise ValueError(f"No checkpoint found for conversation ID {conversation_id}")
 
         if latest.status == "PENDING_APPROVAL":
-            return {
-                "status": "PENDING_APPROVAL",
-                "conversation_id": conversation_id,
-                "step_index": latest.step_index,
-                "message": "Agent execution is still waiting for human approval.",
-            }
+            return ResumeExecutionResult(
+                status="PENDING_APPROVAL",
+                conversation_id=conversation_id,
+                step_index=latest.step_index,
+                message="Agent execution is still waiting for human approval.",
+            )
 
         logger.info(f"[ExecutionEngine] Resuming conv {conversation_id} from step {latest.step_index}")
-        return {
-            "status": "RESUMED",
-            "conversation_id": conversation_id,
-            "step_index": latest.step_index,
-            "state_snapshot": latest.state_snapshot,
-            "agent_role": latest.agent_role,
-            "message": f"Successfully resumed from step {latest.step_index}.",
-        }
+        return ResumeExecutionResult(
+            status="RESUMED",
+            conversation_id=conversation_id,
+            step_index=latest.step_index,
+            state_snapshot=latest.state_snapshot,
+            agent_role=latest.agent_role,
+            message=f"Successfully resumed from step {latest.step_index}.",
+        )

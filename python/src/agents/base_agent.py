@@ -49,7 +49,7 @@ class RateLimitHandler:
         self.last_request_time: float = 0.0
         self.min_request_interval = 0.5  # Increased from 0.1 to 0.5s (2 requests/sec max) for stability
 
-    async def _log_rate_limit_alert(self, error_message: str, retry_count: int, wait_time: float):
+    async def _log_rate_limit_alert(self, error_message: str, retry_count: int, wait_time: float) -> None:
         """Log the rate limit hit as a system ALERT in archon_logs."""
         try:
             from ..utils import get_supabase_client
@@ -72,7 +72,7 @@ class RateLimitHandler:
         except Exception as e:
             logger.warning(f"Failed to log rate limit alert to DB: {e}")
 
-    async def execute_with_rate_limit(self, func, *args, progress_callback=None, **kwargs):
+    async def execute_with_rate_limit(self, func: Any, *args: Any, progress_callback: Any = None, **kwargs: Any) -> Any:
         """Execute a function with rate limiting protection."""
         retries = 0
 
@@ -187,8 +187,8 @@ class BaseAgent[DepsT, OutputT](ABC):
         name: str | None = None,
         retries: int = 3,
         enable_rate_limiting: bool = True,
-        **agent_kwargs,
-    ):
+        **agent_kwargs: Any,
+    ) -> None:
         if not model:
             raise ValueError(
                 f"No model specified for {self.__class__.__name__}. Please set the appropriate environment variable."
@@ -212,7 +212,7 @@ class BaseAgent[DepsT, OutputT](ABC):
         self.logger = logging.getLogger(f"agents.{self.name}")
 
     @abstractmethod
-    def _create_agent(self, **kwargs) -> Agent[DepsT, OutputT]:
+    def _create_agent(self, **kwargs: Any) -> Agent[DepsT, OutputT]:
         """Create and configure the PydanticAI agent. Must be implemented by subclasses."""
         pass
 
@@ -288,7 +288,7 @@ class BaseAgent[DepsT, OutputT](ABC):
             self.logger.error(f"Agent {self.name} failed: {str(e)}")
             raise
 
-    def run_stream(self, user_prompt: str, deps: DepsT):
+    def run_stream(self, user_prompt: str, deps: DepsT) -> Any:
         """
         Run the agent with streaming output.
 
@@ -305,7 +305,7 @@ class BaseAgent[DepsT, OutputT](ABC):
         # run_stream returns an async context manager directly, not a coroutine
         return self._agent.run_stream(user_prompt, deps=deps)
 
-    def add_tool(self, func, **tool_kwargs):
+    def add_tool(self, func: Any, **tool_kwargs: Any) -> Any:
         """
         Add a tool function to the agent.
 
@@ -315,7 +315,7 @@ class BaseAgent[DepsT, OutputT](ABC):
         """
         return self._agent.tool(**tool_kwargs)(func)
 
-    def add_system_prompt_function(self, func):
+    def add_system_prompt_function(self, func: Any) -> Any:
         """
         Add a dynamic system prompt function to the agent.
 

@@ -61,10 +61,10 @@ AVAILABLE_AGENTS = {
 }
 
 # Global credentials storage
-AGENT_CREDENTIALS = {}
+AGENT_CREDENTIALS: dict[str, str] = {}
 
 
-async def fetch_credentials_from_server():
+async def fetch_credentials_from_server() -> dict[str, str]:
     """Fetch credentials from the server's internal API."""
     max_retries = 30  # Try for up to 5 minutes (30 * 10 seconds)
     retry_delay = 10  # seconds
@@ -84,7 +84,7 @@ async def fetch_credentials_from_server():
                     f"http://{server_host}:{server_port}/internal/credentials/agents", timeout=10.0
                 )
                 response.raise_for_status()
-                credentials = response.json()
+                credentials = cast(dict[str, str], response.json())
 
                 # Set credentials as environment variables
                 for key, value in credentials.items():
@@ -108,10 +108,12 @@ async def fetch_credentials_from_server():
                 logger.error(f"Failed to fetch credentials after {max_retries} attempts")
                 raise Exception("Could not fetch credentials from server") from e
 
+    return {}
+
 
 # Lifespan context manager
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Initialize and cleanup resources"""
     logger.info("Starting Agents service...")
 
@@ -193,23 +195,33 @@ async def run_workflow(request: WorkflowRequest):
         return AgentResponse(success=False, error=str(e))
 
 
-@app.get("/")
-@app.head("/")
-async def root():
+class RootResponse(BaseModel):
+    status: str
+    service: str
+
+@app.get("/", response_model=RootResponse)
+@app.head("/", response_model=RootResponse)
+async def root() -> RootResponse:
     """Root endpoint for the agents service"""
-    return {"status": "healthy", "service": "agents"}
+    return RootResponse(status="healthy", service="agents")
 
 
-@app.get("/health")
-@app.head("/health")
-async def health_check():
+class HealthResponse(BaseModel):
+    status: str
+    service: str
+    agents_available: list[str]
+    note: str
+
+@app.get("/health", response_model=HealthResponse)
+@app.head("/health", response_model=HealthResponse)
+async def health_check() -> HealthResponse:
     """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "agents",
-        "agents_available": list(AVAILABLE_AGENTS.keys()),
-        "note": "This service only hosts PydanticAI agents",
-    }
+    return HealthResponse(
+        status="healthy",
+        service="agents",
+        agents_available=list(AVAILABLE_AGENTS.keys()),
+        note="This service only hosts PydanticAI agents",
+    )
 
 
 @app.post("/agents/run", response_model=AgentResponse)
@@ -247,24 +259,34 @@ async def run_agent(request: AgentRequest):
         return AgentResponse(success=False, error=str(e))
 
 
-@app.get("/agents/list")
-async def list_agents():
+class AgentInfo(BaseModel):
+    name: str
+    model: str
+    description: str
+    available: bool
+
+class AgentListResponse(BaseModel):
+    agents: dict[str, AgentInfo]
+    total: int
+
+@app.get("/agents/list", response_model=AgentListResponse)
+async def list_agents() -> AgentListResponse:
     """List all available agents and their capabilities"""
-    agents_info = {}
+    agents_info: dict[str, AgentInfo] = {}
 
     for name, agent in app.state.agents.items():
-        agents_info[name] = {
-            "name": agent.name,
-            "model": agent.model,
-            "description": agent.__class__.__doc__ or "No description available",
-            "available": True,
-        }
+        agents_info[name] = AgentInfo(
+            name=agent.name,
+            model=agent.model,
+            description=agent.__class__.__doc__ or "No description available",
+            available=True,
+        )
 
-    return {"agents": agents_info, "total": len(agents_info)}
+    return AgentListResponse(agents=agents_info, total=len(agents_info))
 
 
 @app.post("/agents/{agent_type}/stream")
-async def stream_agent(agent_type: str, request: AgentRequest):
+async def stream_agent(agent_type: str, request: AgentRequest) -> StreamingResponse:
     """
     Stream responses from an agent using Server-Sent Events (SSE).
 
