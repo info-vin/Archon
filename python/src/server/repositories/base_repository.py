@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import Any
 
 from supabase import Client
@@ -25,13 +24,14 @@ class BaseRepository:
         return self
 
     def execute_query(
-        self, query_func: Callable[[], Any], error_context: str = "Query failed", require_data: bool = False, max_retries: int = 1
+        self, query_func: Any, error_context: str = "Query failed", require_data: bool = False, max_retries: int = 1
     ) -> tuple[bool, dict[str, Any]]:
         """
         封裝 Supabase 查詢，提供標準化的錯誤處理與資料驗證機制。包含對 ConnectionTerminated 的自動重試 (自癒)。
+        支援直接傳入 query builder 或是 closure。
 
         Args:
-            query_func: 一個閉包或 lambda，回傳 Supabase 查詢的 response
+            query_obj_or_func: Supabase 查詢物件 (e.g. table("x").select("*")) 或一個無參數 closure。
             error_context: 錯誤紀錄時的上下文描述 (供前端介面與後端 Log 辨識)
             require_data: 如果此為 True，必定要求 response.data 不為空，否則視為 False
             max_retries: 遇到錯誤時的最多重試次數
@@ -44,7 +44,13 @@ class BaseRepository:
         last_exception = None
         for attempt in range(max_retries + 1):
             try:
-                response = query_func()
+                # Support both functions (legacy) and objects (new DRY)
+                response = query_func.execute() if hasattr(query_func, "execute") else query_func()
+
+                # Check for explicit failure markers like status=False from the response object
+                if hasattr(response, "status") and response.status is False:
+                    return False, {"error": f"{error_context}"}
+
                 if require_data and not response.data:
                     return False, {"error": f"{error_context}"}
 

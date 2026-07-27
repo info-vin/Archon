@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 class MarketingMetrics:
     """Handles deep lead analysis and marketing ROI."""
 
-    def __init__(self, supabase_client):
-        self.supabase = supabase_client
+    def __init__(self, supabase_client: Any | None = None) -> None:
+        self.supabase: Any = supabase_client
 
     async def get_marketing_intelligence(self, user_id: str | None = None) -> dict[str, Any]:
         """Marketing 2.0: Deep Lead Analysis & ROI (Phase 4.6.42)."""

@@ -13,16 +13,14 @@ logger = get_logger(__name__)
 class BlogService(BaseRepository):
     """Service for handling blog post operations."""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     async def list_posts(self) -> tuple[bool, dict[str, Any]]:
         """Retrieve a list of all blog posts."""
 
-        def _query():
-            return self.supabase_client.table("blog_posts").select("*").order("publish_date", desc=True).execute()
 
-        success, res = self.execute_query(_query, "Failed to fetch blog posts")
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").select("*").order("publish_date", desc=True), "Failed to fetch blog posts")
         if success:
             return True, {"posts": res.get("data", [])}
         return False, res
@@ -30,7 +28,7 @@ class BlogService(BaseRepository):
     async def get_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve a single blog post by its ID."""
 
-        def _query():
+        def _query() -> Any:
             res = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
             res.data = res.data[0] if res.data else {}
             return res
@@ -60,10 +58,8 @@ class BlogService(BaseRepository):
             except Exception as e:
                 logger.warning(f"BlogService: Visual generation skipped due to error: {e}")
 
-        def _query():
-            return self.supabase_client.table("blog_posts").insert(post_data).execute()
 
-        success, res = self.execute_query(_query, "Error creating post")
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").insert(post_data), "Error creating post")
         if success:
             data = res.get("data", [])
             return True, {"post": data[0] if isinstance(data, list) and data else data}
@@ -108,10 +104,8 @@ class BlogService(BaseRepository):
             # P6: Smart Polish - Extract image and clean content
             update_data = self._clean_content_images(update_data)
 
-        def _query():
-            return self.supabase_client.table("blog_posts").update(update_data).eq("id", post_id).execute()
 
-        success, res = self.execute_query(_query, f"Error updating post {post_id}")
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").update(update_data).eq("id", post_id), f"Error updating post {post_id}")
         if success:
             data = res.get("data", [])
             return True, {"post": data[0] if isinstance(data, list) and data else data}
@@ -142,11 +136,9 @@ class BlogService(BaseRepository):
     async def delete_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Delete a blog post."""
 
-        def _query():
-            return self.supabase_client.table("blog_posts").delete().eq("id", post_id).execute()
 
         # execute_query with require_data=False for delete
-        success, res = self.execute_query(_query, f"Error deleting post {post_id}", require_data=False)
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").delete().eq("id", post_id), f"Error deleting post {post_id}", require_data=False)
         if success:
             return True, {"message": "Post deleted successfully."}
         return False, res

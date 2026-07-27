@@ -36,7 +36,7 @@ class SalesPitchGenerator:
             sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
 
             @retry_with_backoff(max_retries=2)
-            async def _call_gemini():
+            async def _call_gemini() -> Any:
                 return await client.aio.models.generate_content(
                     model=marketing_model,
                     contents=f"Company: {company}\nRole: {job_title}",

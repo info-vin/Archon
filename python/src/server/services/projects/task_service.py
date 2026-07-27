@@ -22,7 +22,7 @@ class TaskService(BaseRepository):
 
     VALID_STATUSES = ["todo", "doing", "review", "done", "processing", "dispatched"]
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         """Initialize with optional supabase client"""
         client = supabase_client or get_supabase_client()
         super().__init__(client)

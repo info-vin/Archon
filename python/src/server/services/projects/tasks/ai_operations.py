@@ -243,7 +243,7 @@ async def generate_task_from_alert_logic(
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
         @retry_with_backoff(max_retries=2)
-        async def _call_gemini():
+        async def _call_gemini() -> Any:
             from src.server.services.prompt_service import prompt_service
             default_instruction = "You are Charlie's Assistant. Answer in Traditional Chinese (Taiwan)."
             system_instruction = prompt_service.get_prompt("CHARLIE_ASSISTANT_PM", default=default_instruction)

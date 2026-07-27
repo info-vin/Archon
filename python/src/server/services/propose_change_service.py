@@ -44,7 +44,7 @@ class ActionExecutor:
 
 
 class ProposeChangeService:
-    def __init__(self, db_client=None):
+    def __init__(self, db_client: Any | None = None) -> None:
         self.db_client = db_client or get_supabase_client()
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)

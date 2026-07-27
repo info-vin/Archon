@@ -16,7 +16,7 @@ CST = ZoneInfo("Asia/Taipei")
 
 
 class ReportService(BaseRepository):
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         super().__init__(supabase_client)
 
     def _get_leads_context(self, cutoff_date: str) -> str:

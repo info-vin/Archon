@@ -190,7 +190,7 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
     Get a specific task by ID, including AI usage metrics.
     """
 
-    def _query():
+    def _query() -> Any:
         return task_service_instance.supabase_client.table("archon_tasks").select("*").eq("id", task_id).execute()
 
     success, result = task_service_instance.execute_query(

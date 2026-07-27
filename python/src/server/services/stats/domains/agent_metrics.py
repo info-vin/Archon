@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 class AgentMetrics:
     """Handles agent execution trends and readiness."""
 
-    def __init__(self, supabase_client):
-        self.supabase = supabase_client
+    def __init__(self, supabase_client: Any | None = None) -> None:
+        self.supabase: Any = supabase_client
 
     async def get_commander_trends(self) -> list[dict[str, Any]]:
         """Strategic 30-day trend data including full Velocity (GAP-034)."""

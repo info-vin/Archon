@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 class SystemMetrics:
     """Handles SLA reliability and token usage tracking."""
 
-    def __init__(self, supabase_client):
-        self.supabase = supabase_client
+    def __init__(self, supabase_client: Any | None = None) -> None:
+        self.supabase: Any = supabase_client
 
     async def get_sla_reliability(self) -> dict[str, Any]:
         """6-Month SLA Attainment logic."""

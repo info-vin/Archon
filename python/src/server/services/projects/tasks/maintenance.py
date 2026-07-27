@@ -66,7 +66,7 @@ async def archive_task_logic(
             "updated_at": datetime.now().isoformat(),
         }
 
-        def _archive_query():
+        def _archive_query() -> Any:
             return (
                 task_service_instance.supabase_client.table("archon_tasks")
                 .update(archive_data)

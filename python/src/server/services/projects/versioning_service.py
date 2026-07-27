@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class VersioningService(BaseRepository):
     """Service class for document versioning operations"""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         """Initialize with optional supabase client"""
         super().__init__(supabase_client)
 
@@ -31,7 +31,7 @@ class VersioningService(BaseRepository):
         """
 
         # 1. Get latest version number
-        def _get_latest():
+        def _get_latest() -> Any:
             return (
                 self.supabase_client.table("archon_document_versions")
                 .select("version_number")
@@ -59,15 +59,13 @@ class VersioningService(BaseRepository):
             "created_by": created_by,
         }
 
-        def _insert():
-            return self.supabase_client.table("archon_document_versions").insert(new_version_data).execute()
 
-        return self.execute_query(_insert, "Failed to create new version")
+        return self.execute_query(self.supabase_client.table("archon_document_versions").insert(new_version_data), "Failed to create new version")
 
     async def get_version_history(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve the version history for a specific project."""
 
-        def _query():
+        def _query() -> Any:
             return (
                 self.supabase_client.table("archon_document_versions")
                 .select("*")
@@ -81,7 +79,7 @@ class VersioningService(BaseRepository):
     def list_all_versions(self) -> tuple[bool, dict[str, Any]]:
         """List all document versions globally."""
 
-        def _query():
+        def _query() -> Any:
             return (
                 self.supabase_client.table("archon_document_versions")
                 .select("*")
@@ -98,7 +96,7 @@ class VersioningService(BaseRepository):
     def list_versions(self, project_id: str, field_name: str | None = None) -> tuple[bool, dict[str, Any]]:
         """List version history for a project's JSONB fields."""
 
-        def _query():
+        def _query() -> Any:
             query = self.supabase_client.table("archon_document_versions").select("*").eq("project_id", project_id)
             if field_name:
                 query = query.eq("field_name", field_name)
@@ -114,7 +112,7 @@ class VersioningService(BaseRepository):
     def get_version_content(self, project_id: str, field_name: str, version_number: int) -> tuple[bool, dict[str, Any]]:
         """Get a specific version's content."""
 
-        def _query():
+        def _query() -> Any:
             res = (
                 self.supabase_client.table("archon_document_versions")
                 .select("content")
@@ -146,7 +144,7 @@ class VersioningService(BaseRepository):
                 return False, {"error": "Version content is empty"}
 
             # 2. Update the project table
-            def _update_project():
+            def _update_project() -> Any:
                 return (
                     self.supabase_client.table("archon_projects")
                     .update({field_name: content})
@@ -175,7 +173,7 @@ class VersioningService(BaseRepository):
     async def get_all_versions(self) -> tuple[bool, dict[str, Any]]:
         """Retrieve all document versions across all projects."""
 
-        def _query():
+        def _query() -> Any:
             return (
                 self.supabase_client.table("archon_sources")
                 .select("*")

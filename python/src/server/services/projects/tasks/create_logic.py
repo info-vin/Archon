@@ -44,7 +44,7 @@ async def create_info_request_task_logic(
         if not project_id:
             logger.warning("No 'default_business_project' set. Falling back to the first available project.")
 
-            def _get_first_project():
+            def _get_first_project() -> Any:
                 return task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute()
 
             p_success, p_result = task_service_instance.execute_query(
@@ -156,7 +156,7 @@ async def create_task_logic(
         if due_date:
             task_data["due_date"] = due_date.isoformat()
 
-        def _create_query():
+        def _create_query() -> Any:
             return task_service_instance.supabase_client.table("archon_tasks").insert(task_data).execute()
 
         success_create, create_result = task_service_instance.execute_query(

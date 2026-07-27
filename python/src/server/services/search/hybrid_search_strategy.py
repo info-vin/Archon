@@ -66,7 +66,7 @@ class HybridSearchStrategy(BaseRepository):
                     "source_filter": source_filter,
                 },
             )
-            success, response = self.execute_query(query_obj.execute, error_context="Hybrid document search failed")
+            success, response = self.execute_query(query_obj, error_context="Hybrid document search failed")
 
             if not success:
                 span.set_attribute("error", str(response.get("error")))
@@ -150,7 +150,7 @@ class HybridSearchStrategy(BaseRepository):
                     "source_filter": final_source_filter,
                 },
             )
-            success, response = self.execute_query(query_obj.execute, error_context="Hybrid code example search failed")
+            success, response = self.execute_query(query_obj, error_context="Hybrid code example search failed")
 
             if not success:
                 span.set_attribute("error", str(response.get("error")))

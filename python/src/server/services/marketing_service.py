@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from ..config.logfire_config import get_logger
 from ..repositories.base_repository import BaseRepository
@@ -14,7 +15,7 @@ class MarketingService(BaseRepository):
     Physically delegates logic to specialized handlers for Phase 4.6.47 Hardening.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     # --- 1. Leads & Jobs (LeadHandler) ---

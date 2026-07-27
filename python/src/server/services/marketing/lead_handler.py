@@ -23,7 +23,7 @@ class LeadHandler:
             return False, {"error": str(e)}
 
     async def list_leads(self, user_id: str | None = None, role: str | None = None) -> list[dict]:
-        def _query():
+        def _query() -> Any:
             q = self.supabase_client.table("leads").select("*")
             if role == "sales" and user_id:
                 q = q.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
@@ -42,10 +42,8 @@ class LeadHandler:
         source_url = lead_data.get("source_job_url")
         if source_url:
 
-            def _check_existing():
-                return self.supabase_client.table("leads").select("id").eq("source_job_url", source_url).execute()
 
-            _, existing = self.execute_query(_check_existing, "Check existing lead")
+            _, existing = self.execute_query(self.supabase_client.table("leads").select("id").eq("source_job_url", source_url), "Check existing lead")
             if hasattr(existing, "data") and existing.data:
                 if lead_data.get("pitch_content"):
                     self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq(
@@ -53,19 +51,15 @@ class LeadHandler:
                     ).execute()
                 return True, {"lead": existing.data[0]}
 
-        def _insert():
-            return self.supabase_client.table("leads").insert(lead_data).execute()
 
-        success, res = self.execute_query(_insert, "Failed to create lead")
+        success, res = self.execute_query(self.supabase_client.table("leads").insert(lead_data), "Failed to create lead")
         if success and hasattr(res, "data") and res.data:
             return True, {"lead": res.data[0]}
         return False, res
 
     async def update_lead(self, lead_id: str, update_data: dict) -> tuple[bool, dict]:
-        def _query():
-            return self.supabase_client.table("leads").update(update_data).eq("id", lead_id).execute()
 
-        success, res = self.execute_query(_query, f"Failed to update lead {lead_id}")
+        success, res = self.execute_query(self.supabase_client.table("leads").update(update_data).eq("id", lead_id), f"Failed to update lead {lead_id}")
         if success and hasattr(res, "data") and res.data:
             lead_data = res.data[0]
             if lead_data.get("status") == "LOST":

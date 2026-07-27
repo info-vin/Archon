@@ -11,14 +11,12 @@ logger = get_logger(__name__)
 
 
 class DocumentService(BaseRepository):
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         super().__init__(supabase_client)
 
     def list_documents(self, project_id: str, include_content: bool = False) -> tuple[bool, dict[str, Any]]:
-        def _query():
-            return self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
 
-        success, result = self.execute_query(_query, "DB operation logged error")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("docs").eq("id", project_id), "DB operation logged error")
         if success:
             raw_docs = result["data"][0].get("docs") or {} if result["data"] else {}
             # DEFENSIVE: Handle both dict (prod) and list (test/mock) formats
@@ -67,7 +65,7 @@ class DocumentService(BaseRepository):
             "version": 1,
         }
 
-        def _query():
+        def _query() -> Any:
             res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
             docs = res.data[0].get("docs") if res.data else {}
             if isinstance(docs, list):
@@ -78,10 +76,8 @@ class DocumentService(BaseRepository):
         return self.execute_query(_query, "DB operation logged error")
 
     def get_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
-        def _query():
-            return self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
 
-        success, result = self.execute_query(_query, "DB operation logged error")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("docs").eq("id", project_id), "DB operation logged error")
         if success:
             docs = result["data"][0].get("docs") or {} if result["data"] else {}
             if isinstance(docs, list):
@@ -93,7 +89,7 @@ class DocumentService(BaseRepository):
     def update_document(
         self, project_id: str, doc_id: str, update_fields: dict[str, Any]
     ) -> tuple[bool, dict[str, Any]]:
-        def _query():
+        def _query() -> Any:
             res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
             docs = res.data[0].get("docs") if res.data else {}
             if isinstance(docs, list):
@@ -107,7 +103,7 @@ class DocumentService(BaseRepository):
         return self.execute_query(_query, "DB operation logged error")
 
     def delete_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
-        def _query():
+        def _query() -> Any:
             res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
             docs = res.data[0].get("docs") if res.data else {}
             if isinstance(docs, list):

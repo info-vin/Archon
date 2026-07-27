@@ -98,7 +98,7 @@ async def update_task_logic(
                 update_data["completed_at"] = comp_val
 
         # Update task
-        def _update_query():
+        def _update_query() -> Any:
             return (
                 task_service_instance.supabase_client.table("archon_tasks")
                 .update(update_data)

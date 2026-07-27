@@ -22,11 +22,11 @@ class VisitLogService(BaseRepository):
     Restored with Voice-to-Task (GAP-009) and aligned with 0413 SDK patterns.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     async def list_logs(self, lead_id: str | None = None) -> tuple[bool, Any]:
-        def _query():
+        def _query() -> Any:
             q = self.supabase_client.table("visit_logs").select("*")
             if lead_id:
                 q = q.eq("lead_id", lead_id)
@@ -144,10 +144,8 @@ class VisitLogService(BaseRepository):
             "follow_up_tasks": tasks,
         }
 
-        def _query():
-            return self.supabase_client.table("visit_logs").insert(log_payload).execute()
 
-        success, res = self.execute_query(_query, "Failed to create visit log")
+        success, res = self.execute_query(self.supabase_client.table("visit_logs").insert(log_payload), "Failed to create visit log")
         if not success or not res:
             return False, res
 
@@ -265,7 +263,7 @@ class VisitLogService(BaseRepository):
     async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
         """Fetches the current attendance status for a user."""
 
-        def _query():
+        def _query() -> Any:
             return (
                 self.supabase_client.table("attendance_logs")
                 .select("*")

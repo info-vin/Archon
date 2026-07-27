@@ -43,7 +43,7 @@ class BlogGenerator:
             google_search_tool = types.Tool(google_search=types.GoogleSearch())
 
             @retry_with_backoff(max_retries=2)
-            async def _call_gemini():
+            async def _call_gemini() -> Any:
                 return await client.aio.models.generate_content(
                     model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     contents=f"Topic: {topic}\nContext: {context_text}",
@@ -166,7 +166,7 @@ class BlogGenerator:
             for lead in leads:
 
                 @retry_with_backoff(max_retries=2)
-                async def _call_gemini(current_lead=lead):
+                async def _call_gemini(current_lead=lead) -> Any:
                     return await client.aio.models.generate_content(
                         model=SYSTEM_MODELS["DEFAULT_TEXT"],
                         contents=f"Generate a blog post. Target Company: {current_lead.get('company_name')}. Identified Need: {current_lead.get('identified_need')}. Job Title: {current_lead.get('job_title')}",

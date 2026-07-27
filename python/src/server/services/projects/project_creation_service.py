@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class ProjectCreationService(BaseRepository):
     """Service class for advanced project creation with AI assistance"""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any | None = None) -> None:
         """Initialize with optional supabase client"""
         super().__init__(supabase_client)
 
@@ -56,7 +56,7 @@ class ProjectCreationService(BaseRepository):
             "data": {},
         }
 
-        def _query():
+        def _query() -> Any:
             return self.supabase_client.table("archon_projects").insert(project_data).execute()
 
         success, result = self.execute_query(query_func=_query, error_context="DB operation logged error")
@@ -105,7 +105,7 @@ class ProjectCreationService(BaseRepository):
                 prd_request += f" (GitHub repo: {github_repo})"
 
             # Create a progress callback for the document agent
-            async def agent_progress_callback(update_data):
+            async def agent_progress_callback(update_data) -> Any:
                 pass  # Progress tracking removed
 
             # Run the document agent to create PRD
