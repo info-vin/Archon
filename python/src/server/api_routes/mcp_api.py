@@ -8,6 +8,7 @@ import os
 from fastapi import APIRouter, Depends
 
 from src.server.config.service_discovery import get_api_url
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.mcp_service_client import get_mcp_service_client
 
 from ..auth.dependencies import get_current_user, requires_permission
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 
 @router.get("/status")
 @router.get("/health")
-async def get_mcp_status(current_user: dict = Depends(get_current_user)):
+async def get_mcp_status(current_user: UserProfileDTO = Depends(get_current_user)):
     """General connection status. Available to all authenticated users."""
     client = get_mcp_service_client()
     health = await client.health_check()
@@ -31,7 +32,7 @@ async def get_mcp_status(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/sessions")
-async def list_mcp_sessions(current_user: dict = Depends(get_current_user)):
+async def list_mcp_sessions(current_user: UserProfileDTO = Depends(get_current_user)):
     """Get active tool sessions. Frontend expectation."""
     # Placeholder: In a real system, this would query the session manager
     return {"sessions": [], "active_count": 0}

@@ -5,11 +5,12 @@ from fastapi.testclient import TestClient
 
 from src.server.auth.dependencies import get_current_user
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 
 @pytest.fixture
 def client():
-    app.dependency_overrides[get_current_user] = lambda: {"id": "test_user_id", "role": "admin", "permissions": ["agent:trigger:mkt"]}
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="test_user_id", role="admin", email="mock@archon.com")
     with TestClient(app) as client:
         yield client
     app.dependency_overrides.clear()

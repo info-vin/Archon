@@ -2,6 +2,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import MCP_MANAGE, TASK_READ_TEAM
 from ..services.health_service import HealthService, HealthStatusResult
@@ -160,7 +162,7 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
 
 @router.patch("/settings/{key}", dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def update_system_setting(
-    key: str, request: dict[str, Any], current_user: dict = Depends(get_current_user)
+    key: str, request: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)
 ) -> dict[str, Any]:
     """
     Updates a specific system setting and records the change in the audit trail.
@@ -200,7 +202,7 @@ async def update_system_setting(
 
     # 3. Create Audit Trail Entry
     try:
-        user_name = current_user.get("name", current_user.get("email", "Unknown"))
+        user_name = current_user.name
         audit_payload = {
             "document_id": f"setting:{key}",
             "created_by": user_name,

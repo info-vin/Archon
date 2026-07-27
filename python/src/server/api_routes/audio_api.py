@@ -6,6 +6,8 @@ from fastapi.responses import StreamingResponse
 from google import genai
 from pydantic import BaseModel
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ..auth.dependencies import get_current_user
 from ..config.model_ssot import SYSTEM_MODELS
 from ..services.prompt_service import prompt_service
@@ -22,7 +24,7 @@ class TTSRequest(BaseModel):
 
 
 @router.post("/generate")
-async def generate_audio_stream(request: TTSRequest, current_user: dict = Depends(get_current_user)):
+async def generate_audio_stream(request: TTSRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Generates TTS audio and returns it as a streaming WAV response.
     If agent_data is provided, it uses an LLM to dynamically generate the script

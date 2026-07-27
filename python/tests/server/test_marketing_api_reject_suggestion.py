@@ -4,6 +4,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.server.models.auth_models import UserProfileDTO
+
 
 def create_test_app():
     from src.server.api_routes.marketing_api import router
@@ -41,11 +43,7 @@ def test_reject_suggestion_success(client, mock_dependencies):
     from src.server.auth.dependencies import get_current_user
 
     # Manager role has CONTENT_PUBLISH permission
-    client.app.dependency_overrides[get_current_user] = lambda: {
-        "role": "manager",
-        "email": "charlie@archon.com",
-        "id": "user-charlie",
-    }
+    client.app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-charlie", role="manager", email="charlie@archon.com")
 
     payload = {"notes": "This is a constructive rejection reason."}
     response = client.post("/api/marketing/approvals/blog/post-123/reject", json=payload)
@@ -58,7 +56,7 @@ def test_reject_suggestion_forbidden(client, mock_dependencies):
     from src.server.auth.dependencies import get_current_user
 
     # Marketing role does NOT have CONTENT_PUBLISH permission
-    client.app.dependency_overrides[get_current_user] = lambda: {"role": "marketing", "email": "bob@archon.com"}
+    client.app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="mock-id", role="marketing", email="bob@archon.com")
 
     payload = {"notes": "Bad content"}
     response = client.post("/api/marketing/approvals/blog/post-123/reject", json=payload)
@@ -69,7 +67,7 @@ def test_reject_suggestion_forbidden(client, mock_dependencies):
 def test_reject_suggestion_invalid_type(client, mock_dependencies):
     from src.server.auth.dependencies import get_current_user
 
-    client.app.dependency_overrides[get_current_user] = lambda: {"role": "manager", "email": "charlie@archon.com"}
+    client.app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="mock-id", role="manager", email="charlie@archon.com")
 
     payload = {"notes": "Invalid type"}
     # item_type "unknown" should return success: False based on MarketingService logic

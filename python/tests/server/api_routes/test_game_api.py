@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from src.server.auth.dependencies import get_current_user
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 client = TestClient(app)
 
@@ -12,7 +13,7 @@ client = TestClient(app)
 @pytest.fixture
 def mock_user():
     user = {"id": "user-uuid-1234", "role": "employee", "email": "user@archon.com"}
-    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(**user) if isinstance(user, dict) else user
     yield user
     app.dependency_overrides = {}
 

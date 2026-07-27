@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ..auth.dependencies import get_current_user
 from ..config.logfire_config import get_logger
 from ..services.agent_service import AgentService, agent_service
@@ -22,14 +24,14 @@ async def agents_health():
 
 @router.get("/assignable", response_model=list[dict])
 async def get_assignable_agents(
-    current_user: dict = Depends(get_current_user), service: AgentService = Depends(lambda: agent_service)
+    current_user: UserProfileDTO = Depends(get_current_user), service: AgentService = Depends(lambda: agent_service)
 ):
     """
     Get a list of all assignable AI agents.
     Filtered by user role (RBAC).
     """
     try:
-        user_role = current_user.get("role", "employee")
+        user_role = current_user.role
         agents = await service.get_assignable_agents(user_role=user_role)
         return agents
     except Exception as e:
@@ -68,14 +70,14 @@ async def get_pending_approvals():
 
 
 @router.post("/approvals/{approval_id}/review", response_model=dict)
-async def review_approval(approval_id: str, approved: bool, reason: str | None = None, current_user: dict = Depends(get_current_user)):
+async def review_approval(approval_id: str, approved: bool, reason: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Approve or reject a pending sensitive tool execution.
     """
     try:
         from src.agents.approval_manager import AgentApprovalManager
         mgr = AgentApprovalManager()
-        reviewer_id = current_user.get("id", "admin")
+        reviewer_id = current_user.id
         res = await mgr.review_approval(approval_id=approval_id, approved=approved, reviewer_id=reviewer_id, reason=reason)
         return {
             "success": True,

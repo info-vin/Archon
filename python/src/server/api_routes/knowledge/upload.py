@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
 
 from src.server.config.logfire_config import get_logger, safe_logfire_error
+from src.server.models.auth_models import UserProfileDTO
 
 # TOP-LEVEL IMPORTS for Test Patching
 from src.server.services.source_management_service import SourceManagementService
@@ -28,7 +29,7 @@ async def upload_document(
     knowledge_type: str = Form("technical"),
     tags: str = Form("[]"),
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(requires_permission(TASK_CREATE)),
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
 ):
     """Upload a document and process it into knowledge chunks. Requires TASK_CREATE."""
     try:

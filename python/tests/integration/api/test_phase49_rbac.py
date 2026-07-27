@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from server.api_routes.agents_api import get_current_user
 from server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 client = TestClient(app)
 
@@ -29,7 +30,7 @@ async def test_get_assignable_agents_admin():
 
     # Override dependency to simulate logged-in admin
 
-    app.dependency_overrides[get_current_user] = lambda: {"id": "admin-1", "role": "system_admin"}
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="admin-1", role="system_admin", email="mock@archon.com")
 
     response = client.get("/api/agents/assignable")
 
@@ -54,7 +55,7 @@ async def test_get_assignable_agents_sales_alice():
 
     # Override dependency to simulate Alice
 
-    app.dependency_overrides[get_current_user] = lambda: {"id": "alice-1", "role": "sales"}
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="alice-1", role="sales", email="mock@archon.com")
 
     response = client.get("/api/agents/assignable")
 

@@ -1,10 +1,11 @@
 # python/src/server/auth/dependencies.py
 
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from ..models.auth_models import UserProfileDTO
 from ..services.profile_service import ProfileService
 from .utils import get_user_from_token
 
@@ -27,7 +28,7 @@ async def get_token_optional(
     return str(credentials.credentials)
 
 
-async def get_current_user(token: Annotated[str, Depends(get_token)]) -> dict:
+async def get_current_user(token: Annotated[str, Depends(get_token)]) -> UserProfileDTO:
     """
     Validates the token and retrieves the full user profile (including Role) from the database.
     This is the SSOT for "Who is this user?".
@@ -49,7 +50,10 @@ async def get_current_user(token: Annotated[str, Depends(get_token)]) -> dict:
     try:
         success, profile = profile_service.get_profile(user_id)
         if success and profile:
-            return cast(dict[str, Any], profile)
+            if isinstance(profile, dict):
+                return UserProfileDTO(**profile)
+            if isinstance(profile, UserProfileDTO):
+                return profile
     except Exception as e:
         import logging
 
@@ -64,10 +68,10 @@ async def get_current_user(token: Annotated[str, Depends(get_token)]) -> dict:
         if metadata_role:
             fallback_role = metadata_role
 
-    return {"id": user_id, "email": auth_user.email, "role": fallback_role}
+    return UserProfileDTO(id=user_id, email=getattr(auth_user, "email", "system@archon.com") or "system@archon.com", role=fallback_role)
 
 
-async def get_current_user_optional(token: Annotated[str | None, Depends(get_token_optional)]) -> dict | None:
+async def get_current_user_optional(token: Annotated[str | None, Depends(get_token_optional)]) -> UserProfileDTO | None:
     """
     Validates the token and retrieves the profile if a token is provided.
     If no token is provided, or the token is invalid, returns None instead of raising 401.
@@ -85,33 +89,33 @@ async def get_current_user_optional(token: Annotated[str | None, Depends(get_tok
         raise e
 
 
-async def get_current_admin(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
+async def get_current_admin(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> UserProfileDTO:
     """Dependency that enforces Admin role and returns the user object."""
-    role = current_user.get("role", "").lower()
+    role = current_user.role.lower()
     if role not in ["admin", "system_admin"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
 
-async def verify_admin_role(current_user: Annotated[dict, Depends(get_current_user)]):
+async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]):
     """Secure boolean-style dependency for Admin enforcement via JWT."""
-    role = current_user.get("role", "").lower()
+    role = current_user.role.lower()
     if role not in ["admin", "system_admin"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return True
 
 
-async def verify_manager_role(current_user: Annotated[dict, Depends(get_current_user)]):
+async def verify_manager_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]):
     """Secure dependency ensuring the user is at least a Manager or Admin."""
-    role = current_user.get("role", "").lower()
+    role = current_user.role.lower()
     if role not in ["admin", "system_admin", "manager"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager privileges or higher required")
     return True
 
 
-async def get_current_user_id(current_user: Annotated[dict, Depends(get_current_user)]) -> Any:
+async def get_current_user_id(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> str:
     """Extracts the user ID from the current authenticated user."""
-    return current_user.get("id")
+    return current_user.id
 
 
 async def get_propose_change_service() -> Any:
@@ -127,17 +131,17 @@ def requires_permission(permission: str):
     Usage: @router.get("/", dependencies=[Depends(requires_permission(TASK_CREATE))])
     """
 
-    async def permission_checker(current_user: Annotated[dict, Depends(get_current_user)]):
+    async def permission_checker(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]):
         from ..services.rbac_service import RBACService
 
-        role = current_user.get("role", "").lower()
+        role = current_user.role.lower()
         # Phase 4.6.31: Switch to Dynamic RBAC Matrix via RBACService
         user_permissions = await RBACService().get_role_permissions(role)
 
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.info(f"🛡️ [RBAC Check] User: {current_user.get('email')} | Role: {role} | Checking: {permission}")
+        logger.info(f"🛡️ [RBAC Check] User: {current_user.email} | Role: {role} | Checking: {permission}")
         logger.info(f"🔑 [RBAC Matrix] Available for {role}: {user_permissions}")
 
         if permission not in user_permissions:

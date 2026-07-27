@@ -6,6 +6,7 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.projects import (
     CreateVersionRequest,
     RestoreVersionRequest,
@@ -24,8 +25,8 @@ def _err(res: Any, code: int = 500):
 
 
 @router.get("/versions")
-async def list_all_versions(current_user: dict = Depends(get_current_user)):
-    u_role = current_user.get("role", "member").lower()
+async def list_all_versions(current_user: UserProfileDTO = Depends(get_current_user)):
+    u_role = current_user.role.lower()
     if u_role not in ["system_admin", "admin", "manager"]:
         _err("Forbidden", 403)
     s, res = VersioningService().list_all_versions()
@@ -36,7 +37,7 @@ async def list_all_versions(current_user: dict = Depends(get_current_user)):
 
 @router.get("/projects/{project_id}/versions")
 async def list_project_versions(
-    project_id: str, field_name: str | None = None, current_user: dict = Depends(get_current_user)
+    project_id: str, field_name: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)
 ):
     s, res = VersioningService().list_versions(project_id, field_name)
     if not s:
@@ -46,7 +47,7 @@ async def list_project_versions(
 
 @router.post("/projects/{project_id}/versions")
 async def create_project_version(
-    project_id: str, req: CreateVersionRequest, current_user: dict = Depends(get_current_user)
+    project_id: str, req: CreateVersionRequest, current_user: UserProfileDTO = Depends(get_current_user)
 ):
     s, res = VersioningService().create_version(project_id=project_id, **req.model_dump())
     return {
@@ -61,7 +62,7 @@ async def restore_project_version(
     field_name: str,
     version_number: int,
     req: RestoreVersionRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ):
     s, res = VersioningService().restore_version(
         project_id=project_id, field_name=field_name, version_number=version_number, **req.model_dump()

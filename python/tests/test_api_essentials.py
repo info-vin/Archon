@@ -4,15 +4,16 @@ from fastapi.testclient import TestClient
 
 from src.server.auth.dependencies import get_current_user
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 
 # Setup Global Override for Essentials Tests
 def setup_module(module):
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "user-essentials",
-        "role": "system_admin",
-        "department": "Engineering",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(
+        id="user-essentials",
+        role="system_admin",
+        department="Engineering",
+    )
 
 
 def teardown_module(module):

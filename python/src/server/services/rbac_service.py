@@ -2,6 +2,7 @@
 
 from ..auth.permissions import ROLE_PERMISSIONS
 from ..config.logfire_config import get_logger
+from ..models.auth_models import UserProfileDTO
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -143,6 +144,26 @@ class RBACService:
 
         return constraints
 
+    async def has_permission(self, user: UserProfileDTO | None, permission: str) -> bool:
+        """
+        Checks if a user has a specific permission.
+        Args:
+            user: UserProfileDTO instance
+            permission: The permission scope to check (e.g. TASK_CREATE)
+        """
+        if not user:
+            return False
+
+        # 1. Check per-user overrides first (High priority)
+        overrides = user.permission_overrides or {}
+        if permission in overrides:
+            return bool(overrides[permission])
+
+        # 2. Fallback to role-based permissions
+        user_role = (user.role or "viewer").lower()
+        role_perms = await self.get_role_permissions(user_role)
+        return permission in role_perms or user_role in ["admin", "system_admin"]
+
     async def has_permission_to_assign(self, current_user_role: str, assignee_role: str) -> bool:
         """Checks if the current user role has permission to assign tasks to the target role."""
         if not current_user_role or not assignee_role:
@@ -203,31 +224,31 @@ class RBACService:
         content_manager_roles = ["admin", "system_admin", "manager", "marketing", "sales"]
         return current_user_role.lower() in content_manager_roles
 
-    def scope_projects(self, projects: list[dict], user: dict) -> list[dict]:
+    def scope_projects(self, projects: list[dict], user: UserProfileDTO) -> list[dict]:
         """
         Filters a list of projects based on user's department and role.
         Centralized logic from projects/core.py for Phase 4.6.30.
         """
-        role = user.get("role", "viewer").lower()
-        dept = user.get("department")
+        role = (user.role or "viewer").lower()
+        dept = user.department
 
         if role in ["system_admin", "admin"]:
             return projects
 
         return [p for p in projects if p.get("department") == dept or not p.get("department")]
 
-    def validate_project_access(self, project: dict, user: dict) -> bool:
+    def validate_project_access(self, project: dict | UserProfileDTO, user: UserProfileDTO) -> bool:
         """
         Validates if a user has access to a specific project based on department.
         Centralized logic from projects/core.py for Phase 4.6.30.
         """
-        role = user.get("role", "viewer").lower()
-        dept = user.get("department")
+        role = (user.role or "viewer").lower()
+        dept = user.department
 
         if role in ["system_admin", "admin"]:
             return True
 
-        project_dept = project.get("department")
+        project_dept = getattr(project, "department", None) if not isinstance(project, dict) else project.get("department")
         if not project_dept:
             return True
 

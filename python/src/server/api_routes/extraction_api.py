@@ -2,6 +2,8 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
@@ -47,11 +49,11 @@ async def get_schema(schema_id: str) -> dict[str, Any]:
 
 
 @router.post("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def create_schema(request: dict[str, Any], current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
+async def create_schema(request: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)) -> dict[str, Any]:
     """Create a new extraction schema."""
     service = ExtractionService()
     try:
-        return await service.create_schema(request, current_user["id"])
+        return await service.create_schema(request, current_user.id)
     except Exception as e:
         logger.error(f"Create schema failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -77,7 +79,7 @@ async def delete_schema(schema_id: str) -> dict[str, bool]:
 
 
 @router.post("/run", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def run_extraction(request: dict[str, str], current_user: dict = Depends(get_current_user)) -> dict[str, Any]:
+async def run_extraction(request: dict[str, str], current_user: UserProfileDTO = Depends(get_current_user)) -> dict[str, Any]:
     """
     Triggers an actual data extraction task.
     Payload: { "url": "...", "schema_id": "..." }
@@ -90,7 +92,7 @@ async def run_extraction(request: dict[str, str], current_user: dict = Depends(g
     service = ExtractionService()
     try:
         # Fulfills Phase 4.6.23: Functional Realization (No more Mock)
-        return await service.run_extraction(url, schema_id, current_user["id"])
+        return await service.run_extraction(url, schema_id, current_user.id)
     except Exception as e:
         logger.error(f"Extraction failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

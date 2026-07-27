@@ -7,6 +7,7 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.projects import (
     AssignableUser,
     CreateDocumentRequest,
@@ -34,9 +35,9 @@ def _err(res: Any, code: int = 500):
 
 
 @router.get("/assignable-users", response_model=list[AssignableUser])
-async def list_assignable_users(current_user: dict = Depends(get_current_user)):
+async def list_assignable_users(current_user: UserProfileDTO = Depends(get_current_user)):
     """Lists users that can be assigned tasks, respecting RBAC visibility."""
-    current_user_role = current_user.get("role", "User")
+    current_user_role = current_user.role
     s, users = ProfileService().list_all_users()
     if not s or users is None:
         _err("Failed to retrieve profiles")
@@ -46,12 +47,12 @@ async def list_assignable_users(current_user: dict = Depends(get_current_user)):
 
     filtered_users = []
     for u in user_list:
-        if u.get("role") == "ai_agent":
+        if u.role == "ai_agent":
             continue
-        can_assign = await rbac.has_permission_to_assign(current_user_role, str(u.get("role", "User")))
+        can_assign = await rbac.has_permission_to_assign(current_user_role, str(u.role))
         if can_assign and rbac.validate_project_access(u, current_user):
             filtered_users.append(
-                AssignableUser(id=str(u["id"]), name=str(u.get("full_name", u.get("name"))), role=str(u["role"]))
+                AssignableUser(id=str(u.id), name=str(u.name), role=str(u.role))
             )
 
     return filtered_users
@@ -63,7 +64,7 @@ async def list_projects(
     include_content: bool = True,
     include_computed_status: bool = False,
     if_none_match: str | None = Header(None),
-    current_user: dict = Depends(requires_permission(TASK_READ_TEAM)),
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM)),
 ):
     """Lists projects, with department isolation managed by RBACService."""
     s, res = await ProjectService().list_projects(
@@ -87,13 +88,13 @@ async def list_projects(
 
 
 @router.post("/projects")
-async def create_project(req: CreateProjectRequest, current_user: dict = Depends(requires_permission(TASK_CREATE))):
+async def create_project(req: CreateProjectRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE))):
     """Creates a new project. Requires TASK_CREATE permission."""
     if not req.title or not req.title.strip():
         _err("Title is required", 422)
 
     project_data = req.model_dump()
-    project_data["department"] = current_user.get("department")
+    project_data["department"] = current_user.department
 
     s, res = await ProjectCreationService().create_project_with_ai(progress_id="direct", **project_data)
     if s and isinstance(res, dict):
@@ -107,7 +108,7 @@ async def create_project(req: CreateProjectRequest, current_user: dict = Depends
 
 
 @router.get("/projects/{project_id}")
-async def get_project(project_id: str, current_user: dict = Depends(get_current_user)):
+async def get_project(project_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await ProjectService().get_project(project_id)
     if not s or not isinstance(res, dict) or not res.get("project"):
         _err(res if s else "Project not found", 404 if "not found" in str(res).lower() or s else 500)
@@ -127,7 +128,7 @@ async def get_project(project_id: str, current_user: dict = Depends(get_current_
 
 
 @router.patch("/projects/{project_id}")
-async def update_project(project_id: str, req: UpdateProjectRequest, current_user: dict = Depends(get_current_user)):
+async def update_project(project_id: str, req: UpdateProjectRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await ProjectService().get_project(project_id)
     if not s or not res.get("project"):
         _err("Project not found", 404)
@@ -149,7 +150,7 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
 
 
 @router.delete("/projects/{project_id}")
-async def delete_project(project_id: str, current_user: dict = Depends(requires_permission(TASK_UPDATE_ALL))):
+async def delete_project(project_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
     """Requires Admin level override for project deletion."""
     s, res = await ProjectService().delete_project(project_id)
     res_data = cast(dict[str, Any], handle_service_result(s, res))
@@ -157,14 +158,14 @@ async def delete_project(project_id: str, current_user: dict = Depends(requires_
 
 
 @router.get("/projects/{project_id}/features")
-async def get_project_features(project_id: str, current_user: dict = Depends(get_current_user)):
+async def get_project_features(project_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await ProjectService().get_project_features(project_id)
     return handle_service_result(s, res)
 
 
 @router.get("/projects/{project_id}/docs")
 async def list_project_documents(
-    project_id: str, include_content: bool = False, current_user: dict = Depends(get_current_user)
+    project_id: str, include_content: bool = False, current_user: UserProfileDTO = Depends(get_current_user)
 ):
     s, res = DocumentService().list_documents(project_id, include_content)
     return handle_service_result(s, res)
@@ -172,7 +173,7 @@ async def list_project_documents(
 
 @router.post("/projects/{project_id}/docs")
 async def create_project_document(
-    project_id: str, req: CreateDocumentRequest, current_user: dict = Depends(get_current_user)
+    project_id: str, req: CreateDocumentRequest, current_user: UserProfileDTO = Depends(get_current_user)
 ):
     s, res = DocumentService().add_document(project_id=project_id, **req.model_dump())
     return {
@@ -182,7 +183,7 @@ async def create_project_document(
 
 
 @router.get("/projects/{project_id}/docs/{doc_id}")
-async def get_project_document(project_id: str, doc_id: str, current_user: dict = Depends(get_current_user)):
+async def get_project_document(project_id: str, doc_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = DocumentService().get_document(project_id, doc_id)
     if not s or not isinstance(res, dict):
         _err(res, 404 if "not found" in str(res).lower() else 500)

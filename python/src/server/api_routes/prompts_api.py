@@ -6,6 +6,7 @@ Standardized RBAC Sealing with correct response unwrapping.
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.prompts import PromptResponse, PromptUpdateRequest
 from src.server.services.prompt_service import prompt_service
 
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/api/system/prompts", tags=["prompts"])
 
 @router.get("", response_model=list[PromptResponse])
 @router.get("/list", response_model=list[PromptResponse])
-async def list_all_prompts(current_user: dict = Depends(get_current_user)):
+async def list_all_prompts(current_user: UserProfileDTO = Depends(get_current_user)):
     """Lists all configured prompts."""
     s, res = await prompt_service.list_prompts()
     if not s:

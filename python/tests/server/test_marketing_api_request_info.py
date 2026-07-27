@@ -4,6 +4,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.server.models.auth_models import UserProfileDTO
+
 
 def create_test_app():
     from src.server.api_routes.marketing_api import router
@@ -45,11 +47,7 @@ def test_get_context_success(client, mock_dependencies):
     from src.server.auth.dependencies import get_current_user
 
     # Inject Admin identity as requested
-    client.app.dependency_overrides[get_current_user] = lambda: {
-        "role": "admin",
-        "email": "admin@archon.com",
-        "id": "user-admin",
-    }
+    client.app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-admin", role="admin", email="admin@archon.com")
 
     response = client.get("/api/marketing/context/lead-001")
 

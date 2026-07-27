@@ -9,6 +9,7 @@ from src.agents.nexus_oracle_agent import (
     ShortTermKPIs,
 )
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 client = TestClient(app)
 
@@ -109,7 +110,7 @@ def test_consolidated_api_endpoint(monkeypatch):
     from src.server.auth.dependencies import get_current_user
 
     async def mock_get_current_user():
-        return {"id": "test-user-id", "email": "test@example.com", "role": "admin"}
+        return UserProfileDTO(id="test-user-id", role="admin", email="test@example.com")
 
     app.dependency_overrides[get_current_user] = mock_get_current_user
 

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from src.server.api_routes.auth_api import get_auth_service
 from src.server.auth.dependencies import get_current_user
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.auth_service import AuthService
 
 # Create a mock service
@@ -13,7 +14,7 @@ mock_service = MagicMock(spec=AuthService)
 
 # Default overrides
 app.dependency_overrides[get_auth_service] = lambda: mock_service
-app.dependency_overrides[get_current_user] = lambda: {"id": "admin-id", "email": "admin@archon.com", "role": "admin"}
+app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="admin-id", role="admin", email="admin@archon.com")
 
 client = TestClient(app)
 
@@ -22,11 +23,7 @@ client = TestClient(app)
 def reset_mock():
     mock_service.reset_mock()
     # Reset to admin by default
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "admin-id",
-        "email": "admin@archon.com",
-        "role": "admin",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="admin-id", role="admin", email="admin@archon.com")
 
 
 def test_admin_create_user_success():
@@ -51,7 +48,7 @@ def test_admin_create_user_success():
 
 def test_admin_create_user_forbidden():
     # Override current user to a member
-    app.dependency_overrides[get_current_user] = lambda: {"id": "user-id", "email": "user@archon.com", "role": "member"}
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-id", role="member", email="user@archon.com")
 
     payload = {
         "name": "Test User",

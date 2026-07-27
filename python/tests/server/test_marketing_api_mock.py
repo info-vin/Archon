@@ -11,6 +11,7 @@ from server.api_routes.marketing_api import (
     generate_logo,
     generate_pitch,
 )
+from src.server.models.auth_models import UserProfileDTO
 
 
 @pytest.mark.asyncio
@@ -26,7 +27,7 @@ async def test_generate_pitch_no_key_real_logic():
 
         # We call the API function directly
         try:
-            res = await generate_pitch(req=req_obj, current_user=user)
+            res = await generate_pitch(req=req_obj, current_user=UserProfileDTO(**user) if isinstance(user, dict) else user)
             if isinstance(res, dict):
                 assert res.get("error_code") == 401
         except HTTPException as e:
@@ -43,7 +44,7 @@ async def test_draft_blog_failure():
         mock_method.return_value = (False, {"error": "LLM failure"})
 
         with pytest.raises(HTTPException) as excinfo:
-            await draft_blog_post(req=req_obj, current_user=user)
+            await draft_blog_post(req=req_obj, current_user=UserProfileDTO(**user) if isinstance(user, dict) else user)
 
         assert excinfo.value.status_code == 500
 
@@ -61,5 +62,5 @@ async def test_generate_logo_tier_fallback():
             "tier": "fallback_pollinations",
         }
 
-        result = await generate_logo(req=req_obj, current_user=user)
+        result = await generate_logo(req=req_obj, current_user=UserProfileDTO(**user) if isinstance(user, dict) else user)
         assert result["tier"] == "fallback_pollinations"

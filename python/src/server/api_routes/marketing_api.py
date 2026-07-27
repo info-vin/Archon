@@ -7,6 +7,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.marketing import (
     ApprovalRequest,
     DraftBlogRequest,
@@ -44,24 +45,24 @@ def _err(msg: str, code: int = 403):
 
 
 @router.get("/jobs")
-async def search_jobs(keyword: str = Query(...), limit: int = 8, current_user: dict = Depends(get_current_user)):
+async def search_jobs(keyword: str = Query(...), limit: int = 8, current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
     return await service.search_jobs(keyword, limit)
 
 
 @router.get("/leads")
-async def list_leads(current_user: dict = Depends(get_current_user)):
-    user_id = str(current_user.get("id"))
-    role = current_user.get("role", "member")
+async def list_leads(current_user: UserProfileDTO = Depends(get_current_user)):
+    user_id = str(current_user.id)
+    role = current_user.role
     logger.info(f"DEBUG: list_leads accessed by UserID: {user_id}, Role: {role}")
     service = MarketingService()
     return await service.list_leads(user_id=user_id, role=role)
 
 
 @router.post("/leads")
-async def create_lead(req: LeadCreateRequest, current_user: dict = Depends(get_current_user)):
+async def create_lead(req: LeadCreateRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
-    success, res = await service.create_lead(req.model_dump(), creator_id=str(current_user.get("id")))
+    success, res = await service.create_lead(req.model_dump(), creator_id=str(current_user.id))
     if not success:
         _err(str(res), 400)
     return res
@@ -75,7 +76,7 @@ async def reset_leads(current_user: dict = Depends(requires_permission(CONTENT_P
 
 
 @router.patch("/leads/{lead_id}")
-async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: dict = Depends(get_current_user)):
+async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
     success, res = await service.update_lead(lead_id, req.model_dump(exclude_unset=True))
     if not success:
@@ -84,17 +85,17 @@ async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: dict =
 
 
 @router.post("/leads/{lead_id}/promote")
-async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: dict = Depends(get_current_user)):
+async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
-    success, res = await service.promote_to_vendor(lead_id, **req.model_dump(), owner_id=str(current_user.get("id")))
+    success, res = await service.promote_to_vendor(lead_id, **req.model_dump(), owner_id=str(current_user.id))
     if not success:
         _err(str(res), 400)
     return res
 
 
 @router.post("/generate-pitch", response_model=PitchResponse)
-async def generate_pitch(req: PitchRequest, current_user: dict = Depends(get_current_user)):
-    role = current_user.get("role", "viewer").lower()
+async def generate_pitch(req: PitchRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+    role = current_user.role.lower()
     if role not in ["system_admin", "admin", "marketing", "sales"]:
         raise HTTPException(status_code=403, detail=f"Role '{role}' is unauthorized to generate pitches")
 
@@ -126,7 +127,7 @@ async def draft_from_leads(
 
 
 @router.post("/blog/{post_id}/submit")
-async def submit_blog(post_id: str, current_user: dict = Depends(get_current_user)):
+async def submit_blog(post_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
     success, res = await service.submit_blog(post_id)
     if not success:
@@ -141,14 +142,14 @@ async def generate_logo(req: LogoRequest, current_user: dict = Depends(requires_
 
 
 @router.get("/sources")
-async def get_combined_sources(current_user: dict = Depends(get_current_user)):
+async def get_combined_sources(current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
-    return await service.get_combined_sources(user_id=str(current_user.get("id")))
+    return await service.get_combined_sources(user_id=str(current_user.id))
 
 
 @router.get("/context/{source_id}")
 async def get_content_context(
-    source_id: str, source_type: str = Query("lead"), current_user: dict = Depends(get_current_user)
+    source_id: str, source_type: str = Query("lead"), current_user: UserProfileDTO = Depends(get_current_user)
 ):
     service = MarketingService()
     return await service.get_content_context(source_id, source_type)
@@ -178,23 +179,23 @@ async def run_sentinel_manual(current_user: dict = Depends(requires_permission(A
 
 
 @router.get("/stats")
-async def get_marketing_stats(current_user: dict = Depends(get_current_user)):
+async def get_marketing_stats(current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
     return await service.get_marketing_stats()
 
 
 @router.get("/trends")
-async def get_marketing_trends(current_user: dict = Depends(get_current_user)):
+async def get_marketing_trends(current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
     return await service.get_marketing_trends()
 
 
 @router.get("/intelligence")
-async def get_marketing_intelligence(current_user: dict = Depends(get_current_user)):
+async def get_marketing_intelligence(current_user: UserProfileDTO = Depends(get_current_user)):
     from ..services.stats.metrics import MetricsManager
 
     metrics = MetricsManager()
-    return await metrics.get_marketing_intelligence(user_id=str(current_user.get("id")))
+    return await metrics.get_marketing_intelligence(user_id=str(current_user.id))
 
 
 @router.post("/knowledge/seed")

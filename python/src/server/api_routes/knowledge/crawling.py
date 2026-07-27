@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 
 from src.server.api_routes.knowledge.schemas import CrawlRequest
 from src.server.config.logfire_config import safe_logfire_error, safe_logfire_info
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
 from src.server.utils import get_supabase_client
 from src.server.utils.progress.progress_tracker import ProgressTracker
@@ -35,7 +36,7 @@ async def get_crawl_progress(progress_id: str):
 
 
 @router.post("/knowledge-items/stop/{progress_id}")
-async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(requires_permission(TASK_CREATE))):
+async def stop_crawl_operation(progress_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE))):
     """Stop an active crawl or refresh operation. Requires TASK_CREATE."""
     from src.server.services.crawling import unregister_orchestration
 
@@ -61,7 +62,7 @@ async def stop_crawl_operation(progress_id: str, current_user: dict = Depends(re
 async def refresh_knowledge_item(
     source_id: str,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(requires_permission(TASK_CREATE)),
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
 ):
     """Refresh an existing knowledge item by re-crawling its source. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
@@ -129,7 +130,7 @@ async def refresh_knowledge_item(
 async def crawl_knowledge_item(
     request: CrawlRequest,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
-    current_user: dict = Depends(requires_permission(TASK_CREATE)),
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
 ):
     """Start a new web crawl to populate the knowledge base. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules

@@ -3,6 +3,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ..auth.dependencies import get_current_user
 from ..utils import get_supabase_client
 
@@ -12,8 +14,8 @@ class GameSaveRequest(BaseModel):
     save_data: dict[str, Any]
 
 @router.post("/save")
-async def save_game(request: GameSaveRequest, current_user: dict = Depends(get_current_user)):
-    user_id = str(current_user.get("id"))
+async def save_game(request: GameSaveRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+    user_id = str(current_user.id)
     supabase = get_supabase_client()
 
     # Perform upsert to supabase
@@ -38,8 +40,8 @@ async def save_game(request: GameSaveRequest, current_user: dict = Depends(get_c
         ) from e
 
 @router.get("/load")
-async def load_game(current_user: dict = Depends(get_current_user)):
-    user_id = str(current_user.get("id"))
+async def load_game(current_user: UserProfileDTO = Depends(get_current_user)):
+    user_id = str(current_user.id)
     supabase = get_supabase_client()
 
     try:

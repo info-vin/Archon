@@ -5,6 +5,7 @@ Standardized alignment with L2 modularity infrastructure.
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
 from src.server.services.knowledge.knowledge_summary_service import KnowledgeSummaryService
 from src.server.services.source_management_service import SourceManagementService
@@ -21,7 +22,7 @@ KnowledgeSummaryService = KnowledgeSummaryService
 
 
 @router.get("/knowledge-items/sources")
-async def list_sources(current_user: dict = Depends(requires_permission(TASK_READ_OWN))):
+async def list_sources(current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))):
     """Lists all available knowledge sources. Requires TASK_READ_OWN."""
     service = KnowledgeItemService(get_supabase_client())
     success, res = await service.get_available_sources()
@@ -36,7 +37,7 @@ async def list_knowledge_items(
     per_page: int = 50,
     knowledge_type: str | None = None,
     search: str | None = None,
-    current_user: dict = Depends(requires_permission(TASK_READ_OWN)),
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN)),
 ):
     """Lists knowledge items. Requires TASK_READ_OWN."""
     service = KnowledgeItemService(get_supabase_client())
@@ -47,7 +48,7 @@ async def list_knowledge_items(
 
 
 @router.get("/knowledge-items/{source_id}/chunks")
-async def list_source_chunks(source_id: str, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
+async def list_source_chunks(source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM))):
     """Lists raw chunks. Requires TASK_READ_TEAM."""
     service = KnowledgeSummaryService(get_supabase_client())
     success, res = await service.get_item_chunks(source_id=source_id)
@@ -57,7 +58,7 @@ async def list_source_chunks(source_id: str, current_user: dict = Depends(requir
 
 
 @router.delete("/knowledge-items/{source_id}")
-async def delete_knowledge_source(source_id: str, current_user: dict = Depends(requires_permission(TASK_UPDATE_ALL))):
+async def delete_knowledge_source(source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
     """Deletes a knowledge source. Requires Admin level permission."""
     service = SourceManagementService()
     # Physical Correction: delete_source is a SYNCHRONOUS method
@@ -69,12 +70,12 @@ async def delete_knowledge_source(source_id: str, current_user: dict = Depends(r
 
 
 @router.get("/available-sources")
-async def list_available_sources(current_user: dict = Depends(requires_permission(TASK_READ_OWN))):
+async def list_available_sources(current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))):
     """Alias for listing sources. Requires TASK_READ_OWN."""
     return await list_sources(current_user=current_user)
 
 
 @router.delete("/sources/{source_id}")
-async def delete_source_alias(source_id: str, current_user: dict = Depends(requires_permission(TASK_UPDATE_ALL))):
+async def delete_source_alias(source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
     """Alias for deleting source."""
     return await delete_knowledge_source(source_id, current_user=current_user)

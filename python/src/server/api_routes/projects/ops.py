@@ -6,6 +6,7 @@ from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.projects import (
     AgentOutputUpdateRequest,
     AgentStatusUpdateRequest,
@@ -32,7 +33,7 @@ def _err(res: Any, code: int = 500):
 
 
 @router.get("/projects/task-counts")
-async def get_all_task_counts(request: Request, response: Response, current_user: dict = Depends(get_current_user)):
+async def get_all_task_counts(request: Request, response: Response, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await TaskService().get_all_project_task_counts()
     if not s:
         _err(res)
@@ -51,7 +52,7 @@ async def list_project_tasks(
     response: Response,
     include_archived: bool = False,
     exclude_large_fields: bool = False,
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ):
     s, res = await TaskService().list_tasks(
         project_id=project_id,
@@ -71,7 +72,7 @@ async def list_project_tasks(
 
 
 @router.post("/tasks/refine-description")
-async def refine_task_description(req: RefineTaskRequest, current_user: dict = Depends(get_current_user)):
+async def refine_task_description(req: RefineTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     res = await TaskService().refine_task_description(req.title, req.description)
     return {"refined_description": res}
 
@@ -85,10 +86,10 @@ async def generate_task_from_alert(
 
 
 @router.post("/tasks")
-async def create_task(req: CreateTaskRequest, current_user: dict = Depends(get_current_user)):
+async def create_task(req: CreateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     """Creates a new task. Includes cross-department assignment blocking."""
-    u_role = current_user.get("role", "viewer").lower()
-    u_dept = current_user.get("department")
+    u_role = current_user.role.lower()
+    u_dept = current_user.department
 
     target_name, res_id = req.assignee, req.assignee_id
     if res_id:
@@ -137,10 +138,10 @@ async def list_tasks(
     page: int = 1,
     per_page: int = 50,
     exclude_large_fields: bool = False,
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ):
-    u_role = current_user.get("role", "member").lower()
-    u_id = current_user.get("id")
+    u_role = current_user.role.lower()
+    u_id = current_user.id
 
     if u_role in ["system_admin", "admin", "manager"]:
         a_filter = assignee_id
@@ -171,14 +172,14 @@ async def list_tasks(
 
 
 @router.get("/tasks/{task_id}")
-async def get_task(task_id: str, current_user: dict = Depends(get_current_user)):
+async def get_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await TaskService().get_task(task_id)
     return cast(dict[str, Any], handle_service_result(s, res)).get("task")
 
 
 @router.put("/tasks/{task_id}")
-async def update_task(task_id: str, req: UpdateTaskRequest, current_user: dict = Depends(get_current_user)):
-    u_role = current_user.get("role", "viewer").lower()
+async def update_task(task_id: str, req: UpdateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+    u_role = current_user.role.lower()
     fields = {k: v for k, v in req.model_dump().items() if v is not None}
 
     if "assignee" in fields or "assignee_id" in fields:
@@ -196,10 +197,10 @@ async def update_task(task_id: str, req: UpdateTaskRequest, current_user: dict =
 
 
 @router.delete("/tasks/{task_id}")
-async def delete_task(task_id: str, current_user: dict = Depends(get_current_user)):
-    if current_user.get("role", "member").lower() not in ["system_admin", "admin", "manager"]:
+async def delete_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+    if current_user.role.lower() not in ["system_admin", "admin", "manager"]:
         _err("Forbidden: Only managers can archive tasks", 403)
-    s, res = await TaskService().archive_task(task_id, archived_by=str(current_user.get("id")))
+    s, res = await TaskService().archive_task(task_id, archived_by=str(current_user.id))
     if not s:
         _err(res, 400)
     return {"message": "Task archived successfully"}

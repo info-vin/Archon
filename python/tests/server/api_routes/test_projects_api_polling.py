@@ -1,3 +1,5 @@
+from src.server.models.auth_models import UserProfileDTO
+
 """Unit tests for projects API polling endpoints with ETag support."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -13,11 +15,7 @@ from src.server.main import app
 # 2. Setup Global Overrides
 def setup_module(module):
     # Ensure all routes have a system_admin context for polling tests
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "admin-polling",
-        "role": "system_admin",
-        "department": "Engineering",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="admin-polling", role="system_admin", email="mock@archon.com", department="Engineering")
 
 
 def teardown_module(module):

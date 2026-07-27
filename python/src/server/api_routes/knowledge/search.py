@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.api_routes.knowledge.schemas import RagQueryRequest
 from src.server.config.logfire_config import safe_logfire_error
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.search.rag_service import RAGService
 from src.server.utils import get_supabase_client
 
@@ -18,7 +19,7 @@ router = APIRouter()
 
 @router.post("/knowledge-items/search")
 async def search_knowledge_items(
-    request: RagQueryRequest, current_user: dict = Depends(requires_permission(TASK_READ_OWN))
+    request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
 ):
     """Search for relevant knowledge items using vector similarity. Requires TASK_READ_OWN."""
     try:
@@ -33,7 +34,7 @@ async def search_knowledge_items(
 
 
 @router.post("/rag/query")
-async def perform_rag_query(request: RagQueryRequest, current_user: dict = Depends(requires_permission(TASK_READ_OWN))):
+async def perform_rag_query(request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))):
     """Perform a full RAG query combining retrieval and generation. Requires TASK_READ_OWN."""
     try:
         service = RAGService(get_supabase_client())
@@ -50,7 +51,7 @@ async def perform_rag_query(request: RagQueryRequest, current_user: dict = Depen
 
 @router.post("/rag/code-examples")
 async def search_code_examples(
-    request: RagQueryRequest, current_user: dict = Depends(requires_permission(TASK_READ_OWN))
+    request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
 ):
     """Search specifically for code examples within the knowledge base. Requires TASK_READ_OWN."""
     try:
@@ -70,7 +71,7 @@ async def search_code_examples(
 
 @router.post("/code-examples")
 async def search_code_examples_simple(
-    request: RagQueryRequest, current_user: dict = Depends(requires_permission(TASK_READ_OWN))
+    request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
 ):
     """Backward compatible alias for searching code examples. Requires TASK_READ_OWN."""
     service = RAGService(get_supabase_client())

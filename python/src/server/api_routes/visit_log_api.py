@@ -5,6 +5,7 @@ Lean implementation with full test compatibility and GAP-009 Realization.
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.visit_log_service import visit_log_service
 
 from ..auth.dependencies import get_current_user, requires_permission
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/api/visit-logs", tags=["visit-logs"])
 
 @router.get("")
 async def list_visit_logs(
-    lead_id: str | None = None, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
+    lead_id: str | None = None, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM))
 ):
     """Lists visit logs, optionally filtered by lead. Restricted to Manager/Admin."""
     success, res = await visit_log_service.list_logs(lead_id=lead_id)
@@ -33,7 +34,7 @@ async def create_visit_log(
     longitude: float | None = Form(None),
     location_address: str | None = Form(None),
     audio_file: UploadFile | None = File(None),
-    current_user: dict = Depends(requires_permission(TASK_CREATE)),
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
 ):
     """
     Creates a new visit log from voice or text (GAP-009).
@@ -41,7 +42,7 @@ async def create_visit_log(
     """
     # Physical identity injection
     log_data = {
-        "user_id": current_user.get("id"),
+        "user_id": current_user.id,
         "company_name": company_name,
         "customer_id": customer_id,
         "lead_id": lead_id,
@@ -60,9 +61,9 @@ async def create_visit_log(
 
 
 @router.get("/attendance/status")
-async def get_attendance_status(current_user: dict = Depends(get_current_user)):
+async def get_attendance_status(current_user: UserProfileDTO = Depends(get_current_user)):
     """Fetches the current attendance status for the current user."""
-    success, res = await visit_log_service.get_attendance_status(current_user["id"])
+    success, res = await visit_log_service.get_attendance_status(current_user.id)
     if not success:
         raise HTTPException(status_code=500, detail=str(res))
     return res

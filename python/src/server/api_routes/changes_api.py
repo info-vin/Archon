@@ -8,6 +8,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.services.propose_change_service import ProposeChangeService
 
 from ..auth.dependencies import get_current_user, requires_permission
@@ -17,15 +18,15 @@ router = APIRouter(prefix="/api/changes", tags=["Changes"])
 
 
 @router.get("", response_model=list[dict[str, Any]])
-async def list_proposals(current_user: dict = Depends(get_current_user)):
+async def list_proposals(current_user: UserProfileDTO = Depends(get_current_user)):
     """Lists all pending AI proposals. Respects department isolation."""
     service = ProposeChangeService()
     # Logic inside service should filter by department for non-admins
-    return await service.list_proposals(user_id=str(current_user.get("id")))
+    return await service.list_proposals(user_id=str(current_user.id))
 
 
 @router.post("", response_model=dict[str, Any])
-async def create_proposal(payload: dict[str, Any], current_user: dict = Depends(get_current_user)):
+async def create_proposal(payload: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)):
     """Creates a new AI proposal. Typically called by an Agent."""
     service = ProposeChangeService()
     file_path = payload.get("file_path")
@@ -36,13 +37,13 @@ async def create_proposal(payload: dict[str, Any], current_user: dict = Depends(
         raise HTTPException(status_code=400, detail="Missing file_path or new_content")
 
     res = await service.create_file_proposal(
-        file_path=file_path, new_content=new_content, summary=summary, user_id=str(current_user.get("id"))
+        file_path=file_path, new_content=new_content, summary=summary, user_id=str(current_user.id)
     )
     return res
 
 
 @router.get("/{change_id}")
-async def get_proposal(change_id: UUID, current_user: dict = Depends(get_current_user)):
+async def get_proposal(change_id: UUID, current_user: UserProfileDTO = Depends(get_current_user)):
     """Retrieves a specific proposal with Diff data."""
     service = ProposeChangeService()
     res = await service.get_proposal(change_id)
@@ -52,22 +53,22 @@ async def get_proposal(change_id: UUID, current_user: dict = Depends(get_current
 
 
 @router.post("/{change_id}/approve")
-async def approve_proposal(change_id: UUID, current_user: dict = Depends(requires_permission(CODE_APPROVE))):
+async def approve_proposal(change_id: UUID, current_user: UserProfileDTO = Depends(requires_permission(CODE_APPROVE))):
     """Executes the proposed change. Requires CODE_APPROVE permission."""
     service = ProposeChangeService()
     try:
-        res = await service.approve_proposal(change_id, user_id=current_user.get("id"))
+        res = await service.approve_proposal(change_id, user_id=current_user.id)
         return {"status": "success", "message": "Change approved and executed", "details": res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{change_id}/reject")
-async def reject_proposal(change_id: UUID, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
+async def reject_proposal(change_id: UUID, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM))):
     """Rejects the proposal. Requires Manager level visibility."""
     service = ProposeChangeService()
     try:
-        res = await service.reject_proposal(change_id, user_id=current_user.get("id"))
+        res = await service.reject_proposal(change_id, user_id=current_user.id)
         return {"status": "rejected", "message": "Change proposal rejected", "details": res}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

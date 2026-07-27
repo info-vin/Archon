@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ...auth.dependencies import get_current_user, verify_admin_role
 from ...config.logfire_config import get_logger
 from ...services.ollama.model_discovery_service import model_discovery_service
@@ -28,7 +30,7 @@ async def discover_models_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
     include_capabilities: bool = Query(True, description="Include capability detection"),
     fetch_details: bool = Query(False, description="Fetch comprehensive model details via /api/show"),
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ) -> ModelDiscoveryResponse:
     """Discover models from multiple Ollama instances."""
     try:
@@ -117,7 +119,7 @@ async def discover_and_store_models_endpoint(
 
 
 @router.get("/models/stored", response_model=ModelListResponse)
-async def get_stored_models_endpoint(current_user: dict = Depends(get_current_user)) -> ModelListResponse:
+async def get_stored_models_endpoint(current_user: UserProfileDTO = Depends(get_current_user)) -> ModelListResponse:
     """Retrieve stored Ollama models from database."""
     try:
         supabase = get_supabase_client()

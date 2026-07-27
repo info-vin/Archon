@@ -2,6 +2,8 @@ import aiofiles
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from src.server.models.auth_models import UserProfileDTO
+
 from ..auth.dependencies import (
     get_current_user,
     verify_admin_role,
@@ -17,7 +19,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 @router.post("/scheduler/job/{job_id}/run", dependencies=[Depends(verify_manager_role)])
-async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Phase 5.1.15: Manually trigger a specific Clockwork job from the Admin UI.
     Requires Manager or Admin role.
@@ -44,7 +46,7 @@ async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, 
         raise HTTPException(status_code=400, detail=f"Unknown job_id: {job_id}")
 
     background_tasks.add_task(job_map[job_id])
-    logger.info(f"Admin {current_user.get('email')} manually triggered Clockwork job: {job_id}")
+    logger.info(f"Admin {current_user.email} manually triggered Clockwork job: {job_id}")
     return {"status": "triggered", "job_id": job_id}
 
 
@@ -53,7 +55,7 @@ async def admin_upload_file(
     file: UploadFile = File(...),
     knowledge_type: str = Form("technical"),
     tags: str = Form("[]"),
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ):
     """
     Compatibility endpoint for enduser-ui-fe upload feature.
@@ -73,7 +75,7 @@ class DiagnoseRequest(BaseModel):
 
 
 @router.post("/diagnose", dependencies=[Depends(verify_admin_role)])
-async def diagnose_file(request: DiagnoseRequest, current_user: dict = Depends(get_current_user)):
+async def diagnose_file(request: DiagnoseRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Triggers a technical debt diagnostic for a specific file (Admin only).
     """
@@ -81,7 +83,7 @@ async def diagnose_file(request: DiagnoseRequest, current_user: dict = Depends(g
 
 
 @router.get("/david/read", dependencies=[Depends(verify_admin_role)])
-async def david_read_file(path: str, current_user: dict = Depends(get_current_user)):
+async def david_read_file(path: str, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Allows David Agent to read codebase files for self-evolution (Admin only).
     """
@@ -117,14 +119,14 @@ async def get_document_versions(limit: int = 100, current_user: dict = Depends(v
 
 
 @router.get("/users")
-async def get_users(limit: int = 100, role: str | None = None, current_user: dict = Depends(get_current_user)):
+async def get_users(limit: int = 100, role: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Get all users (Admin & Manager).
     """
-    user_role = str(current_user.get("role", "viewer")).lower()
+    user_role = str(current_user.role).lower()
     if user_role not in ["admin", "system_admin", "manager"]:
         logger.warning(
-            f"Admin API: Unauthorized access attempt to /users by {current_user.get('email')} with role {user_role}"
+            f"Admin API: Unauthorized access attempt to /users by {current_user.email} with role {user_role}"
         )
         raise HTTPException(status_code=403, detail="Insufficient permissions to view team members")
 
@@ -137,12 +139,12 @@ async def get_users(limit: int = 100, role: str | None = None, current_user: dic
 
 
 @router.patch("/users/{user_id}/role", dependencies=[Depends(verify_admin_role)])
-async def update_user_role(user_id: str, request: UpdateRoleRequest, current_user: dict = Depends(get_current_user)):
+async def update_user_role(user_id: str, request: UpdateRoleRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Update a user's role (Admin only).
     """
     try:
-        email = str(current_user.get("email", "unknown"))
+        email = str(current_user.email)
         updated_user = await AdminService.update_user_role(
             user_id=user_id, new_role=request.role, current_admin_email=email
         )
@@ -162,7 +164,7 @@ class RBACRoleUpdate(BaseModel):
 
 
 @router.get("/rbac/matrix", dependencies=[Depends(verify_manager_role)])
-async def get_rbac_matrix(current_user: dict = Depends(get_current_user)):
+async def get_rbac_matrix(current_user: UserProfileDTO = Depends(get_current_user)):
     """Fetch the full role-permission matrix (Managers & Admins)."""
     try:
         return await AdminService.get_rbac_matrix()
@@ -172,7 +174,7 @@ async def get_rbac_matrix(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/rbac/role", dependencies=[Depends(verify_admin_role)])
-async def update_rbac_role(request: RBACRoleUpdate, current_user: dict = Depends(get_current_user)):
+async def update_rbac_role(request: RBACRoleUpdate, current_user: UserProfileDTO = Depends(get_current_user)):
     """Update permissions for a specific role (Admin only)."""
     try:
         return await AdminService.update_rbac_role(
@@ -193,15 +195,15 @@ class CrawlerTargetCreate(BaseModel):
 
 
 @router.get("/crawler-targets", dependencies=[Depends(verify_manager_role)])
-async def list_crawler_targets(current_user: dict = Depends(get_current_user)):
+async def list_crawler_targets(current_user: UserProfileDTO = Depends(get_current_user)):
     """List specialized crawler targets (Respects Department Isolation)."""
     from ..utils import get_supabase_client
 
     query = get_supabase_client().table("archon_crawler_targets").select("*")
 
     # Physical Isolation logic: If not Admin, filter by department
-    if current_user.get("role") not in ["admin", "system_admin"]:
-        dept = current_user.get("department", "General")
+    if current_user.role not in ["admin", "system_admin"]:
+        dept = current_user.department
         query = query.eq("department", dept)
 
     res = query.order("created_at").execute()
@@ -209,12 +211,12 @@ async def list_crawler_targets(current_user: dict = Depends(get_current_user)):
 
 
 @router.post("/crawler-targets", dependencies=[Depends(verify_manager_role)])
-async def create_crawler_target(request: CrawlerTargetCreate, current_user: dict = Depends(get_current_user)):
+async def create_crawler_target(request: CrawlerTargetCreate, current_user: UserProfileDTO = Depends(get_current_user)):
     """Add a new target associated with the manager's department."""
     from ..utils import get_supabase_client
 
     data = request.model_dump()
-    data["department"] = current_user.get("department", "General")
+    data["department"] = current_user.department
 
     res = get_supabase_client().table("archon_crawler_targets").insert(data).execute()
     if not res.data:
@@ -223,7 +225,7 @@ async def create_crawler_target(request: CrawlerTargetCreate, current_user: dict
 
 
 @router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)])
-async def delete_crawler_target(target_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_crawler_target(target_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     """Remove a target (Protected by DB RLS for Managers)."""
     from ..utils import get_supabase_client
 
@@ -234,7 +236,7 @@ async def delete_crawler_target(target_id: str, current_user: dict = Depends(get
 
 @router.get("/logs", dependencies=[Depends(verify_manager_role)])
 async def get_admin_logs(
-    type: str | None = None, time_range: str | None = "7d", current_user: dict = Depends(get_current_user)
+    type: str | None = None, time_range: str | None = "7d", current_user: UserProfileDTO = Depends(get_current_user)
 ):
     """Fetch system logs (e.g., AI_CORRECTION)."""
     from datetime import datetime, timedelta

@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from src.server.auth.dependencies import get_current_user
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 client = TestClient(app)
 
@@ -13,7 +14,7 @@ client = TestClient(app)
 def mock_admin_user():
     # RBAC Hardening: Provide a complete identity
     user = {"id": "admin1", "role": "system_admin", "email": "admin@archon.com", "department": "Marketing"}
-    app.dependency_overrides[get_current_user] = lambda: user
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(**user) if isinstance(user, dict) else user
     yield user
     app.dependency_overrides.pop(get_current_user, None)
 

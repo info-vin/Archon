@@ -2,6 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
+from src.server.models.auth_models import UserProfileDTO
+
 
 # To test the API routes in isolation, we patch the services they depend on.
 # These patches target the namespaces where the services are imported and used.
@@ -30,11 +32,7 @@ def test_create_task_with_ai_assignee_success(mock_profile_class, mock_rbac_clas
     from src.server.auth.dependencies import get_current_user
     from src.server.main import app
 
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "user-123",
-        "role": "system_admin",
-        "department": "Engineering",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-123", role="system_admin", email="mock@archon.com", department="Engineering")
     client = TestClient(app)
 
     task_payload = {"project_id": "proj-123", "title": "Test AI Task", "assignee": "ai-researcher-1"}
@@ -81,11 +79,7 @@ def test_create_task_with_ai_assignee_permission_denied(mock_profile_class, mock
     from src.server.auth.dependencies import get_current_user
     from src.server.main import app
 
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "user-123",
-        "role": "viewer",
-        "department": "Engineering",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-123", role="viewer", email="mock@archon.com", department="Engineering")
     client = TestClient(app)
 
     task_payload = {"project_id": "proj-123", "title": "Test AI Task", "assignee_id": "other-user"}
@@ -120,11 +114,7 @@ def test_create_task_with_knowledge_sources(mock_profile_class, mock_rbac_class,
     from src.server.auth.dependencies import get_current_user
     from src.server.main import app
 
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "user-123",
-        "role": "system_admin",
-        "department": "Engineering",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-123", role="system_admin", email="mock@archon.com", department="Engineering")
     client = TestClient(app)
 
     task_payload = {

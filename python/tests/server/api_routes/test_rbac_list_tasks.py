@@ -2,6 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
+from src.server.models.auth_models import UserProfileDTO
+
 
 @patch("src.server.api_routes.projects.ops.TaskService", new_callable=MagicMock)
 def test_list_tasks_admin_access(mock_task_service_class):
@@ -19,7 +21,7 @@ def test_list_tasks_admin_access(mock_task_service_class):
     from src.server.main import app
 
     # Override dependency
-    app.dependency_overrides[get_current_user] = lambda: mock_admin_user
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(**mock_admin_user) if isinstance(mock_admin_user, dict) else mock_admin_user
 
     client = TestClient(app)
 
@@ -54,7 +56,7 @@ def test_list_tasks_member_access(mock_task_service_class):
     from src.server.main import app
 
     # Override dependency
-    app.dependency_overrides[get_current_user] = lambda: mock_member_user
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(**mock_member_user) if isinstance(mock_member_user, dict) else mock_member_user
 
     client = TestClient(app)
 

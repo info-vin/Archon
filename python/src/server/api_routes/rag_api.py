@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.server.auth.dependencies import get_current_user
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.rag import (
     GraphPathResponse,
     GraphSearchRequest,
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/rag", tags=["rag"])
 @router.post("/hybrid-search", response_model=RagSearchResponse)
 async def hybrid_search(
     request: RagSearchRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ):
     try:
         results = await RagService.hybrid_search(
@@ -42,7 +43,7 @@ async def hybrid_search(
 @router.post("/graph-search", response_model=GraphSearchResponse)
 async def graph_search(
     request: GraphSearchRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: UserProfileDTO = Depends(get_current_user),
 ):
     try:
         results = await RagService.graph_search(

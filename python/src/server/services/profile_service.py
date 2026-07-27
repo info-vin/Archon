@@ -1,5 +1,6 @@
 # python/src/server/services/profile_service.py
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
@@ -16,7 +17,7 @@ class ProfileService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
-    def list_all_users(self) -> tuple[bool, list[dict] | str]:
+    def list_all_users(self) -> tuple[bool, list[UserProfileDTO] | str]:
         """
         Retrieves all user profiles from the database (basic info only).
 
@@ -31,10 +32,11 @@ class ProfileService(BaseRepository):
             query_func=_query, error_context="Failed to retrieve profiles", require_data=False
         )
         if success:
-            return True, result["data"] or []
+            profiles = result["data"] or []
+            return True, [UserProfileDTO(**p) for p in profiles]
         return False, result["error"]
 
-    def list_full_profiles(self) -> tuple[bool, list[dict] | str]:
+    def list_full_profiles(self) -> tuple[bool, list[UserProfileDTO] | str]:
         """
         Retrieves all user profiles with all fields from the database.
         Intended for administrative use.
@@ -50,7 +52,8 @@ class ProfileService(BaseRepository):
             query_func=_query, error_context="Failed to retrieve full profiles", require_data=False
         )
         if success:
-            return True, result["data"] or []
+            profiles = result["data"] or []
+            return True, [UserProfileDTO(**p) for p in profiles]
         return False, result["error"]
 
     def get_user_role(self, user_name: str) -> tuple[bool, str | None]:
@@ -78,7 +81,7 @@ class ProfileService(BaseRepository):
             return True, result["data"][0].get("role") if result["data"] else None
         return False, None
 
-    def get_profile(self, user_id: str) -> tuple[bool, dict | str | None]:
+    def get_profile(self, user_id: str) -> tuple[bool, UserProfileDTO | str | None]:
         """
         Retrieves a user profile by ID.
 
@@ -99,11 +102,11 @@ class ProfileService(BaseRepository):
         if success and result["data"]:
             profile = result["data"][0]
             # Permissions are now handled by the dynamic RBAC service or frontend fallback
-            return True, profile
+            return True, UserProfileDTO(**profile)
 
         return False, "Profile not found"
 
-    def update_profile(self, user_id: str, updates: dict) -> tuple[bool, dict | str]:
+    def update_profile(self, user_id: str, updates: dict) -> tuple[bool, UserProfileDTO | str]:
         """
         Updates a user profile.
 
@@ -127,5 +130,6 @@ class ProfileService(BaseRepository):
         )
         if success:
             data = result["data"]
-            return True, data[0] if isinstance(data, list) else data
+            profile_data = data[0] if isinstance(data, list) else data
+            return True, UserProfileDTO(**profile_data)
         return False, result.get("error", "Update failed or returned no data.")

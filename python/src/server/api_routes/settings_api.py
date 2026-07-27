@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.settings import (
     CredentialCreate,
     CredentialResponse,
@@ -41,7 +42,7 @@ def get_credential_service():
 
 
 @router.get("/database/metrics")
-async def database_metrics(current_user: dict = Depends(get_current_user)):
+async def database_metrics(current_user: UserProfileDTO = Depends(get_current_user)):
     """Get database metrics and statistics. Frontend expectation."""
     try:
         settings_service = SettingsService()
@@ -62,7 +63,7 @@ async def database_metrics(current_user: dict = Depends(get_current_user)):
 
 @router.post("/credentials/status-check")
 async def check_credentials_status(
-    req: CredentialStatusRequest | None = None, current_user: dict = Depends(get_current_user)
+    req: CredentialStatusRequest | None = None, current_user: UserProfileDTO = Depends(get_current_user)
 ):
     """
     Checks if configured AI keys or specific requested keys exist.
@@ -76,7 +77,7 @@ async def check_credentials_status(
 
 
 @router.get("/credentials")
-async def list_credentials(category: str | None = None, current_user: dict = Depends(get_current_user)):
+async def list_credentials(category: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)):
     """Lists all credentials or filters by category. Restricted to Admin."""
     all_creds = await credential_service.list_all_credentials()
     if category:
@@ -99,7 +100,7 @@ async def reset_user_password(user_id: str, current_user: dict = Depends(require
 
 
 @router.get("/credentials/categories/{category}")
-async def get_credentials_by_category(category: str, current_user: dict = Depends(get_current_user)):
+async def get_credentials_by_category(category: str, current_user: UserProfileDTO = Depends(get_current_user)):
     """
     Get all credentials for a specific category.
     Frontend compatibility endpoint.
@@ -191,9 +192,9 @@ async def list_users(current_user: dict = Depends(requires_permission(USER_MANAG
 
 
 @router.put("/users/me")
-async def update_own_profile(req: UserUpdateRequest, current_user: dict = Depends(get_current_user)):
+async def update_own_profile(req: UserUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     """Users can update their own metadata (avatar, name)."""
-    ok, res = ProfileService().update_profile(str(current_user.get("id")), req.model_dump(exclude_unset=True))
+    ok, res = ProfileService().update_profile(str(current_user.id), req.model_dump(exclude_unset=True))
     if not ok:
         raise HTTPException(status_code=400, detail=str(res))
     return res

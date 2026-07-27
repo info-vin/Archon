@@ -6,16 +6,13 @@ from src.server.auth.dependencies import get_current_user
 
 # Correct import paths for physical dependency overrides
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 
 # Setup Global Overrides for this test module
 def setup_module(module):
     # Ensure all routes have a system_admin context for these tests
-    app.dependency_overrides[get_current_user] = lambda: {
-        "id": "user-counts",
-        "role": "system_admin",
-        "department": "Engineering",
-    }
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(id="user-counts", role="system_admin", email="mock@archon.com", department="Engineering")
 
 
 def teardown_module(module):

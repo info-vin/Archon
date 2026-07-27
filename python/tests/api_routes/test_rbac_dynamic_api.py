@@ -5,11 +5,12 @@ from fastapi.testclient import TestClient
 
 from server.auth.dependencies import get_current_user
 from server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 client = TestClient(app)
 
 def mock_get_admin_user():
-    return {"id": "test-admin-uuid", "email": "admin@test.com", "role": "system_admin"}
+    return UserProfileDTO(id="test-admin-uuid", role="system_admin", email="admin@test.com")
 
 @pytest.fixture
 def admin_user():
