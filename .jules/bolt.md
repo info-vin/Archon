@@ -142,3 +142,6 @@
 ## 2024-05-18 - Avoid redundant string allocations in Array.prototype.sort() comparators
 **Learning:** Calling string methods like `.toLowerCase()` inside an `Array.prototype.sort()` comparator causes $O(N \log N)$ redundant string allocations during the sorting phase.
 **Action:** When optimizing frontend performance, pre-calculate sorting weights or normalized strings in an $O(N)$ loop or `useMemo` block before executing the sort operation to eliminate redundant allocations.
+## 2026-07-26 - Static lookup dictionaries for repeated inline strings
+**Learning:** Extracting repeated string manipulation operations (e.g. `status.toLowerCase() === 'todo'`) inside a React component render loop into an external, static lookup dictionary (`STATUS_COLORS`) prevents unnecessary string memory allocations and provides faster O(1) attribute access per iteration.
+**Action:** When optimizing React component performance, extract redundant inline string operations and conditional ternary chains evaluated during every render cycle into static O(1) lookup dictionaries defined outside the component.

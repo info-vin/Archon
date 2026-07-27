@@ -12,6 +12,14 @@ interface KanbanViewProps {
 
 const statuses: TaskStatus[] = [TaskStatus.TODO, TaskStatus.DOING, TaskStatus.REVIEW, TaskStatus.DONE];
 
+// PERFORMANCE: Hoisted static lookup dictionary outside the component to prevent allocations and O(N) inline .toLowerCase() calls
+const STATUS_COLORS: Record<string, string> = {
+  [TaskStatus.TODO]: 'bg-gray-400',
+  [TaskStatus.DOING]: 'bg-blue-400',
+  [TaskStatus.REVIEW]: 'bg-purple-400',
+  [TaskStatus.DONE]: 'bg-green-400'
+};
+
 // PERFORMANCE: Hoisted Intl.DateTimeFormat out of the component to prevent expensive re-instantiation on every render cycle
 const kanbanDateFormatter = new Intl.DateTimeFormat(undefined, {month:'short', day:'numeric'});
 const safeFormatKanbanDate = (dateStr: string) => {
@@ -57,7 +65,7 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
         <div key={status} className="bg-gray-50/50 rounded-2xl p-4 flex flex-col gap-4 border border-gray-100" onDrop={(e) => onDrop(e, status)} onDragOver={onDragOver}>
           <div className="flex justify-between items-center border-b border-gray-200 pb-3">
              <h3 className="font-bold text-gray-700 capitalize flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${status.toLowerCase() === 'todo' ? 'bg-gray-400' : status.toLowerCase() === 'doing' ? 'bg-blue-400' : status.toLowerCase() === 'review' ? 'bg-purple-400' : 'bg-green-400'}`}></span>
+                <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[status] || 'bg-gray-400'}`}></span>
                 {status}
              </h3>
              <span className="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-gray-500 shadow-sm">{tasksByStatus[status]?.length || 0}</span>
