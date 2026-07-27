@@ -17,7 +17,7 @@ class CrawlerService:
     prepared for Crawl4AI for dynamic content.
     """
 
-    def __init__(self, user_role: str = "member"):
+    def __init__(self, user_role: str = "member") -> None:
         self.supabase = get_supabase_client()
         self.rbac = RBACService()
         self.user_role = user_role

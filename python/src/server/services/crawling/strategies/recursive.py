@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class RecursiveCrawlStrategy:
     """Strategy for recursive crawling of websites."""
 
-    def __init__(self, crawler, markdown_generator):
+    def __init__(self, crawler, markdown_generator) -> None:
         """
         Initialize recursive crawl strategy.
 

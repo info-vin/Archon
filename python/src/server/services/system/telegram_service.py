@@ -7,7 +7,7 @@ from src.server.config.logfire_config import get_logger
 logger = get_logger(__name__)
 
 class TelegramService:
-    def __init__(self):
+    def __init__(self) -> None:
         # We don't read os.getenv here to avoid module-load time evaluation gaps (dotenv might load later).
         pass
 

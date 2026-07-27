@@ -8,7 +8,7 @@ from src.server.config.logfire_config import search_logger
 class ProgressTracker:
     """Manages progress reporting and SSE communication for storage operations."""
 
-    def __init__(self, progress_callback: Callable | None = None):
+    def __init__(self, progress_callback: Callable | None = None) -> None:
         self.progress_callback = progress_callback
 
     async def report_progress(self, message: str, progress: int, batch_info: dict[str, Any] | None = None):

@@ -17,7 +17,7 @@ class EmbeddingError(Exception):
         text_preview: str | None = None,
         batch_index: int | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """
         Initialize embedding error with context.
 
@@ -51,7 +51,7 @@ class EmbeddingQuotaExhaustedError(EmbeddingError):
     as continuing would be pointless without ability to create embeddings.
     """
 
-    def __init__(self, message: str, tokens_used: int | None = None, **kwargs):
+    def __init__(self, message: str, tokens_used: int | None = None, **kwargs) -> None:
         super().__init__(message, **kwargs)
         self.tokens_used = tokens_used
         if tokens_used:
@@ -66,7 +66,7 @@ class EmbeddingRateLimitError(EmbeddingError):
     with other batches after appropriate delay.
     """
 
-    def __init__(self, message: str, retry_count: int = 0, **kwargs):
+    def __init__(self, message: str, retry_count: int = 0, **kwargs) -> None:
         super().__init__(message, **kwargs)
         self.retry_count = retry_count
         self.metadata["retry_count"] = retry_count
@@ -91,7 +91,7 @@ class EmbeddingAPIError(EmbeddingError):
     to continue with other items.
     """
 
-    def __init__(self, message: str, original_error: Exception | None = None, **kwargs):
+    def __init__(self, message: str, original_error: Exception | None = None, **kwargs) -> None:
         super().__init__(message, **kwargs)
         self.original_error = original_error
         if original_error:
@@ -107,7 +107,7 @@ class EmbeddingValidationError(EmbeddingError):
     a serious issue if it does.
     """
 
-    def __init__(self, message: str, embedding_sample: list | None = None, **kwargs):
+    def __init__(self, message: str, embedding_sample: list | None = None, **kwargs) -> None:
         super().__init__(message, **kwargs)
         if embedding_sample:
             # Store first 10 values as sample

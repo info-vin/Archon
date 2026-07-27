@@ -184,7 +184,7 @@ class DraftFromLeadsStrategy(BaseAgentStrategy):
 class AgentDispatcher:
     """Routes tasks to the appropriate strategy based on agent_id and task_data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._strategies: list[tuple[Any, BaseAgentStrategy]] = []
         self._default_strategy = DefaultLLMStrategy()
 

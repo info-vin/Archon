@@ -16,7 +16,7 @@ class CrawlOrchestrator:
     Physically isolated for Phase 4.6.16 modularization.
     """
 
-    def __init__(self, service: "CrawlingService"):
+    def __init__(self, service: "CrawlingService") -> None:
         self.service = service
 
     async def run(self, request: dict[str, Any], task_id: str):

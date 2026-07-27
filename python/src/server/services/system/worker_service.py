@@ -19,7 +19,7 @@ class WorkerService:
     Background worker that polls for 'dispatched' tasks and executes them.
     """
 
-    def __init__(self, poll_interval_seconds: float = 5.0, max_concurrent_tasks: int = 3):
+    def __init__(self, poll_interval_seconds: float = 5.0, max_concurrent_tasks: int = 3) -> None:
         self.poll_interval = poll_interval_seconds
         self._running = False
         self._task: asyncio.Task[Any] | None = None

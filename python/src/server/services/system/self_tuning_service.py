@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class SelfTuningService:
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
         self.proposer = ProposeChangeService(self.supabase)
 

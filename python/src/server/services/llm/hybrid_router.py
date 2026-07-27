@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 class HybridRouter:
     """Routes LLM inference queries between Tier 1 (Cloud) and Tier 3 (Local Ollama)."""
 
-    def __init__(self, matrix_path: str | None = None):
+    def __init__(self, matrix_path: str | None = None) -> None:
         if matrix_path:
             self.matrix_path = matrix_path
         else:

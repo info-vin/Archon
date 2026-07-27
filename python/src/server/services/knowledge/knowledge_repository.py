@@ -14,7 +14,7 @@ class KnowledgeRepository:
     Repository for database operations related to knowledge items.
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client
 
     async def get_document_counts_batch(self, source_ids: list[str]) -> dict[str, int]:

@@ -22,7 +22,7 @@ SIMILARITY_THRESHOLD = 0.30
 class BaseSearchStrategy(BaseRepository):
     """Base strategy implementing fundamental vector similarity search"""
 
-    def __init__(self, supabase_client: Client):
+    def __init__(self, supabase_client: Client) -> None:
         """Initialize with database client"""
         super().__init__(supabase_client)
 

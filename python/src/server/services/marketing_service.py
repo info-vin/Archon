@@ -15,7 +15,7 @@ class MarketingService(BaseRepository):
     Physically delegates logic to specialized handlers for Phase 4.6.47 Hardening.
     """
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     # --- 1. Leads & Jobs (LeadHandler) ---

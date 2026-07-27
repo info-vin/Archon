@@ -18,7 +18,7 @@ class SeedingService:
     Decoupled from Business Services for Phase 4.6.46 Hardening.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
         self.librarian = LibrarianService()
 

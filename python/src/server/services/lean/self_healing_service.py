@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 class LeanSelfHealingService:
     """Orchestrates 2-stage proof repair (local and cloud escalation) & database seeding."""
 
-    def __init__(self, compiler_service=None, db_client=None):
+    def __init__(self, compiler_service=None, db_client=None) -> None:
         self.compiler_service = compiler_service or lean_compiler_service
         self.db_client = db_client or get_supabase_client()
 

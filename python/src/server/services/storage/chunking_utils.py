@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 class ChunkingUtils:
     """Handles logic for splitting markdown documents into chunks without DB interaction."""
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client: Any = None) -> None:
         from src.server.services.storage.storage_services import DocumentStorageService
 
         self.doc_storage_service = DocumentStorageService(supabase_client)

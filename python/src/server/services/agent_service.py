@@ -11,7 +11,7 @@ from .shared_constants import AI_AGENT_ROLES
 class AgentService:
     """Service for handling business logic related to AI agents."""
 
-    def __init__(self, mcp_client=None):
+    def __init__(self, mcp_client=None) -> None:
         self.tool_executor = AgentToolExecutor(mcp_client)
         self.dev_ops = DevOpsAgentService(self.tool_executor)
 

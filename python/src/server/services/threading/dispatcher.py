@@ -16,7 +16,7 @@ logfire_logger = get_logger("threading")
 class MemoryAdaptiveDispatcher:
     """Dynamically adjust concurrency based on memory usage"""
 
-    def __init__(self, config):
+    def __init__(self, config) -> None:
         self.config = config
         self.current_workers = config.base_workers
         self.last_metrics: SystemMetrics | None = None

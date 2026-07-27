@@ -53,7 +53,7 @@ class EmbeddingRouter:
     - Multi-instance load balancing consideration
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.routing_cache: dict[str, RoutingDecision] = {}
         self.cache_ttl = 300  # 5 minutes cache TTL
 

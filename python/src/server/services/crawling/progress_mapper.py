@@ -34,7 +34,7 @@ class ProgressMapper:
         "storing": (30, 100),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the progress mapper"""
         self.last_overall_progress = 0
         self.current_stage = "starting"

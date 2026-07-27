@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class SinglePageCrawlStrategy:
     """Strategy for crawling a single web page."""
 
-    def __init__(self, crawler, markdown_generator):
+    def __init__(self, crawler, markdown_generator) -> None:
         """
         Initialize single page crawl strategy.
 

@@ -31,9 +31,9 @@ class CodeExtractionService(BaseRepository):
 
     LANGUAGE_PATTERNS = LANGUAGE_PATTERNS
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client)
-        self._settings_cache = {}
+        self._settings_cache: dict[str, Any] = {}
 
     async def _get_config(self):
         if not hasattr(self, "_config_cache"):

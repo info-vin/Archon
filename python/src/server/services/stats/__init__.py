@@ -21,7 +21,7 @@ class StatsService:
     Maintains 100% backward compatibility with legacy StatsService.
     """
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
         self.metrics = MetricsManager(self.supabase)
         self.performance = PerformanceManager(self.supabase)

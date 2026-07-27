@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 class BaseStorageService(BaseRepository, ABC):
     """Base class for all storage services with common functionality."""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client and threading service."""
         # Lazy import to avoid circular dependency
         if supabase_client is None:

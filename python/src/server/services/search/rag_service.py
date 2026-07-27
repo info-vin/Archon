@@ -42,7 +42,7 @@ class RAGService(BaseRepository):
     based on configuration settings.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize RAG service as a coordinator for search strategies"""
         super().__init__(supabase_client or get_supabase_client())
 

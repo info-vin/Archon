@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class KnowledgeMetrics:
     """Handles knowledge base growth and ROI tracking."""
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client
 
     async def get_knowledge_roi(self) -> dict[str, Any]:

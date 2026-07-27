@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class AuthService(BaseRepository):
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     def get_all_users(self) -> list[dict[str, Any]]:

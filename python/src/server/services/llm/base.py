@@ -9,24 +9,24 @@ logger = get_logger(__name__)
 
 # --- Mock Classes ---
 class MockMessage:
-    def __init__(self, content):
+    def __init__(self, content) -> None:
         self.content = content
         self.reasoning_content = None
 
 
 class MockChoice:
-    def __init__(self, content):
+    def __init__(self, content) -> None:
         self.message = MockMessage(content)
 
 
 class MockResponse:
-    def __init__(self, content):
+    def __init__(self, content) -> None:
         self.choices = [MockChoice(content)]
         self.usage = None
 
 
 class MockCompletions:
-    def __init__(self, provider_name):
+    def __init__(self, provider_name) -> None:
         self.provider_name = provider_name
 
     async def create(self, *args, **kwargs):
@@ -49,12 +49,12 @@ class MockCompletions:
 
 
 class MockChat:
-    def __init__(self, provider_name):
+    def __init__(self, provider_name) -> None:
         self.completions = MockCompletions(provider_name)
 
 
 class MockLLMClient:
-    def __init__(self, provider_name="mock"):
+    def __init__(self, provider_name="mock") -> None:
         self.chat = MockChat(provider_name)
         self.models = None
 
@@ -83,7 +83,7 @@ class MockLLMClient:
 
 # --- Tracking Classes ---
 class UsageTrackingCompletions:
-    def __init__(self, original_completions, context):
+    def __init__(self, original_completions, context) -> None:
         self._original = original_completions
         self._context = context
 
@@ -275,7 +275,7 @@ class UsageTrackingCompletions:
 
 
 class UsageTrackingChat:
-    def __init__(self, original_chat, context):
+    def __init__(self, original_chat, context) -> None:
         self._original = original_chat
         self.completions = UsageTrackingCompletions(original_chat.completions, context)
 
@@ -284,7 +284,7 @@ class UsageTrackingChat:
 
 
 class UsageTrackingClient:
-    def __init__(self, original_client, user_id, request_id, provider):
+    def __init__(self, original_client, user_id, request_id, provider) -> None:
         self._original = original_client
         self._context = {"user_id": user_id, "request_id": request_id, "provider": provider}
         self.chat = UsageTrackingChat(original_client.chat, self._context)

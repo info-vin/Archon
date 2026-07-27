@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class BlogService(BaseRepository):
     """Service for handling blog post operations."""
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     async def list_posts(self) -> tuple[bool, dict[str, Any]]:

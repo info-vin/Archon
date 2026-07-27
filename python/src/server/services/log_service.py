@@ -30,7 +30,7 @@ class LogEntryResultDTO(TypedDict):
 class LogService(BaseRepository):
     """Service class for logging operations"""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client"""
         client = supabase_client or get_supabase_client()
         super().__init__(client)

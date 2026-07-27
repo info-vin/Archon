@@ -11,7 +11,7 @@ class ContentHandler:
     Facade delegating specialized tasks to domain sub-generators.
     """
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
         # Dynamic import to avoid module-level circular dependencies

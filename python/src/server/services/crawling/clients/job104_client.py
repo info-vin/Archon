@@ -52,7 +52,7 @@ class Job104Crawler:
             "X-Requested-With": "XMLHttpRequest",
         }
 
-    def __init__(self, base_url: str = DEFAULT_BASE_URL, detail_base_url: str = DEFAULT_DETAIL_BASE_URL):
+    def __init__(self, base_url: str = DEFAULT_BASE_URL, detail_base_url: str = DEFAULT_DETAIL_BASE_URL) -> None:
         self.base_url = base_url
         self.detail_base_url = detail_base_url
 

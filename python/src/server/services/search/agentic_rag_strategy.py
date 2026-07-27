@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 class AgenticRAGStrategy(BaseRepository):
     """Strategy class implementing agentic RAG for code example search and extraction"""
 
-    def __init__(self, supabase_client: Client, base_strategy):
+    def __init__(self, supabase_client: Client, base_strategy) -> None:
         """
         Initialize agentic RAG strategy.
 

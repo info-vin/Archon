@@ -13,7 +13,7 @@ from .dictionaries import PRESERVE_KEYWORDS, STOP_WORDS, TECHNICAL_STOP_WORDS
 class KeywordExtractor:
     """Simple keyword extraction for search queries"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.stop_words = STOP_WORDS | TECHNICAL_STOP_WORDS
         self.preserve_keywords = PRESERVE_KEYWORDS
 

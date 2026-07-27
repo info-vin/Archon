@@ -22,7 +22,7 @@ class VisitLogService(BaseRepository):
     Restored with Voice-to-Task (GAP-009) and aligned with 0413 SDK patterns.
     """
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     async def list_logs(self, lead_id: str | None = None) -> tuple[bool, Any]:

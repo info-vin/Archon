@@ -7,7 +7,7 @@ from ..config.logfire_config import get_logger
 
 
 class AgentToolExecutor:
-    def __init__(self, mcp_client=None):
+    def __init__(self, mcp_client=None) -> None:
         self.mcp_client = mcp_client
         self._native_tools: dict[str, Callable[..., Coroutine[Any, Any, str]]] = {}
 

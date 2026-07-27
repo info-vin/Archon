@@ -24,7 +24,7 @@ SUPPORTED_DIMENSIONS: dict[int, list[str]] = {
 class MultiDimensionalEmbeddingService:
     """Service for managing embeddings with multiple dimensions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def get_supported_dimensions(self) -> dict[int, list[str]]:

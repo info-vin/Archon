@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class BlogGenerator:
     """Handles blog drafting and automated generation from leads using RAG."""
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:

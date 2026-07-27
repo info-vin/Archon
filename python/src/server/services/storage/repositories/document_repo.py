@@ -7,7 +7,7 @@ from src.server.config.logfire_config import search_logger
 class DocumentRepository:
     """Handles raw database operations for document storage."""
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client: Any = None) -> None:
         self.client = supabase_client
 
     async def delete_existing_urls_in_batches(

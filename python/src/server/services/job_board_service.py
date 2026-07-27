@@ -58,7 +58,7 @@ class JobBoardService:
             logger.error(f"Failed to read or embed AGENTS.md: {e}")
             return None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.supabase = get_supabase_client()
         from ..utils.rate_limiter import RateLimitConfig, RateLimiter
         self.rate_limiter = RateLimiter(RateLimitConfig())

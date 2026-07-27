@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 
 class BusinessArchiver:
-    def __init__(self, supabase=None, repo=None):
+    def __init__(self, supabase=None, repo=None) -> None:
         self.supabase = supabase or get_supabase_client()
         self.repo = repo or KnowledgeRepository(self.supabase)
 

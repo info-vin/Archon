@@ -16,7 +16,7 @@ class ExtractionService:
     Integrates with LLM to auto-discover potential fields from raw web content.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
 
     async def analyze_url_structure(self, url: str) -> dict[str, Any]:

@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class VersioningService(BaseRepository):
     """Service class for document versioning operations"""
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client"""
         super().__init__(supabase_client)
 

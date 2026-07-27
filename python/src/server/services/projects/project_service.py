@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class ProjectService(BaseRepository):
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client)
         self.task_service = TaskService(self.supabase_client)
 

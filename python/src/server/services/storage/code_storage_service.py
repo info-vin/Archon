@@ -155,7 +155,7 @@ class CodeStorageService:
     Facade Service for code storage operations.
     """
 
-    def __init__(self, supabase_client: Client | None = None):
+    def __init__(self, supabase_client: Client | None = None) -> None:
         self.supabase_client = supabase_client
 
     async def add_code_examples(self, **kwargs):

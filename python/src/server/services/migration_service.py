@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class MigrationRecord:
     """Represents a migration record from the database."""
 
-    def __init__(self, data: dict[str, Any]):
+    def __init__(self, data: dict[str, Any]) -> None:
         self.id = data.get("id")
         self.version = data.get("version")
         self.migration_name = data.get("migration_name") or data.get("version")
@@ -30,7 +30,7 @@ class MigrationRecord:
 class PendingMigration:
     """Represents a pending migration from the filesystem."""
 
-    def __init__(self, version: str, name: str, sql_content: str, file_path: str):
+    def __init__(self, version: str, name: str, sql_content: str, file_path: str) -> None:
         self.version = version
         self.name = name
         self.sql_content = sql_content
@@ -45,7 +45,7 @@ class PendingMigration:
 class MigrationService:
     """Service for managing database migrations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._supabase: Client | None = None
         self._table_name = "schema_migrations"  # Default standard
         # This robustly handles both Docker and local environments by first checking

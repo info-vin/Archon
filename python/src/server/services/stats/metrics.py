@@ -17,7 +17,7 @@ class MetricsManager:
     Acts as a Coordinator delegating to domain-specific metric classes.
     """
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
         self.agent_metrics = AgentMetrics(self.supabase)
         self.knowledge_metrics = KnowledgeMetrics(self.supabase)

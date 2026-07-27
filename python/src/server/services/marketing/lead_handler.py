@@ -10,7 +10,7 @@ class LeadHandler:
     Physically decoupled for Phase 4.6.47.
     """
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
     def execute_query(self, query_func, error_msg: str) -> tuple[bool, Any]:

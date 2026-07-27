@@ -9,7 +9,7 @@ class CredentialRepository:
     Decoupled from cache and business rules of CredentialManager.
     """
 
-    def __init__(self, supabase_client: Client):
+    def __init__(self, supabase_client: Client) -> None:
         self.supabase = supabase_client
 
     def fetch_all(self) -> list[dict[str, Any]]:

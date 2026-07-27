@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class BackgroundTaskManager:
     """Manages async background task execution with progress tracking"""
 
-    def __init__(self, max_concurrent_tasks: int = 10, metadata_retention_hours: int = 1):
+    def __init__(self, max_concurrent_tasks: int = 10, metadata_retention_hours: int = 1) -> None:
         self.active_tasks: dict[str, asyncio.Task] = {}
         self.task_metadata: dict[str, dict[str, Any]] = {}
         self.max_concurrent_tasks = max_concurrent_tasks

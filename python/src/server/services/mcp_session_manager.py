@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class SimplifiedSessionManager:
     """Simplified MCP session manager that tracks session IDs and expiration"""
 
-    def __init__(self, timeout: int = 3600):
+    def __init__(self, timeout: int = 3600) -> None:
         """
         Initialize session manager
 

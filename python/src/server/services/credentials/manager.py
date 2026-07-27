@@ -21,7 +21,7 @@ class CredentialManager:
     and application configuration stored in the archon_settings table.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._supabase: Client | None = None
         self._repository: Any | None = None
         self._cache: dict[str, Any] = {}

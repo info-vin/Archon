@@ -17,7 +17,7 @@ class KnowledgeSummaryService:
     Designed for efficient polling with minimal data transfer.
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client: Any = None) -> None:
         """
         Initialize the knowledge summary service.
 

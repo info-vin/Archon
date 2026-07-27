@@ -19,7 +19,7 @@ class PromptService(BaseRepository):
     _prompts: dict[str, str] = {}
     _last_loaded: datetime | None = None
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     @classmethod

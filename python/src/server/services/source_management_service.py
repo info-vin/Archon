@@ -35,7 +35,7 @@ __all__ = [
 class SourceManagementService(BaseRepository):
     """Facade Service for source management operations."""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 

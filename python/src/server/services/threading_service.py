@@ -38,7 +38,7 @@ class ThreadingService:
         self,
         threading_config: ThreadingConfig | None = None,
         rate_limit_config: RateLimitConfig | None = None,
-    ):
+    ) -> None:
         self.config = threading_config or ThreadingConfig()
         self.rate_limiter = RateLimiter(rate_limit_config or RateLimitConfig())
         self.memory_dispatcher = MemoryAdaptiveDispatcher(self.config)

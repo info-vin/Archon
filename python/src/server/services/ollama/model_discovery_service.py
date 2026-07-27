@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 class ModelDiscoveryService:
     """Service for discovering and validating Ollama models across multiple instances."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model_cache: dict[str, list[OllamaModel]] = {}
         self.capability_cache: dict[str, ModelCapabilities] = {}
         self.capability_lock = asyncio.Lock()  # Restored for concurrency control

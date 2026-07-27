@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class VisualAssetGenerator:
     """Handles visual asset generation and fallback SVG logo pipelines."""
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
     async def generate_visual_asset(self, style: str) -> dict:

@@ -15,7 +15,7 @@ from .llm_provider_service import get_llm_client
 
 
 class DevOpsAgentService:
-    def __init__(self, tool_executor: AgentToolExecutor):
+    def __init__(self, tool_executor: AgentToolExecutor) -> None:
         self.code_modifier = CodeModifier(base_path=".")
         self.tool_executor = tool_executor
 

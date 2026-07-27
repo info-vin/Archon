@@ -44,7 +44,7 @@ class HealthService(BaseRepository):
     Service for checking the health of system components including the database.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     def check_db_health(self) -> bool:

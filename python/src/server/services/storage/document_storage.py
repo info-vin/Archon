@@ -27,7 +27,7 @@ from .repositories.document_repo import DocumentRepository
 class DocumentStorageFacade(BaseRepository):
     """Facade for all document storage and processing operations."""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client)
         self.repo = DocumentRepository(self.supabase_client)
         self.chunking_utils = ChunkingUtils(self.supabase_client)

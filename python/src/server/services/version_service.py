@@ -15,7 +15,7 @@ from ..utils.semantic_version import is_newer_version
 class VersionService:
     """Service for checking Archon version against GitHub releases."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cache: dict[str, Any] | None = None
         self._cache_time: datetime | None = None
         self._cache_ttl = 3600  # 1 hour cache TTL

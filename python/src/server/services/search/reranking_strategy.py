@@ -35,7 +35,7 @@ def sigmoid(x: float) -> float:
 class RerankingStrategy:
     """Strategy class implementing result reranking using ONNX CrossEncoder models"""
 
-    def __init__(self, model_name: str = DEFAULT_RERANKING_MODEL, model_instance: Any | None = None):
+    def __init__(self, model_name: str = DEFAULT_RERANKING_MODEL, model_instance: Any | None = None) -> None:
         """
         Initialize ONNX reranking strategy.
         """

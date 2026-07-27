@@ -12,7 +12,7 @@ class KnowledgeChunkingService:
     and formatting into valid Vector DB page data.
     """
 
-    def __init__(self, chunk_size: int = 4000):
+    def __init__(self, chunk_size: int = 4000) -> None:
         self.chunk_size = chunk_size
 
     async def process_document_into_pages(

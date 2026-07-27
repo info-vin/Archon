@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ProviderDiscoveryService:
     """Facade for multi-provider AI model discovery and health checking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:

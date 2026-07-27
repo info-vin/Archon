@@ -13,7 +13,7 @@ class URLTypeRouter:
     Physically isolated for Phase 4.6.16 modularization.
     """
 
-    def __init__(self, service: "CrawlingService"):
+    def __init__(self, service: "CrawlingService") -> None:
         self.service = service
 
     async def crawl_by_url_type(self, url: str, request: dict[str, Any]) -> tuple:

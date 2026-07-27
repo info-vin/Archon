@@ -13,7 +13,7 @@ class PerformanceManager:
     1:1 Physical Parity with original StatsService implementation.
     """
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
 
     @staticmethod

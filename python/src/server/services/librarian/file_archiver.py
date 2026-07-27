@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class FileArchiver:
-    def __init__(self, supabase=None, repo=None, chunker=None):
+    def __init__(self, supabase=None, repo=None, chunker=None) -> None:
         self.supabase = supabase or get_supabase_client()
         self.repo = repo or KnowledgeRepository(self.supabase)
         self.chunker = chunker or KnowledgeChunkingService()

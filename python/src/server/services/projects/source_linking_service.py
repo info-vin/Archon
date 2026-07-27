@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class SourceLinkingService(BaseRepository):
     """Service class for managing project-source relationships"""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client"""
         super().__init__(supabase_client)
 

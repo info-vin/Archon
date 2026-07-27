@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class DocumentService(BaseRepository):
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client)
 
     def list_documents(self, project_id: str, include_content: bool = False) -> tuple[bool, dict[str, Any]]:

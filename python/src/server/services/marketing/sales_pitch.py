@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 class SalesPitchGenerator:
     """Handles sales pitch AI generation workflows."""
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
     async def generate_pitch(self, company: str, job_title: str) -> dict:

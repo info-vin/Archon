@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class ApprovalManager:
     """Handles content approval workflows and feedback suggestion generation."""
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
     async def process_approval(self, item_type: str, item_id: str, action: str, notes: str | None) -> bool:

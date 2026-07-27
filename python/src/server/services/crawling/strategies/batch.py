@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class BatchCrawlStrategy:
     """Strategy for crawling multiple URLs in batch."""
 
-    def __init__(self, crawler, markdown_generator):
+    def __init__(self, crawler, markdown_generator) -> None:
         """
         Initialize batch crawl strategy.
 

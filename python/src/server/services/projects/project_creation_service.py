@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class ProjectCreationService(BaseRepository):
     """Service class for advanced project creation with AI assistance"""
 
-    def __init__(self, supabase_client: Any | None = None) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client"""
         super().__init__(supabase_client)
 

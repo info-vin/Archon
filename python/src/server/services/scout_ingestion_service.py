@@ -15,7 +15,7 @@ class ScoutIngestionService:
     Closes the loop between automated diagnostics and RAG awareness.
     """
 
-    def __init__(self, diagnostics_dir: str = "./.twin/diagnostics"):
+    def __init__(self, diagnostics_dir: str = "./.twin/diagnostics") -> None:
         self.diagnostics_dir = diagnostics_dir
         self.librarian = LibrarianService()
 

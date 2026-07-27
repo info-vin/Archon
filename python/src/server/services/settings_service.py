@@ -1,5 +1,7 @@
 # python/src/server/services/settings_service.py
 
+from typing import Any
+
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
@@ -11,7 +13,7 @@ logger = get_logger(__name__)
 class SettingsService(BaseRepository):
     """Service for handling business logic related to application settings and statistics."""
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client."""
         client = supabase_client or get_supabase_client()
         super().__init__(client)

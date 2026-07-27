@@ -15,7 +15,7 @@ class DatabaseMetricsService:
     Service for retrieving database metrics and statistics.
     """
 
-    def __init__(self, supabase_client):
+    def __init__(self, supabase_client: Any = None) -> None:
         """
         Initialize the database metrics service.
 

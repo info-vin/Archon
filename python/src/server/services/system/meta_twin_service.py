@@ -16,7 +16,7 @@ class MetaTwinService:
     Audits agent parameters dynamically and executes fallback actions.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.supabase = get_supabase_client()
 
     async def run_telemetry_audit(self) -> dict:

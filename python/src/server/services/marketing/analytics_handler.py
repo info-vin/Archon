@@ -15,7 +15,7 @@ class AnalyticsHandler:
     Consolidates background and data-heavy logic for Phase 4.6.47.
     """
 
-    def __init__(self, supabase_client: Any):
+    def __init__(self, supabase_client: Any) -> None:
         self.supabase_client = supabase_client
 
     async def get_marketing_stats(self) -> dict:

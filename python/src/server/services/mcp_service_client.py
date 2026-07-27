@@ -21,7 +21,7 @@ class MCPServiceClient:
     Replaces direct module imports with proper service-to-service communication.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_url = get_api_url()
         self.agents_url = get_agents_url()
         self.service_auth = "mcp-service-key"  # In production, use proper key management

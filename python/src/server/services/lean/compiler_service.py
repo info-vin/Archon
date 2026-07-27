@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class LeanCompilerService:
     """Service to physical build/compile Lean 4 files and parse errors."""
 
-    def __init__(self, lean_proofs_dir: str | None = None):
+    def __init__(self, lean_proofs_dir: str | None = None) -> None:
         if lean_proofs_dir:
             self.lean_proofs_dir = lean_proofs_dir
         else:

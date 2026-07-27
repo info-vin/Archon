@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 class HybridSearchStrategy(BaseRepository):
     """Strategy class implementing hybrid search combining vector and full-text search"""
 
-    def __init__(self, supabase_client: Client, base_strategy):
+    def __init__(self, supabase_client: Client, base_strategy) -> None:
         super().__init__(supabase_client)
         self.base_strategy = base_strategy
 

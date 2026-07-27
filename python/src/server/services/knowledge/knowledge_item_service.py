@@ -10,7 +10,7 @@ class KnowledgeItemService(BaseRepository):
     Service for managing knowledge items using the BaseRepository pattern.
     """
 
-    def __init__(self, supabase_client=None):
+    def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client)
 
     async def list_items(

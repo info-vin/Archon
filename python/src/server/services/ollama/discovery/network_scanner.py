@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 class OllamaNetworkScanner:
     """Handles network communication with Ollama instances."""
 
-    def __init__(self, timeout: int = 30):
+    def __init__(self, timeout: int = 30) -> None:
         self.timeout = timeout
 
     async def fetch_tags(self, instance_url: str) -> dict[str, Any]:

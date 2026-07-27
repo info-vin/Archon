@@ -42,7 +42,7 @@ class CrawlingService(BaseRepository):
     Combines functionality from both CrawlingService and CrawlOrchestrationService.
     """
 
-    def __init__(self, crawler=None, supabase_client=None, progress_id=None):
+    def __init__(self, crawler=None, supabase_client: Any = None, progress_id=None) -> None:
         """
         Initialize the crawling service.
 
@@ -54,7 +54,7 @@ class CrawlingService(BaseRepository):
         super().__init__(supabase_client or get_supabase_client())
         self.crawler = crawler
         self.progress_id = progress_id
-        self.progress_tracker = None
+        self.progress_tracker: Any = None
 
         # Initialize helpers
         self.url_handler = URLHandler()

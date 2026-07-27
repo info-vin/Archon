@@ -15,7 +15,7 @@ class LibrarianService:
     Facade for Librarian operations, delegating to specialized archivers.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.supabase = get_supabase_client()
         self.source_service = SourceManagementService(self.supabase)
         self.repo = KnowledgeRepository(self.supabase)
