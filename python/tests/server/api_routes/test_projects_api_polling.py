@@ -1,5 +1,3 @@
-from src.server.models.auth_models import UserProfileDTO
-
 """Unit tests for projects API polling endpoints with ETag support."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -10,6 +8,7 @@ from src.server.auth.dependencies import get_current_user
 
 # 1. Correct import paths for physical dependency overrides
 from src.server.main import app
+from src.server.models.auth_models import UserProfileDTO
 
 
 # 2. Setup Global Overrides
