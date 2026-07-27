@@ -49,15 +49,17 @@ async def test_scheduler_jobs_configuration():
     # Create mapping of job ids to their triggers
     job_triggers = {job.id: job.trigger for job in jobs}
 
-    # Verify alice_auto_fetch daily cron schedule (CST 10:30 -> hour=10, minute=30)
+    # Verify alice_auto_fetch specific cron schedule (CST 10:30, tue,fri,sat,sun -> hour=10, minute=30, day_of_week=tue,fri,sat,sun)
     alice_trigger = job_triggers.get("alice_auto_fetch_recurring")
     assert isinstance(alice_trigger, CronTrigger)
     assert str(alice_trigger.timezone) == "Asia/Taipei"
 
     hour_field = next(f for f in alice_trigger.fields if f.name == "hour")
     minute_field = next(f for f in alice_trigger.fields if f.name == "minute")
+    day_of_week_field = next(f for f in alice_trigger.fields if f.name == "day_of_week")
     assert str(hour_field) == "10"
     assert str(minute_field) == "30"
+    assert str(day_of_week_field) == "tue,fri,sat,sun"
 
     # Verify token_analysis daily cron schedule (CST 08:20 -> hour=8, minute=20)
     token_trigger = job_triggers.get("token_analysis_recurring")

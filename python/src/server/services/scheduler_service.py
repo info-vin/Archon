@@ -198,7 +198,7 @@ class SchedulerService:
 
         # --- Category 2: Stateful Daily Jobs ---
         await self._schedule_stateful_job(self._cleanup_system_probes, "system_probe_cleanup", 5, self._should_run_daily, CronTrigger(hour=config.system_probe_cleanup_hour, minute=config.system_probe_cleanup_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_local_only, CronTrigger(hour=10, minute=30, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_local_only, CronTrigger(day_of_week='tue,fri,sat,sun', hour=10, minute=30, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=8, minute=20, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=8, minute=40, timezone=DEFAULT_TIMEZONE), "Already run today")
