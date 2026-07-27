@@ -103,9 +103,9 @@ class ProjectService(BaseRepository):
         """Retrieve features for a project."""
 
         def _query():
-            return (
-                self.supabase_client.table("archon_projects").select("features").eq("id", project_id).single().execute()
-            )
+            res = self.supabase_client.table("archon_projects").select("features").eq("id", project_id).execute()
+            res.data = res.data[0] if res.data else {}
+            return res
 
         success, result = self.execute_query(_query, f"Failed to fetch features for project {project_id}")
         if success:

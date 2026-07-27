@@ -55,7 +55,8 @@ class ApprovalManager:
         if item_type != "blog":
             return {"notes": "Content type not supported for AI rejection."}
 
-        post = self.supabase_client.table("blog_posts").select("*").eq("id", item_id).single().execute().data
+        res = self.supabase_client.table("blog_posts").select("*").eq("id", item_id).execute()
+        post = res.data[0] if res.data else None
         if not post:
             return {"notes": "Item not found."}
 

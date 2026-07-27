@@ -209,18 +209,12 @@ class ReportService(BaseRepository):
             output = run_result.output if hasattr(run_result, "output") else run_result
 
             success, p_res = self.execute_query(
-                lambda: self.supabase_client.table("projects").select("id").limit(1).execute(),
+                lambda: self.supabase_client.table("archon_projects").select("id").limit(1).execute(),
                 "Failed to get internal project", require_data=True
             )
-            # fallback to archon_projects if projects doesn't exist
             if not success or not p_res.get("data"):
-                success, p_res = self.execute_query(
-                    lambda: self.supabase_client.table("archon_projects").select("id").limit(1).execute(),
-                    "Failed to get projects fallback", require_data=True
-                )
-                if not success or not p_res.get("data"):
-                    logger.warning(f"ReportService: No internal project found to attach {title_prefix} summary task.")
-                    return
+                logger.warning(f"ReportService: No internal project found to attach {title_prefix} summary task.")
+                return
 
             end_date = datetime.now(CST)
             start_date = end_date - timedelta(days=days)

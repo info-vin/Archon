@@ -68,8 +68,8 @@ class DocumentService(BaseRepository):
         }
 
         def _query():
-            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).single().execute()
-            docs = res.data.get("docs") or {}
+            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+            docs = res.data[0].get("docs") if res.data else {}
             if isinstance(docs, list):
                 docs = {d["id"]: d for d in docs if "id" in d}
             docs[doc_id] = new_doc
@@ -94,8 +94,8 @@ class DocumentService(BaseRepository):
         self, project_id: str, doc_id: str, update_fields: dict[str, Any]
     ) -> tuple[bool, dict[str, Any]]:
         def _query():
-            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).single().execute()
-            docs = res.data.get("docs") or {}
+            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+            docs = res.data[0].get("docs") if res.data else {}
             if isinstance(docs, list):
                 docs = {d["id"]: d for d in docs if "id" in d}
             if doc_id not in docs:
@@ -108,8 +108,8 @@ class DocumentService(BaseRepository):
 
     def delete_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
         def _query():
-            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).single().execute()
-            docs = res.data.get("docs") or {}
+            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+            docs = res.data[0].get("docs") if res.data else {}
             if isinstance(docs, list):
                 docs = {d["id"]: d for d in docs if "id" in d}
             if doc_id in docs:

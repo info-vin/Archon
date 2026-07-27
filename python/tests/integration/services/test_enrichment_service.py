@@ -11,12 +11,12 @@ async def test_enrich_lead_success():
     Test that enrich_lead updates status to success.
     """
     mock_supabase = MagicMock()
-    # Mock finding the lead
-    mock_supabase.table().select().eq().single().execute.return_value.data = {
+    # Mock finding the lead (now expects a list because single() was removed)
+    mock_supabase.table().select().eq().execute.return_value.data = [{
         "id": "lead-123",
         "company_name": "Test Corp",
         "enrichment_status": None,
-    }
+    }]
 
     with (
         patch("server.services.enrichment_service.get_supabase_client", return_value=mock_supabase),

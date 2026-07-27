@@ -136,7 +136,7 @@ async def add_code_examples_to_supabase(
             batch_data.append(row)
 
         try:
-            client.table("code_examples").insert(batch_data).execute()
+            client.table("archon_code_examples").insert(batch_data).execute()
             if progress_callback:
                 await progress_callback(
                     {

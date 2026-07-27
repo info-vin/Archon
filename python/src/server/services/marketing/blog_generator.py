@@ -201,7 +201,8 @@ class BlogGenerator:
             raise e
 
     async def submit_blog(self, post_id: str) -> tuple[bool, dict]:
-        post = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).single().execute().data
+        res = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
+        post = res.data[0] if res.data else None
         if not post:
             return False, {"error": "Post not found"}
         score = self.calculate_ai_score(post.get("content", ""))

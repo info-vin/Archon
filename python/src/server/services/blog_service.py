@@ -31,7 +31,9 @@ class BlogService(BaseRepository):
         """Retrieve a single blog post by its ID."""
 
         def _query():
-            return self.supabase_client.table("blog_posts").select("*").eq("id", post_id).single().execute()
+            res = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
+            res.data = res.data[0] if res.data else {}
+            return res
 
         success, res = self.execute_query(_query, f"Error getting post {post_id}", require_data=True)
         if success:

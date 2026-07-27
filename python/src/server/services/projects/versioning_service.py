@@ -115,15 +115,16 @@ class VersioningService(BaseRepository):
         """Get a specific version's content."""
 
         def _query():
-            return (
+            res = (
                 self.supabase_client.table("archon_document_versions")
                 .select("content")
                 .eq("project_id", project_id)
                 .eq("field_name", field_name)
                 .eq("version_number", version_number)
-                .single()
                 .execute()
             )
+            res.data = res.data[0] if res.data else {}
+            return res
 
         success, res = self.execute_query(_query, "Failed to fetch version content", require_data=True)
         if success:

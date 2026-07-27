@@ -44,7 +44,7 @@ def git_sync_check():
             print("✅ Working directory clean.")
             
         print("📝 Last 5 commits:")
-        subprocess.run(["git", "log", "-n", "5", "--oneline"], check=True)
+        subprocess.run(["git", "--no-pager", "log", "-n", "5", "--oneline"], check=True)
         
     except Exception as e:
         print(f"❌ Git check failed: {e}")
@@ -109,6 +109,59 @@ def architecture_health_audit():
     except Exception as e:
         print(f"❌ Architecture health audit failed: {e}")
 
+def schema_sync_audit():
+    import re
+    print_header("Step 7: Physical Schema Three-Way Sync Audit")
+    
+    # 1. Parse all sql files in migration/ for tables and views
+    sql_tables = set()
+    migration_dir = "migration"
+    if os.path.exists(migration_dir):
+        for root, _, files in os.walk(migration_dir):
+            for file in files:
+                if file.endswith(".sql"):
+                    with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+                        content = f.read()
+                        
+                        # Match CREATE TABLE
+                        t_matches = re.findall(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:[\w]+\.)?[\"']?([a-zA-Z0-9_]+)[\"']?", content, re.IGNORECASE)
+                        sql_tables.update(t_matches)
+                        
+                        # Match CREATE VIEW
+                        v_matches = re.findall(r"CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:[\w]+\.)?[\"']?([a-zA-Z0-9_]+)[\"']?", content, re.IGNORECASE)
+                        sql_tables.update(v_matches)
+                        
+                        # Match ALTER TABLE RENAME TO
+                        r_matches = re.findall(r"ALTER\s+TABLE\s+(?:[\w]+\.)?[\"']?[a-zA-Z0-9_]+[\"']?\s+RENAME\s+TO\s+(?:[\w]+\.)?[\"']?([a-zA-Z0-9_]+)[\"']?", content, re.IGNORECASE)
+                        sql_tables.update(r_matches)
+                        
+    # Supabase system tables we might query
+    sql_tables.update({"auth.users", "schema_migrations", "pg_stat_activity", "archon_migrations"})
+                        
+    # 2. Parse python/src for .table("...")
+    python_dir = "python/src"
+    python_tables = set()
+    ghost_tables = set()
+    
+    if os.path.exists(python_dir):
+        for root, _, files in os.walk(python_dir):
+            for file in files:
+                if file.endswith(".py") and not any(x in root for x in ["tests", "__tests__"]):
+                    with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+                        content = f.read()
+                        matches = re.findall(r"\.table\([\"']([a-zA-Z0-9_]+)[\"']\)", content)
+                        python_tables.update(matches)
+                        
+    for pt in python_tables:
+        if pt not in sql_tables:
+            ghost_tables.add(pt)
+            
+    if ghost_tables:
+        print(f"❌ FOUND GHOST TABLES IN PYTHON CODE: {ghost_tables}")
+        print("These tables are queried via .table() in Python but are NOT created in migration SQL!")
+        sys.exit(1)
+    else:
+        print("✅ Schema sync audit passed. No ghost tables found.")
 
 if __name__ == "__main__":
     scan_prps()
@@ -116,5 +169,6 @@ if __name__ == "__main__":
     monolith_check()
     cloud_audit()
     architecture_health_audit()
+    schema_sync_audit()
     print_header("Audit Complete")
 

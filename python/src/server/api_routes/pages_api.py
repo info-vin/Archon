@@ -109,7 +109,7 @@ async def list_pages(
 
         # Build query - select only summary fields (no full_content)
         query = (
-            client.table("archon_page_metadata")
+            client.table("archon_crawled_pages")
             .select("id, url, section_title, section_order, word_count, char_count, chunk_count")
             .eq("source_id", source_id)
         )
@@ -152,13 +152,13 @@ async def get_page_by_url(url: str = Query(..., description="The URL of the page
         client = get_supabase_client()
 
         # Query by URL
-        result = client.table("archon_page_metadata").select("*").eq("url", url).single().execute()
+        result = client.table("archon_crawled_pages").select("*").eq("url", url).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail=f"Page not found for URL: {url}")
 
         # Handle large pages
-        page_data = _handle_large_page_content(result.data.copy())
+        page_data = _handle_large_page_content(result.data[0].copy())
         return PageResponse(**page_data)
 
     except HTTPException:
@@ -184,13 +184,13 @@ async def get_page_by_id(page_id: str):
         client = get_supabase_client()
 
         # Query by ID
-        result = client.table("archon_page_metadata").select("*").eq("id", page_id).single().execute()
+        result = client.table("archon_crawled_pages").select("*").eq("id", page_id).execute()
 
         if not result.data:
             raise HTTPException(status_code=404, detail=f"Page not found: {page_id}")
 
         # Handle large pages
-        page_data = _handle_large_page_content(result.data.copy())
+        page_data = _handle_large_page_content(result.data[0].copy())
         return PageResponse(**page_data)
 
     except HTTPException:

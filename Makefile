@@ -250,11 +250,21 @@ lint-fe:
 	@cd archon-ui-main && $(PNPM) run --if-present lint && $(PNPM) tsc --noEmit
 
 # Run backend linter
-lint-be:
+lint-be: check-no-single
 	@echo "Linting backend..."
 	@cd python && $(UV) sync --all-groups
 	@cd python && $(UV) run ruff check --fix
 	@cd python && $(UV) run mypy src --ignore-missing-imports
+
+check-no-single:
+	@echo "Checking for .single() usage in python/src..."
+	@if grep -r "\.single()" python/src/ | grep -v "tests/" | grep -v "conftest.py" > /dev/null; then \
+		echo "❌ ERROR: .single() is banned. Use .execute() and access data[0] instead."; \
+		grep -r "\.single()" python/src/ | grep -v "tests/" | grep -v "conftest.py"; \
+		exit 1; \
+	else \
+		echo "✅ No .single() usage found."; \
+	fi
 
 # Clean everything (with confirmation)
 clean:
@@ -365,7 +375,7 @@ deploy-hf:
 
 # Phase Audit Automation
 phase-audit:
-	@set -a; [ -f .env ] && . ./.env; set +a; python scripts/phase_audit.py
+	@set -a; [ -f .env ] && . ./.env; set +a; $(UV) run python scripts/phase_audit.py
 
 test-lean:
 	@echo "--- Testing Lean 4 Subproject (lean_proofs) ---"

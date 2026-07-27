@@ -23,12 +23,12 @@ class EnrichmentService:
         supabase = get_supabase_client()
         try:
             # Fetch lead
-            res = supabase.table("leads").select("*").eq("id", lead_id).single().execute()
+            res = supabase.table("leads").select("*").eq("id", lead_id).execute()
             if not res.data:
                 logger.warning(f"Enrichment: Lead not found | id={lead_id}")
                 return False
 
-            lead = res.data
+            lead = res.data[0]
             if lead.get("enrichment_status") == "success":
                 return True
 

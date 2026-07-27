@@ -13,11 +13,11 @@ async def test_stateful_crud_operations(mock_supabase_client):
     client = mock_supabase_client
 
     # 1. Select initially empty
-    res = client.table("projects").select("*").execute()
+    res = client.table("archon_projects").select("*").execute()
     assert len(res.data) == 0
 
     # 2. Insert records
-    inserted = client.table("projects").insert([
+    inserted = client.table("archon_projects").insert([
         {"title": "Project A", "status": "active"},
         {"title": "Project B", "status": "archived"}
     ]).execute()
@@ -27,28 +27,28 @@ async def test_stateful_crud_operations(mock_supabase_client):
     assert "id" in inserted.data[0]
 
     # 3. Read back records (Read-After-Write)
-    selected = client.table("projects").select("*").execute()
+    selected = client.table("archon_projects").select("*").execute()
     assert len(selected.data) == 2
 
     # 4. Filter records using eq
-    filtered = client.table("projects").select("*").eq("title", "Project A").execute()
+    filtered = client.table("archon_projects").select("*").eq("title", "Project A").execute()
     assert len(filtered.data) == 1
     assert filtered.data[0]["title"] == "Project A"
 
     # 5. Update record
-    updated = client.table("projects").update({"status": "completed"}).eq("title", "Project A").execute()
+    updated = client.table("archon_projects").update({"status": "completed"}).eq("title", "Project A").execute()
     assert len(updated.data) == 1
     assert updated.data[0]["status"] == "completed"
 
     # Verify update persisted
-    verify = client.table("projects").select("*").eq("title", "Project A").execute()
+    verify = client.table("archon_projects").select("*").eq("title", "Project A").execute()
     assert verify.data[0]["status"] == "completed"
 
     # 6. Delete record
-    client.table("projects").delete().eq("title", "Project B").execute()
+    client.table("archon_projects").delete().eq("title", "Project B").execute()
 
     # Verify deletion
-    remaining = client.table("projects").select("*").execute()
+    remaining = client.table("archon_projects").select("*").execute()
     assert len(remaining.data) == 1
     assert remaining.data[0]["title"] == "Project A"
 

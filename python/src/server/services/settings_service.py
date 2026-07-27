@@ -75,12 +75,14 @@ class SettingsService(BaseRepository):
         """Retrieve a specific setting value."""
 
         def _query():
-            return self.supabase_client.table("archon_settings").select("value").eq("key", key).single().execute()
+            res = self.supabase_client.table("archon_settings").select("value").eq("key", key).execute()
+            res.data = res.data[0] if res.data else {}
+            return res
 
         success, result = self.execute_query(
             query_func=_query, error_context=f"Error fetching setting {key}", require_data=True
         )
-        if success and result["data"]:
+        if success and result.get("data"):
             return str(result["data"].get("value", default))
         return default
 

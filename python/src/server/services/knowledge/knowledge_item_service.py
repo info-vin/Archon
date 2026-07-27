@@ -48,9 +48,9 @@ class KnowledgeItemService(BaseRepository):
         """Retrieve a single knowledge item."""
 
         def _query():
-            return (
-                self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).single().execute()
-            )
+            res = self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).execute()
+            res.data = res.data[0] if res.data else {}
+            return res
 
         success, result = self.execute_query(_query, f"Failed to get item {source_id}", require_data=True)
         if success:
