@@ -1,11 +1,18 @@
 # python/src/server/services/settings_service.py
 
-from typing import Any
+from typing import Any, TypedDict
 
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
+
+
+class DatabaseStatisticsDict(TypedDict):
+    projects: int
+    tasks: int
+    crawled_pages: int
+    settings: int
 
 logger = get_logger(__name__)
 
@@ -18,14 +25,19 @@ class SettingsService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
-    def get_database_statistics(self) -> tuple[bool, dict | str]:
+    def get_database_statistics(self) -> tuple[bool, DatabaseStatisticsDict | str]:
         """
         Retrieves record counts for various tables in the database.
 
         Returns:
             A tuple containing a success boolean and either a dictionary of table counts or an error message.
         """
-        tables_info = {}
+        tables_info: DatabaseStatisticsDict = {
+            "projects": 0,
+            "tasks": 0,
+            "crawled_pages": 0,
+            "settings": 0
+        }
 
         # Get projects count
         def _get_projects():
