@@ -91,24 +91,33 @@ class SchedulerService:
             pass
         return None
 
-    async def _should_run_local_only(self, job_id: str) -> bool:
+    async def _should_run_local_only(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
         if os.environ.get("SPACE_ID") is not None:
             return False
-        return await self._should_run_daily(job_id)
+        return await self._should_run_daily(job_id, trigger=trigger)
 
-    async def _should_run_daily(self, job_id: str) -> bool:
+    async def _should_run_daily(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
+        now_local = datetime.now(DEFAULT_TIMEZONE)
+        if trigger:
+            try:
+                target_hour = int(str(trigger.fields[5]))
+                target_minute = int(str(trigger.fields[6]))
+                if now_local.hour < target_hour or (now_local.hour == target_hour and now_local.minute < target_minute):
+                    return False
+            except Exception:
+                pass
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
-        return last_run.astimezone(DEFAULT_TIMEZONE).date() < datetime.now(DEFAULT_TIMEZONE).date()
+        return last_run.astimezone(DEFAULT_TIMEZONE).date() < now_local.date()
 
-    async def _should_run_weekly(self, job_id: str) -> bool:
+    async def _should_run_weekly(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
         return last_run.astimezone(DEFAULT_TIMEZONE).isocalendar()[:2] < datetime.now(DEFAULT_TIMEZONE).isocalendar()[:2]
 
-    async def _should_run_monthly(self, job_id: str) -> bool:
+    async def _should_run_monthly(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
@@ -116,7 +125,7 @@ class SchedulerService:
         now_local = datetime.now(DEFAULT_TIMEZONE)
         return (last_run_local.year, last_run_local.month) < (now_local.year, now_local.month)
 
-    async def _should_run_biweekly(self, job_id: str) -> bool:
+    async def _should_run_biweekly(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
@@ -132,11 +141,11 @@ class SchedulerService:
         )
         logger.info(f"✅ Scheduled Stateless: {job_id} (Start: +{delay_mins}m, Loop: {interval_mins}m)")
 
-    async def _schedule_stateful_job(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, check_func: Callable[[str], Any], trigger: CronTrigger, skip_msg: str) -> None:
+    async def _schedule_stateful_job(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, check_func: Callable[..., Any], trigger: CronTrigger, skip_msg: str) -> None:
         if not self._scheduler:
             return
         async def wrapper() -> None:
-            if await check_func(job_id):
+            if await check_func(job_id, trigger=trigger):
                 logger.info(f"🕒 Clockwork: Executing stateful job '{job_id}'")
                 try:
                     await job_func()
