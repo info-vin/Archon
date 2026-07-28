@@ -37,3 +37,10 @@
 - ✅ `make lint-be`: 語法排版 100% 乾淨。
 - ✅ `uv run mypy src/server/`: 型別標註 100% 正確，無 Callable 簽名衝突。
 - ✅ `make test-be`: 612 項單元與整合測試全數通過，確保系統零副作用 (Zero Regressions)。
+
+### Step 4: 爬蟲推論併發限流修復 (Concurrency Limit for Gemini Inference)
+- **行動**：修復爬蟲取得大量職缺後，呼叫 Gemini 預測痛點時引發的 `429 RESOURCE_EXHAUSTED` 錯誤。
+- **作法**：
+  - 先前 `RateLimiter` 的 `acquire()` 僅計算 Token 總數，並未阻擋 `asyncio.gather` 所發起的「瞬間併發 (Concurrency)」。這導致數十個推論請求在同一毫秒擊中 Gemini Free Tier 伺服器，觸發 15 RPM 的防禦網。
+  - 在 `job_board_service.py` 中的 `_infer_need` 閉包內，引入 `async with self.rate_limiter.semaphore:` 限制物理併發數 (預設為 1)。
+  - 將洪水式併發轉化為**循序漸進的排隊處理**，成功確保 Token Bucket 發揮緩衝與平滑分佈的作用，完美消滅 429 錯誤。
