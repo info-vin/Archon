@@ -1,6 +1,6 @@
 import aiofiles
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.server.models.auth_models import UserProfileDTO
 
@@ -16,6 +16,10 @@ from ..services.agent_service import agent_service
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+class UsersListResponse(BaseModel):
+    profiles: list[UserProfileDTO] = Field(description="List of user profiles")
 
 
 @router.post("/scheduler/job/{job_id}/run", dependencies=[Depends(verify_manager_role)])
@@ -118,8 +122,8 @@ async def get_document_versions(limit: int = 100, current_user: dict = Depends(v
         return {"versions": []}
 
 
-@router.get("/users")
-async def get_users(limit: int = 100, role: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/users", response_model=UsersListResponse)
+async def get_users(limit: int = 100, role: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)) -> UsersListResponse:
     """
     Get all users (Admin & Manager).
     """
@@ -132,7 +136,7 @@ async def get_users(limit: int = 100, role: str | None = None, current_user: Use
 
     try:
         users = await AdminService.get_all_users(limit=limit, role_filter=role)
-        return {"profiles": users}
+        return UsersListResponse(profiles=users)
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch users: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error while fetching users: {str(e)}") from e
