@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.server.api_routes.stats_api import get_member_performance, get_tasks_by_status
+from src.server.api_routes.stats_api import get_agent_xp, get_member_performance, get_tasks_by_status
 
 
 @pytest.mark.asyncio
@@ -30,3 +30,30 @@ async def test_get_member_performance():
         assert result[0].completed_tasks == 2
         assert result[1].name == "Bob"
         assert result[1].completed_tasks == 1
+
+
+@pytest.mark.asyncio
+async def test_get_agent_xp():
+    mock_data = [
+        {
+            "name": "Sentinel",
+            "agent_id": "ai-sentinel",
+            "total_xp": 100,
+            "success_count": 10,
+            "total_cost": 0.5,
+            "roi_ratio": 200.0,
+            "level": "Level 1"
+        }
+    ]
+
+    with patch("src.server.api_routes.stats_api.stats_service.get_agent_xp_stats", return_value=mock_data):
+        result = await get_agent_xp()
+
+        assert len(result) == 1
+        assert result[0].name == "Sentinel"
+        assert result[0].agent_id == "ai-sentinel"
+        assert result[0].total_xp == 100
+        assert result[0].success_count == 10
+        assert result[0].total_cost == 0.5
+        assert result[0].roi_ratio == 200.0
+        assert result[0].level == "Level 1"
