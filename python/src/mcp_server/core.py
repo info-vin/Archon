@@ -39,7 +39,7 @@ class ArchonContext:
     health_status: dict | None = None
     startup_time: float | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.health_status is None:
             self.health_status = {
                 "status": "healthy",

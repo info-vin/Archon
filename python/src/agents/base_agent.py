@@ -53,9 +53,11 @@ class RateLimitHandler:
         """Log the rate limit hit as a system ALERT in archon_logs."""
         try:
             from ..utils import get_supabase_client
+            from src.server.repositories.base_repository import BaseRepository
 
             supabase = get_supabase_client()
-            supabase.table("archon_logs").insert(
+            repo = BaseRepository(supabase)
+            query = supabase.table("archon_logs").insert(
                 {
                     "level": "ALERT",
                     "source": "RateLimitHandler",
@@ -68,7 +70,8 @@ class RateLimitHandler:
                         "error": error_message,
                     },
                 }
-            ).execute()
+            )
+            repo.execute_query(query, "Failed to log rate limit alert to DB")
         except Exception as e:
             logger.warning(f"Failed to log rate limit alert to DB: {e}")
 

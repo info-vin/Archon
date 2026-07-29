@@ -9,6 +9,7 @@ from src.agents.document.templates.generators import (
     generate_erd_content,
 )
 from src.agents.mcp_client import get_mcp_client
+from src.server.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +23,14 @@ async def list_documents_logic(supabase_client: Any, project_id: str) -> str:
         if not supabase_client:
             return "Error: Database client not configured."
 
-        response = supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+        repo = BaseRepository(supabase_client)
+        query = supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        success, res = repo.execute_query(query, f"Error getting docs for project {project_id}")
 
-        if not response.data:
+        if not success or not res.get("data"):
             return "No project found with the given ID."
 
-        docs = response.data[0].get("docs", [])
+        docs = res["data"][0].get("docs", [])
         if not docs:
             return "No documents found in this project."
 
@@ -49,12 +52,14 @@ async def get_document_logic(supabase_client: Any, project_id: str, document_tit
         if not supabase_client:
             return "Error: Database client not configured."
 
-        response = supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
+        repo = BaseRepository(supabase_client)
+        query = supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        success, res = repo.execute_query(query, f"Error getting docs for project {project_id}")
 
-        if not response.data:
+        if not success or not res.get("data"):
             return "No project found."
 
-        docs = response.data[0].get("docs", [])
+        docs = res["data"][0].get("docs", [])
         matching_docs = [doc for doc in docs if document_title.lower() in doc.get("title", "").lower()]
 
         if not matching_docs:

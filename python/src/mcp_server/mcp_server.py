@@ -87,7 +87,7 @@ register_custom_routes(mcp)
 
 
 # Import and register modules
-def register_modules():
+def register_modules() -> None:
     """Register all MCP tool modules."""
     logger.info("🔧 Registering MCP tool modules...")
     modules_registered = 0
@@ -211,7 +211,7 @@ except Exception as e:
     raise
 
 
-def main():
+def main() -> None:
     """Main entry point for the MCP server."""
     try:
         setup_logfire(service_name="archon-mcp-server")

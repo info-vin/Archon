@@ -1,7 +1,9 @@
 from .job_tools import marketing_crawler_tools, marketing_tools
 
 
-def register_marketing_tools(mcp):
+from mcp.server.fastmcp import FastMCP
+
+def register_marketing_tools(mcp: FastMCP) -> None:
     """Register marketing tools with the MCP server."""
     for tool_cls in marketing_tools + marketing_crawler_tools:
         name = getattr(tool_cls, "tool_name", None)

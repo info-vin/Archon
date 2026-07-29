@@ -1,10 +1,8 @@
 # python/src/server/services/prompt_service.py
 
 from datetime import datetime
-from typing import Any, NotRequired, TypedDict
+from typing import cast, Any, NotRequired, TypedDict
 from unittest.mock import MagicMock
-
-from postgrest.base_request_builder import APIResponse
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -56,14 +54,11 @@ class PromptService(BaseRepository):
 
     async def list_prompts(self) -> tuple[bool, PromptListDTO]:
         """List all system prompts from the database."""
-
-        def _query() -> APIResponse:
-            return self.supabase_client.table("archon_prompts").select("*").execute()
-
-        success, result = self.execute_query(_query, "Failed to list prompts")
+        query = self.supabase_client.table("archon_prompts").select("*")
+        success, result = self.execute_query(query, "Failed to list prompts")
         if success:
-            return True, {"prompts": result["data"]}
-        return False, result
+            return True, cast(PromptListDTO, {"prompts": result.get("data", [])})
+        return False, cast(PromptListDTO, result)
 
     def get_prompt(self, name: str, default: str | None = None) -> str:
         """Get a prompt by name (cached or direct)."""
@@ -86,27 +81,21 @@ class PromptService(BaseRepository):
         self, prompt_name: str, content: str, description: str | None = None, category: str | None = None, metadata: dict[str, Any] | None = None
     ) -> tuple[bool, PromptUpdateDTO]:
         """Update a system prompt."""
-
-        def _query() -> APIResponse:
-            # DB schema uses 'prompt' for the content and 'prompt_name' for identity
-            update_data: dict[str, Any] = {"prompt": content}
-            if description:
-                update_data["description"] = description
-            if category:
-                update_data["category"] = category
-            if metadata is not None:
-                update_data["metadata"] = metadata
-            return (
-                self.supabase_client.table("archon_prompts")
-                .update(update_data)
-                .eq("prompt_name", prompt_name)
-                .execute()
-            )
-
-        success, result = self.execute_query(_query, f"Failed to update prompt {prompt_name}")
+        update_data: dict[str, Any] = {"prompt": content}
+        if description:
+            update_data["description"] = description
+        if category:
+            update_data["category"] = category
+        if metadata is not None:
+            update_data["metadata"] = metadata
+            
+        query = self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name)
+        success, result = self.execute_query(query, f"Failed to update prompt {prompt_name}")
+        
         if success:
             self._prompts[prompt_name] = content  # Sync cache
-        return success, result
+            
+        return success, cast(PromptUpdateDTO, result)
 
 
 prompt_service = PromptService()

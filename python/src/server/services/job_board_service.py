@@ -259,7 +259,7 @@ class JobBoardService:
             async with self.rate_limiter.semaphore:
                 await self.rate_limiter.acquire(estimated_tokens=400)
                 response = await _call_gemini()
-                
+
             return str(response.text).strip() if response.text else f"Hiring for {job.title}"
         except Exception as e:
             logger.error(f"Need inference failed: {e}")

@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    async def main():
+    async def main() -> None:
         logger.info("🚀 Starting REAL Fan-out Map-Reduce...")
 
         # Create a test state with a dummy user message to give the agents some context

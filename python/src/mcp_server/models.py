@@ -99,7 +99,7 @@ class ProjectRequirementsDocument(BaseModel):
     success_criteria: list[str] = Field(default_factory=list, description="Overall project success criteria")
 
     @validator("last_updated", pre=True, always=True)
-    def set_last_updated(cls, v):
+    def set_last_updated(cls: Any, v: Any) -> datetime:
         return v or datetime.now()
 
 
@@ -131,7 +131,7 @@ class GeneralDocument(BaseModel):
     updated_at: datetime | None = Field(None, description="Last update timestamp")
 
     @validator("created_at", "updated_at", pre=True, always=True)
-    def set_timestamps(cls, v):
+    def set_timestamps(cls: Any, v: Any) -> datetime:
         return v or datetime.now()
 
 

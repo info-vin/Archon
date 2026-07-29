@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.server.utils import get_supabase_client
+from src.server.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +27,11 @@ class CheckpointDTO:
     updated_at: str | None = None
 
 
-class AgentCheckpointManager:
+class AgentCheckpointManager(BaseRepository):
     """Manages saving, reading, and restoring Agent state checkpoints in Supabase."""
 
     def __init__(self, supabase_client=None) -> None:
-        self.supabase = supabase_client if supabase_client is not None else get_supabase_client()
+        super().__init__(supabase_client=supabase_client)
 
     async def save_checkpoint(self, dto: CheckpointDTO) -> str:
         """Saves or updates a state checkpoint snapshot in the database."""
@@ -42,26 +43,27 @@ class AgentCheckpointManager:
             "state_snapshot": dto.state_snapshot,
             "last_tool_call": dto.last_tool_call,
         }
-        res = self.supabase.table("agent_checkpoints").upsert(payload, on_conflict="conversation_id,step_index").execute()
-        if res.data:
-            checkpoint_id = str(res.data[0]["id"])
+        query = self.supabase_client.table("agent_checkpoints").upsert(payload, on_conflict="conversation_id,step_index")
+        success, res = self.execute_query(query, "Failed to save agent checkpoint to database")
+        if success and res.get("data"):
+            checkpoint_id = str(res["data"][0]["id"])
             logger.info(f"[CheckpointManager] Saved checkpoint {checkpoint_id} for conv {dto.conversation_id} step {dto.step_index}")
             return checkpoint_id
         raise RuntimeError("Failed to save agent checkpoint to database")
 
     async def load_latest_checkpoint(self, conversation_id: str) -> CheckpointDTO | None:
         """Loads the most recent checkpoint for a given conversation ID."""
-        res = (
-            self.supabase.table("agent_checkpoints")
+        query = (
+            self.supabase_client.table("agent_checkpoints")
             .select("*")
             .eq("conversation_id", conversation_id)
             .order("step_index", desc=True)
             .limit(1)
-            .execute()
         )
-        if not res.data:
+        success, res = self.execute_query(query, f"Failed to load latest checkpoint for conv {conversation_id}")
+        if not success or not res.get("data"):
             return None
-        d = res.data[0]
+        d = res["data"][0]
         return CheckpointDTO(
             id=d.get("id"),
             conversation_id=d["conversation_id"],
@@ -76,13 +78,14 @@ class AgentCheckpointManager:
 
     async def list_checkpoints(self, conversation_id: str) -> list[CheckpointDTO]:
         """Lists all checkpoints for a conversation in chronological order."""
-        res = (
-            self.supabase.table("agent_checkpoints")
+        query = (
+            self.supabase_client.table("agent_checkpoints")
             .select("*")
             .eq("conversation_id", conversation_id)
             .order("step_index", desc=False)
-            .execute()
         )
+        success, res = self.execute_query(query, f"Failed to list checkpoints for conv {conversation_id}")
+        data = res.get("data", []) if success else []
         return [
             CheckpointDTO(
                 id=d.get("id"),
@@ -95,5 +98,5 @@ class AgentCheckpointManager:
                 created_at=d.get("created_at"),
                 updated_at=d.get("updated_at"),
             )
-            for d in res.data or []
+            for d in data
         ]

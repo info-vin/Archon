@@ -126,7 +126,7 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
 
             supabase = get_supabase_client()
 
-            async def run_query(query):
+            async def run_query(query: Any) -> Any:
                 try:
                     return await asyncio.to_thread(query.execute)
                 except Exception as e:

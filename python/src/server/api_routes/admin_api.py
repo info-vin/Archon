@@ -135,8 +135,9 @@ async def get_users(limit: int = 100, role: str | None = None, current_user: Use
         raise HTTPException(status_code=403, detail="Insufficient permissions to view team members")
 
     try:
+        from typing import cast
         users = await AdminService.get_all_users(limit=limit, role_filter=role)
-        return UsersListResponse(profiles=users)
+        return UsersListResponse(profiles=cast(list[UserProfileDTO], users))
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch users: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Database error while fetching users: {str(e)}") from e

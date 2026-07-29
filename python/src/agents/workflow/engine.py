@@ -29,7 +29,7 @@ class WorkflowEngine:
                 if final_state.input_tokens > 0 or final_state.output_tokens > 0:
                     import asyncio
 
-                    async def log_telemetry():
+                    async def log_telemetry() -> None:
                         server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
                         async with httpx.AsyncClient() as client:
                             payload = {
