@@ -147,10 +147,21 @@ export const useMarketingLogic = () => {
     }
 
     if (sortConfig !== null) {
+      // PERFORMANCE: Pre-calculate date timestamps for O(1) lookups during the O(N log N) sort operation
+      // to avoid redundant string-to-date parsing overhead from calling new Date().getTime() inside the comparator.
+      const isDateSort = sortConfig.key === 'created_at' || sortConfig.key === 'next_followup_date';
+      const parsedDates = new Map<string, number>();
+
+      if (isDateSort) {
+          sortableLeads.forEach(lead => {
+              parsedDates.set(lead.id, new Date(lead[sortConfig.key] || 0).getTime());
+          });
+      }
+
       sortableLeads.sort((a, b) => {
-        if (sortConfig.key === 'created_at' || sortConfig.key === 'next_followup_date') {
-             const dateA = new Date(a[sortConfig.key] || 0).getTime();
-             const dateB = new Date(b[sortConfig.key] || 0).getTime();
+        if (isDateSort) {
+             const dateA = parsedDates.get(a.id) || 0;
+             const dateB = parsedDates.get(b.id) || 0;
              return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
         }
         if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
