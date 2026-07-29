@@ -58,16 +58,7 @@ async def get_document_versions(limit: int = 50, current_user: dict = Depends(re
     Fetch historical versions of project documents. Requires TASK_READ_TEAM.
     """
     try:
-        from ..utils import get_supabase_client
-
-        supabase = get_supabase_client()
-
-        # Note: Table name in DB is archon_document_versions
-        res = (
-            supabase.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit).execute()
-        )
-
-        return res.data or []
+        return await version_service.get_document_versions(limit=limit)
     except Exception as e:
         logfire.error(f"Error fetching document versions: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

@@ -52,8 +52,9 @@ class RateLimitHandler:
     async def _log_rate_limit_alert(self, error_message: str, retry_count: int, wait_time: float) -> None:
         """Log the rate limit hit as a system ALERT in archon_logs."""
         try:
-            from ..utils import get_supabase_client
             from src.server.repositories.base_repository import BaseRepository
+
+            from ..utils import get_supabase_client
 
             supabase = get_supabase_client()
             repo = BaseRepository(supabase)

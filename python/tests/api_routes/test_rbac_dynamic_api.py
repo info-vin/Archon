@@ -1,10 +1,8 @@
 from unittest.mock import MagicMock, patch
-
 import pytest
 from fastapi.testclient import TestClient
-
-from server.auth.dependencies import get_current_user
-from server.main import app
+from src.server.auth.dependencies import get_current_user
+from src.server.main import app
 from src.server.models.auth_models import UserProfileDTO
 
 client = TestClient(app)
@@ -19,38 +17,31 @@ def admin_user():
     app.dependency_overrides.pop(get_current_user, None)
 
 def test_get_rbac_matrix(admin_user):
-    # Setup mock data for this test
     mock_data = [
         {"role": "system_admin", "permissions": ["*"]},
         {"role": "employee", "permissions": ["task:read"]}
     ]
-
-    with patch("server.services.admin_service.get_supabase_client") as mock_get:
-        mock_client = MagicMock()
-        mock_get.return_value = mock_client
-        mock_client.table.return_value.select.return_value.order.return_value.execute.return_value.data = mock_data
-
-        response = client.get("/api/admin/rbac/matrix")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 2
-        roles = [r["role"] for r in data]
-        assert "system_admin" in roles
+    with patch("src.server.services.admin_service.admin_service.execute_query") as mock_eq:
+        with patch("src.server.services.admin_service.admin_service.supabase_client"):
+            mock_eq.return_value = (True, {"data": mock_data})
+            response = client.get("/api/admin/rbac/matrix")
+            assert response.status_code == 200
+            data = response.json()
+            assert len(data) == 2
+            roles = [r["role"] for r in data]
+            assert "system_admin" in roles
 
 def test_update_rbac_role(admin_user):
-    # Setup mock data for updating
-    with patch("server.services.admin_service.get_supabase_client") as mock_get:
-
-        mock_client = MagicMock()
-        mock_get.return_value = mock_client
-        # Mock upsert response
-        mock_client.table.return_value.upsert.return_value.execute.return_value.data = [
-            {"role": "employee", "permissions": ["task:read", "dummy:perm"]}
-        ]
-
-        update_response = client.post("/api/admin/rbac/role", json={
-            "role": "employee",
-            "permissions": ["task:read", "dummy:perm"]
-        })
-        assert update_response.status_code == 200
-        assert "dummy:perm" in update_response.json()["permissions"]
+    with patch("src.server.services.admin_service.admin_service.execute_query") as mock_eq:
+        with patch("src.server.services.admin_service.admin_service.supabase_client"):
+            def execute_side_effect(query, *args, **kwargs):
+                if "insert" in str(query) or "archon_logs" in str(query):
+                    return (True, {})
+                return (True, {"data": [{"role": "employee", "permissions": ["task:read", "dummy:perm"]}]})
+            mock_eq.side_effect = execute_side_effect
+            update_response = client.post("/api/admin/rbac/role", json={
+                "role": "employee",
+                "permissions": ["task:read", "dummy:perm"]
+            })
+            assert update_response.status_code == 200
+            assert "dummy:perm" in update_response.json()["permissions"]

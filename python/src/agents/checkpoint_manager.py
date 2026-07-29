@@ -8,7 +8,6 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.server.utils import get_supabase_client
 from src.server.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)

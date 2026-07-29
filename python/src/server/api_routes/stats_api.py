@@ -10,7 +10,6 @@ from ..auth.dependencies import requires_permission
 from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
 from ..services.stats import StatsService
-from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
@@ -140,13 +139,8 @@ class MemberPerformanceStats(BaseModel):
 async def get_tasks_by_status() -> list[TaskStatusCount]:
     """Get the count of tasks grouped by status."""
     try:
-        supabase = get_supabase_client()
-        response = supabase.table("archon_tasks").select("status").execute()
-        counts: dict[str, int] = {}
-        for row in response.data:
-            s = row.get("status", "unknown")
-            counts[s] = counts.get(s, 0) + 1
-        return [TaskStatusCount(name=k, value=v) for k, v in counts.items()]
+        results = await stats_service.get_tasks_by_status()
+        return [TaskStatusCount(name=r["name"], value=r["value"]) for r in results]
     except Exception as e:
         logger.error(f"Failed to get task stats: {e}")
         return []

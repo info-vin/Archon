@@ -11,7 +11,6 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from ..config.logfire_config import get_logger, safe_logfire_error
-from ..utils import get_supabase_client
 
 # Get logger for this module
 logger = get_logger(__name__)
@@ -105,27 +104,9 @@ async def list_pages(
         PageListResponse with list of pages and metadata
     """
     try:
-        client = get_supabase_client()
-
-        # Build query - select only summary fields (no full_content)
-        query = (
-            client.table("archon_crawled_pages")
-            .select("id, url, section_title, section_order, word_count, char_count, chunk_count")
-            .eq("source_id", source_id)
-        )
-
-        # Add section filter if provided
-        if section:
-            query = query.eq("section_title", section)
-
-        # Order by section_order and created_at
-        query = query.order("section_order").order("created_at")
-
-        # Execute query
-        result = query.execute()
-
-        # Use PageSummary (no content handling needed)
-        pages = [PageSummary(**page) for page in result.data]
+        from ..services.pages_service import pages_service
+        data = await pages_service.list_pages(source_id=source_id, section=section)
+        pages = [PageSummary(**page) for page in data]
 
         return PageListResponse(pages=pages, total=len(pages), source_id=source_id)
 
@@ -149,16 +130,14 @@ async def get_page_by_url(url: str = Query(..., description="The URL of the page
         PageResponse with complete page data
     """
     try:
-        client = get_supabase_client()
+        from ..services.pages_service import pages_service
+        page_dict = await pages_service.get_page_by_url(url=url)
 
-        # Query by URL
-        result = client.table("archon_crawled_pages").select("*").eq("url", url).execute()
-
-        if not result.data:
+        if not page_dict:
             raise HTTPException(status_code=404, detail=f"Page not found for URL: {url}")
 
         # Handle large pages
-        page_data = _handle_large_page_content(result.data[0].copy())
+        page_data = _handle_large_page_content(page_dict.copy())
         return PageResponse(**page_data)
 
     except HTTPException:
@@ -181,16 +160,14 @@ async def get_page_by_id(page_id: str):
         PageResponse with complete page data
     """
     try:
-        client = get_supabase_client()
+        from ..services.pages_service import pages_service
+        page_dict = await pages_service.get_page_by_id(page_id=page_id)
 
-        # Query by ID
-        result = client.table("archon_crawled_pages").select("*").eq("id", page_id).execute()
-
-        if not result.data:
+        if not page_dict:
             raise HTTPException(status_code=404, detail=f"Page not found: {page_id}")
 
         # Handle large pages
-        page_data = _handle_large_page_content(result.data[0].copy())
+        page_data = _handle_large_page_content(page_dict.copy())
         return PageResponse(**page_data)
 
     except HTTPException:

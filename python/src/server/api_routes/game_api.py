@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from src.server.models.auth_models import UserProfileDTO
 
 from ..auth.dependencies import get_current_user
-from ..utils import get_supabase_client
 
 router = APIRouter(prefix="/game", tags=["game"])
 
@@ -16,22 +15,9 @@ class GameSaveRequest(BaseModel):
 @router.post("/save")
 async def save_game(request: GameSaveRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     user_id = str(current_user.id)
-    supabase = get_supabase_client()
-
-    # Perform upsert to supabase
     try:
-        res = supabase.table("user_game_saves").upsert({
-            "user_id": user_id,
-            "save_data": request.save_data,
-            "updated_at": "now()"
-        }).execute()
-
-        if not res.data:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to save game state."
-            )
-
+        from ..services.game_service import game_service
+        await game_service.save_game(user_id=user_id, save_data=request.save_data)
         return {"status": "success", "message": "Game state saved successfully."}
     except Exception as e:
         raise HTTPException(
@@ -42,15 +28,12 @@ async def save_game(request: GameSaveRequest, current_user: UserProfileDTO = Dep
 @router.get("/load")
 async def load_game(current_user: UserProfileDTO = Depends(get_current_user)):
     user_id = str(current_user.id)
-    supabase = get_supabase_client()
-
     try:
-        res = supabase.table("user_game_saves").select("save_data").eq("user_id", user_id).execute()
-
-        if not res.data:
+        from ..services.game_service import game_service
+        save_data = await game_service.load_game(user_id=user_id)
+        if save_data is None:
             return {"status": "not_found", "message": "No save game found for this user.", "save_data": None}
-
-        return {"status": "success", "save_data": res.data[0]["save_data"]}
+        return {"status": "success", "save_data": save_data}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

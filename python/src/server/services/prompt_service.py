@@ -1,7 +1,7 @@
 # python/src/server/services/prompt_service.py
 
 from datetime import datetime
-from typing import cast, Any, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict, cast
 from unittest.mock import MagicMock
 
 from src.server.repositories.base_repository import BaseRepository
@@ -88,13 +88,13 @@ class PromptService(BaseRepository):
             update_data["category"] = category
         if metadata is not None:
             update_data["metadata"] = metadata
-            
+
         query = self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name)
         success, result = self.execute_query(query, f"Failed to update prompt {prompt_name}")
-        
+
         if success:
             self._prompts[prompt_name] = content  # Sync cache
-            
+
         return success, cast(PromptUpdateDTO, result)
 
 

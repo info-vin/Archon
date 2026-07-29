@@ -8,7 +8,6 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.server.utils import get_supabase_client
 from src.server.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -96,14 +95,14 @@ class AgentApprovalManager(BaseRepository):
             .eq("approval_id", approval_id)
         )
         success, res = self.execute_query(query, f"Failed to update approval request {approval_id}")
-        
+
         if not success or not res.get("data"):
             raise ValueError(f"Approval request {approval_id} not found")
 
         d = res["data"][0]
         # Also update associated checkpoint status
         checkpoint_status = "RUNNING" if approved else "CANCELLED"
-        
+
         cp_query = self.supabase_client.table("agent_checkpoints").update({"status": checkpoint_status}).eq("id", d["checkpoint_id"])
         self.execute_query(cp_query, f"Failed to update checkpoint {d['checkpoint_id']}")
 

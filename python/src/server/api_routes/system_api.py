@@ -127,21 +127,9 @@ async def list_connectivity_logs() -> list[dict[str, Any]]:
     Lists system-level connectivity alerts (404, 429, etc) for Admin monitoring.
     Restricted to System Admin.
     """
-    from ..utils import get_supabase_client
 
-    supabase = get_supabase_client()
-
-    # Fetch logs flagged as 'system' type alerts
-    response = (
-        supabase.table("archon_logs")
-        .select("*")
-        .eq("level", "ALERT")
-        .eq("type", "system")
-        .order("created_at", desc=True)
-        .limit(20)
-        .execute()
-    )
-    return response.data or []
+    from ..services.system_service import system_service
+    return await system_service.list_connectivity_logs()
 
 
 @router.get("/settings", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
@@ -150,14 +138,8 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
     Lists system settings from the database.
     Requires TASK_READ_TEAM scope.
     """
-    from ..utils import get_supabase_client
-
-    supabase = get_supabase_client()
-    query = supabase.table("archon_settings").select("*")
-    if category:
-        query = query.eq("category", category)
-    response = query.order("key").execute()
-    return response.data or []
+    from ..services.system_service import system_service
+    return await system_service.list_system_settings(category=category)
 
 
 @router.patch("/settings/{key}", dependencies=[Depends(requires_permission(MCP_MANAGE))])
@@ -168,56 +150,22 @@ async def update_system_setting(
     Updates a specific system setting and records the change in the audit trail.
     Restricted to System Admin via MCP_MANAGE scope.
     """
-    from ..config.logfire_config import get_logger  # Ensure logger is available
-    from ..utils import get_supabase_client
-
-    logger = get_logger(__name__)
-    supabase = get_supabase_client()
-
     new_value = request.get("value")
     description = request.get("description")
 
     if new_value is None:
         raise HTTPException(status_code=400, detail="Setting value is required")
 
-    # 1. Fetch old value and protection status
-    old_res = supabase.table("archon_settings").select("value, is_system_protected").eq("key", key).execute()
-
-    if not old_res.data:
-        raise HTTPException(status_code=404, detail=f"Setting '{key}' not found")
-
-    old_data = old_res.data[0]
-    old_value = old_data["value"]
-
-    # 2. Perform Update (Permission verified by MCP_MANAGE scope)
-    update_data = {"value": str(new_value), "updated_at": "now()"}
-
-    if description:
-        update_data["description"] = description
-
-    response = supabase.table("archon_settings").update(update_data).eq("key", key).execute()
-
-    if not response.data:
-        raise HTTPException(status_code=404, detail=f"Setting '{key}' not found")
-
-    # 3. Create Audit Trail Entry
+    from ..services.system_service import system_service
     try:
-        user_name = current_user.name
-        audit_payload = {
-            "document_id": f"setting:{key}",
-            "created_by": user_name,
-            "change_type": "UPDATE",
-            "field_name": key,
-            "old_value": str(old_value),
-            "new_value": str(new_value),
-            "change_summary": f"System setting '{key}' updated by {user_name}",
-            "version_number": 1,
-        }
-        supabase.table("archon_document_versions").insert(audit_payload).execute()
-    except Exception as audit_err:
-        logger.warning(f"Audit logging failed for setting {key}: {audit_err}")
-
-    return dict(response.data[0])
+        return await system_service.update_system_setting(
+            key=key,
+            new_value=str(new_value),
+            description=description,
+            user_name=current_user.name or "System"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/fallback/status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])

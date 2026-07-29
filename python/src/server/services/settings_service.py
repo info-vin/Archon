@@ -125,3 +125,8 @@ class SettingsService(BaseRepository):
             query_func=_query, error_context=f"Error setting {key}", require_data=False
         )
         return success
+
+    async def upsert_setting(self, payload: dict[str, Any]) -> bool:
+        query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key")
+        success, res = self.execute_query(query, f"Error upserting setting", require_data=False)
+        return success

@@ -10,7 +10,7 @@ from ..auth.dependencies import (
     verify_manager_role,
 )
 from ..config.logfire_config import get_logger
-from ..services.admin_service import AdminService
+from ..services.admin_service import admin_service
 from ..services.agent_service import agent_service
 
 logger = get_logger(__name__)
@@ -110,13 +110,8 @@ async def get_document_versions(limit: int = 100, current_user: dict = Depends(v
     Get document versions for the Admin audit trail.
     """
     try:
-        from ..utils import get_supabase_client
-
-        supabase = get_supabase_client()
-        res = (
-            supabase.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit).execute()
-        )
-        return {"versions": res.data if res and res.data else []}
+        versions = await admin_service.get_document_versions(limit=limit)
+        return {"versions": versions}
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch document versions: {e}")
         return {"versions": []}
@@ -136,7 +131,7 @@ async def get_users(limit: int = 100, role: str | None = None, current_user: Use
 
     try:
         from typing import cast
-        users = await AdminService.get_all_users(limit=limit, role_filter=role)
+        users = await admin_service.get_all_users(limit=limit, role_filter=role)
         return UsersListResponse(profiles=cast(list[UserProfileDTO], users))
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch users: {e}", exc_info=True)
@@ -150,7 +145,7 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest, current_use
     """
     try:
         email = str(current_user.email)
-        updated_user = await AdminService.update_user_role(
+        updated_user = await admin_service.update_user_role(
             user_id=user_id, new_role=request.role, current_admin_email=email
         )
         return updated_user
@@ -172,7 +167,7 @@ class RBACRoleUpdate(BaseModel):
 async def get_rbac_matrix(current_user: UserProfileDTO = Depends(get_current_user)):
     """Fetch the full role-permission matrix (Managers & Admins)."""
     try:
-        return await AdminService.get_rbac_matrix()
+        return await admin_service.get_rbac_matrix()
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch RBAC matrix: {e}")
         raise HTTPException(status_code=500, detail="Internal server error while fetching matrix") from e
@@ -182,7 +177,7 @@ async def get_rbac_matrix(current_user: UserProfileDTO = Depends(get_current_use
 async def update_rbac_role(request: RBACRoleUpdate, current_user: UserProfileDTO = Depends(get_current_user)):
     """Update permissions for a specific role (Admin only)."""
     try:
-        return await AdminService.update_rbac_role(
+        return await admin_service.update_rbac_role(
             role=request.role, permissions=request.permissions, description=request.description
         )
     except Exception as e:
@@ -202,40 +197,27 @@ class CrawlerTargetCreate(BaseModel):
 @router.get("/crawler-targets", dependencies=[Depends(verify_manager_role)])
 async def list_crawler_targets(current_user: UserProfileDTO = Depends(get_current_user)):
     """List specialized crawler targets (Respects Department Isolation)."""
-    from ..utils import get_supabase_client
-
-    query = get_supabase_client().table("archon_crawler_targets").select("*")
-
-    # Physical Isolation logic: If not Admin, filter by department
+    dept = None
     if current_user.role not in ["admin", "system_admin"]:
         dept = current_user.department
-        query = query.eq("department", dept)
-
-    res = query.order("created_at").execute()
-    return res.data or []
+    return await admin_service.list_crawler_targets(department=dept)
 
 
 @router.post("/crawler-targets", dependencies=[Depends(verify_manager_role)])
 async def create_crawler_target(request: CrawlerTargetCreate, current_user: UserProfileDTO = Depends(get_current_user)):
     """Add a new target associated with the manager's department."""
-    from ..utils import get_supabase_client
-
     data = request.model_dump()
     data["department"] = current_user.department
-
-    res = get_supabase_client().table("archon_crawler_targets").insert(data).execute()
-    if not res.data:
-        raise HTTPException(status_code=500, detail="Failed to create target")
-    return res.data[0]
+    try:
+        return await admin_service.create_crawler_target(data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)])
 async def delete_crawler_target(target_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     """Remove a target (Protected by DB RLS for Managers)."""
-    from ..utils import get_supabase_client
-
-    # Managers can only delete if RLS allows (matching department)
-    get_supabase_client().table("archon_crawler_targets").delete().eq("id", target_id).execute()
+    await admin_service.delete_crawler_target(target_id)
     return {"success": True}
 
 
@@ -244,19 +226,4 @@ async def get_admin_logs(
     type: str | None = None, time_range: str | None = "7d", current_user: UserProfileDTO = Depends(get_current_user)
 ):
     """Fetch system logs (e.g., AI_CORRECTION)."""
-    from datetime import datetime, timedelta
-
-    from ..utils import get_supabase_client
-
-    query = get_supabase_client().table("archon_logs").select("*")
-
-    if type:
-        query = query.eq("type", type)
-
-    if time_range:
-        days = int(time_range.replace("d", "")) if time_range.endswith("d") else 7
-        cutoff_time = (datetime.now() - timedelta(days=days)).isoformat()
-        query = query.gte("created_at", cutoff_time)
-
-    res = query.order("created_at", desc=True).execute()
-    return res.data or []
+    return await admin_service.get_admin_logs(type=type, time_range=time_range)

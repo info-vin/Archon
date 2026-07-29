@@ -12,10 +12,13 @@ from ..config.version import ARCHON_VERSION, GITHUB_REPO_NAME, GITHUB_REPO_OWNER
 from ..utils.semantic_version import is_newer_version
 
 
-class VersionService:
+from ..repositories.base_repository import BaseRepository
+
+class VersionService(BaseRepository):
     """Service for checking Archon version against GitHub releases."""
 
-    def __init__(self) -> None:
+    def __init__(self, supabase_client=None) -> None:
+        super().__init__(supabase_client)
         self._cache: dict[str, Any] | None = None
         self._cache_time: datetime | None = None
         self._cache_ttl = 3600  # 1 hour cache TTL
@@ -155,6 +158,12 @@ class VersionService:
         self._cache = None
         self._cache_time = None
 
+    async def get_document_versions(self, limit: int = 50) -> list[dict[str, Any]]:
+        query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit)
+        success, res = self.execute_query(query, "Failed to get document versions", require_data=False)
+        return cast(list[dict[str, Any]], res.get("data", []) if success else [])
+
 
 # Export singleton instance
 version_service = VersionService()
+

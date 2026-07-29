@@ -82,6 +82,12 @@ class MarketingService(BaseRepository):
 
         return await ContentHandler(self.supabase_client).submit_blog(post_id)
 
+
+    async def get_manager_alerts(self, limit: int = 50) -> list[dict]:
+        query = self.supabase_client.table("archon_logs").select("*").eq("level", "ALERT").in_("source", ["sentinel", "twin_scout", "LeadScoring"]).order("created_at", desc=True).limit(limit)
+        success, res = self.execute_query(query, "Failed to get manager alerts")
+        return res.get("data", []) if success else []
+
     async def process_approval(self, item_type: str, item_id: str, action: str, notes: str | None) -> bool:
         from .marketing.content_handler import ContentHandler
 

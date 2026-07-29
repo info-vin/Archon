@@ -48,12 +48,12 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
         try:
             from src.server.repositories.base_repository import BaseRepository
-            
+
             supabase = get_supabase_client()
             repo = BaseRepository(supabase)
             query = supabase.table("archon_workflow_flows").select("*").eq("workflow_type", task_type)
             success, res = repo.execute_query(query, "Failed to load workflow config")
-            
+
             if success and res.get("data"):
                 flow_data = res["data"][0]
                 prompt_key = flow_data["supervisor_prompt_name"]

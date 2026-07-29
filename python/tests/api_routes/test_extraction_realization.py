@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from server.services.extraction_service import ExtractionService
+from src.server.services.extraction_service import ExtractionService
 
 
 @pytest.mark.asyncio
@@ -17,9 +17,9 @@ async def test_extraction_service_realization_logic():
 
     # 1. Setup Mocks
     with (
-        patch("server.services.extraction_service.get_supabase_client") as mock_db_factory,
-        patch("server.services.extraction_service.get_crawler") as mock_get_crawler,
-        patch("server.services.llm_provider_service.get_llm_client") as mock_get_llm,
+        patch("src.server.services.extraction_service.get_supabase_client") as mock_db_factory,
+        patch("src.server.services.extraction_service.get_crawler") as mock_get_crawler,
+        patch("src.server.services.llm_provider_service.get_llm_client") as mock_get_llm,
     ):
         mock_db = MagicMock()
         mock_db_factory.return_value = mock_db

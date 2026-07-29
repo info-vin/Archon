@@ -157,19 +157,8 @@ async def get_content_context(
 
 @router.get("/manager/alerts")
 async def get_manager_alerts(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
-    from ..utils import get_supabase_client
-
-    sb = get_supabase_client()
-    res = (
-        sb.table("archon_logs")
-        .select("*")
-        .eq("level", "ALERT")
-        .in_("source", ["sentinel", "twin_scout", "LeadScoring"])
-        .order("created_at", desc=True)
-        .limit(50)
-        .execute()
-    )
-    return res.data or []
+    service = MarketingService()
+    return await service.get_manager_alerts()
 
 
 @router.post("/manager/sentinel/run")

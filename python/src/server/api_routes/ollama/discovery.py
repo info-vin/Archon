@@ -97,14 +97,15 @@ async def discover_and_store_models_endpoint(
             "instances_checked": instances_checked,
             "total_count": len(stored_models),
         }
-        supabase.table("archon_settings").upsert(
+        from ...services.settings_service import SettingsService
+        await SettingsService().upsert_setting(
             {
                 "key": "ollama_discovered_models",
                 "value": json.dumps(models_data),
                 "category": "ollama",
                 "updated_at": datetime.now(UTC).isoformat(),
             }
-        ).execute()
+        )
 
         return ModelListResponse(
             models=stored_models,
@@ -123,8 +124,8 @@ async def get_stored_models_endpoint(current_user: UserProfileDTO = Depends(get_
     """Retrieve stored Ollama models from database."""
     try:
         supabase = get_supabase_client()
-        result = supabase.table("archon_settings").select("value").eq("key", "ollama_discovered_models").execute()
-        models_setting = result.data[0]["value"] if result.data else None
+        from ...services.settings_service import SettingsService
+        models_setting = SettingsService().get_setting("ollama_discovered_models")
         if not models_setting:
             return ModelListResponse(
                 models=[], total_count=0, instances_checked=0, last_discovery=None, cache_status="empty"

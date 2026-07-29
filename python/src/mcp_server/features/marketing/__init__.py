@@ -1,7 +1,7 @@
+from mcp.server.fastmcp import FastMCP
+
 from .job_tools import marketing_crawler_tools, marketing_tools
 
-
-from mcp.server.fastmcp import FastMCP
 
 def register_marketing_tools(mcp: FastMCP) -> None:
     """Register marketing tools with the MCP server."""
