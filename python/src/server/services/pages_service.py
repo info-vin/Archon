@@ -1,8 +1,10 @@
 from typing import Any, cast
+
 from ..repositories.base_repository import BaseRepository
 
+
 class PagesService(BaseRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     async def list_pages(self, source_id: str, section: str | None = None) -> list[dict[str, Any]]:
@@ -10,7 +12,7 @@ class PagesService(BaseRepository):
         if section:
             query = query.eq("section_title", section)
         query = query.order("section_order").order("created_at")
-        
+
         success, res = self.execute_query(query, f"Failed to list pages for source_id={source_id}", require_data=False)
         return cast(list[dict[str, Any]], res.get("data", []) if success else [])
 

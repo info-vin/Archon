@@ -110,7 +110,7 @@ async def check_for_updates(response: Response, if_none_match: str | None = Head
 
 
 @router.get("/current", response_model=CurrentVersionResponse)
-async def get_current_version():
+async def get_current_version() -> Any:
     """
     Get the current Archon version.
 
@@ -120,7 +120,7 @@ async def get_current_version():
 
 
 @router.post("/clear-cache")
-async def clear_version_cache():
+async def clear_version_cache() -> Any:
     """
     Clear the version check cache.
 

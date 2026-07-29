@@ -3,6 +3,8 @@ Stats API endpoints for Archon (Refactored - Lean Controller)
 Hardened for Phase 4.6.59 - Ensures no 404s for Admin HUD.
 """
 
+from typing import Any
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
@@ -18,7 +20,7 @@ stats_service = StatsService()
 
 
 @router.get("/commander-trends", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_commander_trends():
+async def get_commander_trends() -> list[dict[str, Any]]:
     try:
         return await stats_service.get_commander_trends()
     except Exception as e:
@@ -27,7 +29,7 @@ async def get_commander_trends():
 
 
 @router.get("/collab-synergy", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_collab_synergy():
+async def get_collab_synergy() -> dict[str, Any]:
     try:
         return await stats_service.get_collab_synergy()
     except Exception as e:
@@ -36,7 +38,7 @@ async def get_collab_synergy():
 
 
 @router.get("/sla-reliability", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_sla_reliability():
+async def get_sla_reliability() -> dict[str, Any]:
     try:
         return await stats_service.get_sla_reliability()
     except Exception as e:
@@ -45,7 +47,7 @@ async def get_sla_reliability():
 
 
 @router.get("/force-readiness", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_force_readiness():
+async def get_force_readiness() -> dict[str, Any]:
     try:
         return await stats_service.get_force_readiness()
     except Exception as e:
@@ -54,7 +56,7 @@ async def get_force_readiness():
 
 
 @router.get("/business-risks", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_business_risks():
+async def get_business_risks() -> list[dict[str, Any]]:
     try:
         return await stats_service.get_business_risks()
     except Exception as e:
@@ -63,7 +65,7 @@ async def get_business_risks():
 
 
 @router.get("/health-trend", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_health_trend():
+async def get_health_trend() -> Any:
     try:
         from ..services.health_service import HealthService
 
@@ -74,7 +76,7 @@ async def get_health_trend():
 
 
 @router.get("/system-overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_system_overview():
+async def get_system_overview() -> dict[str, Any]:
     try:
         return await stats_service.get_system_health_overview()
     except Exception as e:
@@ -84,7 +86,7 @@ async def get_system_overview():
 
 @router.get("/overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 @router.get("/ai-usage", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_ai_usage():
+async def get_ai_usage() -> dict[str, Any]:
     try:
         return await stats_service.get_detailed_ai_usage(days=30)
     except Exception as e:
@@ -93,7 +95,7 @@ async def get_ai_usage():
 
 
 @router.get("/token-usage/details", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_token_usage_details(days: int = 7):
+async def get_token_usage_details(days: int = 7) -> list[dict[str, Any]]:
     try:
         return await stats_service.get_recent_token_usage(limit=100)
     except Exception:
@@ -101,7 +103,7 @@ async def get_token_usage_details(days: int = 7):
 
 
 @router.get("/token-usage/recent", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_recent_token_usage(limit: int = 20):
+async def get_recent_token_usage(limit: int = 20) -> list[dict[str, Any]]:
     try:
         return await stats_service.get_recent_token_usage(limit=limit)
     except Exception:
@@ -109,7 +111,7 @@ async def get_recent_token_usage(limit: int = 20):
 
 
 @router.get("/knowledge-roi", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_knowledge_roi():
+async def get_knowledge_roi() -> dict[str, Any]:
     try:
         res = await stats_service.get_knowledge_roi()
         return res if res else {"roi": 0, "active_nodes": 0}
@@ -118,7 +120,7 @@ async def get_knowledge_roi():
 
 
 @router.get("/ethics-audit-queue", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_ethics_audit_queue():
+async def get_ethics_audit_queue() -> dict[str, Any]:
     try:
         return {"violations": [], "status": "clear"}
     except Exception:
@@ -158,7 +160,7 @@ async def get_member_performance() -> list[MemberPerformanceStats]:
 
 
 @router.get("/agent-xp", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_agent_xp():
+async def get_agent_xp() -> list[dict[str, Any]]:
     """Agent Experience (XP) & Level Ranking HUD (Phase 4.6.8)."""
     try:
         return await stats_service.get_agent_xp_stats()
@@ -168,7 +170,7 @@ async def get_agent_xp():
 
 
 @router.get("/consolidated", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_consolidated_stats():
+async def get_consolidated_stats() -> Any:
     """Consolidated Strategic Nexus dashboard state (Phase 5.5.7)."""
     try:
         from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent

@@ -1,5 +1,6 @@
 # python/src/server/api_routes/test_api.py
 import os
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from supabase import Client  # Needed for type hinting for get_supabase_client
@@ -19,7 +20,7 @@ else:
     )
 
     @router.post("/reset-database", status_code=status.HTTP_200_OK)
-    async def reset_database():
+    async def reset_database() -> Any:
         """
         Resets and seeds the database using pre-defined database functions.
         THIS IS FOR TESTING ONLY AND SHOULD NOT BE ENABLED IN PRODUCTION.

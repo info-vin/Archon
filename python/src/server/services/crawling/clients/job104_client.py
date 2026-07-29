@@ -168,7 +168,7 @@ class Job104Crawler:
         if client:
             return await asyncio.to_thread(_fetch_all, client)
         else:
-            def _with_session():
+            def _with_session() -> list[JobData]:
                 with self.create_session() as new_client:
                     return _fetch_all(new_client)
             return await asyncio.to_thread(_with_session)

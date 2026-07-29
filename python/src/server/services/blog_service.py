@@ -28,14 +28,12 @@ class BlogService(BaseRepository):
     async def get_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve a single blog post by its ID."""
 
-        def _query() -> Any:
-            res = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
-            res.data = res.data[0] if res.data else {}
-            return res
-
-        success, res = self.execute_query(_query, f"Error getting post {post_id}", require_data=True)
+        query = self.supabase_client.table("blog_posts").select("*").eq("id", post_id)
+        success, res = self.execute_query(query, f"Error getting post {post_id}", require_data=True)
         if success:
-            return True, {"post": res.get("data")}
+            data = res.get("data", [])
+            post_data = data[0] if isinstance(data, list) and data else (data if data else {})
+            return True, {"post": post_data}
         return False, res
 
     async def create_post(self, post_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:

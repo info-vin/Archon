@@ -26,7 +26,7 @@ class CrawlOrchestrator:
         last_heartbeat = asyncio.get_event_loop().time()
         heartbeat_interval = 30.0
 
-        async def send_heartbeat_if_needed():
+        async def send_heartbeat_if_needed() -> float:
             current_time = asyncio.get_event_loop().time()
             if current_time - last_heartbeat >= heartbeat_interval:
                 await self.service._handle_progress_update(

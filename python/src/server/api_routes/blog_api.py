@@ -1,3 +1,6 @@
+
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.dependencies import requires_permission
@@ -8,7 +11,7 @@ from ..services.blog_service import BlogService
 router = APIRouter(prefix="/api/blogs", tags=["blog"])
 
 
-def get_blog_service():
+def get_blog_service() -> Any:
     return BlogService()
 
 

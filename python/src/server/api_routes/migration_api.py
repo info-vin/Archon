@@ -3,6 +3,7 @@ API routes for database migration tracking and management.
 """
 
 from datetime import datetime
+from typing import Any
 
 import logfire
 from fastapi import APIRouter, Header, HTTPException, Response
@@ -147,7 +148,7 @@ async def get_migration_history(response: Response, if_none_match: str | None = 
 
 
 @router.get("/pending", response_model=list[PendingMigration])
-async def get_pending_migrations():
+async def get_pending_migrations() -> Any:
     """
     Get list of pending migrations only.
 

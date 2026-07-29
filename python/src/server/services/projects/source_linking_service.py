@@ -21,15 +21,12 @@ class SourceLinkingService(BaseRepository):
         Get all linked sources for a project, separated by type.
         """
 
-        def _query():
-            return (
-                self.supabase_client.table("archon_project_sources")
-                .select("source_id, notes")
-                .eq("project_id", project_id)
-                .execute()
-            )
-
-        success, result = self.execute_query(_query, "Failed to fetch project sources")
+        query = (
+            self.supabase_client.table("archon_project_sources")
+            .select("source_id, notes")
+            .eq("project_id", project_id)
+        )
+        success, result = self.execute_query(query, "Failed to fetch project sources")
         if not success:
             return False, result
 
@@ -62,12 +59,8 @@ class SourceLinkingService(BaseRepository):
         """
         try:
             # 1. Clear existing links
-            def _delete():
-                return (
-                    self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id).execute()
-                )
-
-            self.execute_query(_delete, "Failed to clear project sources", require_data=False)
+            delete_query = self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id)
+            self.execute_query(delete_query, "Failed to clear project sources", require_data=False)
 
             # 2. Batch insert new links
             all_links = []
@@ -80,10 +73,8 @@ class SourceLinkingService(BaseRepository):
 
             if all_links:
 
-                def _insert():
-                    return self.supabase_client.table("archon_project_sources").insert(all_links).execute()
-
-                return self.execute_query(_insert, "Failed to batch link sources")
+                insert_query = self.supabase_client.table("archon_project_sources").insert(all_links)
+                return self.execute_query(insert_query, "Failed to batch link sources")
 
             return True, {"message": "No sources to link"}
         except Exception as e:
@@ -129,15 +120,12 @@ class SourceLinkingService(BaseRepository):
                 p["business_sources"] = []
             return projects
 
-        def _query():
-            return (
-                self.supabase_client.table("archon_project_sources")
-                .select("project_id, source_id, notes")
-                .in_("project_id", project_ids)
-                .execute()
-            )
-
-        success, result = self.execute_query(_query, "Failed to fetch batched project sources")
+        query = (
+            self.supabase_client.table("archon_project_sources")
+            .select("project_id, source_id, notes")
+            .in_("project_id", project_ids)
+        )
+        success, result = self.execute_query(query, "Failed to fetch batched project sources")
 
         for p in projects:
             p["technical_sources"] = []

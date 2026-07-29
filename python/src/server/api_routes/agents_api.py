@@ -1,3 +1,6 @@
+
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.models.auth_models import UserProfileDTO
@@ -15,7 +18,7 @@ router = APIRouter(
 
 
 @router.get("/health")
-async def agents_health():
+async def agents_health() -> Any:
     """
     Health check for the AI agents service.
     """
@@ -42,7 +45,7 @@ async def get_assignable_agents(
 # Phase 5.9.13: Agent DB State Checkpointing & HITL Endpoints
 
 @router.get("/approvals/pending", response_model=list[dict])
-async def get_pending_approvals():
+async def get_pending_approvals() -> Any:
     """
     Get all active PENDING human approval requests for sensitive agent tool calls.
     """

@@ -12,15 +12,15 @@ class TelegramService:
         pass
 
     @property
-    def bot_token(self):
+    def bot_token(self) -> str | None:
         return os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
 
     @property
-    def chat_id(self):
+    def chat_id(self) -> str | None:
         return os.getenv("TELEGRAM_TO") or os.getenv("TELEGRAM_CHAT_ID")
 
     @property
-    def api_url(self):
+    def api_url(self) -> str | None:
         token = self.bot_token
         return f"https://api.telegram.org/bot{token}/sendMessage" if token else None
 

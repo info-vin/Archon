@@ -20,10 +20,8 @@ class ReportService(BaseRepository):
         super().__init__(supabase_client)
 
     def _get_leads_context(self, cutoff_date: str) -> str:
-        success, leads_res = self.execute_query(
-            lambda: self.supabase_client.table("leads").select("company_name, job_title, status").gt("created_at", cutoff_date).execute(),
-            "Failed to get leads"
-        )
+        query = self.supabase_client.table("leads").select("company_name, job_title, status").gt("created_at", cutoff_date)
+        success, leads_res = self.execute_query(query, "Failed to get leads")
         leads = leads_res.get("data", []) if success else []
         leads_summary = f"Total New Leads: {len(leads)}\n"
         if leads:
@@ -41,10 +39,8 @@ class ReportService(BaseRepository):
         return leads_summary
 
     def _get_token_context(self, cutoff_date: str) -> str:
-        success, token_res = self.execute_query(
-            lambda: self.supabase_client.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", cutoff_date).execute(),
-            "Failed to get token usage"
-        )
+        query = self.supabase_client.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", cutoff_date)
+        success, token_res = self.execute_query(query, "Failed to get token usage")
         token_data = token_res.get("data", []) if success else []
         total_input = sum(row.get("input_tokens", 0) or 0 for row in token_data)
         total_output = sum(row.get("output_tokens", 0) or 0 for row in token_data)
@@ -57,10 +53,8 @@ class ReportService(BaseRepository):
         )
 
     def _get_logs_context(self, cutoff_date: str) -> str:
-        success, logs_res = self.execute_query(
-            lambda: self.supabase_client.table("archon_logs").select("level, message, source, created_at").gt("created_at", cutoff_date).in_("level", ["ALERT", "ERROR"]).execute(),
-            "Failed to get alerts"
-        )
+        query = self.supabase_client.table("archon_logs").select("level, message, source, created_at").gt("created_at", cutoff_date).in_("level", ["ALERT", "ERROR"])
+        success, logs_res = self.execute_query(query, "Failed to get alerts")
         logs = logs_res.get("data", []) if success else []
         logs_summary = f"Total Alerts/Errors: {len(logs)}\n"
         if logs:
@@ -74,10 +68,8 @@ class ReportService(BaseRepository):
         return logs_summary
 
     def _get_tasks_context(self, cutoff_date: str) -> str:
-        success, tasks_res = self.execute_query(
-            lambda: self.supabase_client.table("archon_tasks").select("title, status, assignee").gt("updated_at", cutoff_date).execute(),
-            "Failed to get tasks updated"
-        )
+        query = self.supabase_client.table("archon_tasks").select("title, status, assignee").gt("updated_at", cutoff_date)
+        success, tasks_res = self.execute_query(query, "Failed to get tasks updated")
         tasks = tasks_res.get("data", []) if success else []
         tasks_summary = f"Total Tasks Active/Updated: {len(tasks)}\n"
         if tasks:
@@ -140,10 +132,8 @@ class ReportService(BaseRepository):
             context_md = await self.gather_report_context(1)
             supabase = self.supabase_client
 
-            success, p_res = self.execute_query(
-                lambda: supabase.table("archon_projects").select("id").limit(1).execute(),
-                "Failed to get projects"
-            )
+            query = supabase.table("archon_projects").select("id").limit(1)
+            success, p_res = self.execute_query(query, "Failed to get projects")
             if not success or not p_res.get("data"):
                 logger.warning("ReportService: No projects found to attach summary task.")
                 return
@@ -160,10 +150,8 @@ class ReportService(BaseRepository):
             prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT", default=fallback_str)
             task_desc = prompt_template.format(context_md=context_md)
 
-            success, charlie_res = self.execute_query(
-                lambda: supabase.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
-                "Failed to get charlie's id"
-            )
+            query = supabase.table("profiles").select("id").eq("email", "charlie@archon.com")
+            success, charlie_res = self.execute_query(query, "Failed to get charlie's id")
             charlie_data = charlie_res.get("data", []) if success else []
             assignee_id = charlie_data[0]["id"] if charlie_data else AgentUUIDs.SUPERVISOR
             p_id = p_res.get("data", [])[0]["id"] if p_res.get("data") else ""
@@ -174,16 +162,14 @@ class ReportService(BaseRepository):
             if success:
                 logger.info(f"✅ ReportService: Created Daily Executive Summary task {tr['task']['id']}. Dispatching Group Chat...")
                 asyncio.create_task(agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id=AgentUUIDs.SUPERVISOR))
-                self.execute_query(
-                    lambda: supabase.table("archon_logs").insert(
-                        {
-                            "source": "report-service", "level": "INFO",
-                            "message": f"Daily Executive Summary group chat dispatched. Task created: {tr['task']['id']}",
-                            "details": {"type": "daily_executive_summary", "status": "dispatched"},
-                        }
-                    ).execute(),
-                    "Failed to record daily summary log"
+                insert_query = supabase.table("archon_logs").insert(
+                    {
+                        "source": "report-service", "level": "INFO",
+                        "message": f"Daily Executive Summary group chat dispatched. Task created: {tr['task']['id']}",
+                        "details": {"type": "daily_executive_summary", "status": "dispatched"},
+                    }
                 )
+                self.execute_query(insert_query, "Failed to record daily summary log")
         except Exception as e:
             logger.error(f"💥 ReportService: Daily Executive Summary generation failed: {e}", exc_info=True)
 
@@ -208,10 +194,8 @@ class ReportService(BaseRepository):
             run_result: Any = await beta_graph.run(deps=None, state=state)
             output = run_result.output if hasattr(run_result, "output") else run_result
 
-            success, p_res = self.execute_query(
-                lambda: self.supabase_client.table("archon_projects").select("id").limit(1).execute(),
-                "Failed to get internal project", require_data=True
-            )
+            query = self.supabase_client.table("archon_projects").select("id").limit(1)
+            success, p_res = self.execute_query(query, "Failed to get internal project", require_data=True)
             if not success or not p_res.get("data"):
                 logger.warning(f"ReportService: No internal project found to attach {title_prefix} summary task.")
                 return
@@ -222,10 +206,8 @@ class ReportService(BaseRepository):
             task_desc = str(output)
             task_desc = await report_enrichment_service.attach_podcast_audio(task_desc)
 
-            success, charlie_res = self.execute_query(
-                lambda: self.supabase_client.table("profiles").select("id").eq("email", "charlie@archon.com").execute(),
-                "Failed to get charlie's id"
-            )
+            query = self.supabase_client.table("profiles").select("id").eq("email", "charlie@archon.com")
+            success, charlie_res = self.execute_query(query, "Failed to get charlie's id")
             assignee_id = charlie_res.get("data", [])[0]["id"] if (success and charlie_res.get("data")) else AgentUUIDs.SUPERVISOR
             p_id = p_res.get("data", [])[0]["id"] if p_res.get("data") else ""
 
@@ -236,21 +218,19 @@ class ReportService(BaseRepository):
                 await task_service.update_task(tr["task"]["id"], {"status": "done"})
                 logger.info(f"✅ ReportService: Created and completed {title_prefix} Executive Summary task {tr['task']['id']}.")
                 log_type = f"{title_prefix.lower().replace(' ', '_')}_executive_summary"
-                self.execute_query(
-                    lambda: self.supabase_client.table("archon_logs").insert(
-                        {
-                            "source": "report-service", "level": "INFO",
-                            "message": f"{title_prefix} Executive Summary completed. Task created: {tr['task']['id']}",
-                            "details": {
-                                "type": log_type,
-                                "input_tokens": state.shared.input_tokens,
-                                "output_tokens": state.shared.output_tokens,
-                                "model": state.shared.model_used,
-                            },
-                        }
-                    ).execute(),
-                    "Failed to record summary log"
+                insert_query = self.supabase_client.table("archon_logs").insert(
+                    {
+                        "source": "report-service", "level": "INFO",
+                        "message": f"{title_prefix} Executive Summary completed. Task created: {tr['task']['id']}",
+                        "details": {
+                            "type": log_type,
+                            "input_tokens": state.shared.input_tokens,
+                            "output_tokens": state.shared.output_tokens,
+                            "model": state.shared.model_used,
+                        },
+                    }
                 )
+                self.execute_query(insert_query, "Failed to record summary log")
         except Exception as e:
             logger.error(f"💥 ReportService: {title_prefix} Executive Summary generation failed: {e}", exc_info=True)
 

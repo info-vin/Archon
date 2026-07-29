@@ -9,10 +9,9 @@ import httpx
 import logfire
 
 from ..config.version import ARCHON_VERSION, GITHUB_REPO_NAME, GITHUB_REPO_OWNER
+from ..repositories.base_repository import BaseRepository
 from ..utils.semantic_version import is_newer_version
 
-
-from ..repositories.base_repository import BaseRepository
 
 class VersionService(BaseRepository):
     """Service for checking Archon version against GitHub releases."""
@@ -153,7 +152,7 @@ class VersionService(BaseRepository):
                 "check_error": str(e),
             }
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the cached version data."""
         self._cache = None
         self._cache_time = None

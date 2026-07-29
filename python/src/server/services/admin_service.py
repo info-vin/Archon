@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 class AdminService(BaseRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
     async def get_all_users(self, limit: int = 100, role_filter: str | None = None) -> list[dict[str, Any]]:
         """

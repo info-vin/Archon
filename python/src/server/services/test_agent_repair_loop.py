@@ -1,4 +1,6 @@
 import os
+from collections.abc import Generator
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -14,7 +16,7 @@ FIXED_CONTENT = "print('Hello World')  # Fixed"
 
 
 @pytest.fixture
-def clean_env():
+def clean_env() -> Generator[None, None, None]:
     # Setup
     if os.path.exists(BROKEN_SCRIPT):
         os.remove(BROKEN_SCRIPT)
@@ -36,7 +38,7 @@ def clean_env():
 
 
 @pytest.mark.asyncio
-async def test_agent_repair_loop_python(clean_env):
+async def test_agent_repair_loop_python(clean_env: Any) -> None:
     """
     Verifies that the agent service:
     1. Detects failure of the broken script.
@@ -82,7 +84,7 @@ async def test_agent_repair_loop_python(clean_env):
 
 
 @pytest.mark.asyncio
-async def test_agent_repair_loop_typescript_simulation(clean_env):
+async def test_agent_repair_loop_typescript_simulation(clean_env: Any) -> None:
     """
     Simulates a TypeScript fix scenario (Language Agnostic check).
     We won't actually run tsc, but we'll simulate the failure/success return codes via mocking.

@@ -1,3 +1,6 @@
+
+from typing import Any
+
 from fastapi import APIRouter
 
 # EXPORTS for test compatibility (GAP-012)
@@ -38,7 +41,7 @@ async def list_knowledge_items_root(page: int = 1, per_page: int = 20):
 
 
 @router.get("/knowledge/database/metrics")
-async def get_database_metrics():
+async def get_database_metrics() -> Any:
     from fastapi import HTTPException
 
     from ..config.logfire_config import safe_logfire_error

@@ -50,14 +50,14 @@ class ThreadingService:
         self._running = False
         self._health_check_task: asyncio.Task[None] | None = None
 
-    async def start(self):
+    async def start(self) -> None:
         if self._running:
             return
         self._running = True
         self._health_check_task = asyncio.create_task(self._health_check_loop())
         logfire_logger.info("Threading service started", extra={"config": self.config.__dict__})
 
-    async def stop(self):
+    async def stop(self) -> None:
         if not self._running:
             return
         self._running = False
@@ -110,7 +110,7 @@ class ThreadingService:
     def get_system_metrics(self) -> SystemMetrics:
         return get_system_metrics()
 
-    async def _health_check_loop(self):
+    async def _health_check_loop(self) -> None:
         while self._running:
             try:
                 metrics = get_system_metrics()
@@ -175,7 +175,7 @@ async def start_threading_service() -> ThreadingService:
     return service
 
 
-async def stop_threading_service():
+async def stop_threading_service() -> None:
     global _threading_service
     if _threading_service:
         await _threading_service.stop()

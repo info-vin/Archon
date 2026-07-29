@@ -1,6 +1,8 @@
+
 """Progress API endpoints for polling operation status."""
 
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi import status as http_status
@@ -89,7 +91,7 @@ async def get_progress(operation_id: str, response: Response, if_none_match: str
 
 
 @router.get("/")
-async def list_active_operations():
+async def list_active_operations() -> Any:
     """
     List all active operations.
 

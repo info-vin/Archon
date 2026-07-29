@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
+
 import pytest
-from src.server.services.admin_service import AdminService, admin_service
+
+from src.server.services.admin_service import admin_service
+
 
 @pytest.fixture
 def mock_execute_query():

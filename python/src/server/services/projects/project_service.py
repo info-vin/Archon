@@ -92,12 +92,10 @@ class ProjectService(BaseRepository):
     async def get_project_features(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve features for a project."""
 
-        def _query() -> Any:
-            res = self.supabase_client.table("archon_projects").select("features").eq("id", project_id).execute()
-            res.data = res.data[0] if res.data else {}
-            return res
-
-        success, result = self.execute_query(_query, f"Failed to fetch features for project {project_id}")
+        query = self.supabase_client.table("archon_projects").select("features").eq("id", project_id)
+        success, result = self.execute_query(query, f"Failed to fetch features for project {project_id}")
         if success:
-            return True, result.get("data", {})
+            data = result.get("data", [])
+            features_data = data[0] if isinstance(data, list) and data else (data if data else {})
+            return True, features_data
         return False, result

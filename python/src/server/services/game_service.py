@@ -4,7 +4,7 @@ from ..repositories.base_repository import BaseRepository
 
 
 class GameService(BaseRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     async def save_game(self, user_id: str, save_data: dict[str, Any]) -> dict[str, Any]:

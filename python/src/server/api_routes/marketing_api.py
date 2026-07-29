@@ -1,9 +1,11 @@
+
 """
 Marketing API Hardened - Entry point for Alice & Bob workflows.
 Standardized RBAC Sealing with Full Test Compatibility.
 """
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -35,7 +37,7 @@ logger = logging.getLogger(__name__)
 router: APIRouter = APIRouter(prefix="/api/marketing", tags=["marketing"])
 
 
-def get_marketing_service():
+def get_marketing_service() -> Any:
     """Export for test compatibility."""
     return MarketingService()
 

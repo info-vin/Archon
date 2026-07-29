@@ -45,7 +45,7 @@ class BugReportResponse(BaseModel):
 
 
 class GitHubService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.token = os.getenv("GITHUB_TOKEN")
         self.repo = os.getenv("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha")
 
@@ -259,7 +259,7 @@ def _create_manual_submission_response(bug_report: BugReportRequest) -> BugRepor
 
 
 @router.get("/health")
-async def bug_report_health():
+async def bug_report_health() -> Any:
     """Health check for bug reporting service."""
 
     github_configured = bool(os.getenv("GITHUB_TOKEN"))

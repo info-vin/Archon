@@ -26,7 +26,7 @@ class WorkerService:
         # Phase 5.1.1 Milestone 3.2: Semaphore concurrency protection
         self._semaphore = asyncio.Semaphore(max_concurrent_tasks)
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the background worker loop"""
         if self._running:
             return
@@ -37,7 +37,7 @@ class WorkerService:
             f"🚀 Worker Service started (poll interval: {self.poll_interval}s, max concurrency: {self._semaphore._value})"
         )
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the background worker loop"""
         self._running = False
         if self._task:
@@ -48,7 +48,7 @@ class WorkerService:
                 pass
         logger.info("🛑 Worker Service stopped")
 
-    async def _run_loop(self):
+    async def _run_loop(self) -> None:
         """Main polling loop"""
         while self._running:
             try:
@@ -58,7 +58,7 @@ class WorkerService:
 
             await asyncio.sleep(self.poll_interval)
 
-    async def _process_queued_tasks(self):
+    async def _process_queued_tasks(self) -> None:
         """Fetch and execute dispatched tasks"""
         # 1. Fetch tasks with status='dispatched'
         # We use task_service.list_tasks which internally calls query_logic

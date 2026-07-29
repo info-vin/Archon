@@ -139,7 +139,7 @@ class ProgressMapper:
         # Could be extended to support substage ranges
         return self.map_progress(stage, stage_progress)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the mapper to initial state"""
         self.last_overall_progress = 0
         self.current_stage = "starting"

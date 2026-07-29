@@ -23,13 +23,12 @@ class LeadHandler:
             return False, {"error": str(e)}
 
     async def list_leads(self, user_id: str | None = None, role: str | None = None) -> list[dict]:
-        def _query() -> Any:
-            q = self.supabase_client.table("leads").select("*")
-            if role == "sales" and user_id:
-                q = q.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
-            return q.order("created_at", desc=True).execute()
+        q = self.supabase_client.table("leads").select("*")
+        if role == "sales" and user_id:
+            q = q.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
+        query = q.order("created_at", desc=True)
 
-        success, res = self.execute_query(_query, "Failed to fetch leads")
+        success, res = self.execute_query(query, "Failed to fetch leads")
         return res.data if success and hasattr(res, "data") and res.data is not None else []
 
     async def create_lead(self, lead_data: dict, creator_id: str | None = None) -> tuple[bool, dict]:

@@ -1,8 +1,10 @@
 from typing import Any, cast
+
 from ..repositories.base_repository import BaseRepository
 
+
 class SystemService(BaseRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     async def list_connectivity_logs(self, limit: int = 20) -> list[dict[str, Any]]:
@@ -24,7 +26,7 @@ class SystemService(BaseRepository):
         success_old, res_old = self.execute_query(query_old, f"Setting '{key}' not found", require_data=True)
         if not success_old or not res_old.get("data"):
             raise ValueError(f"Setting '{key}' not found")
-        
+
         old_data = res_old["data"][0]
         old_value = old_data["value"]
 
@@ -32,7 +34,7 @@ class SystemService(BaseRepository):
         update_data = {"value": str(new_value), "updated_at": "now()"}
         if description:
             update_data["description"] = description
-            
+
         query_upd = self.supabase_client.table("archon_settings").update(update_data).eq("key", key)
         success_upd, res_upd = self.execute_query(query_upd, f"Failed to update setting '{key}'", require_data=True)
         if not success_upd or not res_upd.get("data"):

@@ -56,10 +56,8 @@ class ProjectCreationService(BaseRepository):
             "data": {},
         }
 
-        def _query() -> Any:
-            return self.supabase_client.table("archon_projects").insert(project_data).execute()
-
-        success, result = self.execute_query(query_func=_query, error_context="DB operation logged error")
+        query = self.supabase_client.table("archon_projects").insert(project_data)
+        success, result = self.execute_query(query_func=query, error_context="DB operation logged error")
         if success:
             # TODO: Extract properties via 'result["data"]' as per original logic
             return True, {"data": result["data"]}

@@ -4,6 +4,8 @@ Site Configuration Helper
 Handles site-specific configurations and detection.
 """
 
+from typing import Any
+
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 from ....config.logfire_config import get_logger
@@ -69,7 +71,7 @@ class SiteConfig:
         return any(pattern in url_lower for pattern in doc_patterns)
 
     @staticmethod
-    def get_markdown_generator():
+    def get_markdown_generator() -> Any:
         """
         Get markdown generator that preserves code blocks.
 

@@ -42,11 +42,9 @@ class SourceManagementService(BaseRepository):
     def get_available_sources(self) -> tuple[bool, dict[str, Any]]:
         """Get all available sources from archon_sources."""
 
-        def _query():
-            return self.supabase_client.table("archon_sources").select("*").execute()
-
+        query = self.supabase_client.table("archon_sources").select("*")
         success, result = self.execute_query(
-            query_func=_query, error_context="Error retrieving sources", require_data=False
+            query_func=query, error_context="Error retrieving sources", require_data=False
         )
         if not success:
             return False, {"error": f"Error retrieving sources: {result['error']}"}
@@ -71,10 +69,8 @@ class SourceManagementService(BaseRepository):
         # 1. Pages
         logger.info(f"Deleting from crawled_pages table for source_id: {source_id}")
 
-        def _p_q():
-            return self.supabase_client.table("archon_crawled_pages").delete().eq("source_id", source_id).execute()
-
-        p_ok, p_res = self.execute_query(_p_q, "Failed to delete from crawled_pages", False)
+        query_p = self.supabase_client.table("archon_crawled_pages").delete().eq("source_id", source_id)
+        p_ok, p_res = self.execute_query(query_p, "Failed to delete from crawled_pages", False)
         if not p_ok:
             return False, {"error": f"Failed to delete crawled pages: {p_res.get('error')}"}
         pages_deleted = len(p_res["data"] or [])
@@ -83,10 +79,8 @@ class SourceManagementService(BaseRepository):
         # 2. Code
         logger.info(f"Deleting from code_examples table for source_id: {source_id}")
 
-        def _c_q():
-            return self.supabase_client.table("archon_code_examples").delete().eq("source_id", source_id).execute()
-
-        c_ok, c_res = self.execute_query(_c_q, "Failed to delete from code_examples", False)
+        query_c = self.supabase_client.table("archon_code_examples").delete().eq("source_id", source_id)
+        c_ok, c_res = self.execute_query(query_c, "Failed to delete from code_examples", False)
         if not c_ok:
             return False, {"error": f"Failed to delete code examples: {c_res.get('error')}"}
         code_deleted = len(c_res["data"] or [])
@@ -95,10 +89,8 @@ class SourceManagementService(BaseRepository):
         # 3. Source record
         logger.info(f"Deleting from sources table for source_id: {source_id}")
 
-        def _s_q():
-            return self.supabase_client.table("archon_sources").delete().eq("source_id", source_id).execute()
-
-        s_ok, s_res = self.execute_query(_s_q, "Failed to delete from sources", False)
+        query_s = self.supabase_client.table("archon_sources").delete().eq("source_id", source_id)
+        s_ok, s_res = self.execute_query(query_s, "Failed to delete from sources", False)
         if not s_ok:
             return False, {"error": f"Failed to delete source: {s_res.get('error')}"}
         source_deleted = len(s_res["data"] or [])
@@ -124,12 +116,8 @@ class SourceManagementService(BaseRepository):
 
         if kwargs.get("knowledge_type") or kwargs.get("tags"):
 
-            def _m_q():
-                return (
-                    self.supabase_client.table("archon_sources").select("metadata").eq("source_id", source_id).execute()
-                )
-
-            ok, res = self.execute_query(_m_q, "Error getting source metadata", False)
+            query_m = self.supabase_client.table("archon_sources").select("metadata").eq("source_id", source_id)
+            ok, res = self.execute_query(query_m, "Error getting source metadata", False)
             if not ok:
                 return False, {"error": f"Error updating source metadata: {res.get('error')}"}
 
@@ -143,10 +131,8 @@ class SourceManagementService(BaseRepository):
         if not update_data:
             return False, {"error": "No update data provided"}
 
-        def _u_q():
-            return self.supabase_client.table("archon_sources").update(update_data).eq("source_id", source_id).execute()
-
-        success, result = self.execute_query(_u_q, "Error updating source metadata", True)
+        query_u = self.supabase_client.table("archon_sources").update(update_data).eq("source_id", source_id)
+        success, result = self.execute_query(query_u, "Error updating source metadata", True)
         if success and result.get("data"):
             return True, {"source_id": source_id, "updated_fields": list(update_data.keys())}
         return False, {"error": f"Source with ID {source_id} not found: {result.get('error', '')}"}
@@ -179,24 +165,18 @@ class SourceManagementService(BaseRepository):
     def get_source_details(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve full details including counts."""
 
-        def _s_q():
-            return self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id).execute()
-
-        ok, res = self.execute_query(_s_q, "Error getting source details", False)
+        query_s = self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id)
+        ok, res = self.execute_query(query_s, "Error getting source details", False)
         if not ok or not res["data"]:
             return False, {"error": f"Source with ID {source_id} not found: {res.get('error', '')}"}
 
         source_data = res["data"][0]
 
-        def _p_c():
-            return self.supabase_client.table("archon_crawled_pages").select("id").eq("source_id", source_id).execute()
+        query_p = self.supabase_client.table("archon_crawled_pages").select("id").eq("source_id", source_id)
+        _, p_res = self.execute_query(query_p, "Error counting pages", False)
 
-        _, p_res = self.execute_query(_p_c, "Error counting pages", False)
-
-        def _c_c():
-            return self.supabase_client.table("archon_code_examples").select("id").eq("source_id", source_id).execute()
-
-        _, c_res = self.execute_query(_c_c, "Error counting code examples", False)
+        query_c = self.supabase_client.table("archon_code_examples").select("id").eq("source_id", source_id)
+        _, c_res = self.execute_query(query_c, "Error counting code examples", False)
 
         return True, {
             "source": source_data,
@@ -207,13 +187,11 @@ class SourceManagementService(BaseRepository):
     def list_sources_by_type(self, knowledge_type: str | None = None) -> tuple[bool, dict[str, Any]]:
         """Filtered listing of sources with full metadata parity."""
 
-        def _q():
-            query = self.supabase_client.table("archon_sources").select("*")
-            if knowledge_type:
-                query = query.filter("metadata->>knowledge_type", "eq", knowledge_type)
-            return query.execute()
+        query = self.supabase_client.table("archon_sources").select("*")
+        if knowledge_type:
+            query = query.filter("metadata->>knowledge_type", "eq", knowledge_type)
 
-        success, result = self.execute_query(_q, "Error listing sources by type", False)
+        success, result = self.execute_query(query, "Error listing sources by type", False)
         if not success:
             return False, {"error": f"Error listing sources by type: {result.get('error')}"}
 

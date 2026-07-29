@@ -26,13 +26,12 @@ class VisitLogService(BaseRepository):
         super().__init__(supabase_client or get_supabase_client())
 
     async def list_logs(self, lead_id: str | None = None) -> tuple[bool, Any]:
-        def _query() -> Any:
-            q = self.supabase_client.table("visit_logs").select("*")
-            if lead_id:
-                q = q.eq("lead_id", lead_id)
-            return q.order("created_at", desc=True).execute()
+        q = self.supabase_client.table("visit_logs").select("*")
+        if lead_id:
+            q = q.eq("lead_id", lead_id)
+        query = q.order("created_at", desc=True)
 
-        return self.execute_query(_query, "Failed to list logs")
+        return self.execute_query(query, "Failed to list logs")
 
     async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str], Any]:
         """
@@ -263,17 +262,15 @@ class VisitLogService(BaseRepository):
     async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
         """Fetches the current attendance status for a user."""
 
-        def _query() -> Any:
-            return (
-                self.supabase_client.table("attendance_logs")
-                .select("*")
-                .eq("user_id", user_id)
-                .order("clock_in_time", desc=True)
-                .limit(1)
-                .execute()
-            )
+        query = (
+            self.supabase_client.table("attendance_logs")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("clock_in_time", desc=True)
+            .limit(1)
+        )
 
-        success, res = self.execute_query(_query, "Failed to fetch attendance status")
+        success, res = self.execute_query(query, "Failed to fetch attendance status")
         if not success or not res:
             return True, {"status": "OFF_WORK", "clock_in_time": None}
 

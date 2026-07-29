@@ -36,7 +36,7 @@ OPTIONAL_SETTINGS_WITH_DEFAULTS = {
 }
 
 
-def get_credential_service():
+def get_credential_service() -> Any:
     """Export for test compatibility."""
     return credential_service
 

@@ -65,15 +65,19 @@ class DocumentService(BaseRepository):
             "version": 1,
         }
 
-        def _query() -> Any:
-            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
-            docs = res.data[0].get("docs") if res.data else {}
-            if isinstance(docs, list):
-                docs = {d["id"]: d for d in docs if "id" in d}
-            docs[doc_id] = new_doc
-            return self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id).execute()
+        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        success, res = self.execute_query(select_query, "Failed to fetch docs")
+        if not success:
+            return False, res
 
-        return self.execute_query(_query, "DB operation logged error")
+        data = res.get("data", [])
+        docs = data[0].get("docs") if data else {}
+        if isinstance(docs, list):
+            docs = {d["id"]: d for d in docs if "id" in d}
+        docs[doc_id] = new_doc
+
+        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id)
+        return self.execute_query(update_query, "DB operation logged error")
 
     def get_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
 
@@ -89,27 +93,36 @@ class DocumentService(BaseRepository):
     def update_document(
         self, project_id: str, doc_id: str, update_fields: dict[str, Any]
     ) -> tuple[bool, dict[str, Any]]:
-        def _query() -> Any:
-            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
-            docs = res.data[0].get("docs") if res.data else {}
-            if isinstance(docs, list):
-                docs = {d["id"]: d for d in docs if "id" in d}
-            if doc_id not in docs:
-                raise ValueError(f"Document {doc_id} not found")
-            docs[doc_id].update(update_fields)
-            docs[doc_id]["updated_at"] = datetime.utcnow().isoformat()
-            return self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id).execute()
+        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        success, res = self.execute_query(select_query, "Failed to fetch docs")
+        if not success:
+            return False, res
 
-        return self.execute_query(_query, "DB operation logged error")
+        data = res.get("data", [])
+        docs = data[0].get("docs") if data else {}
+        if isinstance(docs, list):
+            docs = {d["id"]: d for d in docs if "id" in d}
+        if doc_id not in docs:
+            return False, {"error": f"Document {doc_id} not found"}
+
+        docs[doc_id].update(update_fields)
+        docs[doc_id]["updated_at"] = datetime.utcnow().isoformat()
+
+        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id)
+        return self.execute_query(update_query, "DB operation logged error")
 
     def delete_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
-        def _query() -> Any:
-            res = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id).execute()
-            docs = res.data[0].get("docs") if res.data else {}
-            if isinstance(docs, list):
-                docs = {d["id"]: d for d in docs if "id" in d}
-            if doc_id in docs:
-                docs.pop(doc_id)
-            return self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id).execute()
+        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        success, res = self.execute_query(select_query, "Failed to fetch docs")
+        if not success:
+            return False, res
 
-        return self.execute_query(_query, "DB operation logged error")
+        data = res.get("data", [])
+        docs = data[0].get("docs") if data else {}
+        if isinstance(docs, list):
+            docs = {d["id"]: d for d in docs if "id" in d}
+        if doc_id in docs:
+            docs.pop(doc_id)
+
+        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id)
+        return self.execute_query(update_query, "DB operation logged error")

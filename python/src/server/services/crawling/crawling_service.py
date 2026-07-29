@@ -90,7 +90,7 @@ class CrawlingService(BaseRepository):
             # Initialize progress tracker for HTTP polling
             self.progress_tracker = ProgressTracker(progress_id, operation_type="crawl")
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the crawl operation."""
         self._cancelled = True
         safe_logfire_info(f"Crawl operation cancelled | progress_id={self.progress_id}")
@@ -99,7 +99,7 @@ class CrawlingService(BaseRepository):
         """Check if the crawl operation has been cancelled."""
         return self._cancelled
 
-    def _check_cancellation(self):
+    def _check_cancellation(self) -> None:
         """Check if cancelled and raise an exception if so."""
         if self._cancelled:
             raise asyncio.CancelledError("Crawl operation was cancelled by user")

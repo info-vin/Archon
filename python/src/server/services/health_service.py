@@ -50,10 +50,8 @@ class HealthService(BaseRepository):
     def check_db_health(self) -> bool:
         """Checks if the database is reachable and responding."""
 
-        def _query():
-            return self.supabase_client.table("profiles").select("id", count="exact").limit(1).execute()
-
-        success, _ = self.execute_query(_query, "DB health check failed")
+        query = self.supabase_client.table("profiles").select("id", count="exact").limit(1)
+        success, _ = self.execute_query(query, "DB health check failed")
         return success
 
     def verify_auth_config(self) -> bool:
@@ -80,10 +78,8 @@ class HealthService(BaseRepository):
             return {"status": "unhealthy", "score": 0.0, "details": {"error": "Critical: Database connection lost."}}
 
         # 2. Knowledge Alignment Check (70% weight)
-        def _query_sources():
-            return self.supabase_client.table("archon_sources").select("source_id", count="exact").execute()
-
-        success, res = self.execute_query(_query_sources, "Error counting sources", require_data=False)
+        query_sources = self.supabase_client.table("archon_sources").select("source_id", count="exact")
+        success, res = self.execute_query(query_sources, "Error counting sources", require_data=False)
         if not success:
             logger.error("💥 System Integrity Calculation Failed")
             return {"status": "unhealthy", "score": 0.0, "details": {"error": str(res.get("error") or "Unknown database error")}}
@@ -98,16 +94,13 @@ class HealthService(BaseRepository):
         indexed_count = 0
         if total_count > 0:
 
-            def _query_indexed():
-                return (
-                    self.supabase_client.table("archon_crawled_pages")
-                    .select("source_id", count="exact")
-                    .not_.is_("embedding", "null")
-                    .execute()
-                )
-
+            query_indexed = (
+                self.supabase_client.table("archon_crawled_pages")
+                .select("source_id", count="exact")
+                .not_.is_("embedding", "null")
+            )
             idx_success, idx_res = self.execute_query(
-                _query_indexed, "Error counting indexed sources", require_data=False
+                query_indexed, "Error counting indexed sources", require_data=False
             )
             if idx_success:
                 idx_data = idx_res.get("data") or []
@@ -152,17 +145,14 @@ class HealthService(BaseRepository):
         """
         since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days)).isoformat()
 
-        def _query():
-            return (
-                self.supabase_client.table("archon_logs")
-                .select("*")
-                .eq("source", "clockwork-scheduler")
-                .gt("created_at", since)
-                .order("created_at", desc=True)
-                .execute()
-            )
-
-        success, res = self.execute_query(_query, "History fetch failed", require_data=False)
+        query = (
+            self.supabase_client.table("archon_logs")
+            .select("*")
+            .eq("source", "clockwork-scheduler")
+            .gt("created_at", since)
+            .order("created_at", desc=True)
+        )
+        success, res = self.execute_query(query, "History fetch failed", require_data=False)
         if not success:
             return {"trend": [], "audit": []}
 

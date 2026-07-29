@@ -136,7 +136,7 @@ class RecursiveCrawlStrategy:
 
         visited = set()
 
-        def normalize_url(url):
+        def normalize_url(url: str) -> str:
             return urldefrag(url)[0]
 
         current_urls = {normalize_url(u) for u in start_urls}

@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["auth"])
 
 
-def get_auth_service():
+def get_auth_service() -> Any:
     return AuthService()
 
 

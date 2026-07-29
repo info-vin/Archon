@@ -20,7 +20,7 @@ class DevOpsAgentService:
         self.tool_executor = tool_executor
 
     @property
-    def mcp_client(self):
+    def mcp_client(self) -> Any:
         return self.tool_executor.mcp_client
 
     async def _analyze_error_with_structured_output(

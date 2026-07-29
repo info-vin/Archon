@@ -1,6 +1,7 @@
 import json
 import time
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -10,7 +11,6 @@ from src.server.models.auth_models import UserProfileDTO
 from ...auth.dependencies import get_current_user, verify_admin_role
 from ...config.logfire_config import get_logger
 from ...services.ollama.model_discovery_service import model_discovery_service
-from ...utils import get_supabase_client
 from .schemas import (
     ModelCapabilityTestRequest,
     ModelCapabilityTestResponse,
@@ -60,7 +60,6 @@ async def discover_and_store_models_endpoint(
 ) -> ModelListResponse:
     """Discover and assess models, then store results in DB. Admin only."""
     try:
-        supabase = get_supabase_client()
         stored_models = []
         instances_checked = 0
 
@@ -123,7 +122,6 @@ async def discover_and_store_models_endpoint(
 async def get_stored_models_endpoint(current_user: UserProfileDTO = Depends(get_current_user)) -> ModelListResponse:
     """Retrieve stored Ollama models from database."""
     try:
-        supabase = get_supabase_client()
         from ...services.settings_service import SettingsService
         models_setting = SettingsService().get_setting("ollama_discovered_models")
         if not models_setting:
@@ -248,33 +246,33 @@ async def _warm_model_cache(instance_urls: list[str]):
             pass
 
 
-def _assess_archon_compatibility(model):
+def _assess_archon_compatibility(model: Any) -> dict[str, Any]:
     return {"level": "full", "features": [], "limitations": []}
 
 
-def _determine_model_type(model):
+def _determine_model_type(model: Any) -> str:
     return "chat"
 
 
-def _extract_model_size(model):
+def _extract_model_size(model: Any) -> int | None:
     return None
 
 
-def _extract_context_length(model):
+def _extract_context_length(model: Any) -> int:
     return 4096
 
 
-def _extract_parameters(model):
+def _extract_parameters(model: Any) -> str | None:
     return None
 
 
-def _assess_performance_rating(model):
+def _assess_performance_rating(model: Any) -> str:
     return "medium"
 
 
-def _generate_model_description(model):
+def _generate_model_description(model: Any) -> str | None:
     return None
 
 
-def _determine_model_type_from_name_only(model_name):
+def _determine_model_type_from_name_only(model_name: str) -> str:
     return "chat"

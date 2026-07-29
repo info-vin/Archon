@@ -1,3 +1,4 @@
+
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -165,7 +166,7 @@ async def update_system_setting(
             user_name=current_user.name or "System"
         )
     except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/fallback/status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])

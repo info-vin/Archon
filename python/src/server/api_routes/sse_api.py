@@ -1,7 +1,10 @@
+
 """
 SSE API Router for Archon (Phase 5.1.0)
 Endpoints for real-time task status updates.
 """
+
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -12,7 +15,7 @@ router = APIRouter(prefix="/api/sse", tags=["sse"])
 
 
 @router.get("/tasks")
-async def task_stream():
+async def task_stream() -> Any:
     """
     SSE stream for task status updates.
     Clients can subscribe to receive real-time updates when tasks change.

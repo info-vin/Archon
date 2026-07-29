@@ -211,7 +211,7 @@ async def create_crawler_target(request: CrawlerTargetCreate, current_user: User
     try:
         return await admin_service.create_crawler_target(data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)])

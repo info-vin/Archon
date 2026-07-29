@@ -1,6 +1,8 @@
 # python/src/server/services/agent_service.py
 
 
+from typing import Any
+
 from ..config.logfire_config import get_logger
 from .agent_registry import get_agent_config
 from .agent_tool_executor import AgentToolExecutor
@@ -16,11 +18,11 @@ class AgentService:
         self.dev_ops = DevOpsAgentService(self.tool_executor)
 
     @property
-    def mcp_client(self):
+    def mcp_client(self) -> Any:
         return self.tool_executor.mcp_client
 
     @mcp_client.setter
-    def mcp_client(self, value):
+    def mcp_client(self, value: Any) -> None:
         self.tool_executor.mcp_client = value
 
     async def get_assignable_agents(self, user_role: str | None = None) -> list[dict]:
