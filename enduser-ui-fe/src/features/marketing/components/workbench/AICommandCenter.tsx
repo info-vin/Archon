@@ -49,7 +49,7 @@ export const AICommandCenter: React.FC<AICommandCenterProps> = ({
             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Unified Prompt & Logic Console</p>
           </div>
         </div>
-        <button onClick={() => setPromptCenterOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors" aria-label="Close AI Command Center" title="Close AI Command Center">
+        <button onClick={() => setPromptCenterOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close AI Command Center" title="Close AI Command Center">
           <XIcon className="w-5 h-5 text-slate-400" />
         </button>
       </div>

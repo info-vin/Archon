@@ -91,7 +91,7 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     <span className="text-[10px] text-gray-400 font-bold uppercase">{selectedContent.author_name || selectedContent.authorName}</span>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close content preview" title="Close content preview"><XIcon className="w-4 h-4" /></button>
+                            <button onClick={() => setSelectedContent(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close content preview" title="Close content preview"><XIcon className="w-4 h-4" /></button>
                         </div>
 
                         <div className="prose prose-sm dark:prose-invert max-w-none mb-8 bg-white dark:bg-slate-950 p-6 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -126,7 +126,7 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     onChange={e => setRejectReason(e.target.value)}
                                 />
                                 <div className="flex gap-2 justify-end">
-                                    <button onClick={() => setIsRejecting(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500">Cancel</button>
+                                    <button onClick={() => setIsRejecting(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">Cancel</button>
                                     <button 
                                         disabled={!rejectReason.trim() || !!processingId}
                                         onClick={handleRejectContent} 

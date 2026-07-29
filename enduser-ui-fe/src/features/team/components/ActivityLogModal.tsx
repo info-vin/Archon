@@ -51,7 +51,7 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                             <p className="text-xs text-gray-500">Recent Assignments & Tasks</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close activity log"><XIcon className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close activity log"><XIcon className="w-5 h-5" /></button>
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-6">
