@@ -51,7 +51,7 @@ export const LeadPitchDrawer = ({ lead, onClose }: PitchDrawerProps) => {
                         </div>
                         <h3 className="text-lg font-bold">{lead.pitch_content ? 'Saved Pitch' : 'AI Pitch Generator'}</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="Close Pitch Generator">
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close Pitch Generator">
                         <XIcon className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>

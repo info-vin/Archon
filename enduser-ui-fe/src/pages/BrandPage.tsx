@@ -135,7 +135,7 @@ const BrandPage: React.FC = () => {
                             <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
                                 {editingPost ? 'Edit Asset' : 'New Asset'}
                             </h3>
-                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
+                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
                         </div>
                         <CreatePostForm 
                             post={editingPost} 

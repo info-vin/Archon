@@ -68,7 +68,7 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                             <p className="text-xs text-gray-500">{member.email}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
                 </div>
 
                 <div className="p-6 space-y-8">
