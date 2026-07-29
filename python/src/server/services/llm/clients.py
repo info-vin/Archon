@@ -203,9 +203,17 @@ async def _get_optimal_ollama_instance(instance_type=None, use_embedding=False, 
 
     rag_data = await credential_service.get_credentials_by_category("rag_strategy")
 
+    from ...schemas.settings import NetworkConfig
+    from ...services.settings_service import SettingsService
+    try:
+        net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
+        ollama_default = net_config.ollama_base_url
+    except Exception:
+        ollama_default = NetworkConfig().ollama_base_url
+
     # DEFENSIVE: Ensure we have a real dictionary (handles Mock objects in tests)
     if not isinstance(rag_data, dict):
-        return "http://host.docker.internal:11434/v1"
+        return f"{ollama_default}/v1" if not ollama_default.endswith("/v1") else ollama_default
 
     if use_embedding or instance_type == "embedding":
         embedding_url = rag_data.get("OLLAMA_EMBEDDING_URL")
@@ -215,10 +223,10 @@ async def _get_optimal_ollama_instance(instance_type=None, use_embedding=False, 
                 return embedding_url
             return f"{embedding_url}/v1"
 
-    url = rag_data.get("LLM_BASE_URL", "http://host.docker.internal:11434")
+    url = rag_data.get("LLM_BASE_URL", ollama_default)
     # DEFENSIVE: Ensure we have a real string
     if isinstance(url, str):
         if url.endswith("/v1"):
             return url
         return f"{url}/v1"
-    return "http://host.docker.internal:11434/v1"
+    return f"{ollama_default}/v1" if not ollama_default.endswith("/v1") else ollama_default

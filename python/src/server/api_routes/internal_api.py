@@ -95,6 +95,13 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
 
     try:
         from ..config.model_ssot import SYSTEM_MODELS
+        from ..schemas.settings import NetworkConfig
+        from ..services.settings_service import SettingsService
+        try:
+            net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
+            mcp_default = net_config.mcp_service_url
+        except Exception:
+            mcp_default = NetworkConfig().mcp_service_url
 
         credentials = {
             "OPENAI_API_KEY": await credential_service.get_credential("OPENAI_API_KEY"),
@@ -107,7 +114,7 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
             ),
             "AGENT_MAX_RETRIES": await credential_service.get_credential("AGENT_MAX_RETRIES", default="3"),
             "MCP_SERVICE_URL": await credential_service.get_credential(
-                "MCP_SERVICE_URL", default="http://archon-mcp:8051"
+                "MCP_SERVICE_URL", default=mcp_default
             ),
             "LOG_LEVEL": await credential_service.get_credential("LOG_LEVEL", default="INFO"),
             # Phase 5.4.5: Global Model SSOT Hardening

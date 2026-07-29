@@ -113,6 +113,13 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/29: Micro SSOT Eradication 與排程/網路預設值收攏 (Phase 5.9.28)
+- **NetworkConfig 收攏**: 在 `settings.py` 新增 `NetworkConfig`，將 `AGENTS_SERVICE_URL`, `MCP_SERVICE_URL`, `LLM_BASE_URL` 抽離，並於 `agent_service.py`, `rag_service.py`, `internal_api.py`, `clients.py`, `validation.py` 中，使用 `NetworkConfig()` 動態取得乾淨安全的預設值，消滅所有寫死的 HTTP 網址。
+- **Scheduler 時間變數化**: 於 `scheduler_service.py` 中，將剩餘的排程日 (`"sun"`, `"fri"`) 對應至 `SchedulerConfig` 的 `weekly_executive_summary_days` 與 `architecture_health_audit_days`，徹底實現 SSOT 管理。
+- **稽核門禁智慧化**: 調校 `scripts/phase_audit.py`，使 `ssot_hardcoding_audit` 能夠智慧識別出作為 Event Loop Yielding 的正當微小休眠 (`asyncio.sleep(0.01)` 等)，避免誤報。
+- **物理公證與健康度**: `make phase-audit` 0 違規，`uv run mypy src/server/` 型別掃描 0 錯誤，`make test-be` 611 項測試全數綠燈通過。
+
+
 ### 2026/07/27: 後端 DRY 重構與爬蟲 Cloud-Edge 策略更新 (Phase 3.5 & Crawler Settings)
 - **Legacy Closure 清除**: 成功移除了全域 83 支檔案中的 `_query()` 舊式閉包寫法，全面改用 `BaseRepository.execute_query`，達成 L2 架構的 DRY 原則。
 - **強型別硬化與語法修復**: 清除了自動化腳本遺留的 `None=None` 雙重指派錯誤，並針對 `supabase_client` 注入了嚴格的型別宣告 (`Any = None`)。

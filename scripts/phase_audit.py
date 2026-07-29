@@ -163,6 +163,49 @@ def schema_sync_audit():
     else:
         print("✅ Schema sync audit passed. No ghost tables found.")
 
+def ssot_hardcoding_audit():
+    import re
+    print_header("Step 8: SSOT & Hardcoding Audit")
+    
+    target_dirs = ["python/src/server/services", "python/src/server/api_routes"]
+    hardcoded_issues = []
+    
+    # 掃描 asyncio.sleep(數字) 與寫死的 http://... 網址
+    sleep_pattern = re.compile(r"asyncio\.sleep\(\s*([0-9\.]+)\s*\)")
+    url_pattern = re.compile(r"[\"']https?://[a-zA-Z0-9_\-\.]+:\d+[\"']")
+    cron_pattern = re.compile(r"CronTrigger\([^)]*(hour=\d+|minute=\d+|day_of_week=[\"'][a-zA-Z,]+[\"'])[^)]*\)")
+    
+    for base_dir in target_dirs:
+        if not os.path.exists(base_dir): continue
+        for root, _, files in os.walk(base_dir):
+            for file in files:
+                if file.endswith(".py") and not any(x in root for x in ["tests", "__tests__"]):
+                    file_path = os.path.join(root, file)
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line_num, line in enumerate(f, 1):
+                            if line.strip().startswith("#"): continue
+                            
+                            sleep_match = sleep_pattern.search(line)
+                            if sleep_match:
+                                try:
+                                    if float(sleep_match.group(1)) >= 1.0:
+                                        hardcoded_issues.append((file_path, line_num, "Hardcoded asyncio.sleep()", line.strip()))
+                                except ValueError:
+                                    pass
+                            elif url_pattern.search(line):
+                                hardcoded_issues.append((file_path, line_num, "Hardcoded HTTP URL/Port", line.strip()))
+                            elif cron_pattern.search(line):
+                                hardcoded_issues.append((file_path, line_num, "Hardcoded CronTrigger rules", line.strip()))
+                                
+    if hardcoded_issues:
+        print(f"⚠️  Found {len(hardcoded_issues)} potential hardcoding / SSOT violations:")
+        for path, line_num, issue, content in hardcoded_issues:
+            # 限制長度避免洗頻
+            short_content = content if len(content) < 80 else content[:77] + "..."
+            print(f"   - {path}:{line_num} | {issue} | {short_content}")
+    else:
+        print("✅ SSOT & Hardcoding audit passed. No obvious magic numbers found.")
+
 if __name__ == "__main__":
     scan_prps()
     git_sync_check()
@@ -170,5 +213,6 @@ if __name__ == "__main__":
     cloud_audit()
     architecture_health_audit()
     schema_sync_audit()
+    ssot_hardcoding_audit()
     print_header("Audit Complete")
 

@@ -169,7 +169,17 @@ class BackgroundTaskManager:
         """Periodically clean up old task metadata to prevent memory leaks"""
         while True:
             try:
-                await asyncio.sleep(300)  # Run cleanup every 5 minutes
+                try:
+                    from src.server.schemas.settings import SystemTaskConfig
+                    from src.server.services.settings_service import SettingsService
+                    raw_settings = SettingsService().get_all_settings()
+                    config = SystemTaskConfig.model_validate(raw_settings)
+                    cleanup_interval = config.background_cleanup_interval_secs
+                except Exception as e:
+                    logger.warning(f"Failed to load SystemTaskConfig for cleanup, using default 300s: {e}")
+                    cleanup_interval = 300
+
+                await asyncio.sleep(cleanup_interval)  # Dynamic cleanup interval
 
                 current_time = datetime.utcnow()
                 retention_cutoff = current_time - timedelta(hours=self.metadata_retention_hours)
@@ -196,7 +206,15 @@ class BackgroundTaskManager:
                 break
             except Exception as e:
                 logger.error(f"Error in periodic cleanup: {e}", exc_info=True)
-                await asyncio.sleep(60)  # Wait a bit before retrying on error
+                try:
+                    from src.server.schemas.settings import SystemTaskConfig
+                    from src.server.services.settings_service import SettingsService
+                    raw_settings = SettingsService().get_all_settings()
+                    config = SystemTaskConfig.model_validate(raw_settings)
+                    error_retry = config.background_error_retry_secs
+                except Exception:
+                    error_retry = 60
+                await asyncio.sleep(error_retry)  # Wait a bit before retrying on error
 
     async def cleanup(self):
         """Cleanup resources and cancel remaining tasks"""

@@ -1,7 +1,5 @@
 from dataclasses import dataclass
 
-# Constants extracted from ProviderDiscoveryService
-DEFAULT_OLLAMA_URL = "http://host.docker.internal:11434"
 _CACHE_TTL_SECONDS = 300
 
 CHAT_MODEL_PATTERNS = ["llama", "qwen", "mistral", "codellama", "phi", "gemma", "vicuna", "orca"]

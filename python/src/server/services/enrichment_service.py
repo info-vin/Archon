@@ -41,6 +41,18 @@ class EnrichmentService:
             enable_real = await credential_service.get_credential("ENABLE_REAL_ENRICHMENT")
             is_real_mode = str(enable_real).lower() == "true"
 
+            # Implement GAP-015: Dynamic Scoring via SettingsService
+            from ..services.settings_service import SettingsService
+            settings_service = SettingsService(supabase)
+
+            # Fetch rules (with defaults via SSOT)
+            from ..schemas.settings import EnrichmentConfig
+            try:
+                config = EnrichmentConfig.model_validate(settings_service.get_all_settings())
+            except Exception as e:
+                logger.warning(f"Failed to parse EnrichmentConfig, using defaults: {e}")
+                config = EnrichmentConfig()
+
             if is_real_mode:
                 logger.info(f"Enrichment: Running in REAL mode (Simulated Real API Call) | id={lead_id}")
                 # Real Implementation Hook:
@@ -48,10 +60,10 @@ class EnrichmentService:
                 # 2. Call Crawler
                 # 3. Parse results
                 # For Phase 4.6, we simulate a 'Real' call taking longer or hitting a different endpoint
-                await asyncio.sleep(3.0)
+                await asyncio.sleep(config.enrichment_api_delay_long)
             else:
                 logger.info(f"Enrichment: Running in MOCK mode | id={lead_id}")
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(config.enrichment_api_delay_short)
 
             # logic: If successful, update status and score
             # Real implementation would call scraping tools here.
@@ -66,19 +78,6 @@ class EnrichmentService:
             enriched_summary = (
                 f"{current_need}\n\n[Auto-Enriched Data]\nTax ID: {mock_tax_id}\nEmail: {mock_email}\nNews: {mock_news}"
             )
-
-            # Implement GAP-015: Dynamic Scoring via SettingsService
-            from ..services.settings_service import SettingsService
-
-            settings_service = SettingsService(supabase)
-
-            # Fetch rules (with defaults via SSOT)
-            from ..schemas.settings import EnrichmentConfig
-            try:
-                config = EnrichmentConfig.model_validate(settings_service.get_all_settings())
-            except Exception as e:
-                logger.warning(f"Failed to parse EnrichmentConfig, using defaults: {e}")
-                config = EnrichmentConfig()
 
             score_vital = config.scoring_vital_contact
             score_funding = config.scoring_news_funding

@@ -15,9 +15,16 @@ async def validate_provider_instance(provider: str, instance_url: str | None = N
         if provider == "ollama":
             from ..ollama.model_discovery_service import model_discovery_service
 
-            health = await model_discovery_service.check_instance_health(
-                instance_url or "http://host.docker.internal:11434"
-            )
+            if not instance_url:
+                from ...schemas.settings import NetworkConfig
+                from ...services.settings_service import SettingsService
+                try:
+                    net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
+                    instance_url = net_config.ollama_base_url
+                except Exception:
+                    instance_url = NetworkConfig().ollama_base_url
+
+            health = await model_discovery_service.check_instance_health(instance_url)
             return {
                 "provider": provider,
                 "instance_url": instance_url,

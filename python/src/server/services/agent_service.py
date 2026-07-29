@@ -141,7 +141,6 @@ class AgentService:
 
     async def _run_workflow_engine_task(self, task_id: str, task_data: dict, agent_id: str):
         """Phase 5.0.2: Bridges the execution to the isolated archon-agents WorkflowEngine container."""
-        import os
 
         import httpx
 
@@ -161,7 +160,14 @@ class AgentService:
         prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
 
         # 2. Call WorkflowEngine via httpx
-        agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
+        from ..schemas.settings import NetworkConfig
+        from ..services.settings_service import SettingsService
+        try:
+            net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
+            agents_url = net_config.agents_service_url
+        except Exception:
+            agents_url = NetworkConfig().agents_service_url
+
         try:
             # Group chats take time, set a safe timeout
             async with httpx.AsyncClient(timeout=300.0) as client:

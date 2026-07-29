@@ -57,6 +57,11 @@ class PruningConfig(BaseModel):
     l3_tokens_days: int = Field(default=30, alias="PRUNING_L3_TOKENS_DAYS")
 
 
+class NetworkConfig(BaseModel):
+    agents_service_url: str = Field(default="http://archon-agents:8052", alias="AGENTS_SERVICE_URL")
+    mcp_service_url: str = Field(default="http://archon-mcp:8051", alias="MCP_SERVICE_URL")
+    ollama_base_url: str = Field(default="http://host.docker.internal:11434", alias="LLM_BASE_URL")
+
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.05, alias="WEEKLY_BUDGET_THRESHOLD")
 
@@ -76,10 +81,31 @@ class SchedulerConfig(BaseModel):
     model_verification_interval_mins: int = Field(default=150, alias="MODEL_VERIFICATION_INTERVAL_MINS")
     meta_twin_audit_interval_mins: int = Field(default=20, alias="META_TWIN_AUDIT_INTERVAL_MINS")
 
+    # Category 2: Stateful Daily Jobs
     system_probe_cleanup_hour: int = Field(default=11, alias="SYSTEM_PROBE_CLEANUP_HOUR")
     system_probe_cleanup_minute: int = Field(default=20, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
     prune_stale_leads_hour: int = Field(default=11, alias="PRUNE_STALE_LEADS_HOUR")
     prune_stale_leads_minute: int = Field(default=20, alias="PRUNE_STALE_LEADS_MINUTE")
+    alice_auto_fetch_hour: int = Field(default=10, alias="ALICE_AUTO_FETCH_HOUR")
+    alice_auto_fetch_minute: int = Field(default=30, alias="ALICE_AUTO_FETCH_MINUTE")
+    alice_auto_fetch_days: str = Field(default="tue,fri,sat,sun", alias="ALICE_AUTO_FETCH_DAYS")
+    token_analysis_hour: int = Field(default=8, alias="TOKEN_ANALYSIS_HOUR")
+    token_analysis_minute: int = Field(default=20, alias="TOKEN_ANALYSIS_MINUTE")
+    business_sentinel_hour: int = Field(default=8, alias="BUSINESS_SENTINEL_HOUR")
+    business_sentinel_minute: int = Field(default=40, alias="BUSINESS_SENTINEL_MINUTE")
+
+    # Category 3: Stateful Weekly / Monthly Jobs
+    weekly_executive_summary_days: str = Field(default="sun", alias="WEEKLY_EXECUTIVE_SUMMARY_DAYS")
+    architecture_health_audit_days: str = Field(default="fri", alias="ARCHITECTURE_HEALTH_AUDIT_DAYS")
+    monthly_summary_day: int = Field(default=1, alias="MONTHLY_SUMMARY_DAY")
+    monthly_summary_hour: int = Field(default=9, alias="MONTHLY_SUMMARY_HOUR")
+    monthly_summary_minute: int = Field(default=0, alias="MONTHLY_SUMMARY_MINUTE")
+
+    # Category 4: Stateful Bi-weekly Maintenance
+    maintenance_audit_hour: int = Field(default=14, alias="MAINTENANCE_AUDIT_HOUR")
+    maintenance_audit_minute: int = Field(default=0, alias="MAINTENANCE_AUDIT_MINUTE")
+    maintenance_audit_days: str = Field(default="sat,sun", alias="MAINTENANCE_AUDIT_DAYS")
+
 
 
 class CrawlerJobConfig(BaseModel):
@@ -101,6 +127,13 @@ class EnrichmentConfig(BaseModel):
     scoring_vital_contact: int = Field(default=20, alias="SCORING_VITAL_CONTACT")
     scoring_news_funding: int = Field(default=30, alias="SCORING_NEWS_FUNDING")
     scoring_has_job_url: int = Field(default=15, alias="SCORING_HAS_JOB_URL")
+    enrichment_api_delay_long: float = Field(default=3.0, alias="ENRICHMENT_API_DELAY_LONG")
+    enrichment_api_delay_short: float = Field(default=1.5, alias="ENRICHMENT_API_DELAY_SHORT")
+
+class SystemTaskConfig(BaseModel):
+    background_cleanup_interval_secs: int = Field(default=300, alias="BACKGROUND_CLEANUP_INTERVAL_SECS")
+    background_error_retry_secs: int = Field(default=60, alias="BACKGROUND_ERROR_RETRY_SECS")
+    embedding_process_delay_secs: int = Field(default=15, alias="EMBEDDING_PROCESS_DELAY_SECS")
 
 
 class CodeExtractionConfig(BaseModel):

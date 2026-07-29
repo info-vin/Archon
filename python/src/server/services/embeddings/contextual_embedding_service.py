@@ -75,8 +75,16 @@ Answer only with the succinct context and nothing else. Do not repeat the chunk 
 
     except openai.RateLimitError:
         # Physical In-place Retry: Wait for quota recovery
-        search_logger.warning("429 Quota Exhausted. Waiting 15s for recovery...")
-        await asyncio.sleep(15)
+        from ...schemas.settings import SystemTaskConfig
+        from ...services.settings_service import SettingsService
+        try:
+            raw_settings = SettingsService().get_all_settings()
+            config = SystemTaskConfig.model_validate(raw_settings)
+            delay = config.embedding_process_delay_secs
+        except Exception:
+            delay = 15
+        search_logger.warning(f"429 Quota Exhausted. Waiting {delay}s for recovery...")
+        await asyncio.sleep(delay)
         try:
             # Recursive retry once
             return await generate_contextual_embedding(full_document, chunk, provider=provider)

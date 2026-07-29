@@ -12,7 +12,6 @@ It combines multiple RAG strategies in a pipeline fashion:
 Multiple strategies can be enabled simultaneously and work together.
 """
 
-import os
 from typing import Any
 
 # Google GenAI for Web Grounding
@@ -54,16 +53,19 @@ class RAGService(BaseRepository):
         self.agentic_strategy = AgenticRAGStrategy(self.supabase_client, self.base_strategy)
 
         # Phase 4.6.28: Neural Bridge Configuration
-        from src.server.schemas.settings import RagConfig
+        from src.server.schemas.settings import NetworkConfig, RagConfig
         from src.server.services.settings_service import SettingsService
         try:
             settings_service = SettingsService(self.supabase_client)
-            config = RagConfig.model_validate(settings_service.get_all_settings())
+            raw_settings = settings_service.get_all_settings()
+            config = RagConfig.model_validate(raw_settings)
+            net_config = NetworkConfig.model_validate(raw_settings)
         except Exception:
             config = RagConfig()
+            net_config = NetworkConfig()
 
         self.agents_enabled = config.agents_enabled
-        self.agents_url = os.getenv("AGENTS_SERVICE_URL", "http://archon-agents:8052")
+        self.agents_url = net_config.agents_service_url
 
         # Initialize reranking strategy based on settings
         self.reranking_strategy = None

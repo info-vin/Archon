@@ -207,25 +207,25 @@ class SchedulerService:
 
         # --- Category 2: Stateful Daily Jobs ---
         await self._schedule_stateful_job(self._cleanup_system_probes, "system_probe_cleanup", 5, self._should_run_daily, CronTrigger(hour=config.system_probe_cleanup_hour, minute=config.system_probe_cleanup_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_local_only, CronTrigger(day_of_week='tue,fri,sat,sun', hour=10, minute=30, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_local_only, CronTrigger(day_of_week=config.alice_auto_fetch_days, hour=config.alice_auto_fetch_hour, minute=config.alice_auto_fetch_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
         await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
-        await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=8, minute=20, timezone=DEFAULT_TIMEZONE), "Already run today")
-        await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=8, minute=40, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=config.token_analysis_hour, minute=config.token_analysis_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
+        await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=config.business_sentinel_hour, minute=config.business_sentinel_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
 
         # --- Category 3: Stateful Weekly / Monthly Jobs ---
         weekly_h, weekly_m = self._parse_dynamic_hf_time(3)
-        await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_weekly, CronTrigger(day_of_week="sun", hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
+        await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_weekly, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
 
         health_h, health_m = self._parse_dynamic_hf_time(1)
-        await self._schedule_stateful_job(self._run_architecture_health_audit, "architecture_health_audit", 40, self._should_run_weekly, CronTrigger(day_of_week="fri", hour=health_h, minute=health_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
+        await self._schedule_stateful_job(self._run_architecture_health_audit, "architecture_health_audit", 40, self._should_run_weekly, CronTrigger(day_of_week=config.architecture_health_audit_days, hour=health_h, minute=health_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
 
-        await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_monthly, CronTrigger(day=1, hour=9, minute=0, timezone=DEFAULT_TIMEZONE), "Already run this month")
+        await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_monthly, CronTrigger(day=config.monthly_summary_day, hour=config.monthly_summary_hour, minute=config.monthly_summary_minute, timezone=DEFAULT_TIMEZONE), "Already run this month")
 
         # --- Category 4: Stateful Bi-weekly Maintenance ---
-        await self._schedule_stateful_job(self._run_infrastructure_audit, "infrastructure_audit", 48, self._should_run_biweekly, CronTrigger(day_of_week="sat", hour=14, minute=0, timezone=DEFAULT_TIMEZONE), "Already run recently")
-        await self._schedule_stateful_job(self._run_api_deprecation_scan, "api_deprecation_scan", 50, self._should_run_biweekly, CronTrigger(day_of_week="sat", hour=14, minute=5, timezone=DEFAULT_TIMEZONE), "Already run recently")
-        await self._schedule_stateful_job(self._run_tech_debt_audit, "tech_debt_audit", 45, self._should_run_biweekly, CronTrigger(day_of_week="sun", hour=14, minute=0, timezone=DEFAULT_TIMEZONE), "Already run recently")
-        await self._schedule_stateful_job(self._run_ssot_audit, "ssot_audit", 47, self._should_run_biweekly, CronTrigger(day_of_week="sun", hour=14, minute=5, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_infrastructure_audit, "infrastructure_audit", 48, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_api_deprecation_scan, "api_deprecation_scan", 50, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_tech_debt_audit, "tech_debt_audit", 45, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_ssot_audit, "ssot_audit", 47, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
 
     # Delegation Methods
     async def _run_system_probe(self) -> None: await patrol.run_system_probe()
