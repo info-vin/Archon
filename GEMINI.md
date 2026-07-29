@@ -118,6 +118,7 @@
 - **Scheduler 時間變數化**: 於 `scheduler_service.py` 中，將剩餘的排程日 (`"sun"`, `"fri"`) 對應至 `SchedulerConfig` 的 `weekly_executive_summary_days` 與 `architecture_health_audit_days`，徹底實現 SSOT 管理。
 - **稽核門禁智慧化**: 調校 `scripts/phase_audit.py`，使 `ssot_hardcoding_audit` 能夠智慧識別出作為 Event Loop Yielding 的正當微小休眠 (`asyncio.sleep(0.01)` 等)，避免誤報。
 - **物理公證與健康度**: `make phase-audit` 0 違規，`uv run mypy src/server/` 型別掃描 0 錯誤，`make test-be` 611 項測試全數綠燈通過。
+- **全域檔案大掃除與架構純淨化**: 執行了全域的技術債檔案清理。刪除了遺留的 `temp_refactor/` 與根目錄重複的舊版 `skills/` 資料夾。將 `scripts/` 中如 `refactor_main.py`, `patch_tscn.py` 等過渡性腳本歸檔至 `scripts/archive/`。並正式將 `scratch/` 與 `python/scratch/` 兩個一次性實驗區從 Git 版控中解除追蹤 (Untrack) 並加入 `.gitignore`，徹底根除草稿污染正式歷史的隱患。
 
 
 ### 2026/07/27: 後端 DRY 重構與爬蟲 Cloud-Edge 策略更新 (Phase 3.5 & Crawler Settings)
