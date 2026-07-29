@@ -50,9 +50,10 @@ def git_sync_check():
         print(f"❌ Git check failed: {e}")
 
 def monolith_check():
-    print_header("Monolith Check (> 400 lines)")
+    print_header("Monolith Check (> 400 lines & Warnings > 360 lines)")
     target_dirs = ["python/src", "enduser-ui-fe/src", "archon-ui-main/src"]
     large_files = []
+    warning_files = []
     
     for base_dir in target_dirs:
         if not os.path.exists(base_dir): continue
@@ -63,15 +64,36 @@ def monolith_check():
                     try:
                         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                             lines = sum(1 for _ in f)
-                        if lines > 400: large_files.append((file_path, lines))
+                        if lines > 400:
+                            large_files.append((file_path, lines))
+                        elif lines > 360:
+                            warning_files.append((file_path, lines))
                     except: pass
                         
-    if large_files:
-        print(f"⚠️  Found {len(large_files)} monoliths:")
-        for path, count in sorted(large_files, key=lambda x: x[1], reverse=True):
-            print(f"   - {path}: {count} lines")
-    else:
-        print("✅ No monolith files found!")
+    def print_separated(files_list, label_icon, label_text):
+        if not files_list:
+            return False
+            
+        backend_files = [x for x in files_list if x[0].startswith("python/")]
+        frontend_files = [x for x in files_list if not x[0].startswith("python/")]
+        
+        print(f"{label_icon} Found {len(files_list)} {label_text}:")
+        
+        if backend_files:
+            print("   [Backend]")
+            for path, count in sorted(backend_files, key=lambda x: x[1], reverse=True):
+                print(f"     - {path}: {count} lines")
+        if frontend_files:
+            print("   [Frontend]")
+            for path, count in sorted(frontend_files, key=lambda x: x[1], reverse=True):
+                print(f"     - {path}: {count} lines")
+        return True
+                        
+    has_large = print_separated(large_files, "❌", "monoliths (>400 lines)")
+    if not has_large:
+        print("✅ No monolith files (>400 lines) found!")
+        
+    print_separated(warning_files, "⚠️ ", "files nearing monolith status (>360 lines)")
 
 def cloud_audit():
     print_header("Step 5: Cloud & Scheduler Audit (Hugging Face)")
