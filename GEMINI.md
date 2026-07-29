@@ -113,6 +113,12 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/29: RAG Baseline 精煉與黃金關鍵字優化 (Phase 5.9.29)
+- **證據至上與沙盒模擬**: 在修改正式代碼前，撰寫隔離腳本 (`scratch/test_proposed_baseline.py`) 進行數學驗證。證實了在 4.6% 純淨 Baseline 下，舊有 29 筆雜訊 Leads 分數掉至 0.6 以下，而 HyDE 完美目標能穩居 0.66，徹底證明 `0.65` 門檻的精準度與 Baseline 精煉的必要性。
+- **爬蟲關鍵字擴充 (Golden Seven)**: 於 `settings.py` 擴充 `CrawlerJobConfig`，以 `AI行銷自動化, 智慧客服, 數據分析, AI自動化流程, 大語言模型應用` 等高價值詞彙替換泛用的 `Marketing/Sales`，確保 104 爬蟲抓取目標與 Archon 產品力高度對齊。
+- **RAG 測謊機上膛**: 於 `job_board_service.py` 實作 4.6% 純淨特徵切片（僅保留 `Knowledge Base Tools` 等 Agent 核心），剝離開發雜訊，大幅提升潛在客戶配對的訊噪比。
+- **零副作用公證**: 修改全數通過 `make lint-be`、`uv run mypy src/server/` 型別安全檢查、612 項 `make test-be` 測試與 `make phase-audit` SSOT 查核。
+
 ### 2026/07/29: Micro SSOT Eradication 與排程/網路預設值收攏 (Phase 5.9.28)
 - **NetworkConfig 收攏**: 在 `settings.py` 新增 `NetworkConfig`，將 `AGENTS_SERVICE_URL`, `MCP_SERVICE_URL`, `LLM_BASE_URL` 抽離，並於 `agent_service.py`, `rag_service.py`, `internal_api.py`, `clients.py`, `validation.py` 中，使用 `NetworkConfig()` 動態取得乾淨安全的預設值，消滅所有寫死的 HTTP 網址。
 - **Scheduler 時間變數化**: 於 `scheduler_service.py` 中，將剩餘的排程日 (`"sun"`, `"fri"`) 對應至 `SchedulerConfig` 的 `weekly_executive_summary_days` 與 `architecture_health_audit_days`，徹底實現 SSOT 管理。

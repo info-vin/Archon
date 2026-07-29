@@ -109,7 +109,7 @@ class SchedulerConfig(BaseModel):
 
 
 class CrawlerJobConfig(BaseModel):
-    crawler_job_keywords: str = Field(default="Python,AI,Marketing,Sales,數據分析", alias="CRAWLER_JOB_KEYWORDS")
+    crawler_job_keywords: str = Field(default="Python,AI,AI行銷自動化,智慧客服,數據分析,AI自動化流程,大語言模型應用", alias="CRAWLER_JOB_KEYWORDS")
     crawler_job_limit: int = Field(default=12, alias="CRAWLER_JOB_LIMIT")
     lead_gen_similarity_threshold: float = Field(default=0.65, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
     crawler_waf_delay_min: float = Field(default=5.0, alias="CRAWLER_WAF_DELAY_MIN")

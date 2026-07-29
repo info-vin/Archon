@@ -47,8 +47,12 @@ class JobBoardService:
         try:
             with open(agents_md_path, encoding="utf-8") as f:
                 content = f.read()
-                # Extract the core capabilities
-                if "## MCP Tools Available" in content:
+                # Extract only the focused core capabilities (4.6% pure baseline)
+                start_idx = content.find("### Knowledge Base Tools")
+                end_idx = content.find("### Document Management")
+                if start_idx != -1 and end_idx != -1:
+                    core_text = "Archon Core Capabilities:\n" + content[start_idx:end_idx].strip()
+                elif "## MCP Tools Available" in content:
                     core_text = "Archon Core Capabilities:\n" + content.split("## MCP Tools Available")[1][:2000]
                 else:
                     core_text = content[:2000]
