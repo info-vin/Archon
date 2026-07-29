@@ -1,8 +1,10 @@
 # python/src/server/services/prompt_service.py
 
 from datetime import datetime
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 from unittest.mock import MagicMock
+
+from postgrest.base_request_builder import APIResponse
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -10,6 +12,18 @@ from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
+
+
+class PromptListDTO(TypedDict):
+    data: NotRequired[list[dict[str, Any]]]
+    prompts: NotRequired[list[dict[str, Any]]]
+    error: NotRequired[str]
+
+
+class PromptUpdateDTO(TypedDict):
+    data: NotRequired[list[dict[str, Any]]]
+    count: NotRequired[int]
+    error: NotRequired[str]
 
 
 class PromptService(BaseRepository):
@@ -23,13 +37,13 @@ class PromptService(BaseRepository):
         super().__init__(supabase_client or get_supabase_client())
 
     @classmethod
-    def _reset_for_testing(cls):
+    def _reset_for_testing(cls) -> None:
         """Internal helper to reset singleton state between tests."""
         cls._prompts = {}
         cls._last_loaded = None
         cls._instance = None
 
-    async def load_prompts(self):
+    async def load_prompts(self) -> None:
         """Mock-compatible method for tests to simulate loading."""
         success, res = await self.list_prompts()
         if success:
@@ -40,10 +54,10 @@ class PromptService(BaseRepository):
                     self._prompts[p.get("prompt_name", "")] = text
             self._last_loaded = datetime.utcnow()
 
-    async def list_prompts(self) -> tuple[bool, dict[str, Any]]:
+    async def list_prompts(self) -> tuple[bool, PromptListDTO]:
         """List all system prompts from the database."""
 
-        def _query():
+        def _query() -> APIResponse:
             return self.supabase_client.table("archon_prompts").select("*").execute()
 
         success, result = self.execute_query(_query, "Failed to list prompts")
@@ -70,10 +84,10 @@ class PromptService(BaseRepository):
 
     async def update_prompt(
         self, prompt_name: str, content: str, description: str | None = None, category: str | None = None, metadata: dict[str, Any] | None = None
-    ) -> tuple[bool, dict[str, Any]]:
+    ) -> tuple[bool, PromptUpdateDTO]:
         """Update a system prompt."""
 
-        def _query():
+        def _query() -> APIResponse:
             # DB schema uses 'prompt' for the content and 'prompt_name' for identity
             update_data: dict[str, Any] = {"prompt": content}
             if description:
