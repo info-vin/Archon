@@ -23,7 +23,13 @@ interface LeadsTimelineProps {
 
 export const LeadsTimeline: React.FC<LeadsTimelineProps> = ({ events }) => {
     // Sort events by date descending
-    const sortedEvents = [...events].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // PERFORMANCE: Pre-calculate Date strings into numeric timestamps (O(N)) to prevent redundant object instantiations during O(N log N) sorting
+    const dateWeights = new Map<any, number>();
+    events.forEach(event => {
+        dateWeights.set(event, new Date(event.timestamp).getTime());
+    });
+
+    const sortedEvents = [...events].sort((a, b) => (dateWeights.get(b) || 0) - (dateWeights.get(a) || 0));
 
     return (
         <div className="relative pl-6 border-l-2 border-gray-200 space-y-8 my-6">

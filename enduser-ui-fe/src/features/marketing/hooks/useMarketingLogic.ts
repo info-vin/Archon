@@ -147,16 +147,23 @@ export const useMarketingLogic = () => {
     }
 
     if (sortConfig !== null) {
-      sortableLeads.sort((a, b) => {
-        if (sortConfig.key === 'created_at' || sortConfig.key === 'next_followup_date') {
-             const dateA = new Date(a[sortConfig.key] || 0).getTime();
-             const dateB = new Date(b[sortConfig.key] || 0).getTime();
-             return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
-        }
-        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
+      if (sortConfig.key === 'created_at' || sortConfig.key === 'next_followup_date') {
+        const dateWeights: Record<string, number> = {};
+        sortableLeads.forEach(lead => {
+          dateWeights[lead.id] = new Date(lead[sortConfig.key] || 0).getTime();
+        });
+        sortableLeads.sort((a, b) => {
+          const valA = dateWeights[a.id] || 0;
+          const valB = dateWeights[b.id] || 0;
+          return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
+        });
+      } else {
+        sortableLeads.sort((a, b) => {
+          if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+          if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
     }
     return sortableLeads;
   }, [leads, sortConfig, filterMode]);

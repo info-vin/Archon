@@ -47,7 +47,13 @@ export const approvalMachine = setup({
           marketing_author: b.authorName
         }))
       ];
-      unifiedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // PERFORMANCE: Pre-calculate Date strings into numeric timestamps (O(N)) to prevent redundant object instantiations during O(N log N) sorting
+      const dateWeights = new Map<any, number>();
+      unifiedList.forEach(item => {
+        dateWeights.set(item, new Date(item.created_at).getTime());
+      });
+      unifiedList.sort((a, b) => (dateWeights.get(b) || 0) - (dateWeights.get(a) || 0));
       return unifiedList;
     }),
     processAction: fromPromise(async ({ input }: { input: { id: string; action: 'approve' | 'reject'; proposal: UnifiedProposal; reason?: string } }) => {

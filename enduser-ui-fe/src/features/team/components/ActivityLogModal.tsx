@@ -28,7 +28,15 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                     t.assignee_id === member.id || 
                     t.assignee === member.name ||
                     (t.assignee === 'User' && member.role === 'marketing')
-                ).sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+                );
+
+                // PERFORMANCE: Pre-calculate Date strings into numeric timestamps (O(N)) to prevent redundant object instantiations during O(N log N) sorting
+                const dateWeights = new Map<any, number>();
+                memberTasks.forEach(t => {
+                    dateWeights.set(t, new Date(t.created_at || '').getTime());
+                });
+
+                memberTasks.sort((a, b) => (dateWeights.get(b) || 0) - (dateWeights.get(a) || 0));
 
                 setTasks(memberTasks);
             } catch (e) {
