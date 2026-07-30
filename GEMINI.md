@@ -113,6 +113,13 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/30: Auth 與 RBAC 徹底淨化與 SSOT 鞏固 (Phase 5.9.32 & 5.9.33)
+- **型別公證 100%**: 完成 `ethics_service.py` 遺失的返回型別標記，將 3.4 Auth 與細粒度 RBAC 子網域的型別覆蓋率正式推升至 100%。
+- **DRY 原則落實**: 將 `auth_service.py` 與 `rbac_service.py` 的資料庫操作全面收斂至 `BaseRepository.execute_query`，移除所有零散的 `.execute()` 與樣板例外處理。
+- **硬編碼清零與 SSOT 落地**: 拔除 `rbac_service.py` 中寫死的 MCP 工具權限清單 (`{"delete_project"...}`) 以及 `providers_api.py` 的 `allowed_providers` 陣列。改由 `archon_settings` 資料庫與 `PROVIDER_KEY_MAP` 動態驅動。
+- **公證防禦網升級**: 於 `scripts/phase_audit.py` 擴充 `set_literal_pattern` 規則，能精準攔截未來任何隱藏的字串陣列硬編碼 (`{"str1", "str2"}`)。
+- **雲端與本機環境認知**: 在執行資料庫 Seed 驗證時，重申「專案連接的是雲端 Supabase」的基礎設施事實，正確透過根目錄 `.env` 的憑證以實體連線驗證資料庫異動，而非依賴本機不存在的 Docker 容器。
+
 ### 2026/07/30: 絞殺榕模式最後一哩路與 Manager 純化 (Phase 5.9.31)
 - **絞殺榕最後一哩路**: 將所有測試依賴（包含 `test_async_llm_provider_service.py` 等 6 個檔案）從舊的 `mock_credential_service.get_active_provider` 徹底遷移至真實的 `provider_configs.py` 介面，並嚴格傳入 `(credential_service, provider)` 簽名。
 - **Manager 純化**: 從 `manager.py` 徹底拔除 5 個向下相容代理 (Proxy Wrappers)，消除其 God Object 特性，讓 `CredentialManager` 回歸為純粹的 Database CRUD 服務。
