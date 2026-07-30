@@ -8,6 +8,7 @@ from src.server.models.auth_models import UserProfileDTO
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import MCP_MANAGE, TASK_READ_TEAM
 from ..services.health_service import HealthService, HealthStatusResult
+from ..services.system_service import ConnectivityLogDTO, SystemSettingDTO
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
@@ -123,7 +124,7 @@ async def get_ai_model_health() -> dict[str, Any]:
 
 
 @router.get("/logs/connectivity", dependencies=[Depends(requires_permission(MCP_MANAGE))])
-async def list_connectivity_logs() -> list[dict[str, Any]]:
+async def list_connectivity_logs() -> list[ConnectivityLogDTO]:
     """
     Lists system-level connectivity alerts (404, 429, etc) for Admin monitoring.
     Restricted to System Admin.
@@ -134,7 +135,7 @@ async def list_connectivity_logs() -> list[dict[str, Any]]:
 
 
 @router.get("/settings", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def list_system_settings(category: str | None = None) -> list[dict[str, Any]]:
+async def list_system_settings(category: str | None = None) -> list[SystemSettingDTO]:
     """
     Lists system settings from the database.
     Requires TASK_READ_TEAM scope.
@@ -146,7 +147,7 @@ async def list_system_settings(category: str | None = None) -> list[dict[str, An
 @router.patch("/settings/{key}", dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def update_system_setting(
     key: str, request: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)
-) -> dict[str, Any]:
+) -> SystemSettingDTO:
     """
     Updates a specific system setting and records the change in the audit trail.
     Restricted to System Admin via MCP_MANAGE scope.
