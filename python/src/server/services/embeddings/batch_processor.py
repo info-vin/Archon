@@ -12,6 +12,7 @@ import openai
 
 from ...config.logfire_config import safe_span, search_logger
 from ..credential_service import credential_service
+from ..credentials.provider_configs import get_embedding_provider_configs
 from ..llm_provider_service import create_embedding_client
 from ..threading_service import get_threading_service
 from .embedding_exceptions import (
@@ -84,7 +85,7 @@ async def create_embeddings_batch(
 
     with safe_span("create_embeddings_batch", text_count=len(texts), total_chars=sum(len(t) for t in texts)) as span:
         try:
-            configs = await credential_service.get_embedding_provider_configs()
+            configs = await get_embedding_provider_configs(credential_service)
             if not configs:
                 raise ValueError("No valid embedding providers configured.")
 

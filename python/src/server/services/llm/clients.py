@@ -23,6 +23,7 @@ async def get_llm_client(
 ):
     """Create an async OpenAI-compatible client based on the configured provider."""
     # LATE IMPORT to ensure physical identity with test patches in Facade
+    from ..credentials.provider_configs import _get_provider_api_key, _get_provider_base_url, get_active_provider
     from ..llm_provider_service import (
         credential_service,
         get_cached_settings,
@@ -39,7 +40,7 @@ async def get_llm_client(
         if provider:
             provider_name = provider
             if not resolved_api_key:
-                resolved_api_key = await credential_service._get_provider_api_key(provider)
+                resolved_api_key = await _get_provider_api_key(credential_service, provider)
             cache_key = "rag_strategy_settings"
             rag_settings = get_cached_settings(cache_key)
             if rag_settings is None:
@@ -47,7 +48,7 @@ async def get_llm_client(
                 if isinstance(rag_settings, dict):
                     set_cached_settings(cache_key, rag_settings)
             if provider != "ollama":
-                base_url = credential_service._get_provider_base_url(provider, rag_settings)
+                base_url = _get_provider_base_url(provider, rag_settings)
             else:
                 base_url = None
         else:
@@ -55,7 +56,7 @@ async def get_llm_client(
             cache_key = f"provider_config_{service_type}"
             config = get_cached_settings(cache_key)
             if config is None:
-                config = await credential_service.get_active_provider(service_type)
+                config = await get_active_provider(credential_service, service_type)
                 if isinstance(config, dict):
                     set_cached_settings(cache_key, config)
             provider_name = config["provider"]

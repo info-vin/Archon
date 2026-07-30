@@ -5,6 +5,7 @@ import openai
 import pytest
 
 from src.server.services.credential_service import credential_service
+from src.server.services.credentials import provider_configs
 from src.server.services.llm.clients import get_llm_client
 
 
@@ -48,7 +49,7 @@ async def test_fallback_self_healing_on_success(mock_openai, mock_provider_confi
     mock_response.choices = [MagicMock(message=MagicMock(content="Hello World"))]
     mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier:
 
@@ -84,7 +85,7 @@ async def test_fallback_to_tier2_huggingface_on_rate_limit(mock_openai, mock_pro
         "HF_TOKEN": "test-hf-token"
     }
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(side_effect=lambda key, default=None: mock_creds_dict.get(key, ""))), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier:
 
@@ -119,7 +120,7 @@ async def test_fallback_to_tier3_ollama_on_connection_error(mock_openai, mock_pr
         "HF_TOKEN": "test-hf-token"
     }
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(side_effect=lambda key, default=None: mock_creds_dict.get(key, ""))), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier:
 
@@ -152,7 +153,7 @@ async def test_human_override_forces_fallback_tier(mock_openai, mock_provider_co
         "forced_fallback_tier": "3",
     }
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(side_effect=lambda key, default=None: mock_creds_dict.get(key, ""))), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier:
 

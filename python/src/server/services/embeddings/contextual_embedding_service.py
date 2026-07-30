@@ -117,9 +117,10 @@ async def process_chunk_with_context(url: str, content: str, full_document: str)
 async def _get_model_choice(provider: str | None = None) -> str:
     """Get model choice from credential service."""
     from ..credential_service import credential_service
+    from ..credentials.provider_configs import get_active_provider
 
     # Get the active provider configuration
-    provider_config = await credential_service.get_active_provider("llm")
+    provider_config = await get_active_provider(credential_service, "llm")
     model = provider_config.get("chat_model")
     if not model:
         raise ValueError("chat_model is not configured in provider_config")

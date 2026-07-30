@@ -113,6 +113,12 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/30: 絞殺榕模式最後一哩路與 Manager 純化 (Phase 5.9.31)
+- **絞殺榕最後一哩路**: 將所有測試依賴（包含 `test_async_llm_provider_service.py` 等 6 個檔案）從舊的 `mock_credential_service.get_active_provider` 徹底遷移至真實的 `provider_configs.py` 介面，並嚴格傳入 `(credential_service, provider)` 簽名。
+- **Manager 純化**: 從 `manager.py` 徹底拔除 5 個向下相容代理 (Proxy Wrappers)，消除其 God Object 特性，讓 `CredentialManager` 回歸為純粹的 Database CRUD 服務。
+- **零硬編碼與假 Mock 消除**: 確保所有測試的 Mock 路徑完全對齊物理匯入 (Physical Import) 路線，未遺留任何硬編碼與未使用的變數 (如移除未使用的 `mock_provider_config`)。
+- **驗證公證 (Verification)**: 成功通過 `make lint-be` (0 警告) 以及 `make test-be` (613/613 全數綠燈)，`manager.py` 行數成功降至 361 行解除 monolith 警報，架構健康度全面提升。
+
 ### 2026/07/29: RAG Baseline 精煉與黃金關鍵字優化 (Phase 5.9.29)
 - **證據至上與沙盒模擬**: 在修改正式代碼前，撰寫隔離腳本 (`scratch/test_proposed_baseline.py`) 進行數學驗證。證實了在 4.6% 純淨 Baseline 下，舊有 29 筆雜訊 Leads 分數掉至 0.6 以下，而 HyDE 完美目標能穩居 0.66，徹底證明 `0.65` 門檻的精準度與 Baseline 精煉的必要性。
 - **爬蟲關鍵字擴充 (Golden Seven)**: 於 `settings.py` 擴充 `CrawlerJobConfig`，以 `AI行銷自動化, 智慧客服, 數據分析, AI自動化流程, 大語言模型應用` 等高價值詞彙替換泛用的 `Marketing/Sales`，確保 104 爬蟲抓取目標與 Archon 產品力高度對齊。

@@ -6,6 +6,7 @@ from typing import cast
 from pydantic import BaseModel, Field
 
 from src.server.services.credential_service import credential_service
+from src.server.services.credentials.provider_configs import get_active_provider
 from src.server.services.llm_provider_service import get_llm_client
 
 # Using the same dependency injector pattern as file_operation_tools
@@ -53,7 +54,7 @@ Instructions:
 """
     try:
         # Get active model from config
-        provider_config = await credential_service.get_active_provider()
+        provider_config = await get_active_provider(credential_service)
         model = provider_config.get("chat_model")
         if not model:
             raise ValueError("chat_model is not configured in provider_config")

@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.server.services.credential_service import credential_service
+from src.server.services.credentials import provider_configs
 from src.server.services.llm.clients import get_llm_client
 from src.server.services.llm.hybrid_router import hybrid_router
 
@@ -55,7 +56,7 @@ async def test_simple_offline_query_routes_to_tier3(mock_openai, mock_provider_c
     # First client setup is for Tier 3
     mock_openai.return_value = mock_ollama_client
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
          patch.object(hybrid_router, "capability_matrix", mock_matrix):
@@ -86,7 +87,7 @@ async def test_complex_online_query_routes_to_tier1(mock_openai, mock_provider_c
 
     mock_openai.return_value = mock_cloud_client
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
          patch.object(hybrid_router, "capability_matrix", mock_matrix):
@@ -118,7 +119,7 @@ async def test_ollama_unavailable_routes_to_tier1(mock_openai, mock_provider_con
 
     mock_openai.return_value = mock_cloud_client
 
-    with patch.object(credential_service, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
+    with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
          patch.object(hybrid_router, "capability_matrix", mock_matrix):

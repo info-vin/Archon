@@ -1,5 +1,7 @@
 from typing import Any
+
 from pydantic import BaseModel
+
 
 class AgentRequest(BaseModel):
     agent_type: str

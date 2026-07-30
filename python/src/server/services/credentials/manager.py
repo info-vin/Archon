@@ -358,22 +358,4 @@ class CredentialManager:
         from .helpers import check_credentials_exist
         return await check_credentials_exist(self, keys)
 
-    async def get_active_provider(self, service_type: str = "llm") -> dict[str, Any]:
-        from .provider_configs import get_active_provider
-        return await get_active_provider(self, service_type)
 
-    async def get_embedding_provider_configs(self) -> list[dict[str, Any]]:
-        from .provider_configs import get_embedding_provider_configs
-        return await get_embedding_provider_configs(self)
-
-    async def _get_provider_api_key(self, provider: str) -> str | None:
-        from .provider_configs import _get_provider_api_key
-        return await _get_provider_api_key(self, provider)
-
-    def _get_provider_base_url(self, provider: str, rag_settings: dict) -> str | None:
-        from .provider_configs import _get_provider_base_url
-        return _get_provider_base_url(provider, rag_settings)
-
-    async def set_active_provider(self, provider: str, service_type: str = "llm") -> bool:
-        from .provider_configs import set_active_provider
-        return await set_active_provider(self, provider, service_type)

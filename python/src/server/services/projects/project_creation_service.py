@@ -80,8 +80,9 @@ class ProjectCreationService(BaseRepository):
         try:
             # Check if LLM provider is configured
             from ..credential_service import credential_service
+            from ..credentials.provider_configs import get_active_provider
 
-            provider_config = await credential_service.get_active_provider("llm")
+            provider_config = await get_active_provider(credential_service, "llm")
 
             if not provider_config:
                 # No LLM provider configured, skip AI documentation

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from ..models import RootResponse, HealthResponse
+
 from ..lifespan import AVAILABLE_AGENTS
+from ..models import HealthResponse, RootResponse
 
 router = APIRouter(tags=["health"])
 

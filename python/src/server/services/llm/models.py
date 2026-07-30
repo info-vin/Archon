@@ -9,6 +9,7 @@ logger = get_logger(__name__)
 async def get_embedding_model(provider: str | None = None) -> str:
     """Get the configured embedding model based on the provider."""
     # Late import to ensure physical identity with test patches
+    from ..credentials.provider_configs import get_active_provider
     from ..llm_provider_service import credential_service, get_cached_settings, is_valid_provider, set_cached_settings
 
     try:
@@ -25,7 +26,7 @@ async def get_embedding_model(provider: str | None = None) -> str:
             cache_key = "provider_config_embedding"
             provider_config = get_cached_settings(cache_key)
             if provider_config is None:
-                provider_config = await credential_service.get_active_provider("embedding")
+                provider_config = await get_active_provider(credential_service, "embedding")
                 if isinstance(provider_config, dict):
                     set_cached_settings(cache_key, provider_config)
             provider_name = provider_config["provider"]

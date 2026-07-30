@@ -52,13 +52,8 @@ async def test_analyze_error_with_skills_flow(mock_mcp_client):
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_llm_client
 
-    mock_provider_config = {"chat_model": "test-model-v1"}
-
     with (
         patch("src.server.services.dev_ops_agent_service.get_llm_client", return_value=mock_ctx),
-        patch(
-            "src.server.services.dev_ops_agent_service.credential_service.get_active_provider", return_value=mock_provider_config
-        ),
     ):
         result = await service.dev_ops._analyze_error_with_structured_output(
             command="python script.py", stderr="ImportError: No module named foo", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31"
@@ -88,10 +83,6 @@ async def test_analyze_error_graceful_degradation():
 
     with (
         patch("src.server.services.dev_ops_agent_service.get_llm_client", return_value=mock_ctx),
-        patch(
-            "src.server.services.dev_ops_agent_service.credential_service.get_active_provider",
-            return_value={"chat_model": "test-model-v1"},
-        ),
     ):
         result = await service.dev_ops._analyze_error_with_structured_output("cmd", "err", agent_id="bcb00484-30bd-46fb-9e39-84b2ec4ced31")
         assert result == final_fix

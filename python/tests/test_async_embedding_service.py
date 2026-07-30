@@ -72,7 +72,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -106,7 +106,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -139,7 +139,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -173,7 +173,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -229,7 +229,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -271,7 +271,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -311,7 +311,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -349,7 +349,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
@@ -427,7 +427,7 @@ class TestAsyncEmbeddingService:
                 return_value=mock_threading_service,
             ),
             patch(
-                "src.server.services.embeddings.batch_processor.credential_service.get_embedding_provider_configs",
+                "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
             patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),

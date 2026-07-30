@@ -17,6 +17,10 @@ from src.server.services.credential_service import (
     initialize_credentials,
     set_credential,
 )
+from src.server.services.credentials.provider_configs import (
+    get_active_provider,
+    get_embedding_provider_configs,
+)
 
 
 class TestAsyncCredentialService:
@@ -232,7 +236,7 @@ class TestAsyncCredentialService:
         mock_table.select().eq().execute.return_value = mock_response
 
         with patch.object(credential_service, "_get_supabase_client", return_value=mock_client):
-            result = await credential_service.get_active_provider("llm")
+            result = await get_active_provider(credential_service, "llm")
             # Should return default values when no settings found
             assert "provider" in result
             assert "api_key" in result
@@ -359,7 +363,7 @@ class TestAsyncCredentialService:
             patch.object(credential_service, "get_credentials_by_category", return_value=mock_rag_settings),
             patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
         ):
-            configs = await credential_service.get_embedding_provider_configs()
+            configs = await get_embedding_provider_configs(credential_service)
 
             assert len(configs) == 2
             assert configs[0]["provider"] == "openai"
@@ -386,7 +390,7 @@ class TestAsyncCredentialService:
             patch.object(credential_service, "get_credentials_by_category", return_value=mock_rag_settings),
             patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
         ):
-            configs = await credential_service.get_embedding_provider_configs()
+            configs = await get_embedding_provider_configs(credential_service)
 
             assert len(configs) == 1
             assert configs[0]["provider"] == "openai"
@@ -410,7 +414,7 @@ class TestAsyncCredentialService:
             patch.object(credential_service, "get_credentials_by_category", return_value=mock_rag_settings),
             patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
         ):
-            configs = await credential_service.get_embedding_provider_configs()
+            configs = await get_embedding_provider_configs(credential_service)
 
             assert len(configs) == 1
             assert configs[0]["provider"] == "google"
@@ -429,7 +433,7 @@ class TestAsyncCredentialService:
             patch.object(credential_service, "get_credentials_by_category", return_value={}),
             patch.object(credential_service, "get_credential", side_effect=mock_get_credential),
         ):
-            configs = await credential_service.get_embedding_provider_configs()
+            configs = await get_embedding_provider_configs(credential_service)
             assert len(configs) == 1
             assert configs[0]["provider"] == "openai"
             assert configs[0]["embedding_model"] == "text-embedding-3-small"

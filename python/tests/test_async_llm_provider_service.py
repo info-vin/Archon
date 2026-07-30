@@ -49,14 +49,21 @@ class TestAsyncLLMProviderService:
         yield
         llm_module._settings_cache.clear()
 
+
+    @pytest.fixture
+    def mock_provider_configs(self):
+        """Mock provider configs"""
+        mock = MagicMock()
+        mock.get_active_provider = AsyncMock()
+        mock._get_provider_api_key = AsyncMock()
+        mock._get_provider_base_url = MagicMock(return_value=None)
+        return mock
+
     @pytest.fixture
     def mock_credential_service(self):
         """Mock credential service"""
         mock_service = MagicMock()
-        mock_service.get_active_provider = AsyncMock()
         mock_service.get_credentials_by_category = AsyncMock()
-        mock_service._get_provider_api_key = AsyncMock()
-        mock_service._get_provider_base_url = MagicMock(return_value=None)
         return mock_service
 
     @pytest.fixture
@@ -93,15 +100,19 @@ class TestAsyncLLMProviderService:
         }
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_openai_success(self, mock_credential_service, openai_provider_config):
+    async def test_get_llm_client_openai_success(self, mock_provider_configs, mock_credential_service, openai_provider_config):
         """Test successful OpenAI client creation"""
-        mock_credential_service.get_active_provider.return_value = openai_provider_config
+        mock_provider_configs.get_active_provider.return_value = openai_provider_config
         # Mock the category call for potential fallbacks
         mock_credential_service.get_credentials_by_category.return_value = {
             "LLM_BASE_URL": "http://host.docker.internal:11434"
         }
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -113,14 +124,18 @@ class TestAsyncLLMProviderService:
 
                 # Verify provider config was fetched
                 # The call count is higher due to diagnostic logging, so we check it was called with "llm"
-                mock_credential_service.get_active_provider.assert_called_with("llm")
+                mock_provider_configs.get_active_provider.assert_called_with(mock_credential_service, "llm")
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_ollama_success(self, mock_credential_service, ollama_provider_config):
+    async def test_get_llm_client_ollama_success(self, mock_provider_configs, mock_credential_service, ollama_provider_config):
         """Test successful Ollama client creation"""
-        mock_credential_service.get_active_provider.return_value = ollama_provider_config
+        mock_provider_configs.get_active_provider.return_value = ollama_provider_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -132,11 +147,15 @@ class TestAsyncLLMProviderService:
                     )
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_google_success(self, mock_credential_service, google_provider_config):
+    async def test_get_llm_client_google_success(self, mock_provider_configs, mock_credential_service, google_provider_config):
         """Test successful Google client creation"""
-        mock_credential_service.get_active_provider.return_value = google_provider_config
+        mock_provider_configs.get_active_provider.return_value = google_provider_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -150,13 +169,17 @@ class TestAsyncLLMProviderService:
                     )
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_with_provider_override(self, mock_credential_service):
+    async def test_get_llm_client_with_provider_override(self, mock_provider_configs, mock_credential_service):
         """Test client creation with explicit provider override (OpenAI)"""
-        mock_credential_service._get_provider_api_key.return_value = "override-key"
+        mock_provider_configs._get_provider_api_key.return_value = "override-key"
         mock_credential_service.get_credentials_by_category.return_value = {"LLM_BASE_URL": ""}
-        mock_credential_service._get_provider_base_url.return_value = None
+        mock_provider_configs._get_provider_base_url.return_value = None
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -166,10 +189,10 @@ class TestAsyncLLMProviderService:
                     mock_openai.assert_called_once_with(api_key="override-key")
 
                 # Verify explicit provider API key was requested
-                mock_credential_service._get_provider_api_key.assert_called_once_with("openai")
+                mock_provider_configs._get_provider_api_key.assert_called_once_with(mock_credential_service, "openai")
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_use_embedding_provider(self, mock_credential_service):
+    async def test_get_llm_client_use_embedding_provider(self, mock_provider_configs, mock_credential_service):
         """Test client creation with embedding provider preference"""
         embedding_config = {
             "provider": "openai",
@@ -178,13 +201,17 @@ class TestAsyncLLMProviderService:
             "chat_model": "gpt-4",
             "embedding_model": "text-embedding-3-large",
         }
-        mock_credential_service.get_active_provider.return_value = embedding_config
+        mock_provider_configs.get_active_provider.return_value = embedding_config
         # Mock the category call for potential fallbacks
         mock_credential_service.get_credentials_by_category.return_value = {
             "LLM_BASE_URL": "http://host.docker.internal:11434"
         }
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -195,11 +222,11 @@ class TestAsyncLLMProviderService:
 
                 # Verify embedding provider was requested
                 # The call count is higher due to diagnostic logging, so we check it was called with "embedding"
-                mock_credential_service.get_active_provider.assert_called_with("embedding")
+                mock_provider_configs.get_active_provider.assert_called_with(mock_credential_service, "embedding")
 
     @pytest.mark.skip(reason="Temporarily disabled due to missing OpenAI key in test environment")
     @pytest.mark.asyncio
-    async def test_get_llm_client_missing_openai_key_with_ollama_fallback(self, mock_credential_service):
+    async def test_get_llm_client_missing_openai_key_with_ollama_fallback(self, mock_provider_configs, mock_credential_service):
         """Test successful fallback to Ollama when OpenAI API key is missing"""
         config_without_key = {
             "provider": "openai",
@@ -208,12 +235,16 @@ class TestAsyncLLMProviderService:
             "chat_model": "gpt-4",
             "embedding_model": "text-embedding-3-small",
         }
-        mock_credential_service.get_active_provider.return_value = config_without_key
+        mock_provider_configs.get_active_provider.return_value = config_without_key
         mock_credential_service.get_credentials_by_category = AsyncMock(
             return_value={"LLM_BASE_URL": "http://host.docker.internal:11434"}
         )
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -228,7 +259,7 @@ class TestAsyncLLMProviderService:
 
     @pytest.mark.skip(reason="Temporarily disabled due to missing OpenAI key in test environment")
     @pytest.mark.asyncio
-    async def test_get_llm_client_missing_openai_key(self, mock_credential_service):
+    async def test_get_llm_client_missing_openai_key(self, mock_provider_configs, mock_credential_service):
         """Test error when OpenAI API key is missing and Ollama fallback fails"""
         config_without_key = {
             "provider": "openai",
@@ -237,13 +268,17 @@ class TestAsyncLLMProviderService:
             "chat_model": "gpt-4",
             "embedding_model": "text-embedding-3-small",
         }
-        mock_credential_service.get_active_provider.return_value = config_without_key
+        mock_provider_configs.get_active_provider.return_value = config_without_key
         # Mock get_credentials_by_category to raise an exception, simulating Ollama fallback failure
         mock_credential_service.get_credentials_by_category = AsyncMock(side_effect=Exception("Database error"))
 
         # Mock openai.AsyncOpenAI to fail when creating Ollama client with fallback URL
         with (
-            patch("src.server.services.llm_provider_service.credential_service", mock_credential_service),
+            patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider),
             patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai,
         ):
             mock_openai.side_effect = Exception("Connection failed")
@@ -253,7 +288,7 @@ class TestAsyncLLMProviderService:
                     pass
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_missing_google_key(self, mock_credential_service):
+    async def test_get_llm_client_missing_google_key(self, mock_provider_configs, mock_credential_service):
         """Test fallback to MockClient when Google API key is missing in dev environment"""
         config_without_key = {
             "provider": "google",
@@ -262,9 +297,13 @@ class TestAsyncLLMProviderService:
             "chat_model": "gemini-pro",
             "embedding_model": "text-embedding-004",
         }
-        mock_credential_service.get_active_provider.return_value = config_without_key
+        mock_provider_configs.get_active_provider.return_value = config_without_key
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             # Now we expect it NOT to raise, but to return a MockLLMClient
             # because we implemented the Mock Strategy for BUG-028/029
             async with get_llm_client() as client:
@@ -273,7 +312,7 @@ class TestAsyncLLMProviderService:
                 assert isinstance(client, MockLLMClient)
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_unsupported_provider_error(self, mock_credential_service):
+    async def test_get_llm_client_unsupported_provider_error(self, mock_provider_configs, mock_credential_service):
         """Test error when unsupported provider is configured"""
         unsupported_config = {
             "provider": "unsupported",
@@ -282,68 +321,92 @@ class TestAsyncLLMProviderService:
             "chat_model": "some-model",
             "embedding_model": "",
         }
-        mock_credential_service.get_active_provider.return_value = unsupported_config
+        mock_provider_configs.get_active_provider.return_value = unsupported_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with pytest.raises(ValueError, match="Unsupported LLM provider: unsupported"):
                 async with get_llm_client():
                     pass
 
     @pytest.mark.asyncio
-    async def test_get_llm_client_with_unsupported_provider_override(self, mock_credential_service):
+    async def test_get_llm_client_with_unsupported_provider_override(self, mock_provider_configs, mock_credential_service):
         """Test error when unsupported provider is explicitly requested"""
-        mock_credential_service._get_provider_api_key.return_value = "some-key"
+        mock_provider_configs._get_provider_api_key.return_value = "some-key"
         mock_credential_service.get_credentials_by_category.return_value = {}
-        mock_credential_service._get_provider_base_url.return_value = None
+        mock_provider_configs._get_provider_base_url.return_value = None
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with pytest.raises(ValueError, match="Unsupported LLM provider: custom-unsupported"):
                 async with get_llm_client(provider="custom-unsupported"):
                     pass
 
     @pytest.mark.asyncio
-    async def test_get_embedding_model_openai_success(self, mock_credential_service, openai_provider_config):
+    async def test_get_embedding_model_openai_success(self, mock_provider_configs, mock_credential_service, openai_provider_config):
         """Test getting embedding model for OpenAI provider"""
-        mock_credential_service.get_active_provider.return_value = openai_provider_config
+        mock_provider_configs.get_active_provider.return_value = openai_provider_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             model = await get_embedding_model()
             assert model == "text-embedding-3-small"
 
-            mock_credential_service.get_active_provider.assert_called_once_with("embedding")
+            mock_provider_configs.get_active_provider.assert_called_once_with(mock_credential_service, "embedding")
 
     @pytest.mark.asyncio
-    async def test_get_embedding_model_ollama_success(self, mock_credential_service, ollama_provider_config):
+    async def test_get_embedding_model_ollama_success(self, mock_provider_configs, mock_credential_service, ollama_provider_config):
         """Test getting embedding model for Ollama provider"""
-        mock_credential_service.get_active_provider.return_value = ollama_provider_config
+        mock_provider_configs.get_active_provider.return_value = ollama_provider_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             model = await get_embedding_model()
             assert model == "nomic-embed-text"
 
     @pytest.mark.asyncio
-    async def test_get_embedding_model_google_success(self, mock_credential_service, google_provider_config):
+    async def test_get_embedding_model_google_success(self, mock_provider_configs, mock_credential_service, google_provider_config):
         """Test getting embedding model for Google provider"""
-        mock_credential_service.get_active_provider.return_value = google_provider_config
+        mock_provider_configs.get_active_provider.return_value = google_provider_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             model = await get_embedding_model()
             assert model == "text-embedding-004"
 
     @pytest.mark.asyncio
-    async def test_get_embedding_model_with_provider_override(self, mock_credential_service):
+    async def test_get_embedding_model_with_provider_override(self, mock_provider_configs, mock_credential_service):
         """Test getting embedding model with provider override"""
         rag_settings = {"EMBEDDING_MODEL": "custom-embedding-model"}
         mock_credential_service.get_credentials_by_category.return_value = rag_settings
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             model = await get_embedding_model(provider="custom-provider")
             assert model == "custom-embedding-model"
 
             mock_credential_service.get_credentials_by_category.assert_called_once_with("rag_strategy")
 
     @pytest.mark.asyncio
-    async def test_get_embedding_model_custom_model_override(self, mock_credential_service):
+    async def test_get_embedding_model_custom_model_override(self, mock_provider_configs, mock_credential_service):
         """Test custom embedding model override"""
         config_with_custom = {
             "provider": "openai",
@@ -352,18 +415,26 @@ class TestAsyncLLMProviderService:
             "chat_model": "gpt-4",
             "embedding_model": "text-embedding-custom-large",
         }
-        mock_credential_service.get_active_provider.return_value = config_with_custom
+        mock_provider_configs.get_active_provider.return_value = config_with_custom
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             model = await get_embedding_model()
             assert model == "text-embedding-custom-large"
 
     @pytest.mark.asyncio
-    async def test_get_embedding_model_error_fallback(self, mock_credential_service):
+    async def test_get_embedding_model_error_fallback(self, mock_provider_configs, mock_credential_service):
         """Test that an error getting embedding model propagates the exception (Fail Fast SSOT)."""
-        mock_credential_service.get_active_provider.side_effect = Exception("Database error")
+        mock_provider_configs.get_active_provider.side_effect = Exception("Database error")
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with pytest.raises(Exception, match="Database error"):
                 await get_embedding_model()
 
@@ -381,15 +452,19 @@ class TestAsyncLLMProviderService:
         assert _get_cached_settings("non_existent") is None
 
     @pytest.mark.asyncio
-    async def test_cache_usage_in_get_llm_client(self, mock_credential_service, openai_provider_config):
+    async def test_cache_usage_in_get_llm_client(self, mock_provider_configs, mock_credential_service, openai_provider_config):
         """Test that cache is used to avoid repeated credential service calls"""
-        mock_credential_service.get_active_provider.return_value = openai_provider_config
+        mock_provider_configs.get_active_provider.return_value = openai_provider_config
         # Mock the category call for potential fallbacks
         mock_credential_service.get_credentials_by_category.return_value = {
             "LLM_BASE_URL": "http://host.docker.internal:11434"
         }
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -403,7 +478,7 @@ class TestAsyncLLMProviderService:
                     pass
 
                 # Should only call get_active_provider once due to caching
-                assert mock_credential_service.get_active_provider.call_count == 1
+                assert mock_provider_configs.get_active_provider.call_count == 1
 
     def test_deprecated_functions_removed(self):
         """Test that deprecated sync functions are no longer available"""
@@ -420,11 +495,15 @@ class TestAsyncLLMProviderService:
 
     @pytest.mark.skip(reason="Temporarily disabled to unblock CI/CD pipeline")
     @pytest.mark.asyncio
-    async def test_context_manager_cleanup(self, mock_credential_service, openai_provider_config):
+    async def test_context_manager_cleanup(self, mock_provider_configs, mock_credential_service, openai_provider_config):
         """Test that async context manager properly handles cleanup"""
-        mock_credential_service.get_active_provider.return_value = openai_provider_config
+        mock_provider_configs.get_active_provider.return_value = openai_provider_config
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -439,7 +518,7 @@ class TestAsyncLLMProviderService:
                 mock_client.aclose.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_multiple_providers_in_sequence(self, mock_credential_service):
+    async def test_multiple_providers_in_sequence(self, mock_provider_configs, mock_credential_service):
         """Test creating clients for different providers in sequence"""
         configs = [
             {"provider": "openai", "api_key": "openai-key", "base_url": None},
@@ -455,7 +534,11 @@ class TestAsyncLLMProviderService:
             "LLM_BASE_URL": "http://host.docker.internal:11434"
         }
 
-        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service):
+        with patch("src.server.services.llm_provider_service.credential_service", mock_credential_service), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider), \
+             patch("src.server.services.credentials.provider_configs._get_provider_api_key", mock_provider_configs._get_provider_api_key), \
+             patch("src.server.services.credentials.provider_configs._get_provider_base_url", mock_provider_configs._get_provider_base_url), \
+             patch("src.server.services.credentials.provider_configs.get_active_provider", mock_provider_configs.get_active_provider):
             with patch("src.server.services.llm_provider_service.openai.AsyncOpenAI") as mock_openai:
                 mock_client = self._make_mock_client()
                 mock_openai.return_value = mock_client
@@ -466,13 +549,13 @@ class TestAsyncLLMProviderService:
 
                     llm_module._settings_cache.clear()
 
-                    mock_credential_service.get_active_provider.return_value = config
+                    mock_provider_configs.get_active_provider.return_value = config
 
                     async with get_llm_client() as client:
                         assert client._original == mock_client
 
                 # Each of the 3 providers makes 1 call to get_active_provider (logic)
-                assert mock_credential_service.get_active_provider.call_count == 3
+                assert mock_provider_configs.get_active_provider.call_count == 3
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
