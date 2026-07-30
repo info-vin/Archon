@@ -4,3 +4,6 @@
 ## 2026-07-28 - Missing Focus Rings on Modal Close Buttons
 **Learning:** Discovered a consistent pattern where modal/drawer close buttons across multiple components (IdentityNewUserModal, ContentReviewPanel, LeadPitchDrawer, etc.) lacked keyboard focus indicators, breaking accessibility for keyboard users.
 **Action:** When adding or reviewing interactive icon buttons, specifically those used for dismissal/closing overlays, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` are explicitly applied to the `className` for keyboard a11y.
+## 2026-07-29 - Missing Focus Rings on Navigation Layout Buttons
+**Learning:** Found that core layout navigational icon buttons (like the mobile menu toggles and user logout buttons in PublicLayout and MainLayout) lacked keyboard focus indicators. While they functioned on click, keyboard-only users could not visually identify when these critical navigational elements were focused.
+**Action:** When adding or reviewing layout-level navigational buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring` (and optionally `focus-visible:ring-offset-2`) are explicitly applied to the `className` for keyboard a11y.
