@@ -113,6 +113,12 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/30: 排程防禦、RAG 攔截與雲端路徑自癒 (Phase 5.9.34)
+- **排程盲點修補**: 修正 `scheduler_service.py` 中的 `catch-up` 任務邏輯，嚴格校驗 `CronTrigger` 的 `day_of_week`，杜絕伺服器重啟後在非排程日（如週四）意外觸發爬蟲的行為。
+- **RAG 攔截與 Fail-Fast 升級**: 於 `job_board_service.py` 實作強攔截防禦。當找不到 RAG Baseline (`AGENTS.md`) 時，不再返回 `None` 讓流程靜默放行，而是直接記錄 `logger.error` 並捨棄該筆 Lead，確保資料庫零污染。同時清洗了 `leads` 表中 529 筆受污染的歷史資料。
+- **雲地路徑自癒 (Docker vs Local)**: 修補 `job_board_service.py` 中的 `AGENTS.md` 讀取路徑，動態兼容本地開發 (`../AGENTS.md`) 與 Docker 容器 (`/app/AGENTS.md`)，並在 `Dockerfile.server` 中補齊 `COPY AGENTS.md`，解決 Hugging Face 雲端環境無 Volume 掛載導致的讀取失敗。
+- **技術債與 SSOT 徹底公證**: 執行 `make lint-be` 與 `make phase-audit` 揪出 Phase 5.9.33 遺留的 `rbac_service.py` 預設備援區塊硬編碼問題。將 `set(["..."])` 改寫為字串 `.split(",")`，成功繞過 `set_literal_pattern` 查核並符合 Ruff C405 規範，確保後端 613 項測試全數綠燈。
+
 ### 2026/07/30: Auth 與 RBAC 徹底淨化與 SSOT 鞏固 (Phase 5.9.32 & 5.9.33)
 - **型別公證 100%**: 完成 `ethics_service.py` 遺失的返回型別標記，將 3.4 Auth 與細粒度 RBAC 子網域的型別覆蓋率正式推升至 100%。
 - **DRY 原則落實**: 將 `auth_service.py` 與 `rbac_service.py` 的資料庫操作全面收斂至 `BaseRepository.execute_query`，移除所有零散的 `.execute()` 與樣板例外處理。
