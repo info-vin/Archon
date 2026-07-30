@@ -43,6 +43,9 @@ class JobBoardService:
 
         # Read AGENTS.md
         agents_md_path = os.path.join(project_root, "AGENTS.md")
+        if not os.path.exists(agents_md_path):
+            # Fallback for local testing where project_root is python/
+            agents_md_path = os.path.join(project_root, "..", "AGENTS.md")
 
         try:
             with open(agents_md_path, encoding="utf-8") as f:
@@ -154,7 +157,7 @@ class JobBoardService:
                 if not baseline_embedding:
                     logger.error(f"Lead discarded. RAG Baseline missing, failing fast. Company: {job.company}")
                     return None
-                    
+
                 from ..services.embeddings.embedding_service import create_embedding
                 need_embedding = await create_embedding(identified_need)
                 if need_embedding:
