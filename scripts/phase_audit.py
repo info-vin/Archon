@@ -196,6 +196,8 @@ def ssot_hardcoding_audit():
     sleep_pattern = re.compile(r"asyncio\.sleep\(\s*([0-9\.]+)\s*\)")
     url_pattern = re.compile(r"[\"']https?://[a-zA-Z0-9_\-\.]+:\d+[\"']")
     cron_pattern = re.compile(r"CronTrigger\([^)]*(hour=\d+|minute=\d+|day_of_week=[\"'][a-zA-Z,]+[\"'])[^)]*\)")
+    # 新增：偵測寫死的字串集合 (例如 {"delete_project", "execute_sql"})
+    set_literal_pattern = re.compile(r"\{\s*[\"'][a-zA-Z0-9_]+[\"']\s*(?:,\s*[\"'][a-zA-Z0-9_]+[\"']\s*)+\}")
     
     for base_dir in target_dirs:
         if not os.path.exists(base_dir): continue
@@ -218,6 +220,8 @@ def ssot_hardcoding_audit():
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded HTTP URL/Port", line.strip()))
                             elif cron_pattern.search(line):
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded CronTrigger rules", line.strip()))
+                            elif set_literal_pattern.search(line):
+                                hardcoded_issues.append((file_path, line_num, "Hardcoded String Set Literal (SSOT Violation)", line.strip()))
                                 
     if hardcoded_issues:
         print(f"⚠️  Found {len(hardcoded_issues)} potential hardcoding / SSOT violations:")

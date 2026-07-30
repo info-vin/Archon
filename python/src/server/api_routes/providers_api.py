@@ -97,6 +97,16 @@ PROVIDER_TESTERS = {
 }
 
 
+PROVIDER_KEY_MAP = {
+    "google": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+    "openai": ["OPENAI_API_KEY"],
+    "anthropic": ["ANTHROPIC_API_KEY"],
+    "openrouter": ["OPENROUTER_API_KEY"],
+    "grok": ["GROK_API_KEY", "XAI_API_KEY"],
+    "ollama": [],  # Ollama doesn't need a key usually, or uses LLM_BASE_URL
+}
+
+
 @router.get("/{provider}/status")
 async def get_provider_status(
     provider: str = Path(
@@ -106,7 +116,7 @@ async def get_provider_status(
     """Test provider connectivity using server-side API key (secure)"""
     try:
         # Basic provider validation
-        allowed_providers = {"openai", "ollama", "google", "openrouter", "anthropic", "grok"}
+        allowed_providers = set(PROVIDER_KEY_MAP.keys())
         if provider not in allowed_providers:
             raise HTTPException(
                 status_code=400, detail=f"Invalid provider '{provider}'. Allowed providers: {sorted(allowed_providers)}"
@@ -119,17 +129,7 @@ async def get_provider_status(
         if provider not in PROVIDER_TESTERS:
             raise HTTPException(status_code=400, detail=f"Provider '{provider}' not supported for connectivity testing")
 
-        # Determine which DB keys to check based on the provider
-        provider_key_map = {
-            "google": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
-            "openai": ["OPENAI_API_KEY"],
-            "anthropic": ["ANTHROPIC_API_KEY"],
-            "openrouter": ["OPENROUTER_API_KEY"],
-            "grok": ["GROK_API_KEY", "XAI_API_KEY"],
-            "ollama": [],  # Ollama doesn't need a key usually, or uses LLM_BASE_URL
-        }
-
-        keys_to_check = provider_key_map.get(provider, [])
+        keys_to_check = PROVIDER_KEY_MAP.get(provider, [])
         api_key = None
 
         if provider == "ollama":

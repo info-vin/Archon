@@ -156,7 +156,16 @@ VALUES
   "text-embedding-004": {"input": 0.00, "output": 0.00},
   "claude-3-5-sonnet": {"input": 3.00, "output": 15.00},
   "ollama": {"input": 0.00, "output": 0.00}
-}', false, 'system', 'JSON configuration for AI model pricing per million tokens', NOW())
+}', false, 'system', 'JSON configuration for AI model pricing per million tokens', NOW()),
+
+-- 5. MCP Tool Restrictions (Phase 5.1/5.9.33 Realization)
+('MCP_RESTRICTED_BASE', 'delete_project, delete_task, run_system_command, execute_sql', false, 'security', 'Base MCP tool restrictions for all lower-level bots/users', NOW()),
+('MCP_RESTRICTED_MARKETBOT', 'manage_project', false, 'security', 'Extra MCP restrictions for marketbot', NOW()),
+('MCP_RESTRICTED_MARKETING', 'manage_project', false, 'security', 'Extra MCP restrictions for marketing', NOW()),
+('MCP_RESTRICTED_SUMMARY', 'manage_project', false, 'security', 'Extra MCP restrictions for summary', NOW()),
+('MCP_RESTRICTED_LIBRARIAN', 'manage_project, manage_task', false, 'security', 'Extra MCP restrictions for librarian', NOW()),
+('MCP_RESTRICTED_RAG', 'manage_project, manage_task', false, 'security', 'Extra MCP restrictions for rag', NOW()),
+('MCP_RESTRICTED_DOCUMENT', 'manage_project, manage_task', false, 'security', 'Extra MCP restrictions for document', NOW())
 
 ON CONFLICT (key) DO UPDATE SET 
     value = EXCLUDED.value,

@@ -1,5 +1,9 @@
 # python/src/server/services/rbac_service.py
 
+from typing import Any, cast
+
+from src.server.repositories.base_repository import BaseRepository
+
 from ..auth.permissions import ROLE_PERMISSIONS
 from ..config.logfire_config import get_logger
 from ..models.auth_models import UserProfileDTO
@@ -8,7 +12,7 @@ from ..utils import get_supabase_client
 logger = get_logger(__name__)
 
 
-class RBACService:
+class RBACService(BaseRepository):
     """
     Service for handling Role-Based Access Control (RBAC) logic.
     Phase 4.6.31: Transitioned from hardcoded dicts to dynamic database-backed matrix.
@@ -16,7 +20,8 @@ class RBACService:
 
     _matrix_cache: dict[str, set[str]] | None = None
 
-    def __init__(self) -> None:
+    def __init__(self, supabase_client: Any = None) -> None:
+        super().__init__(supabase_client or get_supabase_client())
         # Initial assignment rules (Static fallback)
         self.permissions = {
             "admin": ["admin", "system_admin", "manager", "employee", "member", "marketing", "sales", "ai_agent"],
@@ -53,17 +58,16 @@ class RBACService:
             return self._matrix_cache
 
         # Try to load from Database
-        try:
-            supabase = get_supabase_client()
-            result = supabase.table("archon_roles_permissions").select("role, permissions").execute()
+        query = self.supabase_client.table("archon_roles_permissions").select("role, permissions")
+        success, result = self.execute_query(query, "Failed to load dynamic RBAC matrix from DB", require_data=False)
 
-            if result.data:
-                dynamic_matrix = {item["role"].lower(): set(item["permissions"]) for item in result.data}
-                RBACService._matrix_cache = dynamic_matrix
-                logger.info(f"Loaded {len(dynamic_matrix)} roles from dynamic RBAC matrix")
-                return dynamic_matrix
-        except Exception as e:
-            logger.warning(f"Failed to load dynamic RBAC matrix from DB, falling back to static: {e}")
+        if success and result.get("data"):
+            dynamic_matrix = {item["role"].lower(): set(item["permissions"]) for item in result["data"]}
+            RBACService._matrix_cache = dynamic_matrix
+            logger.info(f"Loaded {len(dynamic_matrix)} roles from dynamic RBAC matrix")
+            return dynamic_matrix
+
+        logger.warning("Failed to load dynamic RBAC matrix from DB or no data, falling back to static")
 
         # Fallback to static permissions.py
         static_matrix = {role.lower(): perms for role, perms in ROLE_PERMISSIONS.items()}
@@ -95,13 +99,13 @@ class RBACService:
         }
 
         try:
-            supabase = get_supabase_client()
             # 1. Fetch static settings from archon_settings
             keys = [f"CRAWL_MAX_DEPTH_{suffix}", f"CRAWL_CONCURRENT_MAX_{suffix}", "CRAWL_ALLOWED_DOMAINS_RESTRICTED"]
-            result = supabase.table("archon_settings").select("key, value").in_("key", keys).execute()
+            query = self.supabase_client.table("archon_settings").select("key, value").in_("key", keys)
+            success, result = self.execute_query(query, "Failed to fetch settings", require_data=False)
 
-            if result.data:
-                settings = {item["key"]: item["value"] for item in result.data}
+            if success and result.get("data"):
+                settings = {item["key"]: item["value"] for item in result["data"]}
 
                 depth_key = f"CRAWL_MAX_DEPTH_{suffix}"
                 if depth_key in settings:
@@ -117,16 +121,15 @@ class RBACService:
 
             # 2. 物理加固：從 archon_crawler_targets 動態抓取 David 在 3737 設定的白名單
             # 這實現了 David 在 3737 設定 URL 與後端爬蟲權限的物理連動
-            dynamic_result = (
-                supabase.table("archon_crawler_targets").select("whitelist, target_url").eq("is_active", True).execute()
+            dynamic_query = (
+                self.supabase_client.table("archon_crawler_targets").select("whitelist, target_url").eq("is_active", True)
             )
+            d_success, dynamic_result = self.execute_query(dynamic_query, "Failed to fetch dynamic crawler targets", require_data=False)
 
-            if dynamic_result.data:
-                from typing import cast
-
+            if d_success and dynamic_result.get("data"):
                 allowed_domains = cast(list[str], constraints["allowed_domains"])
 
-                for target in dynamic_result.data:
+                for target in dynamic_result["data"]:
                     # 加入主網址網域 (Domain) 作為基本許可
                     from urllib.parse import urlparse
 
@@ -265,14 +268,26 @@ class RBACService:
         if role in ["admin", "system_admin", "charlie"]:
             return set()
 
-        # Base restrictions for all lower-level bots/users to protect infrastructure
-        restricted_tools = {"delete_project", "delete_task", "run_system_command", "execute_sql"}
+        # Fetch from archon_settings for dynamic restrictions
+        query = self.supabase_client.table("archon_settings").select("key, value").in_("key", ["MCP_RESTRICTED_BASE", f"MCP_RESTRICTED_{role.upper()}"])
+        success, result = self.execute_query(query, "Failed to fetch MCP restrictions", require_data=False)
 
-        # Additional restrictions based on specific roles
-        if role in ["marketbot", "marketing", "summary"]:
-            restricted_tools.update(["manage_project"])
-        elif role in ["librarian", "rag", "document"]:
-            restricted_tools.update(["manage_project", "manage_task"])
+        restricted_tools = set()
 
-        # Here we could extend to check DB permissions in the future
+        if success and result.get("data"):
+            settings = {item["key"]: item["value"] for item in result["data"]}
+            if "MCP_RESTRICTED_BASE" in settings:
+                restricted_tools.update([t.strip() for t in settings["MCP_RESTRICTED_BASE"].split(",") if t.strip()])
+
+            role_key = f"MCP_RESTRICTED_{role.upper()}"
+            if role_key in settings:
+                restricted_tools.update([t.strip() for t in settings[role_key].split(",") if t.strip()])
+        else:
+            # Fallback (DB independent)
+            restricted_tools = set(["delete_project", "delete_task", "run_system_command", "execute_sql"])
+            if role in ["marketbot", "marketing", "summary"]:
+                restricted_tools.update(["manage_project"])
+            elif role in ["librarian", "rag", "document"]:
+                restricted_tools.update(["manage_project", "manage_task"])
+
         return restricted_tools

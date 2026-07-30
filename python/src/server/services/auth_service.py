@@ -19,12 +19,9 @@ class AuthService(BaseRepository):
         Lists all users from the profiles table.
         Returns a list of profile dicts.
         """
-        try:
-            response = self.supabase_client.table("profiles").select("*").execute()
-            return list(response.data) if response.data else []
-        except Exception as e:
-            logger.error(f"Error fetching users: {e}")
-            return []
+        query = self.supabase_client.table("profiles").select("*")
+        success, res = self.execute_query(query, "Error fetching users", require_data=False)
+        return list(res.get("data", [])) if success else []
 
     def register_user(self, email: str, password: str, name: str, role: str = "employee") -> dict[str, Any]:
         """
@@ -65,7 +62,8 @@ class AuthService(BaseRepository):
                 "avatar": f"https://i.pravatar.cc/150?u={user_id}",
             }
 
-            self.supabase_client.table("profiles").upsert(profile_data).execute()
+            query = self.supabase_client.table("profiles").upsert(profile_data)
+            self.execute_query(query, f"Error creating profile for {user_id}", require_data=False)
             return profile_data
         except Exception as e:
             logger.error(f"Admin user creation error: {e}")
@@ -82,7 +80,8 @@ class AuthService(BaseRepository):
             self.supabase_client.auth.admin.update_user_by_id(user_id, {"email": new_email})
 
             # 2. Update Profile
-            self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id).execute()
+            query = self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id)
+            self.execute_query(query, f"Error updating email in profile for {user_id}", require_data=False)
 
         except Exception as e:
             logger.error(f"Error updating email: {e}", exc_info=True)
@@ -100,10 +99,11 @@ class AuthService(BaseRepository):
                 self.supabase_client.auth.admin.update_user_by_id(user_id, {"user_metadata": {"role": updates["role"]}})
 
             # 2. Update Profile table
-            res = self.supabase_client.table("profiles").update(updates).eq("id", user_id).execute()
+            query = self.supabase_client.table("profiles").update(updates).eq("id", user_id)
+            success, res = self.execute_query(query, f"Failed to update profile for {user_id}", require_data=False)
 
-            if res.data:
-                return cast(dict[str, Any], res.data[0])
+            if success and res.get("data"):
+                return cast(dict[str, Any], res["data"][0])
             raise ValueError(f"Failed to update profile for {user_id}")
 
         except Exception as e:
