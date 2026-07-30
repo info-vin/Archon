@@ -1,26 +1,51 @@
-from typing import Any, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from ..repositories.base_repository import BaseRepository
+
+
+class ConnectivityLogDTO(TypedDict):
+    id: NotRequired[str]
+    source: NotRequired[str]
+    level: NotRequired[str]
+    message: NotRequired[str]
+    details: NotRequired[dict[str, Any] | None]
+    created_at: NotRequired[str]
+    type: NotRequired[str]
+    project_name: NotRequired[str | None]
+    user_id: NotRequired[str | None]
+
+
+class SystemSettingDTO(TypedDict):
+    id: NotRequired[str]
+    key: NotRequired[str]
+    value: NotRequired[str | None]
+    encrypted_value: NotRequired[str | None]
+    is_encrypted: NotRequired[bool]
+    category: NotRequired[str | None]
+    description: NotRequired[str | None]
+    created_at: NotRequired[str]
+    updated_at: NotRequired[str]
+    is_system_protected: NotRequired[bool]
 
 
 class SystemService(BaseRepository):
     def __init__(self) -> None:
         super().__init__()
 
-    async def list_connectivity_logs(self, limit: int = 20) -> list[dict[str, Any]]:
+    async def list_connectivity_logs(self, limit: int = 20) -> list[ConnectivityLogDTO]:
         query = self.supabase_client.table("archon_logs").select("*").eq("level", "ALERT").eq("type", "system").order("created_at", desc=True).limit(limit)
         success, res = self.execute_query(query, "Failed to list connectivity logs", require_data=False)
-        return cast(list[dict[str, Any]], res.get("data", []) if success else [])
+        return cast(list[ConnectivityLogDTO], res.get("data", []) if success else [])
 
-    async def list_system_settings(self, category: str | None = None) -> list[dict[str, Any]]:
+    async def list_system_settings(self, category: str | None = None) -> list[SystemSettingDTO]:
         query = self.supabase_client.table("archon_settings").select("*")
         if category:
             query = query.eq("category", category)
         query = query.order("key")
         success, res = self.execute_query(query, "Failed to list system settings", require_data=False)
-        return cast(list[dict[str, Any]], res.get("data", []) if success else [])
+        return cast(list[SystemSettingDTO], res.get("data", []) if success else [])
 
-    async def update_system_setting(self, key: str, new_value: str, description: str | None, user_name: str) -> dict[str, Any]:
+    async def update_system_setting(self, key: str, new_value: str, description: str | None, user_name: str) -> SystemSettingDTO:
         # 1. Fetch old value
         query_old = self.supabase_client.table("archon_settings").select("value, is_system_protected").eq("key", key)
         success_old, res_old = self.execute_query(query_old, f"Setting '{key}' not found", require_data=True)
@@ -56,6 +81,6 @@ class SystemService(BaseRepository):
         except Exception:
             pass
 
-        return cast(dict[str, Any], res_upd["data"][0])
+        return cast(SystemSettingDTO, res_upd["data"][0])
 
 system_service = SystemService()
