@@ -284,10 +284,10 @@ class RBACService(BaseRepository):
                 restricted_tools.update([t.strip() for t in settings[role_key].split(",") if t.strip()])
         else:
             # Fallback (DB independent)
-            restricted_tools = set(["delete_project", "delete_task", "run_system_command", "execute_sql"])
+            restricted_tools = set("delete_project,delete_task,run_system_command,execute_sql".split(","))
             if role in ["marketbot", "marketing", "summary"]:
-                restricted_tools.update(["manage_project"])
+                restricted_tools.add("manage_project")
             elif role in ["librarian", "rag", "document"]:
-                restricted_tools.update(["manage_project", "manage_task"])
+                restricted_tools.update("manage_project,manage_task".split(","))
 
         return restricted_tools
