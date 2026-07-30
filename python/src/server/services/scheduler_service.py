@@ -104,6 +104,12 @@ class SchedulerService:
                 target_minute = int(str(trigger.fields[6]))
                 if now_local.hour < target_hour or (now_local.hour == target_hour and now_local.minute < target_minute):
                     return False
+                
+                target_days = str(trigger.fields[4]).lower()
+                if target_days != "*":
+                    current_day_name = now_local.strftime("%a").lower()
+                    if current_day_name not in target_days:
+                        return False
             except Exception:
                 pass
         last_run = await self._get_last_run(job_id)

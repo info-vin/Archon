@@ -70,6 +70,7 @@ RUN playwright install chromium
 COPY python/src/ src/
 COPY python/tests/ tests/
 COPY migration/ migration/
+COPY AGENTS.md /app/AGENTS.md
 
 # Set environment variables
 ENV PYTHONPATH="/app/src:/app:$PYTHONPATH"
