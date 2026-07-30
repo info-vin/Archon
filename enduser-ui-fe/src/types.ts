@@ -26,15 +26,6 @@ export enum TaskPriority {
   CRITICAL = 'critical'
 }
 
-export type PermissionScope =
-  | 'task:create' | 'task:read:own' | 'task:read:team' | 'task:read:all'
-  | 'task:update:own' | 'task:update:team' | 'task:update:all'
-  | 'agent:trigger:dev' | 'agent:trigger:mkt' | 'agent:trigger:know'
-  | 'code:approve' | 'content:publish'
-  | 'stats:view:own' | 'stats:view:team' | 'stats:view:all'
-  | 'leads:view:all' | 'leads:view:sales' | 'leads:view:marketing' | 'brand:manage'
-  | 'user:manage' | 'user:manage:team' | 'mcp:manage';
-
 export type ViewMode = 'list' | 'table' | 'kanban' | 'gantt';
 export type SortableTaskKeys = 'title' | 'due_date' | 'priority' | 'status' | 'completed_at' | 'created_at';
 export type SortDirection = 'ascending' | 'descending';
@@ -60,14 +51,6 @@ export interface Project {
   status: 'planning' | 'active' | 'completed' | 'on_hold';
   projectManagerId: string;
   computed_status?: 'not_started' | 'in_progress' | 'completed' | null;
-}
-
-export interface ProjectAssignment {
-  id: string;
-  projectId: string;
-  employeeId: string;
-  role: 'manager' | 'member' | 'viewer';
-  isActive: boolean;
 }
 
 export interface Task {
