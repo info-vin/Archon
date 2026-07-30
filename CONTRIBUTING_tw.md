@@ -29,6 +29,7 @@
 | 17. **角色連通性稽核 (Persona Smoke Test Audit)** | 拒絕因「文件標示 Done」或「後端 API 綠燈」就宣佈功能完成。必須針對每個角色 (Alice, Bob, Charlie, David)，從 **UI 實體元件 (`.tsx`)** 開始往下物理尋線，確認該按鈕是否真實呼叫 `api.ts`，並能打通後端 Endpoint。嚴禁「空殼 (Stubbed)」UI 與「複製貼上」的假象混充落地功能。 |
 | 18. **杜絕迴圈內單筆寫入 (Enforce Bulk Insert)** | 嚴禁在 `for` 或 `while` 迴圈內部直接呼叫 `client.table(...).insert().execute()`。必須在迴圈內收集 payload (如 `batch_data.append(row)`)，並在迴圈外一次性使用 Bulk Insert，以杜絕 Event Loop 與資料庫 I/O 阻塞。 |
 | 19. **消滅硬編碼與 Fallback 韌性** | 系統的閾值、限制與提示詞必須從資料庫 `SettingsService` 或 `archon_settings` 動態讀取，落實 Model SSOT 精神。同時，在讀取配置時必須提供安全的回退預設值 (Fallback Default, 如 `value or "default"`)，確保資料缺失時系統能 Fail-Safe，這屬於防禦性編程，不應視為硬編碼。 |
+| 20. **Dockerfile SSOT 與快取防禦** | 嚴禁為了優化「冷啟動時間 (Cold Build)」而破壞依賴的單一事實來源 (SSOT)。例如，`Dockerfile` 中 `playwright` 的安裝**必須**位在 `COPY /venv` 之後，以確保抓取的瀏覽器二進位版本與 `pyproject.toml` 絕對吻合。拒絕使用可能引發 C-extension/OS 衝突的龐大官方 Base Image (如 `mcr.microsoft.com`)。我們接受依賴變更時的較長組建時間，以換取生產環境 100% 的執行期穩定性與日常改代碼時的極速 Layer Cache。 |
 
 ---
 
