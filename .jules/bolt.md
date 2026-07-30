@@ -145,3 +145,15 @@
 ## 2026-07-26 - Static lookup dictionaries for repeated inline strings
 **Learning:** Extracting repeated string manipulation operations (e.g. `status.toLowerCase() === 'todo'`) inside a React component render loop into an external, static lookup dictionary (`STATUS_COLORS`) prevents unnecessary string memory allocations and provides faster O(1) attribute access per iteration.
 **Action:** When optimizing React component performance, extract redundant inline string operations and conditional ternary chains evaluated during every render cycle into static O(1) lookup dictionaries defined outside the component.
+
+## 2026-07-29 - Pre-calculating Date objects before array sorting
+**Learning:** Calling  inside  comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck.
+**Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.
+
+## 2026-07-29 - Pre-calculating Date objects before array sorting
+**Learning:** Calling `new Date(string).getTime()` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck.
+**Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.
+
+## 2026-07-29 - Pre-calculating Date objects before array sorting
+**Learning:** Calling `new Date(string).getTime()` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck.
+**Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.
