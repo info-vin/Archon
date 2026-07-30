@@ -151,29 +151,32 @@ class JobBoardService:
                 identified_need = job.identified_need or await self._infer_need(job)
 
                 # RAG Vector Matching
-                if baseline_embedding:
-                    from ..services.embeddings.embedding_service import create_embedding
-                    need_embedding = await create_embedding(identified_need)
-                    if need_embedding:
-                        sim = self._cosine_similarity(baseline_embedding, need_embedding)
-                        from ..schemas.settings import CrawlerJobConfig
-                        from ..services.settings_service import SettingsService
-                        try:
-                            settings = SettingsService(self.supabase)
-                            config = CrawlerJobConfig.model_validate(settings.get_all_settings())
-                        except Exception:
-                            config = CrawlerJobConfig()
+                if not baseline_embedding:
+                    logger.error(f"Lead discarded. RAG Baseline missing, failing fast. Company: {job.company}")
+                    return None
+                    
+                from ..services.embeddings.embedding_service import create_embedding
+                need_embedding = await create_embedding(identified_need)
+                if need_embedding:
+                    sim = self._cosine_similarity(baseline_embedding, need_embedding)
+                    from ..schemas.settings import CrawlerJobConfig
+                    from ..services.settings_service import SettingsService
+                    try:
+                        settings = SettingsService(self.supabase)
+                        config = CrawlerJobConfig.model_validate(settings.get_all_settings())
+                    except Exception:
+                        config = CrawlerJobConfig()
 
-                        threshold = config.lead_gen_similarity_threshold
+                    threshold = config.lead_gen_similarity_threshold
 
-                        if sim < threshold:
-                            # Log discarded
-                            self.supabase.table("archon_logs").insert({
-                                "source": "job_board_service_rag",
-                                "level": "DEBUG",
-                                "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
-                            }).execute()
-                            return None
+                    if sim < threshold:
+                        # Log discarded
+                        self.supabase.table("archon_logs").insert({
+                            "source": "job_board_service_rag",
+                            "level": "DEBUG",
+                            "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
+                        }).execute()
+                        return None
 
                 return {
                     "company_name": job.company,
