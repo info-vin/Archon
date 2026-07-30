@@ -137,6 +137,16 @@ class MemberPerformanceStats(BaseModel):
     completed_tasks: int = Field(description="The number of completed tasks by this assignee")
 
 
+class AgentXPStats(BaseModel):
+    name: str = Field(description="The display name of the agent")
+    agent_id: str = Field(description="The unique identifier of the agent")
+    total_xp: int = Field(description="The total experience points the agent has accumulated")
+    success_count: int = Field(description="The total number of successful tasks completed by the agent")
+    total_cost: float = Field(description="The total cost in USD incurred by the agent's operations")
+    roi_ratio: float = Field(description="The Return on Investment ratio calculated for the agent")
+    level: str = Field(description="The calculated skill or rank level of the agent")
+
+
 @router.get("/tasks-by-status", response_model=list[TaskStatusCount], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_tasks_by_status() -> list[TaskStatusCount]:
     """Get the count of tasks grouped by status."""
@@ -159,11 +169,12 @@ async def get_member_performance() -> list[MemberPerformanceStats]:
         return []
 
 
-@router.get("/agent-xp", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_agent_xp() -> list[dict[str, Any]]:
+@router.get("/agent-xp", response_model=list[AgentXPStats], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_agent_xp() -> list[AgentXPStats]:
     """Agent Experience (XP) & Level Ranking HUD (Phase 4.6.8)."""
     try:
-        return await stats_service.get_agent_xp_stats()
+        results = await stats_service.get_agent_xp_stats()
+        return [AgentXPStats(**result) for result in results]
     except Exception as e:
         logger.error(f"Failed to get agent xp stats: {e}")
         return []
