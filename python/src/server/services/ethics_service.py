@@ -4,7 +4,7 @@ from ..repositories.base_repository import BaseRepository
 
 
 class EthicsService(BaseRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     async def get_ethics_events(self, limit: int = 20) -> list[dict[str, Any]]:
