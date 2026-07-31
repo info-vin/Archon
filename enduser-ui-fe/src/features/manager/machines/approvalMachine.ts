@@ -47,7 +47,15 @@ export const approvalMachine = setup({
           marketing_author: b.authorName
         }))
       ];
-      unifiedList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // PERFORMANCE: Pre-calculate timestamps to avoid O(N log N) string-to-date parsing in sort
+      // Keyed by object reference to avoid cross-collection ID collisions (BUG-054 mitigation)
+      const timestamps = new Map<UnifiedProposal, number>();
+      for (const item of unifiedList) {
+          timestamps.set(item, new Date(item.created_at).getTime());
+      }
+
+      unifiedList.sort((a, b) => (timestamps.get(b) ?? 0) - (timestamps.get(a) ?? 0));
       return unifiedList;
     }),
     processAction: fromPromise(async ({ input }: { input: { id: string; action: 'approve' | 'reject'; proposal: UnifiedProposal; reason?: string } }) => {
