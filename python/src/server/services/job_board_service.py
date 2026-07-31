@@ -27,30 +27,24 @@ class JobBoardService:
         norm2 = math.sqrt(sum(b * b for b in vec2))
         return dot / (norm1 * norm2) if norm1 and norm2 else 0.0
 
-    async def _get_baseline_embedding(self) -> list[float] | None:
-        if getattr(self, "_baseline_embedding_cache", None) is not None:
-            return self._baseline_embedding_cache # type: ignore
+    async def _get_core_text(self) -> str | None:
+        if getattr(self, "_core_text_cache", None) is not None:
+            return self._core_text_cache # type: ignore
 
         import os
         from pathlib import Path
 
-        from ..services.embeddings.embedding_service import create_embedding
-
-        # Resolve PROJECT_ROOT dynamically
         project_root = os.environ.get("PROJECT_ROOT")
         if not project_root:
             project_root = str(Path(__file__).resolve().parent.parent.parent.parent)
 
-        # Read AGENTS.md
         agents_md_path = os.path.join(project_root, "AGENTS.md")
         if not os.path.exists(agents_md_path):
-            # Fallback for local testing where project_root is python/
             agents_md_path = os.path.join(project_root, "..", "AGENTS.md")
 
         try:
             with open(agents_md_path, encoding="utf-8") as f:
                 content = f.read()
-                # Extract only the focused core capabilities (4.6% pure baseline)
                 start_idx = content.find("### Knowledge Base Tools")
                 end_idx = content.find("### Document Management")
                 if start_idx != -1 and end_idx != -1:
@@ -59,11 +53,102 @@ class JobBoardService:
                     core_text = "Archon Core Capabilities:\n" + content.split("## MCP Tools Available")[1][:2000]
                 else:
                     core_text = content[:2000]
-                self._baseline_embedding_cache = await create_embedding(core_text)
-                return self._baseline_embedding_cache
+                self._core_text_cache = core_text
+                return self._core_text_cache
         except Exception as e:
-            logger.error(f"Failed to read or embed AGENTS.md: {e}")
+            logger.error(f"Failed to read AGENTS.md for core text: {e}")
             return None
+
+    async def _get_hyde_baseline_embedding(self) -> list[float] | None:
+        if getattr(self, "_baseline_embedding_cache", None) is not None:
+            return self._baseline_embedding_cache # type: ignore
+
+        from ..services.embeddings.embedding_service import create_embedding
+
+        core_text = await self._get_core_text()
+        if not core_text:
+            return None
+
+        try:
+            from google import genai
+
+            from ..services.credential_service import credential_service
+            from ..services.prompt_service import prompt_service
+
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            if not api_key:
+                logger.error("No API key for HyDE generation")
+                return None
+
+            client = genai.Client(api_key=api_key)
+
+            default_prompt = (
+                "請想像你是一家需要購買以下 AI 服務的傳統或非軟體公司，請寫出一篇 300 字的徵才職缺文案，尋找能幫你們導入這些技術的顧問或廠商。\n\n"
+                "核心服務：\n{core_text}"
+            )
+            prompt_template = prompt_service.get_prompt("ALICE_HYDE_BASELINE", default=default_prompt)
+            prompt = prompt_template.format(core_text=core_text)
+
+            @retry_with_backoff(max_retries=3, initial_delay=2.0)
+            async def _call_gemini():
+                return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
+
+            async with self.rate_limiter.semaphore:
+                await self.rate_limiter.acquire(estimated_tokens=500)
+                response = await _call_gemini()
+
+            hyde_text = str(response.text).strip() if response.text else core_text
+            self._baseline_embedding_cache = await create_embedding(hyde_text)
+            return self._baseline_embedding_cache
+        except Exception as e:
+            logger.error(f"Failed to generate HyDE baseline: {e}")
+            return None
+
+    async def _llm_judge(self, job: JobData) -> bool:
+        try:
+            from google import genai
+
+            from ..services.credential_service import credential_service
+            from ..services.prompt_service import prompt_service
+
+            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
+            if not api_key:
+                return False
+
+            core_text = await self._get_core_text()
+            if not core_text:
+                return False
+
+            client = genai.Client(api_key=api_key)
+            default_prompt = (
+                "我們是一家 AI 自動化與 Agent 軟體公司。我們的核心能力是：\n{core_text}\n\n"
+                "請看以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
+                "請問這家公司是：\n"
+                "1. 我們的「潛在客戶」(他們缺乏 AI 能力，需要買我們的服務來自動化或導入 AI)。如果是，請回答 YES。\n"
+                "2. 我們的「同業競爭者」(他們正在招募 AI 工程師，要自己開發 LLM 或 Agent)。如果是，請回答 NO。\n"
+                "3. 完全無關。請回答 NO。\n\n"
+                "只回答 YES 或 NO。"
+            )
+            prompt_template = prompt_service.get_prompt("ALICE_LEAD_JUDGE", default=default_prompt)
+            prompt = prompt_template.format(
+                core_text=core_text,
+                title=job.title,
+                desc=(job.description_full or job.description or "")[:1000]
+            )
+
+            @retry_with_backoff(max_retries=3, initial_delay=2.0)
+            async def _call_gemini():
+                return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
+
+            async with self.rate_limiter.semaphore:
+                await self.rate_limiter.acquire(estimated_tokens=500)
+                response = await _call_gemini()
+
+            answer = str(response.text).strip().upper() if response.text else "NO"
+            return "YES" in answer
+        except Exception as e:
+            logger.error(f"LLM Judge failed for {job.company}: {e}")
+            return False
 
     def __init__(self) -> None:
         self.supabase = get_supabase_client()
@@ -147,39 +232,56 @@ class JobBoardService:
             except Exception as e:
                 logger.error(f"Failed to fetch existing leads: {e}")
 
-        baseline_embedding = await self._get_baseline_embedding()
+        baseline_embedding = await self._get_hyde_baseline_embedding()
 
         async def _process_single_job(job: JobData) -> dict | None:
             try:
-                identified_need = job.identified_need or await self._infer_need(job)
-
-                # RAG Vector Matching
+                # RAG Vector Matching against HyDE Baseline
                 if not baseline_embedding:
-                    logger.error(f"Lead discarded. RAG Baseline missing, failing fast. Company: {job.company}")
+                    logger.error(f"Lead discarded. HyDE Baseline missing, failing fast. Company: {job.company}")
                     return None
 
                 from ..services.embeddings.embedding_service import create_embedding
-                need_embedding = await create_embedding(identified_need)
-                if need_embedding:
-                    sim = self._cosine_similarity(baseline_embedding, need_embedding)
-                    from ..schemas.settings import CrawlerJobConfig
-                    from ..services.settings_service import SettingsService
-                    try:
-                        settings = SettingsService(self.supabase)
-                        config = CrawlerJobConfig.model_validate(settings.get_all_settings())
-                    except Exception:
-                        config = CrawlerJobConfig()
+                desc = job.description_full or job.description or ""
+                job_text = f"{job.title} {desc[:1500]}"
+                job_embedding = await create_embedding(job_text)
 
-                    threshold = config.lead_gen_similarity_threshold
+                if not job_embedding:
+                    return None
 
-                    if sim < threshold:
-                        # Log discarded
-                        self.supabase.table("archon_logs").insert({
-                            "source": "job_board_service_rag",
-                            "level": "DEBUG",
-                            "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
-                        }).execute()
-                        return None
+                sim = self._cosine_similarity(baseline_embedding, job_embedding)
+                from ..schemas.settings import CrawlerJobConfig
+                from ..services.settings_service import SettingsService
+                try:
+                    settings = SettingsService(self.supabase)
+                    config = CrawlerJobConfig.model_validate(settings.get_all_settings())
+                except Exception:
+                    config = CrawlerJobConfig()
+
+                threshold = config.lead_gen_similarity_threshold
+
+                # Layer 1: Fast Fail on Vector Similarity
+                if sim < threshold:
+                    # Log discarded
+                    self.supabase.table("archon_logs").insert({
+                        "source": "job_board_service_rag",
+                        "level": "DEBUG",
+                        "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
+                    }).execute()
+                    return None
+
+                # Layer 2: LLM Judge (Reject competitors)
+                is_lead = await self._llm_judge(job)
+                if not is_lead:
+                    self.supabase.table("archon_logs").insert({
+                        "source": "job_board_service_judge",
+                        "level": "DEBUG",
+                        "message": f"Lead discarded by LLM Judge. Company: {job.company}"
+                    }).execute()
+                    return None
+
+                # Generate the identified need only if it passes both layers
+                identified_need = job.identified_need or await self._infer_need(job)
 
                 return {
                     "company_name": job.company,
