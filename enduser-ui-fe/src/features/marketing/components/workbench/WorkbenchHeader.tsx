@@ -36,7 +36,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
       <div className="flex items-center space-x-3">
         <button
           onClick={onSave}
-          className="flex items-center px-4 py-2 border rounded-xl text-sm font-bold hover:bg-slate-50 transition-all dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 active:scale-95"
+          className="flex items-center px-4 py-2 border rounded-xl text-sm font-bold hover:bg-slate-50 transition-all dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
           <SaveIcon className="w-4 h-4 mr-2 text-slate-400" />
           Save Draft
@@ -44,7 +44,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
 
         <button
           onClick={() => onPublish({ title: title, content: content })}
-          className="flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-black transition-all shadow-lg shadow-indigo-100 dark:shadow-none active:scale-95"
+          className="flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-black transition-all shadow-lg shadow-indigo-100 dark:shadow-none active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
           <CheckCircleIcon className="w-4 h-4 mr-2" />
           Submit
