@@ -3,6 +3,8 @@ Visit Log API Hardened - Secure management of physical visit records.
 Lean implementation with full test compatibility and GAP-009 Realization.
 """
 
+from typing import cast
+
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from src.server.models.auth_models import UserProfileDTO
@@ -58,7 +60,7 @@ async def create_visit_log(
     if not success:
         raise HTTPException(status_code=400, detail=str(res))
 
-    return res
+    return cast(VisitLogResponse, res)
 
 
 @router.get("/attendance/status", response_model=AttendanceStatusResponse)
@@ -67,4 +69,4 @@ async def get_attendance_status(current_user: UserProfileDTO = Depends(get_curre
     success, res = await visit_log_service.get_attendance_status(current_user.id)
     if not success:
         raise HTTPException(status_code=500, detail=str(res))
-    return res
+    return cast(AttendanceStatusResponse, res)
