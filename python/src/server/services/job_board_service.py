@@ -59,6 +59,39 @@ class JobBoardService:
             logger.error(f"Failed to read AGENTS.md for core text: {e}")
             return None
 
+    async def _generate_llm_response(
+        self,
+        prompt_name: str,
+        default_prompt: str,
+        format_kwargs: dict[str, Any],
+        estimated_tokens: int = 500,
+        max_retries: int = 3,
+    ) -> str | None:
+        try:
+            from ..services.llm_provider_service import get_llm_client
+            from ..services.prompt_service import prompt_service
+
+            async with get_llm_client() as client:
+                prompt_template = prompt_service.get_prompt(prompt_name, default=default_prompt)
+                prompt = prompt_template.format(**format_kwargs)
+
+                @retry_with_backoff(max_retries=max_retries, initial_delay=2.0)
+                async def _call_llm():
+                    return await client.chat.completions.create(
+                        model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                        messages=[{"role": "user", "content": prompt}]
+                    )
+
+                async with self.rate_limiter.semaphore:
+                    await self.rate_limiter.acquire(estimated_tokens=estimated_tokens)
+                    response = await _call_llm()
+
+                content = response.choices[0].message.content if response.choices else None
+                return str(content).strip() if content else None
+        except Exception as e:
+            logger.error(f"LLM generation failed for {prompt_name}: {e}")
+            return None
+
     async def _get_hyde_baseline_embedding(self) -> list[float] | None:
         if getattr(self, "_baseline_embedding_cache", None) is not None:
             return self._baseline_embedding_cache # type: ignore
@@ -69,35 +102,20 @@ class JobBoardService:
         if not core_text:
             return None
 
+        default_prompt = (
+            "請想像你是一家需要購買以下 AI 服務的傳統或非軟體公司，請寫出一篇 300 字的徵才職缺文案，尋找能幫你們導入這些技術的顧問或廠商。\n\n"
+            "核心服務：\n{core_text}"
+        )
+        llm_text = await self._generate_llm_response(
+            prompt_name="ALICE_HYDE_BASELINE",
+            default_prompt=default_prompt,
+            format_kwargs={"core_text": core_text},
+            estimated_tokens=500,
+            max_retries=3
+        )
+        hyde_text = llm_text if llm_text else core_text
+
         try:
-            from google import genai
-
-            from ..services.credential_service import credential_service
-            from ..services.prompt_service import prompt_service
-
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
-            if not api_key:
-                logger.error("No API key for HyDE generation")
-                return None
-
-            client = genai.Client(api_key=api_key)
-
-            default_prompt = (
-                "請想像你是一家需要購買以下 AI 服務的傳統或非軟體公司，請寫出一篇 300 字的徵才職缺文案，尋找能幫你們導入這些技術的顧問或廠商。\n\n"
-                "核心服務：\n{core_text}"
-            )
-            prompt_template = prompt_service.get_prompt("ALICE_HYDE_BASELINE", default=default_prompt)
-            prompt = prompt_template.format(core_text=core_text)
-
-            @retry_with_backoff(max_retries=3, initial_delay=2.0)
-            async def _call_gemini():
-                return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
-
-            async with self.rate_limiter.semaphore:
-                await self.rate_limiter.acquire(estimated_tokens=500)
-                response = await _call_gemini()
-
-            hyde_text = str(response.text).strip() if response.text else core_text
             self._baseline_embedding_cache = await create_embedding(hyde_text)
             return self._baseline_embedding_cache
         except Exception as e:
@@ -105,50 +123,34 @@ class JobBoardService:
             return None
 
     async def _llm_judge(self, job: JobData) -> bool:
-        try:
-            from google import genai
-
-            from ..services.credential_service import credential_service
-            from ..services.prompt_service import prompt_service
-
-            api_key = await credential_service.get_credential("GEMINI_API_KEY") or await credential_service.get_credential("GOOGLE_API_KEY")
-            if not api_key:
-                return False
-
-            core_text = await self._get_core_text()
-            if not core_text:
-                return False
-
-            client = genai.Client(api_key=api_key)
-            default_prompt = (
-                "我們是一家 AI 自動化與 Agent 軟體公司。我們的核心能力是：\n{core_text}\n\n"
-                "請看以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
-                "請問這家公司是：\n"
-                "1. 我們的「潛在客戶」(他們缺乏 AI 能力，需要買我們的服務來自動化或導入 AI)。如果是，請回答 YES。\n"
-                "2. 我們的「同業競爭者」(他們正在招募 AI 工程師，要自己開發 LLM 或 Agent)。如果是，請回答 NO。\n"
-                "3. 完全無關。請回答 NO。\n\n"
-                "只回答 YES 或 NO。"
-            )
-            prompt_template = prompt_service.get_prompt("ALICE_LEAD_JUDGE", default=default_prompt)
-            prompt = prompt_template.format(
-                core_text=core_text,
-                title=job.title,
-                desc=(job.description_full or job.description or "")[:1000]
-            )
-
-            @retry_with_backoff(max_retries=3, initial_delay=2.0)
-            async def _call_gemini():
-                return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
-
-            async with self.rate_limiter.semaphore:
-                await self.rate_limiter.acquire(estimated_tokens=500)
-                response = await _call_gemini()
-
-            answer = str(response.text).strip().upper() if response.text else "NO"
-            return "YES" in answer
-        except Exception as e:
-            logger.error(f"LLM Judge failed for {job.company}: {e}")
+        core_text = await self._get_core_text()
+        if not core_text:
             return False
+
+        default_prompt = (
+            "我們是一家 AI 自動化與 Agent 軟體公司。我們的核心能力是：\n{core_text}\n\n"
+            "請看以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
+            "請問這家公司是：\n"
+            "1. 我們的「潛在客戶」(他們缺乏 AI 能力，需要買我們的服務來自動化或導入 AI)。如果是，請回答 YES。\n"
+            "2. 我們的「同業競爭者」(他們正在招募 AI 工程師，要自己開發 LLM 或 Agent)。如果是，請回答 NO。\n"
+            "3. 完全無關。請回答 NO。\n\n"
+            "只回答 YES 或 NO。"
+        )
+
+        content = await self._generate_llm_response(
+            prompt_name="ALICE_LEAD_JUDGE",
+            default_prompt=default_prompt,
+            format_kwargs={
+                "core_text": core_text,
+                "title": job.title,
+                "desc": (job.description_full or job.description or "")[:1000]
+            },
+            estimated_tokens=500,
+            max_retries=3
+        )
+
+        answer = str(content).strip().upper() if content else "NO"
+        return "YES" in answer
 
     def __init__(self) -> None:
         self.supabase = get_supabase_client()
@@ -336,43 +338,24 @@ class JobBoardService:
         return new_leads_count
 
     async def _infer_need(self, job: JobData) -> str:
-        try:
-            from ..services.credential_service import credential_service
+        default_prompt = (
+            "你是一位銷售助理。請用繁體中文列出該職缺的：\n"
+            "- **技術棧**\n"
+            "- **痛點預測**\n\n"
+            "Job: {title} at {company}\n"
+            "Desc: {desc}"
+        )
 
-            api_key = await credential_service.get_credential(
-                "GEMINI_API_KEY"
-            ) or await credential_service.get_credential("GOOGLE_API_KEY")
-            if not api_key:
-                return f"Hiring for {job.title}"
+        content = await self._generate_llm_response(
+            prompt_name="ALICE_INFER_NEED",
+            default_prompt=default_prompt,
+            format_kwargs={
+                "title": job.title,
+                "company": job.company,
+                "desc": (job.description_full or job.description)
+            },
+            estimated_tokens=400,
+            max_retries=4
+        )
 
-            from google import genai
-
-            from ..services.prompt_service import prompt_service
-
-            client = genai.Client(api_key=api_key)
-
-            default_prompt = (
-                "你是一位銷售助理。請用繁體中文列出該職缺的：\n"
-                "- **技術棧**\n"
-                "- **痛點預測**\n\n"
-                "Job: {title} at {company}\n"
-                "Desc: {desc}"
-            )
-
-            prompt_template = prompt_service.get_prompt("ALICE_INFER_NEED", default=default_prompt)
-            prompt = prompt_template.format(
-                title=job.title, company=job.company, desc=(job.description_full or job.description)
-            )
-
-            @retry_with_backoff(max_retries=4, initial_delay=2.0)
-            async def _call_gemini():
-                return await client.aio.models.generate_content(model=SYSTEM_MODELS["DEFAULT_TEXT"], contents=prompt)
-
-            async with self.rate_limiter.semaphore:
-                await self.rate_limiter.acquire(estimated_tokens=400)
-                response = await _call_gemini()
-
-            return str(response.text).strip() if response.text else f"Hiring for {job.title}"
-        except Exception as e:
-            logger.error(f"Need inference failed: {e}")
-            return f"Hiring for {job.title}"
+        return str(content).strip() if content else f"Hiring for {job.title}"
