@@ -87,7 +87,7 @@ class BlogGenerator:
                 "excerpt": str(result.get("excerpt", "")),
                 "status": "review",
                 "ai_score": self.calculate_ai_score(str(result.get("content", ""))),
-                "image_url": "https://picsum.photos/seed/market/1024/1024",
+                "image_url": "https://picsum.photos/seed/market/1024/1024", # 合法
             }
             self.supabase_client.table("blog_posts").insert(new_post).execute()
             return True, {

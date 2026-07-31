@@ -7,7 +7,7 @@ from ..config.logfire_config import get_logger
 from .agent_registry import get_agent_config
 from .agent_tool_executor import AgentToolExecutor
 from .dev_ops_agent_service import DevOpsAgentService
-from .shared_constants import AI_AGENT_ROLES
+from .shared_constants import AI_AGENT_ROLES, RoleEnum
 
 
 class AgentService:
@@ -62,7 +62,7 @@ class AgentService:
             pass
 
         # 2. Fallback to static mapping in case database is down or not seeded
-        if not user_role or user_role in ["admin", "system_admin", "manager"]:
+        if not user_role or user_role in [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value, RoleEnum.MANAGER.value]:
             for agent in all_agents:
                 agent_id = str(agent["id"])
                 if agent_id in system_bots:

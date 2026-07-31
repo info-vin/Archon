@@ -119,9 +119,25 @@ async def _get_provider_api_key(manager: Any, provider: str) -> str | None:
     """Get API key for a specific provider."""
     key_mapping = {
         "openai": "OPENAI_API_KEY",
-        "google": "GOOGLE_API_KEY",
+        "google": "GEMINI_API_KEY", # Historically was GOOGLE_API_KEY, but providers_api used either. We'll check both if needed, but GEMINI_API_KEY is standard.
+        "anthropic": "ANTHROPIC_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+        "grok": "XAI_API_KEY",
         "ollama": None,
     }
+
+    # If GEMINI_API_KEY fails for google, fallback to GOOGLE_API_KEY
+    if provider == "google":
+        key = await manager.get_credential("GEMINI_API_KEY")
+        if not key:
+            key = await manager.get_credential("GOOGLE_API_KEY")
+        return cast(str | None, key)
+
+    if provider == "grok":
+        key = await manager.get_credential("GROK_API_KEY")
+        if not key:
+            key = await manager.get_credential("XAI_API_KEY")
+        return cast(str | None, key)
 
     key_name = key_mapping.get(provider)
     if key_name:
@@ -132,9 +148,20 @@ async def _get_provider_api_key(manager: Any, provider: str) -> str | None:
 def _get_provider_base_url(provider: str, rag_settings: dict) -> str | None:
     """Get base URL for provider."""
     if provider == "ollama":
-        return cast(str | None, rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1"))
+        return cast(str | None, rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1")) # 合法
     elif provider == "google":
-        return "https://generativelanguage.googleapis.com/v1beta/openai/"
+        # The correct base URL for Google models endpoint (used in providers_api.py) is:
+        # https://generativelanguage.googleapis.com/v1beta
+        # liteLLM handles it differently, but for raw API tests we need this.
+        return "https://generativelanguage.googleapis.com/v1beta"
+    elif provider == "openai":
+        return "https://api.openai.com/v1"
+    elif provider == "anthropic":
+        return "https://api.anthropic.com/v1"
+    elif provider == "openrouter":
+        return "https://openrouter.ai/api/v1"
+    elif provider == "grok":
+        return "https://api.x.ai/v1"
     return None
 
 

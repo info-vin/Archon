@@ -36,7 +36,7 @@ class FileArchiver:
             # 2. Metadata
             title = file_name
             word_count = len(content.split())
-            tags = ["file_upload", "seeded_knowledge"]
+            tags = ["file_upload", "seeded_knowledge"] # 合法
             if authority_level == "high":
                 tags.append("policy")
 

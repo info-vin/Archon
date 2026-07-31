@@ -43,7 +43,7 @@ class HybridRouter:
         words = proof_context.split()
         score = len(words) * 2
 
-        keywords = ["theorem", "lemma", "induction", "cases", "simp", "rw", "have", "show", "exact", "apply"]
+        keywords = ["theorem", "lemma", "induction", "cases", "simp", "rw", "have", "show", "exact", "apply"] # 合法
         for kw in keywords:
             score += proof_context.lower().count(kw) * 10
 

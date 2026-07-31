@@ -31,7 +31,7 @@ class BusinessArchiver:
             title = f"Pitch: {company} - {job_title}"
             summary = f"Auto-generated sales pitch for {job_title} at {company}."
             word_count = len(content.split())
-            tags = ["sales_pitch", "outbound", "email"]
+            tags = ["sales_pitch", "outbound", "email"] # 合法
             if references:
                 tags.append("has_references")
 
@@ -132,7 +132,7 @@ class BusinessArchiver:
             unique_id = str(uuid.uuid4())[:8]
             source_id = f"fail-{company.lower().replace(' ', '-')}-{unique_id}"
 
-            tags = ["failure_case", "risk_factor", "lesson_learned"]
+            tags = ["failure_case", "risk_factor", "lesson_learned"] # 合法
             title = f"Failure Analysis: {company} - {job_title}"
             summary = f"Loss analysis for {company}. Reason: {reason}"
 
@@ -220,7 +220,7 @@ class BusinessArchiver:
 
             unique_id = str(uuid.uuid4())[:8]
             source_id = f"style-lesson-{unique_id}"
-            tags = ["brand_voice_constraint", "style_lesson", "bob_feedback"]
+            tags = ["brand_voice_constraint", "style_lesson", "bob_feedback"] # 合法
 
             summary = f"Style lesson learned from rejection of '{post_title}'"
             full_lesson = (

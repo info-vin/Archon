@@ -69,7 +69,7 @@ FALLBACK_AGENT_CONFIG: dict[str, FallbackAgentConfig] = {
         "name": "Archon MarketBot",
         "model_tier": "lite",
         "system_prompt": "You are Archon MarketBot, an expert Marketing Content Writer and blog creator. Respond in Traditional Chinese (繁體中文).",
-        "tools": ["search_job_market", "generate_sales_email"],
+        "tools": ["search_job_market", "generate_sales_email"], # 合法
         "default_tool": "search_job_market",
     },
     "librarian": {
@@ -87,13 +87,13 @@ FALLBACK_AGENT_CONFIG: dict[str, FallbackAgentConfig] = {
         "name": "Archon POBot",
         "model_tier": "pro",
         "system_prompt": "You are an expert Product Owner. Refine task descriptions into User Stories.",
-        "tools": ["list_projects", "manage_task"],
+        "tools": ["list_projects", "manage_task"], # 合法
     },
     "dev-bot": {
         "name": "Archon DevBot",
         "model_tier": "pro",
         "system_prompt": "You are Archon DevBot, an expert software engineer. Solve tasks using tools.",
-        "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"],
+        "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"], # 合法
     },
 }
 

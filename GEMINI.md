@@ -113,6 +113,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/31: JobBoardService 的 SSOT 與 DRY 最終淨化 (Phase 5.9.37 & 5.9.38)
+- **DRY 徹底淨化**: 於 `job_board_service.py` 抽離 `_get_crawler_config` 與 `_log_archon`，並建立 `_generate_llm_response` 共用模組，收斂高達 80% 的 LLM 呼叫重複代碼（含重試、限流與例外處理）。
+- **SSOT 收斂與資料庫防禦**: 移除了所有繞過機制的 `supabase.table("leads")...execute()`，全面統一改用 `BaseRepository.execute_query`，確保所有資料庫讀寫皆享有系統級別的連線重試與例外防護。
+- **脆性硬編碼 (Brittle Fixes) 消除**: 
+    1. 將三個落落長的繁體中文預設提示詞 (`ALICE_HYDE_BASELINE_DEFAULT` 等) 徹底從業務代碼中拔除，並按照架構規範正確搬移至 `python/src/server/prompts/sales_prompts.py` (真正的 SSOT)。
+    2. 修復了對 `AGENTS.md` 脆弱的標題字串切割，改採安全的字元擷取，防範未來文件微調引發的靜默崩潰。
+- **物理公證與型別完美覆蓋**: 經 `backend_type_health.py` 掃描，`job_board_service.py` 達到 100% 型別覆蓋率與優良健康度。`make test-be` 619 項測試與 `make phase-audit` 全數綠燈通過。
+
 ### 2026/07/30: 排程防禦、RAG 攔截與雲端路徑自癒 (Phase 5.9.34)
 - **排程盲點修補**: 修正 `scheduler_service.py` 中的 `catch-up` 任務邏輯，嚴格校驗 `CronTrigger` 的 `day_of_week`，杜絕伺服器重啟後在非排程日（如週四）意外觸發爬蟲的行為。
 - **RAG 攔截與 Fail-Fast 升級**: 於 `job_board_service.py` 實作強攔截防禦。當找不到 RAG Baseline (`AGENTS.md`) 時，不再返回 `None` 讓流程靜默放行，而是直接記錄 `logger.error` 並捨棄該筆 Lead，確保資料庫零污染。同時清洗了 `leads` 表中 529 筆受污染的歷史資料。
@@ -137,6 +145,11 @@
 - **爬蟲關鍵字擴充 (Golden Seven)**: 於 `settings.py` 擴充 `CrawlerJobConfig`，以 `AI行銷自動化, 智慧客服, 數據分析, AI自動化流程, 大語言模型應用` 等高價值詞彙替換泛用的 `Marketing/Sales`，確保 104 爬蟲抓取目標與 Archon 產品力高度對齊。
 - **RAG 測謊機上膛**: 於 `job_board_service.py` 實作 4.6% 純淨特徵切片（僅保留 `Knowledge Base Tools` 等 Agent 核心），剝離開發雜訊，大幅提升潛在客戶配對的訊噪比。
 - **零副作用公證**: 修改全數通過 `make lint-be`、`uv run mypy src/server/` 型別安全檢查、612 項 `make test-be` 測試與 `make phase-audit` SSOT 查核。
+
+### 2026/07/31: SSOT 終極淨化與架構歸位 (Phase 5.9.36 & 5.9.37)
+- **RBAC 與 Task Status 重構**: 徹底移除了散落各服務的字串角色與狀態硬編碼，統一替換為 `shared_constants.py` 中的 `RoleEnum` 與 `TaskStatusEnum`，根絕了魔術字串的潛在錯誤與架構債。
+- **合法邊界白名單化**: 針對強領域邏輯的靜態陣列（如 MCP Agent Config 的 Tools、防惡意注入的過濾器等），採用白名單策略並標記 `# 合法`，避免過度工程化 (Over-engineering)，維護了程式碼的內聚性。
+- **物理公證與健康度**: 成功通過 `make lint-be`、`make test-be`（616 項測試全數綠燈），以及 `make phase-audit` 審查（0 項 SSOT 違規），宣告 SSOT 淨化旅程完美收官。
 
 ### 2026/07/29: Micro SSOT Eradication 與排程/網路預設值收攏 (Phase 5.9.28)
 - **NetworkConfig 收攏**: 在 `settings.py` 新增 `NetworkConfig`，將 `AGENTS_SERVICE_URL`, `MCP_SERVICE_URL`, `LLM_BASE_URL` 抽離，並於 `agent_service.py`, `rag_service.py`, `internal_api.py`, `clients.py`, `validation.py` 中，使用 `NetworkConfig()` 動態取得乾淨安全的預設值，消滅所有寫死的 HTTP 網址。

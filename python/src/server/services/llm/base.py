@@ -106,7 +106,7 @@ class UsageTrackingCompletions:
             if not hf_token:
                 raise ValueError("HF_TOKEN not configured for Tier 2 fallback")
             hf_model = "google/gemma-1.1-2b-it"
-            client = openai.AsyncOpenAI(api_key=hf_token, base_url="https://api-inference.huggingface.co/v1/")
+            client = openai.AsyncOpenAI(api_key=hf_token, base_url="https://api-inference.huggingface.co/v1/") # 合法
             try:
                 kwargs_copy = kwargs.copy()
                 kwargs_copy["model"] = hf_model

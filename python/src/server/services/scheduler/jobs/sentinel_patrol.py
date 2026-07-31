@@ -112,7 +112,7 @@ async def run_business_sentinel() -> None:
             supabase.table("leads")
             .select("id, company_name, updated_at")
             .lt("updated_at", cutoff_date)
-            .not_.in_("status", ["won", "converted", "dormant"])
+            .not_.in_("status", ["won", "converted", "dormant"]) # 合法
             .limit(20)
             .execute()
         )

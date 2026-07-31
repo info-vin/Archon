@@ -83,7 +83,7 @@ def is_valid_embedding_model_for_provider(model: str, provider: str) -> bool:
         return is_openai_embedding_model(model)
     if p_lower == "google":
         return is_google_embedding_model(model)
-    if p_lower in ["openrouter", "anthropic", "grok"]:
+    if p_lower in ["openrouter", "anthropic", "grok"]: # 合法
         return is_openai_embedding_model(model) or is_google_embedding_model(model)
     if p_lower == "ollama":
         patterns = ["nomic-embed", "all-minilm", "mxbai-embed", "embed"]
@@ -108,7 +108,7 @@ def get_supported_embedding_models(provider: str) -> list[str]:
         return openai_models
     if p_lower == "google":
         return google_models
-    if p_lower in ["openrouter", "anthropic", "grok"]:
+    if p_lower in ["openrouter", "anthropic", "grok"]: # 合法
         return openai_models + google_models
     if p_lower == "ollama":
         return ["nomic-embed-text", "all-minilm", "mxbai-embed-large"]

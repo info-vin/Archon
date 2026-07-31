@@ -131,7 +131,7 @@ class CrawlOrchestrator:
                             status=data.get("status", "code_extraction"),
                             progress=mapped_progress,
                             log=data.get("log", "Extracting code examples..."),
-                            **{k: v for k, v in data.items() if k not in ["status", "progress", "percentage", "log"]},
+                            **{k: v for k, v in data.items() if k not in ["status", "progress", "percentage", "log"]}, # 合法
                         )
 
                 code_examples_count = await self.service.doc_storage_ops.store_code_examples(

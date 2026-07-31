@@ -91,24 +91,27 @@ async def get_current_user_optional(token: Annotated[str | None, Depends(get_tok
 
 async def get_current_admin(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> UserProfileDTO:
     """Dependency that enforces Admin role and returns the user object."""
+    from ..services.shared_constants import RoleEnum
     role = current_user.role.lower()
-    if role not in ["admin", "system_admin"]:
+    if role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
 
 async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> bool:
     """Secure boolean-style dependency for Admin enforcement via JWT."""
+    from ..services.shared_constants import RoleEnum
     role = current_user.role.lower()
-    if role not in ["admin", "system_admin"]:
+    if role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return True
 
 
 async def verify_manager_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> bool:
     """Secure dependency ensuring the user is at least a Manager or Admin."""
+    from ..services.shared_constants import RoleEnum
     role = current_user.role.lower()
-    if role not in ["admin", "system_admin", "manager"]:
+    if role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN, RoleEnum.MANAGER]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager privileges or higher required")
     return True
 

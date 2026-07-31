@@ -150,7 +150,7 @@ def extract_code_blocks_logic(markdown_content: str, min_length: int | None = No
         # PERFORMANCE: Pre-strip and filter non-empty lines once
         non_empty_lines = [line for line in code_content.split("\n") if line.strip()]
 
-        if not language or language in ["text", "plaintext", "txt"]:
+        if not language or language in ["text", "plaintext", "txt"]: # 合法
             code_lower = code_content.lower()
 
             doc_score = 0

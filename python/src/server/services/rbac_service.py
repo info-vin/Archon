@@ -8,6 +8,7 @@ from ..auth.permissions import ROLE_PERMISSIONS
 from ..config.logfire_config import get_logger
 from ..models.auth_models import UserProfileDTO
 from ..utils import get_supabase_client
+from .shared_constants import RoleEnum
 
 logger = get_logger(__name__)
 
@@ -23,25 +24,25 @@ class RBACService(BaseRepository):
     def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
         # Initial assignment rules (Static fallback)
-        self.permissions = {
-            "admin": ["admin", "system_admin", "manager", "employee", "member", "marketing", "sales", "ai_agent"],
-            "system_admin": [
-                "admin",
-                "system_admin",
-                "manager",
-                "employee",
-                "member",
-                "marketing",
-                "sales",
-                "ai_agent",
+        self.permissions: dict[str, list[str]] = {
+            RoleEnum.ADMIN.value: [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value, RoleEnum.MANAGER.value, RoleEnum.EMPLOYEE.value, RoleEnum.MEMBER.value, RoleEnum.MARKETING.value, RoleEnum.SALES.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.SYSTEM_ADMIN.value: [
+                RoleEnum.ADMIN.value,
+                RoleEnum.SYSTEM_ADMIN.value,
+                RoleEnum.MANAGER.value,
+                RoleEnum.EMPLOYEE.value,
+                RoleEnum.MEMBER.value,
+                RoleEnum.MARKETING.value,
+                RoleEnum.SALES.value,
+                RoleEnum.AI_AGENT.value,
             ],
-            "manager": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
-            "employee": ["employee", "member", "ai_agent"],
-            "member": ["employee", "member", "ai_agent"],
-            "marketing": ["marketing", "ai_agent"],
-            "sales": ["sales", "ai_agent"],
-            "pm": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
-            "engineer": ["employee", "member", "ai_agent"],
+            RoleEnum.MANAGER.value: [RoleEnum.MANAGER.value, RoleEnum.EMPLOYEE.value, RoleEnum.MEMBER.value, RoleEnum.MARKETING.value, RoleEnum.SALES.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.EMPLOYEE.value: [RoleEnum.EMPLOYEE.value, RoleEnum.MEMBER.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.MEMBER.value: [RoleEnum.EMPLOYEE.value, RoleEnum.MEMBER.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.MARKETING.value: [RoleEnum.MARKETING.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.SALES.value: [RoleEnum.SALES.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.PM.value: [RoleEnum.MANAGER.value, RoleEnum.EMPLOYEE.value, RoleEnum.MEMBER.value, RoleEnum.MARKETING.value, RoleEnum.SALES.value, RoleEnum.AI_AGENT.value],
+            RoleEnum.ENGINEER.value: [RoleEnum.EMPLOYEE.value, RoleEnum.MEMBER.value, RoleEnum.AI_AGENT.value],
         }
 
     async def get_role_permissions(self, role: str) -> set[str]:
@@ -165,7 +166,7 @@ class RBACService(BaseRepository):
         # 2. Fallback to role-based permissions
         user_role = (user.role or "viewer").lower()
         role_perms = await self.get_role_permissions(user_role)
-        return permission in role_perms or user_role in ["admin", "system_admin"]
+        return permission in role_perms or user_role in [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value]
 
     async def has_permission_to_assign(self, current_user_role: str, assignee_role: str) -> bool:
         """Checks if the current user role has permission to assign tasks to the target role."""
@@ -180,7 +181,7 @@ class RBACService(BaseRepository):
         if perms:
             if f"assign:{target_role}" in perms:
                 return True
-            if "assign:all" in perms or current_role in ["admin", "system_admin"]:
+            if "assign:all" in perms or current_role in [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value]:
                 return True
 
         # 2. Fallback to static permissions mapping
@@ -224,7 +225,7 @@ class RBACService(BaseRepository):
             return False
         # Define roles that can manage content (case-insensitive)
         # Updated Phase 4.4: Sales and Marketing are content creators too.
-        content_manager_roles = ["admin", "system_admin", "manager", "marketing", "sales"]
+        content_manager_roles = [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value, RoleEnum.MANAGER.value, RoleEnum.MARKETING.value, RoleEnum.SALES.value]
         return current_user_role.lower() in content_manager_roles
 
     def scope_projects(self, projects: list[dict], user: UserProfileDTO) -> list[dict]:
@@ -235,7 +236,7 @@ class RBACService(BaseRepository):
         role = (user.role or "viewer").lower()
         dept = user.department
 
-        if role in ["system_admin", "admin"]:
+        if role in [RoleEnum.SYSTEM_ADMIN.value, RoleEnum.ADMIN.value]:
             return projects
 
         return [p for p in projects if p.get("department") == dept or not p.get("department")]
@@ -248,7 +249,7 @@ class RBACService(BaseRepository):
         role = (user.role or "viewer").lower()
         dept = user.department
 
-        if role in ["system_admin", "admin"]:
+        if role in [RoleEnum.SYSTEM_ADMIN.value, RoleEnum.ADMIN.value]:
             return True
 
         project_dept = getattr(project, "department", None) if not isinstance(project, dict) else project.get("department")
@@ -265,7 +266,7 @@ class RBACService(BaseRepository):
         role = (role_or_agent or "anonymous").lower()
 
         # High-level roles have no restrictions
-        if role in ["admin", "system_admin", "charlie"]:
+        if role in [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value, "charlie"]:
             return set()
 
         # Fetch from archon_settings for dynamic restrictions
@@ -285,9 +286,9 @@ class RBACService(BaseRepository):
         else:
             # Fallback (DB independent)
             restricted_tools = set("delete_project,delete_task,run_system_command,execute_sql".split(","))
-            if role in ["marketbot", "marketing", "summary"]:
+            if role in ["marketbot", RoleEnum.MARKETING.value, "summary"]:
                 restricted_tools.add("manage_project")
-            elif role in ["librarian", "rag", "document"]:
+            elif role in ["librarian", "rag", "document"]: # 合法
                 restricted_tools.update("manage_project,manage_task".split(","))
 
         return restricted_tools

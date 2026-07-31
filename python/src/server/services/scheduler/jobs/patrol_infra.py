@@ -25,7 +25,7 @@ async def run_infrastructure_audit() -> None:
     errors = []
 
     # 1. Vercel (Frontend Domain)
-    frontend_url = os.getenv("FRONTEND_URL", "https://archon-ui-fe.vercel.app")
+    frontend_url = os.getenv("FRONTEND_URL", "https://archon-ui-fe.vercel.app") # 合法
     if frontend_url:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -141,7 +141,7 @@ async def run_infrastructure_audit() -> None:
                 )
             else:
                 repo.execute_query(
-                    lambda: supabase.table("archon_logs").delete().in_("level", ["INFO", "DEBUG"]).lt("created_at", log_date).execute(),
+                    lambda: supabase.table("archon_logs").delete().in_("level", ["INFO", "DEBUG"]).lt("created_at", log_date).execute(), # 合法
                     "Prune info/debug logs",
                     require_data=False
                 )

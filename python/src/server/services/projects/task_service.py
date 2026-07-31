@@ -13,6 +13,7 @@ from src.server.repositories.base_repository import BaseRepository
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
+from ..shared_constants import TaskStatusEnum
 
 logger = get_logger(__name__)
 
@@ -20,7 +21,14 @@ logger = get_logger(__name__)
 class TaskService(BaseRepository):
     """Service class for task operations"""
 
-    VALID_STATUSES = ["todo", "doing", "review", "done", "processing", "dispatched"]
+    VALID_STATUSES: list[str] = [
+        TaskStatusEnum.TODO.value,
+        TaskStatusEnum.DOING.value,
+        TaskStatusEnum.REVIEW.value,
+        TaskStatusEnum.DONE.value,
+        TaskStatusEnum.PROCESSING.value,
+        TaskStatusEnum.DISPATCHED.value,
+    ]
 
     def __init__(self, supabase_client: Any = None) -> None:
         """Initialize with optional supabase client"""

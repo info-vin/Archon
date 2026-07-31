@@ -170,7 +170,7 @@ async def save_agent_output_logic(
             validated_output = AgentOutputSchema(
                 agent_id=agent_id,
                 timestamp=datetime.now(),
-                output_type=cast(Literal["text", "structured", "group_chat"], output_type),
+                output_type=cast(Literal["text", "structured", "group_chat"], output_type), # 合法
                 output=output,
             )
             # Convert to dict for JSONB storage

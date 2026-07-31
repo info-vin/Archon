@@ -56,8 +56,11 @@ async def test_identify_leads_and_save(mock_supabase):
     # Chain for INSERT
     mock_table.insert.return_value = mock_insert_builder
 
-    # Execute
-    count = await service.identify_leads_and_save(jobs)
+    # Execute with mocks to pass the funnel
+    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
+         patch.object(service, '_llm_judge', return_value=True):
+        count = await service.identify_leads_and_save(jobs)
 
     # Assert
     assert count == 1
@@ -92,3 +95,87 @@ async def test_identify_leads_skips_existing(mock_supabase):
     # Assert
     assert count == 0
     mock_table.insert.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_hybrid_funnel_fast_fail_vector():
+    """
+    Test Assertion 1: When similarity < 0.67, return None immediately.
+    _llm_judge and _infer_need should not be called.
+    """
+    service = JobBoardService()
+    job = JobData(title="Plumber", company="Pipes", url="http://p", description="Fix pipes")
+
+    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[0.0, 1.0]), \
+         patch.object(service, '_llm_judge', return_value=True) as mock_judge, \
+         patch.object(service, '_infer_need') as mock_infer:
+
+        # Sim = 0.0 < 0.67
+        # We need to invoke the inner _process_single_job.
+        # Since it's nested, we test identify_leads_and_save with this job and verify no insert.
+        # But wait, identify_leads_and_save suppresses inner exceptions and None returns.
+
+        # Let's mock Supabase for the outer function
+        mock_supabase = Mock()
+        mock_supabase.table().select().in_().execute().data = []
+        service.supabase = mock_supabase
+
+        count = await service.identify_leads_and_save([job])
+
+        assert count == 0
+        mock_judge.assert_not_called()
+        mock_infer.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_hybrid_funnel_fail_llm_judge():
+    """
+    Test Assertion 2: When similarity >= 0.67 but LLM Judge is NO, return None.
+    _infer_need should not be called.
+    """
+    service = JobBoardService()
+    job = JobData(title="AI Engineer", company="Competitor Corp", url="http://c", description="Build AI")
+
+    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
+         patch.object(service, '_llm_judge', return_value=False) as mock_judge, \
+         patch.object(service, '_infer_need') as mock_infer:
+
+        # Sim = 1.0 >= 0.67
+        mock_supabase = Mock()
+        mock_supabase.table().select().in_().execute().data = []
+        service.supabase = mock_supabase
+
+        count = await service.identify_leads_and_save([job])
+
+        assert count == 0
+        mock_judge.assert_called_once()
+        mock_infer.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_hybrid_funnel_pass_both():
+    """
+    Test Assertion 3: When similarity >= 0.67 and LLM Judge is YES, proceed.
+    _infer_need should be called, and lead inserted.
+    """
+    service = JobBoardService()
+    job = JobData(title="System Admin", company="Traditional Corp", url="http://t", description="Need automation")
+
+    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
+         patch.object(service, '_llm_judge', return_value=True) as mock_judge, \
+         patch.object(service, '_infer_need', return_value="Automation need") as mock_infer:
+
+        # Sim = 1.0 >= 0.67, Judge = True
+        mock_supabase = Mock()
+        mock_supabase.table().select().in_().execute().data = []
+        mock_insert = Mock()
+        mock_insert.execute().data = [{"id": "new-id", "identified_need": "Automation need"}]
+        mock_supabase.table().insert.return_value = mock_insert
+        service.supabase = mock_supabase
+
+        count = await service.identify_leads_and_save([job])
+
+        assert count == 1
+        mock_judge.assert_called_once()
+        mock_infer.assert_called_once()
+        mock_supabase.table().insert.assert_called_once()

@@ -1,0 +1,522 @@
+[
+  {
+    "company": "智鈦星平台服務有限公司",
+    "title": "【軟體測試工程師/資深工程師】 Quality Assurance Engineer jr./sr.",
+    "category": "Python",
+    "score_current": 0.5211522687370027,
+    "score_hyde": 0.6874386565270446,
+    "judge": "NO"
+  },
+  {
+    "company": "慧榮科技股份有限公司_SMI",
+    "title": "CAD工程師(Synthesis/STA/LEC/LowPower)-新店",
+    "category": "Python",
+    "score_current": 0.4803494931087299,
+    "score_hyde": 0.6640572763434299,
+    "judge": "NO"
+  },
+  {
+    "company": "皇霖實業股份有限公司",
+    "title": "Python工程師",
+    "category": "Python",
+    "score_current": 0.5048998284906876,
+    "score_hyde": 0.7095849626363834,
+    "judge": "NO"
+  },
+  {
+    "company": "吉翔樂_旻新科技股份有限公司",
+    "title": "Python 後端工程師(桃園)",
+    "category": "Python",
+    "score_current": 0.5170474375995234,
+    "score_hyde": 0.6651807752301413,
+    "judge": "NO"
+  },
+  {
+    "company": "清谷電子有限公司",
+    "title": "軟體工程師 (Python / Django)",
+    "category": "Python",
+    "score_current": 0.5176990374850007,
+    "score_hyde": 0.6975836857513856,
+    "judge": "NO"
+  },
+  {
+    "company": "阿爾發證券投資顧問股份有限公司",
+    "title": "Python後端工程師",
+    "category": "Python",
+    "score_current": 0.5238852272465399,
+    "score_hyde": 0.7047574118474266,
+    "judge": "NO"
+  },
+  {
+    "company": "傑克商業自動化股份有限公司",
+    "title": "軟體工程師(嘉義)｜Python 程式開發與 AI 應用(無經驗可)",
+    "category": "Python",
+    "score_current": 0.5119933996158661,
+    "score_hyde": 0.723749104042126,
+    "judge": "NO"
+  },
+  {
+    "company": "瑞司智慧整合股份有限公司",
+    "title": "Home Assistant / Python工程師 (台中)",
+    "category": "Python",
+    "score_current": 0.5254291119742538,
+    "score_hyde": 0.7070997289402309,
+    "judge": "NO"
+  },
+  {
+    "company": "振興發科技有限公司",
+    "title": "Python工程師(台中)",
+    "category": "Python",
+    "score_current": 0.5193060861874111,
+    "score_hyde": 0.7083141545528133,
+    "judge": "NO"
+  },
+  {
+    "company": "阜爾集團(股票代碼6914)_阜爾運通股份有限公司",
+    "title": "研發工程師(Python)",
+    "category": "Python",
+    "score_current": 0.5440566774635135,
+    "score_hyde": 0.7061525574663904,
+    "judge": "NO"
+  },
+  {
+    "company": "學力創意科技股份有限公司",
+    "title": "Python工程師((Web/APP/IoT開發))",
+    "category": "Python",
+    "score_current": 0.5131774164656882,
+    "score_hyde": 0.712175412972848,
+    "judge": "NO"
+  },
+  {
+    "company": "樂倍達數位科技股份有限公司",
+    "title": "Python研發工程師",
+    "category": "Python",
+    "score_current": 0.5358518990875238,
+    "score_hyde": 0.7858532095526617,
+    "judge": "NO"
+  },
+  {
+    "company": "元鴻應用材料股份有限公司",
+    "title": "環安衛工程師-大甲廠",
+    "category": "AI",
+    "score_current": 0.4998482747311439,
+    "score_hyde": 0.6248030447046357,
+    "judge": "NO"
+  },
+  {
+    "company": "OVOTOILET_京典衛浴股份有限公司",
+    "title": "台北｜視覺設計專員",
+    "category": "AI",
+    "score_current": 0.4789856378668949,
+    "score_hyde": 0.6861247073154784,
+    "judge": "YES"
+  },
+  {
+    "company": "美商圖策生技有限公司台灣分公司",
+    "title": "Senior AI Scientist",
+    "category": "AI",
+    "score_current": 0.4937451476476063,
+    "score_hyde": 0.662130677018219,
+    "judge": "NO"
+  },
+  {
+    "company": "滿拓科技股份有限公司",
+    "title": "AI Accelerator Digital Design Engineer",
+    "category": "AI",
+    "score_current": 0.5017188728006488,
+    "score_hyde": 0.7043031508830143,
+    "judge": "NO"
+  },
+  {
+    "company": "恩平方財經股份有限公司",
+    "title": "財經Ｍ平方 - AI 工程師",
+    "category": "AI",
+    "score_current": 0.535199993749981,
+    "score_hyde": 0.7412605448556893,
+    "judge": "NO"
+  },
+  {
+    "company": "科盛科技股份有限公司",
+    "title": "AI部門主管",
+    "category": "AI",
+    "score_current": 0.5624408012282516,
+    "score_hyde": 0.8232556580525815,
+    "judge": "NO"
+  },
+  {
+    "company": "Shoalter Technology Ltd. (Member of HKTV Grp.) _英屬維京群島商易貿創投有限公司台灣分公司",
+    "title": "Robotics Software  Engineer",
+    "category": "Python",
+    "score_current": 0.5077020991862404,
+    "score_hyde": 0.7221360062490094,
+    "judge": "NO"
+  },
+  {
+    "company": "沛思坦網路股份有限公司",
+    "title": "【台中】英文文件管理客服專員 English Documentation Specialist",
+    "category": "AI",
+    "score_current": 0.5177773576491804,
+    "score_hyde": 0.6323373945719082,
+    "judge": "YES"
+  },
+  {
+    "company": "A Plus耶加教育機構_高雄市私立耶加兒童課後照顧服務中心",
+    "title": "廚房助手",
+    "category": "AI",
+    "score_current": 0.44943051610996976,
+    "score_hyde": 0.5844786303836874,
+    "judge": "NO"
+  },
+  {
+    "company": "雲景科技股份有限公司",
+    "title": "AI Application Engineer",
+    "category": "AI",
+    "score_current": 0.5089496371752512,
+    "score_hyde": 0.7257271086702143,
+    "judge": "NO"
+  },
+  {
+    "company": "宇見智能科技股份有限公司",
+    "title": "（台北）AI Team Lead",
+    "category": "AI",
+    "score_current": 0.5349709832261598,
+    "score_hyde": 0.7636550092027871,
+    "judge": "NO"
+  },
+  {
+    "company": "綠岩能源股份有限公司",
+    "title": "AI應用規劃師/主管",
+    "category": "AI",
+    "score_current": 0.5237429339980882,
+    "score_hyde": 0.7657392955520761,
+    "judge": "YES"
+  },
+  {
+    "company": "數位無限軟體股份有限公司",
+    "title": "(￣▽￣)/生成式 AI 開發工程師 (Generative AI Engineer)",
+    "category": "AI",
+    "score_current": 0.47671721404778855,
+    "score_hyde": 0.7232098664430227,
+    "judge": "NO"
+  },
+  {
+    "company": "富錦未來股份有限公司",
+    "title": "AI 系統整合師",
+    "category": "AI",
+    "score_current": 0.5681147288905578,
+    "score_hyde": 0.7403645988224895,
+    "judge": "YES"
+  },
+  {
+    "company": "財團法人台灣人工智慧學校基金會",
+    "title": "AI工程師（台中分校）",
+    "category": "AI",
+    "score_current": 0.4904504012248245,
+    "score_hyde": 0.7399791861392798,
+    "judge": "NO"
+  },
+  {
+    "company": "FIOLE瀧川_台灣瀧川股份有限公司",
+    "title": "FIOLE瀧川｜MIS系統開發工程師",
+    "category": "AI行銷自動化",
+    "score_current": 0.545561728123364,
+    "score_hyde": 0.6946693026391032,
+    "judge": "NO"
+  },
+  {
+    "company": "巧鑫電機有限公司",
+    "title": "配電盤配線人員（歡迎新鮮人）",
+    "category": "AI行銷自動化",
+    "score_current": 0.4611941676199928,
+    "score_hyde": 0.6125785117570638,
+    "judge": "NO"
+  },
+  {
+    "company": "央定有限公司",
+    "title": "○AI 應用專員 /AI 應用與流程自動化專員 /AI 內容創作與數位行銷專員/生成式 AI 訓練師",
+    "category": "AI行銷自動化",
+    "score_current": 0.5491661937155989,
+    "score_hyde": 0.7433208916380409,
+    "judge": "NO"
+  },
+  {
+    "company": "央定有限公司",
+    "title": "●AI 應用專員  /AI 內容創作員/AI數位行銷專員/生成式 AI 訓練師 /AI 應用與流程自動化專員/AI 流程自動化顧問",
+    "category": "AI行銷自動化",
+    "score_current": 0.5528324267221445,
+    "score_hyde": 0.744247764391729,
+    "judge": "YES"
+  },
+  {
+    "company": "財團法人台灣外展教育發展基金會",
+    "title": "【迪化街】AI 行銷企劃暨自動化專員｜AI Marketing & Automation Specialist",
+    "category": "AI行銷自動化",
+    "score_current": 0.5376464602378651,
+    "score_hyde": 0.7372220505941222,
+    "judge": "NO"
+  },
+  {
+    "company": "台灣四網通科技有限公司",
+    "title": "AI 應用工程師 / AI 全端開發工程師（系統開發與行銷自動化）",
+    "category": "AI行銷自動化",
+    "score_current": 0.558807427708391,
+    "score_hyde": 0.7906891214749482,
+    "judge": "NO"
+  },
+  {
+    "company": "明基材料股份有限公司",
+    "title": "數位行銷專員【品牌管理處】",
+    "category": "AI行銷自動化",
+    "score_current": 0.5263180896562786,
+    "score_hyde": 0.6418812800992757,
+    "judge": "NO"
+  },
+  {
+    "company": "Edenred_新加坡商宜睿智慧股份有限公司台灣分公司",
+    "title": "Sales Development Representative 銷售開發代表",
+    "category": "AI行銷自動化",
+    "score_current": 0.5150490241874355,
+    "score_hyde": 0.664030138377494,
+    "judge": "NO"
+  },
+  {
+    "company": "玉釩食品有限公司-桃園分公司",
+    "title": "AI系統整合與電商營運專員",
+    "category": "AI行銷自動化",
+    "score_current": 0.555210481612039,
+    "score_hyde": 0.7318272737383428,
+    "judge": "YES"
+  },
+  {
+    "company": "永豐商業銀行股份有限公司",
+    "title": "綜合企劃處-行銷企劃部-行銷推廣人員",
+    "category": "AI行銷自動化",
+    "score_current": 0.5199047307391726,
+    "score_hyde": 0.656883610254478,
+    "judge": "NO"
+  },
+  {
+    "company": "口袋證券股份有限公司",
+    "title": "內容行銷 Content Marketing",
+    "category": "AI行銷自動化",
+    "score_current": 0.5048840768372185,
+    "score_hyde": 0.6666217206056774,
+    "judge": "NO"
+  },
+  {
+    "company": "| 達摩本草 | 毛孩時代     TSA _騰勢股份有限公司",
+    "title": "【擴編】AI整合行銷企劃— 年薪保障 14 個月",
+    "category": "AI行銷自動化",
+    "score_current": 0.5381330384503479,
+    "score_hyde": 0.7263692782212912,
+    "judge": "NO"
+  },
+  {
+    "company": "台灣美光(台灣美光晶圓科技股份有限公司/台灣美光記憶體股份有限公司/美商美光亞太科技股份有限公司台灣分公司)",
+    "title": "【R&D】Micron Taiwan Technology and Products Group Engineer 台灣美光研發工程師 熱烈招募中",
+    "category": "Python",
+    "score_current": 0.48657571350537343,
+    "score_hyde": 0.6135109591468905,
+    "judge": "NO"
+  },
+  {
+    "company": "新加坡商奎斯特全球工程服務股份有限公司台灣分公司",
+    "title": "Python Automation Development Engineer",
+    "category": "Python",
+    "score_current": 0.4995167807115289,
+    "score_hyde": 0.6451353580697827,
+    "judge": "NO"
+  },
+  {
+    "company": "東海大學_推廣部",
+    "title": "產學推廣經理",
+    "category": "AI",
+    "score_current": 0.5577468272255522,
+    "score_hyde": 0.618354411207372,
+    "judge": "NO"
+  },
+  {
+    "company": "SkyTrust Global_迅凱全球整合股份有限公司",
+    "title": "AI演算法工程師｜無人系統Sensor Fusion及Edge AI運用及佈署",
+    "category": "AI行銷自動化",
+    "score_current": 0.4969419798547605,
+    "score_hyde": 0.7162540828290409,
+    "judge": "NO"
+  },
+  {
+    "company": "香港商天圓文化諮詢顧問有限公司台灣分公司",
+    "title": "社群暨數位行銷專員",
+    "category": "AI行銷自動化",
+    "score_current": 0.4589333448898034,
+    "score_hyde": 0.6472839615904781,
+    "judge": "NO"
+  },
+  {
+    "company": "紅虹企業有限公司",
+    "title": "美術設計企劃",
+    "category": "AI自動化流程",
+    "score_current": 0.4901307673434298,
+    "score_hyde": 0.6424536562230437,
+    "judge": "NO"
+  },
+  {
+    "company": "儒鴻企業股份有限公司",
+    "title": "【總公司|海外廠】國際QA 儲備幹部｜派駐海外培訓計畫(不限科系/6個月系統化特訓)",
+    "category": "AI自動化流程",
+    "score_current": 0.4735653385995592,
+    "score_hyde": 0.644783150365545,
+    "judge": "NO"
+  },
+  {
+    "company": "全曜財經資訊股份有限公司",
+    "title": "【設計部】AI 自動化流程設計師 (視覺設計專業)(JIRA735)",
+    "category": "AI自動化流程",
+    "score_current": 0.47830272666578216,
+    "score_hyde": 0.7184443381793026,
+    "judge": "NO"
+  },
+  {
+    "company": "91APP_英屬開曼群島商九一應用軟體股份有限公司台灣分公司",
+    "title": " ［HR］專員 (AI & 流程自動化)",
+    "category": "AI自動化流程",
+    "score_current": 0.5108662242237149,
+    "score_hyde": 0.728027857166292,
+    "judge": "YES"
+  },
+  {
+    "company": "英屬開曼群島商宸大科技股份有限公司台灣分公司",
+    "title": "AI工作流程自動化工程師",
+    "category": "AI自動化流程",
+    "score_current": 0.5306450346024036,
+    "score_hyde": 0.830007767875593,
+    "judge": "YES"
+  },
+  {
+    "company": "碩益科技股份有限公司",
+    "title": "AI流程與測試自動化顧問",
+    "category": "AI自動化流程",
+    "score_current": 0.5609082368401365,
+    "score_hyde": 0.7445673903996486,
+    "judge": "NO"
+  },
+  {
+    "company": "聆機科技股份有限公司",
+    "title": "AI 流程自動化與測試工讀生（平日）",
+    "category": "AI自動化流程",
+    "score_current": 0.5463964998374404,
+    "score_hyde": 0.7669921397167339,
+    "judge": "NO"
+  },
+  {
+    "company": "台北101_台北金融大樓股份有限公司",
+    "title": "資深數位應用與數據策略專業人員（AI 應用與流程自動化 PM）",
+    "category": "AI自動化流程",
+    "score_current": 0.5386044753768198,
+    "score_hyde": 0.7522349214387961,
+    "judge": "YES"
+  },
+  {
+    "company": "木子股份有限公司",
+    "title": "AI Agent 與流程自動化工程師 ( AI Agent & Workflow Automation Engineer )",
+    "category": "AI自動化流程",
+    "score_current": 0.5788869396050023,
+    "score_hyde": 0.8577774597863413,
+    "judge": "YES"
+  },
+  {
+    "company": "易禾國際有限公司",
+    "title": "財務AI流程專員/財務會計專員｜SAP B1／AI 流程自動化",
+    "category": "AI自動化流程",
+    "score_current": 0.5398297280557486,
+    "score_hyde": 0.7041236439712989,
+    "judge": "YES"
+  },
+  {
+    "company": "IBM_台灣國際商業機器股份有限公司",
+    "title": "(高雄NATC) 實習軟體工程師 Application Developer Intern",
+    "category": "大語言模型應用",
+    "score_current": 0.47847164956858135,
+    "score_hyde": 0.6442881042451098,
+    "judge": "NO"
+  },
+  {
+    "company": "漢威聯合股份有限公司",
+    "title": "Advanced Networking Engineer 資深網路工程師 - Process Automation",
+    "category": "大語言模型應用",
+    "score_current": 0.5078571650799092,
+    "score_hyde": 0.6760823683307641,
+    "judge": "YES"
+  },
+  {
+    "company": "健鼎科技股份有限公司",
+    "title": "【台北】製造業大語言模型 (LLM)應用工程師",
+    "category": "大語言模型應用",
+    "score_current": 0.5849597314254363,
+    "score_hyde": 0.7465126235538653,
+    "judge": "NO"
+  },
+  {
+    "company": "阿米巴科技股份有限公司",
+    "title": "語言模型應用研發工程師",
+    "category": "大語言模型應用",
+    "score_current": 0.555543010445757,
+    "score_hyde": 0.7152493154145342,
+    "judge": "NO"
+  },
+  {
+    "company": "財團法人國家實驗研究院",
+    "title": "國網中心_大語言模型技術研發與應用計畫人員-新竹(計畫115_09)",
+    "category": "大語言模型應用",
+    "score_current": 0.5721933569215969,
+    "score_hyde": 0.6445995222089916,
+    "judge": "NO"
+  },
+  {
+    "company": "健鼎科技股份有限公司",
+    "title": "【海外】製造業大語言模型 (LLM)應用工程師",
+    "category": "大語言模型應用",
+    "score_current": 0.591266896236655,
+    "score_hyde": 0.7355135700759442,
+    "judge": "NO"
+  },
+  {
+    "company": "優立迅有限公司",
+    "title": "LLM 應用工程師 (資訊及數學相關科系畢, 保障年薪14個月)",
+    "category": "大語言模型應用",
+    "score_current": 0.5224784264255214,
+    "score_hyde": 0.7456694213125161,
+    "judge": "NO"
+  },
+  {
+    "company": "理律法律事務所",
+    "title": "知識管理部  資深資訊工程師 (資訊相關學系；正式 ; 台北所)",
+    "category": "大語言模型應用",
+    "score_current": 0.5491316492641374,
+    "score_hyde": 0.7339947780148044,
+    "judge": "YES"
+  },
+  {
+    "company": "台灣世曦工程顧問股份有限公司",
+    "title": "空間資訊應用開發工程師-B400009633",
+    "category": "大語言模型應用",
+    "score_current": 0.5503565387712565,
+    "score_hyde": 0.6810571223995616,
+    "judge": "YES"
+  },
+  {
+    "company": "工研院 _財團法人工業技術研究院",
+    "title": "工研院感測系統中心_生成式 AI 軟體工程師(創新/M100)",
+    "category": "大語言模型應用",
+    "score_current": 0.49340205006780585,
+    "score_hyde": 0.68623491967769,
+    "judge": "NO"
+  },
+  {
+    "company": "國泰世紀產物保險股份有限公司",
+    "title": "【國泰集團】 AI資料科學家 Data&AI Scientist – (數數發中心, DDT)_I00020724",
+    "category": "大語言模型應用",
+    "score_current": 0.48101518908641316,
+    "score_hyde": 0.6870449830743787,
+    "judge": "NO"
+  }
+]

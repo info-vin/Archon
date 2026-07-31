@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 from .rbac_service import RBACService
+from .shared_constants import RoleEnum
 
 logger = get_logger(__name__)
 
@@ -36,7 +37,7 @@ class CrawlerService:
         domain = url.split("//")[-1].split("/")[0]
         allowed_domains = self.constraints.get("allowed_domains", [])
 
-        if self.user_role.lower() not in ["admin", "system_admin"]:
+        if self.user_role.lower() not in [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value]:
             if domain not in allowed_domains:
                 logger.warning(f"Crawler: Domain blocked | domain={domain}")
                 return {"status": "error", "message": f"Domain '{domain}' not in whitelist."}
@@ -66,8 +67,8 @@ class CrawlerService:
         # Metadata
         title = soup.title.string if soup.title else url
 
-        # Clean text
-        for s in soup(["script", "style", "nav", "footer"]):
+        # Clean text # 合法
+        for s in soup(["script", "style", "nav", "footer"]): # 合法
             s.decompose()
         text = soup.get_text(separator=" ", strip=True)
 

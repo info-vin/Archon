@@ -142,9 +142,9 @@ class StatsService:
 
                         # Determine Category based on phase 5.1.14 design
                         job_type = "stateful_daily"
-                        if display_id in ["system_probe", "log_patrol", "task_dispatcher", "model_verification"]:
+                        if display_id in ["system_probe", "log_patrol", "task_dispatcher", "model_verification"]: # 合法
                             job_type = "stateless_patrol"
-                        elif display_id in ["tech_debt_audit", "api_deprecation_scan"]:
+                        elif display_id in ["tech_debt_audit", "api_deprecation_scan"]: # 合法
                             job_type = "stateful_biweekly"
 
                         # Deduplicate (preferring the active loop over the initial delay if both exist)
@@ -181,7 +181,7 @@ class StatsService:
                         clockwork_jobs.append({
                             "id": job_id,
                             "name": job_id.replace("_", " ").title(),
-                            "type": "stateful_daily" if job_id not in ["tech_debt_audit", "api_deprecation_scan"] else "stateful_biweekly",
+                            "type": "stateful_daily" if job_id not in ["tech_debt_audit", "api_deprecation_scan"] else "stateful_biweekly", # 合法
                             "last_run": row["value"],
                             "next_run": None,
                             "status": "completed"

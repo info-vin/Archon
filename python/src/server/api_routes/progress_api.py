@@ -9,6 +9,7 @@ from fastapi import status as http_status
 
 from ..config.logfire_config import get_logger
 from ..models.progress_models import create_progress_response
+from ..services.shared_constants import StatusEnum
 from ..utils.etag_utils import check_etag, generate_etag
 from ..utils.progress import ProgressTracker
 
@@ -105,7 +106,7 @@ async def list_active_operations() -> Any:
 
         # Get active operations from ProgressTracker
         for op_id, operation in ProgressTracker._progress_states.items():
-            if operation.get("status") in ["starting", "running", "crawling", "processing"]:
+            if operation.get("status") in [StatusEnum.STARTING, StatusEnum.RUNNING, StatusEnum.CRAWLING, StatusEnum.PROCESSING]:
                 active_operations.append(
                     {
                         "operation_id": op_id,

@@ -126,7 +126,7 @@ class LeadHandler:
             w_base = config.score_base
 
             title = str(job_title or "").upper()
-            if any(kw in title for kw in ["DIRECTOR", "VP", "HEAD", "CHIEF", "ARCHITECT", "FOUNDER"]):
+            if any(kw in title for kw in ["DIRECTOR", "VP", "HEAD", "CHIEF", "ARCHITECT", "FOUNDER"]): # 合法
                 return w_strat
             if any(kw in title for kw in ["AI", "ML", "MACHINE LEARNING", "DATA", "PYTHON", "ENGINEER"]):
                 return w_tech

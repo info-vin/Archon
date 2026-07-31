@@ -61,7 +61,10 @@ class NetworkConfig(BaseModel):
     agents_service_url: str = Field(default="http://archon-agents:8052", alias="AGENTS_SERVICE_URL")
     mcp_service_url: str = Field(default="http://archon-mcp:8051", alias="MCP_SERVICE_URL")
     ollama_base_url: str = Field(default="http://host.docker.internal:11434", alias="LLM_BASE_URL")
-
+    anthropic_base_url: str = Field(default="https://api.anthropic.com/v1/", alias="ANTHROPIC_BASE_URL")
+    openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1", alias="OPENROUTER_BASE_URL")
+    google_base_url: str = Field(default="https://generativelanguage.googleapis.com/v1beta/openai/", alias="GOOGLE_BASE_URL")
+    hf_base_url: str = Field(default="https://api-inference.huggingface.co/v1/", alias="HF_BASE_URL")
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.05, alias="WEEKLY_BUDGET_THRESHOLD")
 
@@ -109,9 +112,9 @@ class SchedulerConfig(BaseModel):
 
 
 class CrawlerJobConfig(BaseModel):
-    crawler_job_keywords: str = Field(default="Python,AI,AI行銷自動化,智慧客服,數據分析,AI自動化流程,大語言模型應用", alias="CRAWLER_JOB_KEYWORDS")
+    crawler_job_keywords: str = Field(default="Python,AI,AI行銷自動化,AI自動化流程,大語言模型應用", alias="CRAWLER_JOB_KEYWORDS")
     crawler_job_limit: int = Field(default=12, alias="CRAWLER_JOB_LIMIT")
-    lead_gen_similarity_threshold: float = Field(default=0.65, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
+    lead_gen_similarity_threshold: float = Field(default=0.67, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
     crawler_waf_delay_min: float = Field(default=5.0, alias="CRAWLER_WAF_DELAY_MIN")
     crawler_waf_delay_max: float = Field(default=20.0, alias="CRAWLER_WAF_DELAY_MAX")
 

@@ -1,0 +1,156 @@
+1a77ea1a fix(types): resolve mypy any-return errors in visit_log_api.py
+df837623 docs: update GEMINI.md with Phase 5.9.34 activity log
+00250668 style: auto fix whitespace from ruff
+69ecbe1e fix(crawler): fix AGENTS.md local path resolution to pass test_identify_leads_and_save
+784bf8e4 fix(rbac): resolve ruff C405 list literal and SSOT rule violations in fallback
+
+==================== Step 1: Scanning PRPs for pending tasks ====================
+✅ No pending tasks found in active PRPs!
+
+==================== Step 3: Git Sync & Tech Debt Scan ====================
+🔗 Fetching from origin...
+🔍 Checking status...
+⚠️  Working directory has changes:
+M python/src/server/api_routes/admin_api.py
+ M python/src/server/api_routes/extraction_api.py
+ M python/src/server/api_routes/marketing_api.py
+ M python/src/server/api_routes/progress_api.py
+ M python/src/server/api_routes/projects/ops.py
+ M python/src/server/api_routes/projects/versioning.py
+ M python/src/server/api_routes/providers_api.py
+ M python/src/server/api_routes/settings_api.py
+ M python/src/server/auth/dependencies.py
+ M python/src/server/schemas/settings.py
+ M python/src/server/services/code_extraction/logic/ast_processor.py
+ M python/src/server/services/code_extraction/logic/code_validator.py
+ M python/src/server/services/crawling/clients/job104_client.py
+ M python/src/server/services/crawling/crawling_service.py
+ M python/src/server/services/crawling/handlers/orchestrator.py
+ M python/src/server/services/crawling/progress_mapper.py
+ M python/src/server/services/credentials/provider_configs.py
+ M python/src/server/services/discovery/models.py
+ M python/src/server/services/discovery/providers/google_handler.py
+ M python/src/server/services/embeddings/provider_error_adapters.py
+ M python/src/server/services/llm/clients.py
+ M python/src/server/services/marketing/analytics_handler.py
+ M python/src/server/services/marketing/blog_generator.py
+ M python/src/server/services/marketing/lead_handler.py
+ M python/src/server/services/marketing/logo_tool.py
+ M python/src/server/services/marketing/visual_generator.py
+ M python/src/server/services/ollama/discovery/capabilities.py
+ M python/src/server/services/ollama/discovery/capability_patterns.py
+ M python/src/server/services/projects/task_service.py
+ M python/src/server/services/projects/tasks/maintenance.py
+ M python/src/server/services/projects/tasks/query_logic.py
+ M python/src/server/services/scheduler/jobs/patrol_infra.py
+ M python/src/server/services/scheduler/jobs/sentinel_patrol.py
+ M python/src/server/services/search/reranking_strategy.py
+ M python/src/server/services/shared_constants.py
+ M python/src/server/services/source_management/logic/ai_metadata.py
+ M python/src/server/services/stats/__init__.py
+ M python/src/server/services/stats/domains/agent_metrics.py
+ M python/src/server/services/stats/domains/marketing_metrics.py
+ M python/src/server/services/storage/code/extractors.py
+ M scripts/phase_audit.py
+?? PRPs/Phase_5.9.34_Providers_Refactor.md
+?? PRPs/Phase_5.9.35_SSOT_Refactor.md
+?? PRPs/Phase_5.9.36_Services_SSOT.md
+?? audit_results.txt
+?? python/tests/test_providers_api_refactor.py
+📝 Last 5 commits:
+
+==================== Monolith Check (> 400 lines & Warnings > 360 lines) ====================
+✅ No monolith files (>400 lines) found!
+⚠️  Found 9 files nearing monolith status (>360 lines):
+   [Backend]
+     - python/src/server/services/credentials/manager.py: 361 lines
+   [Frontend]
+     - archon-ui-main/src/features/rag-settings/index.tsx: 394 lines
+     - archon-ui-main/src/features/progress/hooks/useProgressQueries.ts: 383 lines
+     - archon-ui-main/src/features/ui/primitives/combobox.tsx: 380 lines
+     - archon-ui-main/src/features/rag-settings/components/IDEGlobalRules.tsx: 379 lines
+     - archon-ui-main/src/features/knowledge/components/KnowledgeCardTags.tsx: 376 lines
+     - archon-ui-main/src/features/mcp/components/McpConfigSection.tsx: 368 lines
+     - archon-ui-main/src/features/ui/primitives/glass-card.styles.ts: 366 lines
+     - archon-ui-main/src/features/projects/views/ProjectsView.tsx: 363 lines
+
+==================== Step 5: Cloud & Scheduler Audit (Hugging Face) ====================
+✅ Space chiawei6/myrmidon is currently: RUNNING
+
+==================== Step 6: Four Major Backend Architectures Health Check ====================
+### 📊 **四大架構與戰略子要塞健康度總覽 (全覆蓋數值守恆版)**
+
+| 架構層級與戰略子要塞 (Sub-domains) | 基準健康度 | 最新健康度 | 實體檔案數 / 代碼行數 | 型別標註覆蓋率 | 最新演進說明 |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **1. MCP 協議擴充 (mcp_server)** | **95%** | 🟢 **99.0% (優良)** | **28 檔 / 3,214 行 ↑** | **100.0% ↑** | **掛載 28 檔工具，完備異步重試與超時管控。** |
+| &nbsp;&nbsp;`├─ 1.1 核心服務與 Server 路由` | -- | 🟢 **99.0% (優良)** | 8 檔 / 1,122 行 | 100.0% | MCP 協議通訊與 JSON-RPC 路由核心 |
+| &nbsp;&nbsp;`├─ 1.2 知識與 RAG 工具鏈` | -- | 🟢 **99.0% (優良)** | 6 檔 / 796 行 | 100.0% | 唯讀 RAG 檢索與 Code Search 工具 |
+| &nbsp;&nbsp;`├─ 1.3 專案與工單工具鏈` | -- | 🟢 **99.0% (優良)** | 5 檔 / 703 行 | 100.0% | 專案與 Task 管理工具 |
+| &nbsp;&nbsp;`├─ 1.4 行銷、開發與設計工具鏈` | -- | 🟢 **99.0% (優良)** | 9 檔 / 593 行 | 100.0% | 行銷自動化與開發輔助工具 |
+| **2. 自主 Agent 引擎 (agents)** | **90%** | 🟢 **99.0% (優良)** | **36 檔 / 3,609 行 ↑** | **100.0% ↑** | **具備 DB 狀態斷點快照與 HITL 審核雙重防線。** |
+| &nbsp;&nbsp;`├─ 2.1 核心執行與推演引擎` | -- | 🟢 **99.0% (優良)** | 5 檔 / 788 行 | 100.0% | ReAct 推演與任務執行核心引擎 |
+| &nbsp;&nbsp;`├─ 2.2 DB 狀態斷點與快照 (Checkpoint)` | -- | 🟢 **99.0% (優良)** | 1 檔 / 101 行 | 100.0% | 快照斷點防護，防止長任務中斷與額度浪費 |
+| &nbsp;&nbsp;`├─ 2.3 HITL 人工審核防線 (Approval)` | -- | 🟢 **99.0% (優良)** | 1 檔 / 122 行 | 100.0% | 高風險工具調用攔截與人工核准機制 |
+| &nbsp;&nbsp;`├─ 2.4 多 Agent 工作流與專屬 Agent` | -- | 🟢 **99.0% (優良)** | 29 檔 / 2,598 行 | 100.0% | 星型群聊拓樸與 Multi-Agent 路由 |
+| **3. 核心業務服務 (services)** | **85%** | 🟢 **98.5% (優良)** | **210 檔 / 26,713 行 ↑** | **97.0% ↑** | **包含 6 大業務戰略要塞，完成巨型服務 L2 拆解。** |
+| &nbsp;&nbsp;`├─ 3.1 RAG 與向量檢索核心` | -- | 🟢 **98.1% (優良)** | 70 檔 / 8,435 行 | 96.2% | 向量檢索、語意重排與 chunk 切片核心 |
+| &nbsp;&nbsp;`├─ 3.2 Model SSOT 與 Prompt 治理` | -- | 🟢 **95.4% (優良)** | 37 檔 / 3,851 行 | 90.8% | Model SSOT 與提示詞版本控制中心 |
+| &nbsp;&nbsp;`├─ 3.3 背景與排程巡檢戰線` | -- | 🟢 **96.6% (優良)** | 13 檔 / 2,310 行 | 93.1% | 104 爬蟲與 Stale Leads 追蹤巡檢戰線 |
+| &nbsp;&nbsp;`├─ 3.4 Auth 與細粒度 RBAC` | -- | 🟢 **99.0% (優良)** | 5 檔 / 584 行 | 100.0% | JWT 身分驗證與細粒度 RBAC 部門隔離 |
+| &nbsp;&nbsp;`├─ 3.5 CRM 與行銷業務核心` | -- | 🟢 **99.0% (優良)** | 32 檔 / 4,965 行 | 100.0% | Leads 評分、自動化報告與 CRM 核心 |
+| &nbsp;&nbsp;`├─ 3.6 Agent 核心與基礎設施` | -- | 🟢 **99.0% (優良)** | 53 檔 / 6,568 行 | 100.0% | Agent Executor、基礎設施與檔案儲存 |
+| **4. API 門戶與路由 (api_routes)** | **78%** | 🟢 **99.0% (優良)** | **49 檔 / 5,348 行 ↑** | **100.0% ↑** | **掛載 49 檔 REST API 端點，強型別路由防護。** |
+| &nbsp;&nbsp;`├─ 4.1 系統治理、Auth 與 HITL 端點` | -- | 🟢 **99.0% (優良)** | 11 檔 / 1,420 行 | 100.0% | Agent 審核單與系統治理強型別端點 |
+| &nbsp;&nbsp;`├─ 4.2 商業行銷與內容端點` | -- | 🟢 **99.0% (優良)** | 12 檔 / 1,627 行 | 100.0% | 專案、工單與 Leads 商業核心 REST 端點 |
+| &nbsp;&nbsp;`├─ 4.3 知識庫、AI 與模型端點` | -- | 🟢 **99.0% (優良)** | 19 檔 / 1,648 行 | 100.0% | 知識庫上傳與 AI 管道進口端點 |
+| &nbsp;&nbsp;`├─ 4.4 資源、設定與檔案端點` | -- | 🟢 **99.0% (優良)** | 7 檔 / 653 行 | 100.0% | 靜態資源、設定與版本歷史端點 |
+
+==================== Step 7: Physical Schema Three-Way Sync Audit ====================
+✅ Schema sync audit passed. No ghost tables found.
+
+==================== Step 8: SSOT & Hardcoding Audit ====================
+⚠️  Found 42 potential hardcoding / SSOT violations:
+   - python/src/server/services/extraction_service.py:154 | Hardcoded String Set Literal (SSOT Violation) | if k in ["name", "domain_pattern", "schema_definition", "target_role", "descr...
+   - python/src/server/services/agent_registry.py:72 | Hardcoded String Set Literal (SSOT Violation) | "tools": ["search_job_market", "generate_sales_email"],
+   - python/src/server/services/agent_registry.py:90 | Hardcoded String Set Literal (SSOT Violation) | "tools": ["list_projects", "manage_task"],
+   - python/src/server/services/agent_registry.py:96 | Hardcoded String Set Literal (SSOT Violation) | "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", ...
+   - python/src/server/services/marketing_service.py:87 | Hardcoded String Set Literal (SSOT Violation) | query = self.supabase_client.table("archon_logs").select("*").eq("level", "AL...
+   - python/src/server/services/agent_service.py:65 | Hardcoded String Set Literal (SSOT Violation) | if not user_role or user_role in ["admin", "system_admin", "manager"]:
+   - python/src/server/services/crawler_service.py:39 | Hardcoded String Set Literal (SSOT Violation) | if self.user_role.lower() not in ["admin", "system_admin"]:
+   - python/src/server/services/crawler_service.py:70 | Hardcoded String Set Literal (SSOT Violation) | for s in soup(["script", "style", "nav", "footer"]):
+   - python/src/server/services/background_task_manager.py:191 | Hardcoded String Set Literal (SSOT Violation) | if metadata.get("status") in ["complete", "error", "cancelled"]:
+   - python/src/server/services/report_service.py:56 | Hardcoded String Set Literal (SSOT Violation) | query = self.supabase_client.table("archon_logs").select("level, message, sou...
+   - python/src/server/services/rbac_service.py:27 | Hardcoded String Set Literal (SSOT Violation) | "admin": ["admin", "system_admin", "manager", "employee", "member", "marketin...
+   - python/src/server/services/rbac_service.py:38 | Hardcoded String Set Literal (SSOT Violation) | "manager": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
+   - python/src/server/services/rbac_service.py:39 | Hardcoded String Set Literal (SSOT Violation) | "employee": ["employee", "member", "ai_agent"],
+   - python/src/server/services/rbac_service.py:40 | Hardcoded String Set Literal (SSOT Violation) | "member": ["employee", "member", "ai_agent"],
+   - python/src/server/services/rbac_service.py:41 | Hardcoded String Set Literal (SSOT Violation) | "marketing": ["marketing", "ai_agent"],
+   - python/src/server/services/rbac_service.py:42 | Hardcoded String Set Literal (SSOT Violation) | "sales": ["sales", "ai_agent"],
+   - python/src/server/services/rbac_service.py:43 | Hardcoded String Set Literal (SSOT Violation) | "pm": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
+   - python/src/server/services/rbac_service.py:44 | Hardcoded String Set Literal (SSOT Violation) | "engineer": ["employee", "member", "ai_agent"],
+   - python/src/server/services/rbac_service.py:168 | Hardcoded String Set Literal (SSOT Violation) | return permission in role_perms or user_role in ["admin", "system_admin"]
+   - python/src/server/services/rbac_service.py:183 | Hardcoded String Set Literal (SSOT Violation) | if "assign:all" in perms or current_role in ["admin", "system_admin"]:
+   - python/src/server/services/rbac_service.py:227 | Hardcoded String Set Literal (SSOT Violation) | content_manager_roles = ["admin", "system_admin", "manager", "marketing", "sa...
+   - python/src/server/services/rbac_service.py:238 | Hardcoded String Set Literal (SSOT Violation) | if role in ["system_admin", "admin"]:
+   - python/src/server/services/rbac_service.py:251 | Hardcoded String Set Literal (SSOT Violation) | if role in ["system_admin", "admin"]:
+   - python/src/server/services/rbac_service.py:268 | Hardcoded String Set Literal (SSOT Violation) | if role in ["admin", "system_admin", "charlie"]:
+   - python/src/server/services/rbac_service.py:288 | Hardcoded String Set Literal (SSOT Violation) | if role in ["marketbot", "marketing", "summary"]:
+   - python/src/server/services/rbac_service.py:290 | Hardcoded String Set Literal (SSOT Violation) | elif role in ["librarian", "rag", "document"]:
+   - python/src/server/services/librarian/business_archiver.py:34 | Hardcoded String Set Literal (SSOT Violation) | tags = ["sales_pitch", "outbound", "email"]
+   - python/src/server/services/librarian/business_archiver.py:135 | Hardcoded String Set Literal (SSOT Violation) | tags = ["failure_case", "risk_factor", "lesson_learned"]
+   - python/src/server/services/librarian/business_archiver.py:223 | Hardcoded String Set Literal (SSOT Violation) | tags = ["brand_voice_constraint", "style_lesson", "bob_feedback"]
+   - python/src/server/services/librarian/web_archiver.py:92 | Hardcoded String Set Literal (SSOT Violation) | tags = ["web_research", "external_knowledge", "google_grounding"]
+   - python/src/server/services/librarian/file_archiver.py:39 | Hardcoded String Set Literal (SSOT Violation) | tags = ["file_upload", "seeded_knowledge"]
+   - python/src/server/services/lean/compiler_service.py:36 | Hardcoded String Set Literal (SSOT Violation) | ["lake", "build"],
+   - python/src/server/services/llm/parsing.py:85 | Hardcoded String Set Literal (SSOT Violation) | if isinstance(parsed, dict) and any(key in parsed for key in ["example_name",...
+   - python/src/server/services/llm/models.py:86 | Hardcoded String Set Literal (SSOT Violation) | if p_lower in ["openrouter", "anthropic", "grok"]:
+   - python/src/server/services/llm/models.py:111 | Hardcoded String Set Literal (SSOT Violation) | if p_lower in ["openrouter", "anthropic", "grok"]:
+   - python/src/server/services/llm/hybrid_router.py:46 | Hardcoded String Set Literal (SSOT Violation) | keywords = ["theorem", "lemma", "induction", "cases", "simp", "rw", "have", "...
+   - python/src/server/services/llm/utils.py:42 | Hardcoded String Set Literal (SSOT Violation) | valid = ["openai", "ollama", "google", "openrouter", "anthropic", "grok", "mo...
+   - python/src/server/services/llm/clients.py:82 | Hardcoded String Set Literal (SSOT Violation) | if not resolved_api_key and provider_name in ["openai", "google", "anthropic"...
+   - python/src/server/services/llm/clients.py:117 | Hardcoded HTTP URL/Port | client = openai.AsyncOpenAI(api_key=resolved_api_key, base_url=base_url or "h...
+   - python/src/server/services/llm/clients.py:125 | Hardcoded HTTP URL/Port | "HTTP-Referer": "https://github.com/info-vin/Archon",
+   - python/src/server/services/llm/base.py:109 | Hardcoded HTTP URL/Port | client = openai.AsyncOpenAI(api_key=hf_token, base_url="https://api-inference...
+   - python/src/server/services/credentials/provider_configs.py:151 | Hardcoded HTTP URL/Port | return cast(str | None, rag_settings.get("LLM_BASE_URL", "http://localhost:11...
+
+==================== Audit Complete ====================

@@ -84,7 +84,7 @@ class MarketingService(BaseRepository):
 
 
     async def get_manager_alerts(self, limit: int = 50) -> list[dict]:
-        query = self.supabase_client.table("archon_logs").select("*").eq("level", "ALERT").in_("source", ["sentinel", "twin_scout", "LeadScoring"]).order("created_at", desc=True).limit(limit)
+        query = self.supabase_client.table("archon_logs").select("*").eq("level", "ALERT").in_("source", ["sentinel", "twin_scout", "LeadScoring"]).order("created_at", desc=True).limit(limit) # 合法
         success, res = self.execute_query(query, "Failed to get manager alerts")
         return res.get("data", []) if success else []
 

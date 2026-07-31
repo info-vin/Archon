@@ -10,6 +10,8 @@ from typing import Any, cast
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
 
+from ...shared_constants import TaskStatusEnum
+
 logger = get_logger(__name__)
 
 
@@ -173,9 +175,9 @@ async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool
             if project_id not in counts_by_project:
                 counts_by_project[project_id] = {"todo": 0, "doing": 0, "done": 0}
 
-            if status == "review":
-                counts_by_project[project_id]["doing"] += 1
-            elif status in ["todo", "doing", "done"]:
+            if status == TaskStatusEnum.REVIEW:
+                counts_by_project[project_id][TaskStatusEnum.DOING] += 1
+            elif status in [TaskStatusEnum.TODO, TaskStatusEnum.DOING, TaskStatusEnum.DONE]:
                 counts_by_project[project_id][status] += 1
 
         return True, counts_by_project

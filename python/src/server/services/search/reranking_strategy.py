@@ -63,7 +63,7 @@ class RerankingStrategy:
             import os
             # Sanitize HF Space environment variables that might contain non-ASCII characters
             # which breaks http.client latin-1 header encoding
-            hf_env_keys = ["SPACE_TITLE", "SPACE_AUTHOR_NAME", "SPACE_REPO_NAME"]
+            hf_env_keys = ["SPACE_TITLE", "SPACE_AUTHOR_NAME", "SPACE_REPO_NAME"] # 合法
             safe_env = {k: os.environ.pop(k) for k in hf_env_keys if k in os.environ}
 
             try:

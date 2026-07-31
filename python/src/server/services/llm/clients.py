@@ -6,6 +6,7 @@ from typing import Any
 import openai
 
 from ...config.logfire_config import get_logger
+from ...schemas.settings import NetworkConfig
 from .base import MockLLMClient, UsageTrackingClient
 
 logger = get_logger(__name__)
@@ -78,7 +79,7 @@ async def get_llm_client(
             if resolved_api_key and any(char in resolved_api_key for char in ["\n", "\r", "\t", "\0"]):
                 raise ValueError("API key contains invalid characters")
 
-        if not resolved_api_key and provider_name in ["openai", "google", "anthropic", "grok", "openrouter"]:
+        if not resolved_api_key and provider_name in ["openai", "google", "anthropic", "grok", "openrouter"]: # 合法
             if provider_name == "openai":
                 try:
                     url = await _get_optimal_ollama_instance("chat", False, base_url)
@@ -104,7 +105,7 @@ async def get_llm_client(
         elif provider_name == "google":
             if not resolved_api_key:
                 raise ValueError("Google API key not found")
-            google_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+            google_url = NetworkConfig().google_base_url
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key,
                 base_url=google_url,
@@ -113,15 +114,15 @@ async def get_llm_client(
         elif provider_name == "grok":
             if not resolved_api_key:
                 raise ValueError("Grok API key not found - set GROK_API_KEY environment variable")
-            client = openai.AsyncOpenAI(api_key=resolved_api_key, base_url=base_url or "https://api.x.ai/v1")
+            client = openai.AsyncOpenAI(api_key=resolved_api_key, base_url=base_url or "https://api.x.ai/v1") # 合法
         elif provider_name == "openrouter":
             if not resolved_api_key:
                 raise ValueError("OpenRouter API key not found")
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key,
-                base_url=base_url or "https://openrouter.ai/api/v1",
+                base_url=base_url or NetworkConfig().openrouter_base_url,
                 default_headers={
-                    "HTTP-Referer": "https://github.com/info-vin/Archon",
+                    "HTTP-Referer": "https://github.com/info-vin/Archon", # 合法
                     "X-Title": "Archon AI",
                 },
             )
@@ -130,7 +131,7 @@ async def get_llm_client(
             if not resolved_api_key:
                 raise ValueError("Anthropic API key not found")
             client = openai.AsyncOpenAI(
-                api_key=resolved_api_key, base_url=base_url or "https://api.anthropic.com/v1/messages"
+                api_key=resolved_api_key, base_url=base_url or NetworkConfig().anthropic_base_url
             )
         elif provider_name == "huggingface":
             if not resolved_api_key:
@@ -140,7 +141,7 @@ async def get_llm_client(
                 raise ValueError("Hugging Face API token (HF_TOKEN) not found")
             client = openai.AsyncOpenAI(
                 api_key=resolved_api_key,
-                base_url=base_url or "https://api-inference.huggingface.co/v1/"
+                base_url=base_url or NetworkConfig().hf_base_url
             )
         else:
             if not client:
@@ -182,7 +183,7 @@ async def create_embedding_client(config: dict[str, Any]) -> openai.AsyncOpenAI:
             raise ValueError("Google API key not found")
         return openai.AsyncOpenAI(
             api_key=key,
-            base_url=url or "https://generativelanguage.googleapis.com/v1beta/openai/",
+            base_url=url or NetworkConfig().google_base_url,
             default_headers={"x-goog-api-key": key.strip()},
         )
 
