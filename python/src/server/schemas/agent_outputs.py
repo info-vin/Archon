@@ -58,7 +58,6 @@ class VoiceProcessResult(BaseModel):
     meeting_topic: str | None = Field(default=None, description="會議討論主題與大綱")
 
 
-
 class TimeSlot(BaseModel):
     start_time: datetime
     end_time: datetime
@@ -81,6 +80,17 @@ class LogEntry(BaseModel):
     created_at: str | None = None
     project_name: str | None = None
 
+
 class RecordGeminiLogResponse(BaseModel):
     log: LogEntry | None = Field(default=None, description="The created log entry data on success")
     error: str | None = Field(default=None, description="Error message if the logging failed")
+
+
+class SystemAlert(BaseModel):
+    """Schema for system alerts returned to authorized managers."""
+
+    id: str = Field(description="The unique identifier for the alert")
+    level: str = Field(description="The severity level of the alert")
+    message: str = Field(description="The alert message content")
+    details: dict[str, Any] | None = Field(default=None, description="Additional context or payload for the alert")
+    created_at: str = Field(description="The timestamp when the alert was generated")
