@@ -4,6 +4,7 @@ import aiohttp
 
 from src.server.config.config import get_config
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.settings import NetworkConfig
 
 from ..models import ModelSpec
 
@@ -13,7 +14,7 @@ async def discover_google_models(api_key: str, session: aiohttp.ClientSession) -
     """1:1 Physical Parity Implementation from ProviderDiscoveryService."""
     models = []
     try:
-        base_url = "https://generativelanguage.googleapis.com/v1beta/models"
+        base_url = NetworkConfig().google_base_url.replace("openai/", "models")
         headers = {"x-goog-api-key": api_key}
 
         pricing_db = get_config().token_pricing

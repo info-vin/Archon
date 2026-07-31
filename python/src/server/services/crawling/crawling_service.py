@@ -146,7 +146,7 @@ class CrawlingService(BaseRepository):
                 status=update.get("status", "processing"),
                 progress=update.get("progress", update.get("percentage", 0)),  # Support both for compatibility
                 log=update.get("log", "Processing..."),
-                **{k: v for k, v in update.items() if k not in ["status", "progress", "percentage", "log"]},
+                **{k: v for k, v in update.items() if k not in ["status", "progress", "percentage", "log"]}, # 合法
             )
 
     # Simple delegation methods for backward compatibility

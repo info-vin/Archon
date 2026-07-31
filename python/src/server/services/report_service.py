@@ -53,7 +53,7 @@ class ReportService(BaseRepository):
         )
 
     def _get_logs_context(self, cutoff_date: str) -> str:
-        query = self.supabase_client.table("archon_logs").select("level, message, source, created_at").gt("created_at", cutoff_date).in_("level", ["ALERT", "ERROR"])
+        query = self.supabase_client.table("archon_logs").select("level, message, source, created_at").gt("created_at", cutoff_date).in_("level", ["ALERT", "ERROR"]) # 合法
         success, logs_res = self.execute_query(query, "Failed to get alerts")
         logs = logs_res.get("data", []) if success else []
         logs_summary = f"Total Alerts/Errors: {len(logs)}\n"

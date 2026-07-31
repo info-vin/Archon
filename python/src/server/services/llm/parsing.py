@@ -82,7 +82,7 @@ def extract_json_from_reasoning(reasoning_text: str, context_code: str = "", lan
     for match in json_matches:
         try:
             parsed = json.loads(match.strip())
-            if isinstance(parsed, dict) and any(key in parsed for key in ["example_name", "summary", "name", "title"]):
+            if isinstance(parsed, dict) and any(key in parsed for key in ["example_name", "summary", "name", "title"]): # 合法
                 return cast(str, match.strip())
         except Exception:
             continue

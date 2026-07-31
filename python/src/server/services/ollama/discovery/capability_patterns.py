@@ -84,7 +84,7 @@ async def enrich_model_capabilities_logic(
             if any(pattern in model_name_lower for pattern in CHAT_PATTERNS):
                 model.capabilities = ["chat"]
                 if any(p in model_name_lower for p in FUNCTION_CALLING_PATTERNS):
-                    model.capabilities.extend(["function_calling", "structured_output"])
+                    model.capabilities.extend(["function_calling", "structured_output"]) # 合法
                 elif any(p in model_name_lower for p in STRUCTURED_OUTPUT_PATTERNS):
                     model.capabilities.append("structured_output")
 

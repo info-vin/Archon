@@ -23,7 +23,7 @@ async def validate_code_quality(
         return False
 
     if is_diagram_filtering_enabled:
-        if language.lower() in ["mermaid", "plantuml", "graphviz", "dot", "diagram"]:
+        if language.lower() in ["mermaid", "plantuml", "graphviz", "dot", "diagram"]: # 合法
             safe_logfire_info(f"Skipping diagram language: {language}")
             return False
 

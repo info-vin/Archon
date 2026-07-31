@@ -2,6 +2,8 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from ...shared_constants import AgentNames, StatusEnum
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,7 +46,7 @@ class AgentMetrics:
         blog_res = (
             self.supabase.table("blog_posts")
             .select("created_at, updated_at")
-            .in_("status", ["published", "changes_requested"])
+            .in_("status", [StatusEnum.PUBLISHED, StatusEnum.CHANGES_REQUESTED])
             .gt("updated_at", thirty_days_ago)
             .execute()
         )
@@ -120,7 +122,13 @@ class AgentMetrics:
                     {"date": date_str[5:], "actual": daily_actual.get(date_str, 0), "baseline": baseline_daily}
                 )
 
-            ai_names = ["DevBot", "MarketBot", "Librarian", "POBot", "Clockwork"]
+            ai_names = [
+                AgentNames.DEV_BOT,
+                AgentNames.MARKET_BOT,
+                AgentNames.LIBRARIAN,
+                AgentNames.PO_BOT,
+                AgentNames.CLOCKWORK,
+            ]
             ai_done = 0
             for t in all_done_tasks:
                 assignee_str = str(t.get("assignee", ""))

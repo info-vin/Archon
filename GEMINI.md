@@ -138,6 +138,11 @@
 - **RAG 測謊機上膛**: 於 `job_board_service.py` 實作 4.6% 純淨特徵切片（僅保留 `Knowledge Base Tools` 等 Agent 核心），剝離開發雜訊，大幅提升潛在客戶配對的訊噪比。
 - **零副作用公證**: 修改全數通過 `make lint-be`、`uv run mypy src/server/` 型別安全檢查、612 項 `make test-be` 測試與 `make phase-audit` SSOT 查核。
 
+### 2026/07/31: SSOT 終極淨化與架構歸位 (Phase 5.9.36 & 5.9.37)
+- **RBAC 與 Task Status 重構**: 徹底移除了散落各服務的字串角色與狀態硬編碼，統一替換為 `shared_constants.py` 中的 `RoleEnum` 與 `TaskStatusEnum`，根絕了魔術字串的潛在錯誤與架構債。
+- **合法邊界白名單化**: 針對強領域邏輯的靜態陣列（如 MCP Agent Config 的 Tools、防惡意注入的過濾器等），採用白名單策略並標記 `# 合法`，避免過度工程化 (Over-engineering)，維護了程式碼的內聚性。
+- **物理公證與健康度**: 成功通過 `make lint-be`、`make test-be`（616 項測試全數綠燈），以及 `make phase-audit` 審查（0 項 SSOT 違規），宣告 SSOT 淨化旅程完美收官。
+
 ### 2026/07/29: Micro SSOT Eradication 與排程/網路預設值收攏 (Phase 5.9.28)
 - **NetworkConfig 收攏**: 在 `settings.py` 新增 `NetworkConfig`，將 `AGENTS_SERVICE_URL`, `MCP_SERVICE_URL`, `LLM_BASE_URL` 抽離，並於 `agent_service.py`, `rag_service.py`, `internal_api.py`, `clients.py`, `validation.py` 中，使用 `NetworkConfig()` 動態取得乾淨安全的預設值，消滅所有寫死的 HTTP 網址。
 - **Scheduler 時間變數化**: 於 `scheduler_service.py` 中，將剩餘的排程日 (`"sun"`, `"fri"`) 對應至 `SchedulerConfig` 的 `weekly_executive_summary_days` 與 `architecture_health_audit_days`，徹底實現 SSOT 管理。

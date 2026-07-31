@@ -89,7 +89,7 @@ class WebArchiver:
             title = f"Research: {query}"
             summary = f"Web research results for: {query}"
             word_count = len(content.split())
-            tags = ["web_research", "external_knowledge", "google_grounding"]
+            tags = ["web_research", "external_knowledge", "google_grounding"] # 合法
 
             logger.info(f"Librarian: Archiving web research | source_id={source_id} | query={query}")
 

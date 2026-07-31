@@ -1,0 +1,38 @@
+   - python/src/server/services/extraction_service.py:154 | Hardcoded String Set Literal (SSOT Violation) | if k in ["name", "domain_pattern", "schema_definition", "target_role", "descr...
+   - python/src/server/services/agent_registry.py:72 | Hardcoded String Set Literal (SSOT Violation) | "tools": ["search_job_market", "generate_sales_email"],
+   - python/src/server/services/agent_registry.py:90 | Hardcoded String Set Literal (SSOT Violation) | "tools": ["list_projects", "manage_task"],
+   - python/src/server/services/agent_registry.py:96 | Hardcoded String Set Literal (SSOT Violation) | "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", ...
+   - python/src/server/services/marketing_service.py:87 | Hardcoded String Set Literal (SSOT Violation) | query = self.supabase_client.table("archon_logs").select("*").eq("level", "AL...
+   - python/src/server/services/agent_service.py:65 | Hardcoded String Set Literal (SSOT Violation) | if not user_role or user_role in ["admin", "system_admin", "manager"]:
+   - python/src/server/services/crawler_service.py:39 | Hardcoded String Set Literal (SSOT Violation) | if self.user_role.lower() not in ["admin", "system_admin"]:
+   - python/src/server/services/crawler_service.py:70 | Hardcoded String Set Literal (SSOT Violation) | for s in soup(["script", "style", "nav", "footer"]):
+   - python/src/server/services/background_task_manager.py:191 | Hardcoded String Set Literal (SSOT Violation) | if metadata.get("status") in ["complete", "error", "cancelled"]:
+   - python/src/server/services/report_service.py:56 | Hardcoded String Set Literal (SSOT Violation) | query = self.supabase_client.table("archon_logs").select("level, message, sou...
+   - python/src/server/services/rbac_service.py:27 | Hardcoded String Set Literal (SSOT Violation) | "admin": ["admin", "system_admin", "manager", "employee", "member", "marketin...
+   - python/src/server/services/rbac_service.py:38 | Hardcoded String Set Literal (SSOT Violation) | "manager": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
+   - python/src/server/services/rbac_service.py:39 | Hardcoded String Set Literal (SSOT Violation) | "employee": ["employee", "member", "ai_agent"],
+   - python/src/server/services/rbac_service.py:40 | Hardcoded String Set Literal (SSOT Violation) | "member": ["employee", "member", "ai_agent"],
+   - python/src/server/services/rbac_service.py:41 | Hardcoded String Set Literal (SSOT Violation) | "marketing": ["marketing", "ai_agent"],
+   - python/src/server/services/rbac_service.py:42 | Hardcoded String Set Literal (SSOT Violation) | "sales": ["sales", "ai_agent"],
+   - python/src/server/services/rbac_service.py:43 | Hardcoded String Set Literal (SSOT Violation) | "pm": ["manager", "employee", "member", "marketing", "sales", "ai_agent"],
+   - python/src/server/services/rbac_service.py:44 | Hardcoded String Set Literal (SSOT Violation) | "engineer": ["employee", "member", "ai_agent"],
+   - python/src/server/services/rbac_service.py:168 | Hardcoded String Set Literal (SSOT Violation) | return permission in role_perms or user_role in ["admin", "system_admin"]
+   - python/src/server/services/rbac_service.py:183 | Hardcoded String Set Literal (SSOT Violation) | if "assign:all" in perms or current_role in ["admin", "system_admin"]:
+   - python/src/server/services/rbac_service.py:227 | Hardcoded String Set Literal (SSOT Violation) | content_manager_roles = ["admin", "system_admin", "manager", "marketing", "sa...
+   - python/src/server/services/rbac_service.py:238 | Hardcoded String Set Literal (SSOT Violation) | if role in ["system_admin", "admin"]:
+   - python/src/server/services/rbac_service.py:251 | Hardcoded String Set Literal (SSOT Violation) | if role in ["system_admin", "admin"]:
+   - python/src/server/services/rbac_service.py:268 | Hardcoded String Set Literal (SSOT Violation) | if role in ["admin", "system_admin", "charlie"]:
+   - python/src/server/services/rbac_service.py:288 | Hardcoded String Set Literal (SSOT Violation) | if role in ["marketbot", "marketing", "summary"]:
+   - python/src/server/services/rbac_service.py:290 | Hardcoded String Set Literal (SSOT Violation) | elif role in ["librarian", "rag", "document"]:
+   - python/src/server/services/librarian/business_archiver.py:34 | Hardcoded String Set Literal (SSOT Violation) | tags = ["sales_pitch", "outbound", "email"]
+   - python/src/server/services/librarian/business_archiver.py:135 | Hardcoded String Set Literal (SSOT Violation) | tags = ["failure_case", "risk_factor", "lesson_learned"]
+   - python/src/server/services/librarian/business_archiver.py:223 | Hardcoded String Set Literal (SSOT Violation) | tags = ["brand_voice_constraint", "style_lesson", "bob_feedback"]
+   - python/src/server/services/librarian/web_archiver.py:92 | Hardcoded String Set Literal (SSOT Violation) | tags = ["web_research", "external_knowledge", "google_grounding"]
+   - python/src/server/services/librarian/file_archiver.py:39 | Hardcoded String Set Literal (SSOT Violation) | tags = ["file_upload", "seeded_knowledge"]
+   - python/src/server/services/lean/compiler_service.py:36 | Hardcoded String Set Literal (SSOT Violation) | ["lake", "build"],
+   - python/src/server/services/llm/parsing.py:85 | Hardcoded String Set Literal (SSOT Violation) | if isinstance(parsed, dict) and any(key in parsed for key in ["example_name",...
+   - python/src/server/services/llm/models.py:86 | Hardcoded String Set Literal (SSOT Violation) | if p_lower in ["openrouter", "anthropic", "grok"]:
+   - python/src/server/services/llm/models.py:111 | Hardcoded String Set Literal (SSOT Violation) | if p_lower in ["openrouter", "anthropic", "grok"]:
+   - python/src/server/services/llm/hybrid_router.py:46 | Hardcoded String Set Literal (SSOT Violation) | keywords = ["theorem", "lemma", "induction", "cases", "simp", "rw", "have", "...
+   - python/src/server/services/llm/utils.py:42 | Hardcoded String Set Literal (SSOT Violation) | valid = ["openai", "ollama", "google", "openrouter", "anthropic", "grok", "mo...
+   - python/src/server/services/llm/clients.py:82 | Hardcoded String Set Literal (SSOT Violation) | if not resolved_api_key and provider_name in ["openai", "google", "anthropic"...

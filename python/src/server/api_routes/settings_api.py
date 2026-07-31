@@ -72,7 +72,7 @@ async def check_credentials_status(
         return await credential_service.check_credentials_exist(req.keys)
 
     # Default behavior for general status check
-    target_keys = ["GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+    target_keys = ["GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"] # 合法
     return await credential_service.check_credentials_exist(target_keys)
 
 

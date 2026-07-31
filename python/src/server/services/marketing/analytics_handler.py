@@ -5,6 +5,7 @@ from typing import Any
 import aiofiles
 
 from ..librarian_service import LibrarianService
+from ..shared_constants import StatusEnum
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,7 @@ class AnalyticsHandler:
         blogs = (
             self.supabase_client.table("blog_posts")
             .select("*")
-            .in_("status", ["draft", "changes_requested"])
+            .in_("status", [StatusEnum.DRAFT, StatusEnum.CHANGES_REQUESTED])
             .order("created_at", desc=True)
             .limit(10)
             .execute()

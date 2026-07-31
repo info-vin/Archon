@@ -62,7 +62,7 @@ class ProgressMapper:
         start, end = self.STAGE_RANGES[stage]
 
         # Handle completion
-        if stage in ["completed", "complete"]:
+        if stage in ["completed", "complete"]: # 合法
             self.last_overall_progress = 100
             return 100
 

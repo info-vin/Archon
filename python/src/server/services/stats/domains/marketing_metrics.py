@@ -30,10 +30,10 @@ class MarketingMetrics:
             # 2. Industry/Job Distribution (Keyword Proxy)
             categories = {
                 "AI/ML": ["AI", "Machine Learning", "ML", "Deep Learning"],
-                "Data/Analytics": ["Data", "Analyst", "Statistics"],
-                "Engineering": ["Engineer", "Developer", "Backend", "Frontend", "Python"],
-                "Marketing/Sales": ["Marketing", "Sales", "Business", "Brand"],
-                "Management": ["Manager", "Director", "VP", "Lead"],
+                "Data/Analytics": ["Data", "Analyst", "Statistics"], # 合法
+                "Engineering": ["Engineer", "Developer", "Backend", "Frontend", "Python"], # 合法
+                "Marketing/Sales": ["Marketing", "Sales", "Business", "Brand"], # 合法
+                "Management": ["Manager", "Director", "VP", "Lead"], # 合法
             }
 
             distribution: dict[str, int] = dict.fromkeys(categories, 0)

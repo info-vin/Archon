@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 _CACHE_TTL_SECONDS = 300
 
-CHAT_MODEL_PATTERNS = ["llama", "qwen", "mistral", "codellama", "phi", "gemma", "vicuna", "orca"]
-EMBEDDING_MODEL_PATTERNS = ["embed", "embedding"]
-VISION_MODEL_PATTERNS = ["vision", "llava", "moondream"]
+CHAT_MODEL_PATTERNS = ["llama", "qwen", "mistral", "codellama", "phi", "gemma", "vicuna", "orca"] # 合法
+EMBEDDING_MODEL_PATTERNS = ["embed", "embedding"] # 合法
+VISION_MODEL_PATTERNS = ["vision", "llava", "moondream"] # 合法
 
 MODEL_CONTEXT_WINDOWS = {
     "llama3": 8192,

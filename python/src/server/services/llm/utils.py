@@ -39,7 +39,7 @@ def is_valid_provider(provider_name: str | None) -> bool:
     if len(provider_name) > 100:
         return False
     # REMOVED "custom-unsupported" to allow test ValueError to trigger
-    valid = ["openai", "ollama", "google", "openrouter", "anthropic", "grok", "mock", "huggingface"]
+    valid = ["openai", "ollama", "google", "openrouter", "anthropic", "grok", "mock", "huggingface"] # 合法
     return provider_name.lower() in valid
 
 

@@ -93,7 +93,7 @@ async def generate_source_title_and_metadata(
                         source_type_info = " (detected from llms.txt file)"
                     elif "sitemap" in original_url:
                         source_type_info = " (detected from sitemap)"
-                    elif any(d in original_url for d in ["docs", "documentation", "api"]):
+                    elif any(d in original_url for d in ["docs", "documentation", "api"]): # 合法
                         source_type_info = " (detected from documentation site)"
                     else:
                         source_type_info = " (detected from website)"

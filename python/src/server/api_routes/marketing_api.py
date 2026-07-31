@@ -23,6 +23,7 @@ from src.server.schemas.marketing import (
     RejectSuggestionRequest,
 )
 from src.server.services.marketing_service import MarketingService
+from src.server.services.shared_constants import RoleEnum
 
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import (
@@ -98,7 +99,7 @@ async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: User
 @router.post("/generate-pitch", response_model=PitchResponse)
 async def generate_pitch(req: PitchRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     role = current_user.role.lower()
-    if role not in ["system_admin", "admin", "marketing", "sales"]:
+    if role not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MARKETING, RoleEnum.SALES]:
         raise HTTPException(status_code=403, detail=f"Role '{role}' is unauthorized to generate pitches")
 
     service = MarketingService()

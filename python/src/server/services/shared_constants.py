@@ -3,6 +3,37 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 
+class RoleEnum(StrEnum):
+    ADMIN = "admin"
+    SYSTEM_ADMIN = "system_admin"
+    MANAGER = "manager"
+    MARKETING = "marketing"
+    SALES = "sales"
+    EMPLOYEE = "employee"
+    MEMBER = "member"
+    AI_AGENT = "ai_agent"
+    PM = "pm"
+    ENGINEER = "engineer"
+
+class StatusEnum(StrEnum):
+    DRAFT = "draft"
+    CHANGES_REQUESTED = "changes_requested"
+    PUBLISHED = "published"
+    STARTING = "starting"
+    RUNNING = "running"
+    CRAWLING = "crawling"
+    PROCESSING = "processing"
+
+class TaskStatusEnum(StrEnum):
+    TODO = "todo"
+    DOING = "doing"
+    REVIEW = "review"
+    DONE = "done"
+    PROCESSING = "processing"
+    DISPATCHED = "dispatched"
+    ERROR = "error"
+    COMPLETED = "completed"
+    COMPLETE = "complete"
 @dataclass(frozen=True)
 class AgentNames:
     SUPERVISOR = "Supervisor (Group Chat)"

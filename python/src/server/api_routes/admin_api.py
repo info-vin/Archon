@@ -12,6 +12,7 @@ from ..auth.dependencies import (
 from ..config.logfire_config import get_logger
 from ..services.admin_service import admin_service
 from ..services.agent_service import agent_service
+from ..services.shared_constants import RoleEnum
 
 logger = get_logger(__name__)
 
@@ -123,7 +124,7 @@ async def get_users(limit: int = 100, role: str | None = None, current_user: Use
     Get all users (Admin & Manager).
     """
     user_role = str(current_user.role).lower()
-    if user_role not in ["admin", "system_admin", "manager"]:
+    if user_role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN, RoleEnum.MANAGER]:
         logger.warning(
             f"Admin API: Unauthorized access attempt to /users by {current_user.email} with role {user_role}"
         )
@@ -198,7 +199,7 @@ class CrawlerTargetCreate(BaseModel):
 async def list_crawler_targets(current_user: UserProfileDTO = Depends(get_current_user)):
     """List specialized crawler targets (Respects Department Isolation)."""
     dept = None
-    if current_user.role not in ["admin", "system_admin"]:
+    if current_user.role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN]:
         dept = current_user.department
     return await admin_service.list_crawler_targets(department=dept)
 

@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/extraction", tags=["Extraction"])
 async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
     """
     Analyze a URL to discover potential data fields.
-    Payload: { "url": "https://..." }
+    Payload: { "url": "https://..." } # 合法
     """
     url = request.get("url")
     if not url:

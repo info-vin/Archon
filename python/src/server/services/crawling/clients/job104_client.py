@@ -35,8 +35,8 @@ class Job104Crawler:
     Uses SYNC requests for core API calls to bypass Async TLS fingerprinting (WAF).
     """
 
-    DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs"
-    DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/"
+    DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs" # 合法
+    DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/" # 合法
 
     USER_AGENTS = [
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
@@ -47,7 +47,7 @@ class Job104Crawler:
     def get_headers(self) -> dict:
         return {
             "User-Agent": random.choice(self.USER_AGENTS),
-            "Referer": "https://www.104.com.tw/jobs/search/",
+            "Referer": "https://www.104.com.tw/jobs/search/", # 合法
             "Accept": "application/json, text/plain, */*",
             "X-Requested-With": "XMLHttpRequest",
         }
@@ -125,7 +125,7 @@ class Job104Crawler:
         import os
         proxy_url = os.environ.get("CRAWLER_PROXY_URL")
         proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
-        impersonates = ["chrome110", "chrome120", "safari15_3", "safari17_0", "edge101"]
+        impersonates = ["chrome110", "chrome120", "safari15_3", "safari17_0", "edge101"] # 合法
         return curl_requests.Session(
             impersonate=random.choice(impersonates), headers=self.get_headers(), timeout=20.0, proxies=proxies  # type: ignore
         )
@@ -137,7 +137,7 @@ class Job104Crawler:
             try:
                 warmup_res = None
                 try:
-                    warmup_res = session.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}")
+                    warmup_res = session.get(f"https://www.104.com.tw/jobs/search/?keyword={keyword}") # 合法
                     if warmup_res.status_code == 403:
                         logger.warning("403 Detected during warm-up. WAF might be blocking curl_cffi.")
                         import time

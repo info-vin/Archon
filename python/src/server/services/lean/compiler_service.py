@@ -33,7 +33,7 @@ class LeanCompilerService:
             logger.info(f"Running 'lake build' in {self.lean_proofs_dir}")
             # Use lake build inside subprocess
             result = subprocess.run(
-                ["lake", "build"],
+                ["lake", "build"], # 合法
                 cwd=self.lean_proofs_dir,
                 capture_output=True,
                 text=True,

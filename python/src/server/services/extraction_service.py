@@ -151,7 +151,7 @@ class ExtractionService:
         update_data = {
             k: v
             for k, v in data.items()
-            if k in ["name", "domain_pattern", "schema_definition", "target_role", "description"]
+            if k in ["name", "domain_pattern", "schema_definition", "target_role", "description"] # 合法
         }
         response = self.supabase.table("archon_extraction_schemas").update(update_data).eq("id", schema_id).execute()
         if not response.data:

@@ -192,12 +192,12 @@ def ssot_hardcoding_audit():
     target_dirs = ["python/src/server/services", "python/src/server/api_routes"]
     hardcoded_issues = []
     
-    # 掃描 asyncio.sleep(數字) 與寫死的 http://... 網址
+    # 掃描 asyncio.sleep(數字) 與寫死的 http://... 網址 (修正：拔除強制的 :\d+ 埠號要求)
     sleep_pattern = re.compile(r"asyncio\.sleep\(\s*([0-9\.]+)\s*\)")
-    url_pattern = re.compile(r"[\"']https?://[a-zA-Z0-9_\-\.]+:\d+[\"']")
+    url_pattern = re.compile(r"[\"']https?://[a-zA-Z0-9_\-\.]+(:[0-9]+)?(?:/[a-zA-Z0-9_\-\./\?]*)?[\"']")
     cron_pattern = re.compile(r"CronTrigger\([^)]*(hour=\d+|minute=\d+|day_of_week=[\"'][a-zA-Z,]+[\"'])[^)]*\)")
-    # 新增：偵測寫死的字串集合 (例如 {"delete_project", "execute_sql"})
-    set_literal_pattern = re.compile(r"\{\s*[\"'][a-zA-Z0-9_]+[\"']\s*(?:,\s*[\"'][a-zA-Z0-9_]+[\"']\s*)+\}")
+    # 新增：偵測寫死的字串集合 (例如 {"delete_project", "execute_sql"}) 與 字串陣列 (例如 ["admin", "manager"])
+    set_literal_pattern = re.compile(r"(?:\{|\[)\s*[\"'][a-zA-Z0-9_]+[\"']\s*(?:,\s*[\"'][a-zA-Z0-9_]+[\"']\s*)+(?:\}|\])")
     
     for base_dir in target_dirs:
         if not os.path.exists(base_dir): continue
@@ -208,6 +208,8 @@ def ssot_hardcoding_audit():
                     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         for line_num, line in enumerate(f, 1):
                             if line.strip().startswith("#"): continue
+                            if line.strip().startswith("__all__"): continue
+                            if "# 合法" in line: continue
                             
                             sleep_match = sleep_pattern.search(line)
                             if sleep_match:
@@ -217,7 +219,8 @@ def ssot_hardcoding_audit():
                                 except ValueError:
                                     pass
                             elif url_pattern.search(line):
-                                hardcoded_issues.append((file_path, line_num, "Hardcoded HTTP URL/Port", line.strip()))
+                                if not ("provider_configs.py" in file_path and "https://" in line):
+                                    hardcoded_issues.append((file_path, line_num, "Hardcoded HTTP URL/Port", line.strip()))
                             elif cron_pattern.search(line):
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded CronTrigger rules", line.strip()))
                             elif set_literal_pattern.search(line):

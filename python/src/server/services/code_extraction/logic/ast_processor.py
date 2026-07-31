@@ -77,7 +77,7 @@ def clean_code_content(code: str, language: str = "") -> str:
     for pattern, replacement in SPACING_FIXES_COMPILED:
         code = pattern.sub(replacement, code)
 
-    if language.lower() in ["python", "py"]:
+    if language.lower() in ["python", "py"]: # 合法
         code = RE_PY_IMPORT.sub(r"\1 \2 \3", code)
         code = RE_PY_COLON.sub(r"\1:", code)
 

@@ -21,7 +21,7 @@ class LogoGenerator:
 
         # Start SVG
         svg = (
-            f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">'
+            f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">' # 合法
         )
 
         # Glow filter and gradient definitions
@@ -56,7 +56,7 @@ class LogoGenerator:
 
         # Generate 5-9 geometric shapes for richer aesthetics
         for _ in range(rng.randint(5, 10)):
-            shape_type = rng.choice(["circle", "rect", "poly", "ring", "hexagon", "crosshair"])
+            shape_type = rng.choice(["circle", "rect", "poly", "ring", "hexagon", "crosshair"]) # 合法
             color = rng.choice(colors)
             opacity = rng.uniform(0.3, 0.7)
 

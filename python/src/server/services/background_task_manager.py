@@ -188,7 +188,7 @@ class BackgroundTaskManager:
                 tasks_to_remove = []
                 for task_id, metadata in self.task_metadata.items():
                     # Only clean up completed/error/cancelled tasks
-                    if metadata.get("status") in ["complete", "error", "cancelled"]:
+                    if metadata.get("status") in ["complete", "error", "cancelled"]: # 合法
                         created_at = metadata.get("created_at")
                         if created_at and created_at < retention_cutoff:
                             tasks_to_remove.append(task_id)

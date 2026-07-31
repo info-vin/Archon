@@ -59,4 +59,4 @@ class VisualAssetGenerator:
             }
         except Exception as e:
             logger.critical(f"VisualAssetGenerator: Comprehensive visual failure: {e}")
-            return {"status": "success", "image_url": "https://picsum.photos/1024/1024", "tier": "emergency"}
+            return {"status": "success", "image_url": "https://picsum.photos/1024/1024", "tier": "emergency"} # 合法

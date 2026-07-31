@@ -12,6 +12,7 @@ from src.server.schemas.projects import (
     RestoreVersionRequest,
 )
 from src.server.services.projects.versioning_service import VersioningService
+from src.server.services.shared_constants import RoleEnum
 from src.server.utils.api_utils import handle_service_result
 
 from ...auth.dependencies import get_current_user
@@ -27,7 +28,7 @@ def _err(res: Any, code: int = 500):
 @router.get("/versions")
 async def list_all_versions(current_user: UserProfileDTO = Depends(get_current_user)):
     u_role = current_user.role.lower()
-    if u_role not in ["system_admin", "admin", "manager"]:
+    if u_role not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MANAGER]:
         _err("Forbidden", 403)
     s, res = VersioningService().list_all_versions()
     if not s or not isinstance(res, dict):

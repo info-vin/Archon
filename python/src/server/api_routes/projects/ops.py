@@ -21,6 +21,7 @@ from ...auth.permissions import AGENT_TRIGGER_DEV
 from ...services.profile_service import ProfileService
 from ...services.projects.task_service import TaskService
 from ...services.rbac_service import RBACService
+from ...services.shared_constants import RoleEnum
 from ...utils.api_utils import handle_service_result
 from ...utils.etag_utils import check_etag, generate_etag
 
@@ -105,7 +106,7 @@ async def create_task(req: CreateTaskRequest, current_user: UserProfileDTO = Dep
             ok, p = ProfileService().get_profile(str(req.assignee_id))
             if ok and isinstance(p, dict):
                 target_name = str(p.get("name"))
-                if u_role not in ["system_admin", "admin"] and p.get("department") != u_dept:
+                if u_role not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN] and p.get("department") != u_dept:
                     _err(f"Cannot assign tasks to members outside your department ({p.get('department')})", 403)
 
     s, res = await TaskService().create_task(
@@ -143,7 +144,7 @@ async def list_tasks(
     u_role = current_user.role.lower()
     u_id = current_user.id
 
-    if u_role in ["system_admin", "admin", "manager"]:
+    if u_role in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MANAGER]:
         a_filter = assignee_id
     else:
         a_filter = u_id
@@ -154,7 +155,7 @@ async def list_tasks(
         include_closed=include_closed,
         exclude_large_fields=exclude_large_fields,
         assignee_id=a_filter,
-        include_unassigned=include_unassigned if u_role in ["admin", "manager"] else False,
+        include_unassigned=include_unassigned if u_role in [RoleEnum.ADMIN, RoleEnum.MANAGER] else False,
     )
 
     data = cast(dict[str, Any], handle_service_result(s, res))
@@ -198,7 +199,7 @@ async def update_task(task_id: str, req: UpdateTaskRequest, current_user: UserPr
 
 @router.delete("/tasks/{task_id}")
 async def delete_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
-    if current_user.role.lower() not in ["system_admin", "admin", "manager"]:
+    if current_user.role.lower() not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MANAGER]:
         _err("Forbidden: Only managers can archive tasks", 403)
     s, res = await TaskService().archive_task(task_id, archived_by=str(current_user.id))
     if not s:
