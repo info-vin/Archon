@@ -117,7 +117,7 @@ class JobBoardService:
         if not core_text:
             return None
 
-        from .prompt_defaults import ALICE_HYDE_BASELINE_DEFAULT
+        from ..prompts.sales_prompts import ALICE_HYDE_BASELINE_DEFAULT
         llm_text = await self._generate_llm_response(
             prompt_name="ALICE_HYDE_BASELINE",
             default_prompt=ALICE_HYDE_BASELINE_DEFAULT,
@@ -139,7 +139,7 @@ class JobBoardService:
         if not core_text:
             return False
 
-        from .prompt_defaults import ALICE_LEAD_JUDGE_DEFAULT
+        from ..prompts.sales_prompts import ALICE_LEAD_JUDGE_DEFAULT
         
         content = await self._generate_llm_response(
             prompt_name="ALICE_LEAD_JUDGE",
@@ -322,7 +322,7 @@ class JobBoardService:
         return new_leads_count
 
     async def _infer_need(self, job: JobData) -> str:
-        from .prompt_defaults import ALICE_INFER_NEED_DEFAULT
+        from ..prompts.sales_prompts import ALICE_INFER_NEED_DEFAULT
 
         content = await self._generate_llm_response(
             prompt_name="ALICE_INFER_NEED",

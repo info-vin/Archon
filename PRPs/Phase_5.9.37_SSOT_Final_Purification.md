@@ -47,6 +47,16 @@
 - **[MODIFY]** `llm/models.py`, `llm/utils.py`, `llm/clients.py` - Providers 清單檢查
 - **[MODIFY]** `llm/hybrid_router.py` (Line 46) - `keywords` 陣列
 
+### 4. `job_board_service.py` 進階 SSOT 與 DRY 淨化 (擴充目標)
+根據最新的深度 Code Review，在完成 LLM 呼叫的 DRY 重構後，我們發現在資料存取層與配置解析上仍存在架構債：
+- **DRY 違規 (配置讀取重複)**：`auto_fetch_daily_leads` 與 `_process_single_job` 中各自撰寫了 `SettingsService` 並透過 `try-except` 解析 `CrawlerJobConfig` 的邏輯。應抽離為統一的 `_get_crawler_config(self)`。
+- **DRY 違規 (系統日誌重複)**：程式碼中三處散落 `self.supabase.table("archon_logs").insert(...).execute()`，缺乏共用的日誌方法。
+- **SSOT 違規 (繞過 Repository)**：大量依賴 `self.supabase.table("leads")....execute()`。根據 Phase 5.9.32 的規範，所有資料庫寫入應收斂至 `BaseRepository.execute_query`，不該在 Service 中手刻 Supabase 查詢。
+- **嚴重脆性硬編碼 (Brittle Hardcoding)**：
+  - `_get_core_text` 依賴脆弱的字串切割 (例如 `content.find("### Knowledge Base Tools")`) 來讀取 `AGENTS.md`，極易因文件微調而靜默崩潰。
+  - `initial_delay=2.0` 在 `@retry_with_backoff` 中被硬編碼。
+  - 數十行的繁體中文預設提示詞 (`default_prompt`) 直接寫死在代碼中，而非由資料庫或配置檔集中管控。
+
 ## Verification Plan
 ### Automated Tests
 - `make lint-be`：確保替換 `RoleEnum` 時不會再次發生型別錯誤。
