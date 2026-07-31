@@ -2,12 +2,33 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
 import aiofiles
 
 from ..utils import get_supabase_client
+
+
+class FileChangePayloadDict(TypedDict):
+    file_path: NotRequired[str]
+    old_content: NotRequired[str]
+    new_content: NotRequired[str]
+    created_by: NotRequired[str | None]
+    created_by_dept: NotRequired[str]
+    change_summary: NotRequired[str]
+
+
+class ProposedChangeDict(TypedDict):
+    id: NotRequired[str]
+    created_at: NotRequired[str]
+    status: NotRequired[str]
+    type: NotRequired[str]
+    request_payload: NotRequired[FileChangePayloadDict | dict[str, Any]]
+    approved_by: NotRequired[str | None]
+    approved_at: NotRequired[str | None]
+    executed_at: NotRequired[str | None]
+    execution_log: NotRequired[str | None]
 
 
 class ActionExecutor:
@@ -23,7 +44,7 @@ class ActionExecutor:
             raise RuntimeError("Command failed")
         return stdout.decode().strip()
 
-    async def execute_file_change(self, payload: dict[str, Any], task_id: str = "ai-fix") -> str:
+    async def execute_file_change(self, payload: FileChangePayloadDict | dict[str, Any], task_id: str = "ai-fix") -> str:
         file_path_str = payload.get("file_path")
         new_content = payload.get("new_content")
 
@@ -59,7 +80,7 @@ class ProposeChangeService:
         # but keep it as a string to match the updated TEXT column type.
         return uid_str
 
-    async def list_proposals(self, status: str | None = "pending", user_id: str | None = None) -> list[dict[str, Any]]:
+    async def list_proposals(self, status: str | None = "pending", user_id: str | None = None) -> list[ProposedChangeDict]:
         """Lists proposals, optionally filtered by status and user department scope."""
         query = self.db_client.table("proposed_changes").select("*")
         if status:
@@ -76,15 +97,15 @@ class ProposeChangeService:
                     query = query.filter("request_payload->>created_by_dept", "eq", dept)
 
         res = query.order("created_at", desc=True).execute()
-        return cast(list[dict[str, Any]], res.data or [])
+        return cast(list[ProposedChangeDict], res.data or [])
 
-    async def get_proposal(self, proposal_id: UUID) -> dict[str, Any] | None:
+    async def get_proposal(self, proposal_id: UUID) -> ProposedChangeDict | None:
         res = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute()
         return res.data[0] if res.data else None
 
     async def create_file_proposal(
         self, file_path: str, new_content: str, summary: str, user_id: str | None = None
-    ) -> dict[str, Any]:
+    ) -> ProposedChangeDict:
         """Creates a file change proposal, capturing current content as old_content."""
         p = Path(file_path)
         old_content = ""
@@ -112,11 +133,11 @@ class ProposeChangeService:
             .insert({"type": "file", "status": "pending", "request_payload": payload})
             .execute()
         )
-        return cast(dict[str, Any], res.data[0])
+        return cast(ProposedChangeDict, res.data[0])
 
     async def create_proposal(
         self, change_type: str, payload: dict[str, Any], user_id: str | None = None
-    ) -> dict[str, Any]:
+    ) -> ProposedChangeDict:
         """Creates a generic proposal (e.g. git commands, feature management) in proposed_changes."""
         # Embed physical identity (Phase 4.6.23)
         dept = "General"
@@ -136,9 +157,9 @@ class ProposeChangeService:
             .insert({"type": change_type, "status": "pending", "request_payload": request_payload})
             .execute()
         )
-        return cast(dict[str, Any], res.data[0])
+        return cast(ProposedChangeDict, res.data[0])
 
-    async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
+    async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> ProposedChangeDict:
         resolved_id = self._resolve_user_id(user_id)
         res = (
             self.db_client.table("proposed_changes")
@@ -176,9 +197,9 @@ class ProposeChangeService:
         except Exception as e:
             self.logger.warning(f"Audit log failed: {e}")
 
-        return cast(dict[str, Any], res.data[0])
+        return cast(ProposedChangeDict, res.data[0])
 
-    async def reject_proposal(self, proposal_id: UUID, user_id: Any) -> dict[str, Any]:
+    async def reject_proposal(self, proposal_id: UUID, user_id: Any) -> ProposedChangeDict:
         resolved_id = self._resolve_user_id(user_id)
         res = (
             self.db_client.table("proposed_changes")
@@ -205,4 +226,4 @@ class ProposeChangeService:
         except Exception as e:
             self.logger.warning(f"Audit log failed: {e}")
 
-        return cast(dict[str, Any], res.data[0])
+        return cast(ProposedChangeDict, res.data[0])

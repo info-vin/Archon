@@ -28,7 +28,15 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                     t.assignee_id === member.id || 
                     t.assignee === member.name ||
                     (t.assignee === 'User' && member.role === 'marketing')
-                ).sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+                );
+
+                // PERFORMANCE: Pre-calculate timestamps to avoid O(N log N) string-to-date parsing in sort
+                const timestamps = new Map<Task, number>();
+                for (const t of memberTasks) {
+                    timestamps.set(t, new Date(t.created_at || '').getTime());
+                }
+
+                memberTasks.sort((a, b) => (timestamps.get(b) ?? 0) - (timestamps.get(a) ?? 0));
 
                 setTasks(memberTasks);
             } catch (e) {
