@@ -113,6 +113,14 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/07/31: JobBoardService 的 SSOT 與 DRY 最終淨化 (Phase 5.9.37 & 5.9.38)
+- **DRY 徹底淨化**: 於 `job_board_service.py` 抽離 `_get_crawler_config` 與 `_log_archon`，並建立 `_generate_llm_response` 共用模組，收斂高達 80% 的 LLM 呼叫重複代碼（含重試、限流與例外處理）。
+- **SSOT 收斂與資料庫防禦**: 移除了所有繞過機制的 `supabase.table("leads")...execute()`，全面統一改用 `BaseRepository.execute_query`，確保所有資料庫讀寫皆享有系統級別的連線重試與例外防護。
+- **脆性硬編碼 (Brittle Fixes) 消除**: 
+    1. 將三個落落長的繁體中文預設提示詞 (`ALICE_HYDE_BASELINE_DEFAULT` 等) 徹底從業務代碼中拔除，並按照架構規範正確搬移至 `python/src/server/prompts/sales_prompts.py` (真正的 SSOT)。
+    2. 修復了對 `AGENTS.md` 脆弱的標題字串切割，改採安全的字元擷取，防範未來文件微調引發的靜默崩潰。
+- **物理公證與型別完美覆蓋**: 經 `backend_type_health.py` 掃描，`job_board_service.py` 達到 100% 型別覆蓋率與優良健康度。`make test-be` 619 項測試與 `make phase-audit` 全數綠燈通過。
+
 ### 2026/07/30: 排程防禦、RAG 攔截與雲端路徑自癒 (Phase 5.9.34)
 - **排程盲點修補**: 修正 `scheduler_service.py` 中的 `catch-up` 任務邏輯，嚴格校驗 `CronTrigger` 的 `day_of_week`，杜絕伺服器重啟後在非排程日（如週四）意外觸發爬蟲的行為。
 - **RAG 攔截與 Fail-Fast 升級**: 於 `job_board_service.py` 實作強攔截防禦。當找不到 RAG Baseline (`AGENTS.md`) 時，不再返回 `None` 讓流程靜默放行，而是直接記錄 `logger.error` 並捨棄該筆 Lead，確保資料庫零污染。同時清洗了 `leads` 表中 529 筆受污染的歷史資料。
