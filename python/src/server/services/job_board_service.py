@@ -27,7 +27,7 @@ class JobBoardService:
         norm2 = math.sqrt(sum(b * b for b in vec2))
         return dot / (norm1 * norm2) if norm1 and norm2 else 0.0
 
-    def _get_crawler_config(self):
+    def _get_crawler_config(self) -> Any:
         from ..schemas.settings import CrawlerJobConfig
         from ..services.settings_service import SettingsService
         try:
@@ -140,7 +140,7 @@ class JobBoardService:
             return False
 
         from ..prompts.sales_prompts import ALICE_LEAD_JUDGE_DEFAULT
-        
+
         content = await self._generate_llm_response(
             prompt_name="ALICE_LEAD_JUDGE",
             default_prompt=ALICE_LEAD_JUDGE_DEFAULT,
@@ -294,7 +294,7 @@ class JobBoardService:
             repo = BaseRepository(self.supabase)
             query = self.supabase.table("leads").insert(leads_to_insert)
             success, result = repo.execute_query(query, "Bulk insert leads")
-            
+
             if success and result.get("data"):
                 res_data = result.get("data", [])
                 new_leads_count += len(res_data)
