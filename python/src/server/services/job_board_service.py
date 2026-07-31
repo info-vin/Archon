@@ -27,6 +27,26 @@ class JobBoardService:
         norm2 = math.sqrt(sum(b * b for b in vec2))
         return dot / (norm1 * norm2) if norm1 and norm2 else 0.0
 
+    def _get_crawler_config(self):
+        from ..schemas.settings import CrawlerJobConfig
+        from ..services.settings_service import SettingsService
+        try:
+            settings = SettingsService(self.supabase)
+            return CrawlerJobConfig.model_validate(settings.get_all_settings())
+        except Exception as e:
+            logger.warning(f"Failed to parse CrawlerJobConfig, falling back to defaults: {e}")
+            from ..schemas.settings import CrawlerJobConfig
+            return CrawlerJobConfig()
+
+    def _log_archon(self, source: str, level: str, message: str) -> None:
+        try:
+            from ..repositories.base_repository import BaseRepository
+            repo = BaseRepository(self.supabase)
+            query = self.supabase.table("archon_logs").insert({"source": source, "level": level, "message": message})
+            repo.execute_query(query, error_context="Write to archon_logs")
+        except Exception as e:
+            logger.error(f"Failed to write to archon_logs: {e}")
+
     async def _get_core_text(self) -> str | None:
         if getattr(self, "_core_text_cache", None) is not None:
             return self._core_text_cache # type: ignore
@@ -45,14 +65,8 @@ class JobBoardService:
         try:
             with open(agents_md_path, encoding="utf-8") as f:
                 content = f.read()
-                start_idx = content.find("### Knowledge Base Tools")
-                end_idx = content.find("### Document Management")
-                if start_idx != -1 and end_idx != -1:
-                    core_text = "Archon Core Capabilities:\n" + content[start_idx:end_idx].strip()
-                elif "## MCP Tools Available" in content:
-                    core_text = "Archon Core Capabilities:\n" + content.split("## MCP Tools Available")[1][:2000]
-                else:
-                    core_text = content[:2000]
+                # SSOT: Fallback to first 2000 chars to avoid brittle markdown section parsing
+                core_text = "Archon Core Capabilities:\n" + content[:2000]
                 self._core_text_cache = core_text
                 return self._core_text_cache
         except Exception as e:
@@ -66,6 +80,7 @@ class JobBoardService:
         format_kwargs: dict[str, Any],
         estimated_tokens: int = 500,
         max_retries: int = 3,
+        initial_delay: float = 2.0,
     ) -> str | None:
         try:
             from ..services.llm_provider_service import get_llm_client
@@ -75,7 +90,7 @@ class JobBoardService:
                 prompt_template = prompt_service.get_prompt(prompt_name, default=default_prompt)
                 prompt = prompt_template.format(**format_kwargs)
 
-                @retry_with_backoff(max_retries=max_retries, initial_delay=2.0)
+                @retry_with_backoff(max_retries=max_retries, initial_delay=initial_delay)
                 async def _call_llm():
                     return await client.chat.completions.create(
                         model=SYSTEM_MODELS["DEFAULT_TEXT"],
@@ -102,13 +117,10 @@ class JobBoardService:
         if not core_text:
             return None
 
-        default_prompt = (
-            "請想像你是一家需要購買以下 AI 服務的傳統或非軟體公司，請寫出一篇 300 字的徵才職缺文案，尋找能幫你們導入這些技術的顧問或廠商。\n\n"
-            "核心服務：\n{core_text}"
-        )
+        from .prompt_defaults import ALICE_HYDE_BASELINE_DEFAULT
         llm_text = await self._generate_llm_response(
             prompt_name="ALICE_HYDE_BASELINE",
-            default_prompt=default_prompt,
+            default_prompt=ALICE_HYDE_BASELINE_DEFAULT,
             format_kwargs={"core_text": core_text},
             estimated_tokens=500,
             max_retries=3
@@ -127,19 +139,11 @@ class JobBoardService:
         if not core_text:
             return False
 
-        default_prompt = (
-            "我們是一家 AI 自動化與 Agent 軟體公司。我們的核心能力是：\n{core_text}\n\n"
-            "請看以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
-            "請問這家公司是：\n"
-            "1. 我們的「潛在客戶」(他們缺乏 AI 能力，需要買我們的服務來自動化或導入 AI)。如果是，請回答 YES。\n"
-            "2. 我們的「同業競爭者」(他們正在招募 AI 工程師，要自己開發 LLM 或 Agent)。如果是，請回答 NO。\n"
-            "3. 完全無關。請回答 NO。\n\n"
-            "只回答 YES 或 NO。"
-        )
-
+        from .prompt_defaults import ALICE_LEAD_JUDGE_DEFAULT
+        
         content = await self._generate_llm_response(
             prompt_name="ALICE_LEAD_JUDGE",
-            default_prompt=default_prompt,
+            default_prompt=ALICE_LEAD_JUDGE_DEFAULT,
             format_kwargs={
                 "core_text": core_text,
                 "title": job.title,
@@ -172,17 +176,7 @@ class JobBoardService:
         logger.info("Starting daily lead auto-fetch...")
         total_new_leads = 0
 
-        from ..services.settings_service import SettingsService
-        settings = SettingsService(self.supabase)
-
-        try:
-            from ..schemas.settings import CrawlerJobConfig
-            config = CrawlerJobConfig.model_validate(settings.get_all_settings())
-        except Exception as e:
-            logger.warning(f"Failed to parse CrawlerJobConfig, falling back to defaults: {e}")
-            from ..schemas.settings import CrawlerJobConfig
-            config = CrawlerJobConfig()
-
+        config = self._get_crawler_config()
         keywords = [k.strip() for k in config.crawler_job_keywords.split(",")]
         limit = config.crawler_job_limit
 
@@ -195,11 +189,11 @@ class JobBoardService:
                         total_new_leads += await self.identify_leads_and_save(jobs)
                 except CrawlerBlockedException as e:
                     logger.error(f"Crawler blocked by WAF for '{keyword}': {e}")
-                    self.supabase.table("archon_logs").insert({
-                        "source": "job_board_service",
-                        "level": "ALERT",
-                        "message": f"104 Crawler Blocked by WAF: {e}"
-                    }).execute()
+                    self._log_archon(
+                        source="job_board_service",
+                        level="ALERT",
+                        message=f"104 Crawler Blocked by WAF: {e}"
+                    )
                     break  # Stop crawling other keywords if blocked
                 except Exception as e:
                     logger.error(f"Error auto-fetching for '{keyword}': {e}")
@@ -222,17 +216,12 @@ class JobBoardService:
         job_urls = [job.url for job in jobs if job.url]
         existing_urls = set()
         if job_urls:
-            try:
-                existing = (
-                    self.supabase.table("leads")
-                    .select("source_job_url")
-                    .in_("source_job_url", job_urls)
-                    .execute()
-                )
-                if existing.data:
-                    existing_urls = {row["source_job_url"] for row in existing.data}
-            except Exception as e:
-                logger.error(f"Failed to fetch existing leads: {e}")
+            from ..repositories.base_repository import BaseRepository
+            repo = BaseRepository(self.supabase)
+            query = self.supabase.table("leads").select("source_job_url").in_("source_job_url", job_urls)
+            success, result = repo.execute_query(query, "Fetch existing leads urls")
+            if success and result.get("data"):
+                existing_urls = {row["source_job_url"] for row in result.get("data", [])}
 
         baseline_embedding = await self._get_hyde_baseline_embedding()
 
@@ -252,34 +241,27 @@ class JobBoardService:
                     return None
 
                 sim = self._cosine_similarity(baseline_embedding, job_embedding)
-                from ..schemas.settings import CrawlerJobConfig
-                from ..services.settings_service import SettingsService
-                try:
-                    settings = SettingsService(self.supabase)
-                    config = CrawlerJobConfig.model_validate(settings.get_all_settings())
-                except Exception:
-                    config = CrawlerJobConfig()
-
+                config = self._get_crawler_config()
                 threshold = config.lead_gen_similarity_threshold
 
                 # Layer 1: Fast Fail on Vector Similarity
                 if sim < threshold:
                     # Log discarded
-                    self.supabase.table("archon_logs").insert({
-                        "source": "job_board_service_rag",
-                        "level": "DEBUG",
-                        "message": f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
-                    }).execute()
+                    self._log_archon(
+                        source="job_board_service_rag",
+                        level="DEBUG",
+                        message=f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
+                    )
                     return None
 
                 # Layer 2: LLM Judge (Reject competitors)
                 is_lead = await self._llm_judge(job)
                 if not is_lead:
-                    self.supabase.table("archon_logs").insert({
-                        "source": "job_board_service_judge",
-                        "level": "DEBUG",
-                        "message": f"Lead discarded by LLM Judge. Company: {job.company}"
-                    }).execute()
+                    self._log_archon(
+                        source="job_board_service_judge",
+                        level="DEBUG",
+                        message=f"Lead discarded by LLM Judge. Company: {job.company}"
+                    )
                     return None
 
                 # Generate the identified need only if it passes both layers
@@ -308,47 +290,43 @@ class JobBoardService:
                     jobs_to_insert.append(job)
 
         if leads_to_insert:
-            try:
-                res = self.supabase.table("leads").insert(leads_to_insert).execute()
-                if res.data:
-                    new_leads_count += len(res.data)
+            from ..repositories.base_repository import BaseRepository
+            repo = BaseRepository(self.supabase)
+            query = self.supabase.table("leads").insert(leads_to_insert)
+            success, result = repo.execute_query(query, "Bulk insert leads")
+            
+            if success and result.get("data"):
+                res_data = result.get("data", [])
+                new_leads_count += len(res_data)
 
-                    from ..services.agent_registry import get_agent_config
-                    market_bot_config = cast(dict[str, Any], get_agent_config("market-bot") or {})
-                    agent_name = market_bot_config.get("name", "Archon MarketBot")
+                from ..services.agent_registry import get_agent_config
+                market_bot_config = cast(dict[str, Any], get_agent_config("market-bot") or {})
+                agent_name = market_bot_config.get("name", "Archon MarketBot")
 
-                    async def _log_action(job, content):
-                        await stats_service.add_agent_action_log(
-                            agent_name=agent_name,
-                            xp_change=10,
-                            message=f"Identified new lead: {job.company}",
-                            details={"company": job.company},
-                            content=content,
-                        )
+                async def _log_action(job, content):
+                    await stats_service.add_agent_action_log(
+                        agent_name=agent_name,
+                        xp_change=10,
+                        message=f"Identified new lead: {job.company}",
+                        details={"company": job.company},
+                        content=content,
+                    )
 
-                    tasks = [
-                        _log_action(jobs_to_insert[idx], inserted_lead.get("identified_need", jobs_to_insert[idx].identified_need))
-                        for idx, inserted_lead in enumerate(res.data)
-                    ]
-                    if tasks:
-                        await asyncio.gather(*tasks)
-            except Exception as e:
-                logger.error(f"Failed to bulk insert leads: {e}")
+                tasks = [
+                    _log_action(jobs_to_insert[idx], inserted_lead.get("identified_need", jobs_to_insert[idx].identified_need))
+                    for idx, inserted_lead in enumerate(res_data)
+                ]
+                if tasks:
+                    await asyncio.gather(*tasks)
 
         return new_leads_count
 
     async def _infer_need(self, job: JobData) -> str:
-        default_prompt = (
-            "你是一位銷售助理。請用繁體中文列出該職缺的：\n"
-            "- **技術棧**\n"
-            "- **痛點預測**\n\n"
-            "Job: {title} at {company}\n"
-            "Desc: {desc}"
-        )
+        from .prompt_defaults import ALICE_INFER_NEED_DEFAULT
 
         content = await self._generate_llm_response(
             prompt_name="ALICE_INFER_NEED",
-            default_prompt=default_prompt,
+            default_prompt=ALICE_INFER_NEED_DEFAULT,
             format_kwargs={
                 "title": job.title,
                 "company": job.company,
