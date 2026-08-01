@@ -40,7 +40,7 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
     insert_call = [call for call in mock_supabase.table().insert.mock_calls if "report-service" in str(call)]
     assert len(insert_call) > 0
     payload = insert_call[0].args[0]
-    assert "Daily Executive Summary group chat dispatched" in payload["message"]
+    assert "Daily Executive Summary processed. Task" in payload["message"]
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
@@ -118,7 +118,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
     assert "GREEN" in prompt_content
 
     call_kwargs = mock_task_service.create_task.call_args.kwargs
-    assert "[Weekly Report] Executive Summary" in call_kwargs["title"]
+    assert "[Weekly] Executive Summary" in call_kwargs["title"]
     assert "Mocked Weekly Map-Reduce Output" in call_kwargs["description"]
     assert "🎧 **Listen to Podcast**: [Audio Link](https://mock.supabase.co/storage/audio.wav)" in call_kwargs["description"]
 
@@ -162,7 +162,7 @@ async def test_run_monthly_executive_summary_success(mock_gather, mock_beta_grap
     mock_task_service.update_task.assert_awaited_once_with("test-task-monthly", {"status": "done"})
 
     call_kwargs = mock_task_service.create_task.call_args.kwargs
-    assert "[Monthly Report] Executive Summary" in call_kwargs["title"]
+    assert "[Monthly] Executive Summary" in call_kwargs["title"]
     assert "Mocked Monthly Map-Reduce Output" in call_kwargs["description"]
 
 @pytest.mark.asyncio

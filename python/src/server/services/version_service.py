@@ -3,7 +3,7 @@ Version checking service with GitHub API integration.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 import httpx
 import logfire
@@ -13,12 +13,48 @@ from ..repositories.base_repository import BaseRepository
 from ..utils.semantic_version import is_newer_version
 
 
+class ReleaseDataDTO(TypedDict):
+    tag_name: NotRequired[str]
+    html_url: NotRequired[str]
+    body: NotRequired[str | None]
+    published_at: NotRequired[str | None]
+    assets: NotRequired[list[dict[str, Any]]]
+    author: NotRequired[dict[str, Any]]
+
+
+class VersionCheckResultDTO(TypedDict):
+    current: str
+    latest: str | None
+    update_available: bool
+    release_url: str | None
+    release_notes: str | None
+    published_at: datetime | None
+    check_error: str | None
+    assets: NotRequired[list[dict[str, Any]]]
+    author: NotRequired[str | None]
+
+
+class DocumentVersionDTO(TypedDict):
+    id: NotRequired[str]
+    project_id: NotRequired[str | None]
+    task_id: NotRequired[str | None]
+    field_name: NotRequired[str]
+    version_number: NotRequired[int]
+    content: NotRequired[dict[str, Any]]
+    change_summary: NotRequired[str | None]
+    change_type: NotRequired[str | None]
+    document_id: NotRequired[str | None]
+    created_by: NotRequired[str | None]
+    created_at: NotRequired[str | None]
+    status: NotRequired[str | None]
+
+
 class VersionService(BaseRepository):
     """Service for checking Archon version against GitHub releases."""
 
     def __init__(self, supabase_client=None) -> None:
         super().__init__(supabase_client)
-        self._cache: dict[str, Any] | None = None
+        self._cache: ReleaseDataDTO | None = None
         self._cache_time: datetime | None = None
         self._cache_ttl = 3600  # 1 hour cache TTL
 
@@ -30,7 +66,7 @@ class VersionService(BaseRepository):
         age = datetime.now() - self._cache_time
         return age < timedelta(seconds=self._cache_ttl)
 
-    async def get_latest_release(self) -> dict[str, Any] | None:
+    async def get_latest_release(self) -> ReleaseDataDTO | None:
         """
         Fetch latest release information from GitHub API.
 
@@ -61,7 +97,7 @@ class VersionService(BaseRepository):
                     return None
 
                 response.raise_for_status()
-                data = cast(dict[str, Any], response.json())
+                data = cast(ReleaseDataDTO, response.json())
 
                 # Cache the successful response
                 self._cache = data
@@ -88,7 +124,7 @@ class VersionService(BaseRepository):
                 return self._cache
             return None
 
-    async def check_for_updates(self) -> dict[str, Any]:
+    async def check_for_updates(self) -> VersionCheckResultDTO:
         """
         Check if a newer version of Archon is available.
 
@@ -121,7 +157,7 @@ class VersionService(BaseRepository):
 
             # Parse published date
             published_at = None
-            if release.get("published_at"):
+            if release.get("published_at") and isinstance(release["published_at"], str):
                 try:
                     published_at = datetime.fromisoformat(release["published_at"].replace("Z", "+00:00"))
                 except Exception:
@@ -157,10 +193,10 @@ class VersionService(BaseRepository):
         self._cache = None
         self._cache_time = None
 
-    async def get_document_versions(self, limit: int = 50) -> list[dict[str, Any]]:
+    async def get_document_versions(self, limit: int = 50) -> list[DocumentVersionDTO]:
         query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit)
         success, res = self.execute_query(query, "Failed to get document versions", require_data=False)
-        return cast(list[dict[str, Any]], res.get("data", []) if success else [])
+        return cast(list[DocumentVersionDTO], res.get("data", []) if success else [])
 
 
 # Export singleton instance

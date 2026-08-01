@@ -94,7 +94,7 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
             <button
               type="button"
               onClick={() => toggleItem(item.source_id)}
-              className="hover:text-destructive transition-colors"
+              className="hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
               disabled={disabled}
               aria-label="Remove item"
               title="Remove item"

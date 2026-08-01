@@ -137,7 +137,7 @@ async def get_page_by_url(url: str = Query(..., description="The URL of the page
             raise HTTPException(status_code=404, detail=f"Page not found for URL: {url}")
 
         # Handle large pages
-        page_data = _handle_large_page_content(page_dict.copy())
+        page_data = _handle_large_page_content(dict(page_dict))
         return PageResponse(**page_data)
 
     except HTTPException:
@@ -167,7 +167,7 @@ async def get_page_by_id(page_id: str):
             raise HTTPException(status_code=404, detail=f"Page not found: {page_id}")
 
         # Handle large pages
-        page_data = _handle_large_page_content(page_dict.copy())
+        page_data = _handle_large_page_content(dict(page_dict))
         return PageResponse(**page_data)
 
     except HTTPException:

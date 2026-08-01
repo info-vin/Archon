@@ -70,6 +70,10 @@ async def analyze_token_usage() -> None:
                 }
             ).execute()
 
+        total_input = sum(row.get("input_tokens", 0) for row in data_daily)
+        total_output = sum(row.get("output_tokens", 0) for row in data_daily)
+        total_tokens = total_input + total_output
+
         supabase.table("archon_logs").insert(
             {
                 "source": "clockwork-scheduler",
@@ -78,6 +82,8 @@ async def analyze_token_usage() -> None:
                 "details": {
                     "type": "token_analysis",
                     "period": "24h",
+                    "input_tokens": total_input,
+                    "output_tokens": total_output,
                     "total_tokens": total_tokens,
                     "total_cost": total_cost,
                     "weekly_cost": weekly_cost,

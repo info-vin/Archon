@@ -99,77 +99,108 @@ class ReportService(BaseRepository):
             logs_summary = self._get_logs_context(cutoff_date)
             tasks_summary = self._get_tasks_context(cutoff_date)
 
-            return f"""### 系統運行上下文數據
+            from src.server.prompts.pm_prompts import REPORT_CONTEXT_DEFAULT
+            from src.server.services.prompt_service import prompt_service
 
-**資料區間**：{now.strftime('%Y-%m-%d')} 前推 {days} 天 (從 {(now - timedelta(days=days)).strftime('%Y-%m-%d')} 至 {now.strftime('%Y-%m-%d')})
-**報告產出日期**：{now.strftime('%Y-%m-%d')}
-
-#### 1. 商業開發線告 (Leads)
-{leads_summary}
-
-#### 2. AI 運算用量與成本 (Token Usage)
-{token_summary}
-
-#### 3. 系統警示與異常紀錄 (Archon Logs)
-{logs_summary}
-
-#### 4. 專案任務狀態異動 (Archon Tasks)
-{tasks_summary}
-"""
+            prompt_template = prompt_service.get_prompt("REPORT_CONTEXT_PROMPT", default=REPORT_CONTEXT_DEFAULT)
+            return prompt_template.format(
+                end_date_str=now.strftime('%Y-%m-%d'),
+                start_date_str=(now - timedelta(days=days)).strftime('%Y-%m-%d'),
+                days=days,
+                leads_summary=leads_summary,
+                token_summary=token_summary,
+                logs_summary=logs_summary,
+                tasks_summary=tasks_summary
+            )
         except Exception as e:
             logger.error(f"Failed to gather report context: {e}", exc_info=True)
-            return "無法取得系統運行數據，請以無上下文模式進行總結。"
+            from src.server.prompts.pm_prompts import REPORT_CONTEXT_FALLBACK
+            from src.server.services.prompt_service import prompt_service
+            return prompt_service.get_prompt("REPORT_CONTEXT_FALLBACK", default=REPORT_CONTEXT_FALLBACK)
+
+    async def _create_summary_task_and_log(
+        self,
+        days: int,
+        title_prefix: str,
+        task_desc: str,
+        log_details: dict[str, Any],
+        auto_complete: bool = False,
+        dispatch_agent: bool = False,
+    ) -> None:
+        import asyncio
+
+        from src.server.schemas.settings import NetworkConfig
+        from src.server.services.projects.task_service import task_service
+        from src.server.services.system.telegram_service import telegram_service
+
+        query = self.supabase_client.table("archon_projects").select("id").limit(1)
+        success, p_res = self.execute_query(query, "Failed to get projects")
+        if not success or not p_res.get("data"):
+            logger.warning(f"ReportService: No projects found to attach {title_prefix} summary task.")
+            return
+
+        p_id = p_res["data"][0]["id"]
+
+        query = self.supabase_client.table("profiles").select("id").eq("email", "charlie@archon.com")
+        success, charlie_res = self.execute_query(query, "Failed to get charlie's id")
+        assignee_id = charlie_res.get("data", [])[0]["id"] if (success and charlie_res.get("data")) else AgentUUIDs.SUPERVISOR
+
+        end_date = datetime.now(CST)
+        start_date = end_date - timedelta(days=days)
+        task_title = f"[{title_prefix}] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
+
+        success, tr = await task_service.create_task(
+            project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
+        )
+        if success:
+            task_id = tr["task"]["id"]
+            if auto_complete:
+                await task_service.update_task(task_id, {"status": "done"})
+                logger.info(f"✅ ReportService: Created and completed {title_prefix} Executive Summary task {task_id}.")
+            else:
+                logger.info(f"✅ ReportService: Created {title_prefix} Executive Summary task {task_id}.")
+
+            if dispatch_agent:
+                from src.server.services.agent_service import agent_service
+                logger.info(f"Dispatching Group Chat for {task_id}...")
+                asyncio.create_task(agent_service.run_agent_task(task_id=task_id, agent_id=assignee_id))
+
+            insert_query = self.supabase_client.table("archon_logs").insert(
+                {
+                    "source": "report-service", "level": "INFO",
+                    "message": f"{title_prefix} Executive Summary processed. Task: {task_id}",
+                    "details": log_details,
+                }
+            )
+            self.execute_query(insert_query, "Failed to record summary log")
+
+            frontend_url = NetworkConfig().frontend_url
+            telegram_msg = (
+                f"🚨 **[Archon 系統通知] 星環 {title_prefix} 已產出**\n"
+                f"* 日期區間: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}\n"
+                f"* 狀態: 已指派給 Charlie\n"
+                f"👉 請登入 Admin UI 查看詳細數據與表格：[點擊前往]({frontend_url}/tasks/{task_id})"
+            )
+            await telegram_service.send_message(telegram_msg)
 
     async def generate_daily_executive_summary(self) -> None:
         """Triggers Star-topology Group Chat for Daily Executive Summary."""
         logger.info("📊 ReportService: Triggering Daily Executive Summary (Group Chat)...")
         try:
-            import asyncio
-
-            from src.server.services.agent_service import agent_service
-            from src.server.services.projects.task_service import task_service
+            from src.server.prompts.pm_prompts import DAILY_EXECUTIVE_SUMMARY_DEFAULT
+            from src.server.services.prompt_service import prompt_service
 
             context_md = await self.gather_report_context(1)
-            supabase = self.supabase_client
-
-            query = supabase.table("archon_projects").select("id").limit(1)
-            success, p_res = self.execute_query(query, "Failed to get projects")
-            if not success or not p_res.get("data"):
-                logger.warning("ReportService: No projects found to attach summary task.")
-                return
-
-            end_date = datetime.now(CST)
-            start_date = end_date - timedelta(days=1)
-            task_title = f"[Daily] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
-            fallback_str = (
-                "昨日系統運行數據如下：\n\n{context_md}\n\n"
-                "請啟動星環群聊，協調 Alice, Bob, DevBot 進行討論，最後由 Supervisor (Charlie) 彙整並提供每日執行摘要報告。"
-            )
-
-            from src.server.services.prompt_service import prompt_service
-            prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT", default=fallback_str)
+            prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT", default=DAILY_EXECUTIVE_SUMMARY_DEFAULT)
             task_desc = prompt_template.format(context_md=context_md)
 
-            query = supabase.table("profiles").select("id").eq("email", "charlie@archon.com")
-            success, charlie_res = self.execute_query(query, "Failed to get charlie's id")
-            charlie_data = charlie_res.get("data", []) if success else []
-            assignee_id = charlie_data[0]["id"] if charlie_data else AgentUUIDs.SUPERVISOR
-            p_id = p_res.get("data", [])[0]["id"] if p_res.get("data") else ""
-
-            success, tr = await task_service.create_task(
-                project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
+            await self._create_summary_task_and_log(
+                days=1,
+                title_prefix="Daily",
+                task_desc=task_desc,
+                log_details={"type": "daily_executive_summary", "status": "dispatched"},
+                dispatch_agent=True
             )
-            if success:
-                logger.info(f"✅ ReportService: Created Daily Executive Summary task {tr['task']['id']}. Dispatching Group Chat...")
-                asyncio.create_task(agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id=AgentUUIDs.SUPERVISOR))
-                insert_query = supabase.table("archon_logs").insert(
-                    {
-                        "source": "report-service", "level": "INFO",
-                        "message": f"Daily Executive Summary group chat dispatched. Task created: {tr['task']['id']}",
-                        "details": {"type": "daily_executive_summary", "status": "dispatched"},
-                    }
-                )
-                self.execute_query(insert_query, "Failed to record daily summary log")
         except Exception as e:
             logger.error(f"💥 ReportService: Daily Executive Summary generation failed: {e}", exc_info=True)
 
@@ -178,7 +209,6 @@ class ReportService(BaseRepository):
         try:
             from src.agents.workflow.engine_beta_graph import BetaState, beta_graph
             from src.agents.workflow.state import SharedState
-            from src.server.services.projects.task_service import task_service
             from src.server.services.prompt_service import prompt_service
             from src.server.services.report_enrichment_service import report_enrichment_service
 
@@ -194,52 +224,33 @@ class ReportService(BaseRepository):
             run_result: Any = await beta_graph.run(deps=None, state=state)
             output = run_result.output if hasattr(run_result, "output") else run_result
 
-            query = self.supabase_client.table("archon_projects").select("id").limit(1)
-            success, p_res = self.execute_query(query, "Failed to get internal project", require_data=True)
-            if not success or not p_res.get("data"):
-                logger.warning(f"ReportService: No internal project found to attach {title_prefix} summary task.")
-                return
-
-            end_date = datetime.now(CST)
-            start_date = end_date - timedelta(days=days)
-            task_title = f"[{title_prefix}] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
             task_desc = str(output)
             task_desc = await report_enrichment_service.attach_podcast_audio(task_desc)
 
-            query = self.supabase_client.table("profiles").select("id").eq("email", "charlie@archon.com")
-            success, charlie_res = self.execute_query(query, "Failed to get charlie's id")
-            assignee_id = charlie_res.get("data", [])[0]["id"] if (success and charlie_res.get("data")) else AgentUUIDs.SUPERVISOR
-            p_id = p_res.get("data", [])[0]["id"] if p_res.get("data") else ""
+            log_type = f"{title_prefix.lower().replace(' ', '_')}_executive_summary"
+            log_details = {
+                "type": log_type,
+                "input_tokens": state.shared.input_tokens,
+                "output_tokens": state.shared.output_tokens,
+                "model": state.shared.model_used,
+            }
 
-            success, tr = await task_service.create_task(
-                project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
+            await self._create_summary_task_and_log(
+                days=days,
+                title_prefix=title_prefix,
+                task_desc=task_desc,
+                log_details=log_details,
+                auto_complete=True
             )
-            if success:
-                await task_service.update_task(tr["task"]["id"], {"status": "done"})
-                logger.info(f"✅ ReportService: Created and completed {title_prefix} Executive Summary task {tr['task']['id']}.")
-                log_type = f"{title_prefix.lower().replace(' ', '_')}_executive_summary"
-                insert_query = self.supabase_client.table("archon_logs").insert(
-                    {
-                        "source": "report-service", "level": "INFO",
-                        "message": f"{title_prefix} Executive Summary completed. Task created: {tr['task']['id']}",
-                        "details": {
-                            "type": log_type,
-                            "input_tokens": state.shared.input_tokens,
-                            "output_tokens": state.shared.output_tokens,
-                            "model": state.shared.model_used,
-                        },
-                    }
-                )
-                self.execute_query(insert_query, "Failed to record summary log")
         except Exception as e:
             logger.error(f"💥 ReportService: {title_prefix} Executive Summary generation failed: {e}", exc_info=True)
 
     async def generate_weekly_executive_summary(self) -> None:
-        default_prompt = "這是過去 7 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。"
-        await self._execute_map_reduce_summary(7, "Weekly Report", "WEEKLY_EXECUTIVE_SUMMARY", default_prompt)
+        from src.server.prompts.pm_prompts import WEEKLY_EXECUTIVE_SUMMARY_DEFAULT
+        await self._execute_map_reduce_summary(7, "Weekly", "WEEKLY_EXECUTIVE_SUMMARY", WEEKLY_EXECUTIVE_SUMMARY_DEFAULT)
 
     async def generate_monthly_executive_summary(self) -> None:
-        default_prompt = "這是過去 30 天的系統運行上下文數據：\n\n{context_md}\n\n請對每個專屬領域（Sales, Marketing, System, **Engineering/DevBot**）進行分析提煉，最後由 Supervisor 彙整並提供高知識品質、具體行動建議的執行摘要。"
-        await self._execute_map_reduce_summary(30, "Monthly Report", "MONTHLY_EXECUTIVE_SUMMARY", default_prompt)
+        from src.server.prompts.pm_prompts import MONTHLY_EXECUTIVE_SUMMARY_DEFAULT
+        await self._execute_map_reduce_summary(30, "Monthly", "MONTHLY_EXECUTIVE_SUMMARY", MONTHLY_EXECUTIVE_SUMMARY_DEFAULT)
 
 report_service = ReportService()

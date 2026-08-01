@@ -170,6 +170,7 @@ class JobBoardService:
         needs = await asyncio.gather(*(self._infer_need(job) for job in jobs))
         for job, need in zip(jobs, needs, strict=False):
             job.identified_need = need
+            job.keyword = keyword
         return jobs
 
     async def auto_fetch_daily_leads(self) -> int:
@@ -250,7 +251,7 @@ class JobBoardService:
                     self._log_archon(
                         source="job_board_service_rag",
                         level="DEBUG",
-                        message=f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Company: {job.company}"
+                        message=f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Keyword: {job.keyword}. Company: {job.company}"
                     )
                     return None
 
@@ -260,7 +261,7 @@ class JobBoardService:
                     self._log_archon(
                         source="job_board_service_judge",
                         level="DEBUG",
-                        message=f"Lead discarded by LLM Judge. Company: {job.company}"
+                        message=f"Lead discarded by LLM Judge. Similarity: {sim:.3f}. Keyword: {job.keyword}. Company: {job.company}"
                     )
                     return None
 
