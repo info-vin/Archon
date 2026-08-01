@@ -7,3 +7,6 @@
 ## 2026-07-29 - Missing Focus Rings on Navigation Layout Buttons
 **Learning:** Found that core layout navigational icon buttons (like the mobile menu toggles and user logout buttons in PublicLayout and MainLayout) lacked keyboard focus indicators. While they functioned on click, keyboard-only users could not visually identify when these critical navigational elements were focused.
 **Action:** When adding or reviewing layout-level navigational buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring` (and optionally `focus-visible:ring-offset-2`) are explicitly applied to the `className` for keyboard a11y.
+## 2026-08-01 - Missing Focus Rings on Inline Tag Removal Buttons
+**Learning:** Found that inline interactive elements, specifically the 'Remove item' icon buttons inside selected knowledge tags (`KnowledgeSelector`), lacked keyboard focus indicators. These small buttons are easily missed but critical for keyboard navigation inside interactive form elements.
+**Action:** When adding or reviewing inline tag components, always ensure the removal buttons have explicit focus rings (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm`).
