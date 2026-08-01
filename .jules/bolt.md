@@ -161,3 +161,7 @@
 ## 2024-05-24 - Pre-calculating lowercase lookup maps outside of Array.map render loops
 **Learning:** In React components that render lists (like `IdentityMatrix`), calling `.find()` with `.toLowerCase()` transformations inside the `.map()` render loop causes O(N*M) redundant string memory allocations on every render cycle.
 **Action:** Always pre-calculate case-insensitive lookup dictionaries (e.g., using `useMemo` and `Map`) outside of the render loop to guarantee fast O(1) property access without string allocations during iterative rendering.
+
+## 2024-05-18 - Preserving Array.find() behavior with Map caching
+**Learning:** When optimizing a loop by replacing `Array.prototype.find()` with a pre-calculated `Map` for $O(1)$ lookups, simply calling `map.set()` for every item creates a 'last match wins' regression, because `find()` inherently returns the *first* match.
+**Action:** When converting `find()` to a `Map`, always ensure duplicate keys are handled gracefully to mimic `find()`'s 'first match' behavior by checking `if (!map.has(key)) { map.set(key, value); }`.
