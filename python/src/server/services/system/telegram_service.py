@@ -3,21 +3,33 @@ import os
 import httpx
 
 from src.server.config.logfire_config import get_logger
+from src.server.schemas.settings import NotificationConfig
+from src.server.services.settings_service import SettingsService
+from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
 
 class TelegramService:
     def __init__(self) -> None:
-        # We don't read os.getenv here to avoid module-load time evaluation gaps (dotenv might load later).
         pass
+
+    def _get_config(self) -> NotificationConfig:
+        try:
+            supabase = get_supabase_client()
+            settings_service = SettingsService(supabase)
+            raw_settings = settings_service.get_all_settings()
+            return NotificationConfig.model_validate(raw_settings)
+        except Exception as e:
+            logger.warning(f"TelegramService: Failed to parse NotificationConfig: {e}")
+            return NotificationConfig()
 
     @property
     def bot_token(self) -> str | None:
-        return os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
+        return self._get_config().telegram_token or os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
 
     @property
     def chat_id(self) -> str | None:
-        return os.getenv("TELEGRAM_TO") or os.getenv("TELEGRAM_CHAT_ID")
+        return self._get_config().telegram_chat_id or os.getenv("TELEGRAM_TO") or os.getenv("TELEGRAM_CHAT_ID")
 
     @property
     def api_url(self) -> str | None:

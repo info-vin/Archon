@@ -4,7 +4,7 @@ Handles monitoring of Vercel, Supabase, and Hugging Face infrastructure.
 """
 
 from src.server.config.logfire_config import get_logger
-from src.server.schemas.settings import PruningConfig
+from src.server.schemas.settings import NetworkConfig, PruningConfig
 
 logger = get_logger(__name__)
 
@@ -25,7 +25,7 @@ async def run_infrastructure_audit() -> None:
     errors = []
 
     # 1. Vercel (Frontend Domain)
-    frontend_url = os.getenv("FRONTEND_URL", "https://archon-ui-fe.vercel.app") # 合法
+    frontend_url = NetworkConfig().frontend_url
     if frontend_url:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:

@@ -25,6 +25,8 @@ class JobData(BaseModel):
     skills: list[str] | None = None
     source: str = "104"
     company_website: str | None = None
+    keyword: str | None = None
+
     identified_need: str | None = None
     real_id: str | None = None
 

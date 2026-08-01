@@ -113,6 +113,12 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/08/01: 報告生成模組深層 DRY 與 SSOT 淨化 (Phase 5.9.38)
+- **Deep DRY 重構**: 於 `report_service.py` 將 Daily、Weekly、Monthly 摘要任務中高度重複的派發邏輯（包含日期推算、任務建立、日誌記錄與 Telegram 通知）抽取為 `_create_summary_task_and_log`，並補齊了 Daily 摘要遺漏的 Telegram 通知。
+- **全域 SSOT 物理對齊**: 將 `telegram_service.py` 讀取 Token 的方式從 `os.getenv` 升級為透過 `SettingsService` 動態讀取 `NotificationConfig`，徹底修復設定檔斷層；同時收斂 `report_service.py` 與 `patrol_infra.py` 中寫死的 Vercel 網址，統一綁定至 `NetworkConfig().frontend_url`。
+- **0 硬編碼 Prompt**: 實踐文本與邏輯 100% 分離，將 `REPORT_CONTEXT_DEFAULT` 與所有摘要 Prompt 全數抽離至 `pm_prompts.py` 統一管理。
+- **公證與驗證**: 通過 `mypy` 靜態型別檢查 0 錯誤，且修復斷言後，620 項後端測試皆順利綠燈通過。
+
 ### 2026/07/31: JobBoardService 的 SSOT 與 DRY 最終淨化 (Phase 5.9.37 & 5.9.38)
 - **DRY 徹底淨化**: 於 `job_board_service.py` 抽離 `_get_crawler_config` 與 `_log_archon`，並建立 `_generate_llm_response` 共用模組，收斂高達 80% 的 LLM 呼叫重複代碼（含重試、限流與例外處理）。
 - **SSOT 收斂與資料庫防禦**: 移除了所有繞過機制的 `supabase.table("leads")...execute()`，全面統一改用 `BaseRepository.execute_query`，確保所有資料庫讀寫皆享有系統級別的連線重試與例外防護。

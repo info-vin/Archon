@@ -65,6 +65,12 @@ class NetworkConfig(BaseModel):
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1", alias="OPENROUTER_BASE_URL")
     google_base_url: str = Field(default="https://generativelanguage.googleapis.com/v1beta/openai/", alias="GOOGLE_BASE_URL")
     hf_base_url: str = Field(default="https://api-inference.huggingface.co/v1/", alias="HF_BASE_URL")
+    frontend_url: str = Field(default="https://archon-enduser.vercel.app", alias="FRONTEND_URL")
+
+class NotificationConfig(BaseModel):
+    telegram_token: str | None = Field(default=None, alias="TELEGRAM_TOKEN")
+    telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_TO")
+
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.05, alias="WEEKLY_BUDGET_THRESHOLD")
 
@@ -114,7 +120,7 @@ class SchedulerConfig(BaseModel):
 class CrawlerJobConfig(BaseModel):
     crawler_job_keywords: str = Field(default="Python,AI,AI行銷自動化,AI自動化流程,大語言模型應用", alias="CRAWLER_JOB_KEYWORDS")
     crawler_job_limit: int = Field(default=12, alias="CRAWLER_JOB_LIMIT")
-    lead_gen_similarity_threshold: float = Field(default=0.67, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
+    lead_gen_similarity_threshold: float = Field(default=0.66, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
     crawler_waf_delay_min: float = Field(default=5.0, alias="CRAWLER_WAF_DELAY_MIN")
     crawler_waf_delay_max: float = Field(default=20.0, alias="CRAWLER_WAF_DELAY_MAX")
 
