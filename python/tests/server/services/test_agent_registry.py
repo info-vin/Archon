@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from src.server.services.agent_registry import get_tool_min_level, get_agent_uuid, get_agent_config
+
+from src.server.services.agent_registry import get_agent_config, get_agent_uuid, get_tool_min_level
+
 
 def test_get_tool_min_level_static():
     assert get_tool_min_level("apply_modification") == 2

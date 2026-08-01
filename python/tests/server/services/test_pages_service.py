@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from src.server.services.pages_service import PagesService
+
 
 @pytest.fixture
 def mock_supabase():

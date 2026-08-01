@@ -1,6 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
+
 from src.server.services.health_service import HealthService
+
 
 @pytest.fixture
 def mock_supabase():

@@ -157,7 +157,7 @@ class VersionService(BaseRepository):
 
             # Parse published date
             published_at = None
-            if release.get("published_at"):
+            if release.get("published_at") and isinstance(release["published_at"], str):
                 try:
                     published_at = datetime.fromisoformat(release["published_at"].replace("Z", "+00:00"))
                 except Exception:

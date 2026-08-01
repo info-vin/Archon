@@ -32,4 +32,5 @@ async def record_gemini_log(
 @router.get("/alerts", response_model=list[SystemAlert])
 async def get_system_alerts(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))) -> list[SystemAlert]:
     """Charlie checks for system alerts and operational errors. Requires Manager visibility."""
-    return await log_service.get_active_alerts()
+    alerts = await log_service.get_active_alerts()
+    return [SystemAlert(**a) for a in alerts]

@@ -1,6 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-from src.server.services.log_service import LogService, LogDataDTO
+
+import pytest
+
+from src.server.services.log_service import LogDataDTO, LogService
+
 
 @pytest.fixture
 def mock_supabase():
