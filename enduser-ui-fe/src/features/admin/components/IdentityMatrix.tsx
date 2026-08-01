@@ -70,11 +70,20 @@ export const IdentityMatrix: React.FC = () => {
         }
     };
 
+    // PERFORMANCE: Pre-calculate the lowercase lookup map to avoid O(N*M) redundant string allocations
+    // and array searches during the render loop (which maps over employees).
+    const rbacMap = React.useMemo(() => {
+        const map = new Map<string, string[]>();
+        rbacMatrix.forEach(r => {
+            map.set(r.role.toLowerCase(), r.permissions || []);
+        });
+        return map;
+    }, [rbacMatrix]);
+
     if (loading) return <div className="p-12 text-center text-muted-foreground italic">Loading Identity Matrix...</div>;
 
     const getPermissionsForRole = (roleName: string) => {
-        const row = rbacMatrix.find(r => r.role.toLowerCase() === roleName.toLowerCase());
-        return row ? row.permissions : [];
+        return rbacMap.get(roleName.toLowerCase()) || [];
     };
 
     return (
