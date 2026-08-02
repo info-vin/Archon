@@ -1,13 +1,21 @@
 # python/src/server/services/agent_service.py
 
 
-from typing import Any
+from typing import Any, TypedDict
 
 from ..config.logfire_config import get_logger
 from .agent_registry import get_agent_config
 from .agent_tool_executor import AgentToolExecutor
 from .dev_ops_agent_service import DevOpsAgentService
 from .shared_constants import AI_AGENT_ROLES, RoleEnum
+
+
+class AssignableAgent(TypedDict):
+    id: str
+    name: str
+    role: str
+    tools: list[str]
+    description: str
 
 
 class AgentService:
@@ -25,8 +33,8 @@ class AgentService:
     def mcp_client(self, value: Any) -> None:
         self.tool_executor.mcp_client = value
 
-    async def get_assignable_agents(self, user_role: str | None = None) -> list[dict]:
-        all_agents = []
+    async def get_assignable_agents(self, user_role: str | None = None) -> list[AssignableAgent]:
+        all_agents: list[AssignableAgent] = []
         for role_name, agent_id in AI_AGENT_ROLES.items():
             all_agents.append(
                 {"id": agent_id, "name": role_name, "role": role_name, "tools": [], "description": "AI Agent"}
@@ -85,7 +93,7 @@ class AgentService:
                 filtered.append(agent)
         return filtered
 
-    async def run_agent_task(self, task_id: str, agent_id: str, immediate: bool = False):
+    async def run_agent_task(self, task_id: str, agent_id: str, immediate: bool = False) -> None:
         from ..services.projects.task_service import task_service
 
         logger = get_logger(__name__)
@@ -107,7 +115,7 @@ class AgentService:
 
         await self._run_general_agent_task(task_id, agent_id)
 
-    async def _award_agent_xp(self, agent_id: str, task_data: dict, output_message: str):
+    async def _award_agent_xp(self, agent_id: str, task_data: dict[str, Any], output_message: str) -> None:
         from .shared_constants import AgentUUIDs
         from .stats import stats_service
 
@@ -139,7 +147,7 @@ class AgentService:
             details={"task_id": task_data.get("id"), "score": score},
         )
 
-    async def _run_workflow_engine_task(self, task_id: str, task_data: dict, agent_id: str):
+    async def _run_workflow_engine_task(self, task_id: str, task_data: dict[str, Any], agent_id: str) -> None:
         """Phase 5.0.2: Bridges the execution to the isolated archon-agents WorkflowEngine container."""
 
         import httpx
@@ -203,7 +211,7 @@ class AgentService:
             logger.error(f"Unexpected error in WorkflowEngine execution: {e}")
             await task_service.update_task(task_id, {"status": "failed"})
 
-    async def _run_general_agent_task(self, task_id: str, agent_id: str):
+    async def _run_general_agent_task(self, task_id: str, agent_id: str) -> None:
         from ..services.projects.task_service import task_service
 
         logger = get_logger(__name__)
