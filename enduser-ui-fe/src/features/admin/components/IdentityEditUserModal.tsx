@@ -67,7 +67,7 @@ export const IdentityEditUserModal: React.FC<{ user: Employee; onClose: () => vo
                     <KeyIcon className="w-6 h-6 text-primary" />
                     <h2 className="text-2xl font-bold italic">Access Overrides: {user.name}</h2>
                 </div>
-                <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"><XIcon className="w-6 h-6" /></button>
                 
                 <div className="space-y-6 overflow-y-auto pr-2 flex-1">
                     <div className="grid grid-cols-2 gap-4">
