@@ -32,16 +32,19 @@ class TestAgentAwakening:
         Verify MarketBot wakes up, loads its prompt, and executes a task loop.
         """
         # Physical Alignment: Setup Mock MCP Client with new OpenAI-style tool schema (Phase 4.6.19)
+        from agents.mcp_client import MCPToolSchema
         mock_mcp = AsyncMock()
         mock_mcp.list_tools.return_value = [
-            {
-                "type": "function",
-                "function": {"name": "search_job_market", "description": "Search 104", "parameters": {}},
-            },
-            {
-                "type": "function",
-                "function": {"name": "perform_rag_query", "description": "Search RAG", "parameters": {}},
-            },
+            MCPToolSchema(
+                name="search_job_market",
+                description="Search 104",
+                inputSchema={}
+            ),
+            MCPToolSchema(
+                name="perform_rag_query",
+                description="Search RAG",
+                inputSchema={}
+            ),
         ]
         service = AgentService(mcp_client=mock_mcp)
 
