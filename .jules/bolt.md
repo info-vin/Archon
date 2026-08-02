@@ -165,3 +165,6 @@
 ## 2024-05-18 - Preserving Array.find() behavior with Map caching
 **Learning:** When optimizing a loop by replacing `Array.prototype.find()` with a pre-calculated `Map` for $O(1)$ lookups, simply calling `map.set()` for every item creates a 'last match wins' regression, because `find()` inherently returns the *first* match.
 **Action:** When converting `find()` to a `Map`, always ensure duplicate keys are handled gracefully to mimic `find()`'s 'first match' behavior by checking `if (!map.has(key)) { map.set(key, value); }`.
+## 2026-07-29 - Pre-calculating Date parsing before array sorting
+**Learning:** Calling `Date.parse(string)` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck similar to `new Date().getTime()`.
+**Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.

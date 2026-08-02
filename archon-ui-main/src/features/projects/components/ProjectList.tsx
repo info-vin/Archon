@@ -39,6 +39,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
 }) => {
   // Sort projects - pinned first, then by creation date (newest first)
   const sortedProjects = React.useMemo(() => {
+    // PERFORMANCE: Pre-calculate date timestamps for O(1) lookups during the O(N log N) sort operation
+    // to avoid redundant string-to-date parsing overhead from calling Date.parse() inside the comparator.
+    const parsedDates = new Map<string, number>();
+    for (const p of projects) {
+      const parsed = Date.parse(p.created_at);
+      parsedDates.set(p.id, Number.isFinite(parsed) ? parsed : 0);
+    }
+
     return [...projects].sort((a, b) => {
       // Pinned projects always come first
       if (a.pinned && !b.pinned) return -1;
@@ -46,8 +54,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
 
       // Then sort by creation date (newest first)
       // This ensures new projects appear on the left after pinned ones
-      const timeA = Number.isFinite(Date.parse(a.created_at)) ? Date.parse(a.created_at) : 0;
-      const timeB = Number.isFinite(Date.parse(b.created_at)) ? Date.parse(b.created_at) : 0;
+      const timeA = parsedDates.get(a.id) ?? 0;
+      const timeB = parsedDates.get(b.id) ?? 0;
       const byDate = timeB - timeA; // Newer first
       return byDate !== 0 ? byDate : a.id.localeCompare(b.id); // Tie-break with ID for deterministic sort
     });
