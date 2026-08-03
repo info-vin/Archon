@@ -143,8 +143,10 @@ async def run_ssot_audit() -> None:
         # We will scan python files in src/
         scan_dir = project_root / "python" / "src"
         if not scan_dir.exists():
-            logger.warning("SSOT Audit skipped: python/src directory not found.")
-            return
+            scan_dir = project_root / "src"  # Fallback for Docker environment
+            if not scan_dir.exists():
+                logger.warning("SSOT Audit skipped: Both python/src and src directories not found.")
+                return
 
         for root_dir, _, files in os.walk(scan_dir):
             for file in files:

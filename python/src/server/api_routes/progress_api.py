@@ -7,7 +7,7 @@ from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi import status as http_status
 
 from ..config.logfire_config import get_logger
-from ..models.progress_models import ActiveOperationsResponse, create_progress_response
+from ..models.progress_models import ActiveOperation, ActiveOperationsResponse, create_progress_response
 from ..services.shared_constants import StatusEnum
 from ..utils.etag_utils import check_etag, generate_etag
 from ..utils.progress import ProgressTracker
@@ -107,14 +107,14 @@ async def list_active_operations() -> ActiveOperationsResponse:
         for op_id, operation in ProgressTracker._progress_states.items():
             if operation.get("status") in [StatusEnum.STARTING, StatusEnum.RUNNING, StatusEnum.CRAWLING, StatusEnum.PROCESSING]:
                 active_operations.append(
-                    {
-                        "operation_id": op_id,
-                        "operation_type": operation.get("type", "unknown"),
-                        "status": operation.get("status"),
-                        "progress": operation.get("progress", 0),
-                        "message": operation.get("log", "Processing..."),
-                        "started_at": operation.get("start_time"),
-                    }
+                    ActiveOperation(
+                        operation_id=op_id,
+                        operation_type=operation.get("type", "unknown"),
+                        status=operation.get("status"),
+                        progress=operation.get("progress", 0),
+                        message=operation.get("log", "Processing..."),
+                        started_at=operation.get("start_time"),
+                    )
                 )
 
         logger.info(f"Active operations listed | count={len(active_operations)}")
