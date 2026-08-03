@@ -46,13 +46,28 @@ async def get_sla_reliability() -> dict[str, Any]:
         return {"current_sla": 0, "trend": [], "error": str(e)}
 
 
-@router.get("/force-readiness", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_force_readiness() -> dict[str, Any]:
+class ForceReadinessTrend(BaseModel):
+    date: str = Field(description="The date of the trend point")
+    actual: int = Field(description="The actual number of completed tasks")
+    baseline: float = Field(description="The baseline daily expected tasks")
+
+
+class ForceReadinessResponse(BaseModel):
+    baseline: float = Field(description="Baseline average daily tasks")
+    trend: list[ForceReadinessTrend] = Field(description="Trend data points")
+    total_done_90d: float | None = Field(default=None, description="Total tasks done in the last 90 days")
+    automation_rate: float | None = Field(default=None, description="Percentage of tasks done by AI")
+    timestamp: str | None = Field(default=None, description="Timestamp of the calculation")
+    error: str | None = Field(default=None, description="Error message if the fetch failed")
+
+
+@router.get("/force-readiness", response_model=ForceReadinessResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_force_readiness() -> ForceReadinessResponse:
     try:
-        return await stats_service.get_force_readiness()
+        return ForceReadinessResponse(**await stats_service.get_force_readiness())
     except Exception as e:
         logger.error(f"API: Force readiness failed: {e}")
-        return {"baseline": 0, "trend": [], "error": str(e)}
+        return ForceReadinessResponse(baseline=0.0, trend=[], error=str(e))
 
 
 @router.get("/business-risks", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
