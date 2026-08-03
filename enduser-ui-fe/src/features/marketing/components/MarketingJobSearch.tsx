@@ -56,7 +56,7 @@ export const MarketingJobSearch: React.FC<MarketingJobSearchProps> = ({
           {error && (
             <div className="bg-red-50 text-red-700 p-4 rounded-lg border border-red-100 flex justify-between items-center">
               <span>{error}</span>
-              <button onClick={() => setError(null)} className="p-1 hover:bg-red-100 rounded-full transition-colors outline-none" aria-label="Dismiss error"><XIcon className="w-4 h-4" /></button>
+              <button onClick={() => setError(null)} className="p-1 hover:bg-red-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500" aria-label="Dismiss error"><XIcon className="w-4 h-4" /></button>
             </div>
           )}
           
