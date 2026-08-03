@@ -2,13 +2,12 @@
 """Progress API endpoints for polling operation status."""
 
 from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi import status as http_status
 
 from ..config.logfire_config import get_logger
-from ..models.progress_models import create_progress_response
+from ..models.progress_models import ActiveOperation, ActiveOperationsResponse, create_progress_response
 from ..services.shared_constants import StatusEnum
 from ..utils.etag_utils import check_etag, generate_etag
 from ..utils.progress import ProgressTracker
@@ -91,8 +90,8 @@ async def get_progress(operation_id: str, response: Response, if_none_match: str
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.get("/")
-async def list_active_operations() -> Any:
+@router.get("/", response_model=ActiveOperationsResponse)
+async def list_active_operations() -> ActiveOperationsResponse:
     """
     List all active operations.
 
@@ -108,23 +107,23 @@ async def list_active_operations() -> Any:
         for op_id, operation in ProgressTracker._progress_states.items():
             if operation.get("status") in [StatusEnum.STARTING, StatusEnum.RUNNING, StatusEnum.CRAWLING, StatusEnum.PROCESSING]:
                 active_operations.append(
-                    {
-                        "operation_id": op_id,
-                        "operation_type": operation.get("type", "unknown"),
-                        "status": operation.get("status"),
-                        "progress": operation.get("progress", 0),
-                        "message": operation.get("log", "Processing..."),
-                        "started_at": operation.get("start_time"),
-                    }
+                    ActiveOperation(
+                        operation_id=op_id,
+                        operation_type=operation.get("type", "unknown"),
+                        status=operation.get("status"),
+                        progress=operation.get("progress", 0),
+                        message=operation.get("log", "Processing..."),
+                        started_at=operation.get("start_time"),
+                    )
                 )
 
         logger.info(f"Active operations listed | count={len(active_operations)}")
 
-        return {
-            "operations": active_operations,
-            "count": len(active_operations),
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+        return ActiveOperationsResponse(
+            operations=active_operations,
+            count=len(active_operations),
+            timestamp=datetime.utcnow().isoformat(),
+        )
 
     except Exception as e:
         logger.error(f"Failed to list active operations | error={str(e)}")

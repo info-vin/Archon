@@ -32,7 +32,7 @@ export const IdentityNewUserModal: React.FC<{ onClose: () => void; onSave: (newU
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-card rounded-2xl shadow-xl w-full max-lg p-6 relative animate-in fade-in zoom-in-95 duration-200">
                 <h2 className="text-2xl font-bold mb-4">Create New User</h2>
-                <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"><XIcon className="w-6 h-6" /></button>
+                <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"><XIcon className="w-6 h-6" /></button>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="name-new" className="block text-sm font-medium mb-1">Full Name</label>

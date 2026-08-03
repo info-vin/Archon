@@ -73,6 +73,20 @@ export const SystemHealthDashboard: React.FC = () => {
         return agentXp.map((x: any) => (x.name || '').toLowerCase());
     }, [agentXp]);
 
+    // PERFORMANCE: Precalculate a lookup map for agent XP data to prevent O(N*M) Array.find() lookups.
+    // Handles duplicates gracefully by storing the first match to mimic Array.find() behavior exactly.
+    const agentXpMap = React.useMemo(() => {
+        const map = new Map<string, any>();
+        agentXp.forEach((x: any, i: number) => {
+            const nameLower = searchableAgentXpNames[i];
+
+            if (!map.has(nameLower)) {
+                 map.set(nameLower, x);
+            }
+        });
+        return map;
+    }, [agentXp, searchableAgentXpNames]);
+
     if (loading) return (
         <div className="flex justify-center items-center h-64">
             <RefreshCwIcon className="animate-spin w-8 h-8 text-indigo-500" />
@@ -161,10 +175,15 @@ export const SystemHealthDashboard: React.FC = () => {
 
                                 // Physically align with backend SSOT (Phase 4.6.15)
                                 // We find the data in agentXp which now contains total_cost and roi_ratio
-                                const xpData = agentXp.find((_, i) =>
-                                    searchableAgentXpNames[i] === agentNameLower ||
-                                    (searchableAgentXpNames[i].includes(agentIdLower))
-                                ) || { total_xp: 0, total_cost: 0, roi_ratio: 0, level: 'Intern' };
+                                // Fast O(1) exact name lookup first.
+                                let xpData = agentXpMap.get(agentNameLower);
+
+                                // If exact name fails, fallback to O(N) substring match on names for the ID (preserves exact legacy logic)
+                                if (!xpData) {
+                                    xpData = agentXp.find((_, i) => searchableAgentXpNames[i].includes(agentIdLower));
+                                }
+
+                                xpData = xpData || { total_xp: 0, total_cost: 0, roi_ratio: 0, level: 'Intern' };
                                 
                                 return (
                                     <div key={agent.id} className="flex flex-col gap-2">

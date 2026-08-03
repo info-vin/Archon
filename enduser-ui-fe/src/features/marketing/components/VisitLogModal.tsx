@@ -142,7 +142,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                             )}
                         </div>
 
-                        <button onClick={onSuccess} className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold">
+                        <button onClick={onSuccess} className="w-full py-3 bg-gray-900 text-white rounded-lg font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-900">
                             Done
                         </button>
                     </div>
@@ -156,7 +156,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
             <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-xl w-full max-w-md p-6 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-xl font-bold">New Visit Log</h3>
-                    <button onClick={onClose} aria-label="Close modal" className="focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full outline-none"><XIcon className="w-6 h-6 text-gray-400" /></button>
+                    <button onClick={onClose} aria-label="Close modal" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full"><XIcon className="w-6 h-6 text-gray-400" /></button>
                 </div>
 
                 {step === 'type' && (
@@ -165,7 +165,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                             <button 
                                 key={t}
                                 onClick={() => { setType(t); setStep('details'); }}
-                                className="p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all font-medium text-gray-700 hover:text-indigo-700"
+                                className="p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all font-medium text-gray-700 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                                 {t}
                             </button>

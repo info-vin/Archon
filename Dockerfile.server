@@ -71,6 +71,7 @@ COPY python/src/ src/
 COPY python/tests/ tests/
 COPY migration/ migration/
 COPY AGENTS.md /app/AGENTS.md
+COPY scripts/backend_type_health.py scripts/
 
 # Set environment variables
 ENV PYTHONPATH="/app/src:/app:$PYTHONPATH"

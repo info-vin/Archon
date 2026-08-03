@@ -14,17 +14,15 @@ async def test_agent_service_dynamic_tool_discovery():
     instead of using hardcoded lists.
     """
     # 1. Setup Mock MCP Client with a dynamic tool list
+    from agents.mcp_client import MCPToolSchema
     mock_mcp_client = MagicMock()
     mock_mcp_client.list_tools = AsyncMock(
         return_value=[
-            {
-                "type": "function",
-                "function": {
-                    "name": "dynamic_test_tool",
-                    "description": "A dynamically discovered tool",
-                    "parameters": {"type": "object", "properties": {"arg": {"type": "string"}}},
-                },
-            }
+            MCPToolSchema(
+                name="dynamic_test_tool",
+                description="A dynamically discovered tool",
+                inputSchema={"type": "object", "properties": {"arg": {"type": "string"}}},
+            )
         ]
     )
 

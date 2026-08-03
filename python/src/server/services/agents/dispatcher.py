@@ -6,7 +6,7 @@ different agent execution behaviors into independent strategies.
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any, cast
+from typing import Any
 
 from src.server.config.logfire_config import get_logger
 from src.server.config.model_ssot import SYSTEM_MODELS
@@ -84,13 +84,24 @@ class DefaultLLMStrategy(BaseAgentStrategy):
         ]
 
         # Physical Synchronization: Fetch dynamic tools from MCP (Phase 4.6.19)
-        all_mcp_tools: list[dict[str, Any]] = []
+        all_mcp_tools = []
         if agent_service.mcp_client:
             all_mcp_tools = await agent_service.mcp_client.list_tools()
             logger.info(f"Dynamic Tool Discovery: Synced {len(all_mcp_tools)} tools from MCP.")
 
         agent_tools_list: list[str] = list(config.get("tools") or [])
-        agent_tools = [t for t in all_mcp_tools if cast(dict, t["function"])["name"] in agent_tools_list]
+        agent_tools = []
+        for t in all_mcp_tools:
+            if hasattr(t, "name") and t.name in agent_tools_list:
+                tool_dict = t.model_dump(by_alias=True)
+                agent_tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool_dict["name"],
+                        "description": tool_dict.get("description", ""),
+                        "parameters": tool_dict.get("inputSchema", {})
+                    }
+                })
 
         tools_param = agent_tools if agent_tools else None
 

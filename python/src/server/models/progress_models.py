@@ -1,5 +1,6 @@
 """Standardized progress response models for consistent API responses."""
 
+from datetime import datetime
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field, field_validator
@@ -23,6 +24,25 @@ class ProgressDetails(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class ActiveOperation(BaseModel):
+    """Details of a currently active operation."""
+
+    operation_id: str = Field(description="The unique identifier for the operation")
+    operation_type: str = Field(default="unknown", description="The type of the operation (e.g., crawl, upload)")
+    status: str | None = Field(default=None, description="The current status of the operation")
+    progress: float = Field(default=0.0, ge=0, le=100, description="Progress percentage 0-100")
+    message: str = Field(default="Processing...", description="The latest log message or status description")
+    started_at: datetime | str | None = Field(default=None, description="The timestamp when the operation started")
+
+
+class ActiveOperationsResponse(BaseModel):
+    """Response containing a list of all active operations."""
+
+    operations: list[ActiveOperation] = Field(description="List of currently active operations")
+    count: int = Field(description="The total number of active operations")
+    timestamp: datetime | str = Field(description="The current server timestamp")
 
 
 class BaseProgressResponse(BaseModel):

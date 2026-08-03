@@ -76,11 +76,11 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                 try { await api.resetLeads(); fetchLeads(); } catch (e: any) { alert(e.message); }
               }
             }}
-            className="text-red-500 text-sm font-medium hover:text-red-700"
+            className="text-red-500 text-sm font-medium hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500 rounded-md px-2 py-1 -mx-2"
           >
             Clear History
           </button>
-          <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800">Refresh</button>
+          <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 rounded-md px-2 py-1 -mx-2">Refresh</button>
         </div>
       </div>
       
@@ -88,8 +88,8 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-500">Filter:</span>
-            <button onClick={() => setFilterMode('all')} className={`text-xs font-medium px-3 py-1 border rounded-full transition-colors ${filterMode === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}>All Leads</button>
-            <button onClick={() => setFilterMode('review_queue')} className={`text-xs font-bold px-3 py-1 border rounded-full flex items-center gap-1 transition-colors ${filterMode === 'review_queue' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'}`}><span className={`w-2 h-2 rounded-full ${filterMode === 'review_queue' ? 'bg-white' : 'bg-indigo-500'} animate-pulse`}></span>Review Queue</button>
+            <button onClick={() => setFilterMode('all')} className={`text-xs font-medium px-3 py-1 border rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-800 ${filterMode === 'all' ? 'bg-gray-800 text-white border-gray-800' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}>All Leads</button>
+            <button onClick={() => setFilterMode('review_queue')} className={`text-xs font-bold px-3 py-1 border rounded-full flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-600 ${filterMode === 'review_queue' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'}`}><span className={`w-2 h-2 rounded-full ${filterMode === 'review_queue' ? 'bg-white' : 'bg-indigo-500'} animate-pulse`}></span>Review Queue</button>
           </div>
         </div>
 

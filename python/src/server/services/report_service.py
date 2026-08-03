@@ -141,9 +141,7 @@ class ReportService(BaseRepository):
 
         p_id = p_res["data"][0]["id"]
 
-        query = self.supabase_client.table("profiles").select("id").eq("email", "charlie@archon.com")
-        success, charlie_res = self.execute_query(query, "Failed to get charlie's id")
-        assignee_id = charlie_res.get("data", [])[0]["id"] if (success and charlie_res.get("data")) else AgentUUIDs.SUPERVISOR
+        assignee_id = AgentUUIDs.SUPERVISOR
 
         end_date = datetime.now(CST)
         start_date = end_date - timedelta(days=days)
