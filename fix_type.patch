@@ -1,0 +1,15 @@
+--- a/python/src/server/api_routes/stats_api.py
++++ b/python/src/server/api_routes/stats_api.py
+@@ -62,10 +62,10 @@
+ @router.get("/force-readiness", response_model=ForceReadinessResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+ async def get_force_readiness() -> ForceReadinessResponse:
+     try:
+-        return await stats_service.get_force_readiness()  # type: ignore
++        return ForceReadinessResponse(**await stats_service.get_force_readiness())
+     except Exception as e:
+         logger.error(f"API: Force readiness failed: {e}")
+-        return {"baseline": 0, "trend": [], "error": str(e)}  # type: ignore
++        return ForceReadinessResponse(baseline=0.0, trend=[], error=str(e))
+
+
+ @router.get("/business-risks", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
