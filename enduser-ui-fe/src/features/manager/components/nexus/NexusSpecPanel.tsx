@@ -37,7 +37,7 @@ export const NexusSpecPanel: React.FC<NexusSpecPanelProps> = ({ isOpen, onClose,
                                 </div>
                                 <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight">Nexus Metrics Spec</h2>
                             </div>
-                            <button onClick={onClose} className="p-2 hover:bg-gray-200/50 dark:hover:bg-slate-800 rounded-full transition-colors text-gray-400" aria-label="Close Nexus Metrics Spec">
+                            <button onClick={onClose} className="p-2 hover:bg-gray-200/50 dark:hover:bg-slate-800 rounded-full transition-colors text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" aria-label="Close Nexus Metrics Spec">
                                 <XIcon className="w-6 h-6" />
                             </button>
                         </div>
