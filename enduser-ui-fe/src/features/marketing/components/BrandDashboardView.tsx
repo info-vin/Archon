@@ -21,6 +21,75 @@ interface BrandDashboardViewProps {
     onGenerateLogo: () => void;
 }
 
+interface KanbanColumnProps {
+    title: string;
+    icon: any;
+    colorClass: string;
+    columnPosts: BlogPost[];
+    onUpdateStatus: (id: string, status: BlogPost['status']) => void;
+    onEditSmart: (post: BlogPost) => void;
+    onNavigateAdvanced: (id: string) => void;
+    onDeletePost: (id: string) => void;
+}
+
+const KanbanColumn: React.FC<KanbanColumnProps> = ({
+    title, icon: Icon, colorClass, columnPosts,
+    onUpdateStatus, onEditSmart, onNavigateAdvanced, onDeletePost
+}) => {
+    return (
+        <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-xl p-4 flex flex-col gap-4">
+            <div className={`flex items-center justify-between border-b pb-2 ${colorClass}`}>
+                <h3 className="font-bold flex items-center gap-2">
+                    <Icon className="w-5 h-5" />
+                    {title}
+                </h3>
+                <span className="bg-white px-2 py-0.5 rounded-full text-xs shadow-sm font-bold">
+                    {columnPosts.length}
+                </span>
+            </div>
+            <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1 font-sans">
+                {columnPosts.map(post => {
+                    const feedback = post.review_notes || (post as any).reviewNotes;
+                    const isReturned = post.status === 'changes_requested' || (feedback && post.status !== 'published' && post.status !== 'review');
+
+                    return (
+                        <div key={post.id} className={`bg-white p-4 rounded-lg shadow-sm border transition-all group relative overflow-hidden ${isReturned ? 'border-red-200 ring-1 ring-red-50' : 'border-gray-100 hover:shadow-md'}`}>
+                            {isReturned && (
+                                <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg tracking-tighter shadow-sm z-20">
+                                    RETURNED
+                                </div>
+                            )}
+                            <h4 className="font-semibold text-gray-800 line-clamp-2 pr-12">{post.title}</h4>
+                            {isReturned && feedback && (
+                                <div className="mt-3 p-2 bg-red-50/80 rounded-lg border border-red-100 relative">
+                                    <p className="text-[11px] text-red-900 italic line-clamp-4 leading-snug">"{feedback}"</p>
+                                </div>
+                            )}
+                            <p className="text-[10px] text-gray-500 mt-2 font-medium">By {post.authorName}</p>
+                            <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex gap-1" role="group" aria-label="Post actions">
+                                    {post.status !== 'draft' && post.status !== 'changes_requested' && (
+                                        <button onClick={() => onUpdateStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft" aria-label="Move to Draft"><FileEditIcon className="w-4 h-4" /></button>
+                                    )}
+                                    <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
+                                    <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)" aria-label="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
+                                    {post.status !== 'review' && (
+                                        <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review" aria-label="Move to Review"><EyeIcon className="w-4 h-4" /></button>
+                                    )}
+                                    {post.status !== 'published' && (
+                                        <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now" aria-label="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
+                                    )}
+                                    <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto" title="Delete" aria-label="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    )
+};
+
 export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
     posts, trendsData, logoSvg, isGeneratingLogo, onNewPost, onEditSmart, onUpdateStatus, onDeletePost, onNavigateAdvanced, onGenerateLogo
 }) => {
@@ -34,62 +103,6 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    };
-
-    const KanbanColumn = ({ filter, title, icon: Icon, colorClass }: any) => {
-        const columnPosts = posts.filter(filter);
-        return (
-            <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-xl p-4 flex flex-col gap-4">
-                <div className={`flex items-center justify-between border-b pb-2 ${colorClass}`}>
-                    <h3 className="font-bold flex items-center gap-2">
-                        <Icon className="w-5 h-5" />
-                        {title}
-                    </h3>
-                    <span className="bg-white px-2 py-0.5 rounded-full text-xs shadow-sm font-bold">
-                        {columnPosts.length}
-                    </span>
-                </div>
-                <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1 font-sans">
-                    {columnPosts.map(post => {
-                        const feedback = post.review_notes || (post as any).reviewNotes;
-                        const isReturned = post.status === 'changes_requested' || (feedback && post.status !== 'published' && post.status !== 'review');
-                        
-                        return (
-                            <div key={post.id} className={`bg-white p-4 rounded-lg shadow-sm border transition-all group relative overflow-hidden ${isReturned ? 'border-red-200 ring-1 ring-red-50' : 'border-gray-100 hover:shadow-md'}`}>
-                                {isReturned && (
-                                    <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg tracking-tighter shadow-sm z-20">
-                                        RETURNED
-                                    </div>
-                                )}
-                                <h4 className="font-semibold text-gray-800 line-clamp-2 pr-12">{post.title}</h4>
-                                {isReturned && feedback && (
-                                    <div className="mt-3 p-2 bg-red-50/80 rounded-lg border border-red-100 relative">
-                                        <p className="text-[11px] text-red-900 italic line-clamp-4 leading-snug">"{feedback}"</p>
-                                    </div>
-                                )}
-                                <p className="text-[10px] text-gray-500 mt-2 font-medium">By {post.authorName}</p>
-                                <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="flex gap-1" role="group" aria-label="Post actions">
-                                        {post.status !== 'draft' && post.status !== 'changes_requested' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft" aria-label="Move to Draft"><FileEditIcon className="w-4 h-4" /></button>
-                                        )}
-                                        <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
-                                        <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)" aria-label="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
-                                        {post.status !== 'review' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review" aria-label="Move to Review"><EyeIcon className="w-4 h-4" /></button>
-                                        )}
-                                        {post.status !== 'published' && (
-                                            <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now" aria-label="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
-                                        )}
-                                        <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto" title="Delete" aria-label="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        )
     };
 
     const feedSources: ContentSource[] = posts.map(p => ({
@@ -144,9 +157,36 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                     </button>
                 </div>
                 <div className="flex flex-wrap gap-6">
-                    <KanbanColumn title="Drafts & Returned" filter={(p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested'} icon={FileEditIcon} colorClass="text-gray-600 border-gray-200" />
-                    <KanbanColumn title="In Review" filter={(p: BlogPost) => p.status === 'review'} icon={EyeIcon} colorClass="text-amber-600 border-amber-200" />
-                    <KanbanColumn title="Published" filter={(p: BlogPost) => p.status === 'published'} icon={CheckCircleIcon} colorClass="text-green-600 border-green-200" />
+                    <KanbanColumn
+                        title="Drafts & Returned"
+                        columnPosts={posts.filter((p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested')}
+                        icon={FileEditIcon}
+                        colorClass="text-gray-600 border-gray-200"
+                        onUpdateStatus={onUpdateStatus}
+                        onEditSmart={onEditSmart}
+                        onNavigateAdvanced={onNavigateAdvanced}
+                        onDeletePost={onDeletePost}
+                    />
+                    <KanbanColumn
+                        title="In Review"
+                        columnPosts={posts.filter((p: BlogPost) => p.status === 'review')}
+                        icon={EyeIcon}
+                        colorClass="text-amber-600 border-amber-200"
+                        onUpdateStatus={onUpdateStatus}
+                        onEditSmart={onEditSmart}
+                        onNavigateAdvanced={onNavigateAdvanced}
+                        onDeletePost={onDeletePost}
+                    />
+                    <KanbanColumn
+                        title="Published"
+                        columnPosts={posts.filter((p: BlogPost) => p.status === 'published')}
+                        icon={CheckCircleIcon}
+                        colorClass="text-green-600 border-green-200"
+                        onUpdateStatus={onUpdateStatus}
+                        onEditSmart={onEditSmart}
+                        onNavigateAdvanced={onNavigateAdvanced}
+                        onDeletePost={onDeletePost}
+                    />
                 </div>
             </section>
 
