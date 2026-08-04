@@ -182,8 +182,8 @@ class SchedulerService:
                 logger.info(f"⏭️ Event-Driven: Skipped '{job_id}' (Already run today)")
         self._scheduler.add_job(wrapper, id=f"{job_id}_event", replace_existing=True)
 
-    def _parse_dynamic_hf_time(self, offset_hours: int) -> tuple[int, int]:
-        start_str = os.getenv("HF_SLEEP_START", "20:18")
+    def _parse_dynamic_hf_time(self, config: Any, offset_hours: int) -> tuple[int, int]:
+        start_str = config.hf_sleep_start
         try:
             sh, sm = map(int, start_str.split(":"))
         except Exception:
@@ -219,10 +219,10 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=config.business_sentinel_hour, minute=config.business_sentinel_minute, timezone=DEFAULT_TIMEZONE), "Already run today")
 
         # --- Category 3: Stateful Weekly / Monthly Jobs ---
-        weekly_h, weekly_m = self._parse_dynamic_hf_time(3)
+        weekly_h, weekly_m = self._parse_dynamic_hf_time(config, 3)
         await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_weekly, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
 
-        health_h, health_m = self._parse_dynamic_hf_time(1)
+        health_h, health_m = self._parse_dynamic_hf_time(config, 1)
         await self._schedule_stateful_job(self._run_architecture_health_audit, "architecture_health_audit", 40, self._should_run_weekly, CronTrigger(day_of_week=config.architecture_health_audit_days, hour=health_h, minute=health_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
 
         await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_monthly, CronTrigger(day=config.monthly_summary_day, hour=config.monthly_summary_hour, minute=config.monthly_summary_minute, timezone=DEFAULT_TIMEZONE), "Already run this month")

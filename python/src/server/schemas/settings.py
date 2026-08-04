@@ -84,6 +84,11 @@ class TaskDispatcherConfig(BaseModel):
     zombie_task_alert_threshold: int = Field(default=3, alias="ZOMBIE_TASK_ALERT_THRESHOLD")
 
 class SchedulerConfig(BaseModel):
+    # 🚨 絕對鐵律：若修改以下 HF 睡眠時間，必須「先檢查並同步修改」
+    # .github/workflows/hf-pause.yml 與 hf-restart.yml 的 Cron 排程！
+    hf_sleep_start: str = Field(default="17:58", alias="HF_SLEEP_START")
+    hf_sleep_end: str = Field(default="07:20", alias="HF_SLEEP_END")
+
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")
     log_patrol_interval_mins: int = Field(default=30, alias="LOG_PATROL_INTERVAL_MINS")
     task_dispatcher_interval_mins: int = Field(default=15, alias="TASK_DISPATCHER_INTERVAL_MINS")
