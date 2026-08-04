@@ -1,4 +1,4 @@
-from typing import Any
+from typing import NotRequired, TypedDict
 
 import httpx
 from bs4 import BeautifulSoup
@@ -9,6 +9,17 @@ from .rbac_service import RBACService
 from .shared_constants import RoleEnum
 
 logger = get_logger(__name__)
+
+
+class CrawlerResultDTO(TypedDict):
+    status: str
+    message: NotRequired[str]
+    type: NotRequired[str]
+    title: NotRequired[str]
+    content: NotRequired[str]
+    url: NotRequired[str]
+    is_batch: NotRequired[bool]
+    discovered_links: NotRequired[list[str]]
 
 
 class CrawlerService:
@@ -28,7 +39,7 @@ class CrawlerService:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         }
 
-    async def fetch_and_analyze(self, url: str) -> dict[str, Any]:
+    async def fetch_and_analyze(self, url: str) -> CrawlerResultDTO:
         """
         Main entry point for Charlie/Bot.
         Analyzes the URL, detects type, and returns structured data.
@@ -60,7 +71,7 @@ class CrawlerService:
             logger.error(f"Crawler: Execution failed for {url} | error={e}")
             return {"status": "error", "message": str(e)}
 
-    def _process_html(self, html: str, url: str) -> dict[str, Any]:
+    def _process_html(self, html: str, url: str) -> CrawlerResultDTO:
         """Parses standard HTML pages."""
         soup = BeautifulSoup(html, "html.parser")
 
@@ -81,7 +92,7 @@ class CrawlerService:
             "is_batch": False,
         }
 
-    def _process_sitemap(self, xml: str, url: str) -> dict[str, Any]:
+    def _process_sitemap(self, xml: str, url: str) -> CrawlerResultDTO:
         """
         Parses Sitemap XML and returns a list of discovered URLs.
         """
