@@ -12,7 +12,7 @@ from typing import Any
 
 import aiofiles
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..services.credential_service import credential_service
 
@@ -45,6 +45,11 @@ def is_internal_request(request: Request) -> bool:
 
     return False
 
+
+class TriggerCronResponse(BaseModel):
+    status: str = Field(description="The status of the triggered action")
+    jobs: int = Field(description="The number of jobs triggered")
+    job_id: str | None = Field(None, description="The ID of the triggered job, if a specific job was triggered")
 
 class TokenUsagePayload(BaseModel):
     model: str
@@ -160,13 +165,13 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
 
 # ... inside the file later ...
 
-@router.post("/cron/trigger")
+@router.post("/cron/trigger", response_model=TriggerCronResponse)
 async def trigger_cron_jobs(
     request: Request,
     background_tasks: BackgroundTasks,
     api_key: str | None = None,
     job_id: str | None = Query(None, description="Trigger a specific job by its ID. If omitted, triggers all.")
-):
+) -> TriggerCronResponse:
     """
     Webhook to trigger scheduler jobs externally.
     Allows execution via internal IP or matching ARCHON_CRON_SECRET.
@@ -206,13 +211,13 @@ async def trigger_cron_jobs(
             if job_id not in job_map:
                 raise HTTPException(status_code=400, detail=f"Unknown job_id: {job_id}")
             background_tasks.add_task(job_map[job_id])
-            return {"status": "triggered", "jobs": 1, "job_id": job_id}
+            return TriggerCronResponse(status="triggered", jobs=1, job_id=job_id)
         else:
             # Add all jobs to FastAPI BackgroundTasks for manual concurrent triggering
             for func in job_map.values():
                 background_tasks.add_task(func)
 
-            return {"status": "triggered", "jobs": len(job_map)}
+            return TriggerCronResponse(status="triggered", jobs=len(job_map), job_id=None)
     except Exception as e:
         logger.error(f"Error triggering cron jobs: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
