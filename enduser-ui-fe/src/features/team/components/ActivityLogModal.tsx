@@ -12,6 +12,12 @@ const safeFormatActivityDate = (dateVal: any) => {
     return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
 };
 
+// PERFORMANCE: Extract redundant inline conditional ternary chains evaluated during every render cycle into a static O(1) lookup dictionary defined outside the component.
+const STATUS_COLORS: Record<string, string> = {
+    'done': 'bg-green-100 text-green-700',
+    'doing': 'bg-blue-100 text-blue-700'
+};
+
 export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void }> = ({ member, onClose }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
@@ -86,9 +92,7 @@ export const ActivityLogModal: React.FC<{ member: Employee; onClose: () => void 
                                             <p className="text-xs text-gray-500 mt-1 line-clamp-1">{task.description}</p>
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                            task.status === 'done' ? 'bg-green-100 text-green-700' :
-                                            task.status === 'doing' ? 'bg-blue-100 text-blue-700' :
-                                            'bg-gray-100 text-gray-600'
+                                            STATUS_COLORS[task.status] || 'bg-gray-100 text-gray-600'
                                         }`}>
                                             {task.status}
                                         </span>
