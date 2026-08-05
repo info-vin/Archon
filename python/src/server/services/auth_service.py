@@ -1,6 +1,6 @@
 # python/src/server/services/auth_service.py
 
-from typing import Any, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -10,20 +10,34 @@ from ..utils import get_supabase_client
 logger = get_logger(__name__)
 
 
+class UserProfileDictDTO(TypedDict):
+    id: str
+    employeeId: NotRequired[str | None]
+    name: str
+    email: str
+    department: NotRequired[str | None]
+    position: NotRequired[str | None]
+    status: NotRequired[str | None]
+    role: NotRequired[str | None]
+    avatar: NotRequired[str | None]
+    permission_overrides: NotRequired[dict[str, Any] | None]
+    tenant_id: NotRequired[str | None]
+
+
 class AuthService(BaseRepository):
     def __init__(self, supabase_client: Any = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
-    def get_all_users(self) -> list[dict[str, Any]]:
+    def get_all_users(self) -> list[UserProfileDictDTO]:
         """
         Lists all users from the profiles table.
         Returns a list of profile dicts.
         """
         query = self.supabase_client.table("profiles").select("*")
         success, res = self.execute_query(query, "Error fetching users", require_data=False)
-        return list(res.get("data", [])) if success else []
+        return cast(list[UserProfileDictDTO], res.get("data", []) if success else [])
 
-    def register_user(self, email: str, password: str, name: str, role: str = "employee") -> dict[str, Any]:
+    def register_user(self, email: str, password: str, name: str, role: str = "employee") -> UserProfileDictDTO:
         """
         Registers a new user in Supabase Auth and creates a profile.
         """
@@ -31,7 +45,7 @@ class AuthService(BaseRepository):
 
     def create_user_by_admin(
         self, email: str, password: str, name: str, role: str = "employee", status: str = "active"
-    ) -> dict[str, Any]:
+    ) -> UserProfileDictDTO:
         """
         Creates a user via admin privileges.
         """
@@ -64,7 +78,7 @@ class AuthService(BaseRepository):
 
             query = self.supabase_client.table("profiles").upsert(profile_data)
             self.execute_query(query, f"Error creating profile for {user_id}", require_data=False)
-            return profile_data
+            return cast(UserProfileDictDTO, profile_data)
         except Exception as e:
             logger.error(f"Admin user creation error: {e}")
             raise e
@@ -87,7 +101,7 @@ class AuthService(BaseRepository):
             logger.error(f"Error updating email: {e}", exc_info=True)
             raise e
 
-    def update_user_by_admin(self, user_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+    def update_user_by_admin(self, user_id: str, updates: dict[str, Any]) -> UserProfileDictDTO:
         """
         Updates a user's role, status, or permissions as an Admin.
         """
@@ -103,7 +117,7 @@ class AuthService(BaseRepository):
             success, res = self.execute_query(query, f"Failed to update profile for {user_id}", require_data=False)
 
             if success and res.get("data"):
-                return cast(dict[str, Any], res["data"][0])
+                return cast(UserProfileDictDTO, res["data"][0])
             raise ValueError(f"Failed to update profile for {user_id}")
 
         except Exception as e:
