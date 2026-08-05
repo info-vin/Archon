@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
 from ..config.model_ssot import SYSTEM_MODELS
@@ -10,6 +10,52 @@ from .llm_provider_service import extract_message_text
 logger = get_logger(__name__)
 
 
+class SchemaFieldDTO(TypedDict):
+    name: str
+    type: str
+    description: str
+
+
+class StructureAnalysisResultDTO(TypedDict):
+    summary: NotRequired[str]
+    fields: NotRequired[list[SchemaFieldDTO]]
+    error: NotRequired[str]
+
+
+class SchemaCreateDTO(TypedDict):
+    name: str
+    domain_pattern: str
+    schema_definition: dict[str, Any]
+    target_role: NotRequired[str | None]
+    description: NotRequired[str | None]
+
+
+class SchemaUpdateDTO(TypedDict, total=False):
+    name: str
+    domain_pattern: str
+    schema_definition: dict[str, Any]
+    target_role: str | None
+    description: str | None
+
+
+class SchemaResponseDTO(TypedDict):
+    id: str
+    name: str
+    domain_pattern: str
+    schema_definition: dict[str, Any]
+    target_role: str | None
+    description: str | None
+    created_by: str
+    created_at: str
+
+
+class ExtractionResultDTO(TypedDict):
+    success: bool
+    data: NotRequired[dict[str, Any]]
+    schema_used: NotRequired[str]
+    source_url: NotRequired[str]
+
+
 class ExtractionService:
     """
     Service for managing data extraction schemas and analyzing web content structure.
@@ -19,7 +65,7 @@ class ExtractionService:
     def __init__(self, supabase_client: Any = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
 
-    async def analyze_url_structure(self, url: str) -> dict[str, Any]:
+    async def analyze_url_structure(self, url: str) -> StructureAnalysisResultDTO:
         """
         Crawls a URL and uses LLM to analyze its structure, suggesting potential fields.
         """
@@ -95,7 +141,7 @@ class ExtractionService:
                 # Extract text using utility
                 content_text, _, _ = extract_message_text(response.choices[0])
                 schema_suggestion = safe_json_loads(content_text)
-                return schema_suggestion
+                return cast(StructureAnalysisResultDTO, schema_suggestion)
 
         except Exception as e:
             safe_logfire_error(f"LLM analysis failed: {e}")
@@ -111,7 +157,7 @@ class ExtractionService:
                 "error": f"AI Analysis failed, using fallback. Reason: {str(e)[:100]}",
             }
 
-    async def create_schema(self, data: dict[str, Any], user_id: str) -> dict[str, Any]:
+    async def create_schema(self, data: SchemaCreateDTO, user_id: str) -> SchemaResponseDTO:
         """
         Creates a new extraction schema definition.
         """
@@ -130,23 +176,23 @@ class ExtractionService:
             if not response.data:
                 raise Exception("Insert failed")
 
-            return cast(dict[str, Any], response.data[0])
+            return cast(SchemaResponseDTO, response.data[0])
 
         except Exception as e:
             safe_logfire_error(f"Failed to create schema: {e}")
             raise
 
-    async def list_schemas(self) -> list[dict[str, Any]]:
+    async def list_schemas(self) -> list[SchemaResponseDTO]:
         """List all schemas."""
         response = self.supabase.table("archon_extraction_schemas").select("*").order("created_at", desc=True).execute()
-        return cast(list[dict[str, Any]], response.data or [])
+        return cast(list[SchemaResponseDTO], response.data or [])
 
-    async def get_schema(self, schema_id: str) -> dict[str, Any] | None:
+    async def get_schema(self, schema_id: str) -> SchemaResponseDTO | None:
         """Get a single schema by ID."""
         response = self.supabase.table("archon_extraction_schemas").select("*").eq("id", schema_id).execute()
-        return response.data[0] if response.data else None
+        return cast(SchemaResponseDTO, response.data[0]) if response.data else None
 
-    async def update_schema(self, schema_id: str, data: dict[str, Any]) -> dict[str, Any]:
+    async def update_schema(self, schema_id: str, data: SchemaUpdateDTO) -> SchemaResponseDTO:
         """Updates an existing schema."""
         update_data = {
             k: v
@@ -156,14 +202,14 @@ class ExtractionService:
         response = self.supabase.table("archon_extraction_schemas").update(update_data).eq("id", schema_id).execute()
         if not response.data:
             raise Exception("Update failed or schema not found")
-        return cast(dict[str, Any], response.data[0])
+        return cast(SchemaResponseDTO, response.data[0])
 
     async def delete_schema(self, schema_id: str) -> bool:
         """Delete a schema."""
         self.supabase.table("archon_extraction_schemas").delete().eq("id", schema_id).execute()
         return True
 
-    async def run_extraction(self, url: str, schema_id: str, user_id: str) -> dict[str, Any]:
+    async def run_extraction(self, url: str, schema_id: str, user_id: str) -> ExtractionResultDTO:
         """
         Performs actual data extraction: Crawl -> LLM Parse (using schema) -> Result.
         """
