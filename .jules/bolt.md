@@ -168,3 +168,7 @@
 ## 2026-07-29 - Pre-calculating Date parsing before array sorting
 **Learning:** Calling `Date.parse(string)` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck similar to `new Date().getTime()`.
 **Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.
+
+## 2024-05-18 - Extracting inline React components from render functions
+**Learning:** Defining a React component (e.g., `KanbanColumn`) inside the render function of its parent component (`BrandDashboardView`) causes React to create a new component type reference on every single parent render. This bypasses React's reconciliation engine, forcing it to unmount and entirely remount the DOM sub-tree on every state change, destroying local state and causing massive performance overhead.
+**Action:** Always extract inline component definitions outside of the parent component's body. If the child component needs data or callbacks from the parent, pass them explicitly as props (e.g., `onUpdateStatus`, `columnPosts`).

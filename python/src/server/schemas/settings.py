@@ -84,20 +84,25 @@ class TaskDispatcherConfig(BaseModel):
     zombie_task_alert_threshold: int = Field(default=3, alias="ZOMBIE_TASK_ALERT_THRESHOLD")
 
 class SchedulerConfig(BaseModel):
+    # 🚨 絕對鐵律：若修改以下 HF 睡眠時間，必須「先檢查並同步修改」
+    # .github/workflows/hf-pause.yml 與 hf-restart.yml 的 Cron 排程！
+    hf_sleep_start: str = Field(default="17:58", alias="HF_SLEEP_START")
+    hf_sleep_end: str = Field(default="07:20", alias="HF_SLEEP_END")
+
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")
     log_patrol_interval_mins: int = Field(default=30, alias="LOG_PATROL_INTERVAL_MINS")
     task_dispatcher_interval_mins: int = Field(default=15, alias="TASK_DISPATCHER_INTERVAL_MINS")
     model_verification_interval_mins: int = Field(default=150, alias="MODEL_VERIFICATION_INTERVAL_MINS")
-    meta_twin_audit_interval_mins: int = Field(default=20, alias="META_TWIN_AUDIT_INTERVAL_MINS")
+    meta_twin_audit_interval_mins: int = Field(default=45, alias="META_TWIN_AUDIT_INTERVAL_MINS")
 
     # Category 2: Stateful Daily Jobs
     system_probe_cleanup_hour: int = Field(default=11, alias="SYSTEM_PROBE_CLEANUP_HOUR")
-    system_probe_cleanup_minute: int = Field(default=20, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
+    system_probe_cleanup_minute: int = Field(default=50, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
     prune_stale_leads_hour: int = Field(default=11, alias="PRUNE_STALE_LEADS_HOUR")
-    prune_stale_leads_minute: int = Field(default=20, alias="PRUNE_STALE_LEADS_MINUTE")
+    prune_stale_leads_minute: int = Field(default=50, alias="PRUNE_STALE_LEADS_MINUTE")
     alice_auto_fetch_hour: int = Field(default=10, alias="ALICE_AUTO_FETCH_HOUR")
-    alice_auto_fetch_minute: int = Field(default=30, alias="ALICE_AUTO_FETCH_MINUTE")
-    alice_auto_fetch_days: str = Field(default="tue,fri,sat,sun", alias="ALICE_AUTO_FETCH_DAYS")
+    alice_auto_fetch_minute: int = Field(default=25, alias="ALICE_AUTO_FETCH_MINUTE")
+    alice_auto_fetch_days: str = Field(default="tue,wed,thu,fri", alias="ALICE_AUTO_FETCH_DAYS")
     token_analysis_hour: int = Field(default=8, alias="TOKEN_ANALYSIS_HOUR")
     token_analysis_minute: int = Field(default=20, alias="TOKEN_ANALYSIS_MINUTE")
     business_sentinel_hour: int = Field(default=8, alias="BUSINESS_SENTINEL_HOUR")
@@ -120,7 +125,7 @@ class SchedulerConfig(BaseModel):
 class CrawlerJobConfig(BaseModel):
     crawler_job_keywords: str = Field(default="Python,AI,AI行銷自動化,AI自動化流程,大語言模型應用", alias="CRAWLER_JOB_KEYWORDS")
     crawler_job_limit: int = Field(default=12, alias="CRAWLER_JOB_LIMIT")
-    lead_gen_similarity_threshold: float = Field(default=0.66, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
+    lead_gen_similarity_threshold: float = Field(default=0.68, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
     crawler_waf_delay_min: float = Field(default=5.0, alias="CRAWLER_WAF_DELAY_MIN")
     crawler_waf_delay_max: float = Field(default=20.0, alias="CRAWLER_WAF_DELAY_MAX")
 

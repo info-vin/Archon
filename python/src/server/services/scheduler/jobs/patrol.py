@@ -3,7 +3,6 @@ Patrol Jobs for Scheduler
 Handles system health, log monitoring, and cleanup.
 """
 
-import os
 from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -149,15 +148,23 @@ async def run_log_patrol() -> None:
 def is_hf_awake() -> bool:
     """
     判斷當前時間是否在 HF 的上線視窗內。
-    睡眠區間預設為台灣 20:18 ~ 05:32 (CST)。
+    睡眠區間預設為台灣 17:58 ~ 07:20 (CST)。
     """
     # 取得 CST (UTC+8) 時間
     cst_now = datetime.now(ZoneInfo("Asia/Taipei"))
     current_time = cst_now.time()
 
-    # 從環境變數讀取 (CST HH:MM 格式)
-    start_str = os.getenv("HF_SLEEP_START", "20:18")
-    end_str = os.getenv("HF_SLEEP_END", "05:32")
+    # 從集中配置讀取
+    try:
+        from src.server.schemas.settings import SchedulerConfig
+        from src.server.services.settings_service import SettingsService
+        settings_data = SettingsService().get_all_settings()
+        config = SchedulerConfig.model_validate(settings_data)
+        start_str = config.hf_sleep_start
+        end_str = config.hf_sleep_end
+    except Exception:
+        start_str = "17:58"
+        end_str = "07:20"
 
     try:
         sh, sm = map(int, start_str.split(":"))
@@ -165,8 +172,8 @@ def is_hf_awake() -> bool:
         sleep_start = time(sh, sm)
         sleep_end = time(eh, em)
     except Exception:
-        sleep_start = time(20, 18)
-        sleep_end = time(5, 32)
+        sleep_start = time(17, 58)
+        sleep_end = time(7, 20)
 
     if sleep_start <= sleep_end:
         if sleep_start <= current_time <= sleep_end:
