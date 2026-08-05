@@ -10,3 +10,6 @@
 ## 2026-08-01 - Missing Focus Rings on Inline Tag Removal Buttons
 **Learning:** Found that inline interactive elements, specifically the 'Remove item' icon buttons inside selected knowledge tags (`KnowledgeSelector`), lacked keyboard focus indicators. These small buttons are easily missed but critical for keyboard navigation inside interactive form elements.
 **Action:** When adding or reviewing inline tag components, always ensure the removal buttons have explicit focus rings (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm`).
+## 2026-08-05 - Missing Focus Rings on AudioPlayer Play/Pause Button
+**Learning:** Found that the main play/pause button in `AudioPlayer` lacked keyboard focus indicators, breaking accessibility for keyboard users navigating audio content. Additionally, the button lacked an `aria-busy` attribute during loading states, which is important for screen reader context.
+**Action:** When adding or reviewing interactive audio or media player controls, always ensure explicit focus rings (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500`) are applied and `aria-busy` is utilized during asynchronous audio loading states.
