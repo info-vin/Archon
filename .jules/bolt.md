@@ -172,3 +172,7 @@
 ## 2024-05-18 - Extracting inline React components from render functions
 **Learning:** Defining a React component (e.g., `KanbanColumn`) inside the render function of its parent component (`BrandDashboardView`) causes React to create a new component type reference on every single parent render. This bypasses React's reconciliation engine, forcing it to unmount and entirely remount the DOM sub-tree on every state change, destroying local state and causing massive performance overhead.
 **Action:** Always extract inline component definitions outside of the parent component's body. If the child component needs data or callbacks from the parent, pass them explicitly as props (e.g., `onUpdateStatus`, `columnPosts`).
+
+## 2024-05-18 - Pre-calculating complex string manipulations with static lookup dictionaries
+**Learning:** Performing multiple chained string manipulations like `status.toUpperCase().replace('_', ' ')` inside a `.map()` render loop allocates several new strings per item on every render cycle. This is significantly slower and generates more garbage collection overhead than retrieving a pre-formatted string from a dictionary.
+**Action:** Extract repetitive and chained inline string operations into a static $O(1)$ lookup dictionary defined completely outside the component to prevent unnecessary memory allocations during list rendering.
