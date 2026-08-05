@@ -15,6 +15,7 @@ from src.server.schemas.marketing import (
     DraftBlogRequest,
     DraftFromLeadsRequest,
     LeadCreateRequest,
+    LeadResponse,
     LeadUpdateRequest,
     LogoRequest,
     PitchRequest,
@@ -53,13 +54,14 @@ async def search_jobs(keyword: str = Query(...), limit: int = 8, current_user: U
     return await service.search_jobs(keyword, limit)
 
 
-@router.get("/leads")
-async def list_leads(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/leads", response_model=list[LeadResponse])
+async def list_leads(current_user: UserProfileDTO = Depends(get_current_user)) -> list[LeadResponse]:
     user_id = str(current_user.id)
     role = current_user.role
     logger.info(f"DEBUG: list_leads accessed by UserID: {user_id}, Role: {role}")
     service = MarketingService()
-    return await service.list_leads(user_id=user_id, role=role)
+    leads = await service.list_leads(user_id=user_id, role=role)
+    return [LeadResponse(**lead) for lead in leads]
 
 
 @router.post("/leads")
