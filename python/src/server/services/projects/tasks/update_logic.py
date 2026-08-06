@@ -97,6 +97,9 @@ async def update_task_logic(
             else:
                 update_data["completed_at"] = comp_val
 
+        if "retry_count" in update_fields:
+            update_data["retry_count"] = update_fields["retry_count"]
+
         # Update task
         def _update_query() -> Any:
             return (

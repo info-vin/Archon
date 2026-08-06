@@ -81,6 +81,7 @@ class UpdateTaskRequest(BaseModel):
     task_order: int | None = None
     feature: str | None = None
     attachments: list[Attachment] | None = None
+    retry_count: int | None = None
     due_date: datetime | None = None
     is_recurring: bool | None = None
     crawler_target_id: str | None = None
