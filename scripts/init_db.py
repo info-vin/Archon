@@ -16,6 +16,12 @@ logging.getLogger("src.server.services.auth_service").setLevel(logging.ERROR)
 
 DB_URL = os.getenv("SUPABASE_DB_SESSION_URL") or os.getenv("SUPABASE_DB_URL")
 
+if DB_URL and "supabase.co" in DB_URL and os.getenv("FORCE_PROD_INIT") != "true":
+    logger.error("🚨 致命錯誤：偵測到遠端生產環境 URL (supabase.co)，拒絕執行初始化或遷移操作。")
+    logger.error("如果要強制執行，請設定環境變數 FORCE_PROD_INIT=true")
+    sys.exit(1)
+
+
 try:
     from src.server.services.auth_service import AuthService
     from src.server.utils import get_supabase_client
@@ -76,7 +82,7 @@ def get_latest_migration_version(migration_dir: str = "migration") -> str:
     """Automatically detects the latest SemVer-like directory in the migration folder."""
     subdirs = [d for d in os.listdir(migration_dir) if os.path.isdir(os.path.join(migration_dir, d)) and d[0].isdigit()]
     if not subdirs:
-        return "0.2.3"  # Fallback
+        raise FileNotFoundError(f"🚨 致命錯誤：無法在 {migration_dir} 找到任何版本目錄。拒絕退回舊版，執行 Fail-Fast 崩潰！")
     # Sort by version components to handle 0.10.0 > 0.2.0 correctly
     latest = sorted(subdirs, key=lambda x: [int(c) for d in [x.split('.')] for c in d])[-1]
     logger.info(f"📂 Detected latest migration version: {latest}")

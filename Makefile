@@ -87,7 +87,7 @@ verify-data:
 # --- 5-Persona Physical Health Gate ---
 persona-audit:
 	@echo "🔍 Performing Global Persona Physical Audit (Alice, Bob, Charlie, David, Agents)..."
-	@docker exec -i archon-server /venv/bin/python scripts/persona_smoke_test.py
+	@docker exec -i archon-server /venv/bin/python scripts/archive/persona_smoke_test.py
 
 # --- Automated Quality Gateway (Milestone 5) ---
 audit-qa:
