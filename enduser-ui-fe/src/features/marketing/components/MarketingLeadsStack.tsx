@@ -5,6 +5,16 @@ import { EmptyState as CommonEmptyState } from '../../../components/common/Empty
 import { api } from '../../../services/api';
 import { LeadsCardStack, Lead } from './LeadsCardStack';
 
+// PERFORMANCE: Hoisted static dictionary to prevent O(N) string allocations and manipulations in render loops
+const STATUS_DISPLAY: Record<string, string> = {
+  'new': 'NEW',
+  'pending': 'PENDING',
+  'shortlisted': 'SHORTLISTED',
+  'converted': 'CONVERTED',
+  'archived': 'ARCHIVED',
+  'review_queue': 'REVIEW QUEUE'
+};
+
 // PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations during list rendering
 const dateFormatter = new Intl.DateTimeFormat();
 const safeFormatLeadDate = (dateVal: any) => {
@@ -131,7 +141,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       lead.status === 'converted' ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
                     }`}>
-                      {lead.status.toUpperCase()}
+                      {STATUS_DISPLAY[lead.status] || lead.status.toUpperCase()}
                     </span>
                   </div>
                   <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-50 text-xs text-gray-700 italic">
@@ -187,7 +197,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                           lead.status === 'converted' ? 'bg-green-100 text-green-700' : 
                           'bg-gray-100 text-gray-600'
                         }`}>
-                          {lead.status.toUpperCase().replace('_', ' ')}
+                          {STATUS_DISPLAY[lead.status] || lead.status.toUpperCase().replace('_', ' ')}
                         </span>
                       </div>
                     </td>

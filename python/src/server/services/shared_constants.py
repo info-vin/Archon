@@ -32,6 +32,7 @@ class TaskStatusEnum(StrEnum):
     PROCESSING = "processing"
     DISPATCHED = "dispatched"
     ERROR = "error"
+    FAILED = "failed"
     COMPLETED = "completed"
     COMPLETE = "complete"
 @dataclass(frozen=True)

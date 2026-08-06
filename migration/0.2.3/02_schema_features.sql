@@ -948,3 +948,29 @@ CREATE TABLE IF NOT EXISTS public.agent_pending_approvals (
 CREATE INDEX IF NOT EXISTS idx_agent_approvals_status ON public.agent_pending_approvals(status);
 
 
+-- Source: 30_alter_archon_prompts_schema.sql
+-- Phase 5.9.7: Add category and metadata to archon_prompts
+
+ALTER TABLE public.archon_prompts 
+ADD COLUMN IF NOT EXISTS category text DEFAULT 'SYSTEM_AGENT';
+
+ALTER TABLE public.archon_prompts 
+ADD COLUMN IF NOT EXISTS metadata jsonb DEFAULT '{}'::jsonb;
+
+-- Ensure that existing rows have the default values explicitly set if they were somehow inserted before this migration but after table creation
+UPDATE public.archon_prompts 
+SET category = 'SYSTEM_AGENT' WHERE category IS NULL;
+
+UPDATE public.archon_prompts 
+SET metadata = '{}'::jsonb WHERE metadata IS NULL;
+
+-- 1. Create the Dynamic RBAC Matrix Table
+CREATE TABLE IF NOT EXISTS public.archon_roles_permissions (
+    role TEXT PRIMARY KEY,
+    permissions TEXT[] NOT NULL DEFAULT '{}',
+    description TEXT,
+    is_system_protected BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+

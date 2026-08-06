@@ -9,6 +9,7 @@ from typing import Any
 from src.server.config.logfire_config import get_logger
 from src.server.services.agent_service import agent_service
 from src.server.services.projects.task_service import task_service
+from src.server.services.shared_constants import TaskStatusEnum
 from src.server.services.system.rate_limiter import global_throttler
 
 logger = get_logger(__name__)
@@ -32,6 +33,10 @@ class WorkerService:
             return
 
         self._running = True
+
+        # 0. Phase 5.10.5: Recover Zombie Tasks
+        await self._recover_zombie_tasks()
+
         self._task = asyncio.create_task(self._run_loop())
         logger.info(
             f"🚀 Worker Service started (poll interval: {self.poll_interval}s, max concurrency: {self._semaphore._value})"
@@ -57,6 +62,49 @@ class WorkerService:
                 logger.error(f"Error in worker loop: {e}", exc_info=True)
 
             await asyncio.sleep(self.poll_interval)
+
+    async def _recover_zombie_tasks(self) -> None:
+        """Find stuck tasks (processing/doing) from previous interrupted runs and apply DLQ logic."""
+        logger.info("🧹 Scanning for zombie tasks...")
+
+        # Fetch both 'processing' and 'doing' statuses
+        tasks_to_recover = []
+        for status in [TaskStatusEnum.PROCESSING, TaskStatusEnum.DOING]:
+            success, result = await task_service.list_tasks(status=status)
+            if success and result.get("tasks"):
+                tasks_to_recover.extend(result["tasks"])
+
+        if not tasks_to_recover:
+            return
+
+        logger.info(f"🧟 Found {len(tasks_to_recover)} zombie tasks. Applying Reaper/DLQ pattern...")
+
+        for task in tasks_to_recover:
+            task_id = task["id"]
+            retry_count = task.get("retry_count") or 0
+
+            if retry_count < 3:
+                # Automatic Retry
+                new_retry_count = retry_count + 1
+                desc = task.get("description", "")
+                append_msg = f"\n\n[系統紀錄] 理解問題: 系統意外中斷導致任務卡死 (Zombie). 嘗試重新執行 (Attempt {new_retry_count}/3)."
+
+                await task_service.update_task(task_id, {
+                    "status": TaskStatusEnum.DISPATCHED,
+                    "retry_count": new_retry_count,
+                    "description": desc + append_msg
+                })
+                logger.warning(f"🔄 Recovered zombie task {task_id} -> dispatched (Attempt {new_retry_count}/3)")
+            else:
+                # Dead Letter Queue
+                desc = task.get("description", "")
+                append_msg = "\n\n[系統紀錄] DLQ: 任務已連續失敗或中斷 3 次，放棄自動重試。"
+
+                await task_service.update_task(task_id, {
+                    "status": TaskStatusEnum.FAILED,
+                    "description": desc + append_msg
+                })
+                logger.error(f"💀 Zombie task {task_id} exceeded MAX_RETRIES (3). Moved to DLQ (failed).")
 
     async def _process_queued_tasks(self) -> None:
         """Fetch and execute dispatched tasks"""
@@ -93,7 +141,7 @@ class WorkerService:
                 continue
 
             # 2. Mark as processing synchronously to prevent other workers from picking it up
-            await task_service.update_task(task_id, {"status": "processing"})
+            await task_service.update_task(task_id, {"status": TaskStatusEnum.PROCESSING})
 
             # Fire and forget concurrent execution bounded by the Semaphore
             asyncio.create_task(_execute_with_semaphore(task_id, agent_id))

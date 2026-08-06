@@ -1,5 +1,4 @@
 
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -8,14 +7,21 @@ from src.server.models.auth_models import UserProfileDTO
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import TASK_READ_TEAM
 from ..config.logfire_config import get_logger
-from ..services.extraction_service import ExtractionService
+from ..services.extraction_service import (
+    ExtractionResultDTO,
+    ExtractionService,
+    SchemaCreateDTO,
+    SchemaResponseDTO,
+    SchemaUpdateDTO,
+    StructureAnalysisResultDTO,
+)
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/extraction", tags=["Extraction"])
 
 
 @router.post("/analyze", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
+async def analyze_url(request: dict[str, str]) -> StructureAnalysisResultDTO:
     """
     Analyze a URL to discover potential data fields.
     Payload: { "url": "https://..." } # 合法
@@ -33,14 +39,14 @@ async def analyze_url(request: dict[str, str]) -> dict[str, Any]:
 
 
 @router.get("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def list_schemas() -> list[dict[str, Any]]:
+async def list_schemas() -> list[SchemaResponseDTO]:
     """List all extraction schemas."""
     service = ExtractionService()
     return await service.list_schemas()
 
 
 @router.get("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_schema(schema_id: str) -> dict[str, Any]:
+async def get_schema(schema_id: str) -> SchemaResponseDTO:
     """Get a single schema by ID."""
     service = ExtractionService()
     schema = await service.get_schema(schema_id)
@@ -50,7 +56,7 @@ async def get_schema(schema_id: str) -> dict[str, Any]:
 
 
 @router.post("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def create_schema(request: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)) -> dict[str, Any]:
+async def create_schema(request: SchemaCreateDTO, current_user: UserProfileDTO = Depends(get_current_user)) -> SchemaResponseDTO:
     """Create a new extraction schema."""
     service = ExtractionService()
     try:
@@ -61,7 +67,7 @@ async def create_schema(request: dict[str, Any], current_user: UserProfileDTO = 
 
 
 @router.patch("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def update_schema(schema_id: str, request: dict[str, Any]) -> dict[str, Any]:
+async def update_schema(schema_id: str, request: SchemaUpdateDTO) -> SchemaResponseDTO:
     """Update an existing schema."""
     service = ExtractionService()
     try:
@@ -80,7 +86,7 @@ async def delete_schema(schema_id: str) -> dict[str, bool]:
 
 
 @router.post("/run", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def run_extraction(request: dict[str, str], current_user: UserProfileDTO = Depends(get_current_user)) -> dict[str, Any]:
+async def run_extraction(request: dict[str, str], current_user: UserProfileDTO = Depends(get_current_user)) -> ExtractionResultDTO:
     """
     Triggers an actual data extraction task.
     Payload: { "url": "...", "schema_id": "..." }

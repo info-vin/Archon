@@ -54,7 +54,15 @@ def run_migrations_verification():
     db_password = "postgres"
     db_name = "postgres"
     db_url = f"postgresql://{db_user}:{db_password}@localhost:{port}/{db_name}"
-    migration_dir = WORKSPACE_DIR / "migration" / "0.2.2"
+    # import locally to avoid circular dependencies if run directly from scripts
+    sys.path.append(str(WORKSPACE_DIR))
+    try:
+        from scripts.init_db import get_latest_migration_version
+        latest_ver = get_latest_migration_version(str(WORKSPACE_DIR / "migration"))
+        migration_dir = WORKSPACE_DIR / "migration" / latest_ver
+    except Exception as e:
+        print(f"❌ Failed to detect migration version: {e}")
+        sys.exit(1)
 
     cleanup_container(container_name)
     print(f"🚀 Starting shadow database container '{container_name}' on port {port}...")

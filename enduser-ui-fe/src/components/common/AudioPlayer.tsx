@@ -148,9 +148,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             <button
                 onClick={handlePlayPause}
                 disabled={isLoading}
+                aria-busy={isLoading}
                 aria-label={isLoading ? "Loading audio" : isPlaying ? "Pause audio" : label}
                 aria-pressed={isPlaying}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
                 {isLoading ? (
                     <LoaderIcon />
