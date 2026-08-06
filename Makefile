@@ -97,7 +97,9 @@ audit-qa:
 	@echo "Step 2: Running Frontend Unit Tests (pnpm)..."
 	@cd enduser-ui-fe && $(PNPM) run test:unit
 	@cd archon-ui-main && $(PNPM) test
-	@echo "Step 3: Running DNS Leak Probe static scan..."
+	@echo "Step 3: Running Physical Agent Seeding Parity Check..."
+	@cd python && $(UV) run python scripts/verify_agent_seeds.py
+	@echo "Step 3b: Running DNS Leak Probe static scan..."
 	@cd python && $(UV) run python ../scripts/archive/probe_dns_leak.py
 	@echo "Step 4: Running Mobile Viewport Scroll Lockup static scan..."
 	@cd python && $(UV) run python ../scripts/archive/check_scroll_lockup.py
@@ -367,6 +369,8 @@ tech-debt-audit:
 	fi
 	@echo "--- 3. Action Item ---"
 	@echo "💡 Charlie: If warnings exist, assign a cleanup task to DevBot."
+	@echo "--- 4. Verify Physical Agent Data Parity ---"
+	@cd python && $(UV) run python scripts/verify_agent_seeds.py
 
 # Phase 5.5.8: Deploy backend monolith to Hugging Face Spaces
 deploy-hf:

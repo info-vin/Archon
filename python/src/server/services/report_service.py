@@ -201,6 +201,7 @@ class ReportService(BaseRepository):
             )
         except Exception as e:
             logger.error(f"💥 ReportService: Daily Executive Summary generation failed: {e}", exc_info=True)
+            raise e
 
     async def _execute_map_reduce_summary(self, days: int, title_prefix: str, prompt_key: str, default_prompt: str) -> None:
         logger.info(f"📊 ReportService: Triggering {title_prefix} (Map-Reduce)...")
@@ -242,6 +243,7 @@ class ReportService(BaseRepository):
             )
         except Exception as e:
             logger.error(f"💥 ReportService: {title_prefix} Executive Summary generation failed: {e}", exc_info=True)
+            raise e
 
     async def generate_weekly_executive_summary(self) -> None:
         from src.server.prompts.pm_prompts import WEEKLY_EXECUTIVE_SUMMARY_DEFAULT

@@ -6,7 +6,10 @@ from fastapi.testclient import TestClient
 from src.server.auth.dependencies import get_current_user, get_current_user_optional
 from src.server.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client():
+    yield TestClient(app)
 
 
 @pytest.fixture
@@ -19,7 +22,7 @@ def mock_admin_user():
     app.dependency_overrides.pop(get_current_user_optional, None)
 
 
-def test_optional_setting_returns_default(mock_admin_user):
+def test_optional_setting_returns_default(client, mock_admin_user):
     # Physical Path Alignment: /api/settings/credentials/...
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
         mock_get.return_value = "default-val"
@@ -28,14 +31,14 @@ def test_optional_setting_returns_default(mock_admin_user):
         assert response.json()["value"] == "default-val"
 
 
-def test_unknown_credential_returns_404(mock_admin_user):
+def test_unknown_credential_returns_404(client, mock_admin_user):
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
         mock_get.return_value = None
         response = client.get("/api/credentials/REALLY_UNKNOWN")
         assert response.status_code == 404
 
 
-def test_existing_credential_returns_normally(mock_admin_user):
+def test_existing_credential_returns_normally(client, mock_admin_user):
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
         mock_get.return_value = "secret-key"
         response = client.get("/api/credentials/GEMINI_API_KEY")
@@ -43,9 +46,10 @@ def test_existing_credential_returns_normally(mock_admin_user):
         assert response.json()["value"] == "secret-key"
 
 
-def test_unauthenticated_public_setting_returns_default():
+def test_unauthenticated_public_setting_returns_default(client):
     # Should be accessible without mock_admin_user
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_current_user_optional, None)
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
         mock_get.return_value = None
         response = client.get("/api/credentials/PROJECTS_ENABLED")
@@ -53,9 +57,10 @@ def test_unauthenticated_public_setting_returns_default():
         assert response.json()["value"] == "true"  # From OPTIONAL_SETTINGS_WITH_DEFAULTS
 
 
-def test_unauthenticated_private_setting_returns_401():
+def test_unauthenticated_private_setting_returns_401(client):
     # Should be rejected without mock_admin_user
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_current_user_optional, None)
     with patch("src.server.services.credential_service.CredentialService.get_credential") as mock_get:
         mock_get.return_value = "secret-key"
         response = client.get("/api/credentials/GEMINI_API_KEY")

@@ -54,7 +54,7 @@ def run_migrations_verification():
     db_password = "postgres"
     db_name = "postgres"
     db_url = f"postgresql://{db_user}:{db_password}@localhost:{port}/{db_name}"
-    migration_dir = WORKSPACE_DIR / "migration" / "0.2.2"
+    migration_dir = WORKSPACE_DIR / "migration" / "0.2.3"
 
     cleanup_container(container_name)
     print(f"🚀 Starting shadow database container '{container_name}' on port {port}...")

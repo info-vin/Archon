@@ -198,16 +198,6 @@ ON CONFLICT (prompt_name) DO UPDATE SET
 -- migration/0.2.2/04_rbac_dynamic.sql
 -- Phase 4.6.31 & 5.6: Dynamic RBAC Implementation
 
--- 1. Create the Dynamic RBAC Matrix Table
-CREATE TABLE IF NOT EXISTS public.archon_roles_permissions (
-    role TEXT PRIMARY KEY,
-    permissions TEXT[] NOT NULL DEFAULT '{}',
-    description TEXT,
-    is_system_protected BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
 -- 2. Seed Initial Dynamic Matrix (SSOT)
 INSERT INTO public.archon_roles_permissions (role, permissions, description, is_system_protected)
 VALUES 
