@@ -25,11 +25,11 @@ class TelegramService:
 
     @property
     def bot_token(self) -> str | None:
-        return self._get_config().telegram_token or os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
+        return self._get_config().telegram_token
 
     @property
     def chat_id(self) -> str | None:
-        return self._get_config().telegram_chat_id or os.getenv("TELEGRAM_TO") or os.getenv("TELEGRAM_CHAT_ID")
+        return self._get_config().telegram_chat_id
 
     @property
     def api_url(self) -> str | None:

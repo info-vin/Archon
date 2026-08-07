@@ -19,8 +19,19 @@ def get_auth_service() -> Any:
     return AuthService()
 
 
-@router.post("/auth/dev-token")
-async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin-Secret")):
+class DevTokenUser(BaseModel):
+    id: str
+    email: str | None
+    role: str
+
+
+class DevTokenResponse(BaseModel):
+    access_token: str
+    user: DevTokenUser
+
+
+@router.post("/auth/dev-token", response_model=DevTokenResponse)
+async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin-Secret")) -> DevTokenResponse:
     """
     Standardized Dev Token Endpoint.
     Hardened with X-Admin-Secret validation to prevent unauthorized access.
@@ -44,10 +55,10 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
         try:
             res = supabase.auth.sign_in_with_password({"email": email, "password": password})
             if res.session and res.user:
-                return {
-                    "access_token": res.session.access_token,
-                    "user": {"id": res.user.id, "email": res.user.email, "role": "system_admin"},
-                }
+                return DevTokenResponse(
+                    access_token=res.session.access_token,
+                    user=DevTokenUser(id=res.user.id, email=res.user.email, role="system_admin")
+                )
         except Exception:
             pass
 
@@ -62,10 +73,10 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
         # 3. Final sign in attempt
         res = supabase.auth.sign_in_with_password({"email": email, "password": password})
         if res.session and res.user:
-            return {
-                "access_token": res.session.access_token,
-                "user": {"id": res.user.id, "email": res.user.email, "role": "system_admin"},
-            }
+            return DevTokenResponse(
+                access_token=res.session.access_token,
+                user=DevTokenUser(id=res.user.id, email=res.user.email, role="system_admin")
+            )
 
         raise HTTPException(status_code=500, detail="Supabase Auth rejected valid credentials.")
 
@@ -76,11 +87,15 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
 
 
 # REST OF THE ENDPOINTS... (保持不變)
-@router.get("/auth/permissions")
-async def list_permissions(_: bool = Depends(verify_admin_role)):
+class PermissionsResponse(BaseModel):
+    permissions: list[str]
+
+
+@router.get("/auth/permissions", response_model=PermissionsResponse)
+async def list_permissions(_: bool = Depends(verify_admin_role)) -> PermissionsResponse:
     from ..auth.permissions import ALL_PERMISSIONS
 
-    return {"permissions": ALL_PERMISSIONS}
+    return PermissionsResponse(permissions=ALL_PERMISSIONS)
 
 
 class AdminCreateUserResponse(BaseModel):

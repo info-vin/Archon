@@ -1,11 +1,23 @@
 import asyncio
 import os  # Added import
 from datetime import datetime, timedelta
+from typing import NotRequired, TypedDict, cast
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
+
+
+class LeadDTO(TypedDict):
+    id: NotRequired[str]
+    company_name: NotRequired[str | None]
+    enrichment_status: NotRequired[str | None]
+    identified_need: NotRequired[str | None]
+    source_job_url: NotRequired[str | None]
+    enrichment_score: NotRequired[int | None]
+    contact_email: NotRequired[str | None]
+    data_last_verified_at: NotRequired[str | None]
 
 
 class EnrichmentService:
@@ -16,7 +28,7 @@ class EnrichmentService:
     """
 
     @staticmethod
-    async def enrich_lead(lead_id: str):
+    async def enrich_lead(lead_id: str) -> bool:
         """
         Attempts to enrich a single lead with external data.
         """
@@ -28,7 +40,7 @@ class EnrichmentService:
                 logger.warning(f"Enrichment: Lead not found | id={lead_id}")
                 return False
 
-            lead = res.data[0]
+            lead = cast(LeadDTO, res.data[0])
             if lead.get("enrichment_status") == "success":
                 return True
 

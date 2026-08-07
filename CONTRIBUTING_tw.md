@@ -407,6 +407,7 @@ A	migration/0.2.3/04_logic_security_rls.sql
 A	migration/0.2.3/05_seed_system_configs.sql
 A	migration/0.2.3/06_seed_prompts_core.sql
 A	migration/0.2.3/07_seed_prompts_assets.sql
+A	migration/0.2.3/08_schema_task_retry_count.sql
 A	migration/0.2.3/RESET_DB.sql
 A	migration/0.2.3/rescue/leads.sql
 A	migration/0.2.3/rescue/prompts.sql
