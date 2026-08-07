@@ -66,29 +66,30 @@ export const useDashboardLogic = (selectedProjectId: string) => {
     return (tasks || []).filter(task => task.project_id === selectedProjectId);
   }, [tasks, selectedProjectId]);
 
-  // PERFORMANCE: Pre-calculate sorting weights for O(1) lookups during the O(N log N) sort operation
-  // to avoid redundant string allocations from calling .toLowerCase() repeatedly inside the sort comparator.
-  const taskWeights = useMemo(() => {
-    const weights: Record<string, { status: number; priority: number }> = {};
-    filteredTasks.forEach(task => {
-      weights[task.id] = {
-        status: STATUS_WEIGHTS[(task.status || '').toLowerCase()] || 0,
-        priority: PRIORITY_WEIGHTS[(task.priority || '').toLowerCase()] || 0
-      };
-    });
-    return weights;
-  }, [filteredTasks]);
-
   const sortedTasks = useMemo(() => {
     let sortableTasks = [...filteredTasks];
     if (sortConfig !== null) {
+      // PERFORMANCE: Pre-calculate sorting weights for O(1) lookups during the O(N log N) sort operation.
+      // Merged the entire pre-calculation and sort logic into a single hook to prevent rebuilding
+      // the map and re-sorting on every render cycle. Uses object references as keys instead of strings.
+      const taskWeights = new Map<Task, { status: number; priority: number }>();
+
+      if (sortConfig.key === 'status' || sortConfig.key === 'priority') {
+          sortableTasks.forEach(task => {
+            taskWeights.set(task, {
+              status: STATUS_WEIGHTS[(task.status || '').toLowerCase()] || 0,
+              priority: PRIORITY_WEIGHTS[(task.priority || '').toLowerCase()] || 0
+            });
+          });
+      }
+
       sortableTasks.sort((a, b) => {
         let valA: any = a[sortConfig.key] || '';
         let valB: any = b[sortConfig.key] || '';
 
         if (sortConfig.key === 'status' || sortConfig.key === 'priority') {
-            valA = taskWeights[a.id]?.[sortConfig.key] || 0;
-            valB = taskWeights[b.id]?.[sortConfig.key] || 0;
+            valA = taskWeights.get(a)?.[sortConfig.key] ?? 0;
+            valB = taskWeights.get(b)?.[sortConfig.key] ?? 0;
         }
 
         if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -97,7 +98,7 @@ export const useDashboardLogic = (selectedProjectId: string) => {
       });
     }
     return sortableTasks;
-  }, [filteredTasks, sortConfig, taskWeights]);
+  }, [filteredTasks, sortConfig]);
 
   const requestSort = useCallback((key: SortableTaskKeys) => {
     setSortConfig((currentConfig) => {
