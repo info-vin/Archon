@@ -7,3 +7,7 @@
 ## 2026-08-05 - Missing explicit instantiation of Pydantic models in FastAPI returns
 **Learning:** When adding a strict return type hint (`-> list[LeadResponse]`) to a FastAPI route that previously returned a list of dictionaries, returning the raw list of dictionaries causes static type checkers (`mypy`, `pyright`, or strictly typed linting rules) to fail with an incompatible type error, even though FastAPI itself will correctly coerce dictionaries to Pydantic models at runtime via `response_model`.
 **Action:** When annotating a FastAPI route handler with a specific Pydantic return type, you must explicitly instantiate the model(s) before returning (e.g., `return [MyModel(**item) for item in items]`) to ensure strict Python static type checking passes.
+
+## 2025-05-18 - Untyped GET /health endpoints
+**Learning:** Found several `GET /health` endpoints returning untyped dictionaries (e.g. `{"status": "healthy"}`) directly instead of using a Pydantic `response_model` schema. While simple, they fail the strict OpenAPI contract compliance required for Contractor.
+**Action:** Always create a quick `BaseModel` for `/health` responses and use `response_model=HealthResponse` in the `@router.get` decorator to ensure 100% type safety on all endpoints, no matter how trivial.
