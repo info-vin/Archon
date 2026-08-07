@@ -1,3 +1,3 @@
-## 2025-01-20 - Adding typed dicts for dynamic API responses in Settings Service
-**Learning:** When incrementally adding static type safety to services that return complex, dynamic dictionary data structures (like database statistics) consumed directly by downstream JSON responses, using `TypedDict` is safer than `BaseModel` or `dataclass` as it avoids unexpected runtime serialization or `TypeError` breaking changes.
-**Action:** Apply `TypedDict` for raw dictionary responses first before migrating completely to class-based models if downstream systems are tightly coupled to dict syntax.
+## 2026-08-07 - Python Type Refactoring without breaking dependent unit tests
+**Learning:** When tests in `python/tests` fail due to missing dependencies during verification steps, verify if all declared dependencies have been synchronized to the testing environment. Missing packages like `httpx` and `fastapi` caused test execution to fail initially.
+**Action:** Use `uv sync --all-groups` explicitly before running `pytest` to ensure all required testing dependencies exist before considering a test suite broken by a refactoring change.
