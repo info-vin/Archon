@@ -69,7 +69,7 @@ const PublicLayout: React.FC = () => {
             )}
             
             <button 
-              className="md:hidden p-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="md:hidden p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Open menu"
             >
@@ -93,7 +93,7 @@ const PublicLayout: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-6">
               <BrandLogo className="w-8 h-8" />
-              <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 -mr-1 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Close menu">
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 -mr-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="Close menu">
                 <XIcon className="h-6 w-6" />
               </button>
             </div>
