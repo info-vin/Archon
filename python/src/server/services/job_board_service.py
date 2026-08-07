@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from ..config.logfire_config import get_logger
 from ..config.model_ssot import SYSTEM_MODELS
@@ -11,6 +11,15 @@ from ..utils.retry_utils import retry_with_backoff
 from .crawling.clients.job104_client import CrawlerBlockedException, Job104Crawler, JobData
 
 logger = get_logger(__name__)
+
+
+class LeadDataDTO(TypedDict):
+    company_name: str
+    job_title: str
+    description_snippet: str | None
+    source_job_url: str | None
+    status: str
+    identified_need: str
 
 
 class JobBoardService:
@@ -224,7 +233,7 @@ class JobBoardService:
 
         baseline_embedding = await self._get_hyde_baseline_embedding()
 
-        async def _process_single_job(job: JobData) -> dict | None:
+        async def _process_single_job(job: JobData) -> LeadDataDTO | None:
             try:
                 # RAG Vector Matching against HyDE Baseline
                 if not baseline_embedding:
