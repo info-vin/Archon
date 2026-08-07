@@ -16,7 +16,7 @@ class DocumentService(BaseRepository):
 
     def list_documents(self, project_id: str, include_content: bool = False) -> tuple[bool, dict[str, Any]]:
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("docs").eq("id", project_id), "DB operation logged error")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("docs").eq("id", project_id), "DB operation logged error") # 合法
         if success:
             raw_docs = result["data"][0].get("docs") or {} if result["data"] else {}
             # DEFENSIVE: Handle both dict (prod) and list (test/mock) formats
@@ -65,7 +65,7 @@ class DocumentService(BaseRepository):
             "version": 1,
         }
 
-        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id) # 合法
         success, res = self.execute_query(select_query, "Failed to fetch docs")
         if not success:
             return False, res
@@ -76,12 +76,12 @@ class DocumentService(BaseRepository):
             docs = {d["id"]: d for d in docs if "id" in d}
         docs[doc_id] = new_doc
 
-        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id)
+        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id) # 合法
         return self.execute_query(update_query, "DB operation logged error")
 
     def get_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("docs").eq("id", project_id), "DB operation logged error")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("docs").eq("id", project_id), "DB operation logged error") # 合法
         if success:
             docs = result["data"][0].get("docs") or {} if result["data"] else {}
             if isinstance(docs, list):
@@ -93,7 +93,7 @@ class DocumentService(BaseRepository):
     def update_document(
         self, project_id: str, doc_id: str, update_fields: dict[str, Any]
     ) -> tuple[bool, dict[str, Any]]:
-        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id) # 合法
         success, res = self.execute_query(select_query, "Failed to fetch docs")
         if not success:
             return False, res
@@ -108,11 +108,11 @@ class DocumentService(BaseRepository):
         docs[doc_id].update(update_fields)
         docs[doc_id]["updated_at"] = datetime.utcnow().isoformat()
 
-        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id)
+        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id) # 合法
         return self.execute_query(update_query, "DB operation logged error")
 
     def delete_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
-        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id)
+        select_query = self.supabase_client.table("archon_projects").select("docs").eq("id", project_id) # 合法
         success, res = self.execute_query(select_query, "Failed to fetch docs")
         if not success:
             return False, res
@@ -124,5 +124,5 @@ class DocumentService(BaseRepository):
         if doc_id in docs:
             docs.pop(doc_id)
 
-        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id)
+        update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id) # 合法
         return self.execute_query(update_query, "DB operation logged error")

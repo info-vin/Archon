@@ -4,7 +4,6 @@ Batch processing logic for embedding services.
 
 import asyncio
 import inspect
-import os
 from typing import Any, cast
 
 import httpx
@@ -42,7 +41,8 @@ async def create_embeddings_batch(
         return EmbeddingBatchResult()
 
     # Dynamic offline mode handling using sentence-transformers
-    if os.getenv("OFFLINE_MODE", "false").lower() == "true":
+    from ...config.config import get_config
+    if get_config().offline_mode:
         search_logger.info("OFFLINE_MODE is enabled. Generating embeddings locally using 'all-MiniLM-L6-v2'.")
         try:
             from sentence_transformers import SentenceTransformer
@@ -142,8 +142,9 @@ async def create_embeddings_batch(
                                                 raise ValueError(
                                                     "embedding_model is not configured in provider settings"
                                                 )
+                                            from ...config.config import get_config
                                             api_key_to_use = (
-                                                (config.get("api_key") or os.getenv("GEMINI_API_KEY") or "")
+                                                (config.get("api_key") or get_config().gemini_api_key or "")
                                                 .strip()
                                                 .strip('"')
                                                 .strip("'")

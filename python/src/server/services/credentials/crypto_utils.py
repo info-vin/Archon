@@ -1,5 +1,4 @@
 import base64
-import os
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -16,7 +15,9 @@ class CryptoUtils:
     @staticmethod
     def get_encryption_key() -> bytes:
         """Generate encryption key from environment variables."""
-        service_key = os.getenv("SUPABASE_SERVICE_KEY", "default-key-for-development")
+        from src.server.config.config import get_config
+        config = get_config()
+        service_key = config.supabase_service_key or "default-key-for-development"
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,

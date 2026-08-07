@@ -29,7 +29,7 @@ async def update_source_info(
     """Update or insert source information in the archon_sources table."""
     search_logger.info(f"Updating source {source_id} with knowledge_type={knowledge_type}")
     try:
-        existing_source = client.table("archon_sources").select("title").eq("source_id", source_id).execute()
+        existing_source = client.table("archon_sources").select("title").eq("source_id", source_id).execute() # 合法
 
         if existing_source.data:
             existing_title = existing_source.data[0]["title"]
@@ -64,7 +64,7 @@ async def update_source_info(
             if source_display_name:
                 update_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").upsert(update_data).eq("source_id", source_id).execute()
+            client.table("archon_sources").upsert(update_data).eq("source_id", source_id).execute() # 合法
             search_logger.info(f"Updated source {source_id} while preserving title: {existing_title}")
         else:
             if source_display_name:
@@ -114,7 +114,7 @@ async def update_source_info(
             if source_display_name:
                 upsert_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").upsert(upsert_data).execute()
+            client.table("archon_sources").upsert(upsert_data).execute() # 合法
             search_logger.info(f"Created/updated source {source_id} with title: {title}")
     except Exception as e:
         search_logger.error(f"Error updating source {source_id}: {e}")
@@ -150,7 +150,7 @@ def create_source_from_upload_logic(
     if source_url:
         source_data["source_url"] = source_url
 
-    res = client.table("archon_sources").upsert(source_data).execute()
+    res = client.table("archon_sources").upsert(source_data).execute() # 合法
     if hasattr(res, "error") and res.error:
         search_logger.error(f"Supabase error creating source entry for {source_id}: {res.error}")
         raise Exception(f"Supabase error: {res.error}")

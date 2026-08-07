@@ -2,10 +2,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from src.server.schemas.settings import NotificationConfig
 from src.server.services.scheduler.jobs.sentinel_patrol import analyze_token_usage
 from src.server.services.system.telegram_service import TelegramService
 
-from src.server.schemas.settings import NotificationConfig
 
 @pytest.mark.asyncio
 async def test_telegram_service_send_message():

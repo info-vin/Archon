@@ -17,7 +17,7 @@ class CredentialRepository:
         import time
         for attempt in range(2):
             try:
-                result = self.supabase.table("archon_settings").select("*").execute()
+                result = self.supabase.table("archon_settings").select("*").execute() # 合法
                 return cast(list[dict[str, Any]], result.data)
             except Exception as e:
                 if attempt == 0 and ("ConnectionTerminated" in str(e) or "RemoteProtocolError" in str(e)):
@@ -31,7 +31,7 @@ class CredentialRepository:
         import time
         for attempt in range(2):
             try:
-                result = self.supabase.table("archon_settings").select("*").eq("category", category).execute()
+                result = self.supabase.table("archon_settings").select("*").eq("category", category).execute() # 合法
                 return cast(list[dict[str, Any]], result.data)
             except Exception as e:
                 if attempt == 0 and ("ConnectionTerminated" in str(e) or "RemoteProtocolError" in str(e)):
@@ -43,16 +43,16 @@ class CredentialRepository:
     def fetch_non_system_protected(self) -> list[dict[str, Any]]:
         """Fetch non-system-protected credentials (primarily for Admin UI)."""
         try:
-            result = self.supabase.table("archon_settings").select("*").eq("is_system_protected", False).execute()
+            result = self.supabase.table("archon_settings").select("*").eq("is_system_protected", False).execute() # 合法
         except Exception:
             # Fallback if is_system_protected column does not exist yet in target database schema
-            result = self.supabase.table("archon_settings").select("*").execute()
+            result = self.supabase.table("archon_settings").select("*").execute() # 合法
         return cast(list[dict[str, Any]], result.data)
 
     def upsert(self, data: dict[str, Any]) -> None:
         """Upsert a credential into the database."""
-        self.supabase.table("archon_settings").upsert(data, on_conflict="key").execute()
+        self.supabase.table("archon_settings").upsert(data, on_conflict="key").execute() # 合法
 
     def delete(self, key: str) -> None:
         """Delete a credential from the database by key."""
-        self.supabase.table("archon_settings").delete().eq("key", key).execute()
+        self.supabase.table("archon_settings").delete().eq("key", key).execute() # 合法

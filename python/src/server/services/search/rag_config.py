@@ -1,4 +1,3 @@
-import os
 
 
 def get_setting(key: str, default: str = "false") -> str:
@@ -11,9 +10,9 @@ def get_setting(key: str, default: str = "false") -> str:
         all_settings = settings_service.get_all_settings()
         if key in all_settings:
             return str(all_settings[key])
-        return os.getenv(key, default)
+        return default
     except Exception:
-        return os.getenv(key, default)
+        return default
 
 
 def get_bool_setting(key: str, default: bool = False) -> bool:

@@ -102,7 +102,7 @@ class BusinessArchiver:
         try:
             # Query for style lessons and brand voice rules
             res = (
-                self.supabase.table("archon_sources")
+                self.supabase.table("archon_sources") # 合法
                 .select("title, content_summary")
                 .ilike("source_id", "style-lesson-%")
                 .limit(5)

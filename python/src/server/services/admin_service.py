@@ -16,7 +16,7 @@ class AdminService(BaseRepository):
         """
         try:
             supabase = self.supabase_client
-            query = supabase.table("profiles").select("*").order("name")
+            query = supabase.table("profiles").select("*").order("name") # 合法
 
             if role_filter and role_filter != "all":
                 query = query.eq("role", role_filter)
@@ -43,7 +43,7 @@ class AdminService(BaseRepository):
                 "role": new_role,
                 # "updated_at": "now()" # profiles might not have updated_at
             }
-            query = supabase.table("profiles").update(payload).eq("id", user_id)
+            query = supabase.table("profiles").update(payload).eq("id", user_id) # 合法
             success, res = self.execute_query(query, "Failed to update user role", require_data=True)
             if not success:
                 raise ValueError("User not found in profiles or update failed")
@@ -75,7 +75,7 @@ class AdminService(BaseRepository):
                         "version": "v4.6.31",
                     },
                 }
-                self.execute_query(supabase.table("archon_logs").insert(audit_log), "Audit logging failed")
+                self.execute_query(supabase.table("archon_logs").insert(audit_log), "Audit logging failed") # 合法
             except Exception as log_err:
                 logger.error(f"AdminService: Audit logging failed: {log_err}")
 
@@ -89,7 +89,7 @@ class AdminService(BaseRepository):
         """Fetch the full role-permission matrix from the database."""
         try:
             supabase = self.supabase_client
-            query = supabase.table("archon_roles_permissions").select("*").order("role")
+            query = supabase.table("archon_roles_permissions").select("*").order("role") # 合法
             success, res = self.execute_query(query, "Failed to fetch RBAC matrix")
             return cast(list[dict[str, Any]], res.get("data", []) if success else [])
         except Exception as e:
@@ -107,7 +107,7 @@ class AdminService(BaseRepository):
             if description is not None:
                 payload["description"] = description
 
-            query = supabase.table("archon_roles_permissions").upsert(payload)
+            query = supabase.table("archon_roles_permissions").upsert(payload) # 合法
             success, res = self.execute_query(query, f"Failed to update role {role}", require_data=True)
             if not success:
                 raise ValueError(f"Failed to update role {role}")
@@ -126,7 +126,7 @@ class AdminService(BaseRepository):
                     "type": "audit",
                     "details": {"role": role, "permissions": permissions, "version": "v4.6.31"},
                 }
-                self.execute_query(supabase.table("archon_logs").insert(audit_log), "Audit logging failed")
+                self.execute_query(supabase.table("archon_logs").insert(audit_log), "Audit logging failed") # 合法
             except Exception as log_err:
                 logger.error(f"AdminService: RBAC audit logging failed: {log_err}")
 
@@ -136,12 +136,12 @@ class AdminService(BaseRepository):
             raise
 
     async def get_document_versions(self, limit: int = 100) -> list[dict[str, Any]]:
-        query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit)
+        query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit) # 合法
         success, res = self.execute_query(query, "Failed to fetch document versions")
         return cast(list[dict[str, Any]], res.get("data", []) if success else [])
 
     async def list_crawler_targets(self, department: str | None = None) -> list[dict[str, Any]]:
-        query = self.supabase_client.table("archon_crawler_targets").select("*")
+        query = self.supabase_client.table("archon_crawler_targets").select("*") # 合法
         if department:
             query = query.eq("department", department)
         query = query.order("created_at")
@@ -149,19 +149,19 @@ class AdminService(BaseRepository):
         return cast(list[dict[str, Any]], res.get("data", []) if success else [])
 
     async def create_crawler_target(self, data: dict[str, Any]) -> dict[str, Any]:
-        query = self.supabase_client.table("archon_crawler_targets").insert(data)
+        query = self.supabase_client.table("archon_crawler_targets").insert(data) # 合法
         success, res = self.execute_query(query, "Failed to create target", require_data=True)
         if not success:
             raise ValueError("Failed to create target")
         return cast(dict[str, Any], res.get("data", [{}])[0])
 
     async def delete_crawler_target(self, target_id: str) -> None:
-        query = self.supabase_client.table("archon_crawler_targets").delete().eq("id", target_id)
+        query = self.supabase_client.table("archon_crawler_targets").delete().eq("id", target_id) # 合法
         self.execute_query(query, f"Failed to delete target {target_id}")
 
     async def get_admin_logs(self, type: str | None = None, time_range: str | None = "7d") -> list[dict[str, Any]]:
         from datetime import datetime, timedelta
-        query = self.supabase_client.table("archon_logs").select("*")
+        query = self.supabase_client.table("archon_logs").select("*") # 合法
         if type:
             query = query.eq("type", type)
         if time_range:

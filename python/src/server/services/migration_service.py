@@ -80,13 +80,13 @@ class MigrationService:
         # Direct Probe (Most reliable across all Supabase configs)
         try:
             # Try new standard first
-            supabase.table("schema_migrations").select("version").limit(0).execute()
+            supabase.table("schema_migrations").select("version").limit(0).execute() # 合法
             self._table_name = "schema_migrations"
             return True
         except Exception:
             try:
                 # Fallback to legacy
-                supabase.table("archon_migrations").select("id").limit(0).execute()
+                supabase.table("archon_migrations").select("id").limit(0).execute() # 合法
                 self._table_name = "archon_migrations"
                 return True
             except Exception:
@@ -110,7 +110,7 @@ class MigrationService:
             # Determine order column based on table name (Physical Hardening)
             order_col = "migrated_at" if self._table_name == "schema_migrations" else "applied_at"
 
-            result = supabase.table(self._table_name).select("*").order(order_col, desc=True).execute()
+            result = supabase.table(self._table_name).select("*").order(order_col, desc=True).execute() # 合法
 
             return [MigrationRecord(row) for row in result.data]
         except Exception as e:
@@ -266,11 +266,12 @@ class MigrationService:
         Alters vector column dimensions in the database and rebuilds HNSW indexes
         to match the active mode (384 dimensions for offline, 768 for online).
         """
-        import os
-        is_offline = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+        from ..config.config import get_config
+        config = get_config()
+        is_offline = config.offline_mode
         target_dim = 384 if is_offline else 768
 
-        db_url = os.getenv("SUPABASE_DB_URL")
+        db_url = config.supabase_db_url
         if not db_url:
             logger.warning("SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
             return

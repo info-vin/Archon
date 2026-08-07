@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any
 
 import httpx
@@ -14,7 +13,8 @@ class RagService:
     @staticmethod
     async def get_hf_embedding(text: str) -> list[float]:
         # SSOT: Model from environment variable
-        hf_model_id = os.getenv("HF_EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
+        from src.server.services.settings_service import SettingsService
+        hf_model_id = SettingsService().get_setting("HF_EMBEDDING_MODEL") or "sentence-transformers/all-mpnet-base-v2"
         hf_api_url = f"https://router.huggingface.co/hf-inference/models/{hf_model_id}/pipeline/feature-extraction"
 
         credential_service = CredentialService()

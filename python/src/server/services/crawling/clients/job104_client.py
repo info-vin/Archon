@@ -124,8 +124,8 @@ class Job104Crawler:
             return None
 
     def create_session(self) -> curl_requests.Session:
-        import os
-        proxy_url = os.environ.get("CRAWLER_PROXY_URL")
+        from ....services.settings_service import SettingsService
+        proxy_url = SettingsService().get_setting("CRAWLER_PROXY_URL")
         proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
         impersonates = ["chrome110", "chrome120", "safari15_3", "safari17_0", "edge101"] # 合法
         return curl_requests.Session(

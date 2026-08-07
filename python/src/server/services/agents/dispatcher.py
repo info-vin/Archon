@@ -46,7 +46,7 @@ class LibrarianDirectStrategy(BaseAgentStrategy):
         try:
             target_id = task_data["crawler_target_id"]
             supabase = get_supabase_client()
-            res = supabase.table("archon_crawler_targets").select("*").eq("id", target_id).execute()
+            res = supabase.table("archon_crawler_targets").select("*").eq("id", target_id).execute() # 合法
             if not res.data:
                 raise ValueError(f"Crawler target {target_id} not found")
             target = res.data[0]

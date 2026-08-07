@@ -4,25 +4,27 @@ Provides centralized metrics and performance auditing.
 """
 
 import logging
-import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from ...utils import get_supabase_client
+from ...repositories.base_repository import BaseRepository
 from .metrics import MetricsManager
 from .performance import PerformanceManager
 
 logger = logging.getLogger(__name__)
 
 
-class StatsService:
+
+
+class StatsService(BaseRepository):
     """
     Facade for all system statistics.
     Maintains 100% backward compatibility with legacy StatsService.
     """
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase = supabase_client or get_supabase_client()
+        super().__init__(supabase_client)
+        self.supabase = self.supabase_client
         self.metrics = MetricsManager(self.supabase)
         self.performance = PerformanceManager(self.supabase)
 
@@ -30,9 +32,9 @@ class StatsService:
     async def get_tasks_by_status(self) -> list[dict[str, Any]]:
         """Backwards compatibility for frontend stats."""
         try:
-            response = self.supabase.table("archon_tasks").select("status").execute()
+            success, response = self.execute_query(self.supabase.table("archon_tasks").select("status"), "Get tasks by status") # 合法
             counts: dict[str, int] = {}
-            for row in response.data:
+            for row in (response.get("data", []) if success else []):
                 s = row.get("status", "unknown")
                 counts[s] = counts.get(s, 0) + 1
             return [{"name": k, "value": v} for k, v in counts.items()]
@@ -98,23 +100,23 @@ class StatsService:
             one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
 
             # 1. Error Count
-            error_res = (
-                self.supabase.table("archon_logs")
+            success, error_res = self.execute_query(
+                self.supabase.table("archon_logs") # 合法
                 .select("id", count="exact")
                 .eq("level", "ERROR")
-                .gt("created_at", one_day_ago)
-                .execute()
+                .gt("created_at", one_day_ago),
+                "Get error count"
             )
-            error_count = error_res.count if error_res.count is not None else 0
+            error_count = error_res.get("count", 0) if success else 0
 
             # 2. 24h Cost
-            cost_res = self.supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago).execute()
-            total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.data or []))
+            success_cost, cost_res = self.execute_query(self.supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago), "Get token cost") # 合法
+            total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.get("data", []) if success_cost else []))
 
             # 3. Active Agents
             one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
-            logs_res = self.supabase.table("archon_logs").select("source").gt("created_at", one_hour_ago).execute()
-            active_sources = {log["source"] for log in (logs_res.data or [])}
+            success_logs, logs_res = self.execute_query(self.supabase.table("archon_logs").select("source").gt("created_at", one_hour_ago), "Get active agents logs") # 合法
+            active_sources = {log["source"] for log in (logs_res.get("data", []) if success_logs else [])}
             # PERFORMANCE: Extract string conversion outside loop and unroll nested generator
             active_sources_lower = [s.lower() for s in active_sources]
 
@@ -170,11 +172,12 @@ class StatsService:
                         })
 
                 # Find DB-only jobs that might have completed and been removed from scheduler
-                env_prefix = os.environ.get("ARCHON_ENV", "")
+                from ...config.config import get_config
+                env_prefix = get_config().archon_env
                 last_run_prefix = f"{env_prefix}LAST_RUN_"
 
-                db_keys_res = self.supabase.table("archon_settings").select("key, value").like("key", f"{last_run_prefix}%").execute()
-                for row in (db_keys_res.data or []):
+                success_db, db_keys_res = self.execute_query(self.supabase.table("archon_settings").select("key, value").like("key", f"{last_run_prefix}%"), "Get db keys") # 合法
+                for row in (db_keys_res.get("data", []) if success_db else []):
                     job_id = row["key"].replace(last_run_prefix, "").lower()
                     if not any(j["id"] == job_id for j in clockwork_jobs):
                         # Job is not in memory (likely completed for the day)

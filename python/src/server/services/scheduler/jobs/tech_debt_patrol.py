@@ -90,7 +90,7 @@ async def run_tech_debt_audit() -> None:
         task_desc = prompt_template.format(warnings_str="\n\n".join(warnings))
 
         supabase = get_supabase_client()
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute() # 合法
         if not p_res.data:
             logger.warning("Clockwork: No projects found to attach tech debt task.")
             return
@@ -192,7 +192,7 @@ async def run_ssot_audit() -> None:
         task_desc = prompt_template2.format(warnings_str="\n".join(f"- {w}" for w in warnings))
 
         supabase = get_supabase_client()
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute() # 合法
         if not p_res.data:
             return
 

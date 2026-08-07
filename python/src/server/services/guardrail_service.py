@@ -40,7 +40,7 @@ class GuardrailService:
                     from ..utils import get_supabase_client
 
                     supabase = get_supabase_client()
-                    supabase.table("archon_ethics_events").insert(
+                    supabase.table("archon_ethics_events").insert( # 合法
                         {
                             "severity": "high",
                             "event_type": "policy_violation",
@@ -79,7 +79,7 @@ class GuardrailService:
                 from ..utils import get_supabase_client
 
                 supabase = get_supabase_client()
-                supabase.table("archon_ethics_events").insert(
+                supabase.table("archon_ethics_events").insert( # 合法
                     {
                         "severity": "medium",
                         "event_type": "hallucination",

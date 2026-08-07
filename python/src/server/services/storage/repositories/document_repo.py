@@ -23,7 +23,7 @@ class DocumentRepository:
                     cancellation_check()
 
                 batch_urls = unique_urls[i : i + delete_batch_size]
-                self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute()
+                self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute() # 合法
 
                 if i + delete_batch_size < len(unique_urls):
                     await asyncio.sleep(0.05)
@@ -40,7 +40,7 @@ class DocumentRepository:
 
             batch_urls = unique_urls[i : i + 10]
             try:
-                self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute()
+                self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute() # 合法
                 import time
 
                 time.sleep(0.05)
@@ -54,7 +54,7 @@ class DocumentRepository:
     def insert_document_batch(self, batch_data: list[dict[str, Any]]) -> bool:
         """Inserts a batch of documents into archon_crawled_pages."""
         try:
-            self.client.table("archon_crawled_pages").insert(batch_data).execute()
+            self.client.table("archon_crawled_pages").insert(batch_data).execute() # 合法
             return True
         except Exception as e:
             search_logger.error(f"Error inserting batch: {e}")
@@ -63,7 +63,7 @@ class DocumentRepository:
     def upsert_source_fallback(self, source_id: str, fallback_data: dict[str, Any]) -> tuple[bool, Any]:
         """Upserts a source record to archon_sources."""
         try:
-            response = self.client.table("archon_sources").upsert(fallback_data).execute()
+            response = self.client.table("archon_sources").upsert(fallback_data).execute() # 合法
             return True, response
         except Exception as e:
             return False, {"error": str(e)}
@@ -71,7 +71,7 @@ class DocumentRepository:
     def verify_source_exists(self, source_id: str) -> tuple[bool, Any]:
         """Checks if a source exists in archon_sources."""
         try:
-            response = self.client.table("archon_sources").select("source_id").eq("source_id", source_id).execute()
+            response = self.client.table("archon_sources").select("source_id").eq("source_id", source_id).execute() # 合法
             return True, {"data": response.data}
         except Exception as e:
             return False, {"error": str(e)}

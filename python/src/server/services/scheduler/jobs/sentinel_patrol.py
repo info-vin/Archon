@@ -25,7 +25,7 @@ async def analyze_token_usage() -> None:
 
         # 1. Daily Analysis
         res_daily = (
-            supabase.table("token_usage")
+            supabase.table("token_usage") # 合法
             .select("input_tokens, output_tokens, cost_usd")
             .gt("created_at", one_day_ago)
             .execute()
@@ -37,7 +37,7 @@ async def analyze_token_usage() -> None:
 
         # 2. Phase 6.1 Cost Sentinel (7-day check)
         res_weekly = (
-            supabase.table("token_usage")
+            supabase.table("token_usage") # 合法
             .select("cost_usd")
             .gt("created_at", seven_days_ago)
             .execute()
@@ -61,7 +61,7 @@ async def analyze_token_usage() -> None:
             logger.error(f"💰 Sentinel: {msg}")
             await telegram_service.send_message(msg)
 
-            supabase.table("archon_logs").insert(
+            supabase.table("archon_logs").insert( # 合法
                 {
                     "source": "sentinel-cost",
                     "level": "ALERT",
@@ -74,7 +74,7 @@ async def analyze_token_usage() -> None:
         total_output = sum(row.get("output_tokens", 0) for row in data_daily)
         total_tokens = total_input + total_output
 
-        supabase.table("archon_logs").insert(
+        supabase.table("archon_logs").insert( # 合法
             {
                 "source": "clockwork-scheduler",
                 "level": "INFO",
@@ -103,7 +103,7 @@ async def run_business_sentinel() -> None:
         threshold_days = 14
         # Physical Fix: Column name is 'key', not 'setting_key'
         res_settings = (
-            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute() # 合法
         )
         if res_settings.data:
             threshold_days = int(res_settings.data[0]["value"])
@@ -115,7 +115,7 @@ async def run_business_sentinel() -> None:
 
         # 1. Stale Leads with Proactive Intervention
         res = (
-            supabase.table("leads")
+            supabase.table("leads") # 合法
             .select("id, company_name, updated_at")
             .lt("updated_at", cutoff_date)
             .not_.in_("status", ["won", "converted", "dormant"]) # 合法
@@ -129,11 +129,11 @@ async def run_business_sentinel() -> None:
             log_payloads = []
             for lead in stale_leads:
                 # Proactive Action: Mark as dormant to auto-clean Alice's workbench
-                supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]).execute()
+                supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]).execute() # 合法
 
                 # Anti-spam: Check if already alerted
                 existing = (
-                    supabase.table("archon_logs")
+                    supabase.table("archon_logs") # 合法
                     .select("id")
                     .eq("source", "sentinel")
                     .eq("level", "ALERT")
@@ -161,7 +161,7 @@ async def run_business_sentinel() -> None:
                 logger.info(f"🛡️ Sentinel: Prepared proactive alert for {lead['company_name']}")
 
             if log_payloads:
-                log_res = supabase.table("archon_logs").insert(log_payloads).execute()
+                log_res = supabase.table("archon_logs").insert(log_payloads).execute() # 合法
                 if log_res.data:
                     try:
                         import asyncio
@@ -181,7 +181,7 @@ async def run_business_sentinel() -> None:
         # 2. Content Bottlenecks (GAP-029)
         forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
         post_res = (
-            supabase.table("blog_posts")
+            supabase.table("blog_posts") # 合法
             .select("id, title, updated_at")
             .eq("status", "review")
             .lt("updated_at", forty_eight_hours_ago)
@@ -192,7 +192,7 @@ async def run_business_sentinel() -> None:
         for post in posts:
             # Anti-spam
             existing_p = (
-                supabase.table("archon_logs")
+                supabase.table("archon_logs") # 合法
                 .select("id")
                 .eq("source", "sentinel")
                 .eq("level", "ALERT")
@@ -219,7 +219,7 @@ async def run_business_sentinel() -> None:
             logger.info(f"🛡️ Sentinel: Prepared bottleneck alert for {post['title']}")
 
         if log_payloads:
-            supabase.table("archon_logs").insert(log_payloads).execute()
+            supabase.table("archon_logs").insert(log_payloads).execute() # 合法
     except Exception as e:
         logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
 
@@ -247,7 +247,7 @@ async def run_api_deprecation_scan() -> None:
         )
         task_desc = prompt_service.get_prompt("API_DEPRECATION_SCAN_PROMPT", default=default_desc)
 
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute() # 合法
         if not p_res.data:
             logger.warning("Clockwork: No projects found to attach API scan task.")
             return
@@ -267,7 +267,7 @@ async def run_api_deprecation_scan() -> None:
                 task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
             )
 
-            supabase.table("archon_logs").insert(
+            supabase.table("archon_logs").insert( # 合法
                 {
                     "source": "clockwork-scheduler",
                     "level": "INFO",

@@ -8,7 +8,7 @@ class GameService(BaseRepository):
         super().__init__()
 
     async def save_game(self, user_id: str, save_data: dict[str, Any]) -> dict[str, Any]:
-        query = self.supabase_client.table("user_game_saves").upsert({
+        query = self.supabase_client.table("user_game_saves").upsert({ # 合法
             "user_id": user_id,
             "save_data": save_data,
             "updated_at": "now()"
@@ -19,7 +19,7 @@ class GameService(BaseRepository):
         return cast(dict[str, Any], res.get("data", [{}])[0])
 
     async def load_game(self, user_id: str) -> dict[str, Any] | None:
-        query = self.supabase_client.table("user_game_saves").select("save_data").eq("user_id", user_id)
+        query = self.supabase_client.table("user_game_saves").select("save_data").eq("user_id", user_id) # 合法
         success, res = self.execute_query(query, "Failed to load game state")
         if not success:
             raise ValueError("Failed to load game state.")

@@ -31,7 +31,7 @@ class MetaTwinService(BaseRepository):
         # 1. Fetch recent agent errors
         try:
             query = (
-                self.supabase_client.table("archon_logs")
+                self.supabase_client.table("archon_logs") # 合法
                 .select("id, source, message, level, details, created_at")
                 .gt("created_at", one_hour_ago)
             )
@@ -93,7 +93,7 @@ class MetaTwinService(BaseRepository):
         # Log audit outcomes to archon_logs as system trace
         if corrections:
             try:
-                query = self.supabase_client.table("archon_logs").insert({
+                query = self.supabase_client.table("archon_logs").insert({ # 合法
                     "level": "INFO",
                     "source": "MetaTwinService",
                     "type": "system",
@@ -123,7 +123,7 @@ class MetaTwinService(BaseRepository):
             SYSTEM_MODELS["DEFAULT_PRO"] = fallback_model
 
             # Persist setting to DB so it propagates
-            query = self.supabase_client.table("archon_settings").upsert({
+            query = self.supabase_client.table("archon_settings").upsert({ # 合法
                 "key": f"MODEL_OVERRIDE_{agent_name.upper()}",
                 "value": fallback_model,
                 "description": f"Auto-Healing Model Override by MetaTwin at {datetime.now(UTC).isoformat()}"
@@ -140,7 +140,7 @@ class MetaTwinService(BaseRepository):
         """
         logger.info(f"MetaTwin: Throttling agent {agent_name} concurrency limit to {new_limit}")
         try:
-            query = self.supabase_client.table("archon_settings").upsert({
+            query = self.supabase_client.table("archon_settings").upsert({ # 合法
                 "key": f"CRAWL_CONCURRENT_MAX_{agent_name.upper()}",
                 "value": str(new_limit),
                 "description": f"Auto-Healing Concurrency Limit by MetaTwin at {datetime.now(UTC).isoformat()}"

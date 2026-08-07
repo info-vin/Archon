@@ -171,7 +171,7 @@ class ExtractionService:
                 "created_by": user_id,
             }
 
-            response = self.supabase.table("archon_extraction_schemas").insert(payload).execute()
+            response = self.supabase.table("archon_extraction_schemas").insert(payload).execute() # 合法
 
             if not response.data:
                 raise Exception("Insert failed")
@@ -184,12 +184,12 @@ class ExtractionService:
 
     async def list_schemas(self) -> list[SchemaResponseDTO]:
         """List all schemas."""
-        response = self.supabase.table("archon_extraction_schemas").select("*").order("created_at", desc=True).execute()
+        response = self.supabase.table("archon_extraction_schemas").select("*").order("created_at", desc=True).execute() # 合法
         return cast(list[SchemaResponseDTO], response.data or [])
 
     async def get_schema(self, schema_id: str) -> SchemaResponseDTO | None:
         """Get a single schema by ID."""
-        response = self.supabase.table("archon_extraction_schemas").select("*").eq("id", schema_id).execute()
+        response = self.supabase.table("archon_extraction_schemas").select("*").eq("id", schema_id).execute() # 合法
         return cast(SchemaResponseDTO, response.data[0]) if response.data else None
 
     async def update_schema(self, schema_id: str, data: SchemaUpdateDTO) -> SchemaResponseDTO:
@@ -199,14 +199,14 @@ class ExtractionService:
             for k, v in data.items()
             if k in ["name", "domain_pattern", "schema_definition", "target_role", "description"] # 合法
         }
-        response = self.supabase.table("archon_extraction_schemas").update(update_data).eq("id", schema_id).execute()
+        response = self.supabase.table("archon_extraction_schemas").update(update_data).eq("id", schema_id).execute() # 合法
         if not response.data:
             raise Exception("Update failed or schema not found")
         return cast(SchemaResponseDTO, response.data[0])
 
     async def delete_schema(self, schema_id: str) -> bool:
         """Delete a schema."""
-        self.supabase.table("archon_extraction_schemas").delete().eq("id", schema_id).execute()
+        self.supabase.table("archon_extraction_schemas").delete().eq("id", schema_id).execute() # 合法
         return True
 
     async def run_extraction(self, url: str, schema_id: str, user_id: str) -> ExtractionResultDTO:

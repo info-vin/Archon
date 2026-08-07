@@ -34,7 +34,7 @@ class BaseSearchStrategy(BaseRepository):
                 return SIMILARITY_THRESHOLD
 
             # Try to fetch RAG_SIMILARITY_THRESHOLD from archon_settings
-            query = self.supabase_client.table("archon_settings").select("value").eq("key", "RAG_SIMILARITY_THRESHOLD")
+            query = self.supabase_client.table("archon_settings").select("value").eq("key", "RAG_SIMILARITY_THRESHOLD") # 合法
             success, result = self.execute_query(
                 query.execute,
                 error_context="Error fetching dynamic RAG similarity threshold",

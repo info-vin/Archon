@@ -42,7 +42,7 @@ class JobBoardService:
         try:
             from ..repositories.base_repository import BaseRepository
             repo = BaseRepository(self.supabase)
-            query = self.supabase.table("archon_logs").insert({"source": source, "level": level, "message": message})
+            query = self.supabase.table("archon_logs").insert({"source": source, "level": level, "message": message}) # 合法
             repo.execute_query(query, error_context="Write to archon_logs")
         except Exception as e:
             logger.error(f"Failed to write to archon_logs: {e}")
@@ -54,9 +54,7 @@ class JobBoardService:
         import os
         from pathlib import Path
 
-        project_root = os.environ.get("PROJECT_ROOT")
-        if not project_root:
-            project_root = str(Path(__file__).resolve().parent.parent.parent.parent)
+        project_root = str(Path(__file__).resolve().parent.parent.parent.parent.parent)
 
         agents_md_path = os.path.join(project_root, "AGENTS.md")
         if not os.path.exists(agents_md_path):
@@ -219,7 +217,7 @@ class JobBoardService:
         if job_urls:
             from ..repositories.base_repository import BaseRepository
             repo = BaseRepository(self.supabase)
-            query = self.supabase.table("leads").select("source_job_url").in_("source_job_url", job_urls)
+            query = self.supabase.table("leads").select("source_job_url").in_("source_job_url", job_urls) # 合法
             success, result = repo.execute_query(query, "Fetch existing leads urls")
             if success and result.get("data"):
                 existing_urls = {row["source_job_url"] for row in result.get("data", [])}
@@ -293,7 +291,7 @@ class JobBoardService:
         if leads_to_insert:
             from ..repositories.base_repository import BaseRepository
             repo = BaseRepository(self.supabase)
-            query = self.supabase.table("leads").insert(leads_to_insert)
+            query = self.supabase.table("leads").insert(leads_to_insert) # 合法
             success, result = repo.execute_query(query, "Bulk insert leads")
 
             if success and result.get("data"):

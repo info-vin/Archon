@@ -27,7 +27,7 @@ class ProfileService(BaseRepository):
             A tuple containing a success boolean and either a list of users or an error message.
         """
 
-        query = self.supabase_client.table("profiles").select("id, name, role")
+        query = self.supabase_client.table("profiles").select("id, name, role") # 合法
         success, result = self.execute_query(
             query_func=query, error_context="Failed to retrieve profiles", require_data=False
         )
@@ -45,7 +45,7 @@ class ProfileService(BaseRepository):
             A tuple containing a success boolean and either a list of users or an error message.
         """
 
-        query = self.supabase_client.table("profiles").select("*")
+        query = self.supabase_client.table("profiles").select("*") # 合法
         success, result = self.execute_query(
             query_func=query, error_context="Failed to retrieve full profiles", require_data=False
         )
@@ -65,7 +65,7 @@ class ProfileService(BaseRepository):
             A tuple containing a success boolean and the user's role or None if not found.
         """
 
-        query = self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1)
+        query = self.supabase_client.table("profiles").select("role").eq("name", user_name).limit(1) # 合法
         # Returning True, None instead of False when no role is found.
         success, result = self.execute_query(
             query_func=query,
@@ -88,7 +88,7 @@ class ProfileService(BaseRepository):
             A tuple containing success boolean and the profile data (with flattened permissions).
         """
 
-        query = self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1)
+        query = self.supabase_client.table("profiles").select("*").eq("id", user_id).limit(1) # 合法
         success, result = self.execute_query(
             query_func=query, error_context=f"Failed to fetch profile for {user_id}", require_data=True
         )
@@ -116,7 +116,7 @@ class ProfileService(BaseRepository):
 
         logger.info(f"Updating profile for {user_id} with: {updates.keys()}")
 
-        query = self.supabase_client.table("profiles").update(updates).eq("id", user_id)
+        query = self.supabase_client.table("profiles").update(updates).eq("id", user_id) # 合法
         success, result = self.execute_query(
             query_func=query, error_context=f"Failed to update profile for {user_id}", require_data=True
         )

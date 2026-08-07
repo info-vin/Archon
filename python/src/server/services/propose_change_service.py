@@ -82,14 +82,14 @@ class ProposeChangeService:
 
     async def list_proposals(self, status: str | None = "pending", user_id: str | None = None) -> list[ProposedChangeDict]:
         """Lists proposals, optionally filtered by status and user department scope."""
-        query = self.db_client.table("proposed_changes").select("*")
+        query = self.db_client.table("proposed_changes").select("*") # 合法
         if status:
             query = query.eq("status", status)
 
         # Physical Department Isolation (Phase 4.6.23 Hardening)
         if user_id:
             # First, get the department of the requesting manager
-            p_res = self.db_client.table("profiles").select("department, role").eq("id", user_id).execute()
+            p_res = self.db_client.table("profiles").select("department, role").eq("id", user_id).execute() # 合法
             if p_res.data and len(p_res.data) > 0:
                 profile = p_res.data[0]
                 if profile.get("role") != "system_admin":
@@ -100,7 +100,7 @@ class ProposeChangeService:
         return cast(list[ProposedChangeDict], res.data or [])
 
     async def get_proposal(self, proposal_id: UUID) -> ProposedChangeDict | None:
-        res = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute()
+        res = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute() # 合法
         return res.data[0] if res.data else None
 
     async def create_file_proposal(
@@ -116,7 +116,7 @@ class ProposeChangeService:
         # Physical identity embedding (Phase 4.6.23)
         dept = "General"
         if user_id:
-            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
+            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute() # 合法
             dept = u_res.data[0].get("department", "General") if u_res.data else "General"
 
         payload = {
@@ -129,7 +129,7 @@ class ProposeChangeService:
         }
 
         res = (
-            self.db_client.table("proposed_changes")
+            self.db_client.table("proposed_changes") # 合法
             .insert({"type": "file", "status": "pending", "request_payload": payload})
             .execute()
         )
@@ -142,7 +142,7 @@ class ProposeChangeService:
         # Embed physical identity (Phase 4.6.23)
         dept = "General"
         if user_id:
-            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
+            u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute() # 合法
             dept = u_res.data[0].get("department", "General") if u_res.data else "General"
 
         # Inject created_by and created_by_dept into request_payload for audit
@@ -153,7 +153,7 @@ class ProposeChangeService:
         }
 
         res = (
-            self.db_client.table("proposed_changes")
+            self.db_client.table("proposed_changes") # 合法
             .insert({"type": change_type, "status": "pending", "request_payload": request_payload})
             .execute()
         )
@@ -162,7 +162,7 @@ class ProposeChangeService:
     async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> ProposedChangeDict:
         resolved_id = self._resolve_user_id(user_id)
         res = (
-            self.db_client.table("proposed_changes")
+            self.db_client.table("proposed_changes") # 合法
             .update({"status": "approved", "approved_by": resolved_id, "approved_at": "now()"})
             .eq("id", str(proposal_id))
             .execute()
@@ -181,7 +181,7 @@ class ProposeChangeService:
 
         # Physical Audit Log (Phase 4.6.41)
         try:
-            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).execute()
+            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).execute() # 合法
             user_name = u_res.data[0].get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
 
             from .log_service import log_service
@@ -202,7 +202,7 @@ class ProposeChangeService:
     async def reject_proposal(self, proposal_id: UUID, user_id: Any) -> ProposedChangeDict:
         resolved_id = self._resolve_user_id(user_id)
         res = (
-            self.db_client.table("proposed_changes")
+            self.db_client.table("proposed_changes") # 合法
             .update({"status": "rejected", "approved_by": resolved_id, "approved_at": "now()"})
             .eq("id", str(proposal_id))
             .execute()
@@ -210,7 +210,7 @@ class ProposeChangeService:
 
         # Physical Audit Log (Phase 4.6.41)
         try:
-            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).execute()
+            u_res = self.db_client.table("profiles").select("name").eq("id", str(user_id)).execute() # 合法
             user_name = u_res.data[0].get("name", "Unknown Admin") if u_res.data else "Unknown Admin"
 
             from .log_service import log_service

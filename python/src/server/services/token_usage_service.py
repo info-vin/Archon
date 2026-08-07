@@ -65,7 +65,7 @@ class TokenUsageService:
             # But for now, direct call is fine as it's critical data.
 
             def _log_to_db():
-                return supabase.table("token_usage").insert(payload).execute()
+                return supabase.table("token_usage").insert(payload).execute() # 合法
 
             await asyncio.to_thread(_log_to_db)
 
@@ -80,7 +80,7 @@ class TokenUsageService:
                     agent_names = [config["name"] for config in FALLBACK_AGENT_CONFIG.values()]
 
                     # We need the display name to award XP via StatsService
-                    res = supabase.table("profiles").select("name").eq("id", user_id).execute()
+                    res = supabase.table("profiles").select("name").eq("id", user_id).execute() # 合法
                     if res.data and res.data[0]["name"] in agent_names:
                         agent_display_name = res.data[0]["name"]
                         from .stats import StatsService
@@ -116,7 +116,7 @@ class TokenUsageService:
             # Fetch last N days raw data
             def _fetch_data():
                 return (
-                    supabase.table("token_usage")
+                    supabase.table("token_usage") # 合法
                     .select("cost_usd, created_at, model, provider")
                     .gt("created_at", since.isoformat())
                     .order("created_at", desc=True)

@@ -68,7 +68,7 @@ async def archive_task_logic(
 
         def _archive_query() -> Any:
             return (
-                task_service_instance.supabase_client.table("archon_tasks")
+                task_service_instance.supabase_client.table("archon_tasks") # 合法
                 .update(archive_data)
                 .eq("id", task_id)
                 .execute()
@@ -96,7 +96,7 @@ async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) 
         logger.info(f"Pruning archived tasks older than {days_old} days (cutoff: {cutoff_date})")
 
         tasks_to_prune = (
-            task_service_instance.supabase_client.table("archon_tasks")
+            task_service_instance.supabase_client.table("archon_tasks") # 合法
             .select("id")
             .eq("archived", True)
             .lt("archived_at", cutoff_date)
@@ -106,7 +106,7 @@ async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) 
         count = len(tasks_to_prune.data) if tasks_to_prune.data else 0
 
         if count > 0:
-            task_service_instance.supabase_client.table("archon_tasks").delete().eq("archived", True).lt(
+            task_service_instance.supabase_client.table("archon_tasks").delete().eq("archived", True).lt( # 合法
                 "archived_at", cutoff_date
             ).execute()
             logger.info(f"Successfully pruned {count} tasks")

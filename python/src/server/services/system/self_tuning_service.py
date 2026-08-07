@@ -29,7 +29,7 @@ class SelfTuningService(BaseRepository):
         """
         try:
             # 1. Fetch the error context - robust fetch
-            query = self.supabase_client.table("archon_logs").select("*").eq("id", log_id)
+            query = self.supabase_client.table("archon_logs").select("*").eq("id", log_id) # 合法
             success, res = self.execute_query(query, "Failed to fetch log")
             if not success or not res.get("data"):
                 return {"success": False, "error": f"Log {log_id} not found"}

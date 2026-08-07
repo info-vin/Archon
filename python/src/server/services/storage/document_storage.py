@@ -7,7 +7,6 @@ and crawling/document_storage_operations.py.
 """
 
 import asyncio
-import os
 from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlparse
@@ -151,7 +150,8 @@ class DocumentStorageFacade(BaseRepository):
                 if isinstance(use_contextual_embeddings, str):
                     use_contextual_embeddings = use_contextual_embeddings.lower() == "true"
             except Exception:
-                use_contextual_embeddings = os.getenv("USE_CONTEXTUAL_EMBEDDINGS", "false") == "true"
+                from src.server.services.settings_service import SettingsService
+                use_contextual_embeddings = str(SettingsService().get_setting("USE_CONTEXTUAL_EMBEDDINGS") or "false").lower() == "true"
 
             completed_batches = 0
             total_batches = (len(contents) + batch_size - 1) // batch_size
@@ -173,7 +173,8 @@ class DocumentStorageFacade(BaseRepository):
                 contextual_contents = batch_contents
                 max_workers = 1
                 if use_contextual_embeddings:
-                    max_workers = int(os.getenv("CONTEXTUAL_EMBEDDINGS_MAX_WORKERS", "4"))
+                    from src.server.services.settings_service import SettingsService
+                    max_workers = int(SettingsService().get_setting("CONTEXTUAL_EMBEDDINGS_MAX_WORKERS") or "4")
                     full_documents = [url_to_full_document.get(u, "") for u in batch_urls]
                     try:
                         sub_results = await generate_contextual_embeddings_batch(full_documents, batch_contents)

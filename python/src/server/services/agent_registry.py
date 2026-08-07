@@ -114,7 +114,7 @@ def get_agent_uuid(agent_key: str) -> str | None:
     """
     try:
         supabase = get_supabase_client()
-        res = supabase.table("archon_agents").select("id").eq("agent_key", agent_key).execute()
+        res = supabase.table("archon_agents").select("id").eq("agent_key", agent_key).execute() # 合法
         if res.data:
             return str(res.data[0]["id"])
     except Exception:
@@ -130,7 +130,7 @@ def get_agent_uuid(agent_key: str) -> str | None:
             "dev-bot": "Archon DevBot"
         }
         agent_name = fallback_name_map.get(agent_key, agent_key)
-        res = supabase.table("profiles").select("id").eq("name", agent_name).execute()
+        res = supabase.table("profiles").select("id").eq("name", agent_name).execute() # 合法
         if res.data:
             return str(res.data[0]["id"])
     except Exception:
@@ -166,12 +166,12 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
 
     try:
         supabase = get_supabase_client()
-        res = supabase.table("archon_agents").select("*").eq("agent_key", key).execute()
+        res = supabase.table("archon_agents").select("*").eq("agent_key", key).execute() # 合法
         if res.data:
             agent_data = res.data[0]
             agent_uuid = agent_data["id"]
 
-            tools_res = supabase.table("archon_agent_tools").select("tool_name").eq("agent_id", agent_uuid).execute()
+            tools_res = supabase.table("archon_agent_tools").select("tool_name").eq("agent_id", agent_uuid).execute() # 合法
             tools_list = [row["tool_name"] for row in tools_res.data] if tools_res.data else []
 
             # Mypy inference failure on module-level dict constant

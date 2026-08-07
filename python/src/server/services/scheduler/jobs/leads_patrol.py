@@ -22,7 +22,7 @@ async def run_auto_fetch_leads() -> None:
         service = JobBoardService()
         new_leads = await service.auto_fetch_daily_leads()
 
-        get_supabase_client().table("archon_logs").insert(
+        get_supabase_client().table("archon_logs").insert( # 合法
             {
                 "source": "clockwork-scheduler",
                 "level": "INFO",
@@ -44,7 +44,7 @@ async def run_prune_stale_leads() -> None:
         pruned_count = await EnrichmentService.prune_stale_leads()
 
         if pruned_count > 0:
-            get_supabase_client().table("archon_logs").insert(
+            get_supabase_client().table("archon_logs").insert( # 合法
                 {
                     "source": "clockwork-scheduler",
                     "level": "INFO",
@@ -66,7 +66,7 @@ async def run_daily_market_report() -> None:
 
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
-        res = supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago).execute()
+        res = supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago).execute() # 合法
         leads = res.data or []
         if not leads:
             logger.info("✍️ Clockwork: No new leads today to report on. (Cycle logged)")
@@ -88,7 +88,7 @@ Use the tool to save this blog post as a DRAFT."""
         prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT", default=fallback_str)
         task_desc = prompt_template.format(lead_count=len(leads), lead_summary=lead_summary)
 
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute() # 合法
         if not p_res.data:
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return

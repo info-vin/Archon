@@ -32,14 +32,14 @@ async def list_tasks_logic(
     try:
         # Start with base query
         if exclude_large_fields:
-            query = task_service_instance.supabase_client.table("archon_tasks").select(
+            query = task_service_instance.supabase_client.table("archon_tasks").select( # 合法
                 "id, project_id, parent_task_id, title, description, "
                 "status, assignee, assignee_id, collaborator_agent_ids, task_order, feature, archived, "
                 "archived_at, archived_by, created_at, updated_at, due_date, "
                 "sources, code_examples, is_recurring, crawler_target_id, schedule_config, retry_count"
             )
         else:
-            query = task_service_instance.supabase_client.table("archon_tasks").select("* ")
+            query = task_service_instance.supabase_client.table("archon_tasks").select("* ") # 合法
 
         filters_applied = []
 
@@ -156,7 +156,7 @@ async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool
     try:
         logger.debug("Fetching task counts for all projects in batch")
         response = (
-            task_service_instance.supabase_client.table("archon_tasks")
+            task_service_instance.supabase_client.table("archon_tasks") # 合法
             .select("project_id, status")
             .or_("archived.is.null,archived.is.false")
             .execute()
@@ -192,7 +192,7 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
     Get a specific task by ID, including AI usage metrics.
     """
 
-    query = task_service_instance.supabase_client.table("archon_tasks").select("*").eq("id", task_id)
+    query = task_service_instance.supabase_client.table("archon_tasks").select("*").eq("id", task_id) # 合法
 
     success, result = task_service_instance.execute_query(
         query_func=query, error_context=f"Task with ID {task_id} not found"
@@ -225,7 +225,7 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
     try:
         # We search for token usage linked to this task_id.
         token_res = (
-            task_service_instance.supabase_client.table("token_usage")
+            task_service_instance.supabase_client.table("token_usage") # 合法
             .select("total_tokens, cost_usd")
             .ilike("request_id", f"%{task_id}%")
             .execute()

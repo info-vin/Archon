@@ -40,7 +40,7 @@ class SettingsService(BaseRepository):
         }
 
         # Get projects count
-        query_projects = self.supabase_client.table("archon_projects").select("id", count="exact")
+        query_projects = self.supabase_client.table("archon_projects").select("id", count="exact") # 合法
         success, result = self.execute_query(
             query_func=query_projects, error_context="Error getting projects count", require_data=False
         )
@@ -49,7 +49,7 @@ class SettingsService(BaseRepository):
         tables_info["projects"] = result.get("count", 0) or 0
 
         # Get tasks count
-        query_tasks = self.supabase_client.table("archon_tasks").select("id", count="exact")
+        query_tasks = self.supabase_client.table("archon_tasks").select("id", count="exact") # 合法
         success, result = self.execute_query(
             query_func=query_tasks, error_context="Error getting tasks count", require_data=False
         )
@@ -58,7 +58,7 @@ class SettingsService(BaseRepository):
         tables_info["tasks"] = result.get("count", 0) or 0
 
         # Get crawled pages count
-        query_pages = self.supabase_client.table("archon_crawled_pages").select("id", count="exact")
+        query_pages = self.supabase_client.table("archon_crawled_pages").select("id", count="exact") # 合法
         success, result = self.execute_query(
             query_func=query_pages, error_context="Error getting pages count", require_data=False
         )
@@ -67,7 +67,7 @@ class SettingsService(BaseRepository):
         tables_info["crawled_pages"] = result.get("count", 0) or 0
 
         # Get settings count
-        query_settings = self.supabase_client.table("archon_settings").select("id", count="exact")
+        query_settings = self.supabase_client.table("archon_settings").select("id", count="exact") # 合法
         success, result = self.execute_query(
             query_func=query_settings, error_context="Error getting settings count", require_data=False
         )
@@ -80,7 +80,7 @@ class SettingsService(BaseRepository):
     def get_setting(self, key: str, default: str | None = None) -> str | None:
         """Retrieve a specific setting value."""
 
-        query = self.supabase_client.table("archon_settings").select("value").eq("key", key)
+        query = self.supabase_client.table("archon_settings").select("value").eq("key", key) # 合法
         success, result = self.execute_query(
             query_func=query, error_context=f"Error fetching setting {key}", require_data=True
         )
@@ -95,7 +95,7 @@ class SettingsService(BaseRepository):
     def get_all_settings(self) -> dict[str, str]:
         """Retrieve all settings as a dictionary."""
 
-        query = self.supabase_client.table("archon_settings").select("key, value")
+        query = self.supabase_client.table("archon_settings").select("key, value") # 合法
         success, result = self.execute_query(
             query_func=query, error_context="Error fetching all settings", require_data=False
         )
@@ -106,7 +106,7 @@ class SettingsService(BaseRepository):
     def set_setting(self, key: str, value: str) -> bool:
         """Upsert a specific setting value."""
 
-        query = self.supabase_client.table("archon_settings").upsert(
+        query = self.supabase_client.table("archon_settings").upsert( # 合法
             {"key": key, "value": value}, on_conflict="key"
         )
         success, result = self.execute_query(
@@ -115,6 +115,6 @@ class SettingsService(BaseRepository):
         return success
 
     async def upsert_setting(self, payload: dict[str, Any]) -> bool:
-        query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key")
+        query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key") # 合法
         success, res = self.execute_query(query, "Error upserting setting", require_data=False)
         return success

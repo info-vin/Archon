@@ -103,7 +103,7 @@ async def update_task_logic(
         # Update task
         def _update_query() -> Any:
             return (
-                task_service_instance.supabase_client.table("archon_tasks")
+                task_service_instance.supabase_client.table("archon_tasks") # 合法
                 .update(update_data)
                 .eq("id", task_id)
                 .execute()

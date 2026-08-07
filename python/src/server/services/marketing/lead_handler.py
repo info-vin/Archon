@@ -1,29 +1,24 @@
 import logging
 from typing import Any
 
+from ...repositories.base_repository import BaseRepository
+
 logger = logging.getLogger(__name__)
 
 
-class LeadHandler:
+
+
+class LeadHandler(BaseRepository):
     """
     Handles all Leads CRUD and scoring logic for MarketingService.
     Physically decoupled for Phase 4.6.47.
     """
 
     def __init__(self, supabase_client: Any) -> None:
-        self.supabase_client = supabase_client
-
-    def execute_query(self, query_func, error_msg: str) -> tuple[bool, Any]:
-        """Helper to maintain parity with BaseRepository-like execution."""
-        try:
-            res = query_func()
-            return True, res
-        except Exception as e:
-            logger.error(f"{error_msg}: {e}")
-            return False, {"error": str(e)}
+        super().__init__(supabase_client)
 
     async def list_leads(self, user_id: str | None = None, role: str | None = None) -> list[dict]:
-        q = self.supabase_client.table("leads").select("*")
+        q = self.supabase_client.table("leads").select("*")  # 合法
         if role == "sales" and user_id:
             q = q.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
         query = q.order("created_at", desc=True)
@@ -42,23 +37,24 @@ class LeadHandler:
         if source_url:
 
 
-            _, existing = self.execute_query(self.supabase_client.table("leads").select("id").eq("source_job_url", source_url), "Check existing lead")
+            _, existing = self.execute_query(self.supabase_client.table("leads").select("id").eq("source_job_url", source_url), "Check existing lead")  # 合法
             if hasattr(existing, "data") and existing.data:
                 if lead_data.get("pitch_content"):
-                    self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq(
-                        "id", existing.data[0]["id"]
-                    ).execute()
+                    self.execute_query(
+                        self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq("id", existing.data[0]["id"]),  # 合法
+                        "Update pitch content"
+                    )
                 return True, {"lead": existing.data[0]}
 
 
-        success, res = self.execute_query(self.supabase_client.table("leads").insert(lead_data), "Failed to create lead")
+        success, res = self.execute_query(self.supabase_client.table("leads").insert(lead_data), "Failed to create lead")  # 合法
         if success and hasattr(res, "data") and res.data:
             return True, {"lead": res.data[0]}
         return False, res
 
     async def update_lead(self, lead_id: str, update_data: dict) -> tuple[bool, dict]:
 
-        success, res = self.execute_query(self.supabase_client.table("leads").update(update_data).eq("id", lead_id), f"Failed to update lead {lead_id}")
+        success, res = self.execute_query(self.supabase_client.table("leads").update(update_data).eq("id", lead_id), f"Failed to update lead {lead_id}")  # 合法
         if success and hasattr(res, "data") and res.data:
             lead_data = res.data[0]
             if lead_data.get("status") == "LOST":
@@ -98,13 +94,14 @@ class LeadHandler:
                 "status": "active",
                 "owner_id": owner_id,
             }
-            vendor_res = self.supabase_client.table("vendors").insert(vendor_data).execute()
-            new_vendor_id = vendor_res.data[0]["id"]
-            self.supabase_client.table("leads").update({"status": "converted"}).eq("id", lead_id).execute()
-            self.supabase_client.table("visit_logs").update({"customer_id": new_vendor_id}).eq(
-                "lead_id", lead_id
-            ).execute()
-            return True, {"vendor": vendor_res.data[0]}
+            success, vendor_res = self.execute_query(self.supabase_client.table("vendors").insert(vendor_data), "Insert vendor")  # 合法
+            if not success or not vendor_res.get("data"):
+                return False, {"error": "Failed to create vendor"}
+
+            new_vendor_id = vendor_res["data"][0]["id"]
+            self.execute_query(self.supabase_client.table("leads").update({"status": "converted"}).eq("id", lead_id), "Update lead status")  # 合法
+            self.execute_query(self.supabase_client.table("visit_logs").update({"customer_id": new_vendor_id}).eq("lead_id", lead_id), "Update visit logs")  # 合法
+            return True, {"vendor": vendor_res["data"][0]}
         except Exception as e:
             return False, {"error": str(e)}
 
@@ -139,7 +136,7 @@ class LeadHandler:
 
     async def reset_leads(self) -> bool:
         try:
-            self.supabase_client.table("leads").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+            self.execute_query(self.supabase_client.table("leads").delete().neq("id", "00000000-0000-0000-0000-000000000000"), "Reset leads")  # 合法
             return True
         except Exception as e:
             logger.error(f"Failed to reset leads: {e}")

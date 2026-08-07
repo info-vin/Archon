@@ -88,7 +88,6 @@ class UsageTrackingCompletions:
         self._context = context
 
     async def create(self, *args, **kwargs):
-        import os
 
         import openai
 
@@ -220,8 +219,10 @@ class UsageTrackingCompletions:
                 elif isinstance(e, (openai.AuthenticationError, openai.RateLimitError)) or "429" in err_msg or "401" in err_msg:
                     try:
                         if provider == "google":
-                            primary_key = os.getenv("GEMINI_API_KEY")
-                            google_key_backup = os.getenv("GOOGLE_API_KEY")
+                            from ...config.config import get_config
+                            config = get_config()
+                            primary_key = config.gemini_api_key
+                            google_key_backup = config.google_api_key
                             if google_key_backup and google_key_backup != primary_key:
                                 logger.warning("⚠️ Primary GEMINI_API_KEY exhausted. Rotating to backup...")
                                 response = await _execute(override_key=google_key_backup)

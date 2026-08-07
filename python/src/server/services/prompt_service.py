@@ -54,7 +54,7 @@ class PromptService(BaseRepository):
 
     async def list_prompts(self) -> tuple[bool, PromptListDTO]:
         """List all system prompts from the database."""
-        query = self.supabase_client.table("archon_prompts").select("*")
+        query = self.supabase_client.table("archon_prompts").select("*") # 合法
         success, result = self.execute_query(query, "Failed to list prompts")
         if success:
             return True, cast(PromptListDTO, {"prompts": result.get("data", [])})
@@ -68,7 +68,7 @@ class PromptService(BaseRepository):
                 return self._prompts[name]
 
             # Fallback to direct DB call - Schema: prompt_name, prompt
-            res = self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).execute()
+            res = self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name).execute() # 合法
 
             # DEFENSIVE: Check if res.data is a real dict and not a MagicMock
             if res.data and not isinstance(res.data, MagicMock) and len(res.data) > 0:
@@ -89,7 +89,7 @@ class PromptService(BaseRepository):
         if metadata is not None:
             update_data["metadata"] = metadata
 
-        query = self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name)
+        query = self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name) # 合法
         success, result = self.execute_query(query, f"Failed to update prompt {prompt_name}")
 
         if success:

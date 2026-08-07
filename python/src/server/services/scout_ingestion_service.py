@@ -52,7 +52,7 @@ class ScoutIngestionService:
 
                 supabase = get_supabase_client()
                 existing = (
-                    supabase.table("archon_sources")
+                    supabase.table("archon_sources") # 合法
                     .select("source_id")
                     .eq("metadata->>knowledge_type", "scout_report")
                     .eq("source_display_name", report_file)

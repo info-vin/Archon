@@ -2,28 +2,33 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from ....repositories.base_repository import BaseRepository
+
 logger = logging.getLogger(__name__)
 
 
-class SystemMetrics:
+
+
+class SystemMetrics(BaseRepository):
     """Handles SLA reliability and token usage tracking."""
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase: Any = supabase_client
+        super().__init__(supabase_client)
+        self.supabase: Any = self.supabase_client
 
     async def get_sla_reliability(self) -> dict[str, Any]:
         """6-Month SLA Attainment logic."""
         now = datetime.now(UTC)
         cutoff = (now - timedelta(days=180)).isoformat()
         try:
-            res = (
-                self.supabase.table("archon_tasks")
+            success, res = self.execute_query(
+                self.supabase.table("archon_tasks") # 合法
                 .select("id, completed_at, due_date")
                 .eq("status", "done")
-                .gt("completed_at", cutoff)
-                .execute()
+                .gt("completed_at", cutoff),
+                "Get SLA tasks"
             )
-            all_tasks = res.data or []
+            all_tasks = res.get("data", []) if success else []
             parsed_tasks = []
             for t in all_tasks:
                 if raw_comp := t.get("completed_at"):
@@ -95,9 +100,9 @@ class SystemMetrics:
         """Retrieves recent individual token usage transactions."""
         try:
             # Physical Fix: Remove JOIN query (PGRST200) as FK relationship may not exist
-            res = self.supabase.table("token_usage").select("*").order("created_at", desc=True).limit(limit).execute()
+            success, res = self.execute_query(self.supabase.table("token_usage").select("*").order("created_at", desc=True).limit(limit), "Get recent token usage") # 合法
             formatted = []
-            for row in res.data or []:
+            for row in (res.get("data", []) if success else []):
                 # Fallback for entities without profile mapping (e.g. Agents)
                 formatted.append(
                     {
@@ -133,18 +138,18 @@ class SystemMetrics:
             start_iso = f"{clean_date}T00:00:00+08:00"
             end_iso = f"{clean_date}T23:59:59+08:00"
 
-            res = (
-                self.supabase.table("archon_tasks")
+            success, res = self.execute_query(
+                self.supabase.table("archon_tasks") # 合法
                 .select("assignee_id, due_date, estimated_hours")
                 .in_("assignee_id", user_ids)
                 .neq("status", "done")
                 .or_("archived.is.null,archived.is.false")
                 .gte("due_date", start_iso)
-                .lte("due_date", end_iso)
-                .execute()
+                .lte("due_date", end_iso),
+                "Get team availability tasks"
             )
 
-            tasks = res.data or []
+            tasks = res.get("data", []) if success else []
 
             # 2. Establish busy intervals in timezone-aware datetimes
             busy_intervals = []

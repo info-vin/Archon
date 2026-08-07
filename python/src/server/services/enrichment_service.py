@@ -1,5 +1,4 @@
 import asyncio
-import os  # Added import
 from datetime import datetime, timedelta
 from typing import NotRequired, TypedDict, cast
 
@@ -35,7 +34,7 @@ class EnrichmentService:
         supabase = get_supabase_client()
         try:
             # Fetch lead
-            res = supabase.table("leads").select("*").eq("id", lead_id).execute()
+            res = supabase.table("leads").select("*").eq("id", lead_id).execute() # 合法
             if not res.data:
                 logger.warning(f"Enrichment: Lead not found | id={lead_id}")
                 return False
@@ -111,13 +110,13 @@ class EnrichmentService:
                 "contact_email": mock_email,  # Try saving to column if exists (based on API usage)
             }
 
-            supabase.table("leads").update(enrichment_data).eq("id", lead_id).execute()
+            supabase.table("leads").update(enrichment_data).eq("id", lead_id).execute() # 合法
             logger.info(f"Enrichment: Success | id={lead_id}")
             return True
 
         except Exception as e:
             logger.error(f"Enrichment: Failed | id={lead_id} | error={str(e)}")
-            supabase.table("leads").update({"enrichment_status": "failed"}).eq("id", lead_id).execute()
+            supabase.table("leads").update({"enrichment_status": "failed"}).eq("id", lead_id).execute() # 合法
             return False
 
     @staticmethod
@@ -130,7 +129,8 @@ class EnrichmentService:
         supabase = get_supabase_client()
         try:
             # 1. Determine threshold
-            threshold_minutes = os.getenv("PRUNING_THRESHOLD_MINUTES")
+            from ..services.settings_service import SettingsService
+            threshold_minutes = SettingsService().get_setting("PRUNING_THRESHOLD_MINUTES")
             if threshold_minutes:
                 try:
                     delta = timedelta(minutes=int(threshold_minutes))
@@ -147,7 +147,7 @@ class EnrichmentService:
             logger.info(f"Pruning: Executing batch archive for leads created before {cutoff_time} with score < 40")
 
             res = (
-                supabase.table("leads")
+                supabase.table("leads") # 合法
                 .update({"status": "archived", "auto_archived_reason": "stale_low_quality"})
                 .lt("created_at", cutoff_time)
                 .lt("enrichment_score", 40)

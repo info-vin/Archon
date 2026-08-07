@@ -50,7 +50,7 @@ class HealthService(BaseRepository):
     def check_db_health(self) -> bool:
         """Checks if the database is reachable and responding."""
 
-        query = self.supabase_client.table("profiles").select("id", count="exact").limit(1)
+        query = self.supabase_client.table("profiles").select("id", count="exact").limit(1) # 合法
         success, _ = self.execute_query(query, "DB health check failed")
         return success
 
@@ -78,7 +78,7 @@ class HealthService(BaseRepository):
             return {"status": "unhealthy", "score": 0.0, "details": {"error": "Critical: Database connection lost."}}
 
         # 2. Knowledge Alignment Check (70% weight)
-        query_sources = self.supabase_client.table("archon_sources").select("source_id", count="exact")
+        query_sources = self.supabase_client.table("archon_sources").select("source_id", count="exact") # 合法
         success, res = self.execute_query(query_sources, "Error counting sources", require_data=False)
         if not success:
             logger.error("💥 System Integrity Calculation Failed")
@@ -95,7 +95,7 @@ class HealthService(BaseRepository):
         if total_count > 0:
 
             query_indexed = (
-                self.supabase_client.table("archon_crawled_pages")
+                self.supabase_client.table("archon_crawled_pages") # 合法
                 .select("source_id", count="exact")
                 .not_.is_("embedding", "null")
             )
@@ -146,7 +146,7 @@ class HealthService(BaseRepository):
         since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days)).isoformat()
 
         query = (
-            self.supabase_client.table("archon_logs")
+            self.supabase_client.table("archon_logs") # 合法
             .select("*")
             .eq("source", "clockwork-scheduler")
             .gt("created_at", since)

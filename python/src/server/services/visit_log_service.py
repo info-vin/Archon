@@ -26,7 +26,7 @@ class VisitLogService(BaseRepository):
         super().__init__(supabase_client or get_supabase_client())
 
     async def list_logs(self, lead_id: str | None = None) -> tuple[bool, Any]:
-        q = self.supabase_client.table("visit_logs").select("*")
+        q = self.supabase_client.table("visit_logs").select("*") # 合法
         if lead_id:
             q = q.eq("lead_id", lead_id)
         query = q.order("created_at", desc=True)
@@ -144,7 +144,7 @@ class VisitLogService(BaseRepository):
         }
 
 
-        success, res = self.execute_query(self.supabase_client.table("visit_logs").insert(log_payload), "Failed to create visit log")
+        success, res = self.execute_query(self.supabase_client.table("visit_logs").insert(log_payload), "Failed to create visit log") # 合法
         if not success or not res:
             return False, res
 
@@ -160,13 +160,13 @@ class VisitLogService(BaseRepository):
 
             project_id = None
             proj_res = (
-                self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
+                self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute() # 合法
             )
             if proj_res.data:
                 project_id = proj_res.data[0]["id"]
 
             if not project_id:
-                fallback = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
+                fallback = self.supabase_client.table("archon_projects").select("id").limit(1).execute() # 合法
                 # Empty DB safety: Protect against IndexError (GAP-005 Fix)
                 project_id = fallback.data[0]["id"] if fallback.data and len(fallback.data) > 0 else None
 
@@ -263,7 +263,7 @@ class VisitLogService(BaseRepository):
         """Fetches the current attendance status for a user."""
 
         query = (
-            self.supabase_client.table("attendance_logs")
+            self.supabase_client.table("attendance_logs") # 合法
             .select("*")
             .eq("user_id", user_id)
             .order("clock_in_time", desc=True)

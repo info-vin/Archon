@@ -134,7 +134,7 @@ async def generate_task_from_alert_logic(
         details = {}
         source_table = "archon_logs"
 
-        res_alert = task_service_instance.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute()
+        res_alert = task_service_instance.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute() # 合法
         alert_data = res_alert.data[0] if (res_alert.data and len(res_alert.data) > 0) else None
 
         if alert_data:
@@ -142,7 +142,7 @@ async def generate_task_from_alert_logic(
             context_msg = alert_data.get("message", "System Alert")
         else:
             res_ethics = (
-                task_service_instance.supabase_client.table("archon_ethics_events")
+                task_service_instance.supabase_client.table("archon_ethics_events") # 合法
                 .select("*")
                 .eq("id", alert_id)
                 .execute()
@@ -167,13 +167,13 @@ async def generate_task_from_alert_logic(
         context_str = f"ALERT: {context_msg}\n"
 
         if lead_id:
-            res_lead = task_service_instance.supabase_client.table("leads").select("*").eq("id", lead_id).execute()
+            res_lead = task_service_instance.supabase_client.table("leads").select("*").eq("id", lead_id).execute() # 合法
             if res_lead.data and len(res_lead.data) > 0:
                 lead_data_local = res_lead.data[0]
                 context_str += f"COMPANY: {lead_data_local['company_name']}\n"
                 context_str += f"IDENTIFIED NEED: {lead_data_local.get('identified_need', 'None')}\n"
                 res_logs = (
-                    task_service_instance.supabase_client.table("visit_logs")
+                    task_service_instance.supabase_client.table("visit_logs") # 合法
                     .select("summary")
                     .eq("lead_id", lead_id)
                     .limit(3)
@@ -185,7 +185,7 @@ async def generate_task_from_alert_logic(
                         context_str += f"- {_log['summary']}\n"
 
         elif post_id:
-            res_post = task_service_instance.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
+            res_post = task_service_instance.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute() # 合法
             if res_post.data and len(res_post.data) > 0:
                 post_data_local = res_post.data[0]
                 context_str += f"CONTEXT: Content Bottleneck\nTITLE: {post_data_local['title']}\nSTATUS: {post_data_local['status']}\n"
@@ -273,13 +273,13 @@ async def generate_task_from_alert_logic(
 
         # 5. Get Project (Field Ops preferred)
         p_res = (
-            task_service_instance.supabase_client.table("archon_projects")
+            task_service_instance.supabase_client.table("archon_projects") # 合法
             .select("id")
             .ilike("title", "%Field%")
             .execute()
         )
         if not (p_res.data and len(p_res.data) > 0):
-            p_res = task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute()
+            p_res = task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute() # 合法
 
         if not (p_res.data and len(p_res.data) > 0):
             return False, {"error": "Critical: No project found in database to attach task."}
@@ -306,11 +306,11 @@ async def generate_task_from_alert_logic(
                     "status": "dispatched",
                     "dispatched_task_id": result["task"]["id"],
                 }
-                task_service_instance.supabase_client.table("archon_logs").update(
+                task_service_instance.supabase_client.table("archon_logs").update( # 合法
                     {"details": updated_details, "level": "INFO"}
                 ).eq("id", alert_id).execute()
             else:
-                task_service_instance.supabase_client.table("archon_ethics_events").update(
+                task_service_instance.supabase_client.table("archon_ethics_events").update( # 合法
                     {
                         "resolved": True,
                         "resolution_notes": f"Dispatched: {result['task']['id']}",

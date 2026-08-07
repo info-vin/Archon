@@ -20,7 +20,7 @@ class ReportService(BaseRepository):
         super().__init__(supabase_client)
 
     def _get_leads_context(self, cutoff_date: str) -> str:
-        query = self.supabase_client.table("leads").select("company_name, job_title, status").gt("created_at", cutoff_date)
+        query = self.supabase_client.table("leads").select("company_name, job_title, status").gt("created_at", cutoff_date) # 合法
         success, leads_res = self.execute_query(query, "Failed to get leads")
         leads = leads_res.get("data", []) if success else []
         leads_summary = f"Total New Leads: {len(leads)}\n"
@@ -39,7 +39,7 @@ class ReportService(BaseRepository):
         return leads_summary
 
     def _get_token_context(self, cutoff_date: str) -> str:
-        query = self.supabase_client.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", cutoff_date)
+        query = self.supabase_client.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", cutoff_date) # 合法
         success, token_res = self.execute_query(query, "Failed to get token usage")
         token_data = token_res.get("data", []) if success else []
         total_input = sum(row.get("input_tokens", 0) or 0 for row in token_data)
@@ -68,7 +68,7 @@ class ReportService(BaseRepository):
         return logs_summary
 
     def _get_tasks_context(self, cutoff_date: str) -> str:
-        query = self.supabase_client.table("archon_tasks").select("title, status, assignee").gt("updated_at", cutoff_date)
+        query = self.supabase_client.table("archon_tasks").select("title, status, assignee").gt("updated_at", cutoff_date) # 合法
         success, tasks_res = self.execute_query(query, "Failed to get tasks updated")
         tasks = tasks_res.get("data", []) if success else []
         tasks_summary = f"Total Tasks Active/Updated: {len(tasks)}\n"
@@ -133,7 +133,7 @@ class ReportService(BaseRepository):
         from src.server.services.projects.task_service import task_service
         from src.server.services.system.telegram_service import telegram_service
 
-        query = self.supabase_client.table("archon_projects").select("id").limit(1)
+        query = self.supabase_client.table("archon_projects").select("id").limit(1) # 合法
         success, p_res = self.execute_query(query, "Failed to get projects")
         if not success or not p_res.get("data"):
             logger.warning(f"ReportService: No projects found to attach {title_prefix} summary task.")
@@ -163,7 +163,7 @@ class ReportService(BaseRepository):
                 logger.info(f"Dispatching Group Chat for {task_id}...")
                 asyncio.create_task(agent_service.run_agent_task(task_id=task_id, agent_id=assignee_id))
 
-            insert_query = self.supabase_client.table("archon_logs").insert(
+            insert_query = self.supabase_client.table("archon_logs").insert( # 合法
                 {
                     "source": "report-service", "level": "INFO",
                     "message": f"{title_prefix} Executive Summary processed. Task: {task_id}",

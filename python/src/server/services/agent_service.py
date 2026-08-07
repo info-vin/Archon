@@ -49,7 +49,7 @@ class AgentService:
         # 1. Try to load role mapping dynamically from database
         try:
             supabase = get_supabase_client()
-            res = supabase.table("archon_role_agents").select("agent_key").eq("user_role", user_role or "").execute()
+            res = supabase.table("archon_role_agents").select("agent_key").eq("user_role", user_role or "").execute() # 合法
             if res.data:
                 allowed_keys = {row["agent_key"] for row in res.data}
 

@@ -12,7 +12,6 @@ logger = get_logger(__name__)
 async def run_infrastructure_audit() -> None:
     """Phase 6.1 (now 5.9.2): Patrols the 3 main infrastructures (Vercel, Supabase, HF)."""
     logger.info("🛡️ Clockwork: Starting Infrastructure Patrol...")
-    import os
 
     import httpx
 
@@ -38,7 +37,7 @@ async def run_infrastructure_audit() -> None:
     # 2. Supabase (pg_stat_activity)
     try:
         res = repo.execute_query(
-            lambda: supabase.table("pg_stat_activity").select("pid", count="exact").limit(1).execute(),
+            lambda: supabase.table("pg_stat_activity").select("pid", count="exact").limit(1).execute(), # 合法
             "Check Supabase Connections",
             require_data=False
         )
@@ -49,7 +48,8 @@ async def run_infrastructure_audit() -> None:
         errors.append(f"Supabase: pg_stat_activity check failed ({e})")
 
     # 3. HF Endpoint
-    hf_endpoint = os.getenv("HUGGINGFACE_ENDPOINT")
+    from src.server.services.settings_service import SettingsService
+    hf_endpoint = SettingsService(supabase).get_setting("HUGGINGFACE_ENDPOINT")
     if hf_endpoint:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -102,7 +102,7 @@ async def run_infrastructure_audit() -> None:
                 threshold_tokens = config.l2_tokens_days
                 dormant_date = (datetime.now(UTC) - timedelta(days=config.l2_leads_days)).isoformat()
                 repo.execute_query(
-                    lambda: supabase.table("leads").delete().eq("status", "dormant").lt("created_at", dormant_date).execute(),
+                    lambda: supabase.table("leads").delete().eq("status", "dormant").lt("created_at", dormant_date).execute(), # 合法
                     "Prune dormant leads",
                     require_data=False
                 )
@@ -124,7 +124,7 @@ async def run_infrastructure_audit() -> None:
 
                 crawled_date = (datetime.now(UTC) - timedelta(days=config.l3_crawled_days)).isoformat()
                 repo.execute_query(
-                    lambda: supabase.table("archon_crawled_pages").delete().lt("created_at", crawled_date).execute(),
+                    lambda: supabase.table("archon_crawled_pages").delete().lt("created_at", crawled_date).execute(), # 合法
                     "Prune crawled pages",
                     require_data=False
                 )
@@ -135,7 +135,7 @@ async def run_infrastructure_audit() -> None:
 
             if is_level_3:
                 repo.execute_query(
-                    lambda: supabase.table("archon_logs").delete().lt("created_at", log_date).execute(),
+                    lambda: supabase.table("archon_logs").delete().lt("created_at", log_date).execute(), # 合法
                     "Prune all logs (Level 3)",
                     require_data=False
                 )
@@ -147,7 +147,7 @@ async def run_infrastructure_audit() -> None:
                 )
 
             repo.execute_query(
-                lambda: supabase.table("token_usage").delete().lt("created_at", token_date).execute(),
+                lambda: supabase.table("token_usage").delete().lt("created_at", token_date).execute(), # 合法
                 "Prune token usage",
                 require_data=False
             )
@@ -165,7 +165,7 @@ async def run_infrastructure_audit() -> None:
     if errors:
         logger.error(f"❌ Clockwork: Infrastructure Patrol found issues: {', '.join(errors)}")
         repo.execute_query(
-            lambda: supabase.table("archon_logs").insert({
+            lambda: supabase.table("archon_logs").insert({ # 合法
                 "source": "infra-patrol",
                 "level": "ERROR",
                 "message": "Infrastructure Patrol detected anomalies",

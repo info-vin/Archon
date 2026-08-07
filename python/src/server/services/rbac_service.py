@@ -59,7 +59,7 @@ class RBACService(BaseRepository):
             return self._matrix_cache
 
         # Try to load from Database
-        query = self.supabase_client.table("archon_roles_permissions").select("role, permissions")
+        query = self.supabase_client.table("archon_roles_permissions").select("role, permissions") # 合法
         success, result = self.execute_query(query, "Failed to load dynamic RBAC matrix from DB", require_data=False)
 
         if success and result.get("data"):
@@ -102,7 +102,7 @@ class RBACService(BaseRepository):
         try:
             # 1. Fetch static settings from archon_settings
             keys = [f"CRAWL_MAX_DEPTH_{suffix}", f"CRAWL_CONCURRENT_MAX_{suffix}", "CRAWL_ALLOWED_DOMAINS_RESTRICTED"]
-            query = self.supabase_client.table("archon_settings").select("key, value").in_("key", keys)
+            query = self.supabase_client.table("archon_settings").select("key, value").in_("key", keys) # 合法
             success, result = self.execute_query(query, "Failed to fetch settings", require_data=False)
 
             if success and result.get("data"):
@@ -123,7 +123,7 @@ class RBACService(BaseRepository):
             # 2. 物理加固：從 archon_crawler_targets 動態抓取 David 在 3737 設定的白名單
             # 這實現了 David 在 3737 設定 URL 與後端爬蟲權限的物理連動
             dynamic_query = (
-                self.supabase_client.table("archon_crawler_targets").select("whitelist, target_url").eq("is_active", True)
+                self.supabase_client.table("archon_crawler_targets").select("whitelist, target_url").eq("is_active", True) # 合法
             )
             d_success, dynamic_result = self.execute_query(dynamic_query, "Failed to fetch dynamic crawler targets", require_data=False)
 
@@ -270,7 +270,7 @@ class RBACService(BaseRepository):
             return set()
 
         # Fetch from archon_settings for dynamic restrictions
-        query = self.supabase_client.table("archon_settings").select("key, value").in_("key", ["MCP_RESTRICTED_BASE", f"MCP_RESTRICTED_{role.upper()}"])
+        query = self.supabase_client.table("archon_settings").select("key, value").in_("key", ["MCP_RESTRICTED_BASE", f"MCP_RESTRICTED_{role.upper()}"]) # 合法
         success, result = self.execute_query(query, "Failed to fetch MCP restrictions", require_data=False)
 
         restricted_tools = set()

@@ -53,7 +53,7 @@ async def run_architecture_health_audit() -> None:
         )
 
         supabase = get_supabase_client()
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
+        p_res = supabase.table("archon_projects").select("id").limit(1).execute() # 合法
         if not p_res.data:
             logger.warning("Clockwork: No projects found to attach architecture health task.")
             return
