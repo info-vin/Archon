@@ -5,13 +5,12 @@ import pytest
 from src.server.services.scheduler.jobs.sentinel_patrol import analyze_token_usage
 from src.server.services.system.telegram_service import TelegramService
 
+from src.server.schemas.settings import NotificationConfig
 
 @pytest.mark.asyncio
-async def test_telegram_service_send_message(monkeypatch):
-    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake_token")
-    monkeypatch.setenv("TELEGRAM_CHAT_ID", "fake_chat_id")
-
+async def test_telegram_service_send_message():
     service = TelegramService()
+    service._get_config = MagicMock(return_value=NotificationConfig(TELEGRAM_TOKEN="fake_token", TELEGRAM_TO="fake_chat_id"))
 
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.return_value.status_code = 200
