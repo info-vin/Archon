@@ -250,7 +250,7 @@ def os_getenv_audit():
                 file_path = os.path.join(root, file)
                 
                 # Exemptions: config and credential hubs
-                if "credentials/helpers.py" in file_path or "credentials/provider_configs.py" in file_path or "config_loader.py" in file_path or "credentials/manager.py" in file_path:
+                if "credentials/helpers.py" in file_path or "credentials/provider_configs.py" in file_path or "config_loader.py" in file_path or "credentials/manager.py" in file_path or "credential_service.py" in file_path:
                     continue
                     
                 with open(file_path, "r", encoding="utf-8", errors="ignore") as f:

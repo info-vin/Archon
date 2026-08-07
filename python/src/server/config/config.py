@@ -27,6 +27,11 @@ class EnvironmentConfig:
     port: int  # Required - no default
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
+    supabase_db_url: str | None = None
+    offline_mode: bool = False
+    archon_env: str = ""
+    space_id: str | None = None
+    is_testing: bool = False
     host: str = "0.0.0.0"
     transport: str = "sse"
     token_pricing: dict[str, Any] = field(default_factory=dict)
@@ -157,6 +162,12 @@ def load_environment_config() -> EnvironmentConfig:
     if not supabase_service_key:
         raise ConfigurationError("SUPABASE_SERVICE_KEY environment variable is required")
 
+    supabase_db_url = os.getenv("SUPABASE_DB_URL")
+    offline_mode = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+    archon_env = os.getenv("ARCHON_ENV", "")
+    space_id = os.getenv("SPACE_ID")
+    is_testing = os.getenv("TESTING", "False").lower() == "true" or bool(os.getenv("PYTEST_CURRENT_TEST"))
+
     # Validate required fields
     if openai_api_key:
         validate_openai_api_key(openai_api_key)
@@ -248,6 +259,11 @@ def load_environment_config() -> EnvironmentConfig:
         openai_api_key=openai_api_key,
         supabase_url=supabase_url,
         supabase_service_key=supabase_service_key,
+        supabase_db_url=supabase_db_url,
+        offline_mode=offline_mode,
+        archon_env=archon_env,
+        space_id=space_id,
+        is_testing=is_testing,
         host=host,
         port=port,
         transport=transport,

@@ -8,7 +8,6 @@ Implements a consistent Lifecycle & State-Driven architecture:
 3. Stateful Bi-weekly Maintenance (Run once every 14 days)
 """
 
-import os
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -62,10 +61,12 @@ class SchedulerService:
     async def _update_last_run(self, job_id: str) -> None:
         """Persists the last run timestamp to the database."""
         try:
+            from src.server.config.config import get_config
             from src.server.services.settings_service import SettingsService
 
             settings = SettingsService()
-            env_prefix = os.environ.get("ARCHON_ENV", "")
+            config = get_config()
+            env_prefix = config.archon_env
             if env_prefix and not env_prefix.endswith("_"):
                 env_prefix += "_"
             db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
@@ -77,10 +78,12 @@ class SchedulerService:
     async def _get_last_run(self, job_id: str) -> datetime | None:
         """Retrieves the last run timestamp from the database."""
         try:
+            from src.server.config.config import get_config
             from src.server.services.settings_service import SettingsService
 
             settings = SettingsService()
-            env_prefix = os.environ.get("ARCHON_ENV", "")
+            config = get_config()
+            env_prefix = config.archon_env
             if env_prefix and not env_prefix.endswith("_"):
                 env_prefix += "_"
             db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
@@ -92,7 +95,9 @@ class SchedulerService:
         return None
 
     async def _should_run_local_only(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
-        if os.environ.get("SPACE_ID") is not None:
+        from src.server.config.config import get_config
+        config = get_config()
+        if config.space_id is not None:
             return False
         return await self._should_run_daily(job_id, trigger=trigger)
 

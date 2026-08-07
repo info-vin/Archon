@@ -1,5 +1,4 @@
 import asyncio
-import os
 import time
 
 from ...config.logfire_config import get_logger
@@ -27,7 +26,8 @@ class GlobalThrottler:
         Wait asynchronously until enough capacity is available for the requested model tier.
         Bypasses throttling entirely if TESTING=True is set.
         """
-        if os.getenv("TESTING", "False").lower() == "true" or os.getenv("PYTEST_CURRENT_TEST"):
+        from src.server.config.config import get_config
+        if get_config().is_testing:
             return
 
         if tier not in cls._locks:
