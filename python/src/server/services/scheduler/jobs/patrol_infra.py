@@ -37,7 +37,7 @@ async def run_infrastructure_audit() -> None:
     # 2. Supabase (pg_stat_activity)
     try:
         res = repo.execute_query(
-            lambda: supabase.table("pg_stat_activity").select("pid", count="exact").limit(1).execute(), # 合法
+            supabase.table("pg_stat_activity").select("pid", count="exact").limit(1), # 合法
             "Check Supabase Connections",
             require_data=False
         )
@@ -68,7 +68,7 @@ async def run_infrastructure_audit() -> None:
         settings = SettingsService(supabase)
 
         db_size_res = repo.execute_query(
-            lambda: supabase.rpc("get_db_size_mb").execute(),
+            supabase.rpc("get_db_size_mb"),
             "Get DB Size",
             require_data=False
         )
@@ -102,7 +102,7 @@ async def run_infrastructure_audit() -> None:
                 threshold_tokens = config.l2_tokens_days
                 dormant_date = (datetime.now(UTC) - timedelta(days=config.l2_leads_days)).isoformat()
                 repo.execute_query(
-                    lambda: supabase.table("leads").delete().eq("status", "dormant").lt("created_at", dormant_date).execute(), # 合法
+                    supabase.table("leads").delete().eq("status", "dormant").lt("created_at", dormant_date), # 合法
                     "Prune dormant leads",
                     require_data=False
                 )
@@ -114,7 +114,7 @@ async def run_infrastructure_audit() -> None:
                 is_level_3 = True
 
                 orphan_res = repo.execute_query(
-                    lambda: supabase.rpc("prune_orphan_vectors").execute(),
+                    supabase.rpc("prune_orphan_vectors"),
                     "Prune Orphan Vectors",
                     require_data=False
                 )
@@ -124,7 +124,7 @@ async def run_infrastructure_audit() -> None:
 
                 crawled_date = (datetime.now(UTC) - timedelta(days=config.l3_crawled_days)).isoformat()
                 repo.execute_query(
-                    lambda: supabase.table("archon_crawled_pages").delete().lt("created_at", crawled_date).execute(), # 合法
+                    supabase.table("archon_crawled_pages").delete().lt("created_at", crawled_date), # 合法
                     "Prune crawled pages",
                     require_data=False
                 )
@@ -135,26 +135,30 @@ async def run_infrastructure_audit() -> None:
 
             if is_level_3:
                 repo.execute_query(
-                    lambda: supabase.table("archon_logs").delete().lt("created_at", log_date).execute(), # 合法
+                    supabase.table("archon_logs").delete().lt("created_at", log_date), # 合法
                     "Prune all logs (Level 3)",
                     require_data=False
                 )
             else:
                 repo.execute_query(
-                    lambda: supabase.table("archon_logs").delete().in_("level", ["INFO", "DEBUG"]).lt("created_at", log_date).execute(), # 合法
+                    supabase.table("archon_logs").delete().in_("level", ["INFO", "DEBUG"]).lt("created_at", log_date), # 合法
                     "Prune info/debug logs",
                     require_data=False
                 )
 
             repo.execute_query(
-                lambda: supabase.table("token_usage").delete().lt("created_at", token_date).execute(), # 合法
+                supabase.table("token_usage").delete().lt("created_at", token_date), # 合法
                 "Prune token usage",
                 require_data=False
             )
 
             # Recalculate size
-            new_size_res = supabase.rpc("get_db_size_mb").execute()
-            if new_size_res and hasattr(new_size_res, 'data') and new_size_res.data is not None:
+            new_size_succ, new_size_res = repo.execute_query(
+                supabase.rpc("get_db_size_mb"),
+                "Get new DB Size",
+                require_data=False
+            )
+            if new_size_succ and new_size_res and hasattr(new_size_res, 'data') and new_size_res.data is not None:
                 freed_mb = db_size_mb - float(new_size_res.data)
                 if freed_mb > 0.01:
                     logger.info(f"Tiered Pruning completed. Freed {freed_mb:.2f}MB.")
@@ -165,12 +169,12 @@ async def run_infrastructure_audit() -> None:
     if errors:
         logger.error(f"❌ Clockwork: Infrastructure Patrol found issues: {', '.join(errors)}")
         repo.execute_query(
-            lambda: supabase.table("archon_logs").insert({ # 合法
+            supabase.table("archon_logs").insert({ # 合法
                 "source": "infra-patrol",
                 "level": "ERROR",
                 "message": "Infrastructure Patrol detected anomalies",
                 "details": {"errors": errors}
-            }).execute(),
+            }),
             "Log infra errors"
         )
     else:

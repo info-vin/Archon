@@ -1,4 +1,3 @@
-import os
 from typing import Any, cast
 
 from ...config.logfire_config import get_logger
@@ -22,7 +21,8 @@ async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[s
         provider = all_settings.get(provider_key)
 
         if not provider:
-            provider = os.getenv(provider_key, "openai").lower()
+            provider_val = await manager.get_credential(provider_key, "openai")
+            provider = str(provider_val).lower() if provider_val else "openai"
 
         api_key = await _get_provider_api_key(manager, provider)
         base_url = _get_provider_base_url(provider, all_settings)
@@ -40,10 +40,10 @@ async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[s
 
     except Exception as e:
         logger.error(f"Error getting active provider for {service_type}: {e}")
-        provider = os.getenv("LLM_PROVIDER", "openai")
+        provider = await manager.get_credential("LLM_PROVIDER", "openai")
         return {
             "provider": provider,
-            "api_key": os.getenv("OPENAI_API_KEY"),
+            "api_key": await manager.get_credential("OPENAI_API_KEY"),
             "base_url": None,
             "chat_model": "",
             "embedding_model": "",
@@ -76,13 +76,14 @@ async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
             provider = all_settings.get(provider_key)
             if not provider:
                 if pt["type"] == "primary":
-                    provider = all_settings.get("LLM_PROVIDER") or os.getenv("LLM_PROVIDER", "openai").lower()
+                    provider_val = all_settings.get("LLM_PROVIDER") or await manager.get_credential("LLM_PROVIDER", "openai")
+                    provider = str(provider_val).lower() if provider_val else "openai"
                 else:
                     continue
 
             embedding_model = all_settings.get(model_key)
             if not embedding_model and pt["type"] == "primary":
-                embedding_model = all_settings.get("EMBEDDING_MODEL") or os.getenv("EMBEDDING_MODEL", "")
+                embedding_model = all_settings.get("EMBEDDING_MODEL") or await manager.get_credential("EMBEDDING_MODEL", "")
 
             if not embedding_model:
                 if provider == "google":

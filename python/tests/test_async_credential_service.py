@@ -352,7 +352,7 @@ class TestAsyncCredentialService:
             "EMBEDDING_API_KEY_FALLBACK": "key-b",
         }
 
-        async def mock_get_credential(key):
+        async def mock_get_credential(key, default=None):
             if key == "EMBEDDING_API_KEY":
                 return "key-a"
             if key == "EMBEDDING_API_KEY_FALLBACK":
@@ -381,7 +381,7 @@ class TestAsyncCredentialService:
             "EMBEDDING_MODEL": "model-a",
         }
 
-        async def mock_get_credential(key):
+        async def mock_get_credential(key, default=None):
             if key == "OPENAI_API_KEY":
                 return "general_openai_key"
             return None
@@ -405,7 +405,7 @@ class TestAsyncCredentialService:
             "EMBEDDING_MODEL": "model-b",
         }
 
-        async def mock_get_credential(key):
+        async def mock_get_credential(key, default=None):
             if key == "GOOGLE_API_KEY":
                 return "general_google_key"
             return None
@@ -424,7 +424,7 @@ class TestAsyncCredentialService:
     @pytest.mark.asyncio
     async def test_get_embedding_provider_configs_fallback_defaults(self):
         """Test get_embedding_provider_configs falls back to defaults when nothing is configured."""
-        async def mock_get_credential(key):
+        async def mock_get_credential(key, default=None):
             if key == "OPENAI_API_KEY":
                 return "fallback_openai_key"
             return None

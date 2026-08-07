@@ -39,12 +39,13 @@ async def test_run_infrastructure_audit_success(mock_getenv, mock_get, mock_repo
         (True, MockCount()), # Get DB Size
         (True, None),        # Prune info/debug logs
         (True, None),        # Prune token usage
+        (True, MockCount()), # Get new DB Size
     ]
 
     await run_infrastructure_audit()
 
     assert mock_get.call_count == 2
-    assert mock_repo.execute_query.call_count == 4
+    assert mock_repo.execute_query.call_count == 5
 
 
 @pytest.mark.asyncio
@@ -81,11 +82,12 @@ async def test_run_infrastructure_audit_failure(mock_getenv, mock_get, mock_repo
         (True, MockCount()), # Get DB Size
         (True, None),        # Prune info/debug logs
         (True, None),        # Prune token usage
+        (True, MockCount()), # Get new DB Size
         (True, None)         # Log infra errors
     ]
 
     await run_infrastructure_audit()
 
-    assert mock_repo.execute_query.call_count == 5
-    log_call = mock_repo.execute_query.call_args_list[4]
+    assert mock_repo.execute_query.call_count == 6
+    log_call = mock_repo.execute_query.call_args_list[5]
     assert "Log infra errors" in str(log_call)
