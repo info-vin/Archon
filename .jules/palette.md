@@ -13,3 +13,6 @@
 ## 2026-08-05 - Missing Focus Rings on AudioPlayer Play/Pause Button
 **Learning:** Found that the main play/pause button in `AudioPlayer` lacked keyboard focus indicators, breaking accessibility for keyboard users navigating audio content. Additionally, the button lacked an `aria-busy` attribute during loading states, which is important for screen reader context.
 **Action:** When adding or reviewing interactive audio or media player controls, always ensure explicit focus rings (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500`) are applied and `aria-busy` is utilized during asynchronous audio loading states.
+## 2024-08-07 - Add focus visible styles to ActiveForce team member button
+**Learning:** Found a pattern where icon-only action buttons inside mapped lists (like team member cards) often lack proper focus rings, hindering keyboard navigation for screen readers or power users.
+**Action:** Always ensure mapped UI components with actionable elements have explicitly defined `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` tailwind classes on them.
