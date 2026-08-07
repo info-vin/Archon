@@ -46,10 +46,15 @@ class LibrarianDirectStrategy(BaseAgentStrategy):
         try:
             target_id = task_data["crawler_target_id"]
             supabase = get_supabase_client()
-            res = supabase.table("archon_crawler_targets").select("*").eq("id", target_id).execute() # 合法
-            if not res.data:
+            from src.server.repositories.base_repository import BaseRepository
+            repo = BaseRepository(supabase)
+            success, res = repo.execute_query(
+                supabase.table("archon_crawler_targets").select("*").eq("id", target_id),
+                "Fetch crawler target"
+            )
+            if not success or not res.get("data"):
                 raise ValueError(f"Crawler target {target_id} not found")
-            target = res.data[0]
+            target = res["data"][0]
 
             crawler = CrawlingService()
             await crawler.orchestrate_crawl(

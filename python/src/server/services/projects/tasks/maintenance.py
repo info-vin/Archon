@@ -66,16 +66,11 @@ async def archive_task_logic(
             "updated_at": datetime.now().isoformat(),
         }
 
-        def _archive_query() -> Any:
-            return (
-                task_service_instance.supabase_client.table("archon_tasks") # 合法
-                .update(archive_data)
-                .eq("id", task_id)
-                .execute()
-            )
-
         success_archive, archive_result = task_service_instance.execute_query(
-            query_func=_archive_query, error_context=f"Failed to archive task {task_id}"
+            task_service_instance.supabase_client.table("archon_tasks") # 合法
+            .update(archive_data)
+            .eq("id", task_id),
+            error_context=f"Failed to archive task {task_id}"
         )
 
         if success_archive:
@@ -95,21 +90,29 @@ async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) 
         cutoff_date = (datetime.now() - timedelta(days=days_old)).isoformat()
         logger.info(f"Pruning archived tasks older than {days_old} days (cutoff: {cutoff_date})")
 
-        tasks_to_prune = (
+        success_prune, tasks_to_prune = task_service_instance.execute_query(
             task_service_instance.supabase_client.table("archon_tasks") # 合法
             .select("id")
             .eq("archived", True)
-            .lt("archived_at", cutoff_date)
-            .execute()
+            .lt("archived_at", cutoff_date),
+            error_context="Failed to query tasks to prune"
         )
+        if not success_prune:
+            return False, cast(dict[str, Any], tasks_to_prune)
 
-        count = len(tasks_to_prune.data) if tasks_to_prune.data else 0
+        count = len(tasks_to_prune["data"]) if tasks_to_prune.get("data") else 0
 
         if count > 0:
-            task_service_instance.supabase_client.table("archon_tasks").delete().eq("archived", True).lt( # 合法
-                "archived_at", cutoff_date
-            ).execute()
-            logger.info(f"Successfully pruned {count} tasks")
+            success_delete, _ = task_service_instance.execute_query(
+                task_service_instance.supabase_client.table("archon_tasks").delete().eq("archived", True).lt( # 合法
+                    "archived_at", cutoff_date
+                ),
+                error_context="Failed to prune tasks"
+            )
+            if success_delete:
+                logger.info(f"Successfully pruned {count} tasks")
+            else:
+                logger.warning(f"Failed to execute delete query for pruning")
 
         return True, {"pruned_count": count, "cutoff_date": cutoff_date}
     except Exception as e:

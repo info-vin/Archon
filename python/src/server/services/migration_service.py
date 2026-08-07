@@ -78,19 +78,27 @@ class MigrationService:
         supabase = self._get_supabase_client()
 
         # Direct Probe (Most reliable across all Supabase configs)
-        try:
-            # Try new standard first
-            supabase.table("schema_migrations").select("version").limit(0).execute() # 合法
+        from src.server.repositories.base_repository import BaseRepository
+        repo = BaseRepository(supabase)
+        success_new, res_new = repo.execute_query(
+            supabase.table("schema_migrations").select("version").limit(0),
+            "Check new standard",
+            max_retries=0
+        )
+        if success_new:
             self._table_name = "schema_migrations"
             return True
-        except Exception:
-            try:
-                # Fallback to legacy
-                supabase.table("archon_migrations").select("id").limit(0).execute() # 合法
-                self._table_name = "archon_migrations"
-                return True
-            except Exception:
-                return False
+
+        success_legacy, res_legacy = repo.execute_query(
+            supabase.table("archon_migrations").select("id").limit(0),
+            "Check legacy standard",
+            max_retries=0
+        )
+        if success_legacy:
+            self._table_name = "archon_migrations"
+            return True
+
+        return False
 
     async def get_applied_migrations(self) -> list[MigrationRecord]:
         """
@@ -110,9 +118,14 @@ class MigrationService:
             # Determine order column based on table name (Physical Hardening)
             order_col = "migrated_at" if self._table_name == "schema_migrations" else "applied_at"
 
-            result = supabase.table(self._table_name).select("*").order(order_col, desc=True).execute() # 合法
+            from src.server.repositories.base_repository import BaseRepository
+            repo = BaseRepository(supabase)
+            success, result = repo.execute_query(
+                supabase.table(self._table_name).select("*").order(order_col, desc=True),
+                "Fetch applied migrations"
+            )
 
-            return [MigrationRecord(row) for row in result.data]
+            return [MigrationRecord(row) for row in result.get("data", [])] if success else []
         except Exception as e:
             logger.error(f"Error fetching applied migrations: {e}")
             # Return empty list if we can't fetch migrations

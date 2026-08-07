@@ -49,17 +49,19 @@ class ScoutIngestionService:
 
                 # Deduplication check: Has this file been indexed?
                 from ..utils import get_supabase_client
+                from ..repositories.base_repository import BaseRepository
 
                 supabase = get_supabase_client()
-                existing = (
+                base_repo = BaseRepository(supabase)
+                success, existing_dict = base_repo.execute_query(
                     supabase.table("archon_sources") # 合法
                     .select("source_id")
                     .eq("metadata->>knowledge_type", "scout_report")
-                    .eq("source_display_name", report_file)
-                    .execute()
+                    .eq("source_display_name", report_file),
+                    error_context="Failed to query archon_sources"
                 )
 
-                if existing.data:
+                if success and existing_dict.get("data"):
                     continue
 
                 async with aiofiles.open(file_path, encoding="utf-8") as f:

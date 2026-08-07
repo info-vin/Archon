@@ -9,26 +9,28 @@ from typing import Any
 from ...config.logfire_config import safe_logfire_error
 
 
-class KnowledgeRepository:
+from src.server.repositories.base_repository import BaseRepository
+
+class KnowledgeRepository(BaseRepository):
     """
     Repository for database operations related to knowledge items.
     """
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase = supabase_client
+        super().__init__(supabase_client)
 
     async def get_document_counts_batch(self, source_ids: list[str]) -> dict[str, int]:
         """Get document counts for multiple sources."""
         try:
             counts = {}
             for source_id in source_ids:
-                result = (
-                    self.supabase.from_("archon_crawled_pages")
+                success, res = self.execute_query(
+                    self.supabase_client.from_("archon_crawled_pages")
                     .select("id", count="exact", head=True)
-                    .eq("source_id", source_id)
-                    .execute()
+                    .eq("source_id", source_id),
+                    "Fetch document count"
                 )
-                counts[source_id] = result.count if hasattr(result, "count") else 0
+                counts[source_id] = res.get("count", 0) if success else 0
             return counts
         except Exception as e:
             safe_logfire_error(f"Failed to get document counts | error={str(e)}")
@@ -39,13 +41,13 @@ class KnowledgeRepository:
         try:
             counts = {}
             for source_id in source_ids:
-                result = (
-                    self.supabase.from_("archon_code_examples")
+                success, res = self.execute_query(
+                    self.supabase_client.from_("archon_code_examples")
                     .select("id", count="exact", head=True)
-                    .eq("source_id", source_id)
-                    .execute()
+                    .eq("source_id", source_id),
+                    "Fetch code example count"
                 )
-                counts[source_id] = result.count if hasattr(result, "count") else 0
+                counts[source_id] = res.get("count", 0) if success else 0
             return counts
         except Exception as e:
             safe_logfire_error(f"Failed to get code example counts | error={str(e)}")
@@ -54,16 +56,16 @@ class KnowledgeRepository:
     async def get_first_urls_batch(self, source_ids: list[str]) -> dict[str, str]:
         """Get first URL for each source in a batch."""
         try:
-            result = (
-                self.supabase.from_("archon_crawled_pages")
+            success, res = self.execute_query(
+                self.supabase_client.from_("archon_crawled_pages")
                 .select("source_id, url")
                 .in_("source_id", source_ids)
-                .order("created_at", desc=False)
-                .execute()
+                .order("created_at", desc=False),
+                "Fetch first URLs"
             )
 
             urls = {}
-            for item in result.data or []:
+            for item in res.get("data", []) if success else []:
                 source_id = item["source_id"]
                 if source_id not in urls:
                     urls[source_id] = item["url"]
@@ -85,7 +87,7 @@ class KnowledgeRepository:
             per_page = max(1, min(per_page, 100))
             page = max(1, page)
 
-            query = self.supabase.from_("archon_crawled_pages").select(
+            query = self.supabase_client.from_("archon_crawled_pages").select(
                 "id, source_id, content, metadata, url", count="exact"
             )
             query = query.eq("source_id", source_id)
@@ -96,13 +98,13 @@ class KnowledgeRepository:
             offset = (page - 1) * per_page
             query = query.order("url", desc=False).order("id", desc=False)
             query = query.range(offset, offset + per_page - 1)
-            result = query.execute()
+            success, res = self.execute_query(query, "Fetch item chunks")
 
-            if getattr(result, "error", None):
-                return False, {"error": str(result.error)}
+            if not success:
+                return False, {"error": res.get("error", "Unknown error")}
 
-            chunks = result.data if result.data else []
-            total_count = result.count if hasattr(result, "count") and result.count is not None else len(chunks)
+            chunks = res.get("data", [])
+            total_count = res.get("count", len(chunks))
 
             return True, {
                 "chunks": chunks,

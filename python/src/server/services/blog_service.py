@@ -94,7 +94,10 @@ class BlogService(BaseRepository):
                         },
                     }
                     try:
-                        self.supabase_client.table("archon_logs").insert(log_data).execute() # 合法
+                        self.execute_query(
+                            self.supabase_client.table("archon_logs").insert(log_data),
+                            "Log AI_CORRECTION"
+                        )
                         logger.info(f"Logged AI_CORRECTION for post {post_id} with rate {correction_rate}%")
                     except Exception as e:
                         logger.error(f"Failed to log AI_CORRECTION: {e}")

@@ -37,9 +37,9 @@ async def run_system_probe() -> None:
 
         try:
             repo.execute_query(
-                lambda: supabase.table("archon_logs").insert( # 合法
+                supabase.table("archon_logs").insert( # 合法
                     {"source": "clockwork-scheduler", "level": log_level, "message": msg, "details": result}
-                ).execute(),
+                ),
                 "Log system probe"
             )
         except Exception as db_err:
@@ -53,14 +53,14 @@ async def run_system_probe() -> None:
             error_details = {"error": str(outer_e)}
 
             BaseRepository(get_supabase_client()).execute_query(
-                lambda: get_supabase_client().table("archon_logs").insert( # 合法
+                get_supabase_client().table("archon_logs").insert( # 合法
                     {
                         "source": "clockwork-scheduler",
                         "level": "CRITICAL",
                         "message": error_message,
                         "details": error_details,
                     }
-                ).execute(),
+                ),
                 "Log critical failure"
             )
         except Exception as inner_e:
@@ -81,12 +81,11 @@ async def run_log_patrol() -> None:
         repo = BaseRepository(supabase)
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
         success, res = repo.execute_query(
-            lambda: supabase.table("archon_logs") # 合法
+            supabase.table("archon_logs") # 合法
             .select("*")
             .eq("level", "ERROR")
             .gt("created_at", one_hour_ago)
-            .limit(5)
-            .execute(),
+            .limit(5),
             "Fetch error logs"
         )
         errors = res.get("data", []) if success else []
@@ -107,7 +106,7 @@ async def run_log_patrol() -> None:
         task_desc = prompt_template.format(error_summary=error_summary)
 
         success, p_res = repo.execute_query(
-            lambda: supabase.table("archon_projects").select("id").limit(1).execute(), # 合法
+            supabase.table("archon_projects").select("id").limit(1), # 合法
             "Get project ID"
         )
         p_data = p_res.get("data", []) if success else []
@@ -199,14 +198,14 @@ async def run_model_verification() -> None:
             try:
                 from src.server.repositories.base_repository import BaseRepository
                 BaseRepository(supabase).execute_query(
-                    lambda: supabase.table("archon_logs").insert( # 合法
+                    supabase.table("archon_logs").insert( # 合法
                         {
                             "source": "clockwork-scheduler",
                             "level": "INFO",
                             "message": "Model Verification [Sleep Mode]",
                             "details": {"status": "skipped_due_to_sleep_mode"},
                         }
-                    ).execute(),
+                    ),
                     "Log model verification sleep"
                 )
             except Exception as db_err:
@@ -232,14 +231,14 @@ async def run_model_verification() -> None:
         try:
             from src.server.repositories.base_repository import BaseRepository
             BaseRepository(supabase).execute_query(
-                lambda: supabase.table("archon_logs").insert( # 合法
+                supabase.table("archon_logs").insert( # 合法
                     {
                         "source": "clockwork-scheduler",
                         "level": log_level,
                         "message": msg,
                         "details": {"DEFAULT_PRO": default_pro, "DEFAULT_TEXT": default_text},
                     }
-                ).execute(),
+                ),
                 "Log model verification result"
             )
         except Exception as db_err:

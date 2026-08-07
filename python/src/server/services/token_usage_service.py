@@ -64,8 +64,14 @@ class TokenUsageService:
             # Assuming postgrest-py execute() is sync, we might want to run in thread if blocking.
             # But for now, direct call is fine as it's critical data.
 
+            from ..repositories.base_repository import BaseRepository
+            base_repo = BaseRepository(supabase)
+
             def _log_to_db():
-                return supabase.table("token_usage").insert(payload).execute() # 合法
+                base_repo.execute_query(
+                    supabase.table("token_usage").insert(payload), # 合法
+                    error_context="Failed to log token usage"
+                )
 
             await asyncio.to_thread(_log_to_db)
 
@@ -80,9 +86,12 @@ class TokenUsageService:
                     agent_names = [config["name"] for config in FALLBACK_AGENT_CONFIG.values()]
 
                     # We need the display name to award XP via StatsService
-                    res = supabase.table("profiles").select("name").eq("id", user_id).execute() # 合法
-                    if res.data and res.data[0]["name"] in agent_names:
-                        agent_display_name = res.data[0]["name"]
+                    success, res_dict = base_repo.execute_query(
+                        supabase.table("profiles").select("name").eq("id", user_id), # 合法
+                        error_context="Failed to query profiles for XP"
+                    )
+                    if success and res_dict.get("data") and res_dict["data"][0]["name"] in agent_names:
+                        agent_display_name = res_dict["data"][0]["name"]
                         from .stats import StatsService
 
                         stats_service = StatsService()
@@ -114,19 +123,21 @@ class TokenUsageService:
             since = datetime.now(UTC) - timedelta(days=days)
 
             # Fetch last N days raw data
+            from ..repositories.base_repository import BaseRepository
+            base_repo = BaseRepository(supabase)
+
             def _fetch_data():
-                return (
+                success, res_dict = base_repo.execute_query(
                     supabase.table("token_usage") # 合法
                     .select("cost_usd, created_at, model, provider")
                     .gt("created_at", since.isoformat())
                     .order("created_at", desc=True)
-                    .limit(5000)
-                    .execute()
+                    .limit(5000),
+                    error_context="Failed to fetch token usage"
                 )
+                return res_dict.get("data", []) if success else []
 
-            res = await asyncio.to_thread(_fetch_data)
-
-            data = res.data if res.data else []
+            data = await asyncio.to_thread(_fetch_data)
 
             # Aggregate by date
             daily_stats: dict[str, dict[str, Any]] = {}

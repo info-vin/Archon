@@ -38,17 +38,22 @@ class GuardrailService:
                 # Log to Ethics Table (Fire and forget)
                 try:
                     from ..utils import get_supabase_client
+                    from ..repositories.base_repository import BaseRepository
 
                     supabase = get_supabase_client()
-                    supabase.table("archon_ethics_events").insert( # 合法
-                        {
-                            "severity": "high",
-                            "event_type": "policy_violation",
-                            "description": f"Input contained forbidden keyword: {word}",
-                            "raw_input": text,
-                            "created_at": "now()",
-                        }
-                    ).execute()
+                    base_repo = BaseRepository(supabase)
+                    base_repo.execute_query(
+                        supabase.table("archon_ethics_events").insert( # 合法
+                            {
+                                "severity": "high",
+                                "event_type": "policy_violation",
+                                "description": f"Input contained forbidden keyword: {word}",
+                                "raw_input": text,
+                                "created_at": "now()",
+                            }
+                        ),
+                        error_context="Failed to log ethics event"
+                    )
                 except Exception as e:
                     logger.error(f"Failed to log ethics event: {e}")
 
@@ -77,17 +82,22 @@ class GuardrailService:
             # Log to Ethics Table
             try:
                 from ..utils import get_supabase_client
+                from ..repositories.base_repository import BaseRepository
 
                 supabase = get_supabase_client()
-                supabase.table("archon_ethics_events").insert( # 合法
-                    {
-                        "severity": "medium",
-                        "event_type": "hallucination",
-                        "description": "AI Output contained generic disclosure (potential hallucination/leakage)",
-                        "raw_input": generated_text[:500],  # Store partial output
-                        "created_at": "now()",
-                    }
-                ).execute()
+                base_repo = BaseRepository(supabase)
+                base_repo.execute_query(
+                    supabase.table("archon_ethics_events").insert( # 合法
+                        {
+                            "severity": "medium",
+                            "event_type": "hallucination",
+                            "description": "AI Output contained generic disclosure (potential hallucination/leakage)",
+                            "raw_input": generated_text[:500],  # Store partial output
+                            "created_at": "now()",
+                        }
+                    ),
+                    error_context="Failed to log ethics event"
+                )
             except Exception as e:
                 logger.error(f"Failed to log ethics event: {e}")
 

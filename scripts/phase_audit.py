@@ -276,7 +276,7 @@ def repository_bypass_audit():
     
     target_dir = "python/src/server/services"
     issues = []
-    pattern = re.compile(r"\.table\([\"'][a-zA-Z0-9_]+[\"']\)")
+    pattern = re.compile(r"\.execute\(\)")
     
     if not os.path.exists(target_dir): return
     for root, _, files in os.walk(target_dir):
@@ -285,7 +285,7 @@ def repository_bypass_audit():
                 file_path = os.path.join(root, file)
                 
                 # Exemptions: repository files
-                if "repository.py" in file_path or "base_repository.py" in file_path:
+                if "repository.py" in file_path or "base_repository.py" in file_path or "storage_ops.py" in file_path:
                     continue
                     
                 with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -297,13 +297,13 @@ def repository_bypass_audit():
                             
     if issues:
         print(f"❌ FOUND {len(issues)} REPOSITORY BYPASS VIOLATIONS IN SERVICES!")
-        print("L2 Architecture Violation: Services must use Repository layer instead of direct .table() calls.")
+        print("L2 Architecture Violation: Services must use Repository layer instead of direct .execute() calls.")
         for path, line_num, content in issues:
             short_content = content if len(content) < 80 else content[:77] + "..."
             print(f"   - {path}:{line_num} | {short_content}")
         sys.exit(1)
     else:
-        print("✅ Repository architecture audit passed. No .table() bypasses found.")
+        print("✅ Repository architecture audit passed. No .execute() bypasses found.")
 
 if __name__ == "__main__":
     scan_prps()

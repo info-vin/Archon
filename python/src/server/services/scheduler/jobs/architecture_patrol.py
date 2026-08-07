@@ -52,13 +52,17 @@ async def run_architecture_health_audit() -> None:
             f"{markdown_content}"
         )
 
-        supabase = get_supabase_client()
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute() # 合法
-        if not p_res.data:
+        from src.server.repositories.base_repository import BaseRepository
+        base_repo = BaseRepository(supabase)
+        success, p_res_dict = base_repo.execute_query(
+            supabase.table("archon_projects").select("id").limit(1),
+            "Failed to find project for architecture health task"
+        )
+        if not success or not p_res_dict.get("data"):
             logger.warning("Clockwork: No projects found to attach architecture health task.")
             return
 
-        project_id = p_res.data[0]["id"]
+        project_id = p_res_dict["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,

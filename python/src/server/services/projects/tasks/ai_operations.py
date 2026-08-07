@@ -134,21 +134,24 @@ async def generate_task_from_alert_logic(
         details = {}
         source_table = "archon_logs"
 
-        res_alert = task_service_instance.supabase_client.table("archon_logs").select("*").eq("id", alert_id).execute() # 合法
-        alert_data = res_alert.data[0] if (res_alert.data and len(res_alert.data) > 0) else None
+        success_alert, res_alert_dict = task_service_instance.execute_query(
+            task_service_instance.supabase_client.table("archon_logs").select("*").eq("id", alert_id),
+            error_context="Failed to query archon_logs"
+        )
+        alert_data = res_alert_dict["data"][0] if (success_alert and res_alert_dict.get("data") and len(res_alert_dict["data"]) > 0) else None
 
         if alert_data:
             details = alert_data.get("details", {})
             context_msg = alert_data.get("message", "System Alert")
         else:
-            res_ethics = (
+            success_ethics, res_ethics_dict = task_service_instance.execute_query(
                 task_service_instance.supabase_client.table("archon_ethics_events") # 合法
                 .select("*")
-                .eq("id", alert_id)
-                .execute()
+                .eq("id", alert_id),
+                error_context="Failed to query archon_ethics_events"
             )
-            if res_ethics.data and len(res_ethics.data) > 0:
-                eth = res_ethics.data[0]
+            if success_ethics and res_ethics_dict.get("data") and len(res_ethics_dict["data"]) > 0:
+                eth = res_ethics_dict["data"][0]
                 context_msg = f"Ethics Violation: {eth.get('event_type')} - {eth.get('description')}"
                 details = {
                     "type": "ethics_violation",
@@ -167,27 +170,33 @@ async def generate_task_from_alert_logic(
         context_str = f"ALERT: {context_msg}\n"
 
         if lead_id:
-            res_lead = task_service_instance.supabase_client.table("leads").select("*").eq("id", lead_id).execute() # 合法
-            if res_lead.data and len(res_lead.data) > 0:
-                lead_data_local = res_lead.data[0]
+            success_lead, res_lead_dict = task_service_instance.execute_query(
+                task_service_instance.supabase_client.table("leads").select("*").eq("id", lead_id),
+                error_context="Failed to query leads"
+            )
+            if success_lead and res_lead_dict.get("data") and len(res_lead_dict["data"]) > 0:
+                lead_data_local = res_lead_dict["data"][0]
                 context_str += f"COMPANY: {lead_data_local['company_name']}\n"
                 context_str += f"IDENTIFIED NEED: {lead_data_local.get('identified_need', 'None')}\n"
-                res_logs = (
+                success_logs, res_logs_dict = task_service_instance.execute_query(
                     task_service_instance.supabase_client.table("visit_logs") # 合法
                     .select("summary")
                     .eq("lead_id", lead_id)
-                    .limit(3)
-                    .execute()
+                    .limit(3),
+                    error_context="Failed to query visit_logs"
                 )
-                if res_logs.data:
+                if success_logs and res_logs_dict.get("data"):
                     context_str += "\nPAST VISIT SUMMARIES:\n"
-                    for _log in res_logs.data:
+                    for _log in res_logs_dict["data"]:
                         context_str += f"- {_log['summary']}\n"
 
         elif post_id:
-            res_post = task_service_instance.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute() # 合法
-            if res_post.data and len(res_post.data) > 0:
-                post_data_local = res_post.data[0]
+            success_post, res_post_dict = task_service_instance.execute_query(
+                task_service_instance.supabase_client.table("blog_posts").select("*").eq("id", post_id),
+                error_context="Failed to query blog_posts"
+            )
+            if success_post and res_post_dict.get("data") and len(res_post_dict["data"]) > 0:
+                post_data_local = res_post_dict["data"][0]
                 context_str += f"CONTEXT: Content Bottleneck\nTITLE: {post_data_local['title']}\nSTATUS: {post_data_local['status']}\n"
 
         # 3. RAG Search
@@ -272,19 +281,22 @@ async def generate_task_from_alert_logic(
                 pass
 
         # 5. Get Project (Field Ops preferred)
-        p_res = (
+        success_p, p_res_dict = task_service_instance.execute_query(
             task_service_instance.supabase_client.table("archon_projects") # 合法
             .select("id")
-            .ilike("title", "%Field%")
-            .execute()
+            .ilike("title", "%Field%"),
+            error_context="Failed to query projects"
         )
-        if not (p_res.data and len(p_res.data) > 0):
-            p_res = task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute() # 合法
+        if not (success_p and p_res_dict.get("data") and len(p_res_dict["data"]) > 0):
+            success_p, p_res_dict = task_service_instance.execute_query(
+                task_service_instance.supabase_client.table("archon_projects").select("id").limit(1),
+                error_context="Failed to query projects"
+            )
 
-        if not (p_res.data and len(p_res.data) > 0):
+        if not (success_p and p_res_dict.get("data") and len(p_res_dict["data"]) > 0):
             return False, {"error": "Critical: No project found in database to attach task."}
 
-        project_id = p_res.data[0]["id"]
+        project_id = p_res_dict["data"][0]["id"]
 
         sources = [{"type": "sentinel_alert", "source_id": alert_id, "title": context_msg}]
 
@@ -306,16 +318,22 @@ async def generate_task_from_alert_logic(
                     "status": "dispatched",
                     "dispatched_task_id": result["task"]["id"],
                 }
-                task_service_instance.supabase_client.table("archon_logs").update( # 合法
-                    {"details": updated_details, "level": "INFO"}
-                ).eq("id", alert_id).execute()
+                task_service_instance.execute_query(
+                    task_service_instance.supabase_client.table("archon_logs").update( # 合法
+                        {"details": updated_details, "level": "INFO"}
+                    ).eq("id", alert_id),
+                    error_context="Failed to update archon_logs"
+                )
             else:
-                task_service_instance.supabase_client.table("archon_ethics_events").update( # 合法
-                    {
-                        "resolved": True,
-                        "resolution_notes": f"Dispatched: {result['task']['id']}",
-                    }
-                ).eq("id", alert_id).execute()
+                task_service_instance.execute_query(
+                    task_service_instance.supabase_client.table("archon_ethics_events").update( # 合法
+                        {
+                            "resolved": True,
+                            "resolution_notes": f"Dispatched: {result['task']['id']}",
+                        }
+                    ).eq("id", alert_id),
+                    error_context="Failed to update archon_ethics_events"
+                )
 
         return success, result
 

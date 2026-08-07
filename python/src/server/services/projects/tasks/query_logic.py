@@ -77,10 +77,15 @@ async def list_tasks_logic(
 
         logger.debug(f"Listing tasks with filters: {', '.join(filters_applied)}")
 
-        response = query.order("task_order", desc=False).order("created_at", desc=False).execute()
+        success, response = task_service_instance.execute_query(
+            query.order("task_order", desc=False).order("created_at", desc=False),
+            error_context="Error listing tasks"
+        )
+        if not success:
+            return False, response
 
         tasks = []
-        for task in response.data:
+        for task in response["data"]:
             task_data = {
                 "id": task["id"],
                 "project_id": task["project_id"],
@@ -155,18 +160,20 @@ async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool
     """
     try:
         logger.debug("Fetching task counts for all projects in batch")
-        response = (
+        success, response = task_service_instance.execute_query(
             task_service_instance.supabase_client.table("archon_tasks") # 合法
             .select("project_id, status")
-            .or_("archived.is.null,archived.is.false")
-            .execute()
+            .or_("archived.is.null,archived.is.false"),
+            error_context="Error fetching task counts"
         )
+        if not success:
+            return False, cast(dict[str, dict[str, int]], response)
 
-        if not response.data:
+        if not response.get("data"):
             return True, {}
 
         counts_by_project: dict[str, dict[str, int]] = {}
-        for task in response.data:
+        for task in response["data"]:
             project_id = task.get("project_id")
             status = task.get("status")
             if not project_id or not status:
@@ -224,16 +231,18 @@ async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dic
     # 1. Aggregate AI Metrics (Token Usage & Cost)
     try:
         # We search for token usage linked to this task_id.
-        token_res = (
+        success, token_res = task_service_instance.execute_query(
             task_service_instance.supabase_client.table("token_usage") # 合法
             .select("total_tokens, cost_usd")
-            .ilike("request_id", f"%{task_id}%")
-            .execute()
+            .ilike("request_id", f"%{task_id}%"),
+            error_context="Failed to aggregate AI metrics"
         )
+        if not success:
+            raise Exception(token_res.get("error", "Unknown error fetching token usage"))
 
         total_tokens = 0
         total_cost = 0.0
-        for row in token_res.data or []:
+        for row in token_res.get("data", []):
             total_tokens += row.get("total_tokens", 0)
             total_cost += float(row.get("cost_usd", 0))
 

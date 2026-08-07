@@ -33,13 +33,17 @@ class EnrichmentService:
         """
         supabase = get_supabase_client()
         try:
-            # Fetch lead
-            res = supabase.table("leads").select("*").eq("id", lead_id).execute() # 合法
-            if not res.data:
+            from ..repositories.base_repository import BaseRepository
+            base_repo = BaseRepository(supabase)
+            success, res_dict = base_repo.execute_query(
+                supabase.table("leads").select("*").eq("id", lead_id), # 合法
+                error_context="Failed to fetch lead for enrichment"
+            )
+            if not success or not res_dict.get("data"):
                 logger.warning(f"Enrichment: Lead not found | id={lead_id}")
                 return False
 
-            lead = cast(LeadDTO, res.data[0])
+            lead = cast(LeadDTO, res_dict["data"][0])
             if lead.get("enrichment_status") == "success":
                 return True
 
@@ -110,13 +114,21 @@ class EnrichmentService:
                 "contact_email": mock_email,  # Try saving to column if exists (based on API usage)
             }
 
-            supabase.table("leads").update(enrichment_data).eq("id", lead_id).execute() # 合法
+            base_repo.execute_query(
+                supabase.table("leads").update(enrichment_data).eq("id", lead_id), # 合法
+                error_context="Failed to update lead enrichment data"
+            )
             logger.info(f"Enrichment: Success | id={lead_id}")
             return True
 
         except Exception as e:
             logger.error(f"Enrichment: Failed | id={lead_id} | error={str(e)}")
-            supabase.table("leads").update({"enrichment_status": "failed"}).eq("id", lead_id).execute() # 合法
+            from ..repositories.base_repository import BaseRepository
+            base_repo = BaseRepository(supabase)
+            base_repo.execute_query(
+                supabase.table("leads").update({"enrichment_status": "failed"}).eq("id", lead_id), # 合法
+                error_context="Failed to set lead enrichment_status to failed"
+            )
             return False
 
     @staticmethod
@@ -146,7 +158,9 @@ class EnrichmentService:
             # Criteria: Created < cutoff AND Score < 40 (GAP-011) AND Not already processed
             logger.info(f"Pruning: Executing batch archive for leads created before {cutoff_time} with score < 40")
 
-            res = (
+            from ..repositories.base_repository import BaseRepository
+            base_repo = BaseRepository(supabase)
+            success, res_dict = base_repo.execute_query(
                 supabase.table("leads") # 合法
                 .update({"status": "archived", "auto_archived_reason": "stale_low_quality"})
                 .lt("created_at", cutoff_time)
@@ -154,11 +168,11 @@ class EnrichmentService:
                 .neq("status", "archived")
                 .neq("status", "converted")
                 .neq("status", "won")
-                .neq("status", "lost")
-                .execute()
+                .neq("status", "lost"),
+                error_context="Failed to prune stale leads"
             )
 
-            pruned_count = len(res.data) if res.data else 0
+            pruned_count = len(res_dict.get("data", [])) if success and res_dict.get("data") else 0
 
             if pruned_count > 0:
                 logger.info(f"Pruning: Successfully archived {pruned_count} stale leads.")

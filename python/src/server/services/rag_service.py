@@ -5,6 +5,7 @@ import httpx
 
 from src.server.services.credential_service import CredentialService
 from src.server.utils import get_supabase_client
+from src.server.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +69,15 @@ class RagService:
                 "truncate_dim": truncate_dim,
             }
 
-            res = supabase.rpc("hybrid_match_chunks", rpc_params).execute()
+            base_repo = BaseRepository(supabase)
+            success, res_dict = base_repo.execute_query(
+                supabase.rpc("hybrid_match_chunks", rpc_params),
+                error_context="Failed to execute hybrid_match_chunks"
+            )
 
-            if hasattr(res, "data") and res.data:
+            if success and res_dict.get("data"):
                 from typing import cast
-                results = cast(list[dict[str, Any]], res.data)
+                results = cast(list[dict[str, Any]], res_dict["data"])
 
                 import asyncio
                 async with httpx.AsyncClient(timeout=5.0) as client:
@@ -136,11 +141,15 @@ class RagService:
                 "max_hops": max_hops,
             }
 
-            res = supabase.rpc("graph_reasoning_n_hop", rpc_params).execute()
+            base_repo = BaseRepository(supabase)
+            success, res_dict = base_repo.execute_query(
+                supabase.rpc("graph_reasoning_n_hop", rpc_params),
+                error_context="Failed to execute graph_reasoning_n_hop"
+            )
 
-            if hasattr(res, "data") and res.data:
+            if success and res_dict.get("data"):
                 from typing import cast
-                return cast(list[dict[str, Any]], res.data)
+                return cast(list[dict[str, Any]], res_dict["data"])
             return []
 
         except Exception as e:
