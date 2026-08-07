@@ -82,7 +82,7 @@ class EnrichmentService:
 
             # Generate Mock Enriched Data
             mock_tax_id = "12345678"
-            mock_email = f"contact@{lead.get('company_name', 'company').lower().replace(' ', '')}.com"
+            mock_email = f"contact@{(lead.get('company_name') or 'company').lower().replace(' ', '')}.com"
             mock_news = "Recent news indicates expansion into AI sector with $10M Series B funding."
 
             # Append to identified_need for visibility
