@@ -98,7 +98,7 @@ class JobBoardService:
                 prompt = prompt_template.format(**format_kwargs)
 
                 @retry_with_backoff(max_retries=max_retries, initial_delay=initial_delay)
-                async def _call_llm():
+                async def _call_llm() -> Any:
                     return await client.chat.completions.create(
                         model=SYSTEM_MODELS["DEFAULT_TEXT"],
                         messages=[{"role": "user", "content": prompt}]
@@ -311,7 +311,7 @@ class JobBoardService:
                 market_bot_config = cast(dict[str, Any], get_agent_config("market-bot") or {})
                 agent_name = market_bot_config.get("name", "Archon MarketBot")
 
-                async def _log_action(job, content):
+                async def _log_action(job: Any, content: str) -> None:
                     await stats_service.add_agent_action_log(
                         agent_name=agent_name,
                         xp_change=10,

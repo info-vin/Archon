@@ -3,9 +3,9 @@ from typing import Any
 
 import httpx
 
+from src.server.repositories.base_repository import BaseRepository
 from src.server.services.credential_service import CredentialService
 from src.server.utils import get_supabase_client
-from src.server.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 

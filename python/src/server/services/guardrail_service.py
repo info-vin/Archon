@@ -37,8 +37,8 @@ class GuardrailService:
 
                 # Log to Ethics Table (Fire and forget)
                 try:
-                    from ..utils import get_supabase_client
                     from ..repositories.base_repository import BaseRepository
+                    from ..utils import get_supabase_client
 
                     supabase = get_supabase_client()
                     base_repo = BaseRepository(supabase)
@@ -81,8 +81,8 @@ class GuardrailService:
 
             # Log to Ethics Table
             try:
-                from ..utils import get_supabase_client
                 from ..repositories.base_repository import BaseRepository
+                from ..utils import get_supabase_client
 
                 supabase = get_supabase_client()
                 base_repo = BaseRepository(supabase)

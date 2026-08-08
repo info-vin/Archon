@@ -19,7 +19,6 @@ async def run_architecture_health_audit() -> None:
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
         from src.server.services.shared_constants import AI_AGENT_ROLES
-        from src.server.utils import get_supabase_client
 
         # Multi-path detection (Host vs Docker)
         possible_roots = [
@@ -53,6 +52,8 @@ async def run_architecture_health_audit() -> None:
         )
 
         from src.server.repositories.base_repository import BaseRepository
+        from src.server.utils import get_supabase_client
+        supabase = get_supabase_client()
         base_repo = BaseRepository(supabase)
         success, p_res_dict = base_repo.execute_query(
             supabase.table("archon_projects").select("id").limit(1),

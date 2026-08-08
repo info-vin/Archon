@@ -3,14 +3,16 @@ from ..config.logfire_config import get_logger
 logger = get_logger(__name__)
 
 
-class KnowledgeRepository:
+from .base_repository import BaseRepository
+
+class KnowledgeRepository(BaseRepository):
     """
     Repository for handling persistence of knowledge items (Vector DB and Audit Trail).
     Decoupled from LibrarianService during Phase 4.6.50 God Object Refactoring.
     """
 
     def __init__(self, supabase_client):
-        self.supabase = supabase_client
+        super().__init__(supabase_client)
 
     def insert_crawled_page(self, page_data: dict | list[dict]) -> bool:
         """
@@ -20,9 +22,9 @@ class KnowledgeRepository:
             if isinstance(page_data, list):
                 if not page_data:
                     return True
-                self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+                self.supabase_client.table("archon_crawled_pages").insert(page_data).execute()
             else:
-                self.supabase.table("archon_crawled_pages").insert(page_data).execute()
+                self.supabase_client.table("archon_crawled_pages").insert(page_data).execute()
             return True
         except Exception as e:
             logger.error(f"KnowledgeRepository: Failed to insert crawled page(s): {e}")
@@ -35,7 +37,7 @@ class KnowledgeRepository:
         Records an audit trail / version history for the newly created or updated knowledge.
         """
         try:
-            self.supabase.table("archon_document_versions").insert(
+            self.supabase_client.table("archon_document_versions").insert(
                 {
                     "document_id": document_id,
                     "field_name": field_name,

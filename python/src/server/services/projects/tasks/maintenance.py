@@ -112,7 +112,7 @@ async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) 
             if success_delete:
                 logger.info(f"Successfully pruned {count} tasks")
             else:
-                logger.warning(f"Failed to execute delete query for pruning")
+                logger.warning("Failed to execute delete query for pruning")
 
         return True, {"pruned_count": count, "cutoff_date": cutoff_date}
     except Exception as e:

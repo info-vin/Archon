@@ -1,5 +1,7 @@
 from typing import Any, NotRequired, TypedDict, cast
 
+from src.server.repositories.base_repository import BaseRepository
+
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
 from ..config.model_ssot import SYSTEM_MODELS
 from ..utils import get_supabase_client
@@ -56,7 +58,7 @@ class ExtractionResultDTO(TypedDict):
     source_url: NotRequired[str]
 
 
-from src.server.repositories.base_repository import BaseRepository
+
 
 class ExtractionService(BaseRepository):
     """

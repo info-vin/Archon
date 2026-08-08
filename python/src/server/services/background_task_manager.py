@@ -165,7 +165,7 @@ class BackgroundTaskManager:
             return True
         return False
 
-    async def _periodic_cleanup(self):
+    async def _periodic_cleanup(self) -> None:
         """Periodically clean up old task metadata to prevent memory leaks"""
         while True:
             try:
@@ -216,7 +216,7 @@ class BackgroundTaskManager:
                     error_retry = 60
                 await asyncio.sleep(error_retry)  # Wait a bit before retrying on error
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup resources and cancel remaining tasks"""
         logger.info("Shutting down BackgroundTaskManager")
 
@@ -260,7 +260,7 @@ def get_task_manager() -> BackgroundTaskManager:
     return _task_manager
 
 
-async def cleanup_task_manager():
+async def cleanup_task_manager() -> None:
     """Cleanup the global task manager instance"""
     global _task_manager
     if _task_manager:

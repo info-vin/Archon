@@ -48,8 +48,8 @@ class ScoutIngestionService:
                     continue
 
                 # Deduplication check: Has this file been indexed?
-                from ..utils import get_supabase_client
                 from ..repositories.base_repository import BaseRepository
+                from ..utils import get_supabase_client
 
                 supabase = get_supabase_client()
                 base_repo = BaseRepository(supabase)

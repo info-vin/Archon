@@ -2,7 +2,9 @@ import time
 from typing import Any, cast
 
 from supabase import Client
+
 from src.server.repositories.base_repository import BaseRepository
+
 
 class CredentialRepository(BaseRepository):
     """
