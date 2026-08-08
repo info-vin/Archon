@@ -9,7 +9,7 @@ from typing import Any
 
 import httpx
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..config.logfire_config import get_logger
 
@@ -258,17 +258,25 @@ def _create_manual_submission_response(bug_report: BugReportRequest) -> BugRepor
     )
 
 
-@router.get("/health")
-async def bug_report_health() -> Any:
+class BugReportHealthResponse(BaseModel):
+    status: str = Field(description="The health status of the bug reporting service")
+    github_token_configured: bool = Field(description="Whether the GitHub token is configured")
+    github_repo_configured: bool = Field(description="Whether the GitHub repository is configured")
+    repo: str = Field(description="The configured GitHub repository")
+    message: str = Field(description="A descriptive health message")
+
+
+@router.get("/health", response_model=BugReportHealthResponse)
+async def bug_report_health() -> BugReportHealthResponse:
     """Health check for bug reporting service."""
 
     github_configured = bool(os.getenv("GITHUB_TOKEN"))
     repo_configured = bool(os.getenv("GITHUB_REPO"))
 
-    return {
-        "status": "healthy" if github_configured else "degraded",
-        "github_token_configured": github_configured,
-        "github_repo_configured": repo_configured,
-        "repo": os.getenv("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha"),
-        "message": "Bug reporting is ready" if github_configured else "GitHub token not configured",
-    }
+    return BugReportHealthResponse(
+        status="healthy" if github_configured else "degraded",
+        github_token_configured=github_configured,
+        github_repo_configured=repo_configured,
+        repo=os.getenv("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha"),
+        message="Bug reporting is ready" if github_configured else "GitHub token not configured",
+    )
