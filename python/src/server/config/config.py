@@ -229,10 +229,10 @@ def load_environment_config() -> EnvironmentConfig:
     # Phase 4.6.15: Priority DB -> ENV
     token_pricing_json = os.getenv("TOKEN_PRICING_JSON")
     try:
-        from ..utils import get_supabase_client
-
+        from supabase import create_client
+        temp_client = create_client(supabase_url, supabase_service_key)
         db_res = (
-            get_supabase_client().table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
+            temp_client.table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
         )
         if db_res.data:
             token_pricing_json = db_res.data[0]["value"]
