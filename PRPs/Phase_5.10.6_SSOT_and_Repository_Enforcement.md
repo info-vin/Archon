@@ -53,5 +53,13 @@
   - 執行 `make phase-audit`：獲得 `Repository Bypass (L2 Coupling) Audit` 與 `Config SSOT (os.getenv) Audit` 全數通過 (`✅`)。
   - 後端單元與整合測試全數通過，無退化 (Regression)。
 
+### D. 排程機制硬化與反硬編碼 (Scheduler Hardening & Anti-Hardcoding)
+- **爬蟲極限推演與參數抽離 (Crawler Limits SSOT):**
+  - 將爬蟲任務上限 (`CRAWLER_JOB_LIMIT`) 透過數學建模 (針對 104 WAF 與 Gemini API Rate Limits 推演 25 分鐘物理極限)，精準從 40 修正至 `32`。
+  - 徹底移除四散的寫死數值，將其統一收斂至 `settings.py`，落實單一事實來源 (SSOT) 管理。
+- **DAG 排程鏈事件化與 DRY (Event-Driven DAG & DRY):**
+  - 移除了無效的週四排程，將 `ALICE_AUTO_FETCH_DAYS` 精準定義為 `"tue,wed,fri"`。
+  - 嚴格落實 DRY 原則，確保後續的高階報表 (Executive Summary) 等任務皆依附於爬蟲任務成功觸發的事件鏈 (Event-Driven DAG)，杜絕任何時間的魔術字串 (Magic Strings) 硬編碼。
+
 ## 3. 下一步行動 (Next Steps)
 等待人類指揮官給予下一階段指令。
