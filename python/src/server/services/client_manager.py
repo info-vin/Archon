@@ -68,5 +68,6 @@ def get_supabase_client() -> Client:
 
         return client
     except Exception as e:
-        search_logger.error(f"Failed to create Supabase client: {e}")
+        import logging
+        logging.error(f"Failed to create Supabase client: {e}", exc_info=True)
         raise
