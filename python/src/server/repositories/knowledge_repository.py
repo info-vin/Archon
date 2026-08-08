@@ -1,9 +1,10 @@
 from ..config.logfire_config import get_logger
+from .base_repository import BaseRepository
 
 logger = get_logger(__name__)
 
 
-from .base_repository import BaseRepository
+
 
 class KnowledgeRepository(BaseRepository):
     """
