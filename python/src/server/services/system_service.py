@@ -28,6 +28,17 @@ class SystemSettingDTO(TypedDict):
     is_system_protected: NotRequired[bool]
 
 
+class DocumentVersionDTO(TypedDict):
+    document_id: str
+    created_by: str
+    change_type: str
+    field_name: str
+    old_value: str
+    new_value: str
+    change_summary: str
+    version_number: int
+
+
 class SystemService(BaseRepository):
     def __init__(self) -> None:
         super().__init__()
@@ -67,7 +78,7 @@ class SystemService(BaseRepository):
 
         # 3. Audit
         try:
-            audit_payload = {
+            audit_payload: DocumentVersionDTO = {
                 "document_id": f"setting:{key}",
                 "created_by": user_name,
                 "change_type": "UPDATE",
