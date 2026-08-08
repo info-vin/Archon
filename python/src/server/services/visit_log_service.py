@@ -148,8 +148,9 @@ class VisitLogService(BaseRepository):
         if not success or not res:
             return False, res
 
-        created_log = res[0] if isinstance(res, list) and len(res) > 0 else res
-        visit_id = created_log.get("id")
+        data_list = res.get("data", []) if isinstance(res, dict) else res
+        created_log = data_list[0] if isinstance(data_list, list) and len(data_list) > 0 else data_list
+        visit_id = created_log.get("id") if isinstance(created_log, dict) else None
 
         # 2. Automated Task Dispatch / Scheduling Recommendation (Phase 5.4.6)
         try:
