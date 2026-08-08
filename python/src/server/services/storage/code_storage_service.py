@@ -11,6 +11,7 @@ from typing import Any
 from supabase import Client
 
 from src.server.config.logfire_config import search_logger
+from src.server.repositories.base_repository import BaseRepository
 
 from ..embeddings import EmbeddingBatchResult, create_embeddings_batch
 from ..embeddings.contextual_embedding_service import generate_contextual_embeddings_batch
@@ -136,7 +137,7 @@ async def add_code_examples_to_supabase(
             batch_data.append(row)
 
         try:
-            client.table("archon_code_examples").insert(batch_data).execute() # 合法
+            BaseRepository(client).execute_query(client.table("archon_code_examples").insert(batch_data), "Insert code examples batch")
             if progress_callback:
                 await progress_callback(
                     {
