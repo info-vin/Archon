@@ -90,12 +90,17 @@ async def run_tech_debt_audit() -> None:
         task_desc = prompt_template.format(warnings_str="\n\n".join(warnings))
 
         supabase = get_supabase_client()
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
-        if not p_res.data:
+        from src.server.repositories.base_repository import BaseRepository
+        repo = BaseRepository(supabase)
+        suc_p, p_res = repo.execute_query(
+            supabase.table("archon_projects").select("id").limit(1),
+            "Fetch project for tech debt task"
+        )
+        if not suc_p or not p_res.get("data"):
             logger.warning("Clockwork: No projects found to attach tech debt task.")
             return
 
-        project_id = p_res.data[0]["id"]
+        project_id = p_res["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,
@@ -192,11 +197,16 @@ async def run_ssot_audit() -> None:
         task_desc = prompt_template2.format(warnings_str="\n".join(f"- {w}" for w in warnings))
 
         supabase = get_supabase_client()
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
-        if not p_res.data:
+        from src.server.repositories.base_repository import BaseRepository
+        repo = BaseRepository(supabase)
+        suc_p, p_res = repo.execute_query(
+            supabase.table("archon_projects").select("id").limit(1),
+            "Fetch project for SSOT audit task"
+        )
+        if not suc_p or not p_res.get("data"):
             return
 
-        project_id = p_res.data[0]["id"]
+        project_id = p_res["data"][0]["id"]
         success, task_result = await task_service.create_task(
             project_id=project_id,
             title=task_title,

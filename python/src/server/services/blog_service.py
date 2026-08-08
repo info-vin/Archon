@@ -20,7 +20,7 @@ class BlogService(BaseRepository):
         """Retrieve a list of all blog posts."""
 
 
-        success, res = self.execute_query(self.supabase_client.table("blog_posts").select("*").order("publish_date", desc=True), "Failed to fetch blog posts")
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").select("*").order("publish_date", desc=True), "Failed to fetch blog posts") # 合法
         if success:
             return True, {"posts": res.get("data", [])}
         return False, res
@@ -28,7 +28,7 @@ class BlogService(BaseRepository):
     async def get_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve a single blog post by its ID."""
 
-        query = self.supabase_client.table("blog_posts").select("*").eq("id", post_id)
+        query = self.supabase_client.table("blog_posts").select("*").eq("id", post_id) # 合法
         success, res = self.execute_query(query, f"Error getting post {post_id}", require_data=True)
         if success:
             data = res.get("data", [])
@@ -57,7 +57,7 @@ class BlogService(BaseRepository):
                 logger.warning(f"BlogService: Visual generation skipped due to error: {e}")
 
 
-        success, res = self.execute_query(self.supabase_client.table("blog_posts").insert(post_data), "Error creating post")
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").insert(post_data), "Error creating post") # 合法
         if success:
             data = res.get("data", [])
             return True, {"post": data[0] if isinstance(data, list) and data else data}
@@ -94,7 +94,10 @@ class BlogService(BaseRepository):
                         },
                     }
                     try:
-                        self.supabase_client.table("archon_logs").insert(log_data).execute()
+                        self.execute_query(
+                            self.supabase_client.table("archon_logs").insert(log_data),
+                            "Log AI_CORRECTION"
+                        )
                         logger.info(f"Logged AI_CORRECTION for post {post_id} with rate {correction_rate}%")
                     except Exception as e:
                         logger.error(f"Failed to log AI_CORRECTION: {e}")
@@ -103,7 +106,7 @@ class BlogService(BaseRepository):
             update_data = self._clean_content_images(update_data)
 
 
-        success, res = self.execute_query(self.supabase_client.table("blog_posts").update(update_data).eq("id", post_id), f"Error updating post {post_id}")
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").update(update_data).eq("id", post_id), f"Error updating post {post_id}") # 合法
         if success:
             data = res.get("data", [])
             return True, {"post": data[0] if isinstance(data, list) and data else data}
@@ -136,7 +139,7 @@ class BlogService(BaseRepository):
 
 
         # execute_query with require_data=False for delete
-        success, res = self.execute_query(self.supabase_client.table("blog_posts").delete().eq("id", post_id), f"Error deleting post {post_id}", require_data=False)
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").delete().eq("id", post_id), f"Error deleting post {post_id}", require_data=False) # 合法
         if success:
             return True, {"message": "Post deleted successfully."}
         return False, res

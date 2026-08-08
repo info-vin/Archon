@@ -7,6 +7,7 @@ from google.genai import types
 
 from ...config.model_ssot import SYSTEM_MODELS
 from ...prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
+from ...repositories.base_repository import BaseRepository
 from ...utils.json_utils import safe_json_loads
 from ...utils.retry_utils import retry_with_backoff
 from ..guardrail_service import GuardrailService
@@ -18,11 +19,13 @@ from .content_handler import get_logger
 logger = get_logger(__name__)
 
 
-class BlogGenerator:
+
+
+class BlogGenerator(BaseRepository):
     """Handles blog drafting and automated generation from leads using RAG."""
 
     def __init__(self, supabase_client: Any) -> None:
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
 
     async def draft_blog(self, topic: str, industry: list[str] | None, keywords: str | None) -> tuple[bool, dict]:
         is_valid, err = GuardrailService.validate_input(f"{topic} {keywords or ''}")
@@ -89,7 +92,7 @@ class BlogGenerator:
                 "ai_score": self.calculate_ai_score(str(result.get("content", ""))),
                 "image_url": "https://picsum.photos/seed/market/1024/1024", # 合法
             }
-            self.supabase_client.table("blog_posts").insert(new_post).execute()
+            self.execute_query(self.supabase_client.table("blog_posts").insert(new_post), "Insert new post") # 合法
             return True, {
                 "title": new_post["title"],
                 "content": new_post["content"],
@@ -107,8 +110,8 @@ class BlogGenerator:
             from ..shared_constants import AgentNames, AgentUUIDs
 
             # 1. Fetch lead names for the task title
-            leads_res = self.supabase_client.table("leads").select("company_name").in_("id", lead_ids).execute()
-            lead_names = [L["company_name"] for L in (leads_res.data or [])]
+            success, leads_res = self.execute_query(self.supabase_client.table("leads").select("company_name").in_("id", lead_ids), "Fetch leads") # 合法
+            lead_names = [L["company_name"] for L in (leads_res.get("data", []) if success else [])]
             title = f"AI Draft from Leads: {', '.join(lead_names[:2])}"
             if len(lead_names) > 2:
                 title += f" (+{len(lead_names) - 2})"
@@ -131,14 +134,14 @@ class BlogGenerator:
 
             # 3. Store lead_ids in metadata (or fallback to description if column missing)
             try:
-                self.supabase_client.table("archon_tasks").update({"metadata": {"lead_ids": lead_ids}}).eq(
+                self.execute_query(self.supabase_client.table("archon_tasks").update({"metadata": {"lead_ids": lead_ids}}).eq( # 合法
                     "id", task_id
-                ).execute()
+                ), "Update task metadata")
             except Exception:
                 # Fallback to description suffix if metadata column is not yet migrated
-                self.supabase_client.table("archon_tasks").update(
+                self.execute_query(self.supabase_client.table("archon_tasks").update( # 合法
                     {"description": res["task"]["description"] + f"\n\n[PARAM:LEAD_IDS:{','.join(lead_ids)}]"}
-                ).eq("id", task_id).execute()
+                ).eq("id", task_id), "Update task description")
 
             return True, {"task_id": task_id, "status": "dispatched"}
 
@@ -149,8 +152,8 @@ class BlogGenerator:
     async def draft_from_leads_physical(self, task_id: str, lead_ids: list[str]) -> str:
         """Physical execution of the blog drafting."""
         try:
-            leads_res = self.supabase_client.table("leads").select("*").in_("id", lead_ids).execute()
-            leads = leads_res.data or []
+            success, leads_res = self.execute_query(self.supabase_client.table("leads").select("*").in_("id", lead_ids), "Fetch leads physical") # 合法
+            leads = leads_res.get("data", []) if success else []
             if not leads:
                 return "No leads found for enrichment."
 
@@ -192,7 +195,7 @@ class BlogGenerator:
                 generated_count += 1
 
             if new_posts:
-                self.supabase_client.table("blog_posts").insert(new_posts).execute()
+                self.execute_query(self.supabase_client.table("blog_posts").insert(new_posts), "Insert generated posts") # 合法
 
             return f"Successfully generated {generated_count} blog drafts from {len(lead_ids)} leads."
 
@@ -201,21 +204,22 @@ class BlogGenerator:
             raise e
 
     async def submit_blog(self, post_id: str) -> tuple[bool, dict]:
-        res = self.supabase_client.table("blog_posts").select("*").eq("id", post_id).execute()
-        post = res.data[0] if res.data else None
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").select("*").eq("id", post_id), "Select post") # 合法
+        post = res.get("data", [None])[0] if success and res.get("data") else None
         if not post:
             return False, {"error": "Post not found"}
         score = self.calculate_ai_score(post.get("content", ""))
         status = "changes_requested" if score < 50 else "review"
-        self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq(
+        self.execute_query(self.supabase_client.table("blog_posts").update({"status": status, "ai_score": score}).eq( # 合法
             "id", post_id
-        ).execute()
+        ), "Update post status")
         return True, {"status": status, "ai_score": score}
 
     async def get_content_context(self, source_id: str, source_type: str) -> dict:
         context_text = ""
         if source_type == "lead":
-            logs = self.supabase_client.table("visit_logs").select("*").eq("lead_id", source_id).execute().data
+            success, logs_res = self.execute_query(self.supabase_client.table("visit_logs").select("*").eq("lead_id", source_id), "Fetch visit logs") # 合法
+            logs = logs_res.get("data", []) if success else []
             for log_item in logs or []:
                 context_text += f"\n[Log]: {log_item.get('summary') or 'No summary'}\n"
         from ..search.rag_service import RAGService

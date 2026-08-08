@@ -24,25 +24,27 @@ async def analyze_token_usage() -> None:
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
         # 1. Daily Analysis
-        res_daily = (
-            supabase.table("token_usage")
+        from src.server.repositories.base_repository import BaseRepository
+        repo = BaseRepository(supabase)
+        success_daily, res_daily = repo.execute_query(
+            supabase.table("token_usage") # 合法
             .select("input_tokens, output_tokens, cost_usd")
-            .gt("created_at", one_day_ago)
-            .execute()
+            .gt("created_at", one_day_ago),
+            "Fetch daily tokens"
         )
-        data_daily = res_daily.data or []
+        data_daily = res_daily.get("data", []) if success_daily else []
         total_tokens = sum((row.get("input_tokens", 0) + row.get("output_tokens", 0)) for row in data_daily)
         total_cost = sum(float(row.get("cost_usd", 0)) for row in data_daily)
         logger.info(f"📊 Daily Token Analysis: {total_tokens} physical tokens, ${total_cost:.4f} USD.")
 
         # 2. Phase 6.1 Cost Sentinel (7-day check)
-        res_weekly = (
-            supabase.table("token_usage")
+        success_weekly, res_weekly = repo.execute_query(
+            supabase.table("token_usage") # 合法
             .select("cost_usd")
-            .gt("created_at", seven_days_ago)
-            .execute()
+            .gt("created_at", seven_days_ago),
+            "Fetch weekly tokens"
         )
-        data_weekly = res_weekly.data or []
+        data_weekly = res_weekly.get("data", []) if success_weekly else []
         weekly_cost = sum(float(row.get("cost_usd", 0)) for row in data_weekly)
 
         from src.server.services.settings_service import SettingsService
@@ -61,36 +63,42 @@ async def analyze_token_usage() -> None:
             logger.error(f"💰 Sentinel: {msg}")
             await telegram_service.send_message(msg)
 
-            supabase.table("archon_logs").insert(
-                {
-                    "source": "sentinel-cost",
-                    "level": "ALERT",
-                    "message": msg,
-                    "details": {"weekly_cost": weekly_cost, "threshold": cost_threshold},
-                }
-            ).execute()
+            repo.execute_query(
+                supabase.table("archon_logs").insert( # 合法
+                    {
+                        "source": "sentinel-cost",
+                        "level": "ALERT",
+                        "message": msg,
+                        "details": {"weekly_cost": weekly_cost, "threshold": cost_threshold},
+                    }
+                ),
+                "Log budget exceeded"
+            )
 
         total_input = sum(row.get("input_tokens", 0) for row in data_daily)
         total_output = sum(row.get("output_tokens", 0) for row in data_daily)
         total_tokens = total_input + total_output
 
-        supabase.table("archon_logs").insert(
-            {
-                "source": "clockwork-scheduler",
-                "level": "INFO",
-                "message": f"Daily Token Analysis: {total_tokens} physical tokens",
-                "details": {
-                    "type": "token_analysis",
-                    "period": "24h",
-                    "input_tokens": total_input,
-                    "output_tokens": total_output,
-                    "total_tokens": total_tokens,
-                    "total_cost": total_cost,
-                    "weekly_cost": weekly_cost,
-                    "request_count": len(data_daily),
-                },
-            }
-        ).execute()
+        repo.execute_query(
+            supabase.table("archon_logs").insert( # 合法
+                {
+                    "source": "clockwork-scheduler",
+                    "level": "INFO",
+                    "message": f"Daily Token Analysis: {total_tokens} physical tokens",
+                    "details": {
+                        "type": "token_analysis",
+                        "period": "24h",
+                        "input_tokens": total_input,
+                        "output_tokens": total_output,
+                        "total_tokens": total_tokens,
+                        "total_cost": total_cost,
+                        "weekly_cost": weekly_cost,
+                        "request_count": len(data_daily),
+                    },
+                }
+            ),
+            "Log daily analysis"
+        )
     except Exception as e:
         logger.error(f"💥 Clockwork: Token Analysis Failed: {e}")
 
@@ -101,12 +109,15 @@ async def run_business_sentinel() -> None:
     try:
         supabase = get_supabase_client()
         threshold_days = 14
+        from src.server.repositories.base_repository import BaseRepository
+        repo = BaseRepository(supabase)
         # Physical Fix: Column name is 'key', not 'setting_key'
-        res_settings = (
-            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS").execute()
+        suc_set, res_settings = repo.execute_query(
+            supabase.table("archon_settings").select("value").eq("key", "STALE_LEAD_THRESHOLD_DAYS"), # 合法
+            "Fetch STALE_LEAD_THRESHOLD_DAYS"
         )
-        if res_settings.data:
-            threshold_days = int(res_settings.data[0]["value"])
+        if suc_set and res_settings.get("data"):
+            threshold_days = int(res_settings["data"][0]["value"])
 
         cutoff_date = (datetime.now(UTC) - timedelta(days=threshold_days)).isoformat()
         logger.info(f"🛡️ Sentinel: Scanning for leads updated before {cutoff_date} (threshold={threshold_days}d)")
@@ -114,34 +125,37 @@ async def run_business_sentinel() -> None:
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
         # 1. Stale Leads with Proactive Intervention
-        res = (
-            supabase.table("leads")
+        suc_leads, res = repo.execute_query(
+            supabase.table("leads") # 合法
             .select("id, company_name, updated_at")
             .lt("updated_at", cutoff_date)
             .not_.in_("status", ["won", "converted", "dormant"]) # 合法
-            .limit(20)
-            .execute()
+            .limit(20),
+            "Fetch stale leads"
         )
-        stale_leads = res.data or []
+        stale_leads = res.get("data", []) if suc_leads else []
         if not stale_leads:
             logger.info("🛡️ Clockwork: No stale leads found.")
         else:
             log_payloads = []
             for lead in stale_leads:
                 # Proactive Action: Mark as dormant to auto-clean Alice's workbench
-                supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]).execute()
+                repo.execute_query(
+                    supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]), # 合法
+                    f"Mark lead {lead['id']} dormant"
+                )
 
                 # Anti-spam: Check if already alerted
-                existing = (
-                    supabase.table("archon_logs")
+                suc_ext, existing = repo.execute_query(
+                    supabase.table("archon_logs") # 合法
                     .select("id")
                     .eq("source", "sentinel")
                     .eq("level", "ALERT")
                     .gt("created_at", seven_days_ago)
-                    .filter("details->>lead_id", "eq", str(lead["id"]))
-                    .execute()
+                    .filter("details->>lead_id", "eq", str(lead["id"])),
+                    "Check existing alert"
                 )
-                if existing.data:
+                if suc_ext and existing.get("data"):
                     continue
 
                 log_payloads.append(
@@ -161,8 +175,11 @@ async def run_business_sentinel() -> None:
                 logger.info(f"🛡️ Sentinel: Prepared proactive alert for {lead['company_name']}")
 
             if log_payloads:
-                log_res = supabase.table("archon_logs").insert(log_payloads).execute()
-                if log_res.data:
+                suc_log, log_res = repo.execute_query(
+                    supabase.table("archon_logs").insert(log_payloads), # 合法
+                    "Insert log payloads"
+                )
+                if suc_log and log_res.get("data"):
                     try:
                         import asyncio
 
@@ -174,33 +191,33 @@ async def run_business_sentinel() -> None:
                             async with sem:
                                 await task_service.generate_task_from_alert(alert_id=alert_id, assignee_id=None)
 
-                        await asyncio.gather(*(bounded_generate(str(log_record["id"])) for log_record in log_res.data))
+                        await asyncio.gather(*(bounded_generate(str(log_record["id"])) for log_record in log_res["data"]))
                     except Exception as task_err:
                         logger.error(f"🛡️ Sentinel: Failed to auto-generate tasks from alerts: {task_err}")
 
         # 2. Content Bottlenecks (GAP-029)
         forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
-        post_res = (
-            supabase.table("blog_posts")
+        suc_post, post_res = repo.execute_query(
+            supabase.table("blog_posts") # 合法
             .select("id, title, updated_at")
             .eq("status", "review")
-            .lt("updated_at", forty_eight_hours_ago)
-            .execute()
+            .lt("updated_at", forty_eight_hours_ago),
+            "Fetch bottleneck posts"
         )
-        posts = post_res.data or []
+        posts = post_res.get("data", []) if suc_post else []
         log_payloads = []
         for post in posts:
             # Anti-spam
-            existing_p = (
-                supabase.table("archon_logs")
+            suc_ext_p, existing_p = repo.execute_query(
+                supabase.table("archon_logs") # 合法
                 .select("id")
                 .eq("source", "sentinel")
                 .eq("level", "ALERT")
                 .gt("created_at", seven_days_ago)
-                .filter("details->>post_id", "eq", str(post["id"]))
-                .execute()
+                .filter("details->>post_id", "eq", str(post["id"])),
+                "Check existing post alert"
             )
-            if existing_p.data:
+            if suc_ext_p and existing_p.get("data"):
                 continue
 
             log_payloads.append(
@@ -219,7 +236,10 @@ async def run_business_sentinel() -> None:
             logger.info(f"🛡️ Sentinel: Prepared bottleneck alert for {post['title']}")
 
         if log_payloads:
-            supabase.table("archon_logs").insert(log_payloads).execute()
+            repo.execute_query(
+                supabase.table("archon_logs").insert(log_payloads), # 合法
+                "Insert bottleneck logs"
+            )
     except Exception as e:
         logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
 
@@ -247,12 +267,17 @@ async def run_api_deprecation_scan() -> None:
         )
         task_desc = prompt_service.get_prompt("API_DEPRECATION_SCAN_PROMPT", default=default_desc)
 
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
-        if not p_res.data:
+        from src.server.repositories.base_repository import BaseRepository
+        repo = BaseRepository(supabase)
+        suc_p, p_res = repo.execute_query(
+            supabase.table("archon_projects").select("id").limit(1), # 合法
+            "Fetch project for API scan"
+        )
+        if not suc_p or not p_res.get("data"):
             logger.warning("Clockwork: No projects found to attach API scan task.")
             return
 
-        project_id = p_res.data[0]["id"]
+        project_id = p_res["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,
@@ -267,13 +292,16 @@ async def run_api_deprecation_scan() -> None:
                 task_id=task_result["task"]["id"], agent_id=task_result["task"]["assignee_id"]
             )
 
-            supabase.table("archon_logs").insert(
-                {
-                    "source": "clockwork-scheduler",
-                    "level": "INFO",
-                    "message": "Dispatched Bi-Weekly API Limit & Deprecation Scan to Librarian",
-                }
-            ).execute()
+            repo.execute_query(
+                supabase.table("archon_logs").insert( # 合法
+                    {
+                        "source": "clockwork-scheduler",
+                        "level": "INFO",
+                        "message": "Dispatched Bi-Weekly API Limit & Deprecation Scan to Librarian",
+                    }
+                ),
+                "Log API scan dispatch"
+            )
 
     except Exception as e:
         logger.error(f"💥 Clockwork: API Scan Failed: {e}", exc_info=True)

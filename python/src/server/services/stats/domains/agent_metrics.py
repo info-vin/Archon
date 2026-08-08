@@ -2,34 +2,38 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from ....repositories.base_repository import BaseRepository
 from ...shared_constants import AgentNames, StatusEnum
 
 logger = logging.getLogger(__name__)
 
 
-class AgentMetrics:
+
+
+class AgentMetrics(BaseRepository):
     """Handles agent execution trends and readiness."""
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase: Any = supabase_client
+        super().__init__(supabase_client)
+        self.supabase: Any = self.supabase_client
 
     async def get_commander_trends(self) -> list[dict[str, Any]]:
         """Strategic 30-day trend data including full Velocity (GAP-034)."""
         thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         # 1. Token Analytics (Bob/Alice Usage)
-        marketing_res = self.supabase.table("profiles").select("id").eq("role", "marketing").execute()
-        m_ids = [r["id"] for r in (marketing_res.data or [])]
+        success_m, marketing_res = self.execute_query(self.supabase.table("profiles").select("id").eq("role", "marketing"), "Get marketing profiles") # 合法
+        m_ids = [r["id"] for r in (marketing_res.get("data", []) if success_m else [])]
         token_map: dict[str, int] = {}
         if m_ids:
-            token_res = (
-                self.supabase.table("token_usage")
+            success_t, token_res = self.execute_query(
+                self.supabase.table("token_usage") # 合法
                 .select("created_at, total_tokens")
                 .in_("user_id", m_ids)
-                .gt("created_at", thirty_days_ago)
-                .execute()
+                .gt("created_at", thirty_days_ago),
+                "Get token usage"
             )
-            for row in token_res.data or []:
+            for row in (token_res.get("data", []) if success_t else []):
                 d = str(row["created_at"][:10])
                 token_map[d] = token_map.get(d, 0) + int(row["total_tokens"])
 
@@ -43,40 +47,40 @@ class AgentMetrics:
             velocity_raw[d].append(max(0.1, min(168.0, duration_hours)))
 
         # A. Blog Velocity
-        blog_res = (
-            self.supabase.table("blog_posts")
+        success_b, blog_res = self.execute_query(
+            self.supabase.table("blog_posts") # 合法
             .select("created_at, updated_at")
             .in_("status", [StatusEnum.PUBLISHED, StatusEnum.CHANGES_REQUESTED])
-            .gt("updated_at", thirty_days_ago)
-            .execute()
+            .gt("updated_at", thirty_days_ago),
+            "Get blog posts"
         )
-        for row in blog_res.data or []:
+        for row in (blog_res.get("data", []) if success_b else []):
             start = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
             end = datetime.fromisoformat(row["updated_at"].replace("Z", "+00:00"))
             add_velocity(row["updated_at"], (end - start).total_seconds() / 3600)
 
         # B. Task Velocity (SLA Tracking)
-        task_res = (
-            self.supabase.table("archon_tasks")
+        success_ta, task_res = self.execute_query(
+            self.supabase.table("archon_tasks") # 合法
             .select("created_at, completed_at")
             .eq("status", "done")
-            .gt("completed_at", thirty_days_ago)
-            .execute()
+            .gt("completed_at", thirty_days_ago),
+            "Get tasks SLA"
         )
-        for row in task_res.data or []:
+        for row in (task_res.get("data", []) if success_ta else []):
             start = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
             end = datetime.fromisoformat(row["completed_at"].replace("Z", "+00:00"))
             add_velocity(row["completed_at"], (end - start).total_seconds() / 3600)
 
         # C. Lead Conversion Velocity
-        lead_res = (
-            self.supabase.table("leads")
+        success_l, lead_res = self.execute_query(
+            self.supabase.table("leads") # 合法
             .select("created_at, updated_at")
             .eq("status", "converted")
-            .gt("updated_at", thirty_days_ago)
-            .execute()
+            .gt("updated_at", thirty_days_ago),
+            "Get lead conversion"
         )
-        for row in lead_res.data or []:
+        for row in (lead_res.get("data", []) if success_l else []):
             start = datetime.fromisoformat(row["created_at"].replace("Z", "+00:00"))
             end = datetime.fromisoformat(row["updated_at"].replace("Z", "+00:00"))
             add_velocity(row["updated_at"], (end - start).total_seconds() / 3600)
@@ -98,14 +102,14 @@ class AgentMetrics:
         try:
             now = datetime.now(UTC)
             ninety_days_ago = (now - timedelta(days=90)).isoformat()
-            res = (
-                self.supabase.table("archon_tasks")
+            success_r, res = self.execute_query(
+                self.supabase.table("archon_tasks") # 合法
                 .select("id, completed_at, assignee")
                 .eq("status", "done")
-                .gt("completed_at", ninety_days_ago)
-                .execute()
+                .gt("completed_at", ninety_days_ago),
+                "Get readiness tasks"
             )
-            all_done_tasks = [t for t in (res.data or []) if t.get("assignee") and t.get("assignee") != "Unassigned"]
+            all_done_tasks = [t for t in (res.get("data", []) if success_r else []) if t.get("assignee") and t.get("assignee") != "Unassigned"]
             total_done = len(all_done_tasks)
             baseline_daily = round(total_done / 90, 2)
 

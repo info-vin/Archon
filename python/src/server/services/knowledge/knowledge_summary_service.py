@@ -77,8 +77,8 @@ class KnowledgeSummaryService:
                 search_pattern = f"%{search}%"
                 count_query = count_query.or_(f"title.ilike.{search_pattern},summary.ilike.{search_pattern}")
 
-            count_result = count_query.execute()
-            total = count_result.count if hasattr(count_result, "count") else 0
+            success, count_result = self.repository.execute_query(count_query, error_context="Failed to count knowledge sources")
+            total = count_result.get("count", 0) if success else 0
 
             # Apply pagination
             start_idx = (page - 1) * per_page
@@ -86,8 +86,8 @@ class KnowledgeSummaryService:
             query = query.order("updated_at", desc=True)
 
             # Execute main query
-            result = query.execute()
-            sources = result.data if result.data else []
+            success, result_dict = self.repository.execute_query(query, error_context="Failed to fetch knowledge sources")
+            sources = result_dict.get("data", []) if success else []
 
             # Get source IDs for batch operations
             source_ids = [s["source_id"] for s in sources]

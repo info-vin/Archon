@@ -7,7 +7,6 @@ for extracted code blocks.
 
 import asyncio
 import json
-import os
 from typing import Any, cast
 
 from src.server.config.logfire_config import search_logger
@@ -21,7 +20,8 @@ def _get_model_choice_logic() -> str:
         if credential_service._cache_initialized and "MODEL_CHOICE" in credential_service._cache:
             model = credential_service._cache["MODEL_CHOICE"]
         else:
-            model = os.getenv("MODEL_CHOICE")
+            from src.server.services.settings_service import SettingsService
+            model = SettingsService().get_setting("MODEL_CHOICE")
             if not model:
                 raise ValueError("MODEL_CHOICE is not configured in environment or credentials")
         return cast(str, model)
@@ -68,7 +68,8 @@ Format your response as JSON:
     try:
         import openai
 
-        api_key = os.getenv("OPENAI_API_KEY")
+        from src.server.config.config import get_config
+        api_key = get_config().openai_api_key
         if not api_key:
             from src.server.services.credential_service import credential_service
 
@@ -81,7 +82,8 @@ Format your response as JSON:
                 else:
                     api_key = cached_key
             else:
-                api_key = os.getenv("OPENAI_API_KEY", "")
+                from src.server.config.config import get_config
+                api_key = get_config().openai_api_key or ""
 
         if not api_key:
             raise ValueError("No OpenAI API key available for code summarization")
@@ -147,7 +149,8 @@ async def generate_code_summaries_batch_logic(
             if credential_service._cache_initialized and "CODE_SUMMARY_MAX_WORKERS" in credential_service._cache:
                 max_workers = int(credential_service._cache["CODE_SUMMARY_MAX_WORKERS"])
             else:
-                max_workers = int(os.getenv("CODE_SUMMARY_MAX_WORKERS", "3"))
+                from src.server.services.settings_service import SettingsService
+                max_workers = int(SettingsService().get_setting("CODE_SUMMARY_MAX_WORKERS") or "3")
         except Exception:
             max_workers = 3
 

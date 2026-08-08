@@ -101,16 +101,11 @@ async def update_task_logic(
             update_data["retry_count"] = update_fields["retry_count"]
 
         # Update task
-        def _update_query() -> Any:
-            return (
-                task_service_instance.supabase_client.table("archon_tasks")
-                .update(update_data)
-                .eq("id", task_id)
-                .execute()
-            )
-
         success_update, update_result = task_service_instance.execute_query(
-            query_func=_update_query, error_context=f"Task with ID {task_id} not found"
+            task_service_instance.supabase_client.table("archon_tasks") # 合法
+            .update(update_data)
+            .eq("id", task_id),
+            error_context=f"Task with ID {task_id} not found"
         )
 
         if success_update:

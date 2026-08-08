@@ -4,33 +4,39 @@ from typing import Any
 
 import aiofiles
 
+from ...repositories.base_repository import BaseRepository
 from ..librarian_service import LibrarianService
 from ..shared_constants import StatusEnum
 
 logger = logging.getLogger(__name__)
 
 
-class AnalyticsHandler:
+
+
+class AnalyticsHandler(BaseRepository):
     """
     Handles Marketing Stats, Trends, Knowledge Seeding, and Sentinel Triggers.
     Consolidates background and data-heavy logic for Phase 4.6.47.
     """
 
     def __init__(self, supabase_client: Any) -> None:
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
 
     async def get_marketing_stats(self) -> dict:
         try:
-            leads_count = self.supabase_client.table("leads").select("id", count="exact").execute().count or 0
-            blogs_count = self.supabase_client.table("blog_posts").select("id", count="exact").execute().count or 0
-            converted_leads = (
-                self.supabase_client.table("leads")
+            _, leads_res = self.execute_query(self.supabase_client.table("leads").select("id", count="exact"), "Get leads count") # 合法
+            leads_count = leads_res.get("count", 0)
+
+            _, blogs_res = self.execute_query(self.supabase_client.table("blog_posts").select("id", count="exact"), "Get blogs count") # 合法
+            blogs_count = blogs_res.get("count", 0)
+
+            _, converted_res = self.execute_query(
+                self.supabase_client.table("leads") # 合法
                 .select("id", count="exact")
-                .eq("status", "converted")
-                .execute()
-                .count
-                or 0
+                .eq("status", "converted"),
+                "Get converted leads count"
             )
+            converted_leads = converted_res.get("count", 0)
 
             return {
                 "total_leads": leads_count,
@@ -45,25 +51,28 @@ class AnalyticsHandler:
 
     async def get_marketing_trends(self) -> dict:
         try:
-            res_t = (
-                self.supabase_client.table("marketing_trends")
+            success_t, res_t = self.execute_query(
+                self.supabase_client.table("marketing_trends") # 合法
                 .select("*")
                 .eq("trend_type", "keyword_growth")
                 .order("report_date", desc=True)
-                .limit(1)
-                .execute()
+                .limit(1),
+                "Get keyword growth"
             )
-            res_s = (
-                self.supabase_client.table("marketing_trends")
+            success_s, res_s = self.execute_query(
+                self.supabase_client.table("marketing_trends") # 合法
                 .select("*")
                 .eq("trend_type", "sankey_flow")
                 .order("report_date", desc=True)
-                .limit(1)
-                .execute()
+                .limit(1),
+                "Get sankey flow"
             )
+
+            t_data = res_t.get("data", []) if success_t else []
+            s_data = res_s.get("data", []) if success_s else []
             return {
-                "keyword_growth": res_t.data[0]["data"] if res_t.data else [],
-                "sankey_flow": res_s.data[0]["data"] if res_s.data else {},
+                "keyword_growth": t_data[0]["data"] if t_data else [],
+                "sankey_flow": s_data[0]["data"] if s_data else {},
             }
         except Exception as e:
             logger.error(f"AnalyticsHandler: Failed to fetch trends: {e}")
@@ -121,35 +130,34 @@ class AnalyticsHandler:
             return {"error": f"Seeding failed: {str(e)}"}
 
     async def get_combined_sources(self, user_id: str) -> list[dict]:
-        leads = (
-            self.supabase_client.table("leads")
+        success_l, leads_res = self.execute_query(
+            self.supabase_client.table("leads") # 合法
             .select("*")
             .order("created_at", desc=True)
-            .limit(10)
-            .execute()
-            .data
-            or []
+            .limit(10),
+            "Get leads sources"
         )
-        tasks = (
-            self.supabase_client.table("archon_tasks")
+        leads = leads_res.get("data", []) if success_l else []
+
+        success_t, tasks_res = self.execute_query(
+            self.supabase_client.table("archon_tasks") # 合法
             .select("*")
             .eq("assignee_id", user_id)
             .order("created_at", desc=True)
-            .limit(10)
-            .execute()
-            .data
-            or []
+            .limit(10),
+            "Get tasks sources"
         )
-        blogs = (
-            self.supabase_client.table("blog_posts")
+        tasks = tasks_res.get("data", []) if success_t else []
+
+        success_b, blogs_res = self.execute_query(
+            self.supabase_client.table("blog_posts") # 合法
             .select("*")
             .in_("status", [StatusEnum.DRAFT, StatusEnum.CHANGES_REQUESTED])
             .order("created_at", desc=True)
-            .limit(10)
-            .execute()
-            .data
-            or []
+            .limit(10),
+            "Get blogs sources"
         )
+        blogs = blogs_res.get("data", []) if success_b else []
 
         sources = []
         for lead_entry in leads:

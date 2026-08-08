@@ -22,7 +22,7 @@ class SourceLinkingService(BaseRepository):
         """
 
         query = (
-            self.supabase_client.table("archon_project_sources")
+            self.supabase_client.table("archon_project_sources") # 合法
             .select("source_id, notes")
             .eq("project_id", project_id)
         )
@@ -59,7 +59,7 @@ class SourceLinkingService(BaseRepository):
         """
         try:
             # 1. Clear existing links
-            delete_query = self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id)
+            delete_query = self.supabase_client.table("archon_project_sources").delete().eq("project_id", project_id) # 合法
             self.execute_query(delete_query, "Failed to clear project sources", require_data=False)
 
             # 2. Batch insert new links
@@ -73,7 +73,7 @@ class SourceLinkingService(BaseRepository):
 
             if all_links:
 
-                insert_query = self.supabase_client.table("archon_project_sources").insert(all_links)
+                insert_query = self.supabase_client.table("archon_project_sources").insert(all_links) # 合法
                 return self.execute_query(insert_query, "Failed to batch link sources")
 
             return True, {"message": "No sources to link"}
@@ -121,7 +121,7 @@ class SourceLinkingService(BaseRepository):
             return projects
 
         query = (
-            self.supabase_client.table("archon_project_sources")
+            self.supabase_client.table("archon_project_sources") # 合法
             .select("project_id, source_id, notes")
             .in_("project_id", project_ids)
         )

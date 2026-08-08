@@ -148,8 +148,9 @@ class VisitLogService(BaseRepository):
         if not success or not res:
             return False, res
 
-        created_log = res[0] if isinstance(res, list) and len(res) > 0 else res
-        visit_id = created_log.get("id")
+        data_list = res.get("data", []) if isinstance(res, dict) else res
+        created_log = data_list[0] if isinstance(data_list, list) and len(data_list) > 0 else data_list
+        visit_id = created_log.get("id") if isinstance(created_log, dict) else None
 
         # 2. Automated Task Dispatch / Scheduling Recommendation (Phase 5.4.6)
         try:
@@ -159,16 +160,23 @@ class VisitLogService(BaseRepository):
             from src.server.services.projects.task_service import task_service
 
             project_id = None
-            proj_res = (
-                self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1).execute()
+            proj_res_success, proj_res = self.execute_query(
+                self.supabase_client.table("archon_projects").select("id").ilike("title", "%Ops%").limit(1),
+                "Fetch Ops project ID"
             )
-            if proj_res.data:
-                project_id = proj_res.data[0]["id"]
+            if proj_res_success and proj_res and isinstance(proj_res, dict) and proj_res.get("data"):
+                project_id = proj_res["data"][0]["id"]
 
             if not project_id:
-                fallback = self.supabase_client.table("archon_projects").select("id").limit(1).execute()
+                fallback_success, fallback_res = self.execute_query(
+                    self.supabase_client.table("archon_projects").select("id").limit(1),
+                    "Fetch fallback project ID"
+                )
                 # Empty DB safety: Protect against IndexError (GAP-005 Fix)
-                project_id = fallback.data[0]["id"] if fallback.data and len(fallback.data) > 0 else None
+                if fallback_success and fallback_res and isinstance(fallback_res, dict) and fallback_res.get("data"):
+                    project_id = fallback_res["data"][0]["id"]
+                else:
+                    project_id = None
 
             if project_id and visit_id:
                 entity_name = data.get("company_name") or "客戶"

@@ -9,6 +9,7 @@ from typing import Any
 
 import aiofiles
 
+from ...repositories.base_repository import BaseRepository
 from ...utils import get_supabase_client
 from ..llm_provider_service import get_llm_client
 from ..propose_change_service import ProposeChangeService
@@ -17,10 +18,10 @@ from ..shared_constants import AgentUUIDs
 logger = logging.getLogger(__name__)
 
 
-class SelfTuningService:
+class SelfTuningService(BaseRepository):
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase = supabase_client or get_supabase_client()
-        self.proposer = ProposeChangeService(self.supabase)
+        super().__init__(supabase_client or get_supabase_client())
+        self.proposer = ProposeChangeService(self.supabase_client)
 
     async def tune_prompt_from_error(self, log_id: str) -> dict[str, Any]:
         """
@@ -28,11 +29,12 @@ class SelfTuningService:
         """
         try:
             # 1. Fetch the error context - robust fetch
-            log_res = self.supabase.table("archon_logs").select("*").eq("id", log_id).execute()
-            if not log_res.data:
+            query = self.supabase_client.table("archon_logs").select("*").eq("id", log_id) # 合法
+            success, res = self.execute_query(query, "Failed to fetch log")
+            if not success or not res.get("data"):
                 return {"success": False, "error": f"Log {log_id} not found"}
 
-            log = log_res.data[0]
+            log = res["data"][0]
             error_msg = log.get("message")
             details = log.get("details") or {}
 

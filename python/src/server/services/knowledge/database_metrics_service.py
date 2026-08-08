@@ -8,9 +8,10 @@ from datetime import datetime
 from typing import Any
 
 from ...config.logfire_config import safe_logfire_error, safe_logfire_info
+from ...repositories.base_repository import BaseRepository
 
 
-class DatabaseMetricsService:
+class DatabaseMetricsService(BaseRepository):
     """
     Service for retrieving database metrics and statistics.
     """
@@ -22,7 +23,8 @@ class DatabaseMetricsService:
         Args:
             supabase_client: The Supabase client for database operations
         """
-        self.supabase = supabase_client
+        super().__init__(supabase_client)
+        self.supabase = self.supabase_client
 
     async def get_metrics(self) -> dict[str, Any]:
         """
@@ -38,17 +40,17 @@ class DatabaseMetricsService:
             metrics = {}
 
             # Sources count
-            sources_result = self.supabase.table("archon_sources").select("*", count="exact").execute()
-            metrics["sources_count"] = sources_result.count if sources_result.count else 0
+            success1, sources_result = self.execute_query(self.supabase.table("archon_sources").select("*", count="exact"), "Get sources count") # 合法
+            metrics["sources_count"] = sources_result.get("count", 0) if success1 else 0
 
             # Crawled pages count
-            pages_result = self.supabase.table("archon_crawled_pages").select("*", count="exact").execute()
-            metrics["pages_count"] = pages_result.count if pages_result.count else 0
+            success2, pages_result = self.execute_query(self.supabase.table("archon_crawled_pages").select("*", count="exact"), "Get pages count") # 合法
+            metrics["pages_count"] = pages_result.get("count", 0) if success2 else 0
 
             # Code examples count
             try:
-                code_examples_result = self.supabase.table("archon_code_examples").select("*", count="exact").execute()
-                metrics["code_examples_count"] = code_examples_result.count if code_examples_result.count else 0
+                success3, code_examples_result = self.execute_query(self.supabase.table("archon_code_examples").select("*", count="exact"), "Get code examples count") # 合法
+                metrics["code_examples_count"] = code_examples_result.get("count", 0) if success3 else 0
             except Exception:
                 metrics["code_examples_count"] = 0
 
@@ -81,26 +83,26 @@ class DatabaseMetricsService:
             stats: dict[str, Any] = {}
 
             # Get knowledge type distribution
-            knowledge_types_result = self.supabase.table("archon_sources").select("metadata->knowledge_type").execute()
+            success, knowledge_types_result = self.execute_query(self.supabase.table("archon_sources").select("metadata->knowledge_type"), "Get knowledge type distribution") # 合法
 
-            if knowledge_types_result.data:
+            if success and knowledge_types_result.get("data"):
                 type_counts: dict[str, int] = {}
-                for row in knowledge_types_result.data:
+                for row in knowledge_types_result["data"]:
                     ktype = row.get("knowledge_type", "unknown")
                     type_counts[ktype] = type_counts.get(ktype, 0) + 1
                 stats["knowledge_type_distribution"] = type_counts
 
             # Get recent activity
-            recent_sources = (
-                self.supabase.table("archon_sources")
+            success, recent_sources = self.execute_query(
+                self.supabase.table("archon_sources") # 合法
                 .select("source_id, created_at")
                 .order("created_at", desc=True)
-                .limit(5)
-                .execute()
+                .limit(5),
+                "Get recent activity"
             )
 
             stats["recent_sources"] = [
-                {"source_id": s["source_id"], "created_at": s["created_at"]} for s in (recent_sources.data or [])
+                {"source_id": s["source_id"], "created_at": s["created_at"]} for s in (recent_sources.get("data", []) if success else [])
             ]
 
             return stats

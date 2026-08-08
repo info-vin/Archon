@@ -27,6 +27,12 @@ class EnvironmentConfig:
     port: int  # Required - no default
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
+    google_api_key: str | None = None
+    supabase_db_url: str | None = None
+    offline_mode: bool = False
+    archon_env: str = ""
+    space_id: str | None = None
+    is_testing: bool = False
     host: str = "0.0.0.0"
     transport: str = "sse"
     token_pricing: dict[str, Any] = field(default_factory=dict)
@@ -145,8 +151,10 @@ def validate_supabase_url(url: str) -> bool:
 
 def load_environment_config() -> EnvironmentConfig:
     """Load and validate environment configuration."""
-    # OpenAI API key is optional at startup - can be set via API
+    # Optional at startup
     openai_api_key = os.getenv("OPENAI_API_KEY")
+    gemini_api_key = os.getenv("GEMINI_API_KEY")
+    google_api_key = os.getenv("GOOGLE_API_KEY")
 
     # Required environment variables for database access
     supabase_url = os.getenv("SUPABASE_URL")
@@ -156,6 +164,12 @@ def load_environment_config() -> EnvironmentConfig:
     supabase_service_key = os.getenv("SUPABASE_SERVICE_KEY")
     if not supabase_service_key:
         raise ConfigurationError("SUPABASE_SERVICE_KEY environment variable is required")
+
+    supabase_db_url = os.getenv("SUPABASE_DB_URL")
+    offline_mode = os.getenv("OFFLINE_MODE", "false").lower() == "true"
+    archon_env = os.getenv("ARCHON_ENV", "")
+    space_id = os.getenv("SPACE_ID")
+    is_testing = os.getenv("TESTING", "False").lower() == "true" or bool(os.getenv("PYTEST_CURRENT_TEST"))
 
     # Validate required fields
     if openai_api_key:
@@ -215,10 +229,10 @@ def load_environment_config() -> EnvironmentConfig:
     # Phase 4.6.15: Priority DB -> ENV
     token_pricing_json = os.getenv("TOKEN_PRICING_JSON")
     try:
-        from ..utils import get_supabase_client
-
+        from supabase import create_client
+        temp_client = create_client(supabase_url, supabase_service_key)
         db_res = (
-            get_supabase_client().table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
+            temp_client.table("archon_settings").select("value").eq("key", "TOKEN_PRICING_JSON").execute()
         )
         if db_res.data:
             token_pricing_json = db_res.data[0]["value"]
@@ -246,8 +260,15 @@ def load_environment_config() -> EnvironmentConfig:
 
     return EnvironmentConfig(
         openai_api_key=openai_api_key,
+        gemini_api_key=gemini_api_key,
+        google_api_key=google_api_key,
         supabase_url=supabase_url,
         supabase_service_key=supabase_service_key,
+        supabase_db_url=supabase_db_url,
+        offline_mode=offline_mode,
+        archon_env=archon_env,
+        space_id=space_id,
+        is_testing=is_testing,
         host=host,
         port=port,
         transport=transport,

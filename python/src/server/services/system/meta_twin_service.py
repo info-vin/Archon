@@ -5,19 +5,20 @@ MetaTwinService - Dynamic internal monitoring and self-healing loop for AI Agent
 from datetime import UTC, datetime, timedelta
 
 from ...config.logfire_config import get_logger
+from ...repositories.base_repository import BaseRepository
 from ...utils import get_supabase_client
 
 logger = get_logger(__name__)
 
 
-class MetaTwinService:
+class MetaTwinService(BaseRepository):
     """
     Self-healing orchestrator for the Archon Agent ecosystem.
     Audits agent parameters dynamically and executes fallback actions.
     """
 
     def __init__(self) -> None:
-        self.supabase = get_supabase_client()
+        super().__init__(get_supabase_client())
 
     async def run_telemetry_audit(self) -> dict:
         """
@@ -29,13 +30,13 @@ class MetaTwinService:
 
         # 1. Fetch recent agent errors
         try:
-            logs_res = (
-                self.supabase.table("archon_logs")
+            query = (
+                self.supabase_client.table("archon_logs") # 合法
                 .select("id, source, message, level, details, created_at")
                 .gt("created_at", one_hour_ago)
-                .execute()
             )
-            logs = logs_res.data or []
+            success, res = self.execute_query(query, "Failed to query archon_logs", require_data=False)
+            logs = res.get("data", []) if success else []
         except Exception as e:
             logger.error(f"MetaTwin: Failed to query archon_logs: {e}")
             logs = []
@@ -92,13 +93,14 @@ class MetaTwinService:
         # Log audit outcomes to archon_logs as system trace
         if corrections:
             try:
-                self.supabase.table("archon_logs").insert({
+                query = self.supabase_client.table("archon_logs").insert({ # 合法
                     "level": "INFO",
                     "source": "MetaTwinService",
                     "type": "system",
                     "message": f"Self-healing executed: {len(corrections)} corrections applied.",
                     "details": {"diagnoses": diagnoses, "corrections": corrections}
-                }).execute()
+                })
+                self.execute_query(query, "Failed to insert audit outcome log", require_data=False)
             except Exception as e:
                 logger.error(f"MetaTwin: Failed to insert audit outcome log: {e}")
 
@@ -121,11 +123,12 @@ class MetaTwinService:
             SYSTEM_MODELS["DEFAULT_PRO"] = fallback_model
 
             # Persist setting to DB so it propagates
-            await self.supabase.table("archon_settings").upsert({
+            query = self.supabase_client.table("archon_settings").upsert({ # 合法
                 "key": f"MODEL_OVERRIDE_{agent_name.upper()}",
                 "value": fallback_model,
                 "description": f"Auto-Healing Model Override by MetaTwin at {datetime.now(UTC).isoformat()}"
-            }, on_conflict="key").execute()
+            }, on_conflict="key")
+            self.execute_query(query, "Model override failed", require_data=False)
             return True
         except Exception as e:
             logger.error(f"MetaTwin: Model override failed for {agent_name}: {e}")
@@ -137,11 +140,12 @@ class MetaTwinService:
         """
         logger.info(f"MetaTwin: Throttling agent {agent_name} concurrency limit to {new_limit}")
         try:
-            await self.supabase.table("archon_settings").upsert({
+            query = self.supabase_client.table("archon_settings").upsert({ # 合法
                 "key": f"CRAWL_CONCURRENT_MAX_{agent_name.upper()}",
                 "value": str(new_limit),
                 "description": f"Auto-Healing Concurrency Limit by MetaTwin at {datetime.now(UTC).isoformat()}"
-            }, on_conflict="key").execute()
+            }, on_conflict="key")
+            self.execute_query(query, "Throttling failed", require_data=False)
             return True
         except Exception as e:
             logger.error(f"MetaTwin: Throttling failed for {agent_name}: {e}")

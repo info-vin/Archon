@@ -8,6 +8,7 @@ import logging
 from supabase import Client
 
 from src.server.config.logfire_config import search_logger
+from src.server.repositories.base_repository import BaseRepository
 from src.server.services.source_management.logic.ai_metadata import generate_source_title_and_metadata
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,8 @@ async def update_source_info(
     """Update or insert source information in the archon_sources table."""
     search_logger.info(f"Updating source {source_id} with knowledge_type={knowledge_type}")
     try:
-        existing_source = client.table("archon_sources").select("title").eq("source_id", source_id).execute()
+        success, res = BaseRepository(client).execute_query(client.table("archon_sources").select("title").eq("source_id", source_id), "Fetch existing source title")
+        existing_source = type("obj", (object,), {"data": res["data"] if success and isinstance(res, dict) and "data" in res else None})()
 
         if existing_source.data:
             existing_title = existing_source.data[0]["title"]
@@ -64,7 +66,7 @@ async def update_source_info(
             if source_display_name:
                 update_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").upsert(update_data).eq("source_id", source_id).execute()
+            BaseRepository(client).execute_query(client.table("archon_sources").upsert(update_data).eq("source_id", source_id), "Update existing source metadata")
             search_logger.info(f"Updated source {source_id} while preserving title: {existing_title}")
         else:
             if source_display_name:
@@ -114,7 +116,7 @@ async def update_source_info(
             if source_display_name:
                 upsert_data["source_display_name"] = source_display_name
 
-            client.table("archon_sources").upsert(upsert_data).execute()
+            BaseRepository(client).execute_query(client.table("archon_sources").upsert(upsert_data), "Upsert new source")
             search_logger.info(f"Created/updated source {source_id} with title: {title}")
     except Exception as e:
         search_logger.error(f"Error updating source {source_id}: {e}")
@@ -150,7 +152,8 @@ def create_source_from_upload_logic(
     if source_url:
         source_data["source_url"] = source_url
 
-    res = client.table("archon_sources").upsert(source_data).execute()
+    success, res_data = BaseRepository(client).execute_query(client.table("archon_sources").upsert(source_data), "Create source from upload")
+    res = type("obj", (object,), {"error": not success})()
     if hasattr(res, "error") and res.error:
         search_logger.error(f"Supabase error creating source entry for {source_id}: {res.error}")
         raise Exception(f"Supabase error: {res.error}")

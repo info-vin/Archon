@@ -45,7 +45,7 @@ async def create_info_request_task_logic(
             logger.warning("No 'default_business_project' set. Falling back to the first available project.")
 
             def _get_first_project() -> Any:
-                return task_service_instance.supabase_client.table("archon_projects").select("id").limit(1).execute()
+                return task_service_instance.supabase_client.table("archon_projects").select("id").limit(1)
 
             p_success, p_result = task_service_instance.execute_query(
                 _get_first_project, "Get fallback project", require_data=True
@@ -114,14 +114,19 @@ async def create_task_logic(
         # REORDERING LOGIC: If inserting at a specific position, increment existing tasks
         if task_order > 0:
             try:
-                task_service_instance.supabase_client.rpc(
-                    "increment_task_orders",
-                    {
-                        "p_project_id": project_id,
-                        "p_status": task_status,
-                        "p_start_order": task_order,
-                    },
-                ).execute()
+                success, rpc_res = task_service_instance.execute_query(
+                    task_service_instance.supabase_client.rpc(
+                        "increment_task_orders",
+                        {
+                            "p_project_id": project_id,
+                            "p_status": task_status,
+                            "p_start_order": task_order,
+                        },
+                    ),
+                    error_context="Reordering tasks failed via RPC"
+                )
+                if not success:
+                    raise Exception(rpc_res.get("error", "Unknown RPC error"))
                 logger.info(f"Reordered tasks in project {project_id} starting from order {task_order}")
             except Exception as e:
                 logger.warning(f"Reordering tasks failed via RPC: {e}. Proceeding with task creation.")
@@ -157,7 +162,7 @@ async def create_task_logic(
             task_data["due_date"] = due_date.isoformat()
 
         def _create_query() -> Any:
-            return task_service_instance.supabase_client.table("archon_tasks").insert(task_data).execute()
+            return task_service_instance.supabase_client.table("archon_tasks").insert(task_data)
 
         success_create, create_result = task_service_instance.execute_query(
             query_func=_create_query, error_context="Failed to create task"

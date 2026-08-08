@@ -127,32 +127,29 @@ async def test_end_to_end_voice_scheduling_integration():
         mock_parsed_ai_res.tasks,
         mock_parsed_ai_res
     ))), \
-    patch.object(visit_log_service, "execute_query", return_value=(True, mock_log_db_res)), \
+    patch.object(visit_log_service, "execute_query", side_effect=[
+        (True, {"data": mock_log_db_res}),  # 1st call: insert log
+        (True, {"data": [{"id": "project-uuid-mock"}]})  # 2nd call: fetch Ops project ID
+    ]), \
     patch("src.server.services.agent_registry.get_agent_uuid", side_effect=lambda key: f"{key}-uuid-mock"), \
     patch("src.server.services.projects.task_service.task_service.create_task", AsyncMock(return_value=(True, {}))) as mock_create_task:
 
-        # Let's mock the archon_projects query in supabase client inside create_log
-        mock_project_db = MagicMockResponse([{"id": "project-uuid-mock"}])
-        with patch.object(visit_log_service.supabase_client, "table") as mock_table:
-            # For project lookups
-            mock_table.return_value.select.return_value.ilike.return_value.limit.return_value.execute = MagicMockExecutor(mock_project_db)
+        success, log_res = await visit_log_service.create_log(data, mock_audio)
 
-            success, log_res = await visit_log_service.create_log(data, mock_audio)
+        # 2. Assertions
+        assert success is True
+        assert "scheduling_recommendation" in log_res
+        rec = log_res["scheduling_recommendation"]
+        assert rec["meeting_topic"] == "需求規格書討論"
+        assert len(rec["suggested_slots"]) == 3
 
-            # 2. Assertions
-            assert success is True
-            assert "scheduling_recommendation" in log_res
-            rec = log_res["scheduling_recommendation"]
-            assert rec["meeting_topic"] == "需求規格書討論"
-            assert len(rec["suggested_slots"]) == 3
-
-            # Assert task was created and dispatched to Bob with Charlie as collaborator
-            mock_create_task.assert_called_once()
-            args, kwargs = mock_create_task.call_args
-            assert kwargs["project_id"] == "project-uuid-mock"
-            assert "[待確認會議]" in kwargs["title"]
-            assert kwargs["assignee_id"] == "market-bot-uuid-mock"
-            assert "supervisor-uuid-mock" in kwargs["collaborator_agent_ids"]
+        # Assert task was created and dispatched to Bob with Charlie as collaborator
+        mock_create_task.assert_called_once()
+        args, kwargs = mock_create_task.call_args
+        assert kwargs["project_id"] == "project-uuid-mock"
+        assert "[待確認會議]" in kwargs["title"]
+        assert kwargs["assignee_id"] == "market-bot-uuid-mock"
+        assert "supervisor-uuid-mock" in kwargs["collaborator_agent_ids"]
 
 
 # Helpers for mocking Supabase client executes

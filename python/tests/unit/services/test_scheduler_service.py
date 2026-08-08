@@ -59,7 +59,7 @@ async def test_scheduler_jobs_configuration():
     day_of_week_field = next(f for f in alice_trigger.fields if f.name == "day_of_week")
     assert str(hour_field) == "10"
     assert str(minute_field) == "25"
-    assert str(day_of_week_field) == "tue,wed,thu,fri"
+    assert str(day_of_week_field) == "tue,wed,fri"
 
     # Verify token_analysis daily cron schedule (CST 08:20 -> hour=8, minute=20)
     token_trigger = job_triggers.get("token_analysis_recurring")

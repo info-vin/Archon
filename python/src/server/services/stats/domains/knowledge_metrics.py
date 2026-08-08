@@ -2,35 +2,40 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from ....repositories.base_repository import BaseRepository
+
 logger = logging.getLogger(__name__)
 
 
-class KnowledgeMetrics:
+
+
+class KnowledgeMetrics(BaseRepository):
     """Handles knowledge base growth and ROI tracking."""
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase = supabase_client
+        super().__init__(supabase_client)
+        self.supabase = self.supabase_client
 
     async def get_knowledge_roi(self) -> dict[str, Any]:
         """Knowledge Graph ROI calculation (Phase 4.6.15)."""
         now = datetime.now(UTC)
         cutoff = (now - timedelta(days=60)).isoformat()
         try:
-            sources_res = (
-                self.supabase.table("archon_sources")
+            success_s, sources_res = self.execute_query(
+                self.supabase.table("archon_sources") # 合法
                 .select("source_id, source_url, created_at")
-                .gt("created_at", cutoff)
-                .execute()
+                .gt("created_at", cutoff),
+                "Get knowledge sources"
             )
-            pages_res = (
-                self.supabase.table("archon_crawled_pages")
+            success_p, pages_res = self.execute_query(
+                self.supabase.table("archon_crawled_pages") # 合法
                 .select("source_id, created_at")
-                .gt("created_at", cutoff)
-                .execute()
+                .gt("created_at", cutoff),
+                "Get knowledge pages"
             )
 
-            sources = sources_res.data or []
-            pages = pages_res.data or []
+            sources = sources_res.get("data", []) if success_s else []
+            pages = pages_res.get("data", []) if success_p else []
 
             parsed_sources = []
             for s in sources:

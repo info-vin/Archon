@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from ..config.logfire_config import get_logger
 from ..config.model_ssot import SYSTEM_MODELS
@@ -11,6 +11,15 @@ from ..utils.retry_utils import retry_with_backoff
 from .crawling.clients.job104_client import CrawlerBlockedException, Job104Crawler, JobData
 
 logger = get_logger(__name__)
+
+
+class LeadDataDTO(TypedDict):
+    company_name: str
+    job_title: str
+    description_snippet: str | None
+    source_job_url: str | None
+    status: str
+    identified_need: str
 
 
 class JobBoardService:
@@ -42,7 +51,7 @@ class JobBoardService:
         try:
             from ..repositories.base_repository import BaseRepository
             repo = BaseRepository(self.supabase)
-            query = self.supabase.table("archon_logs").insert({"source": source, "level": level, "message": message})
+            query = self.supabase.table("archon_logs").insert({"source": source, "level": level, "message": message}) # 合法
             repo.execute_query(query, error_context="Write to archon_logs")
         except Exception as e:
             logger.error(f"Failed to write to archon_logs: {e}")
@@ -54,9 +63,7 @@ class JobBoardService:
         import os
         from pathlib import Path
 
-        project_root = os.environ.get("PROJECT_ROOT")
-        if not project_root:
-            project_root = str(Path(__file__).resolve().parent.parent.parent.parent)
+        project_root = str(Path(__file__).resolve().parent.parent.parent.parent.parent)
 
         agents_md_path = os.path.join(project_root, "AGENTS.md")
         if not os.path.exists(agents_md_path):
@@ -91,7 +98,7 @@ class JobBoardService:
                 prompt = prompt_template.format(**format_kwargs)
 
                 @retry_with_backoff(max_retries=max_retries, initial_delay=initial_delay)
-                async def _call_llm():
+                async def _call_llm() -> Any:
                     return await client.chat.completions.create(
                         model=SYSTEM_MODELS["DEFAULT_TEXT"],
                         messages=[{"role": "user", "content": prompt}]
@@ -219,14 +226,14 @@ class JobBoardService:
         if job_urls:
             from ..repositories.base_repository import BaseRepository
             repo = BaseRepository(self.supabase)
-            query = self.supabase.table("leads").select("source_job_url").in_("source_job_url", job_urls)
+            query = self.supabase.table("leads").select("source_job_url").in_("source_job_url", job_urls) # 合法
             success, result = repo.execute_query(query, "Fetch existing leads urls")
             if success and result.get("data"):
                 existing_urls = {row["source_job_url"] for row in result.get("data", [])}
 
         baseline_embedding = await self._get_hyde_baseline_embedding()
 
-        async def _process_single_job(job: JobData) -> dict | None:
+        async def _process_single_job(job: JobData) -> LeadDataDTO | None:
             try:
                 # RAG Vector Matching against HyDE Baseline
                 if not baseline_embedding:
@@ -293,7 +300,7 @@ class JobBoardService:
         if leads_to_insert:
             from ..repositories.base_repository import BaseRepository
             repo = BaseRepository(self.supabase)
-            query = self.supabase.table("leads").insert(leads_to_insert)
+            query = self.supabase.table("leads").insert(leads_to_insert) # 合法
             success, result = repo.execute_query(query, "Bulk insert leads")
 
             if success and result.get("data"):
@@ -304,7 +311,7 @@ class JobBoardService:
                 market_bot_config = cast(dict[str, Any], get_agent_config("market-bot") or {})
                 agent_name = market_bot_config.get("name", "Archon MarketBot")
 
-                async def _log_action(job, content):
+                async def _log_action(job: Any, content: str) -> None:
                     await stats_service.add_agent_action_log(
                         agent_name=agent_name,
                         xp_change=10,

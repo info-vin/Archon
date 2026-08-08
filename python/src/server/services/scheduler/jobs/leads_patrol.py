@@ -22,14 +22,19 @@ async def run_auto_fetch_leads() -> None:
         service = JobBoardService()
         new_leads = await service.auto_fetch_daily_leads()
 
-        get_supabase_client().table("archon_logs").insert(
-            {
-                "source": "clockwork-scheduler",
-                "level": "INFO",
-                "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
-                "details": {"new_leads_count": new_leads},
-            }
-        ).execute()
+        from src.server.repositories.base_repository import BaseRepository
+        base_repo = BaseRepository(get_supabase_client())
+        base_repo.execute_query(
+            get_supabase_client().table("archon_logs").insert( # 合法
+                {
+                    "source": "clockwork-scheduler",
+                    "level": "INFO",
+                    "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
+                    "details": {"new_leads_count": new_leads},
+                }
+            ),
+            "Failed to log auto-fetch completion"
+        )
         logger.info(f"✅ Clockwork: Alice daily auto-fetch finished ({new_leads} leads).")
     except Exception as e:
         logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
@@ -44,14 +49,19 @@ async def run_prune_stale_leads() -> None:
         pruned_count = await EnrichmentService.prune_stale_leads()
 
         if pruned_count > 0:
-            get_supabase_client().table("archon_logs").insert(
-                {
-                    "source": "clockwork-scheduler",
-                    "level": "INFO",
-                    "message": f"Stale leads pruning completed. {pruned_count} leads archived.",
-                    "details": {"pruned_count": pruned_count},
-                }
-            ).execute()
+            from src.server.repositories.base_repository import BaseRepository
+            base_repo = BaseRepository(get_supabase_client())
+            base_repo.execute_query(
+                get_supabase_client().table("archon_logs").insert( # 合法
+                    {
+                        "source": "clockwork-scheduler",
+                        "level": "INFO",
+                        "message": f"Stale leads pruning completed. {pruned_count} leads archived.",
+                        "details": {"pruned_count": pruned_count},
+                    }
+                ),
+                "Failed to log stale leads pruning"
+            )
         logger.info(f"✅ Clockwork: Stale leads pruning finished ({pruned_count} leads archived).")
     except Exception as e:
         logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}")
@@ -66,8 +76,13 @@ async def run_daily_market_report() -> None:
 
         supabase = get_supabase_client()
         one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
-        res = supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago).execute()
-        leads = res.data or []
+        from src.server.repositories.base_repository import BaseRepository
+        base_repo = BaseRepository(supabase)
+        success, res_dict = base_repo.execute_query(
+            supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago),
+            "Failed to fetch leads for market report"
+        )
+        leads = res_dict.get("data", []) if success else []
         if not leads:
             logger.info("✍️ Clockwork: No new leads today to report on. (Cycle logged)")
             return
@@ -88,13 +103,16 @@ Use the tool to save this blog post as a DRAFT."""
         prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT", default=fallback_str)
         task_desc = prompt_template.format(lead_count=len(leads), lead_summary=lead_summary)
 
-        p_res = supabase.table("archon_projects").select("id").limit(1).execute()
-        if not p_res.data:
+        success, p_res_dict = base_repo.execute_query(
+            supabase.table("archon_projects").select("id").limit(1),
+            "Failed to find project for marketing task"
+        )
+        if not success or not p_res_dict.get("data"):
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return
 
         success, tr = await task_service.create_task(
-            project_id=p_res.data[0]["id"], title=task_title, description=task_desc, assignee_id=AgentUUIDs.MARKET_BOT
+            project_id=p_res_dict["data"][0]["id"], title=task_title, description=task_desc, assignee_id=AgentUUIDs.MARKET_BOT
         )
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")

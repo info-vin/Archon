@@ -2,13 +2,15 @@ import asyncio
 from typing import Any
 
 from src.server.config.logfire_config import search_logger
+from src.server.repositories.base_repository import BaseRepository
 
 
-class DocumentRepository:
+class DocumentRepository(BaseRepository):
     """Handles raw database operations for document storage."""
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.client = supabase_client
+        super().__init__(supabase_client)
+        self.client = self.supabase_client
 
     async def delete_existing_urls_in_batches(
         self, urls: list[str], delete_batch_size: int = 50, cancellation_check=None
@@ -23,7 +25,7 @@ class DocumentRepository:
                     cancellation_check()
 
                 batch_urls = unique_urls[i : i + delete_batch_size]
-                self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute()
+                self.execute_query(self.client.table("archon_crawled_pages").delete().in_("url", batch_urls), "Batch delete crawled pages")
 
                 if i + delete_batch_size < len(unique_urls):
                     await asyncio.sleep(0.05)
@@ -40,7 +42,7 @@ class DocumentRepository:
 
             batch_urls = unique_urls[i : i + 10]
             try:
-                self.client.table("archon_crawled_pages").delete().in_("url", batch_urls).execute()
+                self.execute_query(self.client.table("archon_crawled_pages").delete().in_("url", batch_urls), "Batch delete crawled pages")
                 import time
 
                 time.sleep(0.05)
@@ -54,7 +56,7 @@ class DocumentRepository:
     def insert_document_batch(self, batch_data: list[dict[str, Any]]) -> bool:
         """Inserts a batch of documents into archon_crawled_pages."""
         try:
-            self.client.table("archon_crawled_pages").insert(batch_data).execute()
+            self.execute_query(self.client.table("archon_crawled_pages").insert(batch_data), "Batch insert crawled pages")
             return True
         except Exception as e:
             search_logger.error(f"Error inserting batch: {e}")
@@ -63,7 +65,7 @@ class DocumentRepository:
     def upsert_source_fallback(self, source_id: str, fallback_data: dict[str, Any]) -> tuple[bool, Any]:
         """Upserts a source record to archon_sources."""
         try:
-            response = self.client.table("archon_sources").upsert(fallback_data).execute()
+            success, response = self.execute_query(self.client.table("archon_sources").upsert(fallback_data), "Upsert source fallback")
             return True, response
         except Exception as e:
             return False, {"error": str(e)}
@@ -71,7 +73,8 @@ class DocumentRepository:
     def verify_source_exists(self, source_id: str) -> tuple[bool, Any]:
         """Checks if a source exists in archon_sources."""
         try:
-            response = self.client.table("archon_sources").select("source_id").eq("source_id", source_id).execute()
+            success, res_data = self.execute_query(self.client.table("archon_sources").select("source_id").eq("source_id", source_id), "Verify source exists")
+            response = type("obj", (object,), {"data": res_data["data"] if success and isinstance(res_data, dict) and "data" in res_data else None})()
             return True, {"data": response.data}
         except Exception as e:
             return False, {"error": str(e)}

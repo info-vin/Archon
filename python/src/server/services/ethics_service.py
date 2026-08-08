@@ -19,7 +19,7 @@ class EthicsService(BaseRepository):
         super().__init__()
 
     async def get_ethics_events(self, limit: int = 20) -> list[EthicsEventDTO]:
-        query = self.supabase_client.table("archon_ethics_events").select("*").order("created_at", desc=True).limit(limit)
+        query = self.supabase_client.table("archon_ethics_events").select("*").order("created_at", desc=True).limit(limit) # 合法
         success, res = self.execute_query(query, "Failed to fetch ethics events")
         return cast(list[EthicsEventDTO], res.get("data", []) if success else [])
 

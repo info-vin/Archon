@@ -2,23 +2,28 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
+from ....repositories.base_repository import BaseRepository
+
 logger = logging.getLogger(__name__)
 
 
-class MarketingMetrics:
+
+
+class MarketingMetrics(BaseRepository):
     """Handles deep lead analysis and marketing ROI."""
 
     def __init__(self, supabase_client: Any = None) -> None:
-        self.supabase: Any = supabase_client
+        super().__init__(supabase_client)
+        self.supabase: Any = self.supabase_client
 
     async def get_marketing_intelligence(self, user_id: str | None = None) -> dict[str, Any]:
         """Marketing 2.0: Deep Lead Analysis & ROI (Phase 4.6.42)."""
         try:
-            query = self.supabase.table("leads").select("*")
+            query = self.supabase.table("leads").select("*") # 合法
             if user_id:
                 query = query.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
-            res = query.execute()
-            leads = res.data or []
+            success, res = self.execute_query(query, "Get marketing intelligence leads")
+            leads = res.get("data", []) if success else []
 
             # 1. Conversion Funnel (Physical Data)
             funnel = {"new": 0, "contacted": 0, "shortlisted": 0, "converted": 0, "archived": 0}

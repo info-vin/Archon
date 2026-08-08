@@ -235,6 +235,76 @@ def ssot_hardcoding_audit():
     else:
         print("✅ SSOT & Hardcoding audit passed. No obvious magic numbers found.")
 
+def os_getenv_audit():
+    import re
+    print_header("Step 9: Config SSOT (os.getenv) Audit")
+    
+    target_dir = "python/src/server/services"
+    issues = []
+    pattern = re.compile(r"os\.getenv\(|os\.environ")
+    
+    if not os.path.exists(target_dir): return
+    for root, _, files in os.walk(target_dir):
+        for file in files:
+            if file.endswith(".py") and not any(x in root for x in ["tests", "__tests__"]):
+                file_path = os.path.join(root, file)
+                
+                # Exemptions: config and credential hubs
+                if "credentials/helpers.py" in file_path or "credentials/provider_configs.py" in file_path or "config_loader.py" in file_path or "credentials/manager.py" in file_path or "credential_service.py" in file_path or "reranking_strategy.py" in file_path:
+                    continue
+                    
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line_num, line in enumerate(f, 1):
+                        if line.strip().startswith("#"): continue
+                        if "# 合法" in line: continue
+                        if pattern.search(line):
+                            issues.append((file_path, line_num, line.strip()))
+                            
+    if issues:
+        print(f"❌ FOUND {len(issues)} os.getenv() VIOLATIONS IN SERVICES!")
+        print("Config SSOT Violation: All configurations must be read via SettingsService or Config hubs.")
+        for path, line_num, content in issues:
+            short_content = content if len(content) < 80 else content[:77] + "..."
+            print(f"   - {path}:{line_num} | {short_content}")
+        sys.exit(1)
+    else:
+        print("✅ Config SSOT audit passed. No os.getenv() backdoors found in services.")
+
+def repository_bypass_audit():
+    import re
+    print_header("Step 10: Repository Bypass (L2 Coupling) Audit")
+    
+    target_dir = "python/src/server/services"
+    issues = []
+    pattern = re.compile(r"\.execute\(\)")
+    
+    if not os.path.exists(target_dir): return
+    for root, _, files in os.walk(target_dir):
+        for file in files:
+            if file.endswith(".py") and not any(x in root for x in ["tests", "__tests__"]):
+                file_path = os.path.join(root, file)
+                
+                # Exemptions: repository files
+                if "repository.py" in file_path or "base_repository.py" in file_path or "storage_ops.py" in file_path:
+                    continue
+                    
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    for line_num, line in enumerate(f, 1):
+                        if line.strip().startswith("#"): continue
+                        if "# 合法" in line: continue
+                        if pattern.search(line):
+                            issues.append((file_path, line_num, line.strip()))
+                            
+    if issues:
+        print(f"❌ FOUND {len(issues)} REPOSITORY BYPASS VIOLATIONS IN SERVICES!")
+        print("L2 Architecture Violation: Services must use Repository layer instead of direct .execute() calls.")
+        for path, line_num, content in issues:
+            short_content = content if len(content) < 80 else content[:77] + "..."
+            print(f"   - {path}:{line_num} | {short_content}")
+        sys.exit(1)
+    else:
+        print("✅ Repository architecture audit passed. No .execute() bypasses found.")
+
 if __name__ == "__main__":
     scan_prps()
     git_sync_check()
@@ -243,5 +313,7 @@ if __name__ == "__main__":
     architecture_health_audit()
     schema_sync_audit()
     ssot_hardcoding_audit()
+    os_getenv_audit()
+    repository_bypass_audit()
     print_header("Audit Complete")
 

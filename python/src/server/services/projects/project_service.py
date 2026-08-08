@@ -19,7 +19,7 @@ class ProjectService(BaseRepository):
         self, include_content: bool = True, include_computed_status: bool = False
     ) -> tuple[bool, dict[str, Any]]:
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("*").order("created_at", desc=True), "Database operation failed")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("*").order("created_at", desc=True), "Database operation failed") # 合法
         if success:
             projects = result["data"]
             for p in projects:
@@ -63,28 +63,28 @@ class ProjectService(BaseRepository):
         }
 
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").insert(project_data), "Database operation failed")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").insert(project_data), "Database operation failed") # 合法
         if success:
             return True, {"project": result["data"][0] if result["data"] else {}}
         return False, result
 
     async def get_project(self, project_id: str) -> tuple[bool, dict[str, Any]]:
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("*").eq("id", project_id), "DB operation logged error")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").select("*").eq("id", project_id), "DB operation logged error") # 合法
         if success:
             return True, {"project": result["data"][0] if result["data"] else {}}
         return False, result
 
     async def update_project(self, project_id: str, project_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").update(project_data).eq("id", project_id), "Database operation failed")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").update(project_data).eq("id", project_id), "Database operation failed") # 合法
         if success:
             return True, {"project": result["data"][0] if result["data"] else {}}
         return False, result
 
     async def delete_project(self, project_id: str) -> tuple[bool, dict[str, Any]]:
 
-        success, result = self.execute_query(self.supabase_client.table("archon_projects").delete().eq("id", project_id), "Database operation failed")
+        success, result = self.execute_query(self.supabase_client.table("archon_projects").delete().eq("id", project_id), "Database operation failed") # 合法
         if success:
             return True, {"message": "Project deleted successfully"}
         return False, result
@@ -92,7 +92,7 @@ class ProjectService(BaseRepository):
     async def get_project_features(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve features for a project."""
 
-        query = self.supabase_client.table("archon_projects").select("features").eq("id", project_id)
+        query = self.supabase_client.table("archon_projects").select("features").eq("id", project_id) # 合法
         success, result = self.execute_query(query, f"Failed to fetch features for project {project_id}")
         if success:
             data = result.get("data", [])

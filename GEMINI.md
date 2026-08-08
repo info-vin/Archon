@@ -113,6 +113,11 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/08/08: 日報排程極限推演與環境自癒 (Phase 5.10)
+- **死鎖修復與自癒**: 解決了 `archon-server` 因 Supabase 初始化失敗引發 `__del__` 無限遞迴的問題。同時修復了 `BaseRepository.execute_query` 在處理 Supabase v2 Builder 物件時缺少 `.execute()` 造成的 `SyncQueryRequestBuilder` 報錯，確保背景報告任務順利產出。
+- **爬蟲極限數學建模**: 針對 104 WAF 隨機延遲 (6.5s) 與 Gemini 3.1 Rate Limit (4.5s/次)，反向推演了 25 分鐘物理極限。最終將 `CRAWLER_JOB_LIMIT` 下調至精確的 `32` 筆，確保系統在全併發下依然穩定不超時，成功達成 11% 高品質 Leads 轉換率與極低耗損 ($0.01 USD)。
+- **DAG 事件鏈釐清**: 確認系統的行銷與高階日報採「事件驅動 (Event-Driven)」，非固定 Cron。已將 `ALICE_AUTO_FETCH_DAYS` 精準設定為每週二、三、五 (`tue,wed,fri`)，徹底解決休假日無效排程的疑慮。
+
 ### 2026/08/01: 報告生成模組深層 DRY 與 SSOT 淨化 (Phase 5.9.38)
 - **Deep DRY 重構**: 於 `report_service.py` 將 Daily、Weekly、Monthly 摘要任務中高度重複的派發邏輯（包含日期推算、任務建立、日誌記錄與 Telegram 通知）抽取為 `_create_summary_task_and_log`，並補齊了 Daily 摘要遺漏的 Telegram 通知。
 - **全域 SSOT 物理對齊**: 將 `telegram_service.py` 讀取 Token 的方式從 `os.getenv` 升級為透過 `SettingsService` 動態讀取 `NotificationConfig`，徹底修復設定檔斷層；同時收斂 `report_service.py` 與 `patrol_infra.py` 中寫死的 Vercel 網址，統一綁定至 `NetworkConfig().frontend_url`。

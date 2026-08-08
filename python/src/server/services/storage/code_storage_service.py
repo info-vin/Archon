@@ -5,13 +5,13 @@ Handles storage operations for extracted code examples, including
 contextual embeddings and AI summaries.
 """
 
-import os
 from collections.abc import Callable
 from typing import Any
 
 from supabase import Client
 
 from src.server.config.logfire_config import search_logger
+from src.server.repositories.base_repository import BaseRepository
 
 from ..embeddings import EmbeddingBatchResult, create_embeddings_batch
 from ..embeddings.contextual_embedding_service import generate_contextual_embeddings_batch
@@ -26,7 +26,8 @@ def _get_model_choice() -> str:
 
 def _get_max_workers() -> int:
     """Get max workers logic (Facade)."""
-    return int(os.getenv("CONTEXTUAL_EMBEDDINGS_MAX_WORKERS", "3"))
+    from src.server.services.settings_service import SettingsService
+    return int(SettingsService().get_setting("CONTEXTUAL_EMBEDDINGS_MAX_WORKERS") or "3")
 
 
 async def generate_code_summaries_batch(
@@ -136,7 +137,7 @@ async def add_code_examples_to_supabase(
             batch_data.append(row)
 
         try:
-            client.table("archon_code_examples").insert(batch_data).execute()
+            BaseRepository(client).execute_query(client.table("archon_code_examples").insert(batch_data), "Insert code examples batch")
             if progress_callback:
                 await progress_callback(
                     {

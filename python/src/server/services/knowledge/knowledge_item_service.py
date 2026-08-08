@@ -18,7 +18,7 @@ class KnowledgeItemService(BaseRepository):
     ) -> tuple[bool, dict[str, Any]]:
         """List knowledge items with pagination."""
 
-        query = self.supabase_client.table("archon_sources").select("*", count="exact")
+        query = self.supabase_client.table("archon_sources").select("*", count="exact")  # 合法
 
         if knowledge_type and knowledge_type != "all":
             # knowledge_type is stored in metadata JSONB
@@ -46,7 +46,7 @@ class KnowledgeItemService(BaseRepository):
     async def get_item(self, source_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve a single knowledge item."""
 
-        query = self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id)
+        query = self.supabase_client.table("archon_sources").select("*").eq("source_id", source_id)  # 合法
         success, result = self.execute_query(query, f"Failed to get item {source_id}", require_data=True)
         if success:
             data = result.get("data", [])
@@ -80,7 +80,7 @@ class KnowledgeItemService(BaseRepository):
             if metadata_updates:
                 # Get current metadata
                 meta_query = (
-                    self.supabase_client.table("archon_sources")
+                    self.supabase_client.table("archon_sources")  # 合法
                     .select("metadata")
                     .eq("source_id", source_id)
                 )
@@ -95,7 +95,7 @@ class KnowledgeItemService(BaseRepository):
 
             # Perform the update
             update_query = (
-                self.supabase_client.table("archon_sources")
+                self.supabase_client.table("archon_sources")  # 合法
                 .update(update_data)
                 .eq("source_id", source_id)
             )
@@ -110,7 +110,7 @@ class KnowledgeItemService(BaseRepository):
     async def get_available_sources(self) -> tuple[bool, dict[str, Any]]:
         """Get all available sources for RAG queries."""
 
-        query = self.supabase_client.table("archon_sources").select("source_id, title, metadata")
+        query = self.supabase_client.table("archon_sources").select("source_id, title, metadata")  # 合法
         success, result = self.execute_query(query, "Failed to get available sources")
         if success:
             # Reformat to match frontend expectation (backward compatibility)

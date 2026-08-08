@@ -1,9 +1,9 @@
 import logging
-import os
 from typing import Any
 
 import httpx
 
+from src.server.repositories.base_repository import BaseRepository
 from src.server.services.credential_service import CredentialService
 from src.server.utils import get_supabase_client
 
@@ -14,7 +14,8 @@ class RagService:
     @staticmethod
     async def get_hf_embedding(text: str) -> list[float]:
         # SSOT: Model from environment variable
-        hf_model_id = os.getenv("HF_EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
+        from src.server.services.settings_service import SettingsService
+        hf_model_id = SettingsService().get_setting("HF_EMBEDDING_MODEL") or "sentence-transformers/all-mpnet-base-v2"
         hf_api_url = f"https://router.huggingface.co/hf-inference/models/{hf_model_id}/pipeline/feature-extraction"
 
         credential_service = CredentialService()
@@ -68,11 +69,15 @@ class RagService:
                 "truncate_dim": truncate_dim,
             }
 
-            res = supabase.rpc("hybrid_match_chunks", rpc_params).execute()
+            base_repo = BaseRepository(supabase)
+            success, res_dict = base_repo.execute_query(
+                supabase.rpc("hybrid_match_chunks", rpc_params),
+                error_context="Failed to execute hybrid_match_chunks"
+            )
 
-            if hasattr(res, "data") and res.data:
+            if success and res_dict.get("data"):
                 from typing import cast
-                results = cast(list[dict[str, Any]], res.data)
+                results = cast(list[dict[str, Any]], res_dict["data"])
 
                 import asyncio
                 async with httpx.AsyncClient(timeout=5.0) as client:
@@ -136,11 +141,15 @@ class RagService:
                 "max_hops": max_hops,
             }
 
-            res = supabase.rpc("graph_reasoning_n_hop", rpc_params).execute()
+            base_repo = BaseRepository(supabase)
+            success, res_dict = base_repo.execute_query(
+                supabase.rpc("graph_reasoning_n_hop", rpc_params),
+                error_context="Failed to execute graph_reasoning_n_hop"
+            )
 
-            if hasattr(res, "data") and res.data:
+            if success and res_dict.get("data"):
                 from typing import cast
-                return cast(list[dict[str, Any]], res.data)
+                return cast(list[dict[str, Any]], res_dict["data"])
             return []
 
         except Exception as e:

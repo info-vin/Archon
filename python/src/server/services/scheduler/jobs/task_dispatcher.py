@@ -38,11 +38,10 @@ async def run_task_dispatcher() -> None:
         threshold = (datetime.now(UTC) - timedelta(minutes=timeout_mins)).isoformat()
 
         success, reclaim_res = repo.execute_query(
-            lambda: supabase.table("archon_tasks")
+            supabase.table("archon_tasks") # 合法
             .update({"status": "todo", "updated_at": datetime.now(UTC).isoformat()})
             .eq("status", "processing")
-            .lt("updated_at", threshold)
-            .execute(),
+            .lt("updated_at", threshold),
             "Reclaim zombie tasks"
         )
         reclaim_data = reclaim_res.get("data", []) if success else []
@@ -61,7 +60,7 @@ async def run_task_dispatcher() -> None:
                     }
                 )
             if log_payloads:
-                repo.execute_query(lambda: supabase.table("archon_logs").insert(log_payloads).execute(), "Log task reclamation")
+                repo.execute_query(supabase.table("archon_logs").insert(log_payloads), "Log task reclamation") # 合法
 
             # Send Telegram Alert
             alert_threshold = config.zombie_task_alert_threshold
@@ -73,11 +72,10 @@ async def run_task_dispatcher() -> None:
 
         # 2. Dispatch recurring tasks
         success, res = repo.execute_query(
-            lambda: supabase.table("archon_tasks")
+            supabase.table("archon_tasks") # 合法
             .select("id, title, assignee_id, crawler_target_id")
             .eq("is_recurring", True)
-            .eq("status", "todo")
-            .execute(),
+            .eq("status", "todo"),
             "Fetch recurring tasks"
         )
         tasks = res.get("data", []) if success else []
@@ -106,6 +104,6 @@ async def run_task_dispatcher() -> None:
                 }
             )
         if log_payloads:
-            repo.execute_query(lambda: supabase.table("archon_logs").insert(log_payloads).execute(), "Log task dispatch")
+            repo.execute_query(supabase.table("archon_logs").insert(log_payloads), "Log task dispatch") # 合法
     except Exception as e:
         logger.error(f"💥 Clockwork: Task Dispatcher Failed: {e}")

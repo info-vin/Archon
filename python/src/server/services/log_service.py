@@ -62,7 +62,7 @@ class LogService(BaseRepository):
             logger.warning("Attempted to create a log entry with no message.")
             return False, {"error": "message is a required field."}
 
-        query = self.supabase_client.table("archon_logs").insert(insert_data)
+        query = self.supabase_client.table("archon_logs").insert(insert_data) # 合法
         success, result = self.execute_query(
             query_func=query, error_context="Failed to insert log into database", require_data=True
         )

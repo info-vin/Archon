@@ -4,7 +4,6 @@ Client Manager Service
 Manages database and API client connections.
 """
 
-import os
 import re
 import time
 from functools import wraps
@@ -48,8 +47,11 @@ def get_supabase_client() -> Client:
     Returns:
         Supabase client instance
     """
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_KEY")
+    from ..config.config import get_config
+
+    config = get_config()
+    url = config.supabase_url
+    key = config.supabase_service_key
 
     if not url or not key:
         raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables")
@@ -66,5 +68,6 @@ def get_supabase_client() -> Client:
 
         return client
     except Exception as e:
-        search_logger.error(f"Failed to create Supabase client: {e}")
+        import logging
+        logging.error(f"Failed to create Supabase client: {e}", exc_info=True)
         raise

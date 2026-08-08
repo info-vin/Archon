@@ -101,17 +101,17 @@ class BusinessArchiver:
         """
         try:
             # Query for style lessons and brand voice rules
-            res = (
-                self.supabase.table("archon_sources")
+            success, res_dict = self.repo.execute_query(
+                self.supabase.table("archon_sources") # 合法
                 .select("title, content_summary")
                 .ilike("source_id", "style-lesson-%")
-                .limit(5)
-                .execute()
+                .limit(5),
+                error_context="Failed to fetch style constraints"
             )
 
             rules = []
-            if res.data:
-                for entry in res.data:
+            if success and res_dict.get("data"):
+                for entry in res_dict["data"]:
                     rules.append(f"Rule: {entry.get('title')}\nConstraint: {entry.get('content_summary')}")
 
             if not rules:

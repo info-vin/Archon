@@ -33,7 +33,7 @@ class AuthService(BaseRepository):
         Lists all users from the profiles table.
         Returns a list of profile dicts.
         """
-        query = self.supabase_client.table("profiles").select("*")
+        query = self.supabase_client.table("profiles").select("*") # 合法
         success, res = self.execute_query(query, "Error fetching users", require_data=False)
         return cast(list[UserProfileDictDTO], res.get("data", []) if success else [])
 
@@ -76,7 +76,7 @@ class AuthService(BaseRepository):
                 "avatar": f"https://i.pravatar.cc/150?u={user_id}",
             }
 
-            query = self.supabase_client.table("profiles").upsert(profile_data)
+            query = self.supabase_client.table("profiles").upsert(profile_data) # 合法
             self.execute_query(query, f"Error creating profile for {user_id}", require_data=False)
             return cast(UserProfileDictDTO, profile_data)
         except Exception as e:
@@ -94,7 +94,7 @@ class AuthService(BaseRepository):
             self.supabase_client.auth.admin.update_user_by_id(user_id, {"email": new_email})
 
             # 2. Update Profile
-            query = self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id)
+            query = self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id) # 合法
             self.execute_query(query, f"Error updating email in profile for {user_id}", require_data=False)
 
         except Exception as e:
@@ -113,7 +113,7 @@ class AuthService(BaseRepository):
                 self.supabase_client.auth.admin.update_user_by_id(user_id, {"user_metadata": {"role": updates["role"]}})
 
             # 2. Update Profile table
-            query = self.supabase_client.table("profiles").update(updates).eq("id", user_id)
+            query = self.supabase_client.table("profiles").update(updates).eq("id", user_id) # 合法
             success, res = self.execute_query(query, f"Failed to update profile for {user_id}", require_data=False)
 
             if success and res.get("data"):

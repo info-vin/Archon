@@ -4,6 +4,7 @@ from typing import Any
 from google import genai
 
 from ...config.model_ssot import SYSTEM_MODELS
+from ...repositories.base_repository import BaseRepository
 from ..librarian_service import LibrarianService
 from ..prompt_service import prompt_service
 from .content_handler import get_logger
@@ -11,24 +12,26 @@ from .content_handler import get_logger
 logger = get_logger(__name__)
 
 
-class ApprovalManager:
+
+
+class ApprovalManager(BaseRepository):
     """Handles content approval workflows and feedback suggestion generation."""
 
     def __init__(self, supabase_client: Any) -> None:
-        self.supabase_client = supabase_client
+        super().__init__(supabase_client)
 
     async def process_approval(self, item_type: str, item_id: str, action: str, notes: str | None) -> bool:
         if item_type == "blog":
             new_status = "published" if action == "approve" else "changes_requested"
-            res = (
-                self.supabase_client.table("blog_posts")
+            success, res = self.execute_query(
+                self.supabase_client.table("blog_posts") # 合法
                 .update({"status": new_status, "review_notes": notes})
-                .eq("id", item_id)
-                .execute()
+                .eq("id", item_id),
+                "Update blog status"
             )
-            if action != "approve" and notes and res.data:
+            if action != "approve" and notes and success and res.get("data"):
                 try:
-                    post_data = res.data[0]
+                    post_data = res["data"][0]
                     asyncio.create_task(
                         LibrarianService().archive_style_critique(
                             post_title=post_data.get("title", "Untitled"),
@@ -42,21 +45,21 @@ class ApprovalManager:
         return False
 
     async def get_pending_approvals(self) -> dict:
-        res = (
-            self.supabase_client.table("blog_posts")
+        success, res = self.execute_query(
+            self.supabase_client.table("blog_posts") # 合法
             .select("*")
             .eq("status", "review")
-            .order("updated_at", desc=True)
-            .execute()
+            .order("updated_at", desc=True),
+            "Get pending approvals"
         )
-        return {"blogs": res.data or [], "leads": []}
+        return {"blogs": res.get("data", []) if success else [], "leads": []}
 
     async def generate_reject_suggestion(self, item_type: str, item_id: str) -> dict:
         if item_type != "blog":
             return {"notes": "Content type not supported for AI rejection."}
 
-        res = self.supabase_client.table("blog_posts").select("*").eq("id", item_id).execute()
-        post = res.data[0] if res.data else None
+        success, res = self.execute_query(self.supabase_client.table("blog_posts").select("*").eq("id", item_id), "Get blog post") # 合法
+        post = res.get("data", [None])[0] if success and res.get("data") else None
         if not post:
             return {"notes": "Item not found."}
 
