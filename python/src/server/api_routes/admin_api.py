@@ -164,23 +164,31 @@ class RBACRoleUpdate(BaseModel):
     description: str | None = None
 
 
-@router.get("/rbac/matrix", dependencies=[Depends(verify_manager_role)])
-async def get_rbac_matrix(current_user: UserProfileDTO = Depends(get_current_user)):
+class RBACRoleResponse(BaseModel):
+    role: str = Field(..., description="The role name")
+    permissions: list[str] = Field(..., description="List of permissions assigned to this role")
+    description: str | None = Field(None, description="Optional description of the role")
+
+
+@router.get("/rbac/matrix", dependencies=[Depends(verify_manager_role)], response_model=list[RBACRoleResponse])
+async def get_rbac_matrix(current_user: UserProfileDTO = Depends(get_current_user)) -> list[RBACRoleResponse]:
     """Fetch the full role-permission matrix (Managers & Admins)."""
     try:
-        return await admin_service.get_rbac_matrix()
+        data = await admin_service.get_rbac_matrix()
+        return [RBACRoleResponse(**role) for role in data]
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch RBAC matrix: {e}")
         raise HTTPException(status_code=500, detail="Internal server error while fetching matrix") from e
 
 
-@router.post("/rbac/role", dependencies=[Depends(verify_admin_role)])
-async def update_rbac_role(request: RBACRoleUpdate, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/rbac/role", dependencies=[Depends(verify_admin_role)], response_model=RBACRoleResponse)
+async def update_rbac_role(request: RBACRoleUpdate, current_user: UserProfileDTO = Depends(get_current_user)) -> RBACRoleResponse:
     """Update permissions for a specific role (Admin only)."""
     try:
-        return await admin_service.update_rbac_role(
+        data = await admin_service.update_rbac_role(
             role=request.role, permissions=request.permissions, description=request.description
         )
+        return RBACRoleResponse(**data)
     except Exception as e:
         logger.error(f"Admin API: Failed to update RBAC role: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
