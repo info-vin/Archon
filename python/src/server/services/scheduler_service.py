@@ -34,6 +34,12 @@ from src.server.services.scheduler.jobs import (
 
 logger = get_logger(__name__)
 
+API_RETRY_POLICY = retry(
+    stop=stop_after_attempt(6),
+    wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]),
+    reraise=True,
+)
+
 DEFAULT_TIMEZONE = ZoneInfo("Asia/Taipei")
 class SchedulerService:
     _instance = None
@@ -50,6 +56,11 @@ class SchedulerService:
             logger.info("🕒 Clockwork: Starting Lifecycle-Driven Scheduler Service...")
             self._scheduler.start()
             await self._schedule_jobs()
+            try:
+                from src.server.services.scheduler.jobs.leads_patrol import check_and_resume_dag
+                await check_and_resume_dag(self)
+            except Exception as e:
+                logger.error(f"Failed to run L2 DAG catchup: {e}")
         else:
             logger.warning("Clockwork: Scheduler already running.")
 
@@ -250,19 +261,27 @@ class SchedulerService:
     async def _analyze_token_usage(self) -> None: await sentinel_patrol.analyze_token_usage()
     async def _run_business_sentinel(self) -> None: await sentinel_patrol.run_business_sentinel()
     async def run_business_sentinel(self) -> None: await sentinel_patrol.run_business_sentinel()
-    async def _run_daily_executive_summary(self) -> None: await report_service.generate_daily_executive_summary()
-    async def _run_weekly_executive_summary(self) -> None: await report_service.generate_weekly_executive_summary()
-    async def _run_monthly_executive_summary(self) -> None: await report_service.generate_monthly_executive_summary()
+    @API_RETRY_POLICY
+    async def _run_daily_executive_summary(self) -> None:
+        await report_service.generate_daily_executive_summary()
+
+    @API_RETRY_POLICY
+    async def _run_weekly_executive_summary(self) -> None:
+        await report_service.generate_weekly_executive_summary()
+
+    @API_RETRY_POLICY
+    async def _run_monthly_executive_summary(self) -> None:
+        await report_service.generate_monthly_executive_summary()
     async def _run_api_deprecation_scan(self) -> None: await sentinel_patrol.run_api_deprecation_scan()
     async def _run_task_dispatcher(self) -> None: await task_dispatcher.run_task_dispatcher()
     async def _run_architecture_health_audit(self) -> None: await architecture_patrol.run_architecture_health_audit()
 
-    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
+    @API_RETRY_POLICY
     async def _run_auto_fetch_leads(self) -> None:
         await leads_patrol.run_auto_fetch_leads()
         self._trigger_stateful_daily_event(self._run_daily_market_report, "bob_market_report")
 
-    @retry(stop=stop_after_attempt(6), wait=wait_chain(*[wait_fixed(m * 60) for m in [5, 15, 45, 120, 240]]), reraise=True)
+    @API_RETRY_POLICY
     async def _run_daily_market_report(self) -> None:
         await leads_patrol.run_daily_market_report()
         self._trigger_stateful_daily_event(self._run_daily_executive_summary, "daily_executive_summary")
