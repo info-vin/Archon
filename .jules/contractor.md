@@ -11,3 +11,6 @@
 ## 2025-05-18 - Untyped GET /health endpoints
 **Learning:** Found several `GET /health` endpoints returning untyped dictionaries (e.g. `{"status": "healthy"}`) directly instead of using a Pydantic `response_model` schema. While simple, they fail the strict OpenAPI contract compliance required for Contractor.
 **Action:** Always create a quick `BaseModel` for `/health` responses and use `response_model=HealthResponse` in the `@router.get` decorator to ensure 100% type safety on all endpoints, no matter how trivial.
+## 2024-08-08 - Added RBACRoleResponse to Admin API
+**Learning:** Returning a raw dict when the route is typed with a Pydantic `response_model` will cause type-checkers (like ruff/mypy) to complain about incompatible return value types in the handler if we declare `-> RBACRoleResponse`.
+**Action:** Always instantiate the exact Pydantic model (`return RBACRoleResponse(**data)`) inside the route handler when explicit type annotations are used.
