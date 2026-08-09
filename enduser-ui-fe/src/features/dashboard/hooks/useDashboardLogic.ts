@@ -73,6 +73,7 @@ export const useDashboardLogic = (selectedProjectId: string) => {
       // Merged the entire pre-calculation and sort logic into a single hook to prevent rebuilding
       // the map and re-sorting on every render cycle. Uses object references as keys instead of strings.
       const taskWeights = new Map<Task, { status: number; priority: number }>();
+      const parsedDates = new Map<Task, number>();
 
       if (sortConfig.key === 'status' || sortConfig.key === 'priority') {
           sortableTasks.forEach(task => {
@@ -83,7 +84,19 @@ export const useDashboardLogic = (selectedProjectId: string) => {
           });
       }
 
+      if (sortConfig.key === 'due_date') {
+          sortableTasks.forEach(task => {
+              parsedDates.set(task, new Date(task.due_date || 0).getTime());
+          });
+      }
+
       sortableTasks.sort((a, b) => {
+        if (sortConfig.key === 'due_date') {
+            const dateA = parsedDates.get(a) || 0;
+            const dateB = parsedDates.get(b) || 0;
+            return sortConfig.direction === 'ascending' ? dateA - dateB : dateB - dateA;
+        }
+
         let valA: any = a[sortConfig.key] || '';
         let valB: any = b[sortConfig.key] || '';
 
