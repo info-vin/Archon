@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import cast
+from typing import Any, cast
 
 from ...config.logfire_config import get_logger
 
@@ -29,7 +29,7 @@ class MockCompletions:
     def __init__(self, provider_name) -> None:
         self.provider_name = provider_name
 
-    async def create(self, *args, **kwargs):
+    async def create(self, *args: Any, **kwargs: Any) -> Any:
         logger.info(f"MockLLMClient ({self.provider_name}) received request: {kwargs}")
         messages = kwargs.get("messages", [])
         last_user_content = ""
@@ -58,7 +58,7 @@ class MockLLMClient:
         self.chat = MockChat(provider_name)
         self.models = None
 
-    async def close(self):
+    async def close(self) -> None:
         try:
             from ..token_usage_service import TokenUsageService
 
@@ -77,7 +77,7 @@ class MockLLMClient:
         except Exception:
             pass
 
-    async def aclose(self):
+    async def aclose(self) -> None:
         await self.close()
 
 
@@ -87,7 +87,7 @@ class UsageTrackingCompletions:
         self._original = original_completions
         self._context = context
 
-    async def create(self, *args, **kwargs):
+    async def create(self, *args: Any, **kwargs: Any) -> Any:
 
         import openai
 
@@ -113,7 +113,7 @@ class UsageTrackingCompletions:
             finally:
                 await client.close()
 
-        async def _execute_on_ollama():
+        async def _execute_on_ollama() -> Any:
             from .clients import _get_optimal_ollama_instance
             url = await _get_optimal_ollama_instance("chat", False, None)
             client = openai.AsyncOpenAI(api_key="ollama", base_url=url)
@@ -280,7 +280,7 @@ class UsageTrackingChat:
         self._original = original_chat
         self.completions = UsageTrackingCompletions(original_chat.completions, context)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._original, name)
 
 
@@ -290,5 +290,5 @@ class UsageTrackingClient:
         self._context = {"user_id": user_id, "request_id": request_id, "provider": provider}
         self.chat = UsageTrackingChat(original_client.chat, self._context)
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._original, name)

@@ -159,7 +159,7 @@ class CodeStorageService:
     def __init__(self, supabase_client: Client | None = None) -> None:
         self.supabase_client = supabase_client
 
-    async def add_code_examples(self, **kwargs):
+    async def add_code_examples(self, **kwargs: Any) -> Any:
         client = self.supabase_client
         if client is None:
             from ....utils import get_supabase_client
@@ -167,5 +167,5 @@ class CodeStorageService:
             client = get_supabase_client()
         return await add_code_examples_to_supabase(client=client, **kwargs)
 
-    async def generate_summaries(self, blocks, max_workers=None, callback=None, provider=None):
+    async def generate_summaries(self, blocks: Any, max_workers: int | None = None, callback: Callable | None = None, provider: str | None = None) -> Any:
         return await generate_code_summaries_batch(blocks, max_workers, callback, provider)

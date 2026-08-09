@@ -7,6 +7,7 @@ Manages database and API client connections.
 import re
 import time
 from functools import wraps
+from typing import Any
 
 from postgrest._sync.request_builder import SyncQueryRequestBuilder
 from supabase import Client, create_client
@@ -19,7 +20,7 @@ from ..config.logfire_config import search_logger
 _original_execute = SyncQueryRequestBuilder.execute
 
 @wraps(_original_execute)
-def _robust_execute(self, *args, **kwargs):
+def _robust_execute(self: Any, *args: Any, **kwargs: Any) -> Any:
     max_retries = 2
     for attempt in range(max_retries + 1):
         try:

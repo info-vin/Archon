@@ -119,3 +119,38 @@ Use the tool to save this blog post as a DRAFT."""
             await agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id=AgentUUIDs.MARKET_BOT)
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
+
+
+async def check_and_resume_dag(scheduler) -> None:
+    """L2 模組化：檢查今日 leads 相關 DAG 的執行狀態，若遇當機則接力執行未完成的後游任務。"""
+    from src.server.config.config import get_config
+    from src.server.services.settings_service import SettingsService
+
+    settings = SettingsService()
+    config = get_config()
+    env_prefix = config.archon_env or ""
+    if env_prefix and not env_prefix.endswith("_"):
+        env_prefix += "_"
+
+    def get_last_run_date(job_id: str):
+        db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
+        val = settings.get_setting(db_key)
+        if val:
+            try:
+                return datetime.fromisoformat(val.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Taipei")).date()
+            except Exception:
+                pass
+        return None
+
+    now_date = datetime.now(ZoneInfo("Asia/Taipei")).date()
+
+    alice_date = get_last_run_date("alice_auto_fetch")
+    bob_date = get_last_run_date("bob_market_report")
+    exec_date = get_last_run_date("daily_executive_summary")
+
+    if alice_date == now_date and bob_date != now_date:
+        logger.info("🔗 L2 DAG Catchup: Resuming 'bob_market_report'")
+        scheduler._trigger_stateful_daily_event(scheduler._run_daily_market_report, "bob_market_report")
+    elif bob_date == now_date and exec_date != now_date:
+        logger.info("🔗 L2 DAG Catchup: Resuming 'daily_executive_summary'")
+        scheduler._trigger_stateful_daily_event(scheduler._run_daily_executive_summary, "daily_executive_summary")

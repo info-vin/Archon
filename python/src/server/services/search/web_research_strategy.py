@@ -38,7 +38,7 @@ async def perform_web_research_impl(query: str, genai_module: Any, types_module:
         model_id = SYSTEM_MODELS["DEFAULT_TEXT"]
 
         @retry_with_backoff(max_retries=2)
-        async def _call_gemini():
+        async def _call_gemini() -> Any:
             return await client.aio.models.generate_content(
                 model=model_id,
                 contents=prompt,

@@ -204,7 +204,7 @@ const PitchModal: React.FC<{ isOpen: boolean; onClose: () => void; content: stri
                         <SparklesIcon className="w-5 h-5 text-indigo-600" />
                         AI Pitch: {company}
                     </h3>
-                    <button onClick={onClose} aria-label="Close modal" className="p-1 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+                    <button onClick={onClose} aria-label="Close modal" className="p-1 hover:bg-gray-200 rounded-full text-gray-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
                         <XIcon className="w-6 h-6" />
                     </button>
                 </div>

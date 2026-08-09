@@ -193,7 +193,7 @@ async def create_embedding_client(config: dict[str, Any]) -> openai.AsyncOpenAI:
     return openai.AsyncOpenAI(api_key=key, base_url=url)
 
 
-async def _get_optimal_ollama_instance(instance_type=None, use_embedding=False, override=None):
+async def _get_optimal_ollama_instance(instance_type: str | None = None, use_embedding: bool = False, override: str | None = None) -> str:
     if override:
         if isinstance(override, str):
             if override.endswith("/v1"):

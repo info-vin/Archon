@@ -157,7 +157,7 @@ async def find_complete_code_block(
 
 
 # --- Full HTML Extractor Logic ---
-def get_html_extraction_patterns():
+def get_html_extraction_patterns() -> list[tuple[str, str]]:
     # RELAXED PATTERNS: Use .*? to ensure capture regardless of whitespace variations
     return [
         (
@@ -233,7 +233,7 @@ def get_html_extraction_patterns():
 
 
 # --- Full Text Extractor Logic ---
-def get_text_extraction_patterns():
+def get_text_extraction_patterns() -> dict[str, str]:
     return {
         "backtick": r"```(\w*)[^\n]*\n(.*?)```",
         "language_label": r"(?:^|\n)((?:typescript|javascript|python|java|c\+\+|rust|go|ruby|php|swift|kotlin|scala|r|matlab|julia|dart|elixir|erlang|haskell|clojure|lua|perl|shell|bash|sql|html|css|xml|json|yaml|toml|ini|dockerfile|makefile|cmake|gradle|maven|npm|yarn|pip|cargo|gem|pod|composer|nuget|apt|yum|brew|choco|snap|flatpak|appimage|msi|exe|dmg|pkg|deb|rpm|tar|zip|7z|rar|gz|bz2|xz|zst|lz4|lzo|lzma|lzip|lzop|compress|uncompress|gzip|gunzip|bzip2|bunzip2|xz|unxz|zstd|unzstd|lz4|unlz4|lzo|unlzo|lzma|unlzma|lzip|lunzip|lzop|unlzop)\s*(?:code|example|snippet)?)[:\s]*\n((?:(?:^[ \t]+.*\n?)+)|(?:.*\n)+?)(?=\n(?:[A-Z][a-z]+\s*:|^\s*$|\n#|\n\*|\n-|\n\d+\.))",
