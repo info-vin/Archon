@@ -16,3 +16,6 @@
 ## 2024-08-07 - Add focus visible styles to ActiveForce team member button
 **Learning:** Found a pattern where icon-only action buttons inside mapped lists (like team member cards) often lack proper focus rings, hindering keyboard navigation for screen readers or power users.
 **Action:** Always ensure mapped UI components with actionable elements have explicitly defined `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` tailwind classes on them.
+## 2026-08-09 - Ensure Close Modal Buttons Have Focus Styles
+**Learning:** Icon-only modal close buttons often miss focus indicators because default outline styles may have been globally removed or overridden, leading to poor keyboard accessibility. The standard `p-1 hover:bg-gray-200 rounded-full` pattern used across this application looks great on mouse interaction but provides zero feedback for keyboard users.
+**Action:** When adding close buttons or reviewing existing ones, standardize on the application's established pattern for accessible focus rings on icon-only buttons: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`.
