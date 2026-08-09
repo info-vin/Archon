@@ -187,7 +187,7 @@ class DocumentStorageFacade(BaseRepository):
                         search_logger.error(f"Contextual embedding error: {e}")
 
                 # Standard Embedding Phase
-                async def progress_wrap(msg, pct, cp=current_progress, bn=batch_num):
+                async def progress_wrap(msg: str, pct: int, cp: int = current_progress, bn: int = batch_num) -> None:
                     await tracker.embedding_progress_wrapper(msg, pct, cp, bn)
 
                 result = await create_embeddings_batch(

@@ -1,4 +1,6 @@
 # python/src/server/services/search/web_researcher.py
+from typing import Any
+
 from google import genai
 from google.genai import types
 
@@ -29,7 +31,7 @@ class WebResearcher:
             google_search_tool = types.Tool(google_search=types.GoogleSearch())
 
             @retry_with_backoff(max_retries=2)
-            async def _call_gemini():
+            async def _call_gemini() -> Any:
                 return await client.aio.models.generate_content(
                     model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     contents=f"Research: {query}",

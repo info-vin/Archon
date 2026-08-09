@@ -67,7 +67,7 @@ class TokenUsageService:
             from ..repositories.base_repository import BaseRepository
             base_repo = BaseRepository(supabase)
 
-            def _log_to_db():
+            def _log_to_db() -> None:
                 base_repo.execute_query(
                     supabase.table("token_usage").insert(payload), # 合法
                     error_context="Failed to log token usage"
@@ -126,7 +126,7 @@ class TokenUsageService:
             from ..repositories.base_repository import BaseRepository
             base_repo = BaseRepository(supabase)
 
-            def _fetch_data():
+            def _fetch_data() -> list[dict[str, Any]]:
                 success, res_dict = base_repo.execute_query(
                     supabase.table("token_usage") # 合法
                     .select("cost_usd, created_at, model, provider")

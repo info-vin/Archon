@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from ...config.logfire_config import get_logger
 from ...repositories.knowledge_repository import KnowledgeRepository
@@ -208,7 +209,7 @@ class BusinessArchiver:
             extraction_prompt = prompt_template.format(post_title=post_title, review_notes=review_notes)
 
             @retry_with_backoff(max_retries=2)
-            async def _call_gemini():
+            async def _call_gemini() -> Any:
                 return await client.aio.models.generate_content(
                     model=SYSTEM_MODELS["DEFAULT_TEXT"],
                     contents=extraction_prompt,

@@ -36,7 +36,7 @@ class ModelSpec:
     description: str = ""
     aliases: list[str] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.aliases is None:
             self.aliases = []
 

@@ -35,7 +35,7 @@ class CodeExtractionService(BaseRepository):
         super().__init__(supabase_client)
         self._settings_cache: dict[str, Any] = {}
 
-    async def _get_config(self):
+    async def _get_config(self) -> Any:
         if not hasattr(self, "_config_cache"):
             from src.server.schemas.settings import CodeExtractionConfig
             from src.server.services.settings_service import SettingsService
