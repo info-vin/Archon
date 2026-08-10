@@ -142,7 +142,7 @@ export function MainLayout({ children, className }: MainLayoutProps) {
   }, [showToast]);
 
   return (
-    <div className={cn("relative min-h-screen overflow-hidden", className)}>
+    <div className={cn("relative min-h-screen overflow-x-hidden", className)}>
       {/* TEMPORARY: Show backend startup error using old component */}
       {backendStartupFailed && <BackendStartupError />}
 

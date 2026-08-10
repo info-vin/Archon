@@ -175,9 +175,9 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-[70vh] relative">
+      <div className="relative pb-32">
         {/* Main content - Table or Board view */}
-        <div className="relative h-[calc(100vh-220px)] overflow-auto">
+        <div className="relative w-full">
           {viewMode === "table" ? (
             <TableView
               tasks={tasks as Task[]}

@@ -50,7 +50,7 @@ export const BoardView = ({
   }, [tasks]);
 
   return (
-    <div className="flex flex-col h-full min-h-[70vh] relative">
+    <div className="flex flex-col relative w-full">
       {/* Board Columns Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 flex-1 p-2 min-h-[500px]">
         {columns.map(({ status }) => (
