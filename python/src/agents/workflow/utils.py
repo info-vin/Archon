@@ -29,14 +29,14 @@ async def _run_agent_with_retry(
             # Re-initialize the model with the backup key if we hit a hard quota.
             # Phase 5.1.5: Version-aware Provider Selection
             if PAI_V1:
-                from pydantic_ai.providers.google import GoogleProvider as ProviderClass
                 from pydantic_ai.models.google import GoogleModel as ModelClass
+                from pydantic_ai.providers.google import GoogleProvider as ProviderClass
             else:
+                from pydantic_ai.models.gemini import GeminiModel as ModelClass  # type: ignore[assignment]
                 from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
-                from pydantic_ai.models.gemini import GeminiModel as ModelClass
 
             provider = ProviderClass(api_key=override_key)
-            backup_model: Any = ModelClass(model_name, provider=provider)  # type: ignore
+            backup_model: Any = ModelClass(model_name, provider=provider)
             return await agent.run(prompt, model=backup_model, deps=deps)
         return await agent.run(prompt, deps=deps)
 

@@ -56,7 +56,6 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
                 placeholder="Search high-quality images (e.g., 'business meeting')..."
                 aria-label="Search high-quality images"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                id="search-input"
               />
               <SearchIcon className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
             </div>

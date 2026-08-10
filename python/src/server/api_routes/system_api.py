@@ -1,4 +1,3 @@
-
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,13 +7,14 @@ from src.server.models.auth_models import UserProfileDTO
 from ..auth.dependencies import get_current_user, requires_permission
 from ..auth.permissions import MCP_MANAGE, TASK_READ_TEAM
 from ..services.health_service import HealthService, HealthStatusResult
+from ..services.scout_ingestion_service import ScoutIngestionResultDTO
 from ..services.system_service import ConnectivityLogDTO, SystemSettingDTO
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
 
 @router.post("/scout/ingest", dependencies=[Depends(requires_permission(MCP_MANAGE))])
-async def ingest_scout_reports() -> dict[str, Any]:
+async def ingest_scout_reports() -> ScoutIngestionResultDTO:
     """
     Manually triggers ingestion of Twin Scout diagnostic reports into the RAG Knowledge Base.
     Restricted to System Admin.
