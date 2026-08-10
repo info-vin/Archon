@@ -60,7 +60,7 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 h-full p-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 w-full p-2">
       {statuses.map(status => (
         <div key={status} className="bg-gray-50/50 rounded-2xl p-4 flex flex-col gap-4 border border-gray-100" onDrop={(e) => onDrop(e, status)} onDragOver={onDragOver}>
           <div className="flex justify-between items-center border-b border-gray-200 pb-3">
@@ -71,7 +71,7 @@ export const KanbanView: React.FC<KanbanViewProps> = React.memo(({ tasks, update
              <span className="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-gray-500 shadow-sm">{tasksByStatus[status]?.length || 0}</span>
           </div>
           
-          <div className="flex-1 min-w-0 space-y-3 overflow-y-auto pr-1">
+          <div className="flex-1 min-w-0 space-y-3 w-full pr-1">
             {tasksByStatus[status]?.map(task => {
                return (
                   <div 

@@ -52,7 +52,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden p-6 bg-background">
+    <div className="flex-1 min-w-0 flex flex-col w-full p-6 bg-background">
       {/* Header section */}
       <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
@@ -135,7 +135,7 @@ const DashboardPage: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 w-full pb-32">
         <ClockInWidget />
         <div className="mt-4">
           {!isLoading && sortedTasks.length === 0 ? (
