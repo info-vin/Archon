@@ -57,6 +57,9 @@ class PruningConfig(BaseModel):
     l3_tokens_days: int = Field(default=30, alias="PRUNING_L3_TOKENS_DAYS")
 
 
+from pydantic import model_validator
+import os
+
 class NetworkConfig(BaseModel):
     agents_service_url: str = Field(default="http://archon-agents:8052", alias="AGENTS_SERVICE_URL")
     mcp_service_url: str = Field(default="http://archon-mcp:8051", alias="MCP_SERVICE_URL")
@@ -66,6 +69,14 @@ class NetworkConfig(BaseModel):
     google_base_url: str = Field(default="https://generativelanguage.googleapis.com/v1beta/openai/", alias="GOOGLE_BASE_URL")
     hf_base_url: str = Field(default="https://api-inference.huggingface.co/v1/", alias="HF_BASE_URL")
     frontend_url: str = Field(default="https://archon-enduser.vercel.app", alias="FRONTEND_URL")
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_from_env(cls, data: dict) -> dict:
+        for k, v in os.environ.items():
+            if k in ["AGENTS_SERVICE_URL", "MCP_SERVICE_URL", "LLM_BASE_URL", "ANTHROPIC_BASE_URL", "OPENROUTER_BASE_URL", "GOOGLE_BASE_URL", "HF_BASE_URL", "FRONTEND_URL"]:
+                data[k] = v
+        return data
 
 class NotificationConfig(BaseModel):
     telegram_token: str | None = Field(default=None, alias="TELEGRAM_TOKEN")
