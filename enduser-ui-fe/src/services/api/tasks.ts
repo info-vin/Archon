@@ -3,7 +3,7 @@ import { NewTaskData, NewProjectData, UpdateTaskData } from './types';
 import { callAPI } from './apiClient';
 
 export const tasksApi = {
-  async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false, assigneeId?: string, perPage: number = 50): Promise<Task[]> {
+  async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false, assigneeId?: string, perPage: number = 1000): Promise<Task[]> {
     const queryParams = new URLSearchParams({
         include_closed: includeClosed.toString(),
         include_unassigned: includeUnassigned.toString(),
