@@ -104,6 +104,7 @@ async def list_tasks_logic(
                 "is_recurring": task.get("is_recurring"),
                 "crawler_target_id": task.get("crawler_target_id"),
                 "schedule_config": task.get("schedule_config"),
+                "retry_count": task.get("retry_count", 0),
             }
 
             if not exclude_large_fields:
