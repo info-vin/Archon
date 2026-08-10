@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field
+import os
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class CredentialCreate(BaseModel):
@@ -56,9 +58,6 @@ class PruningConfig(BaseModel):
     l3_crawled_days: int = Field(default=30, alias="PRUNING_L3_CRAWLED_DAYS")
     l3_tokens_days: int = Field(default=30, alias="PRUNING_L3_TOKENS_DAYS")
 
-
-from pydantic import model_validator
-import os
 
 class NetworkConfig(BaseModel):
     agents_service_url: str = Field(default="http://archon-agents:8052", alias="AGENTS_SERVICE_URL")
