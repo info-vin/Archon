@@ -131,6 +131,7 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
               <input
                 type="text"
                 placeholder="Search knowledge..."
+                aria-label="Search knowledge"
                 className="w-full px-2 py-1 text-sm bg-input border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

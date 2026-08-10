@@ -22,3 +22,6 @@
 ## 2026-08-09 - Missing Accessible Labels on Search Inputs
 **Learning:** Found that search inputs (like in `SmartImagePicker.tsx` or `RAGPlayground.tsx`) often rely entirely on visual placeholders for context without an explicit, screen-reader-accessible label, breaking accessibility for non-visual users.
 **Action:** When adding or reviewing search inputs or similar form controls without visible text labels, always ensure a `<label className="sr-only">` is properly associated with the input using `htmlFor` and `id` to provide context for screen readers.
+## 2026-08-10 - Missing Accessible Labels on Search Inputs (KnowledgeSelector)
+**Learning:** Found that the search input in `KnowledgeSelector.tsx` lacked an explicit, screen-reader-accessible label. Using `sr-only` class is good, but `aria-label` is safer to ensure it works independent of tailwind styles or layout changes and doesn't visually break things.
+**Action:** When adding or reviewing search inputs or similar form controls without visible text labels, always ensure an `aria-label` is used if `sr-only` is not practical or might introduce layout issues.
