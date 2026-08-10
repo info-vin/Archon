@@ -25,7 +25,7 @@ export const useDashboardLogic = (selectedProjectId: string) => {
                                user?.role?.toLowerCase() === 'system_admin';
 
       const promises: [Promise<Task[]>, Promise<Project[]>, Promise<Employee[]>] = [
-        api.getTasks(true), // include closed
+        api.getTasks(true, false, undefined, -1), // include closed, unlimited pagination for dashboard
         api.getProjects(),
         isManagerOrAdmin ? api.getEmployees() : Promise.resolve([])
       ];

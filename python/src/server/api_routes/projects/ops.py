@@ -162,12 +162,12 @@ async def list_tasks(
     tasks = data.get("tasks", [])
 
     return {
-        "tasks": tasks[(page - 1) * per_page : page * per_page],
+        "tasks": tasks if per_page <= 0 else tasks[(page - 1) * per_page : page * per_page],
         "pagination": {
             "total": len(tasks),
             "page": page,
             "per_page": per_page,
-            "pages": (len(tasks) + per_page - 1) // per_page,
+            "pages": 1 if per_page <= 0 else (len(tasks) + per_page - 1) // per_page,
         },
     }
 
