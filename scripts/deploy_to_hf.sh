@@ -82,7 +82,7 @@ pinned: false
 EOF
 
 echo "6. Adding files to index and committing..."
-git add python/ migration/ scripts/ Makefile Dockerfile README.md
+git add python/ migration/ scripts/ Makefile Dockerfile README.md AGENTS.md
 git commit -m "chore(deploy): build monolithic server for Hugging Face"
 
 echo "7. Pushing to Hugging Face Spaces (main branch)..."
