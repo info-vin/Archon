@@ -19,3 +19,6 @@
 ## 2026-08-09 - Ensure Close Modal Buttons Have Focus Styles
 **Learning:** Icon-only modal close buttons often miss focus indicators because default outline styles may have been globally removed or overridden, leading to poor keyboard accessibility. The standard `p-1 hover:bg-gray-200 rounded-full` pattern used across this application looks great on mouse interaction but provides zero feedback for keyboard users.
 **Action:** When adding close buttons or reviewing existing ones, standardize on the application's established pattern for accessible focus rings on icon-only buttons: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`.
+## 2026-08-09 - Missing Accessible Labels on Search Inputs
+**Learning:** Found that search inputs (like in `SmartImagePicker.tsx` or `RAGPlayground.tsx`) often rely entirely on visual placeholders for context without an explicit, screen-reader-accessible label, breaking accessibility for non-visual users.
+**Action:** When adding or reviewing search inputs or similar form controls without visible text labels, always ensure a `<label className="sr-only">` is properly associated with the input using `htmlFor` and `id` to provide context for screen readers.

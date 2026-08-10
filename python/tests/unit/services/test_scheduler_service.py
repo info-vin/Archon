@@ -10,18 +10,18 @@ from src.server.services.scheduler_service import scheduler_service
 
 def test_is_hf_awake_boundary_conditions():
     """
-    Test boundary conditions for Hugging Face Sleep Awareness (17:58 ~ 07:20 CST).
+    Test boundary conditions for Hugging Face Sleep Awareness (17:18 ~ 07:20 CST).
     """
-    # 17:57 CST -> Awake (True)
-    cst_17_57 = datetime(2026, 6, 8, 17, 57, tzinfo=timezone(timedelta(hours=8)))
+    # 17:17 CST -> Awake (True)
+    cst_17_17 = datetime(2026, 6, 8, 17, 17, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler.jobs.patrol.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_17_57
+        mock_datetime.now.return_value = cst_17_17
         assert is_hf_awake() is True
 
-    # 17:58 CST -> Sleep (False)
-    cst_17_58 = datetime(2026, 6, 8, 17, 58, tzinfo=timezone(timedelta(hours=8)))
+    # 17:18 CST -> Sleep (False)
+    cst_17_18 = datetime(2026, 6, 8, 17, 18, tzinfo=timezone(timedelta(hours=8)))
     with patch("src.server.services.scheduler.jobs.patrol.datetime") as mock_datetime:
-        mock_datetime.now.return_value = cst_17_58
+        mock_datetime.now.return_value = cst_17_18
         assert is_hf_awake() is False
 
     # 07:20 CST -> Sleep (False)

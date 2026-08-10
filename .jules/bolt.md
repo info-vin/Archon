@@ -176,3 +176,6 @@
 ## 2024-05-18 - Pre-calculating complex string manipulations with static lookup dictionaries
 **Learning:** Performing multiple chained string manipulations like `status.toUpperCase().replace('_', ' ')` inside a `.map()` render loop allocates several new strings per item on every render cycle. This is significantly slower and generates more garbage collection overhead than retrieving a pre-formatted string from a dictionary.
 **Action:** Extract repetitive and chained inline string operations into a static $O(1)$ lookup dictionary defined completely outside the component to prevent unnecessary memory allocations during list rendering.
+## 2024-05-19 - Pre-calculating Date parsing before array sorting
+**Learning:** Calling `new Date(string).getTime()` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck.
+**Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.

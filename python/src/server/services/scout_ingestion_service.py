@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from typing import NotRequired, TypedDict
 
 import aiofiles
 
@@ -7,6 +8,14 @@ from ..config.logfire_config import get_logger
 from .librarian_service import LibrarianService
 
 logger = get_logger(__name__)
+
+
+class ScoutIngestionResultDTO(TypedDict):
+    status: str
+    message: NotRequired[str]
+    count: NotRequired[int]
+    errors: NotRequired[list[str]]
+    timestamp: NotRequired[str]
 
 
 class ScoutIngestionService:
@@ -19,7 +28,7 @@ class ScoutIngestionService:
         self.diagnostics_dir = diagnostics_dir
         self.librarian = LibrarianService()
 
-    async def ingest_reports(self) -> dict:
+    async def ingest_reports(self) -> ScoutIngestionResultDTO:
         """
         Scans for report_*.md files and indexes them via Librarian.
         Avoids redundant indexing and filters out infrastructure noise (e.g. connection failures).

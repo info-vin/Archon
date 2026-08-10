@@ -14,3 +14,6 @@
 ## 2024-08-08 - Added RBACRoleResponse to Admin API
 **Learning:** Returning a raw dict when the route is typed with a Pydantic `response_model` will cause type-checkers (like ruff/mypy) to complain about incompatible return value types in the handler if we declare `-> RBACRoleResponse`.
 **Action:** Always instantiate the exact Pydantic model (`return RBACRoleResponse(**data)`) inside the route handler when explicit type annotations are used.
+## 2025-02-23 - Hardened get_commander_trends API endpoint
+**Learning:** Returning a raw list of dictionaries mapped from `stats_service` leaves the API susceptible to schema drift and lacks OpenAPI integration.
+**Action:** Always instantiate Pydantic models (e.g., `[CommanderTrend(**r) for r in results]`) within the route handler to ensure strict serialization and drop unexpected extra fields before they hit the client, even if FastAPI might cast dicts at runtime.

@@ -137,7 +137,12 @@ class SchedulerService:
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True
-        return last_run.astimezone(DEFAULT_TIMEZONE).isocalendar()[:2] < datetime.now(DEFAULT_TIMEZONE).isocalendar()[:2]
+
+        # 修正: ISO 週以週一為起點，若 Catchup 發生在週一，會與下週日同屬一週而導致跳過。
+        # 透過 +1 天將切割線移至週日，確保下週日能正常執行。
+        last_run_shifted = last_run.astimezone(DEFAULT_TIMEZONE) + timedelta(days=1)
+        now_shifted = datetime.now(DEFAULT_TIMEZONE) + timedelta(days=1)
+        return last_run_shifted.isocalendar()[:2] < now_shifted.isocalendar()[:2]
 
     async def _should_run_monthly(self, job_id: str, trigger: CronTrigger | None = None) -> bool:
         last_run = await self._get_last_run(job_id)
