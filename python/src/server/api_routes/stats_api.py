@@ -19,10 +19,17 @@ router = APIRouter(prefix="/api/stats", tags=["stats"])
 stats_service = StatsService()
 
 
-@router.get("/commander-trends", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_commander_trends() -> list[dict[str, Any]]:
+class CommanderTrend(BaseModel):
+    date: str = Field(description="The date of the trend point")
+    bob_tokens: int = Field(description="Token usage for the day")
+    decision_hours: float = Field(description="Decision hours for the day")
+
+
+@router.get("/commander-trends", response_model=list[CommanderTrend], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_commander_trends() -> list[CommanderTrend]:
     try:
-        return await stats_service.get_commander_trends()
+        results = await stats_service.get_commander_trends()
+        return [CommanderTrend(**r) for r in results]
     except Exception as e:
         logger.error(f"Commander trends failed: {e}")
         return []
