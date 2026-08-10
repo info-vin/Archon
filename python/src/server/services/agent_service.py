@@ -173,9 +173,10 @@ class AgentService:
         prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
 
         # 2. Call WorkflowEngine via httpx
+        import os
+
         from ..schemas.settings import NetworkConfig
         from ..services.settings_service import SettingsService
-        import os
         try:
             net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
             agents_url = os.getenv("AGENTS_SERVICE_URL") or net_config.agents_service_url
