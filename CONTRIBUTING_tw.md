@@ -411,6 +411,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - `migration/0.2.3/RESET_DB.sql`
 - `migration/0.2.3/rescue/fix_missing_agents.sql`
 - `migration/0.2.3/rescue/leads.sql`
+- `migration/20260810_seed_rag_blog.sql`
 - `migration/0.2.3/rescue/prompts.sql`
 - `migration/0.2.3/rescue/schema_migrations.sql`
 - `migration/0.2.3/rescue/sources_and_targets.sql`
