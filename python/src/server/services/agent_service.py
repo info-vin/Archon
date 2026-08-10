@@ -175,11 +175,12 @@ class AgentService:
         # 2. Call WorkflowEngine via httpx
         from ..schemas.settings import NetworkConfig
         from ..services.settings_service import SettingsService
+        import os
         try:
             net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
-            agents_url = net_config.agents_service_url
+            agents_url = os.getenv("AGENTS_SERVICE_URL") or net_config.agents_service_url
         except Exception:
-            agents_url = NetworkConfig().agents_service_url
+            agents_url = os.getenv("AGENTS_SERVICE_URL") or NetworkConfig().agents_service_url
 
         try:
             # Group chats take time, set a safe timeout

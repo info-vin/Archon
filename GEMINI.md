@@ -487,3 +487,8 @@
 
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
+
+### 2026/08/10: 雲端部署修復與 Agent 韌性硬化 (Phase 5.10.10)
+- **Hugging Face 部署修復**: 修正 `Dockerfile.server` 中對於 `cache_offline_packages.py` 的路徑參照。該腳本先前已被歸檔至 `scripts/archive/`，導致 Docker 構建在 COPY 階段因緩存未命中 (Cache Miss) 失敗。更新路徑後恢復了單一容器的部署能力。
+- **WorkflowEngine 網路解析自癒**: 修正 `agent_service.py` 遇到 `[Errno -2] Name or service not known` 的崩潰問題。強制透過 `os.getenv("AGENTS_SERVICE_URL")` 讀取環境變數，確保在 HF 環境中能正確解析到本地的 8052 埠。
+- **Map-Reduce 任務超時擴展**: 將 `NexusOracleAgent` 在 `base_agent.py` 的 `asyncio.wait_for` 超時時間由 180 秒大幅放寬至 600 秒，防止彙整大量週報/月報資料時觸發 `TimeoutError` 導致的週期任務中斷。

@@ -18,7 +18,7 @@ RUN uv venv /venv && \
     uv pip install --group server --group mcp --group agents
 
 # Pre-download critical python wheels for offline self-expansion
-COPY scripts/cache_offline_packages.py scripts/
+COPY scripts/archive/cache_offline_packages.py scripts/
 RUN python scripts/cache_offline_packages.py --output /app/offline_wheels
 
 # Phase 5.7.4: PyTorch removed. ONNX models will be fetched dynamically via huggingface-hub.

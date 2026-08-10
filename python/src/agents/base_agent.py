@@ -257,7 +257,7 @@ class BaseAgent[DepsT, OutputT](ABC):
             # Add timeout to prevent hanging, use global resilience
             result = await asyncio.wait_for(
                 run_agent_with_global_resilience(self._agent, user_prompt, deps=deps),
-                timeout=180.0,  # Increased timeout for backoffs
+                timeout=600.0,  # Increased timeout for backoffs
             )
             self.logger.info(f"Agent {self.name} completed successfully")
 
@@ -286,7 +286,7 @@ class BaseAgent[DepsT, OutputT](ABC):
 
             return get_pydantic_ai_output(result)  # type: ignore[no-any-return]
         except TimeoutError as e:
-            self.logger.error(f"Agent {self.name} timed out after 180 seconds")
+            self.logger.error(f"Agent {self.name} timed out after 600 seconds")
             raise Exception(f"Agent {self.name} operation timed out - taking too long to respond") from e
         except Exception as e:
             self.logger.error(f"Agent {self.name} failed: {str(e)}")
