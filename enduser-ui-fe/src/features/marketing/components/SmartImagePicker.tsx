@@ -46,7 +46,9 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
         <div className="p-4 bg-gray-50 border-b border-gray-100">
           <form onSubmit={handleSearch} className="relative flex gap-2">
             <div className="relative flex-1">
+              <label htmlFor="image-search" className="sr-only">Search images</label>
               <input
+                id="image-search"
                 type="text"
                 data-testid="image-search-input"
                 value={keyword}
