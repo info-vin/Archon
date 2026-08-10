@@ -83,7 +83,7 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
     # Fix: Mock the enrichment service's supabase client and its storage upload
     mock_enrichment_sb = MagicMock()
     mock_utils_supabase.return_value = mock_enrichment_sb
-    mock_enrichment_sb.storage.from_().get_public_url.return_value = "https://mock.supabase.co/storage/audio.wav"
+    mock_enrichment_sb.storage.from_().create_signed_url.return_value = {"signedURL": "https://mock.supabase.co/storage/audio.wav"}
 
     mock_p_res = MagicMock()
     mock_p_res.data = [{"id": "test-project-123"}]

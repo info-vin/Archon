@@ -74,8 +74,10 @@ class ReportEnrichmentService:
                         file=result,
                         file_options={"content-type": "audio/wav"}
                     )
-                    audio_url = supabase.storage.from_("archon_documents").get_public_url(filename)
-                    task_desc += f"\n\n🎧 **Listen to Podcast**: [Audio Link]({audio_url})"
+                    audio_url_res = supabase.storage.from_("archon_documents").create_signed_url(filename, 604800)
+                    audio_url = audio_url_res.get("signedURL") or audio_url_res.get("signedUrl")
+                    if audio_url:
+                        task_desc += f"\n\n🎧 **Listen to Podcast**: [Audio Link]({audio_url})"
                     logger.info("✅ ReportEnrichmentService: TTS Podcast generated and attached.")
                 except Exception as upload_err:
                     logger.error(f"❌ ReportEnrichmentService: Failed to upload TTS Podcast to Supabase: {upload_err}")

@@ -179,7 +179,14 @@ class ReportService(BaseRepository):
                 f"* 狀態: 已指派給 Charlie\n"
                 f"👉 請登入 Admin UI 查看詳細數據與表格：[點擊前往]({frontend_url}/tasks/{task_id})"
             )
-            await telegram_service.send_message(telegram_msg)
+            try:
+                await telegram_service.send_message(telegram_msg)
+            except Exception as tg_err:
+                logger.warning(f"⚠️ ReportService: Failed to send Telegram notification (Task {task_id} was still created): {tg_err}")
+        else:
+            error_msg = f"ReportService: Failed to create {title_prefix} summary task."
+            logger.error(f"❌ {error_msg} Task service returned success=False.")
+            raise Exception(error_msg)
 
     async def generate_daily_executive_summary(self) -> None:
         """Triggers Star-topology Group Chat for Daily Executive Summary."""

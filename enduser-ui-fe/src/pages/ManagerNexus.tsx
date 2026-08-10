@@ -188,7 +188,7 @@ export const ManagerNexus: React.FC = () => {
 
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 min-h-screen bg-gray-50/50 font-sans nexus-font-scope" style={{fontFamily: "'Inter', sans-serif"}}>
+        <div className="p-4 md:p-8 pb-32 max-w-7xl mx-auto space-y-8 h-full flex-1 overflow-y-auto bg-gray-50/50 font-sans nexus-font-scope" style={{fontFamily: "'Inter', sans-serif"}}>
              <NexusHeader 
                 onOpenSpec={() => setIsSpecOpen(true)} 
                 dailyData={{

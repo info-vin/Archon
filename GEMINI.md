@@ -113,6 +113,11 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/08/10: 週期任務容錯硬化與前端音效渲染 (Phase 5.10.9)
+- **後端容錯與權限防護**: 將 Podcast 音檔連結從公開的 `get_public_url` 升級為 7 天時效的 `create_signed_url`。於 `report_service.py` 加入 Exception 攔截，若建立任務失敗則立即中斷，並利用 `try-except` 包覆 Telegram 推播，防範網路超時引發 apscheduler Retry Storm 造成任務重複建立。
+- **前端佈局與渲染重構**: 解除 `ManagerNexus.tsx` 造成畫面鎖死的 `min-h-screen` 限制。抽離並建立 `AudioMarkdownRenderer.tsx` 模組，將原本純文字的音檔 Markdown 連結攔截並渲染為原生 `<audio>` 播放器，落實 SSOT 與 DRY 原則。
+- **品質公證**: 同步更新 `test_report_service.py` 內的 Mock 返回值以相容 `create_signed_url` 結構，成功通過 645 項後端 Pytest 驗證與 93 項前端 Vitest 公證，確保 0 副作用。
+
 ### 2026/08/08: 日報排程極限推演與環境自癒 (Phase 5.10)
 - **死鎖修復與自癒**: 解決了 `archon-server` 因 Supabase 初始化失敗引發 `__del__` 無限遞迴的問題。同時修復了 `BaseRepository.execute_query` 在處理 Supabase v2 Builder 物件時缺少 `.execute()` 造成的 `SyncQueryRequestBuilder` 報錯，確保背景報告任務順利產出。
 - **爬蟲極限數學建模**: 針對 104 WAF 隨機延遲 (6.5s) 與 Gemini 3.1 Rate Limit (4.5s/次)，反向推演了 25 分鐘物理極限。最終將 `CRAWLER_JOB_LIMIT` 下調至精確的 `32` 筆，確保系統在全併發下依然穩定不超時，成功達成 11% 高品質 Leads 轉換率與極低耗損 ($0.01 USD)。
