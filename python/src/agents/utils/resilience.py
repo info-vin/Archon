@@ -36,12 +36,12 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
         # If a gateway URL is provided or an override key is specified, we must use an explicit provider
         if gateway_url or override_key:
             import httpx
-            from pydantic_ai.models.gemini import GeminiModel
-
             if PAI_V1:
                 from pydantic_ai.providers.google import GoogleProvider as ProviderClass
+                from pydantic_ai.models.google import GoogleModel as ModelClass
             else:
                 from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
+                from pydantic_ai.models.gemini import GeminiModel as ModelClass
 
             if gateway_url:
                 custom_http_client = httpx.AsyncClient(timeout=120.0)
@@ -53,7 +53,7 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
             if not model_name:
                 model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite"
 
-            backup_model: Any = GeminiModel(model_name, provider=provider)  # type: ignore
+            backup_model: Any = ModelClass(model_name, provider=provider)  # type: ignore
             return await agent.run(prompt, model=backup_model, **run_kwargs)
 
         return await agent.run(prompt, **run_kwargs)
