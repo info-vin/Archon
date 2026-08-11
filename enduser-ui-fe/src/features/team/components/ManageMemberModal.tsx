@@ -133,7 +133,8 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                             <input 
                                 id={passwordId}
                                 type="password" 
-                                placeholder="New password" 
+                                placeholder="New password"
+                                aria-label="New password"
                                 value={newPassword}
                                 onChange={e => setNewPassword(e.target.value)}
                                 className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm"

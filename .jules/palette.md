@@ -25,3 +25,6 @@
 ## 2026-08-10 - Missing Accessible Labels on Search Inputs (KnowledgeSelector)
 **Learning:** Found that the search input in `KnowledgeSelector.tsx` lacked an explicit, screen-reader-accessible label. Using `sr-only` class is good, but `aria-label` is safer to ensure it works independent of tailwind styles or layout changes and doesn't visually break things.
 **Action:** When adding or reviewing search inputs or similar form controls without visible text labels, always ensure an `aria-label` is used if `sr-only` is not practical or might introduce layout issues.
+## 2024-05-19 - Adding accessible labels to naked password inputs
+**Learning:** In contexts like `ManageMemberModal`, password input fields were relying purely on `placeholder` text for identity. Placeholders are frequently skipped by screen readers or considered poor practice for accessible names.
+**Action:** Always prefer adding an explicit `aria-label` directly to naked `<input>` elements over adding a `.sr-only` class label to prevent potential layout shifts and regression in the DOM, while maintaining 100% accessible naming.
