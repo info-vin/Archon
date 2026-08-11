@@ -17,3 +17,6 @@
 ## 2025-02-23 - Hardened get_commander_trends API endpoint
 **Learning:** Returning a raw list of dictionaries mapped from `stats_service` leaves the API susceptible to schema drift and lacks OpenAPI integration.
 **Action:** Always instantiate Pydantic models (e.g., `[CommanderTrend(**r) for r in results]`) within the route handler to ensure strict serialization and drop unexpected extra fields before they hit the client, even if FastAPI might cast dicts at runtime.
+## 2024-08-10 - Preserving JSON Payload Structure with Pydantic Alias
+**Learning:** When refactoring existing API routes to use strict Pydantic schemas, Python reserved keywords (like `from`) used as JSON keys will cause syntax errors if defined directly as class attributes.
+**Action:** Use Pydantic's `Field(alias="from")` combined with a safe Python attribute name (e.g., `from_node`) to strictly type the payload while perfectly preserving the existing JSON serialization structure, ensuring frontend clients do not break.

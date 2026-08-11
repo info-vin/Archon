@@ -35,13 +35,39 @@ async def get_commander_trends() -> list[CommanderTrend]:
         return []
 
 
-@router.get("/collab-synergy", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_collab_synergy() -> dict[str, Any]:
+class SynergyInteraction(BaseModel):
+    to: str = Field(description="The target node name")
+    actual_7d: int = Field(description="Actual interactions in the last 7 days")
+    avg_30d: float = Field(description="Average weekly interactions over the last 30 days")
+
+
+class SynergyMatrixRow(BaseModel):
+    from_node: str = Field(alias="from", description="The source node name")
+    interactions: list[SynergyInteraction] = Field(description="List of interactions with other nodes")
+
+
+class SynergySnapshot(BaseModel):
+    total_7d: int = Field(description="Total interactions in the last 7 days")
+    momentum_pct: float = Field(description="Momentum percentage compared to 30-day average")
+    hot_bridge: str = Field(description="The most active bridge between nodes")
+    active_paths: int = Field(description="Number of active paths with >0 interactions in the last 7 days")
+
+
+class CollabSynergyResponse(BaseModel):
+    nodes: list[str] = Field(description="List of participant node names")
+    matrix: list[SynergyMatrixRow] = Field(description="Adjacency matrix of interactions")
+    snapshot: SynergySnapshot | None = Field(default=None, description="Snapshot statistics")
+    timestamp: str | None = Field(default=None, description="Timestamp of the snapshot")
+    error: str | None = Field(default=None, description="Error message if any")
+
+
+@router.get("/collab-synergy", response_model=CollabSynergyResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_collab_synergy() -> CollabSynergyResponse:
     try:
-        return await stats_service.get_collab_synergy()
+        return CollabSynergyResponse(**await stats_service.get_collab_synergy())
     except Exception as e:
         logger.error(f"API: Collab synergy fetch failed: {e}")
-        return {"nodes": [], "matrix": [], "error": str(e)}
+        return CollabSynergyResponse(nodes=[], matrix=[], error=str(e))
 
 
 @router.get("/sla-reliability", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
