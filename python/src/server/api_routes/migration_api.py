@@ -87,7 +87,17 @@ async def get_migration_status(response: Response, if_none_match: str | None = H
             # Client needs new data
             response.headers["ETag"] = f'"{etag}"'
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            return MigrationStatusResponse(**status)
+            from typing import cast
+
+            return MigrationStatusResponse(
+                pending_migrations=cast(list[PendingMigration], status["pending_migrations"]),
+                applied_migrations=cast(list[MigrationRecord], status["applied_migrations"]),
+                has_pending=status["has_pending"],
+                bootstrap_required=status["bootstrap_required"],
+                current_version=status["current_version"],
+                pending_count=status["pending_count"],
+                applied_count=status["applied_count"],
+            )
 
     except Exception as e:
         logfire.error(f"Error getting migration status: {e}")

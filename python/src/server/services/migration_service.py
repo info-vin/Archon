@@ -35,12 +35,17 @@ class AppliedMigrationInfoDTO(TypedDict):
     version: str | None
     migration_name: str | None
     applied_at: str | None
+    checksum: str | None
 
 
 class MigrationStatusDTO(TypedDict):
     pending_migrations: list[PendingMigrationInfoDTO]
     applied_migrations: list[AppliedMigrationInfoDTO]
     bootstrap_required: bool
+    has_pending: bool
+    current_version: str
+    pending_count: int
+    applied_count: int
 
 logger = get_logger(__name__)
 
