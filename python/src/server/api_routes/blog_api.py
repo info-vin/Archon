@@ -1,22 +1,27 @@
 
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.dependencies import requires_permission
 from ..auth.permissions import CONTENT_PUBLISH, CONTENT_REJECT
-from ..models.blog import BlogPostResponse, CreateBlogPostRequest, UpdateBlogPostRequest
+from ..models.auth_models import UserProfileDTO
+from ..models.blog import (
+    BlogPostResponse,
+    BlogPostStatusResponse,
+    CreateBlogPostRequest,
+    UpdateBlogPostRequest,
+    UpdateBlogPostStatusRequest,
+)
 from ..services.blog_service import BlogService
 
 router = APIRouter(prefix="/api/blogs", tags=["blog"])
 
 
-def get_blog_service() -> Any:
+def get_blog_service() -> BlogService:
     return BlogService()
 
 
 @router.get("", response_model=list[BlogPostResponse])
-async def get_blog_posts(service: BlogService = Depends(get_blog_service)):
+async def get_blog_posts(service: BlogService = Depends(get_blog_service)) -> list[BlogPostResponse]:
     """Get all blog posts. Public access."""
     success, result = await service.list_posts()
     if not success:
@@ -27,7 +32,7 @@ async def get_blog_posts(service: BlogService = Depends(get_blog_service)):
 
 
 @router.get("/{post_id}", response_model=BlogPostResponse)
-async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_service)):
+async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_service)) -> BlogPostResponse:
     """Get a single blog post by ID. Public access."""
     success, result = await service.get_post(post_id)
     if not success:
@@ -42,9 +47,9 @@ async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_se
 @router.post("", response_model=BlogPostResponse)
 async def create_blog_post(
     request: CreateBlogPostRequest,
-    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
+    current_user: UserProfileDTO = Depends(requires_permission(CONTENT_PUBLISH)),
     service: BlogService = Depends(get_blog_service),
-):
+) -> BlogPostResponse:
     """Create a new blog post. Requires CONTENT_PUBLISH permission."""
     post_data = request.model_dump(mode="json", exclude={"id"})
     success, result = await service.create_post(post_data)
@@ -57,9 +62,9 @@ async def create_blog_post(
 async def update_blog_post(
     post_id: str,
     request: UpdateBlogPostRequest,
-    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
+    current_user: UserProfileDTO = Depends(requires_permission(CONTENT_PUBLISH)),
     service: BlogService = Depends(get_blog_service),
-):
+) -> BlogPostResponse:
     """Update an existing blog post. Requires CONTENT_PUBLISH permission."""
     update_data = request.model_dump(mode="json", exclude_unset=True)
     success, result = await service.update_post(post_id, update_data)
@@ -68,30 +73,28 @@ async def update_blog_post(
     return result.get("post")
 
 
-@router.patch("/{post_id}/status")
+@router.patch("/{post_id}/status", response_model=BlogPostStatusResponse)
 async def update_blog_post_status(
     post_id: str,
-    request: dict,
-    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
+    request: UpdateBlogPostStatusRequest,
+    current_user: UserProfileDTO = Depends(requires_permission(CONTENT_PUBLISH)),
     service: BlogService = Depends(get_blog_service),
-):
+) -> BlogPostStatusResponse:
     """Update the status of an existing blog post. Requires CONTENT_PUBLISH permission."""
-    status_val = request.get("status")
-    if not status_val:
-        raise HTTPException(status_code=400, detail="Status value is required.")
+    status_val = request.status
 
     success, result = await service.update_post(post_id, {"status": status_val})
     if not success:
         raise HTTPException(status_code=404, detail=result.get("error"))
-    return {"message": "Status updated successfully"}
+    return BlogPostStatusResponse(message="Status updated successfully")
 
 
 @router.delete("/{post_id}", status_code=204)
 async def delete_blog_post(
     post_id: str,
-    current_user: dict = Depends(requires_permission(CONTENT_REJECT)),
+    current_user: UserProfileDTO = Depends(requires_permission(CONTENT_REJECT)),
     service: BlogService = Depends(get_blog_service),
-):
+) -> None:
     """Delete a blog post. Requires CONTENT_REJECT permission."""
     success, result = await service.delete_post(post_id)
     if not success:
