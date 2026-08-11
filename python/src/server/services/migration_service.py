@@ -4,7 +4,7 @@ Database migration tracking and management service.
 
 import hashlib
 from pathlib import Path
-from typing import Any
+from typing import NotRequired, TypedDict
 
 import aiofiles
 from supabase import Client
@@ -13,13 +13,42 @@ from ..config.logfire_config import get_logger
 from ..config.version import ARCHON_VERSION
 from .client_manager import get_supabase_client
 
+
+class MigrationRecordDTO(TypedDict):
+    id: NotRequired[int]
+    version: NotRequired[str]
+    migration_name: NotRequired[str]
+    migrated_at: NotRequired[str]
+    applied_at: NotRequired[str]
+    checksum: NotRequired[str]
+
+
+class PendingMigrationInfoDTO(TypedDict):
+    version: str
+    name: str
+    sql_content: str
+    file_path: str
+    checksum: str
+
+
+class AppliedMigrationInfoDTO(TypedDict):
+    version: str | None
+    migration_name: str | None
+    applied_at: str | None
+
+
+class MigrationStatusDTO(TypedDict):
+    pending_migrations: list[PendingMigrationInfoDTO]
+    applied_migrations: list[AppliedMigrationInfoDTO]
+    bootstrap_required: bool
+
 logger = get_logger(__name__)
 
 
 class MigrationRecord:
     """Represents a migration record from the database."""
 
-    def __init__(self, data: dict[str, Any]) -> None:
+    def __init__(self, data: MigrationRecordDTO) -> None:
         self.id = data.get("id")
         self.version = data.get("version")
         self.migration_name = data.get("migration_name") or data.get("version")
@@ -234,7 +263,7 @@ class MigrationService:
 
         return pending
 
-    async def get_migration_status(self) -> dict[str, Any]:
+    async def get_migration_status(self) -> MigrationStatusDTO:
         """
         Get comprehensive migration status.
 
