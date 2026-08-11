@@ -40,6 +40,14 @@ class UpdateBlogPostRequest(BaseModel):
     generation_metadata: dict | None = Field(None, alias="generationMetadata")
 
 
+class UpdateBlogPostStatusRequest(BaseModel):
+    status: str
+
+
+class BlogPostStatusResponse(BaseModel):
+    message: str
+
+
 class BlogPostResponse(BlogPostBase):
     id: str
     created_at: datetime = Field(alias="createdAt")
