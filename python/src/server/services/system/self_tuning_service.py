@@ -5,9 +5,10 @@ based on observed errors in archon_logs.
 """
 
 import logging
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 import aiofiles
+from supabase.client import Client
 
 from ...repositories.base_repository import BaseRepository
 from ...utils import get_supabase_client
@@ -18,12 +19,19 @@ from ..shared_constants import AgentUUIDs
 logger = logging.getLogger(__name__)
 
 
+class TunePromptResultDTO(TypedDict):
+    success: bool
+    error: NotRequired[str]
+    proposal_id: NotRequired[str]
+    file_path: NotRequired[str]
+
+
 class SelfTuningService(BaseRepository):
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
         self.proposer = ProposeChangeService(self.supabase_client)
 
-    async def tune_prompt_from_error(self, log_id: str) -> dict[str, Any]:
+    async def tune_prompt_from_error(self, log_id: str) -> TunePromptResultDTO:
         """
         Analyze a specific error log and propose a prompt improvement.
         """
@@ -86,7 +94,7 @@ Return ONLY the full corrected file content.
                 user_id=AgentUUIDs.DEV_BOT,
             )
 
-            return {"success": True, "proposal_id": proposal["id"], "file_path": file_path}
+            return {"success": True, "proposal_id": str(proposal.get("id")), "file_path": file_path}
 
         except Exception as e:
             logger.error(f"SelfTuning: Failed to tune prompt: {e}")
