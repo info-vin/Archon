@@ -227,11 +227,14 @@ def ssot_hardcoding_audit():
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded String Set Literal (SSOT Violation)", line.strip()))
                                 
     if hardcoded_issues:
-        print(f"⚠️  Found {len(hardcoded_issues)} potential hardcoding / SSOT violations:")
+        print(f"❌ FOUND {len(hardcoded_issues)} HARDCODING / SSOT VIOLATIONS:")
+        print("SSOT Architecture Violation: Magic numbers, hardcoded URLs, and inline config arrays are strictly prohibited.")
+        print("If this is a false positive, append '# 合法' to the line to bypass this check.")
         for path, line_num, issue, content in hardcoded_issues:
             # 限制長度避免洗頻
             short_content = content if len(content) < 80 else content[:77] + "..."
             print(f"   - {path}:{line_num} | {issue} | {short_content}")
+        sys.exit(1)
     else:
         print("✅ SSOT & Hardcoding audit passed. No obvious magic numbers found.")
 
