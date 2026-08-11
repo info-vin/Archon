@@ -166,77 +166,34 @@ class MigrationService:
             return []
 
     async def scan_migration_directory(self) -> list[PendingMigration]:
-        """
-        Scan the migration directory for all SQL files.
-
-        Returns:
-            List of PendingMigration objects
-        """
+        """Scan the migration directory for all SQL files."""
         migrations: list[PendingMigration] = []
 
         if not self._migrations_dir.exists():
             logger.warning(f"Migration directory does not exist: {self._migrations_dir}")
             return migrations
 
-        # Scan root migration directory for SQL files
-        for sql_file in sorted(self._migrations_dir.glob("*.sql")):
+        async def _process_file(sql_file: Path, version: str) -> None:
             try:
-                # Read SQL content
                 async with aiofiles.open(sql_file, encoding="utf-8") as f:
-                    sql_content = await f.read()
-
-                # Extract migration name (filename without extension)
-                migration_name = sql_file.stem
-
-                # Create pending migration object
-                migration = PendingMigration(
-                    version="0.0.0",  # Standard root version
-                    name=migration_name,
-                    sql_content=sql_content,
-                    file_path=str(sql_file.relative_to(self._migrations_dir.parent)),
-                )
-                migrations.append(migration)
+                    content = await f.read()
+                name = sql_file.stem if version == "0.0.0" else f"{version}/{sql_file.stem}"
+                migrations.append(PendingMigration(
+                    version=version, name=name, sql_content=content,
+                    file_path=str(sql_file.relative_to(self._migrations_dir.parent))
+                ))
             except Exception as e:
-                logger.error(f"Error reading migration file {sql_file}: {e}")
+                logger.error(f"Error reading {sql_file}: {e}")
 
-        # Scan all version directories
-        for version_dir in sorted(self._migrations_dir.iterdir()):
-            if not version_dir.is_dir():
-                continue
+        # Scan root
+        for f in sorted(self._migrations_dir.glob("*.sql")):
+            await _process_file(f, "0.0.0")
 
-            version = version_dir.name
-
-            # Physical Hardening: Only scan the current version directory or the '0.0.0' placeholder.
-            # This prevents obsolete version folders (e.g., 0.1.0, 0.2.1) from cluttering the UI
-            # with "pending" warnings when the system is already at 0.2.2+.
-            if version != ARCHON_VERSION and version != "0.0.0":
-                logger.debug(f"Skipping obsolete migration directory: {version}")
-                continue
-
-            # Scan all SQL files in version directory
-            for sql_file in sorted(version_dir.glob("*.sql")):
-                try:
-                    # Read SQL content
-                    async with aiofiles.open(sql_file, encoding="utf-8") as f:
-                        sql_content = await f.read()
-
-                    # Extract migration name
-                    # Physical Alignment: Include version prefix if not in root to match DB records
-                    if version != "0.0.0":
-                        migration_name = f"{version}/{sql_file.stem}"
-                    else:
-                        migration_name = sql_file.stem
-
-                    # Create pending migration object
-                    migration = PendingMigration(
-                        version=version,
-                        name=migration_name,
-                        sql_content=sql_content,
-                        file_path=str(sql_file.relative_to(self._migrations_dir.parent)),
-                    )
-                    migrations.append(migration)
-                except Exception as e:
-                    logger.error(f"Error reading migration file {sql_file}: {e}")
+        # Scan versions (only current and root placeholder)
+        for v_dir in sorted(self._migrations_dir.iterdir()):
+            if v_dir.is_dir() and v_dir.name in (ARCHON_VERSION, "0.0.0"):
+                for f in sorted(v_dir.glob("*.sql")):
+                    await _process_file(f, v_dir.name)
 
         return migrations
 
@@ -308,73 +265,7 @@ class MigrationService:
             "applied_count": len(applied),
         }
 
-    async def adapt_vector_dimensions_for_offline_mode(self) -> None:
-        """
-        Alters vector column dimensions in the database and rebuilds HNSW indexes
-        to match the active mode (384 dimensions for offline, 768 for online).
-        """
-        from ..config.config import get_config
-        config = get_config()
-        is_offline = config.offline_mode
-        target_dim = 384 if is_offline else 768
 
-        db_url = config.supabase_db_url
-        if not db_url:
-            logger.warning("SUPABASE_DB_URL is not set. Skipping vector dimension adaptation.")
-            return
-
-        # Prevent destructive downscaling on production cloud database (supabase.co)
-        if "supabase.co" in db_url and target_dim == 384:
-            logger.warning("⚠️ Protected: Attempted vector downscaling to 384 on cloud database. Skipping to prevent data loss.")
-            return
-
-        logger.info(f"Checking vector database column dimensions (Target: {target_dim})...")
-
-        # Connect using psycopg2 to run DDL command
-        import psycopg2
-
-        sql_commands = [
-            "DROP INDEX IF EXISTS public.archon_crawled_pages_embedding_idx CASCADE;",
-            "UPDATE public.archon_crawled_pages SET embedding = NULL;",
-            f"ALTER TABLE public.archon_crawled_pages ALTER COLUMN embedding TYPE public.vector({target_dim});",
-            "CREATE INDEX IF NOT EXISTS archon_crawled_pages_embedding_idx ON public.archon_crawled_pages USING hnsw (embedding public.vector_cosine_ops);",
-
-            "DROP INDEX IF EXISTS public.archon_code_examples_embedding_idx CASCADE;",
-            "UPDATE public.archon_code_examples SET embedding = NULL;",
-            f"ALTER TABLE public.archon_code_examples ALTER COLUMN embedding TYPE public.vector({target_dim});",
-            "CREATE INDEX IF NOT EXISTS archon_code_examples_embedding_idx ON public.archon_code_examples USING hnsw (embedding public.vector_cosine_ops);"
-        ]
-
-        conn = None
-        try:
-            # Connect to pg database
-            conn = psycopg2.connect(db_url)
-            conn.autocommit = True
-            with conn.cursor() as cursor:
-                # Check current dimension of the vector columns
-                try:
-                    cursor.execute(
-                        "SELECT atttypmod FROM pg_attribute WHERE attrelid = 'public.archon_crawled_pages'::regclass AND attname = 'embedding';"
-                    )
-                    row = cursor.fetchone()
-                    if row and row[0] == target_dim:
-                        logger.info(f"Vector columns are already at {target_dim} dimensions. No adaptation needed.")
-                        return
-                except Exception as check_err:
-                    logger.warning(f"Could not check current vector dimension: {check_err}")
-
-                logger.info(f"Altering columns and rebuilding indexes to {target_dim} dimensions...")
-                for cmd in sql_commands:
-                    try:
-                        cursor.execute(cmd)
-                    except Exception as e:
-                        logger.warning(f"Failed to execute command '{cmd}': {e}")
-                logger.info(f"✅ Vector columns successfully adapted to {target_dim} dimensions.")
-        except Exception as e:
-            logger.error(f"❌ Failed to adapt vector database dimensions: {e}", exc_info=True)
-        finally:
-            if conn:
-                conn.close()
 
 
 # Export singleton instance

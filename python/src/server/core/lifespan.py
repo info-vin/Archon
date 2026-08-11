@@ -25,10 +25,10 @@ async def lifespan(app: FastAPI):
     from src.server.services.crawler_manager import cleanup_crawler
     from src.server.services.credential_service import initialize_credentials
     from src.server.services.log_service import log_service
-    from src.server.services.migration_service import migration_service
     from src.server.services.prompt_service import prompt_service
     from src.server.services.scheduler_service import SchedulerService
     from src.server.services.search.reranking_strategy import reranking_strategy
+    from src.server.services.system.database_provisioner import adapt_vector_dimensions_for_offline_mode
     from src.server.services.system.worker_service import worker_service
 
     # Keep track of initialized components for cleanup
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
         # Phase 5.5.0: Adapt vector database dimensions for offline mode (SentenceTransformer 384 dimensions)
         try:
-            await migration_service.adapt_vector_dimensions_for_offline_mode()
+            await adapt_vector_dimensions_for_offline_mode()
         except Exception as mig_err:
             api_logger.error(f"Failed to adapt vector dimensions for offline mode: {mig_err}")
 
