@@ -105,15 +105,18 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
         document.body.removeChild(link);
     };
 
-    const feedSources: ContentSource[] = posts.map(p => ({
-        id: p.id,
-        type: 'blog',
-        title: p.title,
-        score: p.ai_score || 0,
-        summary: p.excerpt || '',
-        date: p.publishDate,
-        status: p.status
-    }));
+    // PERFORMANCE: Wrapped feedSources in useMemo to prevent redundant array allocations and mapping operations on every render cycle
+    const feedSources: ContentSource[] = React.useMemo(() => {
+        return posts.map(p => ({
+            id: p.id,
+            type: 'blog',
+            title: p.title,
+            score: p.ai_score || 0,
+            summary: p.excerpt || '',
+            date: p.publishDate,
+            status: p.status
+        }));
+    }, [posts]);
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">

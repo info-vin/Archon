@@ -179,3 +179,7 @@
 ## 2024-05-19 - Pre-calculating Date parsing before array sorting
 **Learning:** Calling `new Date(string).getTime()` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck.
 **Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.
+
+## 2024-08-10 - Mapping arrays inside render cycles
+**Learning:** Performing `Array.prototype.map()` inside the main body of a React component creates redundant object allocations on every render cycle, even if the underlying array data has not changed. This triggers unnecessary reconciliation effort and garbage collection overhead.
+**Action:** When a computed array (like `feedSources` in `BrandDashboardView`) is derived from props or state using `.map()`, wrap the operation in `React.useMemo()` to guarantee that memory is only re-allocated when the dependencies genuinely change.
