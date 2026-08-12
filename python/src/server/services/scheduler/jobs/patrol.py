@@ -131,9 +131,9 @@ async def run_log_patrol() -> None:
 
                 # Pick the first error to tune
                 if errors:
-                    res = await self_tuning_service.tune_prompt_from_error(str(errors[0]["id"]))
-                    if res.get("success"):
-                        logger.info(f"🧠 Clockwork: Prompt tuning proposal created: {res.get('proposal_id')}")
+                    tune_res = await self_tuning_service.tune_prompt_from_error(str(errors[0]["id"]))
+                    if tune_res.get("success"):
+                        logger.info(f"🧠 Clockwork: Prompt tuning proposal created: {tune_res.get('proposal_id')}")
             except Exception as tune_err:
                 logger.warning(f"🧠 Clockwork: Prompt tuning failed: {tune_err}")
 

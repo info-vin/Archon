@@ -5,7 +5,7 @@ based on observed errors in archon_logs.
 """
 
 import logging
-from typing import Any, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 import aiofiles
 from supabase.client import Client

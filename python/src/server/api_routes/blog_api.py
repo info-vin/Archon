@@ -1,4 +1,6 @@
 
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.dependencies import requires_permission
@@ -28,7 +30,7 @@ async def get_blog_posts(service: BlogService = Depends(get_blog_service)) -> li
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=result.get("error", "Failed to fetch blog posts")
         )
-    return result.get("posts", [])
+    return cast(list[BlogPostResponse], result.get("posts", []))
 
 
 @router.get("/{post_id}", response_model=BlogPostResponse)
@@ -41,7 +43,7 @@ async def get_blog_post(post_id: str, service: BlogService = Depends(get_blog_se
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=result.get("error", "Failed to fetch blog post")
         )
-    return result.get("post")
+    return cast(BlogPostResponse, result.get("post"))
 
 
 @router.post("", response_model=BlogPostResponse)
@@ -55,7 +57,7 @@ async def create_blog_post(
     success, result = await service.create_post(post_data)
     if not success:
         raise HTTPException(status_code=500, detail=result.get("error"))
-    return result.get("post")
+    return cast(BlogPostResponse, result.get("post"))
 
 
 @router.patch("/{post_id}", response_model=BlogPostResponse)
@@ -70,7 +72,7 @@ async def update_blog_post(
     success, result = await service.update_post(post_id, update_data)
     if not success:
         raise HTTPException(status_code=404, detail=result.get("error"))
-    return result.get("post")
+    return cast(BlogPostResponse, result.get("post"))
 
 
 @router.patch("/{post_id}/status", response_model=BlogPostStatusResponse)
