@@ -113,6 +113,11 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/08/12: MCP 依賴鎖定與 Docker 架構防禦 (Phase 5.10.11)
+- **拒絕猜測與實證主義 (No Guessing)**: 糾正了對「爬蟲無產出資料」的錯誤猜測。實際原因為「開發環境 Docker 尚未啟動」，而非程式碼 Bug。學到教訓：在質疑系統出錯前，必須先透過日誌確認服務「是否有被觸發 (Triggered)」，嚴禁在真空環境中腦補 Bug。
+- **Docker 依賴防禦與 `uv export`**: 解決了 `archon-mcp` 啟動時因 `uv` 動態抓取最新 `mcp` SDK (1.27.1 移除了 fastmcp) 導致的 `ModuleNotFoundError`。拒絕了使用 `uv sync` 會改變虛擬環境路徑的「樂觀路徑」，改採「防禦性設計」，使用 `uv export` 從 `uv.lock` 匯出 `requirements.txt` 後，再以 `uv pip install -r requirements.txt` 安裝。
+- **全局 Dockerfile 審查**: 修復時，學到必須「全域盤點」所有潛在受影響的服務。不能只修改 `Dockerfile.server`，而遺漏了真正負責 `archon-mcp` 建置的 `Dockerfile.mcp`。
+- **自動化公證**: 撰寫並通過了全新的自動化驗證腳本 (`verify_mcp_fix.sh`)，在無快取重建後公證了 MCP 容器 100% 成功啟動，落實「不要改東又壞西」的品質承諾。
 ### 2026/08/10: 週期任務容錯硬化與前端音效渲染 (Phase 5.10.9)
 - **後端容錯與權限防護**: 將 Podcast 音檔連結從公開的 `get_public_url` 升級為 7 天時效的 `create_signed_url`。於 `report_service.py` 加入 Exception 攔截，若建立任務失敗則立即中斷，並利用 `try-except` 包覆 Telegram 推播，防範網路超時引發 apscheduler Retry Storm 造成任務重複建立。
 - **前端佈局與渲染重構**: 解除 `ManagerNexus.tsx` 造成畫面鎖死的 `min-h-screen` 限制。抽離並建立 `AudioMarkdownRenderer.tsx` 模組，將原本純文字的音檔 Markdown 連結攔截並渲染為原生 `<audio>` 播放器，落實 SSOT 與 DRY 原則。
