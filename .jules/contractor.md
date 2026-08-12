@@ -20,3 +20,7 @@
 ## 2024-08-10 - Preserving JSON Payload Structure with Pydantic Alias
 **Learning:** When refactoring existing API routes to use strict Pydantic schemas, Python reserved keywords (like `from`) used as JSON keys will cause syntax errors if defined directly as class attributes.
 **Action:** Use Pydantic's `Field(alias="from")` combined with a safe Python attribute name (e.g., `from_node`) to strictly type the payload while perfectly preserving the existing JSON serialization structure, ensuring frontend clients do not break.
+
+## 2026-08-12 - Explicit Pydantic Instantiation for FastAPI Routes
+**Learning:** When changing a FastAPI route to use a strict Pydantic `response_model` and return type hint (e.g., `async def get_fallback_status() -> FallbackStatusDTO:`), returning a raw dictionary (e.g., `return {"active_tier": 1, "internet_connected": True}`) will pass FastAPI's runtime validation, but will cause static type checkers like `mypy` or `ruff` to fail with "Incompatible return value type" errors.
+**Action:** Always explicitly instantiate the Pydantic model before returning (e.g., `return FallbackStatusDTO(active_tier=1, internet_connected=True)`) to satisfy both FastAPI runtime serialization and static type checking.
