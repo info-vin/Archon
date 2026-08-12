@@ -9,11 +9,12 @@ RUN pip install --no-cache-dir uv && \
     apt-get install -y git && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy pyproject.toml for dependency installation
-COPY pyproject.toml .
+# Copy pyproject.toml and uv.lock for dependency installation
+COPY pyproject.toml uv.lock ./
 
 # Install only MCP dependencies to system python
-RUN uv pip install --system --group mcp
+RUN uv export --format requirements-txt --group mcp --no-hashes > requirements.txt && \
+    uv pip install --system -r requirements.txt
 
 # Create directory structure
 RUN mkdir -p src/mcp_server/features/projects src/mcp_server/features/developer src/mcp_server/features/marketing
