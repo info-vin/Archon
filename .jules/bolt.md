@@ -183,3 +183,7 @@
 ## 2024-08-10 - Mapping arrays inside render cycles
 **Learning:** Performing `Array.prototype.map()` inside the main body of a React component creates redundant object allocations on every render cycle, even if the underlying array data has not changed. This triggers unnecessary reconciliation effort and garbage collection overhead.
 **Action:** When a computed array (like `feedSources` in `BrandDashboardView`) is derived from props or state using `.map()`, wrap the operation in `React.useMemo()` to guarantee that memory is only re-allocated when the dependencies genuinely change.
+
+## 2026-08-11 - Pre-calculating lookup maps to replace Array.prototype.find() in render loops
+**Learning:** Calling `Array.prototype.find()` inside React render loops or inside `Array.prototype.sort()` comparators causes O(N) or O(N log N) overhead on every render cycle. This scales poorly when the arrays grow large.
+**Action:** Always pre-calculate lookup maps (using `useMemo` and `Map`) outside of the render loop to guarantee fast O(1) property access.

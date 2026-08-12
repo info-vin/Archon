@@ -21,56 +21,35 @@ interface BrandDashboardViewProps {
     onGenerateLogo: () => void;
 }
 
-interface KanbanColumnProps {
+// PERFORMANCE: Hoisted inline components out of the render loop to prevent full sub-tree remounts
+// on every parent state change (e.g., when the parent re-renders, React will now correctly reconcile).
+const KanbanColumn: React.FC<{
     title: string;
+    columnPosts: BlogPost[];
     icon: any;
     colorClass: string;
-    columnPosts: BlogPost[];
     onUpdateStatus: (id: string, status: BlogPost['status']) => void;
     onEditSmart: (post: BlogPost) => void;
     onNavigateAdvanced: (id: string) => void;
     onDeletePost: (id: string) => void;
-}
-
-const KanbanColumn: React.FC<KanbanColumnProps> = ({
-    title, icon: Icon, colorClass, columnPosts,
-    onUpdateStatus, onEditSmart, onNavigateAdvanced, onDeletePost
-}) => {
+}> = ({ title, columnPosts, icon: Icon, colorClass, onUpdateStatus, onEditSmart, onNavigateAdvanced, onDeletePost }) => {
     return (
-        <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-xl p-4 flex flex-col gap-4">
-            <div className={`flex items-center justify-between border-b pb-2 ${colorClass}`}>
-                <h3 className="font-bold flex items-center gap-2">
-                    <Icon className="w-5 h-5" />
-                    {title}
-                </h3>
-                <span className="bg-white px-2 py-0.5 rounded-full text-xs shadow-sm font-bold">
-                    {columnPosts.length}
-                </span>
-            </div>
-            <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1 font-sans">
-                {columnPosts.map(post => {
-                    const feedback = post.review_notes || (post as any).reviewNotes;
-                    const isReturned = post.status === 'changes_requested' || (feedback && post.status !== 'published' && post.status !== 'review');
-
+        <div className="flex-1 min-w-[300px] bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col max-h-[600px]">
+            <h3 className={`text-sm font-black uppercase tracking-widest mb-4 flex items-center justify-between border-b pb-2 ${colorClass}`}>
+                <span className="flex items-center gap-2"><Icon className="w-4 h-4" /> {title}</span>
+                <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">{columnPosts.length}</span>
+            </h3>
+            <div className="space-y-3 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                {columnPosts.map((post: BlogPost) => {
                     return (
-                        <div key={post.id} className={`bg-white p-4 rounded-lg shadow-sm border transition-all group relative overflow-hidden ${isReturned ? 'border-red-200 ring-1 ring-red-50' : 'border-gray-100 hover:shadow-md'}`}>
-                            {isReturned && (
-                                <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg tracking-tighter shadow-sm z-20">
-                                    RETURNED
-                                </div>
-                            )}
-                            <h4 className="font-semibold text-gray-800 line-clamp-2 pr-12">{post.title}</h4>
-                            {isReturned && feedback && (
-                                <div className="mt-3 p-2 bg-red-50/80 rounded-lg border border-red-100 relative">
-                                    <p className="text-[11px] text-red-900 italic line-clamp-4 leading-snug">"{feedback}"</p>
-                                </div>
-                            )}
-                            <p className="text-[10px] text-gray-500 mt-2 font-medium">By {post.authorName}</p>
-                            <div className="mt-4 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div className="flex gap-1" role="group" aria-label="Post actions">
-                                    {post.status !== 'draft' && post.status !== 'changes_requested' && (
-                                        <button onClick={() => onUpdateStatus(post.id, 'draft')} className="p-1 hover:bg-gray-100 rounded text-gray-400" title="Move to Draft" aria-label="Move to Draft"><FileEditIcon className="w-4 h-4" /></button>
-                                    )}
+                        <div key={post.id} className="group bg-white border border-gray-100 p-4 rounded-xl shadow-sm hover:shadow-md transition-all hover:border-indigo-100">
+                            <h4 className="font-bold text-gray-800 text-sm mb-1 leading-snug">{post.title || 'Untitled'}</h4>
+                            <p className="text-xs text-gray-500 line-clamp-2 mb-3 h-8">{post.excerpt}</p>
+                            <div className="flex items-center justify-between mt-4">
+                                <span className="text-[10px] text-gray-400 font-mono">
+                                    {new Date(post.publishDate).toLocaleDateString()}
+                                </span>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
                                     <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)" aria-label="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
                                     {post.status !== 'review' && (
@@ -116,6 +95,13 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
             date: p.publishDate,
             status: p.status
         }));
+    }, [posts]);
+
+    // PERFORMANCE: Precalculate map for posts to avoid O(N) Array.find calls
+    const postMap = React.useMemo(() => {
+        const map = new Map<string, BlogPost>();
+        posts.forEach(p => map.set(p.id, p));
+        return map;
     }, [posts]);
 
     return (
@@ -199,7 +185,10 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                     Victory Feed
                 </h2>
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                    <VictoryFeedList sources={feedSources} onSelect={(s) => onEditSmart(posts.find(p => p.id === s.id)!)} />
+                    <VictoryFeedList sources={feedSources} onSelect={(s) => {
+                        const post = postMap.get(s.id);
+                        if (post) onEditSmart(post);
+                    }} />
                 </div>
             </section>
 

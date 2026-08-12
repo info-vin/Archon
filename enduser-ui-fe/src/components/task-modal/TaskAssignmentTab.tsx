@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useMachine } from '@xstate/react';
 import { taskAssignmentMachine } from '../../features/admin/machines/taskAssignmentMachine';
 import { AssignableUser } from '../../types.ts';
@@ -31,6 +31,17 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
   frequency, setFrequency,
   inputClass
 }) => {
+  // PERFORMANCE: Precalculate lookup map for users to avoid O(N) Array.find calls
+  const userMap = useMemo(() => {
+    const map = new Map<string, AssignableUser>();
+    for (const u of assignableUsers) {
+      if (u.id) map.set(u.id, u);
+    }
+    return map;
+  }, [assignableUsers]);
+
+  const initialAssignee = assigneeId ? userMap.get(assigneeId) : undefined;
+
   const [state, send] = useMachine(taskAssignmentMachine, {
     input: {
         assigneeId,
@@ -38,7 +49,7 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
         isRecurring,
         frequency,
         collaboratorAgentIds,
-        isLibrarian: assignableUsers.find(u => u.id === assigneeId)?.role === 'ai_agent' || false
+        isLibrarian: initialAssignee?.role === 'ai_agent' || false
     }
   });
 
@@ -56,7 +67,7 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
 
   const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
-    const user = assignableUsers.find(u => u.id === id);
+    const user = id ? userMap.get(id) : undefined;
     send({ 
         type: 'SELECT_ASSIGNEE', 
         id, 
@@ -86,7 +97,7 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
         
         {/* Agent Capabilities Preview */}
         {state.context.assigneeId && (() => {
-            const selected = assignableUsers.find(u => u.id === state.context.assigneeId);
+            const selected = userMap.get(state.context.assigneeId);
             if (selected?.tools && selected.tools.length > 0) {
                 return (
                     <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded text-xs text-blue-700 dark:text-blue-300">
