@@ -298,8 +298,12 @@ class TestNoZeroEmbeddings:
         mock_client.aclose = AsyncMock()
         mock_client.embeddings.create.side_effect = Exception("Test error")
         mock_create_client = AsyncMock(return_value=mock_client)
+        mock_get_configs = AsyncMock(return_value=[{"provider": "openai", "embedding_model": "text-embedding-3-small"}])
 
-        with patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client):
+        with (
+            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.get_embedding_provider_configs", mock_get_configs)
+        ):
             result = await create_embeddings_batch([test_text])
             # Should return result with failures, not zeros
             assert isinstance(result, EmbeddingBatchResult)

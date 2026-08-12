@@ -20,11 +20,11 @@ class MarketingService(BaseRepository):
 
     # --- 1. Leads & Jobs (LeadHandler) ---
 
-    async def search_jobs(self, keyword: str, limit: int = 10) -> list[JobData]:
+    async def search_jobs(self, keyword: str, limit: int = 10, page: int = 1) -> list[JobData]:
         from ..services.job_board_service import JobBoardService
 
         service = JobBoardService()
-        jobs = await service.search_jobs(keyword, limit)
+        jobs = await service.search_jobs(keyword, limit, page=page)
         asyncio.create_task(service.identify_leads_and_save(jobs))
         return jobs
 

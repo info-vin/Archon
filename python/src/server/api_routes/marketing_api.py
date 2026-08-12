@@ -49,9 +49,9 @@ def _err(msg: str, code: int = 403):
 
 
 @router.get("/jobs")
-async def search_jobs(keyword: str = Query(...), limit: int = 8, current_user: UserProfileDTO = Depends(get_current_user)):
+async def search_jobs(keyword: str = Query(...), limit: int = 8, page: int = Query(1), current_user: UserProfileDTO = Depends(get_current_user)):
     service = MarketingService()
-    return await service.search_jobs(keyword, limit)
+    return await service.search_jobs(keyword, limit, page=page)
 
 
 @router.get("/leads", response_model=list[LeadResponse])

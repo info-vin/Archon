@@ -125,6 +125,8 @@
 - **Docker 依賴防禦與 `uv export`**: 解決了 `archon-mcp` 啟動時因 `uv` 動態抓取最新 `mcp` SDK (1.27.1 移除了 fastmcp) 導致的 `ModuleNotFoundError`。拒絕了使用 `uv sync` 會改變虛擬環境路徑的「樂觀路徑」，改採「防禦性設計」，使用 `uv export` 從 `uv.lock` 匯出 `requirements.txt` 後，再以 `uv pip install -r requirements.txt` 安裝。
 - **全局 Dockerfile 審查**: 修復時，學到必須「全域盤點」所有潛在受影響的服務。不能只修改 `Dockerfile.server`，而遺漏了真正負責 `archon-mcp` 建置的 `Dockerfile.mcp`。
 - **自動化公證**: 撰寫並通過了全新的自動化驗證腳本 (`verify_mcp_fix.sh`)，在無快取重建後公證了 MCP 容器 100% 成功啟動，落實「不要改東又壞西」的品質承諾。
+- **Docker Build Context 效能盲點 (ENOSPC 預防)**: 查明 `make dev` 突然變慢的根本原因並非程式碼修改，而是 `ollama_data` (3.5GB) 長期未加入 `.dockerignore`。因為修改後端代碼打破了快取，導致全域 Context 重建而暴露了此問題。將其加入 `.dockerignore` 後，傳輸量瞬間從 3.5GB 降至 13KB，並執行 `docker system prune -f` 釋放 36.8GB 懸空快取，成功防範了歷史 ENOSPC 危機重演。
+- **殭屍處理程序 (Zombie Process) 清理**: 在中斷 `make dev` 後，遇到 Vite 伺服器殘留導致 `Port 3737 is already in use`。透過 `lsof -i :3737 -t | xargs kill -9` 快速物理超渡殭屍程序，確保開發環境通訊埠淨空。
 ### 2026/08/10: 週期任務容錯硬化與前端音效渲染 (Phase 5.10.9)
 - **後端容錯與權限防護**: 將 Podcast 音檔連結從公開的 `get_public_url` 升級為 7 天時效的 `create_signed_url`。於 `report_service.py` 加入 Exception 攔截，若建立任務失敗則立即中斷，並利用 `try-except` 包覆 Telegram 推播，防範網路超時引發 apscheduler Retry Storm 造成任務重複建立。
 - **前端佈局與渲染重構**: 解除 `ManagerNexus.tsx` 造成畫面鎖死的 `min-h-screen` 限制。抽離並建立 `AudioMarkdownRenderer.tsx` 模組，將原本純文字的音檔 Markdown 連結攔截並渲染為原生 `<audio>` 播放器，落實 SSOT 與 DRY 原則。

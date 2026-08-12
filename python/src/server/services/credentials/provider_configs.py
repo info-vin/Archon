@@ -21,8 +21,8 @@ async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[s
         provider = all_settings.get(provider_key)
 
         if not provider:
-            provider_val = await manager.get_credential(provider_key, "openai")
-            provider = str(provider_val).lower() if provider_val else "openai"
+            provider_val = await manager.get_credential(provider_key, "google")
+            provider = str(provider_val).lower() if provider_val else "google"
 
         api_key = await _get_provider_api_key(manager, provider)
         base_url = _get_provider_base_url(provider, all_settings)
@@ -40,7 +40,7 @@ async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[s
 
     except Exception as e:
         logger.error(f"Error getting active provider for {service_type}: {e}")
-        provider = await manager.get_credential("LLM_PROVIDER", "openai")
+        provider = await manager.get_credential("LLM_PROVIDER", "google")
         return {
             "provider": provider,
             "api_key": await manager.get_credential("OPENAI_API_KEY"),
@@ -76,8 +76,8 @@ async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
             provider = all_settings.get(provider_key)
             if not provider:
                 if pt["type"] == "primary":
-                    provider_val = all_settings.get("LLM_PROVIDER") or await manager.get_credential("LLM_PROVIDER", "openai")
-                    provider = str(provider_val).lower() if provider_val else "openai"
+                    provider_val = all_settings.get("LLM_PROVIDER") or await manager.get_credential("LLM_PROVIDER", "google")
+                    provider = str(provider_val).lower() if provider_val else "google"
                 else:
                     continue
 

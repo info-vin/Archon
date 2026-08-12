@@ -58,14 +58,14 @@ class Job104Crawler:
         self.base_url = base_url
         self.detail_base_url = detail_base_url
 
-    def _fetch_from_104_sync(self, client: curl_requests.Session, keyword: str, limit: int) -> list[JobData]:
+    def _fetch_from_104_sync(self, client: curl_requests.Session, keyword: str, limit: int, page: int = 1) -> list[JobData]:
         params = {
             "ro": "0",
             "kwop": "7",
             "keyword": keyword,
             "order": "1",
             "asc": "0",
-            "page": "1",
+            "page": str(page),
             "mode": "s",
             "jobsource": "2018indexpoc",
         }
@@ -132,7 +132,7 @@ class Job104Crawler:
             impersonate=random.choice(impersonates), headers=self.get_headers(), timeout=20.0, proxies=proxies  # type: ignore
         )
 
-    async def search_jobs(self, keyword: str, limit: int = 8, client: curl_requests.Session | None = None) -> list[JobData]:
+    async def search_jobs(self, keyword: str, limit: int = 8, client: curl_requests.Session | None = None, page: int = 1) -> list[JobData]:
         logger.info(f"Searching jobs (Sync-Thru Mode) | keyword={keyword}")
 
         def _fetch_all(session: curl_requests.Session) -> list[JobData]:
@@ -147,7 +147,7 @@ class Job104Crawler:
                 except Exception as e:
                     logger.warning(f"Warm-up failed: {e}")
 
-                jobs = self._fetch_from_104_sync(session, keyword, limit)
+                jobs = self._fetch_from_104_sync(session, keyword, limit, page=page)
                 if not jobs:
                     if warmup_res and warmup_res.status_code == 403:
                         raise CrawlerBlockedException("104 WAF Blocked access.")

@@ -23,20 +23,20 @@ def setup_agents_md(tmp_path, monkeypatch):
     fake_project_root = tmp_path
     agents_md = fake_project_root / "AGENTS.md"
     agents_md.write_text("Test Core Text", encoding="utf-8")
-    
+
     original_exists = os.path.exists
     original_open = open
-    
+
     def mocked_exists(path):
         if "AGENTS.md" in str(path):
             return True
         return original_exists(path)
-        
+
     def mocked_open(path, *args, **kwargs):
         if "AGENTS.md" in str(path):
             return original_open(str(agents_md), *args, **kwargs)
         return original_open(path, *args, **kwargs)
-        
+
     monkeypatch.setattr("os.path.exists", mocked_exists)
     monkeypatch.setattr("builtins.open", mocked_open)
 
@@ -85,11 +85,11 @@ async def test_identify_leads_and_save(mock_supabase):
             return "Need AI"
         return ""
 
-    with patch.object(service, '_generate_llm_response', side_effect=mock_generate_llm_response), \
+    with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response), \
          patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]):
-         
+
         # Make the similarity calculation return 1.0 (pass the threshold 0.67)
-        with patch.object(service, '_cosine_similarity', return_value=1.0):
+        with patch.object(service.evaluator, 'cosine_similarity', return_value=1.0):
             count = await service.identify_leads_and_save(jobs)
 
     assert count == 1
@@ -139,11 +139,11 @@ async def test_hybrid_funnel_fast_fail_vector():
             return "HyDE Baseline Content"
         return "FAIL" # Should not be called for others
 
-    with patch.object(service, '_generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
+    with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
          patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[0.0, 1.0]):
-         
+
         # Sim = 0.0 < 0.67
-        with patch.object(service, '_cosine_similarity', return_value=0.0):
+        with patch.object(service.evaluator, 'cosine_similarity', return_value=0.0):
             count = await service.identify_leads_and_save([job])
 
     assert count == 0
@@ -172,11 +172,11 @@ async def test_hybrid_funnel_fail_llm_judge():
             return "NO" # Fail the judge
         return "FAIL"
 
-    with patch.object(service, '_generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
+    with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
          patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]):
-         
+
         # Sim = 1.0 >= 0.67
-        with patch.object(service, '_cosine_similarity', return_value=1.0):
+        with patch.object(service.evaluator, 'cosine_similarity', return_value=1.0):
             count = await service.identify_leads_and_save([job])
 
     assert count == 0
@@ -210,9 +210,9 @@ async def test_hybrid_funnel_missing_agents_md(monkeypatch):
     mock_supabase.table().select().in_().execute().data = []
     service.supabase = mock_supabase
 
-    with patch.object(service, '_generate_llm_response') as mock_llm, \
+    with patch.object(service.evaluator, 'generate_llm_response') as mock_llm, \
          patch('src.server.services.embeddings.embedding_service.create_embedding') as mock_embed:
-         
+
         count = await service.identify_leads_and_save([job])
 
     # Should fail safely
@@ -220,3 +220,63 @@ async def test_hybrid_funnel_missing_agents_md(monkeypatch):
     # Embeddings shouldn't even be called because core_text is missing
     mock_embed.assert_not_called()
     mock_llm.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_auto_fetch_pagination_fallback():
+    """
+    Test that auto_fetch_daily_leads iterates through pages if no leads are found,
+    but stops iterating once total_new_leads > 0.
+    """
+    service = JobBoardService()
+
+    # Mock settings
+    mock_config = Mock()
+    mock_config.crawler_job_keywords = "Python,AI"
+    mock_config.crawler_job_limit = 2
+    mock_config.crawler_max_pages = 3
+    mock_config.crawler_waf_delay_min = 0.0
+    mock_config.crawler_waf_delay_max = 0.0
+
+    with patch.object(service, '_get_crawler_config', return_value=mock_config):
+        # We will mock search_jobs to return dummy jobs
+        # Page 1: returns jobs, but identify_leads_and_save returns 0
+        # Page 2: returns jobs, identify_leads_and_save returns 1 (success)
+        # Page 3: should not be called
+
+        async def mock_search_jobs(keyword, limit, client, page):
+            if page > 2:
+                raise Exception("Should not reach page 3")
+            return [JobData(title=f"{keyword} Job P{page}", company="Test", url="http://test", description="")]
+
+        with patch.object(service, 'search_jobs', side_effect=mock_search_jobs) as mock_search:
+
+            # mock identify_leads_and_save to return 0 on page 1, and 1 on page 2
+            # Since there are 2 keywords (Python, AI), identify_leads_and_save is called twice per page.
+            # Call 1 (Python, P1): returns 0
+            # Call 2 (AI, P1): returns 0
+            # Call 3 (Python, P2): returns 1
+            # Call 4 (AI, P2): should not be called because Python P2 succeeded? Wait, the break is at the end of the page loop.
+            # So AI P2 will be called, let it return 0. Total = 1.
+
+            async def mock_identify_leads(jobs):
+                if "P1" in jobs[0].title:
+                    return 0
+                if "P2" in jobs[0].title and "Python" in jobs[0].title:
+                    return 1
+                return 0
+
+            with patch.object(service, 'identify_leads_and_save', side_effect=mock_identify_leads):
+                # We also need to mock crawler.create_session
+                service.crawler = Mock()
+                service.crawler.create_session.return_value = Mock()
+
+                total = await service.auto_fetch_daily_leads()
+
+                # Should return 1 lead
+                assert total == 1
+
+                # search_jobs should have been called 4 times (2 keywords * 2 pages)
+                assert mock_search.call_count == 4
+                # Verify arguments of the last call
+                mock_search.assert_any_call("AI", limit=2, client=service.crawler.create_session(), page=2)
+

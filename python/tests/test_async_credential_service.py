@@ -425,8 +425,8 @@ class TestAsyncCredentialService:
     async def test_get_embedding_provider_configs_fallback_defaults(self):
         """Test get_embedding_provider_configs falls back to defaults when nothing is configured."""
         async def mock_get_credential(key, default=None):
-            if key == "OPENAI_API_KEY":
-                return "fallback_openai_key"
+            if key == "GEMINI_API_KEY":
+                return "fallback_google_key"
             return None
 
         with (
@@ -435,6 +435,6 @@ class TestAsyncCredentialService:
         ):
             configs = await get_embedding_provider_configs(credential_service)
             assert len(configs) == 1
-            assert configs[0]["provider"] == "openai"
-            assert configs[0]["embedding_model"] == "text-embedding-3-small"
+            assert configs[0]["provider"] == "google"
+            assert configs[0]["embedding_model"] == "gemini-embedding-001"
 
