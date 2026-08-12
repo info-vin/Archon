@@ -63,11 +63,21 @@ class JobBoardService:
         import os
         from pathlib import Path
 
-        project_root = str(Path(__file__).resolve().parent.parent.parent.parent.parent)
-
-        agents_md_path = os.path.join(project_root, "AGENTS.md")
-        if not os.path.exists(agents_md_path):
-            agents_md_path = os.path.join(project_root, "..", "AGENTS.md")
+        # 多路徑陣列探測法相容 Host 與 Docker
+        possible_paths = [
+            "/app/AGENTS.md",  # Docker 環境
+            str(Path(__file__).resolve().parent.parent.parent.parent.parent / "AGENTS.md"),  # 本機開發環境
+        ]
+        
+        agents_md_path = None
+        for p in possible_paths:
+            if os.path.exists(p):
+                agents_md_path = p
+                break
+                
+        if not agents_md_path:
+            logger.error("Could not find AGENTS.md in any of the probe paths!")
+            return None
 
         try:
             with open(agents_md_path, encoding="utf-8") as f:
