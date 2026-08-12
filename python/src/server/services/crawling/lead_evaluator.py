@@ -69,26 +69,33 @@ class LeadEvaluator:
         initial_delay: float = 2.0,
     ) -> str | None:
         try:
-            from ...services.llm_provider_service import get_llm_client
+            from google import genai
+
+            from ...services.credential_service import credential_service
             from ...services.prompt_service import prompt_service
 
-            async with get_llm_client() as client:
-                prompt_template = prompt_service.get_prompt(prompt_name, default=default_prompt)
-                prompt = prompt_template.format(**format_kwargs)
+            api_key = await credential_service.get_credential("GEMINI_API_KEY")
+            if not api_key:
+                logger.error("GEMINI_API_KEY missing.")
+                return None
 
-                @retry_with_backoff(max_retries=max_retries, initial_delay=initial_delay)
-                async def _call_llm() -> Any:
-                    return await client.chat.completions.create(
-                        model=SYSTEM_MODELS["DEFAULT_TEXT"],
-                        messages=[{"role": "user", "content": prompt}]
-                    )
+            client = genai.Client(api_key=api_key)
+            prompt_template = prompt_service.get_prompt(prompt_name, default=default_prompt)
+            prompt = prompt_template.format(**format_kwargs)
 
-                async with self.rate_limiter.semaphore:
-                    await self.rate_limiter.acquire(estimated_tokens=estimated_tokens)
-                    response = await _call_llm()
+            @retry_with_backoff(max_retries=max_retries, initial_delay=initial_delay)
+            async def _call_llm() -> Any:
+                return await client.aio.models.generate_content(
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                    contents=prompt
+                )
 
-                content = response.choices[0].message.content if response.choices else None
-                return str(content).strip() if content else None
+            async with self.rate_limiter.semaphore:
+                await self.rate_limiter.acquire(estimated_tokens=estimated_tokens)
+                response = await _call_llm()
+
+            content = response.text if response else None
+            return str(content).strip() if content else None
         except Exception as e:
             logger.error(f"LLM generation failed for {prompt_name}: {e}")
             return None

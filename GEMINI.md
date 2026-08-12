@@ -120,6 +120,11 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/08/12: Phase 5.10.x 完整性稽核與清理作業 (Phase Audit)
+- **實體代碼對帳 (Code-to-Doc Parity)**: 執行 `phase-audit` 技能，確認 Phase 5.10.x 的所有 PRPs 皆已在代碼與單元測試中落地（如 `crawler_max_pages` 確實寫入 SSOT 並於 `job_board_service.py` 實裝），消除 0 斷層與虛假開發。
+- **嚴格品質門禁 (Quality Gates)**: 透過全局掃描公證了 382 個 Python 檔案 (Mypy/Ruff 100% 通過) 與 659 項自動化測試 (✅ 646 通過, 9 skipped, 4 xfailed)，確認無任何迴歸損壞，且嚴格禁止 `.single()` 語法。
+- **安全隔離與防禦性清理**: 準備清理 `scratch/` 內的 29 個一次性腳本前，透過全域 `grep_search` 掃描 `import scratch` 與依賴路徑，物理公證其為「絕對無相依」的孤島後，才安全執行刪除，貫徹「不要刪了就壞掉」的安全防線。
+
 ### 2026/08/12: MCP 依賴鎖定與 Docker 架構防禦 (Phase 5.10.11)
 - **拒絕猜測與實證主義 (No Guessing)**: 糾正了對「爬蟲無產出資料」的錯誤猜測。實際原因為「開發環境 Docker 尚未啟動」，而非程式碼 Bug。學到教訓：在質疑系統出錯前，必須先透過日誌確認服務「是否有被觸發 (Triggered)」，嚴禁在真空環境中腦補 Bug。
 - **Docker 依賴防禦與 `uv export`**: 解決了 `archon-mcp` 啟動時因 `uv` 動態抓取最新 `mcp` SDK (1.27.1 移除了 fastmcp) 導致的 `ModuleNotFoundError`。拒絕了使用 `uv sync` 會改變虛擬環境路徑的「樂觀路徑」，改採「防禦性設計」，使用 `uv export` 從 `uv.lock` 匯出 `requirements.txt` 後，再以 `uv pip install -r requirements.txt` 安裝。
