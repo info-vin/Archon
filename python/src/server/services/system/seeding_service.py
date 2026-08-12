@@ -2,12 +2,22 @@
 
 import logging
 import os
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 import aiofiles
+from supabase import Client
 
 from ...utils import get_supabase_client
 from ..librarian_service import LibrarianService
+
+
+class SeedingResultDTO(TypedDict):
+    status: NotRequired[str]
+    scanned_dir: NotRequired[str | None]
+    total_files: NotRequired[int]
+    indexed_count: NotRequired[int]
+    errors: NotRequired[list[str]]
+    error: NotRequired[str]
 
 logger = logging.getLogger(__name__)
 
@@ -18,11 +28,11 @@ class SeedingService:
     Decoupled from Business Services for Phase 4.6.46 Hardening.
     """
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
         self.librarian = LibrarianService()
 
-    async def seed_knowledge(self) -> dict[str, Any]:
+    async def seed_knowledge(self) -> SeedingResultDTO:
         """
         Trigger the Knowledge Seeding process with Cross-Env Path Resilience (SOP-14).
         David (Admin) uses this to rebuild the RAG index.

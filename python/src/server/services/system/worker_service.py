@@ -117,7 +117,7 @@ class WorkerService:
         tasks = result["tasks"]
         logger.info(f"📥 Worker found {len(tasks)} dispatched tasks. Processing...")
 
-        async def _execute_with_semaphore(task_id: str, agent_id: str):
+        async def _execute_with_semaphore(task_id: str, agent_id: str) -> None:
             async with self._semaphore:
                 # 3. Wait for rate limit capacity before executing
                 # Note: We assume 'lite' tier by default, or could deduce from agent_id
