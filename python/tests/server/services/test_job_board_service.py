@@ -1,3 +1,4 @@
+import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -12,6 +13,32 @@ def mock_supabase():
         mock_client = Mock()
         mock_get_client.return_value = mock_client
         yield mock_client
+
+
+@pytest.fixture(autouse=True)
+def setup_agents_md(tmp_path, monkeypatch):
+    """
+    Mock the Path resolution so that it finds a fake AGENTS.md.
+    """
+    fake_project_root = tmp_path
+    agents_md = fake_project_root / "AGENTS.md"
+    agents_md.write_text("Test Core Text", encoding="utf-8")
+    
+    original_exists = os.path.exists
+    original_open = open
+    
+    def mocked_exists(path):
+        if "AGENTS.md" in str(path):
+            return True
+        return original_exists(path)
+        
+    def mocked_open(path, *args, **kwargs):
+        if "AGENTS.md" in str(path):
+            return original_open(str(agents_md), *args, **kwargs)
+        return original_open(path, *args, **kwargs)
+        
+    monkeypatch.setattr("os.path.exists", mocked_exists)
+    monkeypatch.setattr("builtins.open", mocked_open)
 
 
 @pytest.mark.asyncio
@@ -35,39 +62,39 @@ async def test_identify_leads_and_save(mock_supabase):
     Test that identify_leads_and_save attempts to insert new leads into Supabase.
     """
     service = JobBoardService()
-    # Setup mock jobs
     jobs = [JobData(title="Data Scientist", company="Test Corp", url="http://test/1", identified_need="Need AI")]
 
-    # Setup Supabase Mock chain: table().select().in_().execute() -> data
     mock_select_builder = Mock()
     mock_select_builder.in_.return_value.execute.return_value = Mock(data=[])  # No existing lead
 
     mock_insert_builder = Mock()
     mock_insert_builder.execute.return_value = Mock(data=[{"id": "new-id"}])
 
-    # Configure table() to return different builders based on table name (optional but good practice)
-    # Simplified: Just make table() return a builder that can handle both flows
     mock_table = Mock()
     mock_supabase.table.return_value = mock_table
-
-    # Chain for SELECT
     mock_table.select.return_value = mock_select_builder
-
-    # Chain for INSERT
     mock_table.insert.return_value = mock_insert_builder
 
-    # Execute with mocks to pass the funnel
-    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
-         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
-         patch.object(service, '_llm_judge', return_value=True):
-        count = await service.identify_leads_and_save(jobs)
+    # BOUNDARY MOCKS: Mock LLM response and Embeddings instead of internal logic!
+    async def mock_generate_llm_response(prompt_name, **kwargs):
+        if prompt_name == "ALICE_HYDE_BASELINE":
+            return "HyDE Baseline Content"
+        elif prompt_name == "ALICE_LEAD_JUDGE":
+            return "YES"
+        elif prompt_name == "ALICE_INFER_NEED":
+            return "Need AI"
+        return ""
 
-    # Assert
+    with patch.object(service, '_generate_llm_response', side_effect=mock_generate_llm_response), \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]):
+         
+        # Make the similarity calculation return 1.0 (pass the threshold 0.67)
+        with patch.object(service, '_cosine_similarity', return_value=1.0):
+            count = await service.identify_leads_and_save(jobs)
+
     assert count == 1
     mock_supabase.table.assert_called_with("leads")
     mock_table.insert.assert_called_once()
-
-    # Verify insert payload
     inserted_data = mock_table.insert.call_args[0][0]
     assert inserted_data[0]["company_name"] == "Test Corp"
     assert inserted_data[0]["identified_need"] == "Need AI"
@@ -81,7 +108,6 @@ async def test_identify_leads_skips_existing(mock_supabase):
     service = JobBoardService()
     jobs = [JobData(title="Data Scientist", company="Test Corp", url="http://test/1")]
 
-    # Mock finding an existing lead
     mock_select_builder = Mock()
     mock_select_builder.in_.return_value.execute.return_value = Mock(data=[{"source_job_url": "http://test/1"}])
 
@@ -89,93 +115,108 @@ async def test_identify_leads_skips_existing(mock_supabase):
     mock_supabase.table.return_value = mock_table
     mock_table.select.return_value = mock_select_builder
 
-    # Execute
     count = await service.identify_leads_and_save(jobs)
 
-    # Assert
     assert count == 0
     mock_table.insert.assert_not_called()
+
 
 @pytest.mark.asyncio
 async def test_hybrid_funnel_fast_fail_vector():
     """
     Test Assertion 1: When similarity < 0.67, return None immediately.
-    _llm_judge and _infer_need should not be called.
+    _llm_judge and _infer_need should not be called because LLM is bypassed.
     """
     service = JobBoardService()
     job = JobData(title="Plumber", company="Pipes", url="http://p", description="Fix pipes")
 
-    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
-         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[0.0, 1.0]), \
-         patch.object(service, '_llm_judge', return_value=True) as mock_judge, \
-         patch.object(service, '_infer_need') as mock_infer:
+    mock_supabase = Mock()
+    mock_supabase.table().select().in_().execute().data = []
+    service.supabase = mock_supabase
 
+    async def mock_generate_llm_response(prompt_name, **kwargs):
+        if prompt_name == "ALICE_HYDE_BASELINE":
+            return "HyDE Baseline Content"
+        return "FAIL" # Should not be called for others
+
+    with patch.object(service, '_generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[0.0, 1.0]):
+         
         # Sim = 0.0 < 0.67
-        # We need to invoke the inner _process_single_job.
-        # Since it's nested, we test identify_leads_and_save with this job and verify no insert.
-        # But wait, identify_leads_and_save suppresses inner exceptions and None returns.
+        with patch.object(service, '_cosine_similarity', return_value=0.0):
+            count = await service.identify_leads_and_save([job])
 
-        # Let's mock Supabase for the outer function
-        mock_supabase = Mock()
-        mock_supabase.table().select().in_().execute().data = []
-        service.supabase = mock_supabase
+    assert count == 0
+    # LLM should only be called for ALICE_HYDE_BASELINE, not for JUDGE or INFER_NEED
+    calls = mock_llm.call_args_list
+    assert len(calls) == 1
+    assert calls[0][1]["prompt_name"] == "ALICE_HYDE_BASELINE"
 
-        count = await service.identify_leads_and_save([job])
-
-        assert count == 0
-        mock_judge.assert_not_called()
-        mock_infer.assert_not_called()
 
 @pytest.mark.asyncio
 async def test_hybrid_funnel_fail_llm_judge():
     """
     Test Assertion 2: When similarity >= 0.67 but LLM Judge is NO, return None.
-    _infer_need should not be called.
     """
     service = JobBoardService()
     job = JobData(title="AI Engineer", company="Competitor Corp", url="http://c", description="Build AI")
 
-    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
-         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
-         patch.object(service, '_llm_judge', return_value=False) as mock_judge, \
-         patch.object(service, '_infer_need') as mock_infer:
+    mock_supabase = Mock()
+    mock_supabase.table().select().in_().execute().data = []
+    service.supabase = mock_supabase
 
+    async def mock_generate_llm_response(prompt_name, **kwargs):
+        if prompt_name == "ALICE_HYDE_BASELINE":
+            return "HyDE Baseline Content"
+        elif prompt_name == "ALICE_LEAD_JUDGE":
+            return "NO" # Fail the judge
+        return "FAIL"
+
+    with patch.object(service, '_generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]):
+         
         # Sim = 1.0 >= 0.67
-        mock_supabase = Mock()
-        mock_supabase.table().select().in_().execute().data = []
-        service.supabase = mock_supabase
+        with patch.object(service, '_cosine_similarity', return_value=1.0):
+            count = await service.identify_leads_and_save([job])
 
-        count = await service.identify_leads_and_save([job])
+    assert count == 0
+    # Should be called for BASELINE and JUDGE, but not INFER_NEED
+    calls = mock_llm.call_args_list
+    assert len(calls) == 2
+    prompt_names = [call[1]["prompt_name"] for call in calls]
+    assert "ALICE_HYDE_BASELINE" in prompt_names
+    assert "ALICE_LEAD_JUDGE" in prompt_names
+    assert "ALICE_INFER_NEED" not in prompt_names
 
-        assert count == 0
-        mock_judge.assert_called_once()
-        mock_infer.assert_not_called()
 
 @pytest.mark.asyncio
-async def test_hybrid_funnel_pass_both():
+async def test_hybrid_funnel_missing_agents_md(monkeypatch):
     """
-    Test Assertion 3: When similarity >= 0.67 and LLM Judge is YES, proceed.
-    _infer_need should be called, and lead inserted.
+    Test Fault Tolerance: If AGENTS.md is missing, _get_core_text returns None,
+    and the funnel fails fast without crashing.
     """
     service = JobBoardService()
     job = JobData(title="System Admin", company="Traditional Corp", url="http://t", description="Need automation")
 
-    with patch.object(service, '_get_hyde_baseline_embedding', return_value=[1.0, 0.0]), \
-         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
-         patch.object(service, '_llm_judge', return_value=True) as mock_judge, \
-         patch.object(service, '_infer_need', return_value="Automation need") as mock_infer:
+    # Undo the fixture's patch to simulate missing file
+    original_exists = os.path.exists
+    def mocked_exists(path):
+        if "AGENTS.md" in str(path):
+            return False # Force it to fail!
+        return original_exists(path)
+    monkeypatch.setattr("os.path.exists", mocked_exists)
 
-        # Sim = 1.0 >= 0.67, Judge = True
-        mock_supabase = Mock()
-        mock_supabase.table().select().in_().execute().data = []
-        mock_insert = Mock()
-        mock_insert.execute().data = [{"id": "new-id", "identified_need": "Automation need"}]
-        mock_supabase.table().insert.return_value = mock_insert
-        service.supabase = mock_supabase
+    mock_supabase = Mock()
+    mock_supabase.table().select().in_().execute().data = []
+    service.supabase = mock_supabase
 
+    with patch.object(service, '_generate_llm_response') as mock_llm, \
+         patch('src.server.services.embeddings.embedding_service.create_embedding') as mock_embed:
+         
         count = await service.identify_leads_and_save([job])
 
-        assert count == 1
-        mock_judge.assert_called_once()
-        mock_infer.assert_called_once()
-        mock_supabase.table().insert.assert_called_once()
+    # Should fail safely
+    assert count == 0
+    # Embeddings shouldn't even be called because core_text is missing
+    mock_embed.assert_not_called()
+    mock_llm.assert_not_called()
