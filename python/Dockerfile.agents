@@ -6,11 +6,12 @@ WORKDIR /app
 # Install uv
 RUN pip install --no-cache-dir uv
 
-# Copy pyproject.toml for dependency installation
-COPY pyproject.toml .
+# Copy pyproject.toml and uv.lock for dependency installation
+COPY pyproject.toml uv.lock ./
 
 # Install only agent dependencies to system python
-RUN uv pip install --system --group agents
+RUN uv export --format requirements-txt --group agents --no-hashes > requirements.txt && \
+    uv pip install --system -r requirements.txt
 
 # Copy agents code - no dependencies on server code
 # Agents use MCP tools for all operations
