@@ -47,3 +47,20 @@ async def test_prompt_service_ssot_sync(mock_supabase):
     assert retrieved_fallback == ALL_PROMPTS["BLOG_DRAFT"]
     # Verify it re-populated cache
     assert "BLOG_DRAFT" in service._prompts
+
+
+@pytest.mark.asyncio
+async def test_prompt_service_missing_key_warning(mock_supabase, caplog):
+    """Test that a missing prompt key triggers a warning log to prevent silent degradation."""
+    import logging
+    PromptService._reset_for_testing()
+    service = PromptService(supabase_client=mock_supabase)
+
+    with caplog.at_level(logging.WARNING):
+        retrieved = service.get_prompt("INVALID_TYPO_KEY")
+
+        # Verify fallback
+        assert retrieved == "You are a helpful AI assistant."
+
+        # Verify warning log is generated
+        assert "Missing prompt key: INVALID_TYPO_KEY" in caplog.text

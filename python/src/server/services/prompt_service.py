@@ -60,15 +60,15 @@ class PromptService(BaseRepository):
                 self._prompts[name] = content  # Ensure cache is fully populated with Baseline
 
         if upsert_batch:
-            try:
-                # Perform bulk upsert
-                self.execute_query(
-                    self.supabase_client.table("archon_prompts").upsert(upsert_batch, on_conflict="prompt_name"),
-                    "Auto-upsert baseline prompts"
-                )
+            success, _ = self.execute_query(
+                self.supabase_client.table("archon_prompts").upsert(upsert_batch, on_conflict="prompt_name"),
+                "Auto-upsert baseline prompts",
+                max_retries=3
+            )
+            if success:
                 logger.info(f"✅ Auto-upserted {len(upsert_batch)} baseline prompts to Supabase.")
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to auto-upsert prompts: {e}")
+            else:
+                logger.warning("⚠️ Failed to auto-upsert prompts (DB Connection Error). Application will continue with Baseline cache.")
 
         self._last_loaded = datetime.utcnow()
 
@@ -109,6 +109,8 @@ class PromptService(BaseRepository):
             self._prompts[name] = fallback # Prevent future misses
             return fallback
 
+        # Silent Degradation Defense: Log if missing completely
+        logger.warning(f"⚠️ [PromptService] Missing prompt key: {name}")
         return default or "You are a helpful AI assistant."
 
     async def update_prompt(

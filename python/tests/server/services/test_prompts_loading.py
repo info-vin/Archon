@@ -31,7 +31,10 @@ async def test_load_prompts_success():
         service = PromptService()
         await service.load_prompts()
 
-        assert len(service._prompts) == 4 + len(ALL_PROMPTS)
+        # Set union logic to prevent fragile length assertions
+        mock_keys = {"blog_post_draft", "sales_pitch_generation", "svg_logo_design", "user_story_refinement"}
+        expected_keys = mock_keys | set(ALL_PROMPTS.keys())
+        assert len(service._prompts) == len(expected_keys)
         assert service.get_prompt("blog_post_draft") == "You are MarketBot (Blog)..."
         assert service.get_prompt("svg_logo_design") == "You are DevBot..."
 
