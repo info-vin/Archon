@@ -88,7 +88,7 @@ class URLHandler:
         """Detects if a file is primarily a list of links (density analysis)."""
         parsed = urlparse(url)
         filename = parsed.path.split("/")[-1].lower()
-        if filename in ["llms.txt", "sitemap.xml"]:
+        if filename in ["llms.txt", "sitemap.xml"]: # 合法
             return True
 
         if content:

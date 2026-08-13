@@ -1,24 +1,8 @@
 import React, { useState } from 'react';
 import { api } from '@/services/api';
-import { Employee, EmployeeRole } from '@/types';
+import { Employee, EmployeeRole, ROLE_DISPLAY_NAMES } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { XIcon, RefreshCwIcon, ShieldCheckIcon, KeyIcon } from '@/components/Icons';
-
-// PERFORMANCE: Precalculate explicit lookup dictionary for role display names outside the render loop
-// to prevent O(N) repetitive string memory allocations (.replace().toUpperCase()) during list rendering.
-const ROLE_DISPLAY_NAMES: Record<string, string> = {
-    [EmployeeRole.SYSTEM_ADMIN]: 'SYSTEM ADMIN',
-    [EmployeeRole.ADMIN]: 'ADMIN',
-    [EmployeeRole.MANAGER]: 'MANAGER',
-    [EmployeeRole.PROJECT_MANAGER]: 'PROJECT MANAGER',
-    [EmployeeRole.SENIOR_MEMBER]: 'SENIOR MEMBER',
-    [EmployeeRole.MEMBER]: 'MEMBER',
-    [EmployeeRole.EMPLOYEE]: 'EMPLOYEE',
-    [EmployeeRole.SALES]: 'SALES',
-    [EmployeeRole.MARKETING]: 'MARKETING',
-    [EmployeeRole.VIEWER]: 'VIEWER',
-    [EmployeeRole.AI_AGENT]: 'AI AGENT'
-};
 
 
 interface ManageMemberModalProps {

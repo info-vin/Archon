@@ -30,7 +30,7 @@ def is_internal_request(request: Request) -> bool:
     client_host = request.client.host if request.client else "unknown"
 
     # Allow requests from localhost/127.0.0.1
-    if client_host in ("127.0.0.1", "localhost", "::1", "testclient"):
+    if client_host in ("127.0.0.1", "localhost", "::1", "testclient"): # 合法
         return True
 
     # Allow requests from Docker internal network (typically 172.x.x.x)

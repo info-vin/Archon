@@ -170,7 +170,7 @@ async def run_ssot_audit() -> None:
                 with open(filepath, encoding="utf-8") as f:
                     for i, line in enumerate(f, 1):
                         # 1. Hostnames
-                        if "archon-mcp" in line or "127.0.0.1" in line:
+                        if "archon-mcp" in line or "127.0.0.1" in line: # 合法
                             if "http" in line or "://" in line:
                                 warnings.append(f"Hardcoded Network Host at `{rel_path}:{i}` -> {line.strip()[:50]}")
                         # 2. Models removed due to dynamic discovery

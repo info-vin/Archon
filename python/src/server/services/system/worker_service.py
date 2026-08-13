@@ -20,8 +20,10 @@ class WorkerService:
     Background worker that polls for 'dispatched' tasks and executes them.
     """
 
-    def __init__(self, poll_interval_seconds: float = 5.0, max_concurrent_tasks: int = 3) -> None:
-        self.poll_interval = poll_interval_seconds
+    def __init__(self, max_concurrent_tasks: int = 3) -> None:
+        from src.server.services.settings_service import SettingsService
+        settings = SettingsService()
+        self.poll_interval = float(settings.get_setting("WORKER_POLL_INTERVAL") or 5.0)
         self._running = False
         self._task: asyncio.Task[Any] | None = None
         # Phase 5.1.1 Milestone 3.2: Semaphore concurrency protection
@@ -79,11 +81,15 @@ class WorkerService:
 
         logger.info(f"🧟 Found {len(tasks_to_recover)} zombie tasks. Applying Reaper/DLQ pattern...")
 
+        from src.server.services.settings_service import SettingsService
+        settings = SettingsService()
+        max_retries = int(settings.get_setting("WORKER_MAX_RETRIES") or 3)
+
         for task in tasks_to_recover:
             task_id = task["id"]
             retry_count = task.get("retry_count") or 0
 
-            if retry_count < 3:
+            if retry_count < max_retries:
                 # Automatic Retry
                 new_retry_count = retry_count + 1
                 desc = task.get("description", "")
@@ -94,7 +100,7 @@ class WorkerService:
                     "retry_count": new_retry_count,
                     "description": desc + append_msg
                 })
-                logger.warning(f"🔄 Recovered zombie task {task_id} -> dispatched (Attempt {new_retry_count}/3)")
+                logger.warning(f"🔄 Recovered zombie task {task_id} -> dispatched (Attempt {new_retry_count}/{max_retries})")
             else:
                 # Dead Letter Queue
                 desc = task.get("description", "")
@@ -104,7 +110,7 @@ class WorkerService:
                     "status": TaskStatusEnum.FAILED,
                     "description": desc + append_msg
                 })
-                logger.error(f"💀 Zombie task {task_id} exceeded MAX_RETRIES (3). Moved to DLQ (failed).")
+                logger.error(f"💀 Zombie task {task_id} exceeded MAX_RETRIES ({max_retries}). Moved to DLQ (failed).")
 
     async def _process_queued_tasks(self) -> None:
         """Fetch and execute dispatched tasks"""
@@ -119,9 +125,11 @@ class WorkerService:
 
         async def _execute_with_semaphore(task_id: str, agent_id: str) -> None:
             async with self._semaphore:
+                from src.server.services.settings_service import SettingsService
+                settings = SettingsService()
+                tier = settings.get_setting("WORKER_RATE_LIMIT_TIER") or "lite"
                 # 3. Wait for rate limit capacity before executing
-                # Note: We assume 'lite' tier by default, or could deduce from agent_id
-                await global_throttler.wait_for_capacity(tier="lite")
+                await global_throttler.wait_for_capacity(tier=tier)
 
                 # 4. Execute the task
                 try:

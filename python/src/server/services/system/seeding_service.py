@@ -10,6 +10,8 @@ from supabase import Client
 from ...utils import get_supabase_client
 from ..librarian_service import LibrarianService
 
+ALLOWED_SEED_EXTENSIONS = (".md", ".txt")
+DEFAULT_KNOWLEDGE_TYPE = "technical"
 
 class SeedingResultDTO(TypedDict):
     status: NotRequired[str]
@@ -61,7 +63,7 @@ class SeedingService:
                 for file in files:
                     if file.startswith(".") or file == "DS_Store":
                         continue
-                    if not (file.endswith(".md") or file.endswith(".txt")):
+                    if not file.endswith(ALLOWED_SEED_EXTENSIONS):
                         continue
 
                     total_count += 1
@@ -74,7 +76,7 @@ class SeedingService:
 
                         # Use Librarian for heavy RAG lifting
                         await self.librarian.archive_file(
-                            file_name=file, content=content, file_path=file_path, knowledge_type="technical"
+                            file_name=file, content=content, file_path=file_path, knowledge_type=DEFAULT_KNOWLEDGE_TYPE
                         )
                         success_count += 1
                     except Exception as e:

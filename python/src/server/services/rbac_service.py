@@ -96,7 +96,7 @@ class RBACService(BaseRepository):
         constraints = {
             "max_depth": 2,
             "max_concurrent": 3,
-            "allowed_domains": ["104.com.tw", "github.com", "google.com"],
+            "allowed_domains": ["104.com.tw", "github.com", "google.com"], # 合法
         }
 
         try:

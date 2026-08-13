@@ -12,8 +12,19 @@ def mock_task_service():
         mock_ts.update_task = AsyncMock()
         yield mock_ts
 
+@pytest.fixture
+def mock_settings_service():
+    with patch("src.server.services.settings_service.SettingsService") as MockSettings:
+        instance = MockSettings.return_value
+        instance.get_setting.side_effect = lambda k: {
+            "WORKER_MAX_RETRIES": "3",
+            "WORKER_POLL_INTERVAL": "5.0",
+            "WORKER_RATE_LIMIT_TIER": "lite"
+        }.get(k)
+        yield instance
+
 @pytest.mark.asyncio
-async def test_recover_zombie_tasks_auto_retry(mock_task_service):
+async def test_recover_zombie_tasks_auto_retry(mock_task_service, mock_settings_service):
     # Setup mock returns: one zombie task with retry_count < 3
     mock_task_service.list_tasks.side_effect = [
         # Call 1: processing
@@ -34,7 +45,7 @@ async def test_recover_zombie_tasks_auto_retry(mock_task_service):
     assert "嘗試重新執行" in args[1]["description"]
 
 @pytest.mark.asyncio
-async def test_recover_zombie_tasks_dlq(mock_task_service):
+async def test_recover_zombie_tasks_dlq(mock_task_service, mock_settings_service):
     # Setup mock returns: one zombie task with retry_count >= 3
     mock_task_service.list_tasks.side_effect = [
         # Call 1: processing

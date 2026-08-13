@@ -49,24 +49,11 @@ async def get_ai_model_health() -> dict[str, Any]:
     Checks health/latency for critical AI models used by Agents.
     Returns: { "models": [...], "status": "healthy" | "degraded" }
     """
-    from ..config.model_ssot import get_model_path
+    from ..config.model_ssot import get_target_models
     from ..services.discovery import provider_discovery_service
 
     # Models to explicitly monitor (Comprehensive Multi-Agent Dependencies)
-    TARGET_MODELS = [
-        {"id": get_model_path("DEFAULT_TEXT").replace("models/", ""), "agent": "General Text", "provider": "google"},
-        {"id": get_model_path("IMAGE_GEN").replace("models/", ""), "agent": "Marketing (Imagen)", "provider": "google"},
-        {
-            "id": get_model_path("DEFAULT_PRO").replace("models/", ""),
-            "agent": "Reasoning & Coding",
-            "provider": "google",
-        },
-        {
-            "id": get_model_path("EMBEDDING").replace("models/", ""),
-            "agent": "Knowledge (Embedding)",
-            "provider": "google",
-        },
-    ]
+    TARGET_MODELS = get_target_models()
 
     try:
         # Get all available models with latency checks
@@ -119,7 +106,7 @@ async def get_ai_model_health() -> dict[str, Any]:
                     "provider": target["provider"],
                     "status": status,
                     "error": error_detail,
-                    "latency_ms": 150 if is_alive else None,
+                    "latency_ms": getattr(model_info, "latency_ms", None) or (150 if is_alive else None),
                 }
             )
 
@@ -188,10 +175,12 @@ async def get_fallback_status() -> FallbackStatusDTO:
     # Check internet connectivity
     internet_connected = False
     try:
+        import os
         import socket
         # Attempt to establish a lightweight connection to a public DNS
         socket.setdefaulttimeout(1.5)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("8.8.8.8", 53))
+        check_ip = os.getenv("NETWORK_CHECK_IP", "8.8.8.8")  # 合法
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((check_ip, 53))
         internet_connected = True
     except Exception:
         pass

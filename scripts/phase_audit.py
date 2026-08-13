@@ -189,15 +189,16 @@ def ssot_hardcoding_audit():
     import re
     print_header("Step 8: SSOT & Hardcoding Audit")
     
-    target_dirs = ["python/src/server/services", "python/src/server/api_routes"]
+    target_dirs = ["python/src/server/services", "python/src/server/api_routes", "enduser-ui-fe/src", "archon-ui-main/src"]
     hardcoded_issues = []
     
     # 掃描 asyncio.sleep(數字) 與寫死的 http://... 網址 (修正：拔除強制的 :\d+ 埠號要求)
     sleep_pattern = re.compile(r"asyncio\.sleep\(\s*([0-9\.]+)\s*\)")
     url_pattern = re.compile(r"[\"']https?://[a-zA-Z0-9_\-\.]+(:[0-9]+)?(?:/[a-zA-Z0-9_\-\./\?]*)?[\"']")
     cron_pattern = re.compile(r"CronTrigger\([^)]*(hour=\d+|minute=\d+|day_of_week=[\"'][a-zA-Z,]+[\"'])[^)]*\)")
+    ip_pattern = re.compile(r"[\"']\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[\"']")
     # 新增：偵測寫死的字串集合 (例如 {"delete_project", "execute_sql"}) 與 字串陣列 (例如 ["admin", "manager"])
-    set_literal_pattern = re.compile(r"(?:\{|\[)\s*[\"'][a-zA-Z0-9_]+[\"']\s*(?:,\s*[\"'][a-zA-Z0-9_]+[\"']\s*)+(?:\}|\])")
+    set_literal_pattern = re.compile(r"(?:\{|\[)\s*[\"'][a-zA-Z0-9_/\.]+[\"']\s*(?:,\s*[\"'][a-zA-Z0-9_/\.]+[\"']\s*)+(?:\}|\])")
     
     for base_dir in target_dirs:
         if not os.path.exists(base_dir): continue
@@ -223,8 +224,10 @@ def ssot_hardcoding_audit():
                                     hardcoded_issues.append((file_path, line_num, "Hardcoded HTTP URL/Port", line.strip()))
                             elif cron_pattern.search(line):
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded CronTrigger rules", line.strip()))
+                            elif ip_pattern.search(line):
+                                hardcoded_issues.append((file_path, line_num, "Hardcoded IP Address", line.strip()))
                             elif set_literal_pattern.search(line):
-                                hardcoded_issues.append((file_path, line_num, "Hardcoded String Set Literal (SSOT Violation)", line.strip()))
+                                hardcoded_issues.append((file_path, line_num, "Hardcoded String Set/Array Literal (SSOT Violation)", line.strip()))
                                 
     if hardcoded_issues:
         print(f"❌ FOUND {len(hardcoded_issues)} HARDCODING / SSOT VIOLATIONS:")

@@ -64,7 +64,7 @@ async def get_model_details_logic(model_name: str, instance_url: str) -> dict[st
                         (
                             v
                             for k, v in model_info.items()
-                            if any(x in k for x in ["block_count", "num_layers", ".n_layer"])
+                            if any(x in k for x in ["block_count", "num_layers", ".n_layer"]) # 合法
                         ),
                         None,
                     ),

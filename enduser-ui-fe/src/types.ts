@@ -12,6 +12,20 @@ export enum EmployeeRole {
   AI_AGENT = 'ai_agent'
 }
 
+export const ROLE_DISPLAY_NAMES: Record<string, string> = {
+    [EmployeeRole.SYSTEM_ADMIN]: 'SYSTEM ADMIN',
+    [EmployeeRole.ADMIN]: 'ADMIN',
+    [EmployeeRole.MANAGER]: 'MANAGER',
+    [EmployeeRole.PROJECT_MANAGER]: 'PROJECT MANAGER',
+    [EmployeeRole.SENIOR_MEMBER]: 'SENIOR MEMBER',
+    [EmployeeRole.MEMBER]: 'MEMBER',
+    [EmployeeRole.EMPLOYEE]: 'EMPLOYEE',
+    [EmployeeRole.SALES]: 'SALES',
+    [EmployeeRole.MARKETING]: 'MARKETING',
+    [EmployeeRole.VIEWER]: 'VIEWER',
+    [EmployeeRole.AI_AGENT]: 'AI AGENT'
+};
+
 export enum TaskStatus {
   TODO = 'todo',
   DOING = 'doing',

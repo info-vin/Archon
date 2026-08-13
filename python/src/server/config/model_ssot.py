@@ -18,6 +18,24 @@ SYSTEM_MODELS = {
     "EMBEDDING": "models/gemini-embedding-001",
 }
 
+export_TARGET_MODELS = [
+    {"key": "DEFAULT_TEXT", "agent": "General Text", "provider": "google"},
+    {"key": "IMAGE_GEN", "agent": "Marketing (Imagen)", "provider": "google"},
+    {"key": "DEFAULT_PRO", "agent": "Reasoning & Coding", "provider": "google"},
+    {"key": "EMBEDDING", "agent": "Knowledge (Embedding)", "provider": "google"},
+]
+
+def get_target_models() -> list[dict]:
+    """Returns the monitoring target models using current paths."""
+    targets = []
+    for t in export_TARGET_MODELS:
+        targets.append({
+            "id": get_model_path(t["key"]).replace("models/", ""),
+            "agent": t["agent"],
+            "provider": t["provider"]
+        })
+    return targets
+
 
 def get_model_path(key: str, default: str = "DEFAULT_TEXT") -> str:
     """Returns the full physical path (e.g. models/...) for a given model key."""

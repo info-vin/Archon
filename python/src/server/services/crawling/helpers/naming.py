@@ -177,7 +177,7 @@ class URLNamingUtil:
                 if "sitemap" in path.lower() and path.endswith(".xml"):
                     # Get base domain name
                     display = domain
-                    for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]:
+                    for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]: # 合法
                         if display.endswith(tld):
                             display = display[: -len(tld)]
                             break
@@ -187,7 +187,7 @@ class URLNamingUtil:
                 elif "llms" in path.lower() and path.endswith(".txt"):
                     # Get base domain name
                     display = domain
-                    for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]:
+                    for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]: # 合法
                         if display.endswith(tld):
                             display = display[: -len(tld)]
                             break
@@ -197,7 +197,7 @@ class URLNamingUtil:
 
             # Default: Use domain with nice formatting
             display = domain
-            for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]:
+            for tld in [".com", ".org", ".io", ".dev", ".net", ".ai", ".app"]: # 合法
                 if display.endswith(tld):
                     display = display[: -len(tld)]
                     break
