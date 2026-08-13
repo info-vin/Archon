@@ -2,7 +2,11 @@ import asyncio
 import random
 from typing import Any, TypedDict, cast
 
+from curl_cffi.requests import Session
+from supabase import Client
+
 from ..config.logfire_config import get_logger
+from ..schemas.settings import CrawlerJobConfig
 from ..repositories.base_repository import BaseRepository
 from ..utils import get_supabase_client
 
@@ -30,7 +34,7 @@ class JobBoardService(BaseRepository):
 
 
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
         self.supabase = self.supabase_client
         from ..utils.rate_limiter import RateLimitConfig, RateLimiter
@@ -39,15 +43,13 @@ class JobBoardService(BaseRepository):
         from .crawling.lead_evaluator import LeadEvaluator
         self.evaluator = LeadEvaluator(self.rate_limiter)
 
-    def _get_crawler_config(self) -> Any:
-        from ..schemas.settings import CrawlerJobConfig
+    def _get_crawler_config(self) -> CrawlerJobConfig:
         from ..services.settings_service import SettingsService
         try:
             settings = SettingsService(self.supabase)
             return CrawlerJobConfig.model_validate(settings.get_all_settings())
         except Exception as e:
             logger.warning(f"Failed to parse CrawlerJobConfig, falling back to defaults: {e}")
-            from ..schemas.settings import CrawlerJobConfig
             return CrawlerJobConfig()
 
     def _log_archon(self, source: str, level: str, message: str) -> None:
@@ -57,7 +59,7 @@ class JobBoardService(BaseRepository):
         except Exception as e:
             logger.error(f"Failed to write to archon_logs: {e}")
 
-    async def search_jobs(self, keyword: str, limit: int = 8, client: Any = None, page: int = 1) -> list[JobData]:
+    async def search_jobs(self, keyword: str, limit: int = 8, client: Session | None = None, page: int = 1) -> list[JobData]:
         # Delegate search to crawler
         jobs = await self.crawler.search_jobs(keyword, limit, client, page=page)
         # Infer Needs (Async AI processing concurrently)
@@ -209,7 +211,7 @@ class JobBoardService(BaseRepository):
                 market_bot_config = cast(dict[str, Any], get_agent_config("market-bot") or {})
                 agent_name = market_bot_config.get("name", "Archon MarketBot")
 
-                async def _log_action(job: Any, content: str) -> None:
+                async def _log_action(job: JobData, content: str) -> None:
                     await stats_service.add_agent_action_log(
                         agent_name=agent_name,
                         xp_change=10,
