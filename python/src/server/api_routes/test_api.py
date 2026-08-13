@@ -9,7 +9,8 @@ from ..services.client_manager import get_supabase_client  # Found this definiti
 
 # This router should only be included if the environment allows it.
 # This ensures test-specific endpoints are not exposed in production.
-if os.getenv("ENABLE_TEST_ENDPOINTS") != "true":
+from src.server.services.settings_service import SettingsService
+if SettingsService().get_setting("ENABLE_TEST_ENDPOINTS") != "true":
     # If the env var is not set, we create a dummy router that does nothing.
     router = APIRouter()
 else:

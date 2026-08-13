@@ -30,7 +30,8 @@ async def proxy_gemini_v1beta(path: str, request: Request):
 
         # Inject API key if missing (so agents don't strictly need it in their env, though they might have it)
         if "x-goog-api-key" not in headers:
-            api_key = os.getenv("GEMINI_API_KEY")
+            from src.server.services.settings_service import SettingsService
+            api_key = SettingsService().get_setting("GEMINI_API_KEY")
             if api_key:
                 headers["x-goog-api-key"] = api_key
 

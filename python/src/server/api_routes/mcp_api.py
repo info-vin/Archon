@@ -68,8 +68,10 @@ async def list_mcp_sessions(current_user: UserProfileDTO = Depends(get_current_u
 async def get_mcp_config(current_user: dict = Depends(requires_permission(MCP_MANAGE))) -> MCPConfigResponse:
     """Deep inspection of tool configurations. Fetches real system values."""
     api_url = get_api_url()
-    mcp_port = os.getenv("ARCHON_MCP_PORT", "8051")
-    mcp_transport = os.getenv("MCP_TRANSPORT", "http")
+    from src.server.services.settings_service import SettingsService
+    settings = SettingsService()
+    mcp_port = settings.get_setting("ARCHON_MCP_PORT", "8051")
+    mcp_transport = settings.get_setting("MCP_TRANSPORT", "http")
 
     return MCPConfigResponse(
         status="ok",

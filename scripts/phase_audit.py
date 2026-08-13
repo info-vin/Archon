@@ -245,15 +245,16 @@ def os_getenv_audit():
     import re
     print_header("Step 9: Config SSOT (os.getenv) Audit")
     
-    target_dir = "python/src/server/services"
+    target_dirs = ["python/src/server/services", "python/src/server/api_routes"]
     issues = []
     pattern = re.compile(r"os\.getenv\(|os\.environ")
     
-    if not os.path.exists(target_dir): return
-    for root, _, files in os.walk(target_dir):
-        for file in files:
-            if file.endswith(".py") and not any(x in root for x in ["tests", "__tests__"]):
-                file_path = os.path.join(root, file)
+    for target_dir in target_dirs:
+        if not os.path.exists(target_dir): continue
+        for root, _, files in os.walk(target_dir):
+            for file in files:
+                if file.endswith(".py") and not any(x in root for x in ["tests", "__tests__"]):
+                    file_path = os.path.join(root, file)
                 
                 # Exemptions: config and credential hubs
                 if "credentials/helpers.py" in file_path or "credentials/provider_configs.py" in file_path or "config_loader.py" in file_path or "credentials/manager.py" in file_path or "credential_service.py" in file_path or "reranking_strategy.py" in file_path:

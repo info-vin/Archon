@@ -43,6 +43,7 @@ async def test_recover_zombie_tasks_auto_retry(mock_task_service, mock_settings_
     assert args[1]["status"] == "dispatched"
     assert args[1]["retry_count"] == 1
     assert "嘗試重新執行" in args[1]["description"]
+    assert "Attempt 1/3" in args[1]["description"]
 
 @pytest.mark.asyncio
 async def test_recover_zombie_tasks_dlq(mock_task_service, mock_settings_service):
@@ -62,4 +63,5 @@ async def test_recover_zombie_tasks_dlq(mock_task_service, mock_settings_service
     args, kwargs = mock_task_service.update_task.call_args
     assert args[0] == "task-2"
     assert args[1]["status"] == "failed"
+    assert "中斷 3 次" in args[1]["description"]
     assert "放棄自動重試" in args[1]["description"]

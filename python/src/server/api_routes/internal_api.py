@@ -38,7 +38,9 @@ def is_internal_request(request: Request) -> bool:
         return True
 
     # Check for X-Internal-Key header (used for inter-service auth)
-    internal_key = os.getenv("ARCHON_INTERNAL_KEY")
+    from src.server.services.settings_service import SettingsService
+    settings = SettingsService()
+    internal_key = settings.get_setting("ARCHON_INTERNAL_KEY")
     request_key = request.headers.get("X-Internal-Key")
     if internal_key and request_key == internal_key:
         return True
@@ -178,7 +180,9 @@ async def trigger_cron_jobs(
     Phase 5.1.15: Added support for single job triggering.
     """
     is_internal = is_internal_request(request)
-    valid_api_key = os.getenv("ARCHON_CRON_SECRET")
+    from src.server.services.settings_service import SettingsService
+    settings = SettingsService()
+    valid_api_key = settings.get_setting("ARCHON_CRON_SECRET")
 
     if not is_internal:
         if not valid_api_key or api_key != valid_api_key:

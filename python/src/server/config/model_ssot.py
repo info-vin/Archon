@@ -18,6 +18,9 @@ SYSTEM_MODELS = {
     "EMBEDDING": "models/gemini-embedding-001",
 }
 
+DEFAULT_MODEL_LATENCY_MS = 150
+DEFAULT_NETWORK_CHECK_IP = "8.8.8.8"
+
 export_TARGET_MODELS = [
     {"key": "DEFAULT_TEXT", "agent": "General Text", "provider": "google"},
     {"key": "IMAGE_GEN", "agent": "Marketing (Imagen)", "provider": "google"},

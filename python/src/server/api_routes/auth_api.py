@@ -36,8 +36,10 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
     Standardized Dev Token Endpoint.
     Hardened with X-Admin-Secret validation to prevent unauthorized access.
     """
-    admin_secret = os.getenv("ADMIN_SECRET")
-    is_prod = os.getenv("PROD", "false").lower() == "true"
+    from src.server.services.settings_service import SettingsService
+    settings = SettingsService()
+    admin_secret = settings.get_setting("ADMIN_SECRET")
+    is_prod = settings.get_setting("PROD", "false").lower() == "true"
 
     # Enforce secret check if ADMIN_SECRET is set or if in PROD environment
     if is_prod or admin_secret:

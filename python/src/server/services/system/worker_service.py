@@ -93,7 +93,7 @@ class WorkerService:
                 # Automatic Retry
                 new_retry_count = retry_count + 1
                 desc = task.get("description", "")
-                append_msg = f"\n\n[系統紀錄] 理解問題: 系統意外中斷導致任務卡死 (Zombie). 嘗試重新執行 (Attempt {new_retry_count}/3)."
+                append_msg = f"\n\n[系統紀錄] 理解問題: 系統意外中斷導致任務卡死 (Zombie). 嘗試重新執行 (Attempt {new_retry_count}/{max_retries})."
 
                 await task_service.update_task(task_id, {
                     "status": TaskStatusEnum.DISPATCHED,
@@ -104,7 +104,7 @@ class WorkerService:
             else:
                 # Dead Letter Queue
                 desc = task.get("description", "")
-                append_msg = "\n\n[系統紀錄] DLQ: 任務已連續失敗或中斷 3 次，放棄自動重試。"
+                append_msg = f"\n\n[系統紀錄] DLQ: 任務已連續失敗或中斷 {max_retries} 次，放棄自動重試。"
 
                 await task_service.update_task(task_id, {
                     "status": TaskStatusEnum.FAILED,

@@ -46,8 +46,10 @@ class BugReportResponse(BaseModel):
 
 class GitHubService:
     def __init__(self) -> None:
-        self.token = os.getenv("GITHUB_TOKEN")
-        self.repo = os.getenv("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha")
+        from src.server.services.settings_service import SettingsService
+        settings = SettingsService()
+        self.token = settings.get_setting("GITHUB_TOKEN")
+        self.repo = settings.get_setting("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha")
 
     async def create_issue(self, bug_report: BugReportRequest) -> dict[str, Any]:
         """Create a GitHub issue from a bug report."""
@@ -270,13 +272,15 @@ class BugReportHealthResponse(BaseModel):
 async def bug_report_health() -> BugReportHealthResponse:
     """Health check for bug reporting service."""
 
-    github_configured = bool(os.getenv("GITHUB_TOKEN"))
-    repo_configured = bool(os.getenv("GITHUB_REPO"))
+    from src.server.services.settings_service import SettingsService
+    settings = SettingsService()
+    github_configured = bool(settings.get_setting("GITHUB_TOKEN"))
+    repo_configured = bool(settings.get_setting("GITHUB_REPO"))
 
     return BugReportHealthResponse(
         status="healthy" if github_configured else "degraded",
         github_token_configured=github_configured,
         github_repo_configured=repo_configured,
-        repo=os.getenv("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha"),
+        repo=settings.get_setting("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha"),
         message="Bug reporting is ready" if github_configured else "GitHub token not configured",
     )
