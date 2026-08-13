@@ -22,6 +22,30 @@ const safeFormatLeadDate = (dateVal: any) => {
   return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
 };
 
+// PERFORMANCE: Extract chained ternary string operations into O(1) static lookup dictionaries
+const MOBILE_STATUS_STYLE_MAP: Record<string, string> = {
+  'converted': 'bg-green-100 text-green-700'
+};
+const MOBILE_DEFAULT_STYLE = 'bg-indigo-100 text-indigo-700';
+
+const DESKTOP_STATUS_STYLE_MAP: Record<string, string> = {
+  'new': 'bg-blue-100 text-blue-700',
+  'converted': 'bg-green-100 text-green-700'
+};
+const DESKTOP_DEFAULT_STYLE = 'bg-gray-100 text-gray-600';
+
+// PERFORMANCE: Pre-calculate complex string manipulations (toUpperCase, replace) to avoid O(N) allocation during render loops
+const STATUS_FORMAT_MAP: Record<string, string> = {
+  'new': 'NEW',
+  'converted': 'CONVERTED',
+  'review_queue': 'REVIEW QUEUE',
+  'contacted': 'CONTACTED',
+  'qualified': 'QUALIFIED',
+  'proposal_sent': 'PROPOSAL SENT',
+  'negotiation': 'NEGOTIATION',
+  'lost': 'LOST'
+};
+
 interface MarketingLeadsStackProps {
   leads: any[];
   isLeadsLoading: boolean;
@@ -139,9 +163,9 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                       </div>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      lead.status === 'converted' ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
+                      MOBILE_STATUS_STYLE_MAP[lead.status] || MOBILE_DEFAULT_STYLE
                     }`}>
-                      {STATUS_DISPLAY[lead.status] || lead.status.toUpperCase()}
+                      {STATUS_DISPLAY[lead.status] || STATUS_FORMAT_MAP[lead.status] || lead.status.toUpperCase()}
                     </span>
                   </div>
                   <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-50 text-xs text-gray-700 italic">
@@ -193,11 +217,9 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold text-center ${
-                          lead.status === 'new' ? 'bg-blue-100 text-blue-700' : 
-                          lead.status === 'converted' ? 'bg-green-100 text-green-700' : 
-                          'bg-gray-100 text-gray-600'
+                          DESKTOP_STATUS_STYLE_MAP[lead.status] || DESKTOP_DEFAULT_STYLE
                         }`}>
-                          {STATUS_DISPLAY[lead.status] || lead.status.toUpperCase().replace('_', ' ')}
+                          {STATUS_DISPLAY[lead.status] || STATUS_FORMAT_MAP[lead.status] || lead.status.toUpperCase().replace('_', ' ')}
                         </span>
                       </div>
                     </td>
