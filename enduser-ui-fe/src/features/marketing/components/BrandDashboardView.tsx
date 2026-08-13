@@ -49,16 +49,16 @@ const KanbanColumn: React.FC<{
                                 <span className="text-[10px] text-gray-400 font-mono">
                                     {new Date(post.publishDate).toLocaleDateString()}
                                 </span>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
-                                    <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500" title="Advanced Editor (Pro)" aria-label="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                    <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" /></button>
+                                    <button onClick={() => onNavigateAdvanced(post.id)} className="p-1 hover:bg-indigo-50 rounded text-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" title="Advanced Editor (Pro)" aria-label="Advanced Editor (Pro)"><SparklesIcon className="w-4 h-4" /></button>
                                     {post.status !== 'review' && (
-                                        <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500" title="Move to Review" aria-label="Move to Review"><EyeIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => onUpdateStatus(post.id, 'review')} className="p-1 hover:bg-amber-50 rounded text-amber-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" title="Move to Review" aria-label="Move to Review"><EyeIcon className="w-4 h-4" /></button>
                                     )}
                                     {post.status !== 'published' && (
-                                        <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600" title="Publish Now" aria-label="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => onUpdateStatus(post.id, 'published')} className="p-1 hover:bg-green-50 rounded text-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" title="Publish Now" aria-label="Publish Now"><CheckCircleIcon className="w-4 h-4" /></button>
                                     )}
-                                    <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto" title="Delete" aria-label="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
+                                    <button onClick={() => onDeletePost(post.id)} className="p-1 hover:bg-red-50 rounded text-red-500 ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" title="Delete" aria-label="Delete"><PlusIcon className="w-4 h-4 rotate-45" /></button>
                                 </div>
                             </div>
                         </div>
@@ -223,7 +223,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                         <button
                             onClick={downloadLogo}
                             aria-label="Download SVG"
-                            className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/20 transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                             title="Download SVG"
                         >
                             <DownloadIcon className="w-5 h-5" />

@@ -28,3 +28,6 @@
 ## 2024-05-19 - Adding accessible labels to naked password inputs
 **Learning:** In contexts like `ManageMemberModal`, password input fields were relying purely on `placeholder` text for identity. Placeholders are frequently skipped by screen readers or considered poor practice for accessible names.
 **Action:** Always prefer adding an explicit `aria-label` directly to naked `<input>` elements over adding a `.sr-only` class label to prevent potential layout shifts and regression in the DOM, while maintaining 100% accessible naming.
+## 2026-08-13 - Focus Styles on Action Buttons in BrandDashboardView
+**Learning:** Found that the action buttons (edit, pro, review, publish, delete) in the Kanban columns on the BrandDashboardView lacked explicit focus rings. While these buttons are interactive and styled nicely for mouse hover states, they were completely invisible to keyboard navigation.
+**Action:** Applied the application's standard `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` to all action buttons in the BrandDashboardView Kanban feed list items.
