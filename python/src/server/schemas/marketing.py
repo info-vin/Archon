@@ -38,6 +38,10 @@ class LeadResponse(BaseModel):
     }
 
 
+class LeadActionResponse(BaseModel):
+    lead: LeadResponse = Field(description="The created or updated lead object")
+
+
 class PitchRequest(BaseModel):
     company: str
     job_title: str
