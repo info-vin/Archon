@@ -97,12 +97,9 @@ async def run_log_patrol() -> None:
         error_summary = "\n".join([f"- [{e['source']}] {e['message']}" for e in errors])
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"Auto-Repair: System Errors Detected ({datetime.now(cst).strftime('%H:%M')})"
-        fallback_str = (
-            "Clockwork detected the following errors in the last hour:\n{error_summary}\n\nPlease analyze and fix."
-        )
 
         from src.server.services.prompt_service import prompt_service
-        prompt_template = prompt_service.get_prompt("SYS_ERROR_PATROL_PROMPT", default=fallback_str)
+        prompt_template = prompt_service.get_prompt("SYS_ERROR_PATROL_PROMPT")
         task_desc = prompt_template.format(error_summary=error_summary)
 
         success, p_res = repo.execute_query(

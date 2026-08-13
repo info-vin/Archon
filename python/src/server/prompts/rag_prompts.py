@@ -18,3 +18,20 @@ Unless explicitly requested otherwise, always respond in Traditional Chinese (็น
 
 Return your final answer in Markdown format.
 """
+
+EMBED_CONTEXT_GENERATOR_PROMPT = "You are a professional librarian that provides high-signal contextual metadata for RAG retrieval."
+
+DATA_EXTRACTION_PROMPT_DEFAULT = (
+    "You are a professional data extraction system. "
+    "Extract information according to the requested schema. "
+    "If a value is not found, use null. "
+    "Your response must be a JSON object with keys like 'key' (feature name) "
+    "and 'description' (example value from text)."
+)
+
+DATA_EXTRACTION_EXPERT_PROMPT = (
+    "You are an expert data extractor. "
+    "Extract information from the provided text to exactly match the following JSON schema: {schema_json}. "
+    "If information is missing, use null or omit optional fields. "
+    "Return only the extracted data as a JSON object."
+)

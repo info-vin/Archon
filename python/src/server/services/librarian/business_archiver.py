@@ -197,15 +197,7 @@ class BusinessArchiver:
 
             from src.server.services.prompt_service import prompt_service
 
-            default_prompt_template = (
-                "You are an AI Style Auditor. Analyze the following 'Review Notes' provided by a manager "
-                "regarding a blog post. Extract 1-2 concrete, reusable 'Brand Voice Constraints' or 'Style Rules' "
-                "that should be followed in the future. Avoid fluff.\n\n"
-                "Post Title: {post_title}\n"
-                "Review Notes: {review_notes}\n\n"
-                "Return the rules as a clear Markdown list."
-            )
-            prompt_template = prompt_service.get_prompt("AI_STYLE_AUDITOR", default=default_prompt_template)
+            prompt_template = prompt_service.get_prompt("AI_STYLE_AUDITOR")
             extraction_prompt = prompt_template.format(post_title=post_title, review_notes=review_notes)
 
             @retry_with_backoff(max_retries=2)

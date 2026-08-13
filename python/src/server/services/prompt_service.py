@@ -4,14 +4,13 @@ from datetime import datetime
 from typing import Any, NotRequired, TypedDict, cast
 from unittest.mock import MagicMock
 
+from src.server.prompts import ALL_PROMPTS
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
-
-
 class PromptListDTO(TypedDict):
     data: NotRequired[list[dict[str, Any]]]
     prompts: NotRequired[list[dict[str, Any]]]
@@ -42,15 +41,36 @@ class PromptService(BaseRepository):
         cls._instance = None
 
     async def load_prompts(self) -> None:
-        """Mock-compatible method for tests to simulate loading."""
+        """Mock-compatible method for tests to simulate loading and sync."""
         success, res = await self.list_prompts()
+        db_prompts = {}
         if success:
             for p in res.get("prompts", []):
                 # DB schema: prompt_name, prompt
                 text = p.get("prompt")
                 if text:
+                    db_prompts[p.get("prompt_name", "")] = text
                     self._prompts[p.get("prompt_name", "")] = text
-            self._last_loaded = datetime.utcnow()
+
+        # Auto-upsert missing Baseline Prompts to Supabase
+        upsert_batch = []
+        for name, content in ALL_PROMPTS.items():
+            if name not in db_prompts:
+                upsert_batch.append({"prompt_name": name, "prompt": content})
+                self._prompts[name] = content  # Ensure cache is fully populated with Baseline
+
+        if upsert_batch:
+            try:
+                # Perform bulk upsert
+                self.execute_query(
+                    self.supabase_client.table("archon_prompts").upsert(upsert_batch, on_conflict="prompt_name"),
+                    "Auto-upsert baseline prompts"
+                )
+                logger.info(f"✅ Auto-upserted {len(upsert_batch)} baseline prompts to Supabase.")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to auto-upsert prompts: {e}")
+
+        self._last_loaded = datetime.utcnow()
 
     async def list_prompts(self) -> tuple[bool, PromptListDTO]:
         """List all system prompts from the database."""
@@ -63,11 +83,11 @@ class PromptService(BaseRepository):
     def get_prompt(self, name: str, default: str | None = None) -> str:
         """Get a prompt by name (cached or direct)."""
         try:
-            # First try cache
+            # First try cache (which is now fully populated at startup)
             if name in self._prompts:
                 return self._prompts[name]
 
-            # Fallback to direct DB call - Schema: prompt_name, prompt
+            # Fallback to direct DB call in case it was added after startup
             success, res = self.execute_query(
                 self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name),
                 "Fetch prompt fallback"
@@ -76,9 +96,19 @@ class PromptService(BaseRepository):
             # DEFENSIVE: Check if res.get("data") is a real dict/list and not a MagicMock
             data = res.get("data")
             if success and data and not isinstance(data, MagicMock) and len(data) > 0:
-                return data[0].get("prompt") or default or ""
+                text = data[0].get("prompt")
+                if text:
+                    self._prompts[name] = str(text)  # Cache it to prevent future misses
+                    return str(text)
         except Exception:
             pass
+
+        # SSOT Fallback (Prevent cache defeat)
+        if name in ALL_PROMPTS:
+            fallback = ALL_PROMPTS[name]
+            self._prompts[name] = fallback # Prevent future misses
+            return fallback
+
         return default or "You are a helpful AI assistant."
 
     async def update_prompt(

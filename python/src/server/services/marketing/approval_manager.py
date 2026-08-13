@@ -70,13 +70,7 @@ class ApprovalManager(BaseRepository):
 
         client = genai.Client(api_key=api_key)
 
-        default_prompt = (
-            "You are a marketing director reviewing a blog post draft.\n"
-            "The draft is slightly off-brand or has quality issues.\n"
-            "Content:\n{content}\n\n"
-            "Provide exactly ONE brief, constructive paragraph (max 50 words) explaining why this is rejected and what needs to be improved. Use Traditional Chinese."
-        )
-        prompt_template = prompt_service.get_prompt("REJECT_SUGGESTION", default=default_prompt)
+        prompt_template = prompt_service.get_prompt("REJECT_SUGGESTION")
         prompt = prompt_template.format(content=post.get("content", ""))
 
         try:

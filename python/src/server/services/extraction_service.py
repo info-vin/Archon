@@ -117,16 +117,7 @@ class ExtractionService(BaseRepository):
         try:
             from .prompt_service import prompt_service
 
-            default_prompt = (
-                "You are a Data Extraction Expert. Analyze the provided web content (Markdown) "
-                "and identify key structured data fields that would be valuable for business intelligence "
-                "(Sales, Marketing, HR). \n"
-                "Return a JSON object with: \n"
-                "1. 'summary': A 2-3 sentence semantic understanding of what this website is and its main business purpose.\n"
-                "2. 'fields': A list where each field has: 'name', 'type' (string, number, list), "
-                "and 'description' (example value from text)."
-            )
-            system_prompt = prompt_service.get_prompt("data_extraction_prompt", default_prompt)
+            system_prompt = prompt_service.get_prompt("data_extraction_prompt")
 
             user_prompt = f"Analyze this content:\n\n{content}"
 
@@ -253,12 +244,7 @@ class ExtractionService(BaseRepository):
         from .llm_provider_service import get_llm_client
         from .prompt_service import prompt_service
         schema_json = schema["schema_definition"]
-        default_prompt_template = (
-            "You are a Data Extraction Expert. Extract structured data from the provided content "
-            "strictly following this JSON schema: {schema_json}. \n"
-            "Return only the extracted data as a JSON object."
-        )
-        system_prompt_template = prompt_service.get_prompt("DATA_EXTRACTION_EXPERT", default_prompt_template)
+        system_prompt_template = prompt_service.get_prompt("DATA_EXTRACTION_EXPERT")
         system_prompt = system_prompt_template.format(schema_json=schema_json)
 
         async with get_llm_client() as client:

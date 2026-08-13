@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.server.prompts import ALL_PROMPTS
 from src.server.services.prompt_service import PromptService
 
 
@@ -30,7 +31,7 @@ async def test_load_prompts_success():
         service = PromptService()
         await service.load_prompts()
 
-        assert len(service._prompts) == 4
+        assert len(service._prompts) == 4 + len(ALL_PROMPTS)
         assert service.get_prompt("blog_post_draft") == "You are MarketBot (Blog)..."
         assert service.get_prompt("svg_logo_design") == "You are DevBot..."
 
@@ -48,7 +49,7 @@ async def test_load_prompts_empty_db():
         await service.load_prompts()
 
         # Should be empty, but service should not crash
-        assert len(service._prompts) == 0
+        assert len(service._prompts) == len(ALL_PROMPTS)
         # Default fallback check
         assert service.get_prompt("non_existent") == "You are a helpful AI assistant."
 

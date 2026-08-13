@@ -35,8 +35,7 @@ The above content is from the documentation for '{source_id}'. Please provide a 
             search_logger.info(f"Generating summary for {source_id} using model: {model_choice}")
 
             from src.server.services.prompt_service import prompt_service
-            default_instruction = "You are a helpful assistant that provides concise library/tool/framework summaries."
-            system_prompt = prompt_service.get_prompt("SOURCE_METADATA_SUMMARY", default=default_instruction)
+            system_prompt = prompt_service.get_prompt("SOURCE_METADATA_SUMMARY")
 
             response = await client.chat.completions.create(
                 model=model_choice,
@@ -112,8 +111,7 @@ Generate a title in this format: "[Service Name] [Source Type]"
 Generate only the title, nothing else."""
 
                 from src.server.services.prompt_service import prompt_service
-                default_title_instruction = "You are a helpful assistant that generates concise titles."
-                system_prompt = prompt_service.get_prompt("SOURCE_TITLE_GENERATOR", default=default_title_instruction)
+                system_prompt = prompt_service.get_prompt("SOURCE_TITLE_GENERATOR")
 
                 response = await client.chat.completions.create(
                     model=model_choice,

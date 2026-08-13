@@ -80,7 +80,7 @@ class LeadEvaluator:
                 return None
 
             client = genai.Client(api_key=api_key)
-            prompt_template = prompt_service.get_prompt(prompt_name, default=default_prompt)
+            prompt_template = prompt_service.get_prompt(prompt_name)
             prompt = prompt_template.format(**format_kwargs)
 
             @retry_with_backoff(max_retries=max_retries, initial_delay=initial_delay)

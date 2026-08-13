@@ -6,7 +6,6 @@ from google import genai
 from google.genai import types
 
 from ...config.model_ssot import SYSTEM_MODELS
-from ...prompts.sales_prompts import SALES_PITCH_SYSTEM_PROMPT
 from ...utils.retry_utils import retry_with_backoff
 from ..log_service import LogService
 from ..prompt_service import prompt_service
@@ -33,7 +32,7 @@ class SalesPitchGenerator:
             marketing_model = rag_strategy_creds.get("MARKETING_MODEL") or SYSTEM_MODELS["DEFAULT_TEXT"]
 
             client = genai.Client(api_key=api_key)
-            sys_prompt = prompt_service.get_prompt("SALES_PITCH", SALES_PITCH_SYSTEM_PROMPT)
+            sys_prompt = prompt_service.get_prompt("SALES_PITCH")
 
             @retry_with_backoff(max_retries=2)
             async def _call_gemini() -> Any:

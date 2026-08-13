@@ -91,8 +91,7 @@ Format your response as JSON:
         client = openai.OpenAI(api_key=api_key)
 
         from src.server.services.prompt_service import prompt_service
-        default_instruction = "You are a helpful assistant that analyzes code examples."
-        system_prompt = prompt_service.get_prompt("CODE_EXAMPES_AUDITOR", default=default_instruction)
+        system_prompt = prompt_service.get_prompt("CODE_EXAMPES_AUDITOR")
 
         response = client.chat.completions.create(
             model=model_choice,

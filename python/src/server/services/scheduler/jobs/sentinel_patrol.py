@@ -258,14 +258,7 @@ async def run_api_deprecation_scan() -> None:
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"Auto-Scan: Gemini API Deprecations & Quotas ({datetime.now(cst).strftime('%Y-%m-%d')})"
 
-        default_desc = (
-            "Clockwork has initiated the bi-weekly scan of Google's Gemini API documentation.\n\n"
-            "Please use your RAG and Web capabilities to extract the latest information regarding:\n"
-            "1. Model Deprecations (e.g., gemini-3.1-flash-lite, gemini-3-flash-preview).\n"
-            "2. Free Tier API Rate Limits (RPD, RPM) for the Gemini 3/3.1 series.\n\n"
-            "Provide a summary of any changes that might affect our system stability."
-        )
-        task_desc = prompt_service.get_prompt("API_DEPRECATION_SCAN_PROMPT", default=default_desc)
+        task_desc = prompt_service.get_prompt("API_DEPRECATION_SCAN_PROMPT")
 
         from src.server.repositories.base_repository import BaseRepository
         repo = BaseRepository(supabase)

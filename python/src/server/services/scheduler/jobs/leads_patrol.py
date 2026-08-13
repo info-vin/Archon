@@ -91,16 +91,9 @@ async def run_daily_market_report() -> None:
         lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
         task_title = f"Daily Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
 
-        fallback_str = """Please write an engaging 600-word daily blog post summarizing today's tech job market movements.
-
-Data points ({lead_count} leads):
-{lead_summary}
-
-Focus on industry trends and written in Traditional Chinese (繁體中文).
-Use the tool to save this blog post as a DRAFT."""
 
         from src.server.services.prompt_service import prompt_service
-        prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT", default=fallback_str)
+        prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT")
         task_desc = prompt_template.format(lead_count=len(leads), lead_summary=lead_summary)
 
         success, p_res_dict = base_repo.execute_query(

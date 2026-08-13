@@ -79,14 +79,9 @@ async def run_tech_debt_audit() -> None:
 
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"Auto-Cleanup: Technical Debt Audit ({datetime.now(cst).strftime('%Y-%m-%d')})"
-        fallback_str = (
-            "Clockwork detected the following technical debt that needs archiving or cleanup:\n\n"
-            "{warnings_str}"
-            "\n\nPlease review and clean up the workspace."
-        )
 
         from src.server.services.prompt_service import prompt_service
-        prompt_template = prompt_service.get_prompt("TECH_DEBT_CLEANUP_PROMPT", default=fallback_str)
+        prompt_template = prompt_service.get_prompt("TECH_DEBT_CLEANUP_PROMPT")
         task_desc = prompt_template.format(warnings_str="\n\n".join(warnings))
 
         supabase = get_supabase_client()
@@ -186,14 +181,9 @@ async def run_ssot_audit() -> None:
         logger.info("⚠️ Clockwork: Detected Hardcoded Tech Debt. Creating task for DevBot...")
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"Auto-Cleanup: SSOT Hardcoding Audit ({datetime.now(cst).strftime('%Y-%m-%d')})"
-        fallback_str2 = (
-            "Clockwork detected the following hardcoded values (Network/Models/Prompts) that violate SSOT rules:\n\n"
-            "{warnings_str}"
-            "\n\nPlease extract these to config variables, model_ssot.py, or PromptService."
-        )
 
         from src.server.services.prompt_service import prompt_service
-        prompt_template2 = prompt_service.get_prompt("TECH_DEBT_SSOT_AUDIT_PROMPT", default=fallback_str2)
+        prompt_template2 = prompt_service.get_prompt("TECH_DEBT_SSOT_AUDIT_PROMPT")
         task_desc = prompt_template2.format(warnings_str="\n".join(f"- {w}" for w in warnings))
 
         supabase = get_supabase_client()
@@ -266,10 +256,9 @@ async def run_engineering_retrospective() -> None:
             except Exception:
                 journal_logs = "無法讀取 GEMINI.md"
 
-        from src.server.prompts.pm_prompts import ENGINEERING_RETRO_DEFAULT
         from src.server.services.prompt_service import prompt_service
 
-        prompt_template = prompt_service.get_prompt("ENGINEERING_RETRO_DEFAULT", default=ENGINEERING_RETRO_DEFAULT)
+        prompt_template = prompt_service.get_prompt("ENGINEERING_RETRO_DEFAULT")
         prompt_content = prompt_template.format(
             days=days,
             git_logs=git_logs[:3000],  # truncate if too large

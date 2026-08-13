@@ -6,7 +6,6 @@ from google import genai
 from google.genai import types
 
 from ...config.model_ssot import SYSTEM_MODELS
-from ...prompts.marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT
 from ...repositories.base_repository import BaseRepository
 from ...utils.json_utils import safe_json_loads
 from ...utils.retry_utils import retry_with_backoff
@@ -42,7 +41,7 @@ class BlogGenerator(BaseRepository):
                 return False, {"error_code": 401, "message": "API Key missing"}
 
             client = genai.Client(api_key=api_key)
-            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
+            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT")
             google_search_tool = types.Tool(google_search=types.GoogleSearch())
 
             @retry_with_backoff(max_retries=2)
@@ -162,7 +161,7 @@ class BlogGenerator(BaseRepository):
                 "GEMINI_API_KEY"
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
             client = genai.Client(api_key=api_key)
-            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT", BLOG_DRAFT_SYSTEM_PROMPT)
+            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT")
 
             generated_count = 0
             new_posts = []

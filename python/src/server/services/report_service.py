@@ -99,10 +99,9 @@ class ReportService(BaseRepository):
             logs_summary = self._get_logs_context(cutoff_date)
             tasks_summary = self._get_tasks_context(cutoff_date)
 
-            from src.server.prompts.pm_prompts import REPORT_CONTEXT_DEFAULT
             from src.server.services.prompt_service import prompt_service
 
-            prompt_template = prompt_service.get_prompt("REPORT_CONTEXT_PROMPT", default=REPORT_CONTEXT_DEFAULT)
+            prompt_template = prompt_service.get_prompt("REPORT_CONTEXT_PROMPT")
             return prompt_template.format(
                 end_date_str=now.strftime('%Y-%m-%d'),
                 start_date_str=(now - timedelta(days=days)).strftime('%Y-%m-%d'),
@@ -114,9 +113,8 @@ class ReportService(BaseRepository):
             )
         except Exception as e:
             logger.error(f"Failed to gather report context: {e}", exc_info=True)
-            from src.server.prompts.pm_prompts import REPORT_CONTEXT_FALLBACK
             from src.server.services.prompt_service import prompt_service
-            return prompt_service.get_prompt("REPORT_CONTEXT_FALLBACK", default=REPORT_CONTEXT_FALLBACK)
+            return prompt_service.get_prompt("REPORT_CONTEXT_FALLBACK")
 
     async def _create_summary_task_and_log(
         self,
@@ -192,11 +190,10 @@ class ReportService(BaseRepository):
         """Triggers Star-topology Group Chat for Daily Executive Summary."""
         logger.info("📊 ReportService: Triggering Daily Executive Summary (Group Chat)...")
         try:
-            from src.server.prompts.pm_prompts import DAILY_EXECUTIVE_SUMMARY_DEFAULT
             from src.server.services.prompt_service import prompt_service
 
             context_md = await self.gather_report_context(1)
-            prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT", default=DAILY_EXECUTIVE_SUMMARY_DEFAULT)
+            prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT")
             task_desc = prompt_template.format(context_md=context_md)
 
             await self._create_summary_task_and_log(
@@ -210,7 +207,7 @@ class ReportService(BaseRepository):
             logger.error(f"💥 ReportService: Daily Executive Summary generation failed: {e}", exc_info=True)
             raise e
 
-    async def _execute_map_reduce_summary(self, days: int, title_prefix: str, prompt_key: str, default_prompt: str) -> None:
+    async def _execute_map_reduce_summary(self, days: int, title_prefix: str, prompt_key: str) -> None:
         logger.info(f"📊 ReportService: Triggering {title_prefix} (Map-Reduce)...")
         try:
             from src.agents.workflow.engine_beta_graph import BetaState, beta_graph
@@ -222,7 +219,7 @@ class ReportService(BaseRepository):
             context_md = await report_enrichment_service.inject_nexus_oracle_insights(context_md)
 
             state = BetaState(shared=SharedState())
-            prompt_template = prompt_service.get_prompt(prompt_key, default=default_prompt)
+            prompt_template = prompt_service.get_prompt(prompt_key)
             prompt_content = prompt_template.replace("{context_md}", context_md)
             state.shared.messages = [{"role": "user", "content": prompt_content}]
 
@@ -253,11 +250,9 @@ class ReportService(BaseRepository):
             raise e
 
     async def generate_weekly_executive_summary(self) -> None:
-        from src.server.prompts.pm_prompts import WEEKLY_EXECUTIVE_SUMMARY_DEFAULT
-        await self._execute_map_reduce_summary(7, "Weekly", "WEEKLY_EXECUTIVE_SUMMARY", WEEKLY_EXECUTIVE_SUMMARY_DEFAULT)
+        await self._execute_map_reduce_summary(7, "Weekly", "WEEKLY_EXECUTIVE_SUMMARY")
 
     async def generate_monthly_executive_summary(self) -> None:
-        from src.server.prompts.pm_prompts import MONTHLY_EXECUTIVE_SUMMARY_DEFAULT
-        await self._execute_map_reduce_summary(30, "Monthly", "MONTHLY_EXECUTIVE_SUMMARY", MONTHLY_EXECUTIVE_SUMMARY_DEFAULT)
+        await self._execute_map_reduce_summary(30, "Monthly", "MONTHLY_EXECUTIVE_SUMMARY")
 
 report_service = ReportService()
