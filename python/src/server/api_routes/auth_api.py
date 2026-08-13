@@ -1,5 +1,4 @@
 import logging
-import os
 import traceback
 from typing import Any
 
@@ -39,7 +38,7 @@ async def get_dev_token(x_admin_secret: str | None = Header(None, alias="X-Admin
     from src.server.services.settings_service import SettingsService
     settings = SettingsService()
     admin_secret = settings.get_setting("ADMIN_SECRET")
-    is_prod = settings.get_setting("PROD", "false").lower() == "true"
+    is_prod = str(settings.get_setting("PROD", "false")).lower() == "true"
 
     # Enforce secret check if ADMIN_SECRET is set or if in PROD environment
     if is_prod or admin_secret:

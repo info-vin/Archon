@@ -176,6 +176,7 @@ async def get_fallback_status() -> FallbackStatusDTO:
     internet_connected = False
     try:
         import socket
+
         from ..config.model_ssot import DEFAULT_NETWORK_CHECK_IP
         from ..services.settings_service import SettingsService
         # Attempt to establish a lightweight connection to a public DNS

@@ -4,7 +4,6 @@ Bug Report API for Archon Beta
 Handles bug report submission to GitHub Issues with automatic context formatting.
 """
 
-import os
 from typing import Any
 
 import httpx
@@ -281,6 +280,6 @@ async def bug_report_health() -> BugReportHealthResponse:
         status="healthy" if github_configured else "degraded",
         github_token_configured=github_configured,
         github_repo_configured=repo_configured,
-        repo=settings.get_setting("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha"),
+        repo=str(settings.get_setting("GITHUB_REPO", "dynamous-community/Archon-V2-Alpha")),
         message="Bug reporting is ready" if github_configured else "GitHub token not configured",
     )

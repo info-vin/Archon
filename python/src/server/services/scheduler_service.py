@@ -246,6 +246,9 @@ class SchedulerService:
         health_h, health_m = self._parse_dynamic_hf_time(config, 1)
         await self._schedule_stateful_job(self._run_architecture_health_audit, "architecture_health_audit", 40, self._should_run_weekly, CronTrigger(day_of_week=config.architecture_health_audit_days, hour=health_h, minute=health_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
 
+        retro_h, retro_m = self._parse_dynamic_hf_time(config, 1)
+        await self._schedule_stateful_job(self._run_engineering_retrospective, "weekly_engineering_retro", 41, self._should_run_weekly, CronTrigger(day_of_week=config.weekly_engineering_retro_days, hour=retro_h, minute=retro_m, timezone=DEFAULT_TIMEZONE), "Already run this week")
+
         await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_monthly, CronTrigger(day=config.monthly_summary_day, hour=config.monthly_summary_hour, minute=config.monthly_summary_minute, timezone=DEFAULT_TIMEZONE), "Already run this month")
 
         # --- Category 4: Stateful Bi-weekly Maintenance ---
@@ -280,6 +283,9 @@ class SchedulerService:
     async def _run_api_deprecation_scan(self) -> None: await sentinel_patrol.run_api_deprecation_scan()
     async def _run_task_dispatcher(self) -> None: await task_dispatcher.run_task_dispatcher()
     async def _run_architecture_health_audit(self) -> None: await architecture_patrol.run_architecture_health_audit()
+
+    @API_RETRY_POLICY
+    async def _run_engineering_retrospective(self) -> None: await tech_debt_patrol.run_engineering_retrospective()
 
     @API_RETRY_POLICY
     async def _run_auto_fetch_leads(self) -> None:

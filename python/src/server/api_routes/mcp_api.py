@@ -3,7 +3,6 @@ MCP API Hardened - Connects Agents to external tools and systems.
 Standardized alignment with get_mcp_service_client infrastructure.
 """
 
-import os
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -76,8 +75,8 @@ async def get_mcp_config(current_user: dict = Depends(requires_permission(MCP_MA
     return MCPConfigResponse(
         status="ok",
         mcp_version="1.0.0",
-        transport=mcp_transport,
-        port=int(mcp_port),
+        transport=str(mcp_transport or "http"),
+        port=int(mcp_port or 8051),
         api_endpoint=api_url,
         host="localhost" if "localhost" in api_url else "archon-server",
     )

@@ -121,6 +121,8 @@ class SchedulerConfig(BaseModel):
     # Category 3: Stateful Weekly / Monthly Jobs
     weekly_executive_summary_days: str = Field(default="sun", alias="WEEKLY_EXECUTIVE_SUMMARY_DAYS")
     architecture_health_audit_days: str = Field(default="fri", alias="ARCHITECTURE_HEALTH_AUDIT_DAYS")
+    weekly_engineering_retro_days: str = Field(default="sat", alias="WEEKLY_ENGINEERING_RETRO_DAYS")
+    weekly_engineering_retro_lookback_days: int = Field(default=7, alias="WEEKLY_ENGINEERING_RETRO_LOOKBACK_DAYS")
     monthly_summary_day: int = Field(default=1, alias="MONTHLY_SUMMARY_DAY")
     monthly_summary_hour: int = Field(default=9, alias="MONTHLY_SUMMARY_HOUR")
     monthly_summary_minute: int = Field(default=0, alias="MONTHLY_SUMMARY_MINUTE")

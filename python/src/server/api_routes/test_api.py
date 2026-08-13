@@ -1,15 +1,15 @@
 # python/src/server/api_routes/test_api.py
-import os
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from supabase import Client  # Needed for type hinting for get_supabase_client
 
-from ..services.client_manager import get_supabase_client  # Found this definition
-
 # This router should only be included if the environment allows it.
 # This ensures test-specific endpoints are not exposed in production.
 from src.server.services.settings_service import SettingsService
+
+from ..services.client_manager import get_supabase_client  # Found this definition
+
 if SettingsService().get_setting("ENABLE_TEST_ENDPOINTS") != "true":
     # If the env var is not set, we create a dummy router that does nothing.
     router = APIRouter()

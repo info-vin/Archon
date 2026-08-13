@@ -75,3 +75,20 @@ MONTHLY_EXECUTIVE_SUMMARY_DEFAULT = """這是過去 30 天的系統運行上下�
 要求：
 1. 所有的商業行銷數據、Token成本花費、系統警示數量，皆必須使用 Markdown 表格進行結構化對照，禁止純文字描述。
 2. 在數據表格段落的上方，必須顯示並列出各項比率（如歸檔率、轉換率等）的計算來源與名詞定義（例如分子/分母公式），確保數據無歧義。"""
+
+ENGINEERING_RETRO_DEFAULT = """你是 DevBot (Engineering)，這是一份為期 {days} 天的系統工程反思會議 (Weekly Engineering Retrospective)。
+
+以下是這段期間的實體工程紀錄與技術債清理日誌：
+
+【Git Commit 紀錄】
+{git_logs}
+
+【GEMINI.md 近期架構工作日誌】
+{journal_logs}
+
+請啟動星環群聊，由你主持，並主動標記 POBot (Product) 與 Supervisor (Business) 進行跨維度討論。
+要求：
+1. 分析這段時間解決了哪些深層技術債？架構上做出了哪些重構？
+2. 從 POBot 的視角探討這些重構對產品的穩定性與未來擴展性有何幫助。
+3. 從 Supervisor 的視角探討這些改動對商業運營（如減少當機、降低維護成本）的正面效益。
+4. 最後，總結出 2~3 條「工程經驗值 (Lessons Learned)」作為我們下週開發的最高指導原則。"""

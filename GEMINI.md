@@ -120,6 +120,11 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026/08/13: Phase 5.10.1~12 全域實體公證與排程無斷層驗證 (Phase Audit & Scheduler Verification)
+- **實體代碼對帳 (Physical Evidence Audit)**: 完成對 Phase 5.10.1 至 5.10.12 共 12 份 PRPs 的零改動靜態掃描。核實 `CRAWLER_JOB_LIMIT`, `ALICE_AUTO_FETCH_DAYS`, `CRAWLER_MAX_PAGES` 皆已落實於 `settings.py` (SSOT) 且無硬編碼。
+- **排程與 DAG 斷層防禦**: 驗證了排程任務完全遵守 DRY 原則，採用事件驅動 (Event-Driven DAG) 取代僵化的固定時間（`bob_market_report` 在 `alice_auto_fetch` 成功後自動觸發）。確認 `check_and_resume_dag` 具備在伺服器重啟時無縫接力未完成排程的容錯自癒能力。
+- **證據至上 (Evidence First)**: 摒棄「樂觀路徑」與無意義的 AI 承諾用語，完全基於實體的型別掃描結果、Schema 建立順序、與代碼映射 (`retry_count`) 提出 100% 物理對齊的分析。
+
 ### 2026/08/12: Phase 5.10.x 完整性稽核與清理作業 (Phase Audit)
 - **實體代碼對帳 (Code-to-Doc Parity)**: 執行 `phase-audit` 技能，確認 Phase 5.10.x 的所有 PRPs 皆已在代碼與單元測試中落地（如 `crawler_max_pages` 確實寫入 SSOT 並於 `job_board_service.py` 實裝），消除 0 斷層與虛假開發。
 - **嚴格品質門禁 (Quality Gates)**: 透過全局掃描公證了 382 個 Python 檔案 (Mypy/Ruff 100% 通過) 與 659 項自動化測試 (✅ 646 通過, 9 skipped, 4 xfailed)，確認無任何迴歸損壞，且嚴格禁止 `.single()` 語法。
