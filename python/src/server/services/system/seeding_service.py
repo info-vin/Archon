@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 import aiofiles
 from supabase import Client
