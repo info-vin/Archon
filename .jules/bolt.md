@@ -187,3 +187,7 @@
 ## 2026-08-11 - Pre-calculating lookup maps to replace Array.prototype.find() in render loops
 **Learning:** Calling `Array.prototype.find()` inside React render loops or inside `Array.prototype.sort()` comparators causes O(N) or O(N log N) overhead on every render cycle. This scales poorly when the arrays grow large.
 **Action:** Always pre-calculate lookup maps (using `useMemo` and `Map`) outside of the render loop to guarantee fast O(1) property access.
+
+## 2026-08-12 - Re-evaluating inline string manipulations vs Object creation
+**Learning:** Extracting simple inline string manipulations (like `.replace(/_/g, ' ').toUpperCase()`) into static caching dictionaries was flagged as a *non-blocking* nitpick during code review, as modern JS engines execute these in nanoseconds and property lookup overhead can sometimes cancel out theoretical benefits for very simple operations. However, for the sake of strict memory allocation reduction inside large render loops, it remains a valid micro-optimization. The more critical learning is the necessity of providing robust fallback logic (e.g., `|| r.replace('_', ' ').toUpperCase()`) to prevent functional regressions if unknown enums or data are passed to the UI.
+**Action:** When creating static lookup dictionaries to replace runtime operations, *always* include a runtime fallback that performs the original operation for unknown keys, ensuring forward compatibility with backend data changes. Also, ensure dictionaries are not duplicated across files to adhere to DRY principles.
