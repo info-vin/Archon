@@ -3,6 +3,23 @@ import { Employee } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, FileTextIcon } from '@/components/Icons';
 
+// PERFORMANCE: Precalculate explicit lookup dictionary for role display names outside the render loop
+// to prevent O(N) repetitive string memory allocations (.replace().toUpperCase()) during list rendering.
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+    'system_admin': 'SYSTEM ADMIN',
+    'admin': 'ADMIN',
+    'manager': 'MANAGER',
+    'project_manager': 'PROJECT MANAGER',
+    'senior_member': 'SENIOR MEMBER',
+    'member': 'MEMBER',
+    'employee': 'EMPLOYEE',
+    'sales': 'SALES',
+    'marketing': 'MARKETING',
+    'viewer': 'VIEWER',
+    'ai_agent': 'AI AGENT'
+};
+
+
 // PERFORMANCE: Hoisted Intl.NumberFormat to avoid expensive re-instantiations during render
 const numberFormatter = new Intl.NumberFormat();
 
@@ -46,7 +63,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                         <p className="text-sm text-gray-500 truncate">{member.position}</p>
                         <div className={`mt-1 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${roleClasses}`}>
                             <BadgeCheckIcon className="w-3 h-3" />
-                            <span className="truncate">{member.role.toUpperCase().replace('_', ' ')}</span>
+                            <span className="truncate">{ROLE_DISPLAY_NAMES[member.role] || member.role.replace('_', ' ').toUpperCase()}</span>
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,23 @@ import { Employee, EmployeeRole } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { XIcon, RefreshCwIcon, ShieldCheckIcon, KeyIcon } from '@/components/Icons';
 
+// PERFORMANCE: Precalculate explicit lookup dictionary for role display names outside the render loop
+// to prevent O(N) repetitive string memory allocations (.replace().toUpperCase()) during list rendering.
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+    [EmployeeRole.SYSTEM_ADMIN]: 'SYSTEM ADMIN',
+    [EmployeeRole.ADMIN]: 'ADMIN',
+    [EmployeeRole.MANAGER]: 'MANAGER',
+    [EmployeeRole.PROJECT_MANAGER]: 'PROJECT MANAGER',
+    [EmployeeRole.SENIOR_MEMBER]: 'SENIOR MEMBER',
+    [EmployeeRole.MEMBER]: 'MEMBER',
+    [EmployeeRole.EMPLOYEE]: 'EMPLOYEE',
+    [EmployeeRole.SALES]: 'SALES',
+    [EmployeeRole.MARKETING]: 'MARKETING',
+    [EmployeeRole.VIEWER]: 'VIEWER',
+    [EmployeeRole.AI_AGENT]: 'AI AGENT'
+};
+
+
 interface ManageMemberModalProps {
     member: Employee;
     onClose: () => void;
@@ -107,7 +124,7 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                                 onChange={e => setRole(e.target.value as EmployeeRole)}
                                 className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             >
-                                {Object.values(EmployeeRole).map(r => <option key={r} value={r}>{r.replace('_', ' ').toUpperCase()}</option>)}
+                                {Object.values(EmployeeRole).map(r => <option key={r} value={r}>{ROLE_DISPLAY_NAMES[r] || r.replace('_', ' ').toUpperCase()}</option>)}
                             </select>
                         </div>
                         <button 
