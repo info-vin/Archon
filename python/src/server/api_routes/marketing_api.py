@@ -14,6 +14,7 @@ from src.server.schemas.marketing import (
     ApprovalRequest,
     DraftBlogRequest,
     DraftFromLeadsRequest,
+    LeadActionResponse,
     LeadCreateRequest,
     LeadResponse,
     LeadUpdateRequest,
@@ -64,13 +65,13 @@ async def list_leads(current_user: UserProfileDTO = Depends(get_current_user)) -
     return [LeadResponse(**lead) for lead in leads]
 
 
-@router.post("/leads")
-async def create_lead(req: LeadCreateRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/leads", response_model=LeadActionResponse)
+async def create_lead(req: LeadCreateRequest, current_user: UserProfileDTO = Depends(get_current_user)) -> LeadActionResponse:
     service = MarketingService()
     success, res = await service.create_lead(req.model_dump(), creator_id=str(current_user.id))
     if not success:
         _err(str(res), 400)
-    return res
+    return LeadActionResponse(lead=res["lead"])
 
 
 @router.post("/leads/reset")
@@ -80,13 +81,13 @@ async def reset_leads(current_user: dict = Depends(requires_permission(CONTENT_P
     return {"success": success}
 
 
-@router.patch("/leads/{lead_id}")
-async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.patch("/leads/{lead_id}", response_model=LeadActionResponse)
+async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)) -> LeadActionResponse:
     service = MarketingService()
     success, res = await service.update_lead(lead_id, req.model_dump(exclude_unset=True))
     if not success:
         _err(str(res), 400)
-    return res
+    return LeadActionResponse(lead=res["lead"])
 
 
 @router.post("/leads/{lead_id}/promote")
