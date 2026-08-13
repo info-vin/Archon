@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from src.server.models.auth_models import UserProfileDTO
 
@@ -9,6 +10,11 @@ from ..auth.permissions import MCP_MANAGE, TASK_READ_TEAM
 from ..services.health_service import HealthService, HealthStatusResult
 from ..services.scout_ingestion_service import ScoutIngestionResultDTO
 from ..services.system_service import ConnectivityLogDTO, SystemSettingDTO
+
+
+class FallbackStatusDTO(BaseModel):
+    active_tier: int = Field(description="The currently active fallback model tier.")
+    internet_connected: bool = Field(description="Indicates whether the system has active internet connectivity.")
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
@@ -170,8 +176,8 @@ async def update_system_setting(
         raise HTTPException(status_code=404, detail=str(e)) from e
 
 
-@router.get("/fallback/status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_fallback_status() -> dict[str, Any]:
+@router.get("/fallback/status", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=FallbackStatusDTO)
+async def get_fallback_status() -> FallbackStatusDTO:
     """
     Returns the currently active fallback model tier and internet connectivity status.
     Requires TASK_READ_TEAM permission.
@@ -190,7 +196,7 @@ async def get_fallback_status() -> dict[str, Any]:
     except Exception:
         pass
 
-    return {
-        "active_tier": active_tier,
-        "internet_connected": internet_connected
-    }
+    return FallbackStatusDTO(
+        active_tier=active_tier,
+        internet_connected=internet_connected
+    )
