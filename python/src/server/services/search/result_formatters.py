@@ -2,10 +2,20 @@
 Result formatters and context extractors for search results.
 """
 
-from typing import Any
+from typing import Any, TypedDict
 
 
-def extract_code_context(result: dict[str, Any]) -> dict[str, Any]:
+class CodeContext(TypedDict, total=False):
+    """DTO for code extraction context."""
+    language: str
+    framework: str
+    file_path: str
+    line_range: str
+    content_length: int
+    line_count: int
+
+
+def extract_code_context(result: dict[str, Any]) -> CodeContext:
     """
     Extract additional context information from a code example result.
 
@@ -13,9 +23,9 @@ def extract_code_context(result: dict[str, Any]) -> dict[str, Any]:
         result: Raw search result from database
 
     Returns:
-        Dictionary with contextual information
+        CodeContext with contextual information
     """
-    context = {}
+    context: CodeContext = {}
 
     metadata = result.get("metadata", {})
     if isinstance(metadata, dict):
