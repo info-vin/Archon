@@ -6,8 +6,8 @@ from curl_cffi.requests import Session
 from supabase import Client
 
 from ..config.logfire_config import get_logger
-from ..schemas.settings import CrawlerJobConfig
 from ..repositories.base_repository import BaseRepository
+from ..schemas.settings import CrawlerJobConfig
 from ..utils import get_supabase_client
 
 # Import new crawler client
@@ -62,11 +62,7 @@ class JobBoardService(BaseRepository):
     async def search_jobs(self, keyword: str, limit: int = 8, client: Session | None = None, page: int = 1) -> list[JobData]:
         # Delegate search to crawler
         jobs = await self.crawler.search_jobs(keyword, limit, client, page=page)
-        # Infer Needs (Async AI processing concurrently)
-        import asyncio
-        needs = await asyncio.gather(*(self.evaluator.infer_need(job) for job in jobs))
-        for job, need in zip(jobs, needs, strict=False):
-            job.identified_need = need
+        for job in jobs:
             job.keyword = keyword
         return jobs
 
@@ -82,13 +78,16 @@ class JobBoardService(BaseRepository):
         session = self.crawler.create_session()
         try:
             blocked = False
-            for page in range(1, max_pages + 1):
-                logger.info(f"Crawling page {page} for all keywords...")
-                for keyword in keywords:
+            for keyword in keywords:
+                keyword_new_leads = 0
+                for page in range(1, max_pages + 1):
+                    logger.info(f"Crawling page {page} for keyword '{keyword}'...")
                     try:
                         jobs = await self.search_jobs(keyword, limit=limit, client=session, page=page)
                         if jobs:
-                            total_new_leads += await self.identify_leads_and_save(jobs)
+                            new_leads = await self.identify_leads_and_save(jobs)
+                            keyword_new_leads += new_leads
+                            total_new_leads += new_leads
                     except CrawlerBlockedException as e:
                         logger.error(f"Crawler blocked by WAF for '{keyword}': {e}")
                         self._log_archon(
@@ -100,16 +99,17 @@ class JobBoardService(BaseRepository):
                         break  # Stop crawling other keywords if blocked
                     except Exception as e:
                         logger.error(f"Error auto-fetching for '{keyword}' on page {page}: {e}")
+
                     await asyncio.sleep(random.uniform(config.crawler_waf_delay_min, config.crawler_waf_delay_max))
+
+                    if keyword_new_leads > 0:
+                        logger.info(f"Successfully fetched {keyword_new_leads} new leads for '{keyword}'. Moving to next keyword.")
+                        break
+                    else:
+                        logger.info(f"0 leads fetched for '{keyword}' after page {page}. Falling back to next page...")
 
                 if blocked:
                     break
-
-                if total_new_leads > 0:
-                    logger.info(f"Successfully fetched {total_new_leads} new leads. Stopping auto-fetch.")
-                    break
-                else:
-                    logger.info(f"0 leads fetched after page {page}. Falling back to next page...")
         finally:
             session.close()
 

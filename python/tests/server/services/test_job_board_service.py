@@ -224,8 +224,8 @@ async def test_hybrid_funnel_missing_agents_md(monkeypatch):
 @pytest.mark.asyncio
 async def test_auto_fetch_pagination_fallback():
     """
-    Test that auto_fetch_daily_leads iterates through pages if no leads are found,
-    but stops iterating once total_new_leads > 0.
+    Test that auto_fetch_daily_leads iterates through pages for a keyword if no leads are found,
+    but stops paging for that keyword once keyword_new_leads > 0.
     """
     service = JobBoardService()
 
@@ -233,50 +233,38 @@ async def test_auto_fetch_pagination_fallback():
     mock_config = Mock()
     mock_config.crawler_job_keywords = "Python,AI"
     mock_config.crawler_job_limit = 2
-    mock_config.crawler_max_pages = 3
+    mock_config.crawler_max_pages = 2
     mock_config.crawler_waf_delay_min = 0.0
     mock_config.crawler_waf_delay_max = 0.0
 
     with patch.object(service, '_get_crawler_config', return_value=mock_config):
-        # We will mock search_jobs to return dummy jobs
-        # Page 1: returns jobs, but identify_leads_and_save returns 0
-        # Page 2: returns jobs, identify_leads_and_save returns 1 (success)
-        # Page 3: should not be called
 
         async def mock_search_jobs(keyword, limit, client, page):
-            if page > 2:
-                raise Exception("Should not reach page 3")
             return [JobData(title=f"{keyword} Job P{page}", company="Test", url="http://test", description="")]
 
         with patch.object(service, 'search_jobs', side_effect=mock_search_jobs) as mock_search:
 
-            # mock identify_leads_and_save to return 0 on page 1, and 1 on page 2
-            # Since there are 2 keywords (Python, AI), identify_leads_and_save is called twice per page.
-            # Call 1 (Python, P1): returns 0
-            # Call 2 (AI, P1): returns 0
-            # Call 3 (Python, P2): returns 1
-            # Call 4 (AI, P2): should not be called because Python P2 succeeded? Wait, the break is at the end of the page loop.
-            # So AI P2 will be called, let it return 0. Total = 1.
-
             async def mock_identify_leads(jobs):
-                if "P1" in jobs[0].title:
-                    return 0
-                if "P2" in jobs[0].title and "Python" in jobs[0].title:
+                # Python finds a lead on page 1
+                if "Python" in jobs[0].title and "P1" in jobs[0].title:
+                    return 1
+                # AI finds a lead on page 2
+                if "AI" in jobs[0].title and "P2" in jobs[0].title:
                     return 1
                 return 0
 
             with patch.object(service, 'identify_leads_and_save', side_effect=mock_identify_leads):
-                # We also need to mock crawler.create_session
                 service.crawler = Mock()
                 service.crawler.create_session.return_value = Mock()
 
                 total = await service.auto_fetch_daily_leads()
 
-                # Should return 1 lead
-                assert total == 1
+                # Should return 2 leads (1 from Python P1, 1 from AI P2)
+                assert total == 2
 
-                # search_jobs should have been called 4 times (2 keywords * 2 pages)
-                assert mock_search.call_count == 4
-                # Verify arguments of the last call
-                mock_search.assert_any_call("AI", limit=2, client=service.crawler.create_session(), page=2)
+                # search_jobs should have been called 3 times:
+                # Python P1 (success -> breaks)
+                # AI P1 (fail -> continues)
+                # AI P2 (success -> breaks)
+                assert mock_search.call_count == 3
 
