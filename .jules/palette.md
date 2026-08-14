@@ -31,3 +31,6 @@
 ## 2026-08-13 - Focus Styles on Action Buttons in BrandDashboardView
 **Learning:** Found that the action buttons (edit, pro, review, publish, delete) in the Kanban columns on the BrandDashboardView lacked explicit focus rings. While these buttons are interactive and styled nicely for mouse hover states, they were completely invisible to keyboard navigation.
 **Action:** Applied the application's standard `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` to all action buttons in the BrandDashboardView Kanban feed list items.
+## 2026-08-14 - Missing Focus Rings on Dashboard View Mode Toggles
+**Learning:** Found that the primary view mode toggle buttons (list, table, kanban, gantt) and action buttons in the main Dashboard layout lacked clear keyboard focus indicators.
+**Action:** When adding or reviewing layout-level navigational or toggle buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` (or appropriate offset/color) are explicitly applied for keyboard accessibility.
