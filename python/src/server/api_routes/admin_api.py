@@ -203,22 +203,32 @@ class CrawlerTargetCreate(BaseModel):
     description: str | None = None
 
 
-@router.get("/crawler-targets", dependencies=[Depends(verify_manager_role)])
-async def list_crawler_targets(current_user: UserProfileDTO = Depends(get_current_user)):
+class CrawlerTargetResponse(CrawlerTargetCreate):
+    id: str
+    department: str | None
+    created_at: str
+
+
+@router.get("/crawler-targets", dependencies=[Depends(verify_manager_role)], response_model=list[CrawlerTargetResponse])
+async def list_crawler_targets(current_user: UserProfileDTO = Depends(get_current_user)) -> list[CrawlerTargetResponse]:
     """List specialized crawler targets (Respects Department Isolation)."""
     dept = None
     if current_user.role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN]:
         dept = current_user.department
-    return await admin_service.list_crawler_targets(department=dept)
+    from typing import cast
+    res = await admin_service.list_crawler_targets(department=dept)
+    return cast(list[CrawlerTargetResponse], res)
 
 
-@router.post("/crawler-targets", dependencies=[Depends(verify_manager_role)])
-async def create_crawler_target(request: CrawlerTargetCreate, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/crawler-targets", dependencies=[Depends(verify_manager_role)], response_model=CrawlerTargetResponse, status_code=201)
+async def create_crawler_target(request: CrawlerTargetCreate, current_user: UserProfileDTO = Depends(get_current_user)) -> CrawlerTargetResponse:
     """Add a new target associated with the manager's department."""
     data = request.model_dump()
     data["department"] = current_user.department
     try:
-        return await admin_service.create_crawler_target(data)
+        from typing import cast
+        res = await admin_service.create_crawler_target(data)
+        return cast(CrawlerTargetResponse, res)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
