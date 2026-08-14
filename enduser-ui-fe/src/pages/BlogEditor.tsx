@@ -137,8 +137,9 @@ const BlogEditor: React.FC = () => {
                 {/* Editor Column */}
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Post Title</label>
+                        <label htmlFor="post-title" className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Post Title</label>
                         <input 
+                            id="post-title"
                             type="text" 
                             value={post.title}
                             onChange={(e) => setPost({...post, title: e.target.value})}
@@ -148,8 +149,9 @@ const BlogEditor: React.FC = () => {
                     </div>
 
                     <div>
-                         <label className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Excerpt</label>
+                         <label htmlFor="post-excerpt" className="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Excerpt</label>
                          <textarea 
+                            id="post-excerpt"
                             value={post.excerpt}
                             onChange={(e) => setPost({...post, excerpt: e.target.value})}
                             className="w-full text-sm bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all placeholder:text-gray-300 resize-none h-24"
@@ -193,7 +195,7 @@ const BlogEditor: React.FC = () => {
 
                     <div className="flex-1 min-w-0 flex flex-col">
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-gray-500">Main Content (Markdown)</label>
+                            <label htmlFor="post-content" className="text-xs font-black uppercase tracking-widest text-gray-500">Main Content (Markdown)</label>
                             <button 
                                 onClick={() => setShowImagePicker('markdown')}
                                 className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg"
@@ -202,6 +204,7 @@ const BlogEditor: React.FC = () => {
                             </button>
                         </div>
                         <textarea 
+                            id="post-content"
                             value={showDiff && suggestedContent ? suggestedContent : post.content}
                             onChange={(e) => {
                                 if (showDiff && suggestedContent) {
