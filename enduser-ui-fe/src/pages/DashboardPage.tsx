@@ -81,7 +81,7 @@ const DashboardPage: React.FC = () => {
               aria-label="List view" 
               title="List view" 
               aria-pressed={viewMode === 'list'} 
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
+              className={`p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${viewMode === 'list' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
             >
               <ListIcon className="h-5 w-5" />
             </button>
@@ -90,7 +90,7 @@ const DashboardPage: React.FC = () => {
               aria-label="Table view" 
               title="Table view" 
               aria-pressed={viewMode === 'table'} 
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'table' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
+              className={`p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${viewMode === 'table' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
             >
               <TableIcon className="h-5 w-5" />
             </button>
@@ -99,7 +99,7 @@ const DashboardPage: React.FC = () => {
               aria-label="Kanban view" 
               title="Kanban view" 
               aria-pressed={viewMode === 'kanban'} 
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
+              className={`p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${viewMode === 'kanban' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
             >
               <KanbanIcon className="h-5 w-5" />
             </button>
@@ -108,7 +108,7 @@ const DashboardPage: React.FC = () => {
               aria-label="Gantt chart view" 
               title="Gantt chart view" 
               aria-pressed={viewMode === 'gantt'} 
-              className={`p-1.5 rounded-md transition-colors ${viewMode === 'gantt' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
+              className={`p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${viewMode === 'gantt' ? 'bg-background shadow-sm' : 'hover:bg-background/50'}`}
             >
               <GanttChartIcon className="h-5 w-5" />
             </button>
@@ -116,7 +116,7 @@ const DashboardPage: React.FC = () => {
 
           <button
             onClick={() => setIsTaskModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-bold transition-all shadow-lg hover:shadow-indigo-200"
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-bold transition-all shadow-lg hover:shadow-indigo-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
           >
             <PlusIcon className="h-4 w-4" />
             <span>New Task</span>
@@ -125,7 +125,7 @@ const DashboardPage: React.FC = () => {
           {isAdmin && (
             <button
               onClick={() => setIsProjectModalOpen(true)}
-              className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-bold transition-all border border-slate-200"
+              className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-bold transition-all border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
             >
               <PlusIcon className="h-4 w-4" />
               <span>Project</span>
