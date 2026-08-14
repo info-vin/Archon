@@ -2,10 +2,20 @@
 Query analyzer for code search intent.
 """
 
-from typing import Any
+from typing import TypedDict
 
 from .dictionaries.frameworks import FRAMEWORKS
 from .dictionaries.languages import PROGRAMMING_LANGUAGES
+
+
+class CodeQueryAnalysisResult(TypedDict):
+    """DTO for code query analysis results."""
+    is_code_query: bool
+    confidence: float
+    languages: list[str]
+    frameworks: list[str]
+    code_indicators: list[str]
+    enhanced_query_recommended: bool
 
 CODE_KEYWORDS = [
     "function",
@@ -26,7 +36,7 @@ CODE_KEYWORDS = [
 ]
 
 
-def analyze_code_query(query: str) -> dict[str, Any]:
+def analyze_code_query(query: str) -> CodeQueryAnalysisResult:
     """
     Analyze a query to determine if it's code-related and extract relevant information.
 
@@ -57,7 +67,7 @@ def analyze_code_query(query: str) -> dict[str, Any]:
     }
 
 
-def analyze_query_for_code_search(query: str) -> dict[str, Any]:
+def analyze_query_for_code_search(query: str) -> CodeQueryAnalysisResult:
     """
     Standalone function to analyze if a query is code-related.
     """

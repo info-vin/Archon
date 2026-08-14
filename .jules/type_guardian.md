@@ -7,3 +7,6 @@
 ## 2025-03-09 - Optional Dependencies in Service Layers
 **Learning:** External dependencies like `curl_cffi` may need to be imported at the module level when used for typing (e.g., `Session`) instead of using untyped `Any`, provided they are part of the core environment (which we verify via standard tests).
 **Action:** When replacing `Any` types with objects from external clients, import the concrete class from the client module.
+## 2024-08-14 - Use TypedDict for backward compatibility
+**Learning:** When refactoring existing services to return structured DTOs instead of `dict[str, Any]`, using `@dataclass` or `BaseModel` can break downstream callers and tests that use dictionary subscripting (e.g., `result["key"]`), resulting in `TypeError`.
+**Action:** Use `TypedDict` for DTOs in incremental refactors where you cannot guarantee all call sites are simultaneously updated, as it provides static type safety while remaining 100% backward compatible at runtime.

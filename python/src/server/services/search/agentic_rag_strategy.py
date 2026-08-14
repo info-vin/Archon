@@ -232,7 +232,11 @@ async def search_code_examples_agentic(
     return await strategy.search_code_examples(query, match_count, filter_metadata, source_id)
 
 
-def analyze_query_for_code_search(query: str) -> dict[str, Any]:
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.server.services.search.query_analyzer import CodeQueryAnalysisResult
+
+def analyze_query_for_code_search(query: str) -> "CodeQueryAnalysisResult":
     """
     Standalone function to analyze if a query is code-related.
 
@@ -240,7 +244,7 @@ def analyze_query_for_code_search(query: str) -> dict[str, Any]:
         query: Query to analyze
 
     Returns:
-        Analysis results
+        CodeQueryAnalysisResult: Analysis results
     """
     from src.server.services.search.query_analyzer import analyze_code_query
 
