@@ -28,7 +28,7 @@ def test_lead_lifecycle_mobile_ops(mock_admin):
 
     # 2. Create Lead
     with patch("src.server.api_routes.marketing_api.MarketingService.create_lead") as mock_create:
-        mock_create.return_value = (True, {"lead": {"id": "l1"}})
+        mock_create.return_value = (True, {"lead": {"id": "12345678-1234-5678-1234-567812345678", "company_name": "TestCorp"}})
         res = client.post("/api/marketing/leads", json={"company_name": "TestCorp"})
         assert res.status_code == 200
 
