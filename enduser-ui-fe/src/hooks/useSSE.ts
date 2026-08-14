@@ -17,7 +17,7 @@ export function useSSE() {
     console.log('📡 Initializing SSE connection to:', sseUrl);
 
     if (typeof window === 'undefined' || typeof EventSource === 'undefined') {
-      console.warn('📡 EventSource is not supported in this environment (likely tests). Skipping SSE initialization.');
+      console.log('📡 SSE Mocked for testing');
       return;
     }
 
