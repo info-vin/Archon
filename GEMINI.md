@@ -120,44 +120,46 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026/08/13: Phase 5.10.1~12 全域實體公證與排程無斷層驗證 (Phase Audit & Scheduler Verification)
-- **實體代碼對帳 (Physical Evidence Audit)**: 完成對 Phase 5.10.1 至 5.10.12 共 12 份 PRPs 的零改動靜態掃描。核實 `CRAWLER_JOB_LIMIT`, `ALICE_AUTO_FETCH_DAYS`, `CRAWLER_MAX_PAGES` 皆已落實於 `settings.py` (SSOT) 且無硬編碼。
-- **排程與 DAG 斷層防禦**: 驗證了排程任務完全遵守 DRY 原則，採用事件驅動 (Event-Driven DAG) 取代僵化的固定時間（`bob_market_report` 在 `alice_auto_fetch` 成功後自動觸發）。確認 `check_and_resume_dag` 具備在伺服器重啟時無縫接力未完成排程的容錯自癒能力。
-- **證據至上 (Evidence First)**: 摒棄「樂觀路徑」與無意義的 AI 承諾用語，完全基於實體的型別掃描結果、Schema 建立順序、與代碼映射 (`retry_count`) 提出 100% 物理對齊的分析。
-
-### 2026/08/12: Phase 5.10.x 完整性稽核與清理作業 (Phase Audit)
-- **實體代碼對帳 (Code-to-Doc Parity)**: 執行 `phase-audit` 技能，確認 Phase 5.10.x 的所有 PRPs 皆已在代碼與單元測試中落地（如 `crawler_max_pages` 確實寫入 SSOT 並於 `job_board_service.py` 實裝），消除 0 斷層與虛假開發。
-- **嚴格品質門禁 (Quality Gates)**: 透過全局掃描公證了 382 個 Python 檔案 (Mypy/Ruff 100% 通過) 與 659 項自動化測試 (✅ 646 通過, 9 skipped, 4 xfailed)，確認無任何迴歸損壞，且嚴格禁止 `.single()` 語法。
-- **安全隔離與防禦性清理**: 準備清理 `scratch/` 內的 29 個一次性腳本前，透過全域 `grep_search` 掃描 `import scratch` 與依賴路徑，物理公證其為「絕對無相依」的孤島後，才安全執行刪除，貫徹「不要刪了就壞掉」的安全防線。
-
-### 2026/08/12: MCP 依賴鎖定與 Docker 架構防禦 (Phase 5.10.11)
-- **拒絕猜測與實證主義 (No Guessing)**: 糾正了對「爬蟲無產出資料」的錯誤猜測。實際原因為「開發環境 Docker 尚未啟動」，而非程式碼 Bug。學到教訓：在質疑系統出錯前，必須先透過日誌確認服務「是否有被觸發 (Triggered)」，嚴禁在真空環境中腦補 Bug。
-- **Docker 依賴防禦與 `uv export`**: 解決了 `archon-mcp` 啟動時因 `uv` 動態抓取最新 `mcp` SDK (1.27.1 移除了 fastmcp) 導致的 `ModuleNotFoundError`。拒絕了使用 `uv sync` 會改變虛擬環境路徑的「樂觀路徑」，改採「防禦性設計」，使用 `uv export` 從 `uv.lock` 匯出 `requirements.txt` 後，再以 `uv pip install -r requirements.txt` 安裝。
-- **全局 Dockerfile 審查**: 修復時，學到必須「全域盤點」所有潛在受影響的服務。不能只修改 `Dockerfile.server`，而遺漏了真正負責 `archon-mcp` 建置的 `Dockerfile.mcp`。
-- **自動化公證**: 撰寫並通過了全新的自動化驗證腳本 (`verify_mcp_fix.sh`)，在無快取重建後公證了 MCP 容器 100% 成功啟動，落實「不要改東又壞西」的品質承諾。
-- **Docker Build Context 效能盲點 (ENOSPC 預防)**: 查明 `make dev` 突然變慢的根本原因並非程式碼修改，而是 `ollama_data` (3.5GB) 長期未加入 `.dockerignore`。因為修改後端代碼打破了快取，導致全域 Context 重建而暴露了此問題。將其加入 `.dockerignore` 後，傳輸量瞬間從 3.5GB 降至 13KB，並執行 `docker system prune -f` 釋放 36.8GB 懸空快取，成功防範了歷史 ENOSPC 危機重演。
-- **殭屍處理程序 (Zombie Process) 清理**: 在中斷 `make dev` 後，遇到 Vite 伺服器殘留導致 `Port 3737 is already in use`。透過 `lsof -i :3737 -t | xargs kill -9` 快速物理超渡殭屍程序，確保開發環境通訊埠淨空。
-### 2026/08/10: 週期任務容錯硬化與前端音效渲染 (Phase 5.10.9)
-- **後端容錯與權限防護**: 將 Podcast 音檔連結從公開的 `get_public_url` 升級為 7 天時效的 `create_signed_url`。於 `report_service.py` 加入 Exception 攔截，若建立任務失敗則立即中斷，並利用 `try-except` 包覆 Telegram 推播，防範網路超時引發 apscheduler Retry Storm 造成任務重複建立。
-- **前端佈局與渲染重構**: 解除 `ManagerNexus.tsx` 造成畫面鎖死的 `min-h-screen` 限制。抽離並建立 `AudioMarkdownRenderer.tsx` 模組，將原本純文字的音檔 Markdown 連結攔截並渲染為原生 `<audio>` 播放器，落實 SSOT 與 DRY 原則。
-- **品質公證**: 同步更新 `test_report_service.py` 內的 Mock 返回值以相容 `create_signed_url` 結構，成功通過 645 項後端 Pytest 驗證與 93 項前端 Vitest 公證，確保 0 副作用。
-
-### 2026/08/08: 日報排程極限推演與環境自癒 (Phase 5.10)
-- **死鎖修復與自癒**: 解決了 `archon-server` 因 Supabase 初始化失敗引發 `__del__` 無限遞迴的問題。同時修復了 `BaseRepository.execute_query` 在處理 Supabase v2 Builder 物件時缺少 `.execute()` 造成的 `SyncQueryRequestBuilder` 報錯，確保背景報告任務順利產出。
-- **爬蟲極限數學建模**: 針對 104 WAF 隨機延遲 (6.5s) 與 Gemini 3.1 Rate Limit (4.5s/次)，反向推演了 25 分鐘物理極限。最終將 `CRAWLER_JOB_LIMIT` 下調至精確的 `32` 筆，確保系統在全併發下依然穩定不超時，成功達成 11% 高品質 Leads 轉換率與極低耗損 ($0.01 USD)。
-- **DAG 事件鏈釐清**: 確認系統的行銷與高階日報採「事件驅動 (Event-Driven)」，非固定 Cron。已將 `ALICE_AUTO_FETCH_DAYS` 精準設定為每週二、三、五 (`tue,wed,fri`)，徹底解決休假日無效排程的疑慮。
-
-### 2026/08/01: 報告生成模組深層 DRY 與 SSOT 淨化 (Phase 5.9.38)
-- **Deep DRY 重構**: 於 `report_service.py` 將 Daily、Weekly、Monthly 摘要任務中高度重複的派發邏輯（包含日期推算、任務建立、日誌記錄與 Telegram 通知）抽取為 `_create_summary_task_and_log`，並補齊了 Daily 摘要遺漏的 Telegram 通知。
-- **全域 SSOT 物理對齊**: 將 `telegram_service.py` 讀取 Token 的方式從 `os.getenv` 升級為透過 `SettingsService` 動態讀取 `NotificationConfig`，徹底修復設定檔斷層；同時收斂 `report_service.py` 與 `patrol_infra.py` 中寫死的 Vercel 網址，統一綁定至 `NetworkConfig().frontend_url`。
-- **0 硬編碼 Prompt**: 實踐文本與邏輯 100% 分離，將 `REPORT_CONTEXT_DEFAULT` 與所有摘要 Prompt 全數抽離至 `pm_prompts.py` 統一管理。
-- **公證與驗證**: 通過 `mypy` 靜態型別檢查 0 錯誤，且修復斷言後，620 項後端測試皆順利綠燈通過。
+> 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年8月：SSOT 治理、排程防禦、MCP 安全鎖定與週期任務硬化
+八月份是提示詞與配置 SSOT 治理落地、排程防禦與 Docker 依賴硬化的月份。我們對 RAG 與報告模組進行了深度的 DRY 重構，解決了 Docker 環境下的 MCP 依賴缺失與 WAF 限流極限問題，並實作了防禦性的提示詞 Upsert 與測試門禁以確保系統零降級。
+
+**核心主題歸類**:
+1.  **SSOT 治理與硬編碼清理 (Ref: 08-01, 08-12, 08-13)**:
+    *   **Deep DRY 重構**: 於 `report_service.py` 提取 `_create_summary_task_and_log` 消除 Daily/Weekly/Monthly 重複派發邏輯。改寫 `telegram_service.py` 從 `SettingsService` 動態讀取通知 Token，將 Vercel/前端網址統一綁定至 `NetworkConfig().frontend_url`。
+    *   **提示詞解耦**: 移除 `blog_generator.py` 等 31+ 處 hardcoded defaults，將提示詞集中至 `pm_prompts.py` 管理。
+    *   **實體代碼對帳**: 執行 `phase-audit` 校驗，確保 `crawler_max_pages` 確實寫入 SSOT 且所有功能元件 100% 落地，無幽靈文件與代碼。
+
+2.  **週期排程、WAF 防禦與 DAG 斷層防禦 (Ref: 08-08, 08-13)**:
+    *   **DAG 事件鏈與排程鎖自癒**: 將下游報告改為 Alice 爬蟲成功事件驱动以避免競態條件。實作 `check_and_resume_dag` 確保伺服器重啟時能無縫接力執行未完成的排程。
+    *   **WAF 與 Rate Limit 限制**: 針對 104 WAF 隨機延遲 (6.5s) 與 Gemini 限流 (4.5s/次) 進行數學建模，下調 `CRAWLER_JOB_LIMIT` 至 `32` 筆，達成低成本的高效轉換。
+    *   **系統死鎖修復**: 修正 `archon-server` 因 Supabase 連線失敗引發的 `__del__` 無限遞迴，以及 `execute_query` 在 Builder 物件缺少 `.execute()` 造成的 `SyncQueryRequestBuilder` 崩潰。
+
+3.  **MCP 依賴鎖定與 Docker 容器架儲防禦 (Ref: 08-10, 08-12)**:
+    *   **MCP SDK 鎖定與 Dockerfile 盤點**: 解決 `archon-mcp` 因 `uv` 動態抓取最新 MCP 套件（移除 fastmcp）導致的 `ModuleNotFoundError`。改用 `uv export` 生成 `requirements.txt` 並於 `Dockerfile.mcp` 及 `Dockerfile.server` 盤點同步鎖定安裝，防範依賴庫斷層。
+    *   **Docker Build Context 與快取空間最佳化**: 將 3.5GB 巨型 `ollama_data` 排除於 `.dockerignore` 之外以避免 context 重建超載，執行系統清理釋放 36.8GB 磁碟快取，防範 ENOSPC 空間危機。
+    *   **殭屍程序清理**: 使用 `lsof -i :3737 -t | xargs kill -9` 強制回收 Vite 殘留程序，確保本機埠口淨空。
+
+4.  **雲端部署修復、網路自癒與超時配置 (Ref: 08-10)**:
+    *   **HF 部署路徑修復**: 修正 `Dockerfile.server` 中歸檔腳本 `cache_offline_packages.py` 移動至 `scripts/archive/` 導致的 COPY 建置失敗。
+    *   **DNS 解析自癒**: 修正 `agent_service.py` 因 HF 雲端環境尋找本地 `archon-agents` 導致的 `Name or service not known` 錯誤，強制透過 `AGENTS_SERVICE_URL` 動態讀取 127.0.0.1。
+    *   **任務超時容錯**: 將 `NexusOracleAgent` 週報/月報 Map-Reduce 任務超時時間放寬至 600 秒以防超時中斷。
+
+5.  **音效渲染與前端/後端安全自癒 (Ref: 08-10)**:
+    *   **簽名 URL 與容錯防護**: Podcast 音檔改用 7 天時效的 `create_signed_url`。在日誌回報與 Telegram 推播中加入 Exception 攔截，防範網路逾時造成 apscheduler 重試風暴。
+    *   **前端高度釋放與 Audio Markdown 攔截**: 拔除 `ManagerNexus.tsx` 鎖死高度的 `min-h-screen`，並獨立出 `AudioMarkdownRenderer.tsx` 自動將文字 Markdown 連結攔截並渲染為原生 HTML5 `<audio>` 播放組件。
+
+6.  **SSOT 防禦性硬化與測試品質門禁 (Ref: 08-12, 08-13)**:
+    *   **靜默降級防禦**: 於 `prompt_service.py` 注入 `logger.warning` 以攔截 missing key 錯誤，杜絕幽靈降級。
+    *   **強韌斷言與測試 Set 聯集**: 重構 `test_prompts_loading.py` 的 brittle 長度斷言，改採 Set 聯集邏輯，防範 Mock 資料重疊；在 `test_prompt_ssot.py` 補足 warning log 驗證，後端 652 項測試全綠通過。
+    *   **Auto-Upsert 重試機制**: 利用 `BaseRepository.execute_query` 將 upsert 包裝在具有指數退避的重試 (`max_retries=3`) 呼叫中，硬化分散式寫入時的網路抗性。
 
 ### 2026年7月：全域美術遷移、週期排程硬化與雲端單一容器部署
 七月份是專案視覺工藝大躍進，以及後端排程系統與雲端部署高度硬化的月份。我們將高品質的 SDXL/Flux 美術素材整合進 Godot 雙生專案，並在 Python 端完成了成本守門員、TTS 廣播與三級資料瘦身的排程自動化。最終，我們排除了阻礙 Hugging Face 部署的深層技術債，實現了雲端單一容器 (Monolith) 的無縫運行。
@@ -511,8 +513,3 @@
 
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
-
-### 2026/08/10: 雲端部署修復與 Agent 韌性硬化 (Phase 5.10.10)
-- **Hugging Face 部署修復**: 修正 `Dockerfile.server` 中對於 `cache_offline_packages.py` 的路徑參照。該腳本先前已被歸檔至 `scripts/archive/`，導致 Docker 構建在 COPY 階段因緩存未命中 (Cache Miss) 失敗。更新路徑後恢復了單一容器的部署能力。
-- **WorkflowEngine 網路解析自癒**: 修正 `agent_service.py` 遇到 `[Errno -2] Name or service not known` 的崩潰問題。強制透過 `os.getenv("AGENTS_SERVICE_URL")` 讀取環境變數，確保在 HF 環境中能正確解析到本地的 8052 埠。
-- **Map-Reduce 任務超時擴展**: 將 `NexusOracleAgent` 在 `base_agent.py` 的 `asyncio.wait_for` 超時時間由 180 秒大幅放寬至 600 秒，防止彙整大量週報/月報資料時觸發 `TimeoutError` 導致的週期任務中斷。
