@@ -13,7 +13,11 @@ const config: Record<string, { dot: string; text: string; bg: string; stripe: st
   critical: { dot: 'bg-purple-600', text: 'text-purple-700', bg: 'bg-purple-50', stripe: 'bg-purple-600' },
 };
 
-export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority, variant = 'badge' }) => {
+// ⚡ Bolt Optimization:
+// Wrapped PriorityBadge in React.memo to prevent unnecessary re-renders in list views (ListView, TableView, KanbanView).
+// Since this component is purely presentational and relies on primitive props (priority string),
+// memoization reduces CPU overhead (e.g., repeated .toLowerCase() and .replace() calls) when parent state updates.
+export const PriorityBadge: React.FC<PriorityBadgeProps> = React.memo(({ priority, variant = 'badge' }) => {
   const p = (priority || 'low').toLowerCase();
   
   const style = config[p] || { dot: 'bg-gray-400', text: 'text-gray-700', bg: 'bg-gray-100', stripe: 'bg-gray-400' };
@@ -27,4 +31,4 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority, variant 
       {priority}
     </span>
   );
-};
+});

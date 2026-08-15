@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import DashboardPage from './DashboardPage';
+import { MemoryRouter } from 'react-router-dom';
+
 // Mock useAuth to avoid AuthProvider error
 vi.mock('../hooks/useAuth.tsx', () => ({
   useAuth: vi.fn().mockReturnValue({
@@ -94,7 +96,11 @@ vi.mock('../services/api', () => {
 
 describe('DashboardPage', () => {
   it('should open TaskModal and show assignable users in dropdown', async () => {
-    render(<DashboardPage />);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
     await waitFor(() => {
       expect(screen.getByText('All Tasks')).toBeInTheDocument();
     });
@@ -109,7 +115,11 @@ describe('DashboardPage', () => {
   });
 
   it('should display user avatars correctly for humans and AI', async () => {
-    render(<DashboardPage />);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Human task')).toBeInTheDocument();
@@ -133,7 +143,11 @@ describe('DashboardPage', () => {
   });
 
   it('should display attachments for tasks that have them', async () => {
-    render(<DashboardPage />);
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    );
 
     // Wait for the task with the specific title to be rendered
     await waitFor(() => {
@@ -154,5 +168,3 @@ describe('DashboardPage', () => {
     // For this test, verifying the badge count is sufficient to prove attachments are present.
   });
 });
-
-        

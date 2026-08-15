@@ -195,3 +195,6 @@
 ## 2024-05-24 - Extracting chained ternary string operations into static lookup dictionaries
 **Learning:** Performing complex, chained ternary string operations inside a `.map()` render loop allocates several new strings per item on every render cycle. This is significantly slower and generates more garbage collection overhead than retrieving a pre-formatted string from a dictionary.
 **Action:** Extract repetitive and chained inline string operations into a static $O(1)$ lookup dictionary defined completely outside the component to prevent unnecessary memory allocations during list rendering.
+## 2025-02-15 - Memoizing Leaf Presentational Components in Lists
+**Learning:** When rendering primitive-prop leaf components like badges (`PriorityBadge`, `StatusBadge`) inside large array mappings (`ListView`, `TableView`, `KanbanView`), they will needlessly re-render whenever the parent list state changes unless they are wrapped in `React.memo()`.
+**Action:** Always verify if small, frequently rendered presentational components that compute styles based on primitive string props (like string replacement or lowercasing) are memoized to avoid multiplying CPU overhead by O(N) list items.

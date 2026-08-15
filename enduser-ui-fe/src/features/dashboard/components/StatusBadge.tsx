@@ -12,11 +12,15 @@ const styles: Record<string, string> = {
   review: 'bg-purple-200 text-purple-800',
 };
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+// ⚡ Bolt Optimization:
+// Wrapped StatusBadge in React.memo to prevent unnecessary re-renders in list views (TableView, etc.).
+// Since this component relies solely on a primitive prop (status string),
+// memoization avoids redundant inline string allocations (.toLowerCase()) during large list renders.
+export const StatusBadge: React.FC<StatusBadgeProps> = React.memo(({ status }) => {
   const s = (status || 'todo').toLowerCase();
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${styles[s] || 'bg-gray-100'}`}>
       {status}
     </span>
   );
-};
+});
