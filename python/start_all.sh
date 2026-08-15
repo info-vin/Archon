@@ -14,7 +14,7 @@ export ARCHON_SERVER_HOST=${ARCHON_SERVER_HOST:-127.0.0.1}
 if [ "$START_MCP" = "true" ]; then
     echo "Starting MCP Server (Internal Port: $ARCHON_MCP_PORT)..."
     MCP_LOG=${ARCHON_MCP_LOG_PATH:-/tmp/mcp_server.log}
-    PORT=$ARCHON_MCP_PORT sh /app/docker-entrypoint-mcp.sh > $MCP_LOG 2>&1 &
+    PORT=$ARCHON_MCP_PORT sh /app/docker-entrypoint-mcp.sh 2>&1 | tee $MCP_LOG &
 else
     echo "MCP Server is disabled. (Set START_MCP=true to enable)"
 fi
