@@ -12,7 +12,7 @@ Key features:
 - Programming language and framework-aware search
 """
 
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from supabase import Client
 
@@ -232,7 +232,6 @@ async def search_code_examples_agentic(
     return await strategy.search_code_examples(query, match_count, filter_metadata, source_id)
 
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from src.server.services.search.query_analyzer import CodeQueryAnalysisResult
 
