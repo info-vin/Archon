@@ -162,13 +162,22 @@ class AgentService:
         logger = get_logger(__name__)
 
         # 1. Determine task_type for dynamic prompt routing
+        from .shared_constants import TaskFeatureEnum
+
+        task_feature = task_data.get("feature")
         task_title = task_data.get("title", "")
         task_type = "General"
-        # Temporary hack: Deduce task_type from title since UI lacks a dropdown
-        if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:
-            task_type = "Marketing Data Deep Dive"
-        elif "[Daily Report]" in task_title:
+
+        if task_feature == TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY:
             task_type = "Daily Executive Summary"
+        elif task_feature == TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE:
+            task_type = "Marketing Data Deep Dive"
+        else:
+            # Fallback for old tasks that lack a feature field
+            if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:
+                task_type = "Marketing Data Deep Dive"
+            elif "[Daily Report]" in task_title or "[Daily]" in task_title:
+                task_type = "Daily Executive Summary"
 
         prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
 

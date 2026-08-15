@@ -124,6 +124,7 @@ class ReportService(BaseRepository):
         log_details: dict[str, Any],
         auto_complete: bool = False,
         dispatch_agent: bool = False,
+        feature: str | None = None,
     ) -> None:
         import asyncio
 
@@ -146,7 +147,7 @@ class ReportService(BaseRepository):
         task_title = f"[{title_prefix}] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
 
         success, tr = await task_service.create_task(
-            project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id
+            project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id, feature=feature
         )
         if success:
             task_id = tr["task"]["id"]
@@ -191,6 +192,7 @@ class ReportService(BaseRepository):
         logger.info("📊 ReportService: Triggering Daily Executive Summary (Group Chat)...")
         try:
             from src.server.services.prompt_service import prompt_service
+            from src.server.services.shared_constants import TaskFeatureEnum
 
             context_md = await self.gather_report_context(1)
             prompt_template = prompt_service.get_prompt("DAILY_EXECUTIVE_SUMMARY_PROMPT")
@@ -201,7 +203,8 @@ class ReportService(BaseRepository):
                 title_prefix="Daily",
                 task_desc=task_desc,
                 log_details={"type": "daily_executive_summary", "status": "dispatched"},
-                dispatch_agent=True
+                dispatch_agent=True,
+                feature=TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value
             )
         except Exception as e:
             logger.error(f"💥 ReportService: Daily Executive Summary generation failed: {e}", exc_info=True)

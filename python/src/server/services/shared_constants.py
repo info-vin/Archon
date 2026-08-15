@@ -35,6 +35,14 @@ class TaskStatusEnum(StrEnum):
     FAILED = "failed"
     COMPLETED = "completed"
     COMPLETE = "complete"
+
+
+class TaskFeatureEnum(StrEnum):
+    DAILY_EXECUTIVE_SUMMARY = "daily_executive_summary"
+    MARKETING_DATA_DEEP_DIVE = "marketing_data_deep_dive"
+    INFORMATION_REQUEST = "information_request"
+
+
 @dataclass(frozen=True)
 class AgentNames:
     SUPERVISOR = "Supervisor (Group Chat)"
