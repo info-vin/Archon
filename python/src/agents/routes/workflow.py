@@ -2,6 +2,8 @@ import logging
 
 from fastapi import APIRouter
 
+from src.server.services.shared_constants import TaskFeatureEnum
+
 from ..models import AgentResponse, WorkflowRequest
 from ..workflow_engine import WorkflowEngine
 
@@ -11,9 +13,9 @@ router = APIRouter(prefix="/agents/workflow", tags=["workflow"])
 @router.post("/run", response_model=AgentResponse)
 async def run_workflow(request: WorkflowRequest):
     try:
-        task_type = "General"
+        task_type = TaskFeatureEnum.GENERAL.value
         if request.context:
-            task_type = request.context.get("task_type", "General")
+            task_type = request.context.get("task_type", TaskFeatureEnum.GENERAL.value)
 
         engine = WorkflowEngine()
         result = await engine.run_workflow(request.prompt, task_type)

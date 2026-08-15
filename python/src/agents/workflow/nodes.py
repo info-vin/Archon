@@ -7,6 +7,8 @@ from typing import Any
 from pydantic_ai import Agent
 from pydantic_graph import BaseNode, End, GraphRunContext
 
+from src.server.services.shared_constants import PromptNameEnum, TaskFeatureEnum
+
 from .state import SharedState, SupervisorDecision
 from .tools import propose_code_fix, read_code_file
 from .utils import PAI_V1, _accumulate_usage, _build_pruned_history, _get_output, _run_agent_with_retry
@@ -37,7 +39,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         task_type = ctx.state.task_type
 
         # 1. Try to load routing and prompt configuration from database dynamically
-        prompt_key = "WORKFLOW_SUPERVISOR_GENERAL"
+        prompt_key = PromptNameEnum.WORKFLOW_SUPERVISOR_GENERAL
         node_routing = {
             "marketbot": "MarketBotNode",
             "librarian": "LibrarianNode",
@@ -61,17 +63,8 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         except Exception:
             pass
 
-        default_supervisor_prompt = (
-            "You are Charlie, the Supervisor. Review the conversation history. "
-            "Decide which worker should act next. "
-            "- 'marketbot' writes marketing content.\n"
-            "- 'librarian' searches documentation/RAG.\n"
-            "- 'summary' summarizes text.\n"
-            "- 'devbot' calculates statistics or writes code.\n"
-            "- 'david' extracts raw data from the database.\n"
-            "- 'end' if the goal is fully achieved.\n"
-            "- 'human' if you are stuck or lack permissions."
-        )
+        default_supervisor_prompt = "You are Charlie, the Supervisor. Please answer." # Kept minimal as SSOT is the source
+
         system_prompt = prompt_service.get_prompt(prompt_key, default_supervisor_prompt)
 
         # Build agent config dynamically to avoid version mismatch errors
@@ -158,13 +151,13 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
         task_type = ctx.state.task_type
         prompt_key = (
-            "WORKFLOW_STRATEGIST_BOB" if task_type == "Marketing Data Deep Dive" else "WORKFLOW_WORKER_MARKETBOT"
+            PromptNameEnum.WORKFLOW_STRATEGIST_BOB if task_type == TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE else PromptNameEnum.WORKFLOW_WORKER_MARKETBOT
         )
         return await _run_generic_worker(
             ctx,
             "MarketBot",
             prompt_key,
-            "You are a marketing copywriter. Be concise. You MUST write your response in Traditional Chinese (繁體中文).",
+            "You are a marketing copywriter. Be concise.",
             "Based on history, provide the marketing copy.",
         )
 
@@ -214,8 +207,8 @@ class SummaryNode(BaseNode[SharedState, None, str]):
         return await _run_generic_worker(
             ctx,
             "Summary",
-            "WORKFLOW_WORKER_SUMMARY",
-            "You summarize text into bullet points. You MUST write your response in Traditional Chinese (繁體中文).",
+            PromptNameEnum.WORKFLOW_WORKER_SUMMARY,
+            "You summarize text into bullet points.",
             "Summarize the conversation:",
         )
 
@@ -223,7 +216,7 @@ class SummaryNode(BaseNode[SharedState, None, str]):
 class DevBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
         await _run_generic_worker(
-            ctx, "DevBot", "WORKFLOW_SCIENTIST_DEVBOT", "You are DevBot, a data scientist. You MUST write your response in Traditional Chinese (繁體中文).", "Task from Supervisor:"
+            ctx, "DevBot", PromptNameEnum.WORKFLOW_SCIENTIST_DEVBOT, "You are DevBot, a data scientist.", "Task from Supervisor:"
         )
         return SupervisorNode()
 
@@ -238,8 +231,8 @@ class DavidNode(BaseNode[SharedState, None, str]):
         from src.server.services.prompt_service import prompt_service
 
         system_prompt = prompt_service.get_prompt(
-            "WORKFLOW_DATA_DAVID",
-            "You are David, the Senior Developer. You can read code and propose fixes using tools. You MUST write your response in Traditional Chinese (繁體中文).",
+            PromptNameEnum.WORKFLOW_DATA_DAVID,
+            "You are David, the Senior Developer.",
         )
 
         agent = Agent(model=model_name, system_prompt=system_prompt, tools=[propose_code_fix, read_code_file])

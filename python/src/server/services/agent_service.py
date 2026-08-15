@@ -166,18 +166,18 @@ class AgentService:
 
         task_feature = task_data.get("feature")
         task_title = task_data.get("title", "")
-        task_type = "General"
+        task_type = TaskFeatureEnum.GENERAL.value
 
         if task_feature == TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY:
-            task_type = "Daily Executive Summary"
+            task_type = TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value
         elif task_feature == TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE:
-            task_type = "Marketing Data Deep Dive"
+            task_type = TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE.value
         else:
             # Fallback for old tasks that lack a feature field
-            if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:
-                task_type = "Marketing Data Deep Dive"
-            elif "[Daily Report]" in task_title or "[Daily]" in task_title:
-                task_type = "Daily Executive Summary"
+            if "Marketing Data Deep Dive" in task_title or "行銷數據" in task_title:  # 合法
+                task_type = TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE.value
+            elif "[Daily Report]" in task_title or "[Daily]" in task_title:  # 合法
+                task_type = TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value
 
         prompt = f"Task: {task_title}\n\nDetails: {task_data.get('description', '')}"
 

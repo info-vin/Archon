@@ -2,6 +2,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from src.server.services.shared_constants import TaskFeatureEnum
+
 
 # --- 1. Shared State ---
 class SharedState(BaseModel):
@@ -14,7 +16,7 @@ class SharedState(BaseModel):
     input_tokens: int = 0
     output_tokens: int = 0
     model_used: str | None = None
-    task_type: str = "General"  # Phase 5.0.2: Dynamic Prompt Governance
+    task_type: str = TaskFeatureEnum.GENERAL.value  # Phase 5.0.2: Dynamic Prompt Governance
 
 
 class SupervisorDecision(BaseModel):

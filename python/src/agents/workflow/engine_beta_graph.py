@@ -6,6 +6,7 @@ and map-reduce patterns. It is kept isolated from the production `engine.py` to 
 
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -15,6 +16,7 @@ from pydantic_graph.beta import GraphBuilder
 from src.agents.workflow.state import SharedState
 from src.agents.workflow.utils import _accumulate_usage, _build_pruned_history, _run_agent_with_retry
 from src.server.services.prompt_service import prompt_service
+from src.server.services.shared_constants import PromptNameEnum
 
 logger = logging.getLogger(__name__)
 
@@ -33,34 +35,8 @@ builder = GraphBuilder(state_type=BetaState, deps_type=Any, output_type=str)
 sem = asyncio.Semaphore(2)
 
 # --- Define Specialized Agents ---
-MODEL = "gemini-3.1-flash-lite"
-
-
-# Define fallback prompts
-ALICE_FALLBACK = (
-    "You are Alice, a senior sales analyst. "
-    "Analyze the provided context and return a concise, 2-3 sentence insight focusing on sales and revenue. "
-    "You MUST write your response in Traditional Chinese (繁體中文)."
-)
-
-BOB_FALLBACK = (
-    "You are Bob, a marketing expert. "
-    "Analyze the provided context and return a concise, 2-3 sentence insight focusing on engagement and conversion rates. "
-    "You MUST write your response in Traditional Chinese (繁體中文)."
-)
-
-SYSTEM_FALLBACK = (
-    "You are the System Health Monitor. "
-    "Analyze the provided context and return a concise, 2-3 sentence insight focusing on system metrics, token usage, or anomalies. "
-    "You MUST write your response in Traditional Chinese (繁體中文)."
-)
-
-SUPERVISOR_FALLBACK = (
-    "You are the Executive Supervisor. Your task is to aggregate the reports from Alice, Bob, and System. "
-    "Combine their insights into a coherent, professional Executive Summary. Do not repeat the same information. "
-    "You MUST write the entire executive summary in Traditional Chinese (繁體中文)."
-)
-
+# Fetch model from environment or fallback, instead of hardcoding
+MODEL = os.getenv("WORKER_AGENT_MODEL", "gemini-3.1-flash-lite")
 
 @builder.step
 async def supervisor_step(ctx: Any) -> list[str]:
@@ -84,13 +60,13 @@ async def worker_step(ctx: Any) -> dict[str, str]:
 
         # Determine the agent and fetch dynamic prompt
         if target == "sales":
-            prompt_text = prompt_service.get_prompt("MAP_REDUCE_ALICE_PROMPT", ALICE_FALLBACK)
+            prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_ALICE_PROMPT, "You are Alice.")
             agent = Agent(model=MODEL, system_prompt=prompt_text)
         elif target == "marketing":
-            prompt_text = prompt_service.get_prompt("MAP_REDUCE_BOB_PROMPT", BOB_FALLBACK)
+            prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_BOB_PROMPT, "You are Bob.")
             agent = Agent(model=MODEL, system_prompt=prompt_text)
         elif target == "system":
-            prompt_text = prompt_service.get_prompt("MAP_REDUCE_SYSTEM_PROMPT", SYSTEM_FALLBACK)
+            prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_SYSTEM_PROMPT, "You are System Monitor.")
             agent = Agent(model=MODEL, system_prompt=prompt_text)
         else:
             return {target: f"Unknown target '{target}'."}
@@ -143,7 +119,7 @@ async def final_summary_step(ctx: Any) -> str:
         combined_reports += f"--- {k.upper()} REPORT ---\n{v}\n\n"
 
     # Get supervisor agent with dynamic prompt
-    prompt_text = prompt_service.get_prompt("MAP_REDUCE_SUPERVISOR_PROMPT", SUPERVISOR_FALLBACK)
+    prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_SUPERVISOR_PROMPT, "You are Supervisor.")
     supervisor_agent = Agent(model=MODEL, system_prompt=prompt_text)
 
     try:

@@ -199,6 +199,7 @@ def ssot_hardcoding_audit():
     ip_pattern = re.compile(r"[\"']\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[\"']")
     # 新增：偵測寫死的字串集合 (例如 {"delete_project", "execute_sql"}) 與 字串陣列 (例如 ["admin", "manager"])
     set_literal_pattern = re.compile(r"(?:\{|\[)\s*[\"'][a-zA-Z0-9_/\.]+[\"']\s*(?:,\s*[\"'][a-zA-Z0-9_/\.]+[\"']\s*)+(?:\}|\])")
+    task_routing_pattern = re.compile(r"([\"'][^\"']+[\"']\s+(?:==|in)\s+task_(?:type|title))|(task_(?:type|title)\s+(?:==|in)\s+[\"'][^\"']+[\"'])")
     
     for base_dir in target_dirs:
         if not os.path.exists(base_dir): continue
@@ -228,6 +229,8 @@ def ssot_hardcoding_audit():
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded IP Address", line.strip()))
                             elif set_literal_pattern.search(line):
                                 hardcoded_issues.append((file_path, line_num, "Hardcoded String Set/Array Literal (SSOT Violation)", line.strip()))
+                            elif task_routing_pattern.search(line):
+                                hardcoded_issues.append((file_path, line_num, "Hardcoded Task Routing String (SSOT Violation)", line.strip()))
                                 
     if hardcoded_issues:
         print(f"❌ FOUND {len(hardcoded_issues)} HARDCODING / SSOT VIOLATIONS:")

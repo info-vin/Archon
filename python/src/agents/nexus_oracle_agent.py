@@ -91,15 +91,9 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
     def _create_agent(self, **kwargs) -> Agent[NexusDependencies, ConsolidatedNexusState]:
         """Create the PydanticAI agent configuration."""
         from src.server.services.prompt_service import prompt_service
+        from src.server.services.shared_constants import PromptNameEnum
 
-        default_prompt = (
-            "You are Charlie's strategic dashboard orchestrator. Your objective is to digest multiple raw system metric sources "
-            "(health checks, token consumption logs, pending approvals, pending blog drafts, and team SLA status) and consolidate them into a simplified, "
-            "cohesive overview. Keep your descriptions concise. Identify the main bottleneck and prioritize actions requiring the manager's attention. "
-            "IMPORTANT: You MUST include all items from the 'pending_blogs' list under short_term_kpis['pending_approvals'], ensuring you preserve their exact fields "
-            "(such as id, title, author_name, created_at, content, target_brand) and add the key-value pair 'type': 'blog' to each item so the frontend dashboard can render them."
-        )
-        system_prompt = prompt_service.get_prompt("nexus_oracle_agent_prompt", default_prompt)
+        system_prompt = prompt_service.get_prompt(PromptNameEnum.NEXUS_ORACLE_AGENT_PROMPT, "You are Charlie's strategic dashboard orchestrator.")
 
         from src.agents.utils.resilience import PAI_V1
 
