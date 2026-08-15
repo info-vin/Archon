@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Any, cast
 
 from src.server.config.logfire_config import get_logger
-from src.server.services.shared_constants import AI_AGENT_ROLES
 
 logger = get_logger(__name__)
 
@@ -102,6 +101,14 @@ async def create_task_logic(
 
         if not project_id or not isinstance(project_id, str):
             return False, {"error": "Project ID is required and must be a string"}
+
+        # SSOT/DRY: Auto-resolve assignee name from assignee_id if it's the default 'User'
+        if assignee == "User" and assignee_id:
+            from src.server.services.shared_constants import AI_AGENT_ROLES
+            for name, uuid in AI_AGENT_ROLES.items():
+                if uuid == assignee_id:
+                    assignee = name
+                    break
 
         # Validate assignee
         is_valid, error_msg = task_service_instance.validate_assignee(assignee)

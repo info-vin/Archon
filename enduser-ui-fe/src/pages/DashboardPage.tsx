@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Task, ViewMode } from '../types';
 import { GanttChartIcon, KanbanIcon, ListIcon, TableIcon, PlusIcon, ChevronDownIcon } from '../components/Icons';
 import { TaskModal } from '../components/TaskModal';
@@ -21,6 +22,7 @@ const DashboardPage: React.FC = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     projects,
@@ -39,6 +41,21 @@ const DashboardPage: React.FC = () => {
     projects.find(p => p.id === selectedProjectId), 
     [projects, selectedProjectId]
   );
+
+  // Deep Link Interception (Phase 5.10.x Hardening)
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    if (taskId && sortedTasks.length > 0) {
+      const task = sortedTasks.find(t => t.id === taskId);
+      if (task) {
+        setEditingTask(task);
+        // Clean up URL so it doesn't reopen on refresh
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('taskId');
+        setSearchParams(newParams, { replace: true });
+      }
+    }
+  }, [searchParams, sortedTasks, setSearchParams]);
 
   if (isLoading && sortedTasks.length === 0) {
     return (

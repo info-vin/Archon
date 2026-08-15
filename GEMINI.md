@@ -122,6 +122,13 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-15: Telegram 深層連結修復、HashRouter 參數攔截與任務 SSOT 重構
+- **任務 SSOT 重構**: 修改 `create_logic.py`，徹底根除硬編碼的 'User' 指派者，改由 `shared_constants.py` 的 `AI_AGENT_ROLES` 動態映射，落實單一事實來源。
+- **HashRouter 深層連結防禦**: 修正 `report_service.py` 的 Telegram 通知網址，將一般路徑改為 Hash 路由參數格式 (`#/dashboard?taskId=xxx`)，一併修復了日報、週報、月報的外部點擊連動。
+- **無侵入式 UI 攔截**: 在 `DashboardPage.tsx` 導入 `useSearchParams`，自動捕捉 `taskId` 參數並聯動既有之 `<TaskModal>`，實現外部網址無縫彈窗，完美遵守「不改 A 壞 B」的架構原則。
+- **雲端冷啟動偵錯**: 透過物理截圖法醫調查，釐清了 Vercel 上的 `API Error 503` 與 `#/approvals` 網址變形，純屬 Hugging Face 後端休眠期間加上前端手動切換頁籤的疊加結果，排除代碼異常。
+- **資料庫瘦身評估**: 盤點 `archon_tasks` 中歷史遺留的 498 筆 cancelled 與 203 筆 todo 髒資料，確認可安全刪除。
+
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 

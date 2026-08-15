@@ -176,7 +176,7 @@ class ReportService(BaseRepository):
                 f"🚨 **[Archon 系統通知] 星環 {title_prefix} 已產出**\n"
                 f"* 日期區間: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}\n"
                 f"* 狀態: 已指派給 Charlie\n"
-                f"👉 請登入 Admin UI 查看詳細數據與表格：[點擊前往]({frontend_url}/tasks/{task_id})"
+                f"👉 請登入 Admin UI 查看詳細數據與表格：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
             )
             try:
                 await telegram_service.send_message(telegram_msg)

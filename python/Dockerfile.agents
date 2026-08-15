@@ -28,6 +28,7 @@ COPY src/server/services/ src/server/services/
 COPY src/server/auth/ src/server/auth/
 COPY src/server/schemas/ src/server/schemas/
 COPY src/server/models/ src/server/models/
+COPY src/server/prompts/ src/server/prompts/
 
 # Set environment variables
 ENV PYTHONPATH="/app/src:/app"
