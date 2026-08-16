@@ -16,6 +16,23 @@ class FallbackStatusDTO(BaseModel):
     active_tier: int = Field(description="The currently active fallback model tier.")
     internet_connected: bool = Field(description="Indicates whether the system has active internet connectivity.")
 
+
+class AIModelHealthDetailDTO(BaseModel):
+    model: str = Field(description="The internal model identifier.")
+    agent: str = Field(description="The primary agent using this model.")
+    provider: str = Field(description="The API provider for this model.")
+    status: str = Field(description="The health status of the model (e.g., 'healthy', 'offline', 'config_missing').")
+    error: str | None = Field(None, description="Detailed error message if the model is not healthy.")
+    latency_ms: float | None = Field(None, description="The measured latency in milliseconds, if available.")
+
+
+class AIModelHealthResponseDTO(BaseModel):
+    status: str = Field(description="The overall health status ('healthy', 'degraded', 'unhealthy').")
+    models: list[AIModelHealthDetailDTO] = Field(description="A list of health details for specific models.")
+    timestamp: str | None = Field(None, description="The timestamp of the health check.")
+    error: str | None = Field(None, description="Detailed error message if the overall check failed.")
+
+
 router = APIRouter(prefix="/api/system", tags=["System"])
 
 
@@ -43,8 +60,8 @@ async def get_rag_health_check() -> HealthStatusResult:
     return await service.check_rag_integrity()
 
 
-@router.get("/health/ai", dependencies=[Depends(requires_permission(MCP_MANAGE))])
-async def get_ai_model_health() -> dict[str, Any]:
+@router.get("/health/ai", response_model=AIModelHealthResponseDTO, dependencies=[Depends(requires_permission(MCP_MANAGE))])
+async def get_ai_model_health() -> AIModelHealthResponseDTO:
     """
     Checks health/latency for critical AI models used by Agents.
     Returns: { "models": [...], "status": "healthy" | "degraded" }
@@ -100,20 +117,28 @@ async def get_ai_model_health() -> dict[str, Any]:
                             error_detail = health.error_message
 
             results.append(
-                {
-                    "model": target["id"],
-                    "agent": target["agent"],
-                    "provider": target["provider"],
-                    "status": status,
-                    "error": error_detail,
-                    "latency_ms": getattr(model_info, "latency_ms", None) or (DEFAULT_MODEL_LATENCY_MS if is_alive else None),
-                }
+                AIModelHealthDetailDTO(
+                    model=target["id"],
+                    agent=target["agent"],
+                    provider=target["provider"],
+                    status=status,
+                    error=error_detail,
+                    latency_ms=getattr(model_info, "latency_ms", None) or (DEFAULT_MODEL_LATENCY_MS if is_alive else None),
+                )
             )
 
-        return {"status": overall_status, "models": results, "timestamp": "now()"}
+        return AIModelHealthResponseDTO(
+            status=overall_status,
+            models=results,
+            timestamp="now()"
+        )
 
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e), "models": []}
+        return AIModelHealthResponseDTO(
+            status="unhealthy",
+            error=str(e),
+            models=[]
+        )
 
 
 @router.get("/logs/connectivity", dependencies=[Depends(requires_permission(MCP_MANAGE))])
