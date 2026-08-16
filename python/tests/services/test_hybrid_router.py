@@ -1,5 +1,7 @@
 # python/tests/services/test_hybrid_router.py
 
+from unittest.mock import patch
+
 from src.server.services.llm.hybrid_router import HybridRouter
 
 
@@ -31,7 +33,6 @@ def test_evaluate_complexity_complex():
     # Lots of keywords, should score high
     assert score > 150
 
-from unittest.mock import patch
 
 def test_should_escalate_rules():
     router = HybridRouter()

@@ -1,7 +1,7 @@
 # python/src/server/services/llm/hybrid_router.py
 
-import time
 import json
+import time
 
 from ...config.logfire_config import get_logger
 
@@ -11,7 +11,7 @@ class HybridRouter:
     """Routes LLM inference queries between Tier 1 (Cloud) and Tier 3 (Local Ollama)."""
 
     def __init__(self) -> None:
-        self._cache = {}
+        self._cache: dict[str, tuple[str | None, float]] = {}
         self._cache_ttl = 60  # seconds
 
     def _get_setting_cached(self, key: str, default: str | None = None) -> str | None:
@@ -20,12 +20,13 @@ class HybridRouter:
             val, timestamp = self._cache[key]
             if now - timestamp < self._cache_ttl:
                 return val
-                
+
         try:
             from src.server.services.settings_service import SettingsService
-            val = SettingsService().get_setting(key, default)
-            self._cache[key] = (val, now)
-            return val
+            new_val = SettingsService().get_setting(key, default)
+            val_str: str | None = str(new_val) if new_val is not None else None
+            self._cache[key] = (val_str, now)
+            return val_str
         except Exception as e:
             logger.error(f"Failed to fetch setting {key}: {e}")
             return default
