@@ -34,3 +34,6 @@
 ## 2026-08-14 - Missing Focus Rings on Dashboard View Mode Toggles
 **Learning:** Found that the primary view mode toggle buttons (list, table, kanban, gantt) and action buttons in the main Dashboard layout lacked clear keyboard focus indicators.
 **Action:** When adding or reviewing layout-level navigational or toggle buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` (or appropriate offset/color) are explicitly applied for keyboard accessibility.
+## 2024-08-15 - Ensure hover-revealed elements are keyboard accessible
+**Learning:** When using Tailwind utility classes like opacity-0 group-hover:opacity-100 to reveal interactive elements only on mouse hover, these elements become completely invisible and functionally unusable for keyboard-only users who tab through the interface.
+**Action:** Always include a focus-within:opacity-100 or focus:opacity-100 utility class alongside the group-hover modifier so that the container becomes visible when any of its interactive child elements receive keyboard focus.

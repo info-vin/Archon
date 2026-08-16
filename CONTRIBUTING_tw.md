@@ -418,6 +418,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - `migration/0.2.3/seed_mock_data.sql`
 - `migration/0.2.3/seed_rag_defaults.sql`
 - `migration/20260810_seed_rag_blog.sql`
+- `migration/20260815_seed_insight_report_blog.sql`
 
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。
