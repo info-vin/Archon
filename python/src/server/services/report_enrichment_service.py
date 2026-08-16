@@ -15,7 +15,9 @@ class ReportEnrichmentService:
         logger.info("🔮 ReportEnrichmentService: Invoking NexusOracleAgent for high-level insights...")
         try:
             from src.server.services.prompt_service import prompt_service
-            system_prompt = prompt_service.get_prompt("nexus_oracle_agent") or "Please provide a strategic overview of the current system and business state, focusing on 104 data trends."
+            from src.server.services.shared_constants import PromptNameEnum
+
+            system_prompt = prompt_service.get_prompt(PromptNameEnum.NEXUS_ORACLE_AGENT_PROMPT.value)
 
             from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
             oracle = NexusOracleAgent()

@@ -31,27 +31,21 @@ def test_evaluate_complexity_complex():
     # Lots of keywords, should score high
     assert score > 150
 
+from unittest.mock import patch
+
 def test_should_escalate_rules():
-    # Mock capability matrix with slow local CPU
     router = HybridRouter()
-    router.capability_matrix = {
-        "models": {
-            "gemma3:4b": {
-                "tokens_per_sec": 1.2  # Extremely slow CPU fallback
-            }
-        }
-    }
 
     # 1. Slow hardware trigger
-    assert router.should_escalate_to_cloud("simp", retry_count=0) is True
+    with patch("src.server.services.settings_service.SettingsService.get_setting", return_value="500"):
+        assert router.should_escalate_to_cloud("simp", retry_count=0) is True
 
-    # Reset hardware speed
-    router.capability_matrix["models"]["gemma3:4b"]["tokens_per_sec"] = 5.0
+    # 2. Fast hardware
+    with patch("src.server.services.settings_service.SettingsService.get_setting", return_value="100"):
+        # Retry count trigger (K >= 2)
+        assert router.should_escalate_to_cloud("simp", retry_count=2) is True
+        assert router.should_escalate_to_cloud("simp", retry_count=1) is False
 
-    # 2. Retry count trigger (K >= 2)
-    assert router.should_escalate_to_cloud("simp", retry_count=2) is True
-    assert router.should_escalate_to_cloud("simp", retry_count=1) is False
-
-    # 3. Complexity trigger (S >= 150)
-    complex_proof = "theorem " * 20
-    assert router.should_escalate_to_cloud(complex_proof, retry_count=0) is True
+        # Complexity trigger (S >= 150)
+        complex_proof = "theorem " * 20
+        assert router.should_escalate_to_cloud(complex_proof, retry_count=0) is True

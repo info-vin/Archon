@@ -7,7 +7,7 @@ Refactored for L2 modularity while maintaining 100% logic alignment.
 
 import re
 from collections.abc import Callable
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from supabase import Client
 
@@ -258,5 +258,14 @@ class CodeExtractionService(BaseRepository):
         return res
 
     async def _store_code_examples(self, data: dict[str, list[Any]], doc_map: dict[str, str], callback: Callable | None, start: int, end: int) -> int:
-        await add_code_examples_to_supabase(client=self.supabase_client, **data, url_to_full_document=doc_map)
+        import typing
+        await add_code_examples_to_supabase(
+            client=self.supabase_client,
+            urls=typing.cast(list[str], data["urls"]),
+            chunk_numbers=typing.cast(list[int], data["chunk_numbers"]),
+            code_examples=typing.cast(list[str], data["examples"]),
+            summaries=typing.cast(list[str], data["summaries"]),
+            metadatas=typing.cast(list[dict[str, Any]], data["metadatas"]),
+            url_to_full_document=doc_map
+        )
         return len(data["examples"])

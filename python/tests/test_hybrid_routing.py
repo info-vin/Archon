@@ -5,7 +5,6 @@ import pytest
 from src.server.services.credential_service import credential_service
 from src.server.services.credentials import provider_configs
 from src.server.services.llm.clients import get_llm_client
-from src.server.services.llm.hybrid_router import hybrid_router
 
 
 def dummy_retry_decorator(*args, **kwargs):
@@ -38,12 +37,14 @@ def mock_provider_config():
 @patch("openai.AsyncOpenAI")
 async def test_simple_offline_query_routes_to_tier3(mock_openai, mock_provider_config):
     """Test that a simple offline-compatible query routes to Tier 3 (Ollama) when available."""
-    # Mock Ollama capability to be available
-    mock_matrix = {
-        "models": {
-            "gemma3:4b": {"available": True, "tokens_per_sec": 4.5}
-        }
-    }
+    def mock_get_setting(key, default=None):
+        if key == "ollama_discovered_models":
+            return '{"chat_models": [{"name": "llama3:8b"}]}'
+        elif key == "offline_allowed_models":
+            return '["llama3"]'
+        elif key == "local_inference_latency_ms":
+            return "100"
+        return default
 
     # Mock Tier 3 Client (Ollama)
     mock_ollama_client = MagicMock()
@@ -59,7 +60,7 @@ async def test_simple_offline_query_routes_to_tier3(mock_openai, mock_provider_c
     with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
-         patch.object(hybrid_router, "capability_matrix", mock_matrix):
+         patch("src.server.services.settings_service.SettingsService.get_setting", side_effect=mock_get_setting):
 
         async with get_llm_client() as client:
             res = await client.chat.completions.create(messages=[{"role": "user", "content": "Hello, how are you today?"}])
@@ -70,12 +71,14 @@ async def test_simple_offline_query_routes_to_tier3(mock_openai, mock_provider_c
 @patch("openai.AsyncOpenAI")
 async def test_complex_online_query_routes_to_tier1(mock_openai, mock_provider_config):
     """Test that a query containing search/online keywords or with long length routes to Tier 1."""
-    # Mock Ollama capability to be available
-    mock_matrix = {
-        "models": {
-            "gemma3:4b": {"available": True, "tokens_per_sec": 4.5}
-        }
-    }
+    def mock_get_setting(key, default=None):
+        if key == "ollama_discovered_models":
+            return '{"chat_models": [{"name": "llama3:8b"}]}'
+        elif key == "offline_allowed_models":
+            return '["llama3"]'
+        elif key == "local_inference_latency_ms":
+            return "100"
+        return default
 
     # Mock Tier 1 Client (Cloud)
     mock_cloud_client = MagicMock()
@@ -90,7 +93,7 @@ async def test_complex_online_query_routes_to_tier1(mock_openai, mock_provider_c
     with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
-         patch.object(hybrid_router, "capability_matrix", mock_matrix):
+         patch("src.server.services.settings_service.SettingsService.get_setting", side_effect=mock_get_setting):
 
         async with get_llm_client() as client:
             # Query containing "search" (online keyword)
@@ -102,12 +105,14 @@ async def test_complex_online_query_routes_to_tier1(mock_openai, mock_provider_c
 @patch("openai.AsyncOpenAI")
 async def test_ollama_unavailable_routes_to_tier1(mock_openai, mock_provider_config):
     """Test that a simple query routes to Tier 1 when Ollama is marked as unavailable."""
-    # Mock Ollama capability to be unavailable
-    mock_matrix = {
-        "models": {
-            "gemma3:4b": {"available": False, "tokens_per_sec": 4.5}
-        }
-    }
+    def mock_get_setting(key, default=None):
+        if key == "ollama_discovered_models":
+            return '{"chat_models": []}'
+        elif key == "offline_allowed_models":
+            return '["llama3"]'
+        elif key == "local_inference_latency_ms":
+            return "100"
+        return default
 
     # Mock Tier 1 Client (Cloud)
     mock_cloud_client = MagicMock()
@@ -122,7 +127,7 @@ async def test_ollama_unavailable_routes_to_tier1(mock_openai, mock_provider_con
     with patch.object(provider_configs, "get_active_provider", AsyncMock(return_value=mock_provider_config)), \
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
-         patch.object(hybrid_router, "capability_matrix", mock_matrix):
+         patch("src.server.services.settings_service.SettingsService.get_setting", side_effect=mock_get_setting):
 
         async with get_llm_client() as client:
             res = await client.chat.completions.create(messages=[{"role": "user", "content": "Hello"}])

@@ -22,15 +22,15 @@ class AIModelHealthDetailDTO(BaseModel):
     agent: str = Field(description="The primary agent using this model.")
     provider: str = Field(description="The API provider for this model.")
     status: str = Field(description="The health status of the model (e.g., 'healthy', 'offline', 'config_missing').")
-    error: str | None = Field(None, description="Detailed error message if the model is not healthy.")
-    latency_ms: float | None = Field(None, description="The measured latency in milliseconds, if available.")
+    error: str | None = Field(default=None, description="Detailed error message if the model is not healthy.")
+    latency_ms: float | None = Field(default=None, description="The measured latency in milliseconds, if available.")
 
 
 class AIModelHealthResponseDTO(BaseModel):
     status: str = Field(description="The overall health status ('healthy', 'degraded', 'unhealthy').")
     models: list[AIModelHealthDetailDTO] = Field(description="A list of health details for specific models.")
-    timestamp: str | None = Field(None, description="The timestamp of the health check.")
-    error: str | None = Field(None, description="Detailed error message if the overall check failed.")
+    timestamp: str | None = Field(default=None, description="The timestamp of the health check.")
+    error: str | None = Field(default=None, description="Detailed error message if the overall check failed.")
 
 
 router = APIRouter(prefix="/api/system", tags=["System"])
@@ -129,8 +129,7 @@ async def get_ai_model_health() -> AIModelHealthResponseDTO:
 
         return AIModelHealthResponseDTO(
             status=overall_status,
-            models=results,
-            timestamp="now()"
+            models=results
         )
 
     except Exception as e:

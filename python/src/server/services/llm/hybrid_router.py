@@ -1,8 +1,6 @@
 # python/src/server/services/llm/hybrid_router.py
 
 import json
-import os
-from typing import Any, cast
 
 from ...config.logfire_config import get_logger
 
@@ -11,23 +9,8 @@ logger = get_logger(__name__)
 class HybridRouter:
     """Routes LLM inference queries between Tier 1 (Cloud) and Tier 3 (Local Ollama)."""
 
-    def __init__(self, matrix_path: str | None = None) -> None:
-        if matrix_path:
-            self.matrix_path = matrix_path
-        else:
-            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", ".."))
-            self.matrix_path = os.path.join(base_dir, ".twin", "diagnostics", "hardware_capability_matrix.json")
-        self.capability_matrix = self._load_matrix()
-
-    def _load_matrix(self) -> dict[str, Any]:
-        """Loads the hardware capability matrix json."""
-        if os.path.exists(self.matrix_path):
-            try:
-                with open(self.matrix_path, encoding="utf-8") as f:
-                    return cast(dict[str, Any], json.load(f))
-            except Exception as e:
-                logger.error(f"Failed to load hardware capability matrix: {e}")
-        return {}
+    def __init__(self) -> None:
+        pass
 
     def evaluate_complexity(self, proof_context: str) -> int:
         """Estimates AST complexity / proof size.
@@ -62,12 +45,18 @@ class HybridRouter:
             logger.info(f"Escalation Triggered: AST complexity ({complexity}) >= {threshold}")
             return True
 
-        # Rule 3: Local hardware is extremely slow (e.g. tokens_per_sec < 2.0 for gemma3:4b)
-        models_info = self.capability_matrix.get("models", {})
-        gemma3_info = models_info.get("gemma3:4b", {})
-        if gemma3_info and gemma3_info.get("tokens_per_sec", 10.0) < 2.0:
-            logger.info("Escalation Triggered: Local inference speed is too slow")
-            return True
+        # Rule 3: Local hardware is extremely slow (latency_ms > DEFAULT_MODEL_LATENCY_MS * 2)
+        from src.server.config.model_ssot import DEFAULT_MODEL_LATENCY_MS
+        from src.server.services.settings_service import SettingsService
+        try:
+            latency_str = SettingsService().get_setting("local_inference_latency_ms", str(DEFAULT_MODEL_LATENCY_MS))
+            if latency_str:
+                latency_ms = float(latency_str)
+                if latency_ms > DEFAULT_MODEL_LATENCY_MS * 2:
+                    logger.info(f"Escalation Triggered: Local inference latency is too high ({latency_ms}ms)")
+                    return True
+        except Exception as e:
+            logger.error(f"Failed to parse local inference latency: {e}")
 
         return False
 
@@ -79,14 +68,30 @@ class HybridRouter:
         - Absence of online or complex task keywords (e.g. crawl, search, fetch, live, latest, realtime, google, news, code, 寫程式)
         - The local model must be available in the hardware capability matrix.
         """
-        # 1. Check if Ollama has available models
-        models_info = self.capability_matrix.get("models", {})
-        qwen_available = models_info.get("qwen2.5:0.5b", {}).get("available", False)
-        gemma_available = models_info.get("gemma3:4b", {}).get("available", False)
-        gemma_1b_available = models_info.get("gemma3:1b", {}).get("available", False)
+        # 1. Check if Ollama has available models dynamically via SettingsService (SSOT)
+        is_allowed = False
+        try:
+            from src.server.services.settings_service import SettingsService
+            models_setting = SettingsService().get_setting("ollama_discovered_models")
+            allowed_models_setting = SettingsService().get_setting("offline_allowed_models", '["qwen", "gemma"]')
+
+            allowed_models = []
+            if allowed_models_setting:
+                allowed_models = json.loads(allowed_models_setting)
+
+            if models_setting:
+                models_data = json.loads(models_setting)
+                chat_models = models_data.get("chat_models", [])
+                for m in chat_models:
+                    model_name = m.get("name", "").lower()
+                    if any(allowed.lower() in model_name for allowed in allowed_models):
+                        is_allowed = True
+                        break
+        except Exception as e:
+            logger.error(f"Failed to check dynamic Ollama capabilities: {e}")
 
         # If no local model is available, we cannot route to Tier 3
-        if not (qwen_available or gemma_available or gemma_1b_available):
+        if not is_allowed:
             return False
 
         # 2. Extract last user message

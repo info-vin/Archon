@@ -178,10 +178,9 @@ class ReportService(BaseRepository):
                 f"* 狀態: 已指派給 Charlie\n"
                 f"👉 請登入 Admin UI 查看詳細數據與表格：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
             )
-            try:
-                await telegram_service.send_message(telegram_msg)
-            except Exception as tg_err:
-                logger.warning(f"⚠️ ReportService: Failed to send Telegram notification (Task {task_id} was still created): {tg_err}")
+            is_sent = await telegram_service.send_message(telegram_msg)
+            if not is_sent:
+                logger.warning(f"⚠️ ReportService: Failed to send Telegram notification (Task {task_id} was still created). Network timeout or invalid token.")
         else:
             error_msg = f"ReportService: Failed to create {title_prefix} summary task."
             logger.error(f"❌ {error_msg} Task service returned success=False.")
