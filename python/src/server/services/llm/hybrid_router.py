@@ -90,7 +90,7 @@ class HybridRouter:
         is_allowed = False
         try:
             models_setting = self._get_setting_cached("ollama_discovered_models")
-            allowed_models_setting = self._get_setting_cached("offline_allowed_models", '["qwen", "gemma"]')
+            allowed_models_setting = self._get_setting_cached("offline_allowed_models", '["qwen", "gemma"]') # 合法
 
             allowed_models = []
             if allowed_models_setting:
