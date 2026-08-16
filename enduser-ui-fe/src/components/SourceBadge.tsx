@@ -4,7 +4,8 @@ interface SourceBadgeProps {
   source: string;
 }
 
-export const SourceBadge: React.FC<SourceBadgeProps> = ({ source }) => {
+// PERFORMANCE: Wrap in React.memo to prevent O(N) re-renders when parent list state changes
+export const SourceBadge: React.FC<SourceBadgeProps> = React.memo(({ source }) => {
   if (!source) return null;
   const isMock = source.toLowerCase().includes('mock');
   const isLive = !isMock;
@@ -29,4 +30,4 @@ export const SourceBadge: React.FC<SourceBadgeProps> = ({ source }) => {
       Simulated Data
     </span>
   );
-};
+});
