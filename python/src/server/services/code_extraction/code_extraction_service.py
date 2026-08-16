@@ -7,7 +7,12 @@ Refactored for L2 modularity while maintaining 100% logic alignment.
 
 import re
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+from supabase import Client
+
+if TYPE_CHECKING:
+    from src.server.schemas.settings import CodeExtractionConfig
 
 from src.server.config.logfire_config import safe_logfire_error
 from src.server.repositories.base_repository import BaseRepository
@@ -31,11 +36,11 @@ class CodeExtractionService(BaseRepository):
 
     LANGUAGE_PATTERNS = LANGUAGE_PATTERNS
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client)
         self._settings_cache: dict[str, Any] = {}
 
-    async def _get_config(self) -> Any:
+    async def _get_config(self) -> "CodeExtractionConfig":
         if not hasattr(self, "_config_cache"):
             from src.server.schemas.settings import CodeExtractionConfig
             from src.server.services.settings_service import SettingsService
@@ -237,12 +242,12 @@ class CodeExtractionService(BaseRepository):
             await self._get_max_prose_ratio(),
         )
 
-    async def _generate_code_summaries(self, blocks, callback, start, end, cancel) -> list[dict[str, str]]:
+    async def _generate_code_summaries(self, blocks: list[dict[str, Any]], callback: Callable | None, start: int, end: int, cancel: Callable[[], None] | None) -> list[dict[str, str]]:
         if not (await self._get_config()).enable_code_summaries:
             return [{"example_name": "Code", "summary": "Demo"}] * len(blocks)
         return await generate_code_summaries_batch([b["block"] for b in blocks], 3, progress_callback=callback)
 
-    def _prepare_code_examples_for_storage(self, blocks, summaries) -> dict[str, list[Any]]:
+    def _prepare_code_examples_for_storage(self, blocks: list[dict[str, Any]], summaries: list[dict[str, str]]) -> dict[str, list[Any]]:
         res: dict[str, list[Any]] = {"urls": [], "chunk_numbers": [], "examples": [], "summaries": [], "metadatas": []}
         for i, (b, s) in enumerate(zip(blocks, summaries, strict=False)):
             res["urls"].append(b["source_url"])
@@ -252,6 +257,6 @@ class CodeExtractionService(BaseRepository):
             res["metadatas"].append({"source_id": b["source_id"], "language": b["block"].get("language", "")})
         return res
 
-    async def _store_code_examples(self, data, doc_map, callback, start, end) -> int:
+    async def _store_code_examples(self, data: dict[str, list[Any]], doc_map: dict[str, str], callback: Callable | None, start: int, end: int) -> int:
         await add_code_examples_to_supabase(client=self.supabase_client, **data, url_to_full_document=doc_map)
         return len(data["examples"])
