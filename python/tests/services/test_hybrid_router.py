@@ -35,12 +35,14 @@ from unittest.mock import patch
 
 def test_should_escalate_rules():
     router = HybridRouter()
+    router._cache.clear()
 
     # 1. Slow hardware trigger
     with patch("src.server.services.settings_service.SettingsService.get_setting", return_value="500"):
         assert router.should_escalate_to_cloud("simp", retry_count=0) is True
 
     # 2. Fast hardware
+    router._cache.clear()
     with patch("src.server.services.settings_service.SettingsService.get_setting", return_value="100"):
         # Retry count trigger (K >= 2)
         assert router.should_escalate_to_cloud("simp", retry_count=2) is True

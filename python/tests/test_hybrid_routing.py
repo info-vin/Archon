@@ -39,7 +39,7 @@ async def test_simple_offline_query_routes_to_tier3(mock_openai, mock_provider_c
     """Test that a simple offline-compatible query routes to Tier 3 (Ollama) when available."""
     def mock_get_setting(key, default=None):
         if key == "ollama_discovered_models":
-            return '{"chat_models": [{"name": "llama3:8b"}]}'
+            return '{"models": [{"name": "llama3:8b"}]}'
         elif key == "offline_allowed_models":
             return '["llama3"]'
         elif key == "local_inference_latency_ms":
@@ -62,6 +62,9 @@ async def test_simple_offline_query_routes_to_tier3(mock_openai, mock_provider_c
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
          patch("src.server.services.settings_service.SettingsService.get_setting", side_effect=mock_get_setting):
 
+        from src.server.services.llm.hybrid_router import hybrid_router
+        hybrid_router._cache.clear()
+
         async with get_llm_client() as client:
             res = await client.chat.completions.create(messages=[{"role": "user", "content": "Hello, how are you today?"}])
             assert res.choices[0].message.content == "Local Ollama Response"
@@ -73,7 +76,7 @@ async def test_complex_online_query_routes_to_tier1(mock_openai, mock_provider_c
     """Test that a query containing search/online keywords or with long length routes to Tier 1."""
     def mock_get_setting(key, default=None):
         if key == "ollama_discovered_models":
-            return '{"chat_models": [{"name": "llama3:8b"}]}'
+            return '{"models": [{"name": "llama3:8b"}]}'
         elif key == "offline_allowed_models":
             return '["llama3"]'
         elif key == "local_inference_latency_ms":
@@ -94,6 +97,9 @@ async def test_complex_online_query_routes_to_tier1(mock_openai, mock_provider_c
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
          patch("src.server.services.settings_service.SettingsService.get_setting", side_effect=mock_get_setting):
+
+        from src.server.services.llm.hybrid_router import hybrid_router
+        hybrid_router._cache.clear()
 
         async with get_llm_client() as client:
             # Query containing "search" (online keyword)
@@ -128,6 +134,9 @@ async def test_ollama_unavailable_routes_to_tier1(mock_openai, mock_provider_con
          patch.object(credential_service, "get_credential", AsyncMock(return_value="0")), \
          patch.object(credential_service, "set_active_tier") as mock_set_tier, \
          patch("src.server.services.settings_service.SettingsService.get_setting", side_effect=mock_get_setting):
+
+        from src.server.services.llm.hybrid_router import hybrid_router
+        hybrid_router._cache.clear()
 
         async with get_llm_client() as client:
             res = await client.chat.completions.create(messages=[{"role": "user", "content": "Hello"}])

@@ -1,5 +1,6 @@
 # python/src/server/services/llm/hybrid_router.py
 
+import time
 import json
 
 from ...config.logfire_config import get_logger
@@ -10,7 +11,24 @@ class HybridRouter:
     """Routes LLM inference queries between Tier 1 (Cloud) and Tier 3 (Local Ollama)."""
 
     def __init__(self) -> None:
-        pass
+        self._cache = {}
+        self._cache_ttl = 60  # seconds
+
+    def _get_setting_cached(self, key: str, default: str | None = None) -> str | None:
+        now = time.time()
+        if key in self._cache:
+            val, timestamp = self._cache[key]
+            if now - timestamp < self._cache_ttl:
+                return val
+                
+        try:
+            from src.server.services.settings_service import SettingsService
+            val = SettingsService().get_setting(key, default)
+            self._cache[key] = (val, now)
+            return val
+        except Exception as e:
+            logger.error(f"Failed to fetch setting {key}: {e}")
+            return default
 
     def evaluate_complexity(self, proof_context: str) -> int:
         """Estimates AST complexity / proof size.
@@ -47,9 +65,8 @@ class HybridRouter:
 
         # Rule 3: Local hardware is extremely slow (latency_ms > DEFAULT_MODEL_LATENCY_MS * 2)
         from src.server.config.model_ssot import DEFAULT_MODEL_LATENCY_MS
-        from src.server.services.settings_service import SettingsService
         try:
-            latency_str = SettingsService().get_setting("local_inference_latency_ms", str(DEFAULT_MODEL_LATENCY_MS))
+            latency_str = self._get_setting_cached("local_inference_latency_ms", str(DEFAULT_MODEL_LATENCY_MS))
             if latency_str:
                 latency_ms = float(latency_str)
                 if latency_ms > DEFAULT_MODEL_LATENCY_MS * 2:
@@ -71,9 +88,8 @@ class HybridRouter:
         # 1. Check if Ollama has available models dynamically via SettingsService (SSOT)
         is_allowed = False
         try:
-            from src.server.services.settings_service import SettingsService
-            models_setting = SettingsService().get_setting("ollama_discovered_models")
-            allowed_models_setting = SettingsService().get_setting("offline_allowed_models", '["qwen", "gemma"]')
+            models_setting = self._get_setting_cached("ollama_discovered_models")
+            allowed_models_setting = self._get_setting_cached("offline_allowed_models", '["qwen", "gemma"]')
 
             allowed_models = []
             if allowed_models_setting:
@@ -81,8 +97,8 @@ class HybridRouter:
 
             if models_setting:
                 models_data = json.loads(models_setting)
-                chat_models = models_data.get("chat_models", [])
-                for m in chat_models:
+                models_list = models_data.get("models", [])
+                for m in models_list:
                     model_name = m.get("name", "").lower()
                     if any(allowed.lower() in model_name for allowed in allowed_models):
                         is_allowed = True
