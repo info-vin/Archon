@@ -1,10 +1,12 @@
 import json
 import os
 import tempfile
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
+from fastapi import UploadFile
 from google import genai
 from google.genai import types
+from supabase import Client
 
 from src.server.config.logfire_config import get_logger
 from src.server.config.model_ssot import SYSTEM_MODELS
@@ -16,16 +18,59 @@ from src.server.utils import get_supabase_client
 logger = get_logger(__name__)
 
 
+class VisitLogDataDict(TypedDict, total=False):
+    summary: str
+    user_id: str
+    customer_id: str
+    lead_id: str
+    latitude: float
+    longitude: float
+    location_address: str
+    company_name: str
+
+
+class VisitLogReturnDict(TypedDict, total=False):
+    id: str
+    user_id: str
+    customer_id: str
+    lead_id: str
+    latitude: float
+    longitude: float
+    location_address: str
+    voice_transcript: str
+    summary: str
+    follow_up_tasks: list[str]
+    audio_url: str
+    image_urls: list[str]
+    created_at: str
+    updated_at: str
+    visit_type: str
+    scheduling_recommendation: dict[str, Any]
+
+
+class AttendanceStatusDict(TypedDict, total=False):
+    status: str
+    clock_in_time: str | None
+    id: str
+    user_id: str
+    clock_out_time: str
+    latitude: float
+    longitude: float
+    location_name: str
+    created_at: str
+    updated_at: str
+
+
 class VisitLogService(BaseRepository):
     """
     Visit Log Service - Business logic for tracking customer interactions.
     Restored with Voice-to-Task (GAP-009) and aligned with 0413 SDK patterns.
     """
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
-    async def list_logs(self, lead_id: str | None = None) -> tuple[bool, Any]:
+    async def list_logs(self, lead_id: str | None = None) -> tuple[bool, list[VisitLogReturnDict] | str]:
         q = self.supabase_client.table("visit_logs").select("*")
         if lead_id:
             q = q.eq("lead_id", lead_id)
@@ -113,7 +158,7 @@ class VisitLogService(BaseRepository):
             from src.server.schemas.agent_outputs import VoiceProcessResult
             return f"[AI Error: {e}]", "System error during transcription.", [], VoiceProcessResult()
 
-    async def create_log(self, data: dict, audio_file: Any = None) -> tuple[bool, Any]:
+    async def create_log(self, data: VisitLogDataDict, audio_file: UploadFile | None = None) -> tuple[bool, VisitLogReturnDict | str]:
         """
         Creates a visit log and automatically triggers Task Generation (GAP-009).
         Supports Phase 5.4.6 PydanticAI voice scheduling loop.
@@ -267,7 +312,7 @@ class VisitLogService(BaseRepository):
 
         return True, created_log
 
-    async def get_attendance_status(self, user_id: str) -> tuple[bool, Any]:
+    async def get_attendance_status(self, user_id: str) -> tuple[bool, AttendanceStatusDict | str]:
         """Fetches the current attendance status for a user."""
 
         query = (
