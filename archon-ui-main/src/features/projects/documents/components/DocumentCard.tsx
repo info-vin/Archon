@@ -151,7 +151,7 @@ export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: Do
         <div
           className={cn(
             "flex items-center justify-between mt-2 transition-opacity duration-200",
-            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
           )}
         >
           <span className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[120px]" title={document.id}>
