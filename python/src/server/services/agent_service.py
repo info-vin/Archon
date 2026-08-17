@@ -1,7 +1,11 @@
 # python/src/server/services/agent_service.py
 
 
-from typing import Any, TypedDict
+from typing import Any, TypedDict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.agents.mcp_client import MCPClient
+
 
 from ..config.logfire_config import get_logger
 from .agent_registry import get_agent_config
@@ -21,16 +25,16 @@ class AssignableAgent(TypedDict):
 class AgentService:
     """Service for handling business logic related to AI agents."""
 
-    def __init__(self, mcp_client=None) -> None:
+    def __init__(self, mcp_client: 'MCPClient | None' = None) -> None:
         self.tool_executor = AgentToolExecutor(mcp_client)
         self.dev_ops = DevOpsAgentService(self.tool_executor)
 
     @property
-    def mcp_client(self) -> Any:
+    def mcp_client(self) -> 'MCPClient | None':
         return self.tool_executor.mcp_client
 
     @mcp_client.setter
-    def mcp_client(self, value: Any) -> None:
+    def mcp_client(self, value: 'MCPClient | None') -> None:
         self.tool_executor.mcp_client = value
 
     async def get_assignable_agents(self, user_role: str | None = None) -> list[AssignableAgent]:
