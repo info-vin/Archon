@@ -76,7 +76,11 @@ class VisitLogService(BaseRepository):
             q = q.eq("lead_id", lead_id)
         query = q.order("created_at", desc=True)
 
-        return self.execute_query(query, "Failed to list logs")
+        success, res = self.execute_query(query, "Failed to list logs")
+        if not success or not isinstance(res, dict):
+            return success, str(res)
+
+        return True, cast(list[VisitLogReturnDict], res.get("data", []))
 
     async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str], Any]:
         """
@@ -191,7 +195,7 @@ class VisitLogService(BaseRepository):
 
         success, res = self.execute_query(self.supabase_client.table("visit_logs").insert(log_payload), "Failed to create visit log")
         if not success or not res:
-            return False, res
+            return False, str(res)
 
         data_list = res.get("data", []) if isinstance(res, dict) else res
         created_log = data_list[0] if isinstance(data_list, list) and len(data_list) > 0 else data_list
@@ -310,7 +314,7 @@ class VisitLogService(BaseRepository):
         except Exception as task_err:
             logger.error(f"VisitLogService: Auto-task dispatch failed: {task_err}")
 
-        return True, created_log
+        return True, cast(VisitLogReturnDict, created_log)
 
     async def get_attendance_status(self, user_id: str) -> tuple[bool, AttendanceStatusDict | str]:
         """Fetches the current attendance status for a user."""

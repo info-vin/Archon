@@ -25,7 +25,7 @@ async def list_visit_logs(
     success, res = await visit_log_service.list_logs(lead_id=lead_id)
     if not success:
         raise HTTPException(status_code=500, detail=str(res))
-    return res if isinstance(res, list) else []
+    return cast(list[VisitLogResponse], res if isinstance(res, list) else [])
 
 
 @router.post("", response_model=VisitLogResponse, status_code=201)
@@ -54,8 +54,11 @@ async def create_visit_log(
         "location_address": location_address or company_name,
     }
 
+    from src.server.services.visit_log_service import VisitLogDataDict
+    clean_data: VisitLogDataDict = cast(VisitLogDataDict, {k: v for k, v in log_data.items() if v is not None})
+
     # Pass everything to Service layer for atomic realization
-    success, res = await visit_log_service.create_log(data=log_data, audio_file=audio_file)
+    success, res = await visit_log_service.create_log(data=clean_data, audio_file=audio_file)
 
     if not success:
         raise HTTPException(status_code=400, detail=str(res))
