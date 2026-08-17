@@ -122,6 +122,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-17: 電腦版 Leads 介面初篩修復與資料庫安全硬化 (Phase 5.10.23)
+- **UI 響應式斷層修復**: 釐清 Tailwind `md` 斷點 (768px) 物理行為，確認平板與電腦版顯示的是 `md:table` 表格視圖而非滑動卡片。為桌面版表格 Action 欄位補齊了 ✅ (Shortlist) 與 ❌ (Archive) 按鈕，徹底解決了 Charlie 在非手機裝置無法針對單筆 Lead 進行狀態變更的操作死角。
+- **資料庫核彈刪除防護**: 揪出並修復了 `LeadHandler.reset_leads()` 的嚴重未爆彈。將「Clear History」按鈕的無差別物理刪除 (`DELETE FROM leads`)，硬化為僅針對廢棄資料的資源回收 (`DELETE FROM leads WHERE status = 'archived'`)，成功保護了活躍商機免遭誤刪。
+- **防呆與 SSOT 堅持**: 前端電腦版按鈕僅在 `new` 與 `pending` 狀態下顯示以防邏輯衝突，且嚴格重用既有的 `handleSwipeLeft`/`Right` 邏輯，未硬編碼新的 API 呼叫。改動順利通過 `make lint-be` 與前端 `npm run test:unit` 的 93 項自動化品質公證。
+
 ### 08-15: Telegram 深層連結修復、HashRouter 參數攔截與任務 SSOT 重構
 - **任務 SSOT 重構**: 修改 `create_logic.py`，徹底根除硬編碼的 'User' 指派者，改由 `shared_constants.py` 的 `AI_AGENT_ROLES` 動態映射，落實單一事實來源。
 - **HashRouter 深層連結防禦**: 修正 `report_service.py` 的 Telegram 通知網址，將一般路徑改為 Hash 路由參數格式 (`#/dashboard?taskId=xxx`)，一併修復了日報、週報、月報的外部點擊連動。
