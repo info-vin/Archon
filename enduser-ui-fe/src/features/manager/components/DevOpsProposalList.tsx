@@ -40,7 +40,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                         <div className="flex gap-3 w-full md:w-auto">
                             <button 
                                 onClick={() => handleViewDiff(prop)}
-                                className="p-4 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border border-gray-100 dark:border-slate-700"
+                                className="p-4 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border border-gray-100 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                                 title="Inspect Code Difference"
                                 aria-label="Inspect Code Difference"
                             >
@@ -49,7 +49,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                             <button 
                                 onClick={() => handleCodeAction(prop.id, 'reject')}
                                 disabled={!!processingId}
-                                className="flex-1 px-6 py-4 text-xs font-bold text-red-600 border border-red-100 rounded-2xl hover:bg-red-50 transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2"
+                                className="flex-1 px-6 py-4 text-xs font-bold text-red-600 border border-red-100 rounded-2xl hover:bg-red-50 transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                             >
                                 {processingId === prop.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : null}
                                 {processingId === prop.id ? 'REJECTING...' : 'REJECT'}
@@ -57,7 +57,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                             <button 
                                 onClick={() => handleCodeAction(prop.id, 'approve')}
                                 disabled={!!processingId}
-                                className="flex-1 px-6 py-4 text-xs font-black bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-100 dark:shadow-none transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2"
+                                className="flex-1 px-6 py-4 text-xs font-black bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-100 dark:shadow-none transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                             >
                                 {processingId === prop.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : null}
                                 {processingId === prop.id ? 'APPROVING...' : 'APPROVE'}
