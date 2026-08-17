@@ -112,6 +112,30 @@ async def get_business_risks() -> list[dict[str, Any]]:
         return []
 
 
+class ActiveAgentDTO(BaseModel):
+    id: str = Field(description="Agent ID")
+    name: str = Field(description="Agent display name")
+    role: str | None = Field(default=None, description="Agent role")
+    status: str = Field(description="Agent status (e.g., active, standby)")
+
+
+class KnowledgeStatsDTO(BaseModel):
+    total_nodes: int = Field(description="Total number of nodes")
+    total_chunks: int | None = Field(default=None, description="Total number of chunks")
+
+
+class SystemOverviewResponse(BaseModel):
+    status: str = Field(description="System health status")
+    rag: dict[str, Any] = Field(description="RAG integrity check details")
+    integrity_score: int | None = Field(default=None, description="Integrity score")
+    errors_24h: int = Field(description="Number of errors in the last 24 hours")
+    active_agents: list[ActiveAgentDTO] = Field(description="List of active agents")
+    cost_24h: float = Field(description="Cost incurred in the last 24 hours")
+    knowledge_stats: KnowledgeStatsDTO | None = Field(default=None, description="Knowledge graph stats")
+    timestamp: str = Field(description="Timestamp of the data")
+    error: str | None = Field(default=None, description="Error message if any")
+
+
 @router.get("/health-trend", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_health_trend() -> Any:
     try:
@@ -123,13 +147,21 @@ async def get_health_trend() -> Any:
         return {"trend": [], "audit": [], "error": str(e)}
 
 
-@router.get("/system-overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_system_overview() -> dict[str, Any]:
+@router.get("/system-overview", response_model=SystemOverviewResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_system_overview() -> SystemOverviewResponse:
     try:
-        return await stats_service.get_system_health_overview()
+        return SystemOverviewResponse(**(await stats_service.get_system_health_overview()))
     except Exception as e:
         logger.error(f"Failed system overview: {e}")
-        return {"status": "unknown", "error": str(e)}
+        return SystemOverviewResponse(
+            status="unknown",
+            rag={},
+            errors_24h=0,
+            active_agents=[],
+            cost_24h=0.0,
+            timestamp="",
+            error=str(e)
+        )
 
 
 @router.get("/overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
