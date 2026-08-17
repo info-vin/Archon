@@ -1,13 +1,23 @@
 import asyncio
 import json
 from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import Any, TYPE_CHECKING, TypedDict
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from src.agents.mcp_client import MCPClient
+
+class ToolOutputDict(TypedDict):
+    role: str
+    tool_call_id: str
+    content: str
+
 
 from ..config.logfire_config import get_logger
 
 
 class AgentToolExecutor:
-    def __init__(self, mcp_client=None) -> None:
+    def __init__(self, mcp_client: 'MCPClient | None' = None) -> None:
         self.mcp_client = mcp_client
         self._native_tools: dict[str, Callable[..., Coroutine[Any, Any, str]]] = {}
 
@@ -48,14 +58,14 @@ class AgentToolExecutor:
             get_logger(__name__).error(f"Poisson Gate (Level Sync) failed: {e}")
             return False, "Error"
 
-    async def handle_tool_calls(self, tool_calls, agent_id: str) -> list[dict]:
+    async def handle_tool_calls(self, tool_calls: 'Iterable[Any]', agent_id: str) -> list[ToolOutputDict]:
         logger = get_logger(__name__)
         from .agent_registry import get_agent_config, get_tool_min_level
 
         config = get_agent_config(agent_id)
         display_name = config["name"] if config else agent_id
 
-        tool_outputs = []
+        tool_outputs: list[ToolOutputDict] = []
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             arguments = json.loads(tool_call.function.arguments)
@@ -89,8 +99,8 @@ class AgentToolExecutor:
                     else:
                         result = f"Tool {function_name} not available."
 
-                tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(result)})
+                tool_outputs.append(ToolOutputDict(role="tool", tool_call_id=call_id, content=str(result)))
             except Exception as e:
                 logger.error(f"[MCP] Tool execution failed ({function_name}): {e}")
-                tool_outputs.append({"role": "tool", "tool_call_id": call_id, "content": str(e)})
+                tool_outputs.append(ToolOutputDict(role="tool", tool_call_id=call_id, content=str(e)))
         return tool_outputs
