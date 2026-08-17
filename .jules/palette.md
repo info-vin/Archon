@@ -37,3 +37,6 @@
 ## 2024-08-15 - Ensure hover-revealed elements are keyboard accessible
 **Learning:** When using Tailwind utility classes like opacity-0 group-hover:opacity-100 to reveal interactive elements only on mouse hover, these elements become completely invisible and functionally unusable for keyboard-only users who tab through the interface.
 **Action:** Always include a focus-within:opacity-100 or focus:opacity-100 utility class alongside the group-hover modifier so that the container becomes visible when any of its interactive child elements receive keyboard focus.
+## 2024-08-16 - Add aria-pressed to toggle buttons
+**Learning:** Filter buttons that act as toggles (e.g., 'All Leads' vs 'Review Queue') often lack state indicators. Screen reader users need to know which filter is currently active.
+**Action:** Always add `aria-pressed={condition}` to button elements that function as stateful toggles in React.
