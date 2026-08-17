@@ -8,3 +8,6 @@
 ## 2024-08-15 - Hardening get_ai_model_health
 **Learning:** When hardening endpoints that return lists of objects inside a top-level wrapper object (like `{ "status": ..., "models": [...] }`), it's crucial to define both the wrapper response model (`AIModelHealthResponseDTO`) and the item detail model (`AIModelHealthDetailDTO`) to preserve the exact JSON structure. Also, `from_attributes=True` wasn't needed here because we are explicitly mapping to the Pydantic models from dictionaries during instantiation.
 **Action:** Always create a hierarchy of DTOs matching the exact nested structure of the legacy dict return type before migrating the return statements to instantiate the Pydantic classes.
+## 2026-08-16 - Handling Pydantic Fallbacks for Service Exceptions
+**Learning:** When unpacking dictionary responses from service layers into Pydantic response models, wrap the primary logic in a `try` block (`return Model(**(await service()))`) and catch exceptions to return a `Model` instance initialized with generic default fields that fulfill the strict structural contract. This prevents `ValidationError` 500s when downstream data fails and preserves client type compatibility.
+**Action:** Always provide structurally complete fallback instantiation in except blocks when typing endpoint routes with explicit response models.
