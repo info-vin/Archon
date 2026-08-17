@@ -136,7 +136,7 @@ class LeadHandler(BaseRepository):
 
     async def reset_leads(self) -> bool:
         try:
-            self.execute_query(self.supabase_client.table("leads").delete().neq("id", "00000000-0000-0000-0000-000000000000"), "Reset leads")  # 合法
+            self.execute_query(self.supabase_client.table("leads").delete().eq("status", "archived").neq("id", "00000000-0000-0000-0000-000000000000"), "Reset leads (Clear Archived)")  # 合法
             return True
         except Exception as e:
             logger.error(f"Failed to reset leads: {e}")

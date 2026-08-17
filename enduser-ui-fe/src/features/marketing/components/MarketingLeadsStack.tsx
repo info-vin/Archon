@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCwIcon, MapPinIcon, ActivityIcon, SparklesIcon } from '../../../components/Icons';
+import { RefreshCwIcon, MapPinIcon, ActivityIcon, SparklesIcon, CheckCircleIcon, XCircleIcon } from '../../../components/Icons';
 import { Button } from '../../../components/Button';
 import { EmptyState as CommonEmptyState } from '../../../components/common/EmptyState';
 import { api } from '../../../services/api';
@@ -106,13 +106,13 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
         <div className="flex gap-3">
           <button 
             onClick={async () => {
-              if (confirm("Are you sure you want to delete ALL leads?")) {
+              if (confirm("Are you sure you want to delete ALL archived leads?")) {
                 try { await api.resetLeads(); fetchLeads(); } catch (e: any) { alert(e.message); }
               }
             }}
             className="text-red-500 text-sm font-medium hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500 rounded-md px-2 py-1 -mx-2"
           >
-            Clear History
+            Clear Archived
           </button>
           <button onClick={fetchLeads} className="text-indigo-600 text-sm font-medium hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 rounded-md px-2 py-1 -mx-2">Refresh</button>
         </div>
@@ -226,6 +226,16 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                     <td className="px-6 py-4"><a href={lead.source_job_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline text-xs">View Post</a></td>
                     <td className="px-6 py-4 text-xs whitespace-nowrap">{lead.next_followup_date ? safeFormatLeadDate(lead.next_followup_date) : <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Schedule</span>}</td>
                     <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      {(lead.status === 'new' || lead.status === 'pending') && (
+                        <>
+                          <Button variant="ghost" size="sm" className="text-green-600 hover:bg-green-50" onClick={() => handleSwipeRight(lead)} aria-label="Shortlist Lead" title="Shortlist Lead">
+                            <CheckCircleIcon className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50" onClick={() => handleSwipeLeft(lead)} aria-label="Archive Lead" title="Archive Lead">
+                            <XCircleIcon className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
                       <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50" onClick={() => onOpenVisitLog(lead)} aria-label="Log Visit (Hunter Mode)" title="Log Visit (Hunter Mode)">
                         <MapPinIcon className="w-4 h-4" />
                       </Button>
