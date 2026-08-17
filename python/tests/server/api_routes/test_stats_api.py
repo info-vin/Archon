@@ -57,3 +57,27 @@ async def test_get_agent_xp():
         assert result[0].total_cost == 0.5
         assert result[0].roi_ratio == 200.0
         assert result[0].level == "Level 1"
+
+from src.server.api_routes.stats_api import get_token_usage_details, get_recent_token_usage
+
+@pytest.mark.asyncio
+async def test_get_token_usage_details():
+    mock_data = [
+        {"id": "1", "timestamp": "2023-10-27T10:00:00Z", "user_name": "Test User", "role": "admin", "model": "gpt-4", "tokens": 100, "cost": 0.01, "context": "Test"}
+    ]
+    with patch("src.server.api_routes.stats_api.stats_service.get_recent_token_usage", return_value=mock_data):
+        result = await get_token_usage_details()
+        assert len(result) == 1
+        assert result[0]["id"] == "1"
+        assert result[0]["tokens"] == 100
+
+@pytest.mark.asyncio
+async def test_get_recent_token_usage():
+    mock_data = [
+        {"id": "2", "timestamp": "2023-10-27T11:00:00Z", "user_name": "Agent X", "role": "ai_agent", "model": "claude", "tokens": 50, "cost": 0.005, "context": "Chat"}
+    ]
+    with patch("src.server.api_routes.stats_api.stats_service.get_recent_token_usage", return_value=mock_data):
+        result = await get_recent_token_usage()
+        assert len(result) == 1
+        assert result[0]["id"] == "2"
+        assert result[0]["model"] == "claude"

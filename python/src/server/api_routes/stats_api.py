@@ -174,16 +174,27 @@ async def get_ai_usage() -> dict[str, Any]:
         return {"total_monthly_tokens": 0, "total_cost_usd": 0, "usage_percentage": 0}
 
 
-@router.get("/token-usage/details", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_token_usage_details(days: int = 7) -> list[dict[str, Any]]:
+class TokenUsageRecordDTO(BaseModel):
+    id: str = Field(description="The unique identifier for the token usage record")
+    timestamp: str = Field(description="The timestamp when the usage occurred")
+    user_name: str | None = Field(default=None, description="The name of the entity that used the tokens")
+    role: str | None = Field(default=None, description="The role of the entity")
+    model: str = Field(description="The AI model that was queried")
+    tokens: int = Field(description="The total tokens consumed")
+    cost: float = Field(description="The cost in USD")
+    context: str | None = Field(default=None, description="The context or feature triggering the usage")
+
+
+@router.get("/token-usage/details", response_model=list[TokenUsageRecordDTO], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_token_usage_details(days: int = 7) -> list[TokenUsageRecordDTO]:
     try:
         return await stats_service.get_recent_token_usage(limit=100)
     except Exception:
         return []
 
 
-@router.get("/token-usage/recent", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_recent_token_usage(limit: int = 20) -> list[dict[str, Any]]:
+@router.get("/token-usage/recent", response_model=list[TokenUsageRecordDTO], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_recent_token_usage(limit: int = 20) -> list[TokenUsageRecordDTO]:
     try:
         return await stats_service.get_recent_token_usage(limit=limit)
     except Exception:
