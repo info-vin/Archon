@@ -24,7 +24,7 @@ class LeadHandler(BaseRepository):
         query = q.order("created_at", desc=True)
 
         success, res = self.execute_query(query, "Failed to fetch leads")
-        return res.data if success and hasattr(res, "data") and res.data is not None else []
+        return res.get("data", []) if success and isinstance(res, dict) else []
 
     async def create_lead(self, lead_data: dict, creator_id: str | None = None) -> tuple[bool, dict]:
         if "created_from_user_id" in lead_data:
@@ -38,25 +38,25 @@ class LeadHandler(BaseRepository):
 
 
             _, existing = self.execute_query(self.supabase_client.table("leads").select("id").eq("source_job_url", source_url), "Check existing lead")  # 合法
-            if hasattr(existing, "data") and existing.data:
+            if isinstance(existing, dict) and existing.get("data"):
                 if lead_data.get("pitch_content"):
                     self.execute_query(
-                        self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq("id", existing.data[0]["id"]),  # 合法
+                        self.supabase_client.table("leads").update({"pitch_content": lead_data["pitch_content"]}).eq("id", existing["data"][0]["id"]),  # 合法
                         "Update pitch content"
                     )
-                return True, {"lead": existing.data[0]}
+                return True, {"lead": existing["data"][0]}
 
 
         success, res = self.execute_query(self.supabase_client.table("leads").insert(lead_data), "Failed to create lead")  # 合法
-        if success and hasattr(res, "data") and res.data:
-            return True, {"lead": res.data[0]}
+        if success and isinstance(res, dict) and res.get("data"):
+            return True, {"lead": res["data"][0]}
         return False, res
 
     async def update_lead(self, lead_id: str, update_data: dict) -> tuple[bool, dict]:
 
         success, res = self.execute_query(self.supabase_client.table("leads").update(update_data).eq("id", lead_id), f"Failed to update lead {lead_id}")  # 合法
-        if success and hasattr(res, "data") and res.data:
-            lead_data = res.data[0]
+        if success and isinstance(res, dict) and res.get("data"):
+            lead_data = res["data"][0]
             if lead_data.get("status") == "LOST":
                 try:
                     from ..librarian_service import LibrarianService
