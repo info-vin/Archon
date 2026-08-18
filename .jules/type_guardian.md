@@ -10,3 +10,6 @@
 ## 2024-08-14 - Use TypedDict for backward compatibility
 **Learning:** When refactoring existing services to return structured DTOs instead of `dict[str, Any]`, using `@dataclass` or `BaseModel` can break downstream callers and tests that use dictionary subscripting (e.g., `result["key"]`), resulting in `TypeError`.
 **Action:** Use `TypedDict` for DTOs in incremental refactors where you cannot guarantee all call sites are simultaneously updated, as it provides static type safety while remaining 100% backward compatible at runtime.
+## 2025-03-01 - ParamSpec kwargs restriction
+**Learning:** `ParamSpec.kwargs` can only be used in conjunction with `ParamSpec.args` and must be bound to a generic context (such as taking a `Callable[P, ...]`). Using it standalone on a standard method will cause static type checkers to fail. The correct annotation for untyped, variable keyword arguments in standard methods is `**kwargs: Any` or to replace them with explicit keyword arguments.
+**Action:** Always replace `**kwargs` with explicit arguments when possible to favor explicit over implicit. Do not use `ParamSpec.kwargs` outside of its intended generic context.

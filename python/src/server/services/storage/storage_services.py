@@ -5,11 +5,13 @@ This module contains all storage service classes that handle document and data s
 These services extend the base storage functionality with specific implementations.
 """
 
+from collections.abc import Callable
 from typing import Any
 
 from ...config.logfire_config import get_logger, safe_span
 from .base_storage_service import BaseStorageService
 from .document_storage import DocumentStorageFacade
+
 
 logger = get_logger(__name__)
 
@@ -24,8 +26,8 @@ class DocumentStorageService(BaseStorageService):
         source_id: str,
         knowledge_type: str = "documentation",
         tags: list[str] | None = None,
-        progress_callback: Any | None = None,
-        cancellation_check: Any | None = None,
+        progress_callback: Callable[..., Any] | None = None,
+        cancellation_check: Callable[[], bool] | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Upload and process a document file with progress reporting.
@@ -51,7 +53,9 @@ class DocumentStorageService(BaseStorageService):
         ) as span:
             try:
                 # Progress reporting helper
-                async def report_progress(message: str, percentage: int, batch_info: dict[str, Any] | None = None):
+                async def report_progress(
+                    message: str, percentage: int, batch_info: dict[str, Any] | None = None
+                ) -> None:
                     if progress_callback:
                         await progress_callback(message, percentage, batch_info)
 
@@ -152,13 +156,18 @@ class DocumentStorageService(BaseStorageService):
 
                 return False, {"error": f"Error uploading document: {str(e)}"}
 
-    async def store_documents(self, documents: list[dict[str, Any]], **kwargs) -> dict[str, Any]:
+    async def store_documents(
+        self,
+        documents: list[dict[str, Any]],
+        progress_callback: Callable[..., Any] | None = None,
+        cancellation_check: Callable[[], bool] | None = None,
+    ) -> dict[str, Any]:
         """
         Store multiple documents. Implementation of abstract method.
 
         Args:
             documents: List of documents to store
-            **kwargs: Additional options (progress_callback, etc.)
+            progress_callback: Optional progress callback\n            cancellation_check: Optional cancellation check (progress_callback, etc.)
 
         Returns:
             Storage result
@@ -182,13 +191,18 @@ class DocumentStorageService(BaseStorageService):
             "results": results,
         }
 
-    async def process_document(self, document: dict[str, Any], **kwargs) -> dict[str, Any]:
+    async def process_document(
+        self,
+        document: dict[str, Any],
+        progress_callback: Callable[..., Any] | None = None,
+        cancellation_check: Callable[[], bool] | None = None,
+    ) -> dict[str, Any]:
         """
         Process a single document. Implementation of abstract method.
 
         Args:
             document: Document to process
-            **kwargs: Additional processing options
+            progress_callback: Optional progress callback\n            cancellation_check: Optional cancellation check
 
         Returns:
             Processed document with metadata
