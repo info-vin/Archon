@@ -201,21 +201,32 @@ async def get_recent_token_usage(limit: int = 20) -> list[TokenUsageRecordDTO]:
         return []
 
 
-@router.get("/knowledge-roi", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_knowledge_roi() -> dict[str, Any]:
+class KnowledgeROIResponse(BaseModel):
+    roi: float = Field(description="The calculated Return on Investment percentage for the knowledge base")
+    active_nodes: int = Field(description="The number of active nodes in the knowledge graph")
+
+
+class EthicsAuditQueueResponse(BaseModel):
+    violations: list[str] = Field(description="List of detected ethics violations pending audit")
+    status: str = Field(description="Queue status (e.g. 'clear', 'error')")
+
+
+@router.get("/knowledge-roi", response_model=KnowledgeROIResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_knowledge_roi() -> KnowledgeROIResponse:
     try:
         res = await stats_service.get_knowledge_roi()
-        return res if res else {"roi": 0, "active_nodes": 0}
+        data = res if res else {"roi": 0, "active_nodes": 0}
+        return KnowledgeROIResponse(**data)
     except Exception:
-        return {"roi": 0, "active_nodes": 0}
+        return KnowledgeROIResponse(roi=0.0, active_nodes=0)
 
 
-@router.get("/ethics-audit-queue", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_ethics_audit_queue() -> dict[str, Any]:
+@router.get("/ethics-audit-queue", response_model=EthicsAuditQueueResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_ethics_audit_queue() -> EthicsAuditQueueResponse:
     try:
-        return {"violations": [], "status": "clear"}
+        return EthicsAuditQueueResponse(violations=[], status="clear")
     except Exception:
-        return {"violations": [], "status": "error"}
+        return EthicsAuditQueueResponse(violations=[], status="error")
 
 
 class TaskStatusCount(BaseModel):
