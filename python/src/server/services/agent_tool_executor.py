@@ -1,10 +1,13 @@
 import asyncio
 import json
 from collections.abc import Callable, Coroutine
-from typing import Any, TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
+
+from ..config.logfire_config import get_logger
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
     from src.agents.mcp_client import MCPClient
 
 class ToolOutputDict(TypedDict):
@@ -13,7 +16,6 @@ class ToolOutputDict(TypedDict):
     content: str
 
 
-from ..config.logfire_config import get_logger
 
 
 class AgentToolExecutor:

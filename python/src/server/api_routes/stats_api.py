@@ -188,7 +188,8 @@ class TokenUsageRecordDTO(BaseModel):
 @router.get("/token-usage/details", response_model=list[TokenUsageRecordDTO], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_token_usage_details(days: int = 7) -> list[TokenUsageRecordDTO]:
     try:
-        return await stats_service.get_recent_token_usage(limit=100)
+        results = await stats_service.get_recent_token_usage(limit=100)
+        return [TokenUsageRecordDTO(**r) for r in results]
     except Exception:
         return []
 
@@ -196,7 +197,8 @@ async def get_token_usage_details(days: int = 7) -> list[TokenUsageRecordDTO]:
 @router.get("/token-usage/recent", response_model=list[TokenUsageRecordDTO], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_recent_token_usage(limit: int = 20) -> list[TokenUsageRecordDTO]:
     try:
-        return await stats_service.get_recent_token_usage(limit=limit)
+        results = await stats_service.get_recent_token_usage(limit=limit)
+        return [TokenUsageRecordDTO(**r) for r in results]
     except Exception:
         return []
 

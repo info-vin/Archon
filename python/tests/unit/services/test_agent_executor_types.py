@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import MagicMock
-from src.server.services.agent_tool_executor import AgentToolExecutor
+
+import pytest
+
 from src.server.services.agent_service import AgentService
+from src.server.services.agent_tool_executor import AgentToolExecutor
+
 
 @pytest.mark.asyncio
 async def test_agent_executor_init():

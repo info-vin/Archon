@@ -1,7 +1,7 @@
 # python/src/server/services/agent_service.py
 
 
-from typing import Any, TypedDict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypedDict
 
 if TYPE_CHECKING:
     from src.agents.mcp_client import MCPClient

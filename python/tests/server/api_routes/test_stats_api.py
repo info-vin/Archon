@@ -2,7 +2,13 @@ from unittest.mock import patch
 
 import pytest
 
-from src.server.api_routes.stats_api import get_agent_xp, get_member_performance, get_tasks_by_status
+from src.server.api_routes.stats_api import (
+    get_agent_xp,
+    get_member_performance,
+    get_recent_token_usage,
+    get_tasks_by_status,
+    get_token_usage_details,
+)
 
 
 @pytest.mark.asyncio
@@ -58,7 +64,7 @@ async def test_get_agent_xp():
         assert result[0].roi_ratio == 200.0
         assert result[0].level == "Level 1"
 
-from src.server.api_routes.stats_api import get_token_usage_details, get_recent_token_usage
+
 
 @pytest.mark.asyncio
 async def test_get_token_usage_details():

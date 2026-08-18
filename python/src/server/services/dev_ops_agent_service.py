@@ -41,7 +41,7 @@ class DevOpsAgentService:
 
         prompt = get_devbot_analysis_prompt(command, stderr)
         full_prompt = f"{prompt}\n\n### CONSTRAINTS ###\n{sop_context or 'Standard conventions.'}"
-        messages = [{"role": "user", "content": full_prompt}]
+        messages: list[Any] = [{"role": "user", "content": full_prompt}]
         tools = DEVBOT_TOOLS if self.mcp_client else None
         request_id = f"fix-{uuid.uuid4().hex[:8]}"
 
