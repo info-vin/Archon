@@ -198,3 +198,7 @@
 ## 2025-02-15 - Memoizing Leaf Presentational Components in Lists
 **Learning:** When rendering primitive-prop leaf components like badges (`PriorityBadge`, `StatusBadge`) inside large array mappings (`ListView`, `TableView`, `KanbanView`), they will needlessly re-render whenever the parent list state changes unless they are wrapped in `React.memo()`.
 **Action:** Always verify if small, frequently rendered presentational components that compute styles based on primitive string props (like string replacement or lowercasing) are memoized to avoid multiplying CPU overhead by O(N) list items.
+
+## 2026-08-17 - Optimize string operations in map loops
+**Learning:** Using inline string manipulations like `.toUpperCase().replace('_', ' ')` inside a `.map()` render loop forces unnecessary string allocations and regex executions on every re-render.
+**Action:** Pre-calculate and consolidate all possible formatted status string combinations into a single static O(1) lookup dictionary outside the React component.

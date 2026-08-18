@@ -6,13 +6,23 @@ import { api } from '../../../services/api';
 import { LeadsCardStack, Lead } from './LeadsCardStack';
 
 // PERFORMANCE: Hoisted static dictionary to prevent O(N) string allocations and manipulations in render loops
+// Combined and pre-calculated all possible formatted status string combinations to avoid inline .replace() and .toUpperCase() calls
 const STATUS_DISPLAY: Record<string, string> = {
   'new': 'NEW',
   'pending': 'PENDING',
   'shortlisted': 'SHORTLISTED',
   'converted': 'CONVERTED',
   'archived': 'ARCHIVED',
-  'review_queue': 'REVIEW QUEUE'
+  'review_queue': 'REVIEW QUEUE',
+  'contacted': 'CONTACTED',
+  'qualified': 'QUALIFIED',
+  'proposal_sent': 'PROPOSAL SENT',
+  'negotiation': 'NEGOTIATION',
+  'lost': 'LOST'
+};
+
+const getStatusDisplay = (status: string) => {
+    return STATUS_DISPLAY[status] || (status ? status.toUpperCase().replace(/_/g, ' ') : '');
 };
 
 // PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations during list rendering
@@ -33,18 +43,6 @@ const DESKTOP_STATUS_STYLE_MAP: Record<string, string> = {
   'converted': 'bg-green-100 text-green-700'
 };
 const DESKTOP_DEFAULT_STYLE = 'bg-gray-100 text-gray-600';
-
-// PERFORMANCE: Pre-calculate complex string manipulations (toUpperCase, replace) to avoid O(N) allocation during render loops
-const STATUS_FORMAT_MAP: Record<string, string> = {
-  'new': 'NEW',
-  'converted': 'CONVERTED',
-  'review_queue': 'REVIEW QUEUE',
-  'contacted': 'CONTACTED',
-  'qualified': 'QUALIFIED',
-  'proposal_sent': 'PROPOSAL SENT',
-  'negotiation': 'NEGOTIATION',
-  'lost': 'LOST'
-};
 
 interface MarketingLeadsStackProps {
   leads: any[];
@@ -165,7 +163,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       MOBILE_STATUS_STYLE_MAP[lead.status] || MOBILE_DEFAULT_STYLE
                     }`}>
-                      {STATUS_DISPLAY[lead.status] || STATUS_FORMAT_MAP[lead.status] || lead.status.toUpperCase()}
+                      {getStatusDisplay(lead.status)}
                     </span>
                   </div>
                   <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-50 text-xs text-gray-700 italic">
@@ -219,7 +217,7 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
                         <span className={`px-2 py-1 rounded-full text-xs font-bold text-center ${
                           DESKTOP_STATUS_STYLE_MAP[lead.status] || DESKTOP_DEFAULT_STYLE
                         }`}>
-                          {STATUS_DISPLAY[lead.status] || STATUS_FORMAT_MAP[lead.status] || lead.status.toUpperCase().replace('_', ' ')}
+                          {getStatusDisplay(lead.status)}
                         </span>
                       </div>
                     </td>
