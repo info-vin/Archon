@@ -4,6 +4,7 @@ import { promptMachine } from '../machines/promptMachine.ts';
 import { api } from '../../../services/api.ts';
 import { CheckCircleIcon, KeyIcon, RefreshCwIcon, SaveIcon, ShieldCheckIcon, EyeIcon, Edit2Icon, UndoIcon } from '../../../components/Icons.tsx';
 import DiffViewer from '../../../components/DiffViewer';
+const formatPromptName = (name: string) => name ? name.replace(/_/g, " ").toUpperCase() : "";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
     year: 'numeric', month: 'numeric', day: 'numeric',
@@ -91,7 +92,7 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
                             className={`w-full text-left p-4 rounded-xl border transition-all ${selectedPrompt?.prompt_name === p.prompt_name ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-card hover:border-primary/50'}`}
                         >
                             <div className="flex justify-between items-start">
-                                 <div className="font-bold text-sm truncate">{p.prompt_name.replace(/_/g, ' ').toUpperCase()}</div>
+                                 <div className="font-bold text-sm truncate">{formatPromptName(p.prompt_name)}</div>
                                  {p.is_system_protected ? (
                                      <div className="flex items-center text-amber-500" title="System Protected">
                                          <KeyIcon className="w-3.5 h-3.5" />
@@ -115,7 +116,7 @@ export const PromptManagement: React.FC<{ isManagerMode: boolean }> = ({ isManag
                         <div className="p-4 border-b border-border bg-muted/30 flex justify-between items-center">
                             <div>
                                 <h3 className="font-bold text-lg flex items-center gap-2">
-                                    {selectedPrompt.prompt_name.replace(/_/g, ' ').toUpperCase()}
+                                    {formatPromptName(selectedPrompt.prompt_name)}
                                     {isLocked && <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded border border-amber-200">READ ONLY</span>}
                                 </h3>
                                 <p className="text-xs text-muted-foreground">Last updated: {formatDateTime(selectedPrompt.updated_at)}</p>
