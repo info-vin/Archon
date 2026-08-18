@@ -15,7 +15,7 @@ interface TeamMemberCardProps {
     onViewSop: () => void;
 }
 
-export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
+export const TeamMemberCard: React.FC<TeamMemberCardProps> = React.memo(({
     member,
     aiUsage,
     onEditRole,
@@ -125,4 +125,4 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             </div>
         </div>
     );
-};
+});
