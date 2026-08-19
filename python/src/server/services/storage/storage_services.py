@@ -12,7 +12,6 @@ from ...config.logfire_config import get_logger, safe_span
 from .base_storage_service import BaseStorageService
 from .document_storage import DocumentStorageFacade
 
-
 logger = get_logger(__name__)
 
 
@@ -161,6 +160,7 @@ class DocumentStorageService(BaseStorageService):
         documents: list[dict[str, Any]],
         progress_callback: Callable[..., Any] | None = None,
         cancellation_check: Callable[[], bool] | None = None,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Store multiple documents. Implementation of abstract method.
@@ -180,8 +180,8 @@ class DocumentStorageService(BaseStorageService):
                 source_id=doc.get("source_id", "upload"),
                 knowledge_type=doc.get("knowledge_type", "documentation"),
                 tags=doc.get("tags"),
-                progress_callback=kwargs.get("progress_callback"),
-                cancellation_check=kwargs.get("cancellation_check"),
+                progress_callback=progress_callback,
+                cancellation_check=cancellation_check,
             )
             results.append(result)
 
@@ -196,6 +196,7 @@ class DocumentStorageService(BaseStorageService):
         document: dict[str, Any],
         progress_callback: Callable[..., Any] | None = None,
         cancellation_check: Callable[[], bool] | None = None,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         """
         Process a single document. Implementation of abstract method.

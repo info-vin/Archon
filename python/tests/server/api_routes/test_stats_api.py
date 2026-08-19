@@ -74,8 +74,8 @@ async def test_get_token_usage_details():
     with patch("src.server.api_routes.stats_api.stats_service.get_recent_token_usage", return_value=mock_data):
         result = await get_token_usage_details()
         assert len(result) == 1
-        assert result[0]["id"] == "1"
-        assert result[0]["tokens"] == 100
+        assert result[0].id == "1"
+        assert result[0].tokens == 100
 
 @pytest.mark.asyncio
 async def test_get_recent_token_usage():
@@ -85,5 +85,5 @@ async def test_get_recent_token_usage():
     with patch("src.server.api_routes.stats_api.stats_service.get_recent_token_usage", return_value=mock_data):
         result = await get_recent_token_usage()
         assert len(result) == 1
-        assert result[0]["id"] == "2"
-        assert result[0]["model"] == "claude"
+        assert result[0].id == "2"
+        assert result[0].model == "claude"
