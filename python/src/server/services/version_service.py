@@ -5,6 +5,8 @@ Version checking service with GitHub API integration.
 from datetime import datetime, timedelta
 from typing import Any, NotRequired, TypedDict, cast
 
+from supabase import Client
+
 import httpx
 import logfire
 
@@ -52,7 +54,7 @@ class DocumentVersionDTO(TypedDict):
 class VersionService(BaseRepository):
     """Service for checking Archon version against GitHub releases."""
 
-    def __init__(self, supabase_client=None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client)
         self._cache: ReleaseDataDTO | None = None
         self._cache_time: datetime | None = None
