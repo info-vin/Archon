@@ -537,3 +537,4 @@
 - **隱藏成本漏洞修補**: 修正 `lead_evaluator.py` 在爬蟲高併發下直接使用 `genai.Client` 而繞過記帳系統的問題，手動解析 `response.usage_metadata` 並掛載回 `TokenUsageService` 中介攔截器。
 - **閾值硬化**: 將 RAG 過濾閾值從 0.68 上調至 0.70，寫入 `schemas/settings.py` 預設值與 `migration/20260819_update_rag_threshold.sql` 確保資料庫覆寫。通過 668 項後端測試公證與 `make phase-audit`。
 - **60s 超時防禦公證**: 釐清了前端 `signal is aborted without reason` 報錯真相。經物理測試排除後端 Deadlock 與 Socket 超時後，確認此報錯 100% 源於 Vercel 生產環境觸發了 Hugging Face 的冷啟動 (Cold Start > 60s)，進而啟動了 `apiClient.ts` 內建的 `AbortController` 60 秒硬切斷防禦。這是預期的基礎設施行為，無需亦不准修改代碼，成功守住不盲目重構的底線。
+- **拓樸死結修復補丁 (Hotfix)**: 修正了先前 5.10.25 誤將 `depends_on: archon-mcp` 植入 `archon-mcp` 服務自身導致的 Circular Dependency (`make stop` 崩潰)。已將相依性正確掛載至 `archon-server`，並透過 `make stop` 物理驗證關機拓樸圖成功。
