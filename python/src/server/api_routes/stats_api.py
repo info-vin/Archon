@@ -6,7 +6,7 @@ Hardened for Phase 4.6.59 - Ensures no 404s for Admin HUD.
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..auth.dependencies import requires_permission
 from ..auth.permissions import TASK_READ_TEAM
@@ -70,13 +70,25 @@ async def get_collab_synergy() -> CollabSynergyResponse:
         return CollabSynergyResponse(nodes=[], matrix=[], error=str(e))
 
 
-@router.get("/sla-reliability", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_sla_reliability() -> dict[str, Any]:
+class SLATrendPoint(BaseModel):
+    date: str = Field(description="Date string for the window")
+    rate: float = Field(description="SLA attainment rate")
+    count: int = Field(description="Count of tasks analyzed")
+
+class SLAReliabilityResponse(BaseModel):
+    current_sla: float = Field(default=0.0)
+    trend: list[SLATrendPoint] = Field(default_factory=list)
+    total_analyzed: int = Field(default=0)
+    error: str | None = None
+
+@router.get("/sla-reliability", response_model=SLAReliabilityResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_sla_reliability() -> SLAReliabilityResponse:
     try:
-        return await stats_service.get_sla_reliability()
+        data = await stats_service.get_sla_reliability()
+        return SLAReliabilityResponse(**data)
     except Exception as e:
         logger.error(f"API: SLA Reliability failed: {e}")
-        return {"current_sla": 0, "trend": [], "error": str(e)}
+        return SLAReliabilityResponse(current_sla=0.0, trend=[], total_analyzed=0, error=str(e))
 
 
 class ForceReadinessTrend(BaseModel):
@@ -103,10 +115,14 @@ async def get_force_readiness() -> ForceReadinessResponse:
         return ForceReadinessResponse(baseline=0.0, trend=[], error=str(e))
 
 
-@router.get("/business-risks", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_business_risks() -> list[dict[str, Any]]:
+class BusinessRiskDTO(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+@router.get("/business-risks", response_model=list[BusinessRiskDTO], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_business_risks() -> list[BusinessRiskDTO]:
     try:
-        return await stats_service.get_business_risks()
+        data = await stats_service.get_business_risks()
+        return [BusinessRiskDTO(**item) for item in data]
     except Exception as e:
         logger.error(f"API: Business risks fetch failed: {e}")
         return []
@@ -136,15 +152,22 @@ class SystemOverviewResponse(BaseModel):
     error: str | None = Field(default=None, description="Error message if any")
 
 
-@router.get("/health-trend", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_health_trend() -> Any:
+class HealthTrendResponse(BaseModel):
+    trend: list[Any] = Field(default_factory=list)
+    audit: list[Any] = Field(default_factory=list)
+    error: str | None = None
+    model_config = ConfigDict(extra="allow")
+
+
+@router.get("/health-trend", response_model=HealthTrendResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_health_trend() -> HealthTrendResponse:
     try:
         from ..services.health_service import HealthService
-
-        return await HealthService().get_health_history(days=30)
+        data = await HealthService().get_health_history(days=30)
+        return HealthTrendResponse(**data)
     except Exception as e:
         logger.error(f"API: Health trend fetch failed: {e}")
-        return {"trend": [], "audit": [], "error": str(e)}
+        return HealthTrendResponse(trend=[], audit=[], error=str(e))
 
 
 @router.get("/system-overview", response_model=SystemOverviewResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
@@ -164,14 +187,22 @@ async def get_system_overview() -> SystemOverviewResponse:
         )
 
 
-@router.get("/overview", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-@router.get("/ai-usage", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_ai_usage() -> dict[str, Any]:
+class AIUsageResponse(BaseModel):
+    total_monthly_tokens: int = Field(default=0)
+    total_cost_usd: float = Field(default=0.0)
+    usage_percentage: float = Field(default=0.0)
+    model_config = ConfigDict(extra="allow")
+
+
+@router.get("/overview", response_model=AIUsageResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.get("/ai-usage", response_model=AIUsageResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_ai_usage() -> AIUsageResponse:
     try:
-        return await stats_service.get_detailed_ai_usage(days=30)
+        data = await stats_service.get_detailed_ai_usage(days=30)
+        return AIUsageResponse(**data)
     except Exception as e:
         logger.error(f"Failed to get AI usage: {e}")
-        return {"total_monthly_tokens": 0, "total_cost_usd": 0, "usage_percentage": 0}
+        return AIUsageResponse(total_monthly_tokens=0, total_cost_usd=0.0, usage_percentage=0.0)
 
 
 class TokenUsageRecordDTO(BaseModel):
@@ -284,8 +315,18 @@ async def get_agent_xp() -> list[AgentXPStats]:
         return []
 
 
-@router.get("/consolidated", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def get_consolidated_stats() -> Any:
+class ConsolidatedStatsResponse(BaseModel):
+    system_status: str | None = None
+    health_score: int | None = None
+    short_term_kpis: dict[str, Any] | None = None
+    long_term_trends: dict[str, Any] | None = None
+    main_bottleneck: str | None = None
+    recommended_actions: list[Any] | None = None
+    model_config = ConfigDict(extra="allow")
+
+
+@router.get("/consolidated", response_model=ConsolidatedStatsResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+async def get_consolidated_stats() -> ConsolidatedStatsResponse:
     """Consolidated Strategic Nexus dashboard state (Phase 5.5.7)."""
     try:
         from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
@@ -295,15 +336,17 @@ async def get_consolidated_stats() -> Any:
             user_prompt="Analyze the gathered telemetry and operational details. Synthesize them into the ConsolidatedNexusState schema.",
             deps=deps
         )
-        return result
+        data = result.data if hasattr(result, "data") else result
+        data_dict = data if isinstance(data, dict) else data.model_dump() if hasattr(data, "model_dump") else {}
+        return ConsolidatedStatsResponse(**data_dict)
     except Exception as e:
         logger.error(f"Failed to compile consolidated stats: {e}")
-        return {
-            "system_status": "YELLOW",
-            "health_score": 50,
-            "short_term_kpis": {"error": str(e)},
-            "long_term_trends": {},
-            "main_bottleneck": "NexusOracleAgent run execution failed.",
-            "recommended_actions": []
-        }
+        return ConsolidatedStatsResponse(
+            system_status="YELLOW",
+            health_score=50,
+            short_term_kpis={"error": str(e)},
+            long_term_trends={},
+            main_bottleneck="NexusOracleAgent run execution failed.",
+            recommended_actions=[]
+        )
 

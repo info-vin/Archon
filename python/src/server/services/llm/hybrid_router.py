@@ -127,13 +127,15 @@ class HybridRouter:
         if not last_user_content:
             return False
 
-        # 3. Check word count (Simple if < 50 words)
+        # 3. Check word count (Simple if < limit)
         words = last_user_content.split()
-        if len(words) >= 50:
+        word_limit = int(self._get_setting_cached("offline_word_limit", "50") or "50")
+        if len(words) >= word_limit:
             return False
 
         # 4. Check offline keywords
-        online_keywords = ["crawl", "search", "fetch", "live", "latest", "realtime", "google", "news", "code", "寫程式", "程式碼"]
+        keywords_str = self._get_setting_cached("online_keywords", '["crawl", "search", "fetch", "live", "latest", "realtime", "google", "news", "code", "寫程式", "程式碼"]')
+        online_keywords = json.loads(keywords_str or "[]")
         for kw in online_keywords:
             if kw in last_user_content.lower():
                 return False

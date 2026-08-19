@@ -122,6 +122,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-19: 型別斷層修復與 SSOT 硬化 (Phase 5.10.24)
+- **API 強型別補齊**: 修正 `stats_api.py` 先前遺留的重構斷層，為 `/sla-reliability`, `/business-risks`, `/health-trend`, `/overview`, `/consolidated` 5 個端點補齊 Pydantic DTO (如 `SLAReliabilityResponse`)，消滅弱型別 (`Any` / `dict`)，通過 `make lint-be` 與 655 項測試。
+- **混合路由 SSOT 落實**: 拔除 `hybrid_router.py` 中寫死的字數上限與線上關鍵字，改由 `SettingsService` 動態讀取；同步新增 `migration/20260819_add_hybrid_router_settings.sql` 寫入初始種子，實現資料庫可控的單一事實來源。
+- **費率 SSOT 修正**: 查核網路資訊，將缺失的 `gemini-3.5-flash` ($1.50/$9.00) 與 `gemini-3.5-flash-lite` ($0.30/$2.50) 費率補入 `config.py`，確保 ROI 追蹤精準。
+
 ### 08-17: 電腦版 Leads 介面初篩修復與資料庫安全硬化 (Phase 5.10.23)
 - **UI 響應式斷層修復**: 釐清 Tailwind `md` 斷點 (768px) 物理行為，確認平板與電腦版顯示的是 `md:table` 表格視圖而非滑動卡片。為桌面版表格 Action 欄位補齊了 ✅ (Shortlist) 與 ❌ (Archive) 按鈕，徹底解決了 Charlie 在非手機裝置無法針對單筆 Lead 進行狀態變更的操作死角。
 - **資料庫核彈刪除防護**: 揪出並修復了 `LeadHandler.reset_leads()` 的嚴重未爆彈。將「Clear History」按鈕的無差別物理刪除 (`DELETE FROM leads`)，硬化為僅針對廢棄資料的資源回收 (`DELETE FROM leads WHERE status = 'archived'`)，成功保護了活躍商機免遭誤刪。
