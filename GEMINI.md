@@ -538,3 +538,7 @@
 - **閾值硬化**: 將 RAG 過濾閾值從 0.68 上調至 0.70，寫入 `schemas/settings.py` 預設值與 `migration/20260819_update_rag_threshold.sql` 確保資料庫覆寫。通過 668 項後端測試公證與 `make phase-audit`。
 - **60s 超時防禦公證**: 釐清了前端 `signal is aborted without reason` 報錯真相。經物理測試排除後端 Deadlock 與 Socket 超時後，確認此報錯 100% 源於 Vercel 生產環境觸發了 Hugging Face 的冷啟動 (Cold Start > 60s)，進而啟動了 `apiClient.ts` 內建的 `AbortController` 60 秒硬切斷防禦。這是預期的基礎設施行為，無需亦不准修改代碼，成功守住不盲目重構的底線。
 - **拓樸死結修復補丁 (Hotfix)**: 修正了先前 5.10.25 誤將 `depends_on: archon-mcp` 植入 `archon-mcp` 服務自身導致的 Circular Dependency (`make stop` 崩潰)。已將相依性正確掛載至 `archon-server`，並透過 `make stop` 物理驗證關機拓樸圖成功。
+### 08-19: NotebookLM 與 Google Drive MCP 架構與計畫落地 (Phase 5.11.1)
+- **單一事實來源與無斷層設計**: 審閱並制定了 `Phase_5.11.1_NotebookLM_Drive_Integration_Plan.md`，完全對齊 Hugging Face Spaces `scripts/deploy_to_hf.sh` 之單一容器架構。
+- **微服務拓樸防禦**: 捨棄獨立容器，將 `notebooklm-py` 與 NotebookLM API 封裝進既有之 `archon-mcp` (`src/mcp_server/features/notebooklm`)，確保 `start_all.sh` 啟動時雲端與本地端雙向容。
+- **跨平台加密避讓**: 使用 `.env` 變數取代 Mac Keychain Cookie，防禦 Docker 無法解密之限制。
