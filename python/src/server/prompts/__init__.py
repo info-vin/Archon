@@ -1,4 +1,5 @@
 from .design_prompts import SVG_LOGO_SYSTEM_PROMPT
+from .dev_ops_prompts import COMMIT_MESSAGE_GENERATOR
 from .marketing_prompts import BLOG_DRAFT_SYSTEM_PROMPT, REJECTION_REASON_PROMPT
 from .patrol_prompts import (
     API_DEPRECATION_SCAN_PROMPT,
@@ -91,4 +92,5 @@ ALL_PROMPTS = {
     "nexus_oracle_agent_prompt": NEXUS_ORACLE_AGENT_PROMPT,
     "summary_agent_prompt": SUMMARY_AGENT_PROMPT,
     "rag_agent_prompt": RAG_AGENT_PROMPT,
+    "COMMIT_MESSAGE_GENERATOR": COMMIT_MESSAGE_GENERATOR,
 }

@@ -69,10 +69,13 @@ class LeadEvaluator:
         initial_delay: float = 2.0,
     ) -> str | None:
         try:
+            import uuid
+
             from google import genai
 
             from ...services.credential_service import credential_service
             from ...services.prompt_service import prompt_service
+            from ...services.token_usage_service import TokenUsageService
 
             api_key = await credential_service.get_credential("GEMINI_API_KEY")
             if not api_key:
@@ -93,6 +96,20 @@ class LeadEvaluator:
             async with self.rate_limiter.semaphore:
                 await self.rate_limiter.acquire(estimated_tokens=estimated_tokens)
                 response = await _call_llm()
+
+            if response and hasattr(response, 'usage_metadata') and response.usage_metadata:
+                try:
+                    meta = response.usage_metadata
+                    await TokenUsageService.log_usage(
+                        request_id=str(uuid.uuid4()),
+                        model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                        provider="gemini",
+                        input_tokens=getattr(meta, "prompt_token_count", 0),
+                        output_tokens=getattr(meta, "candidates_token_count", 0),
+                        context_type=f"lead_evaluator_{prompt_name}"
+                    )
+                except Exception as ex:
+                    logger.warning(f"Failed to log token usage: {ex}")
 
             content = response.text if response else None
             return str(content).strip() if content else None

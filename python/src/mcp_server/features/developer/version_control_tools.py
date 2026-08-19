@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from src.server.services.credential_service import credential_service
 from src.server.services.credentials.provider_configs import get_active_provider
 from src.server.services.llm_provider_service import get_llm_client
+from src.server.services.prompt_service import prompt_service
 
 # Using the same dependency injector pattern as file_operation_tools
 from .file_operation_tools import ToolDependencies
@@ -37,21 +38,8 @@ async def _generate_commit_message(diff: str, original_message: str) -> str:
     if not diff.strip():
         return original_message
 
-    prompt = f"""
-You are a senior software engineer. Generate a concise and semantic commit message following the Conventional Commits specification based on the provided git diff.
-
-The user provided a generic message: "{original_message}"
-Please improve it to be more descriptive based on the code changes.
-
-Git Diff:
-{diff[:8000]}  # Truncate to avoid context limit issues
-
-Instructions:
-1. Use the format: <type>(<scope>): <subject>
-2. Keep the subject line under 72 characters.
-3. If the diff is too complex, focus on the primary change.
-4. ONLY return the commit message string, no markdown, no quotes, no explanations.
-"""
+    template = prompt_service.get_prompt("COMMIT_MESSAGE_GENERATOR")
+    prompt = template.format(original_message=original_message, diff=diff[:8000])
     try:
         # Get active model from config
         provider_config = await get_active_provider(credential_service)

@@ -139,6 +139,10 @@ services:
       - ./scripts:/app/scripts # Mount utility scripts for agents
       - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Developer guidelines for self-healing
 
+    depends_on:
+      archon-mcp:
+        condition: service_healthy
+
   archon-agents:
     profiles:
       - agents  # Only starts when explicitly using --profile agents

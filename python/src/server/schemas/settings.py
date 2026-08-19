@@ -138,7 +138,7 @@ class CrawlerJobConfig(BaseModel):
     crawler_job_keywords: str = Field(default="Python,AI,AI行銷自動化,AI自動化流程,大語言模型應用", alias="CRAWLER_JOB_KEYWORDS")
     crawler_job_limit: int = Field(default=32, alias="CRAWLER_JOB_LIMIT")
     crawler_max_pages: int = Field(default=3, alias="CRAWLER_MAX_PAGES")
-    lead_gen_similarity_threshold: float = Field(default=0.68, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
+    lead_gen_similarity_threshold: float = Field(default=0.70, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
     crawler_waf_delay_min: float = Field(default=6.0, alias="CRAWLER_WAF_DELAY_MIN")
     crawler_waf_delay_max: float = Field(default=17.0, alias="CRAWLER_WAF_DELAY_MAX")
 

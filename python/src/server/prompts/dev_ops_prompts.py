@@ -67,3 +67,18 @@ DEVBOT_TOOLS = [
         },
     },
 ]
+
+COMMIT_MESSAGE_GENERATOR = """You are a senior software engineer. Generate a concise and semantic commit message following the Conventional Commits specification based on the provided git diff.
+
+The user provided a generic message: "{original_message}"
+Please improve it to be more descriptive based on the code changes.
+
+Git Diff:
+{diff}
+
+Instructions:
+1. Use the format: <type>(<scope>): <subject>
+2. Keep the subject line under 72 characters.
+3. If the diff is too complex, focus on the primary change.
+4. ONLY return the commit message string, no markdown, no quotes, no explanations.
+"""
