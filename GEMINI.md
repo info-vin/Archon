@@ -530,3 +530,9 @@
 
 總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
 ��立起穩固的工程紀律和核心工作原則的基礎月份。
+
+### 08-19: MCP 拓樸修復與爬蟲記帳攔截硬化 (Phase 5.10.25)
+- **拓樸死結修復**: 於 `docker-compose.yml` 將 `archon-server` 加入對 `archon-mcp` 的 `service_healthy` 依賴，根除因容器並行啟動導致的 `Agent Neural Wiring FAILED` 警告。
+- **提示詞 SSOT 補齊**: 抽離 `version_control_tools.py` 中的 Git 智慧提交 inline 提示詞，統一註冊至 `dev_ops_prompts.py` 的 `COMMIT_MESSAGE_GENERATOR`，達成全域提示詞 SSOT。
+- **隱藏成本漏洞修補**: 修正 `lead_evaluator.py` 在爬蟲高併發下直接使用 `genai.Client` 而繞過記帳系統的問題，手動解析 `response.usage_metadata` 並掛載回 `TokenUsageService` 中介攔截器。
+- **閾值硬化**: 將 RAG 過濾閾值從 0.68 上調至 0.70，寫入 `schemas/settings.py` 預設值與 `migration/20260819_update_rag_threshold.sql` 確保資料庫覆寫。通過 668 項後端測試公證與 `make phase-audit`。
