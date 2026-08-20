@@ -122,6 +122,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-20: 任務指派人 SSOT 重構與 Scope 崩潰修復
+- **SSOT 硬化與硬編碼清理**: 於 `shared_constants.py` 宣告唯一的 `DEFAULT_ASSIGNEE = "Charlie"`，並全面重構 `projects.py` Schema、`task_service.py`、`query_logic.py` 與 `task_tools.py`，徹底消除散落的 `"User"` 字串硬編碼，將預設任務責任明確歸屬給專案經理。
+- **變數 Scope 崩潰自癒**: 修復 `create_logic.py` 排程任務建立時，因局部作用域跳躍引發的 `UnboundLocalError: local variable 'AI_AGENT_ROLES'` 雲端當機問題，將依賴移至檔案頂層全域引入。
+- **資料與相容性防護**: `create_logic.py` 兼容解析舊版遺留之 `"User"` 負載，並透過 `profiles` 實體映射至人類實際姓名；所有重構通過 `uv run pytest` 共 655 項後端測試公證，確認無任何 API 衰退 (Regression)。
+
 ### 08-19: 型別斷層修復與 SSOT 硬化 (Phase 5.10.24)
 - **API 強型別補齊**: 修正 `stats_api.py` 先前遺留的重構斷層，為 `/sla-reliability`, `/business-risks`, `/health-trend`, `/overview`, `/consolidated` 5 個端點補齊 Pydantic DTO (如 `SLAReliabilityResponse`)，消滅弱型別 (`Any` / `dict`)，通過 `make lint-be` 與 655 項測試。
 - **混合路由 SSOT 落實**: 拔除 `hybrid_router.py` 中寫死的字數上限與線上關鍵字，改由 `SettingsService` 動態讀取；同步新增 `migration/20260819_add_hybrid_router_settings.sql` 寫入初始種子，實現資料庫可控的單一事實來源。
