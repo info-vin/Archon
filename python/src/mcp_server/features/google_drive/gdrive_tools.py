@@ -16,15 +16,16 @@ def register_gdrive_tools(mcp: FastMCP):
 
     @mcp.tool()
     async def gdrive_upload_file(
-        ctx: Context, filename: str, content: str, mime_type: str = "text/plain"
+        ctx: Context, filename: str, content: str = "", mime_type: str = "text/plain", local_file_path: str = ""
     ) -> str:
         """
         Upload a file to Google Drive.
         
         Args:
             filename: The name of the file to create in Google Drive.
-            content: The text content of the file.
+            content: The text content of the file (if uploading text).
             mime_type: The MIME type of the file. Defaults to 'text/plain'.
+            local_file_path: Optional path to a local file to upload (overrides content).
         """
         token = os.getenv("GOOGLE_DRIVE_OAUTH_TOKEN")
         refresh_token = os.getenv("GOOGLE_DRIVE_REFRESH_TOKEN")
@@ -42,7 +43,7 @@ def register_gdrive_tools(mcp: FastMCP):
 
             from google.oauth2.credentials import Credentials
             from googleapiclient.discovery import build
-            from googleapiclient.http import MediaInMemoryUpload
+            from googleapiclient.http import MediaInMemoryUpload, MediaFileUpload
 
             creds = Credentials(
                 token=token,
@@ -56,15 +57,17 @@ def register_gdrive_tools(mcp: FastMCP):
                 service = build("drive", "v3", credentials=creds)
                 file_metadata = {"name": filename}
 
-                # Default presentation outlines text to google docs if plain text
-                if mime_type == "text/plain":
+                if mime_type == "text/plain" and not local_file_path:
                     file_metadata["mimeType"] = "application/vnd.google-apps.document"
                 else:
                     file_metadata["mimeType"] = mime_type
 
-                media = MediaInMemoryUpload(
-                    content.encode("utf-8"), mimetype="text/plain", resumable=True
-                )
+                if local_file_path and os.path.exists(local_file_path):
+                    media = MediaFileUpload(local_file_path, mimetype=mime_type, resumable=True)
+                else:
+                    media = MediaInMemoryUpload(
+                        content.encode("utf-8"), mimetype=mime_type, resumable=True
+                    )
 
                 # Execute physical API request
                 file = service.files().create(

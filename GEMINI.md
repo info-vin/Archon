@@ -125,10 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
-### 08-20 (追加): NotebookLM 與 Google Drive 整合開發 (Phase 5.11.1)
-- **PresentationAgent 核心邏輯**: 實作了繼承自 `BaseAgent` 的 `PresentationAgent`，將核心的 `generate_and_archive` 抽離為實體方法以提昇可測試性，輸出型別定義為 `PresentationOperation`。
-- **NotebookLM MCP 模組與測試**: 完成自定義 MCP 工具的單元測試 (`test_notebooklm_tools.py`)，驗證 `notebooklm_list_notebooks`, `notebooklm_create_notebook`, `notebooklm_ask_question` 的 mocks 行為。
-- **Agent 與 Mock 整合測試自癒**: 在 `test_presentation_agent.py` 中，修復了 `conftest.py` 全域 `Agent.run` 的 mock 污染與 `AsyncMock` 異步調用 awaitable 問題，完成全量單元測試，660 項測試 100% 綠燈通過。
+### 08-20 (追加2): NotebookLM 原生簡報生成與 Drive 物理上傳 (Phase 5.11.1 貫通)
+- **OAuth 防呆與文件對帳**: 修正 `CONTRIBUTING_tw.md` 附錄 G，確立「先開無痕視窗登入新帳號，再進入 OAuth Playground」的流程，消滅 unauthorized_client 錯誤。
+- **消滅虛假開發**: 廢除 `python-pptx` 底層手刻。重構 `PresentationAgent`，全面使用 `notebooklm-py` 原生 API (`generate_slide_deck` 及 `wait_for_completion`)，成功呼叫雲端 AI 生成 6MB+ 實體簡報。
+- **MCP 二進位支援**: 升級 `gdrive_upload_file`，導入 `MediaFileUpload` 與 `local_file_path`，徹底支援 `.pptx` 等二進位實體檔案上傳。
+- **E2E 零假資料公證**: 撰寫 `verify_native_pptx_e2e.py`，完整跑通從 NotebookLM 抓取 PPTX 到使用新 OAuth 憑證上傳 Google Drive 的流程，證明無虛假代碼。
 
 ### 08-20: 任務指派人 SSOT 重構與 Scope 崩潰修復
 - **SSOT 硬化與硬編碼清理**: 於 `shared_constants.py` 宣告唯一的 `DEFAULT_ASSIGNEE = "Charlie"`，並全面重構 `projects.py` Schema、`task_service.py`、`query_logic.py` 與 `task_tools.py`，徹底消除散落的 `"User"` 字串硬編碼，將預設任務責任明確歸屬給專案經理。

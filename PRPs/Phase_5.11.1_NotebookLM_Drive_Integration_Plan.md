@@ -58,7 +58,7 @@ graph TB
 1. **雲端單一容器相容 (部署 SOP)**:
    * *防禦*: 遵循 `deploy_to_hf.sh` 規範，不安裝任何需要額外 Docker 服務的組件，確保 `git push hf` 後能自動打包運行。
 2. **Cookie 加密 Mac-to-Docker 盲區 (食譜 2.4 節)**:
-   * *防禦*: HF 雲端與本地 Docker 皆統一讀取環境變數 `NOTEBOOKLM_COOKIE` 與 `GOOGLE_DRIVE_OAUTH_TOKEN`，絕不依賴本地 Chrome 實體檔。
+   * *防禦*: HF 雲端與本地 Docker 皆統一讀取環境變數 `NOTEBOOKLM_AUTH_JSON` 與 `GOOGLE_DRIVE_REFRESH_TOKEN`，絕不依賴本地 Chrome 實體檔。
 3. **防範虛假測試與型別斷層 (食譜心法 13)**:
    * *防禦*: `test_presentation_agent.py` 的 Mock payload 必須 100% 物理對齊 `notebooklm-py` 的 DTO。
 4. **防範單檔膨脹 (食譜附錄 B)**:
@@ -83,7 +83,7 @@ graph TB
 #### [NEW] `python/src/mcp_server/features/google_drive/__init__.py`
 #### [NEW] `python/src/mcp_server/features/google_drive/gdrive_tools.py`
 定義 `gdrive_upload_file` 工具。
-* **Fail Fast 原則**：讀取 `GOOGLE_DRIVE_OAUTH_TOKEN`。若環境變數缺失，**絕對禁止**模擬上傳或回傳假 ID，必須直接 Return `{"success": False, "error": "Missing GOOGLE_DRIVE_OAUTH_TOKEN"}`，讓系統在缺乏組態時明確報錯。
+* **Fail Fast 原則**：讀取 `GOOGLE_DRIVE_REFRESH_TOKEN`。若環境變數缺失，**絕對禁止**模擬上傳或回傳假 ID，必須直接 Return `{"success": False, "error": "Missing GOOGLE_DRIVE_REFRESH_TOKEN"}`，讓系統在缺乏組態時明確報錯。
 * 串接 `googleapiclient.discovery` 進行真實的 API 上傳。
 
 #### [MODIFY] `python/src/mcp_server/mcp_server.py`

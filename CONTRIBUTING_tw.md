@@ -632,3 +632,31 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 * **IPA 自癒定位原則**：優先使用語意定位（如 `button:has-text('...')`），嚴禁易斷裂的 CSS 階層路徑。具備 Sandbox Idempotency 與 Pixelmatch 預篩的 Gemini Vision 視覺評判。
 * **核心工具組**：動態關卡生成 (`make twin-gen-levels`)、百關模擬器 (`make twin-simulator`) 與 Headed 視覺對帳 (`make twin-record`)，詳細指令說明請參閱第三章 3.1.2 門禁表格。
+
+---
+
+
+## 附錄 G：外部 API 與環境變數設定手冊 (External API Setup Guide)
+
+### G.1 如何更換或設定 Google Drive 與 NotebookLM 帳號
+為確保開發者與使用者的系統能在背景穩定運行，絕不採用易過期的短效 Token (例如 60 分鐘到期的 OAuth Access Token)。當您需要設定或更換連動的 Google 帳號時，請嚴格遵守以下物理操作步驟，並更新 `.env` 檔案。
+
+**【更換帳號的核心概念】**
+若要更換目標帳號（即「檔案要上傳到誰的雲端硬碟」或「要讀取誰的 NotebookLM」），您只需透過指令重新登入，或更換 `.env` 中的 `Refresh Token` 即可，程式碼完全不需要改動（零硬編碼）。
+
+#### 步驟一：取得 NotebookLM 憑證 (NOTEBOOKLM_AUTH_JSON)
+1. 在終端機執行 `uv run notebooklm login`。
+2. 系統會自動彈出 Chrome 瀏覽器，請**選擇您要更換的 Gmail 帳號登入**。
+3. 登入完成後，憑證會自動存入本地端 (`~/.notebooklm/profiles/default/storage_state.json`)，本機開發不需額外設定變數。
+4. 若要部署至 Hugging Face (Docker)，請執行 `cat ~/.notebooklm/profiles/default/storage_state.json`，將印出的整串 JSON 複製，並貼到 HF Secrets 的 `NOTEBOOKLM_AUTH_JSON`。
+
+#### 步驟二：取得 Google Drive 永久 Refresh Token
+1. **登入目標帳號**：請先開啟無痕視窗，或在瀏覽器中切換並登入您想要綁定的「新 Google 帳號」。
+2. 前往 GCP 控制台建立**網頁應用程式 (Web application)** 的 OAuth 用戶端 ID。
+   *(注意：應用程式類型必須是「網頁應用程式」，絕不能選「電腦版」，否則會觸發 `redirect_uri_mismatch` 錯誤)*。
+3. 在「已授權的重新導向 URI」精準填入：`https://developers.google.com/oauthplayground`。
+4. 將取得的 Client ID 與 Client Secret 填入 `.env` 的 `GOOGLE_DRIVE_CLIENT_ID` 與 `GOOGLE_DRIVE_CLIENT_SECRET`。
+5. 前往 Google OAuth 2.0 Playground，點擊右上角「齒輪」，勾選 `Use your own OAuth credentials`，填入新的 ID 與 Secret。
+6. 在 Step 1 選擇 Drive API v3 (`https://www.googleapis.com/auth/drive`) 並點擊授權。
+7. **(關鍵防呆)**：登入時，請確認畫面上的信箱是您在步驟 1 登入的新帳號！如果 GCP 專案處於測試中，請先去「OAuth 同意畫面」將該信箱加入「測試使用者 (Test users)」。
+8. 在 Step 2 點擊 Exchange 取得 `Refresh Token`，將其以 `1//...` 開頭的字串填入 `.env` 的 `GOOGLE_DRIVE_REFRESH_TOKEN`。

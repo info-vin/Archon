@@ -236,8 +236,11 @@ version = "0.2.2"
 source = { virtual = "." }
 dependencies = [
     { name = "browser-use" },
+    { name = "google-api-python-client" },
+    { name = "google-auth" },
     { name = "langchain-google-genai" },
     { name = "mcp" },
+    { name = "notebooklm-py" },
     { name = "pydantic-ai" },
     { name = "tenacity" },
 ]
@@ -369,8 +372,11 @@ server = [
 [package.metadata]
 requires-dist = [
     { name = "browser-use", specifier = ">=0.3.2" },
+    { name = "google-api-python-client", specifier = ">=2.196.0" },
+    { name = "google-auth", specifier = ">=2.49.2" },
     { name = "langchain-google-genai", specifier = ">=2.1.5" },
     { name = "mcp", specifier = ">=1.12.2" },
+    { name = "notebooklm-py", specifier = ">=0.8.1" },
     { name = "pydantic-ai", specifier = "==1.44.0" },
     { name = "tenacity", specifier = ">=9.1.4" },
 ]
