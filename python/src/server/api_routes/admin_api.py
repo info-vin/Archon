@@ -139,8 +139,8 @@ async def get_users(limit: int = 100, role: str | None = None, current_user: Use
         raise HTTPException(status_code=500, detail=f"Database error while fetching users: {str(e)}") from e
 
 
-@router.patch("/users/{user_id}/role", dependencies=[Depends(verify_admin_role)])
-async def update_user_role(user_id: str, request: UpdateRoleRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.patch("/users/{user_id}/role", dependencies=[Depends(verify_admin_role)], response_model=UserProfileDTO)
+async def update_user_role(user_id: str, request: UpdateRoleRequest, current_user: UserProfileDTO = Depends(get_current_user)) -> UserProfileDTO:
     """
     Update a user's role (Admin only).
     """
@@ -149,7 +149,7 @@ async def update_user_role(user_id: str, request: UpdateRoleRequest, current_use
         updated_user = await admin_service.update_user_role(
             user_id=user_id, new_role=request.role, current_admin_email=email
         )
-        return updated_user
+        return UserProfileDTO.model_validate(updated_user)
     except Exception as e:
         logger.error(f"Admin API: Failed to update role: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e

@@ -11,3 +11,6 @@
 ## 2026-08-16 - Handling Pydantic Fallbacks for Service Exceptions
 **Learning:** When unpacking dictionary responses from service layers into Pydantic response models, wrap the primary logic in a `try` block (`return Model(**(await service()))`) and catch exceptions to return a `Model` instance initialized with generic default fields that fulfill the strict structural contract. This prevents `ValidationError` 500s when downstream data fails and preserves client type compatibility.
 **Action:** Always provide structurally complete fallback instantiation in except blocks when typing endpoint routes with explicit response models.
+## 2025-05-15 - Pydantic Instantiation from Services
+**Learning:** When using a dictionary return from a service in FastAPI, it is safer to return `Model.model_validate(data)` rather than `Model(**data)` since it provides better compatibility with Pydantic V2 and ensures correct parsing logic.
+**Action:** Always prefer `Model.model_validate()` when returning the data directly.
