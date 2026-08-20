@@ -22,7 +22,7 @@ export const DetailSection: React.FC<{
             {onToggleMaximize && (
                 <button 
                     onClick={onToggleMaximize}
-                    className="p-2 hover:bg-gray-200/50 rounded-full transition-colors text-gray-400 hover:text-indigo-600"
+                    className="p-2 hover:bg-gray-200/50 rounded-full transition-colors text-gray-400 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     aria-label={isMaximized ? 'Minimize section' : 'Maximize section'}
                     title={isMaximized ? 'Minimize section' : 'Maximize section'}
                 >
