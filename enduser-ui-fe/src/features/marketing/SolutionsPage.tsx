@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import ContentRenderer from './ContentRenderer.tsx';
 import { solutionsCategories, SolutionItem } from './solutionsConfig';
 
+
+// PERFORMANCE OPTIMIZATION (Bolt):
+// Extracted active item lookup map outside of the render loop to avoid O(N*M) array iterations
+// across all categories and items on every single render cycle. Lookups are now O(1).
+const solutionsMap = new Map<string, SolutionItem>();
+solutionsCategories.forEach(category => {
+    category.items.forEach(item => {
+        solutionsMap.set(item.id, item);
+    });
+});
+
 const SolutionsPage: React.FC = () => {
+
     // Default to the first item of the first category
     const defaultItem = solutionsCategories[0].items[0];
     const [activeItemId, setActiveItemId] = useState<string>(defaultItem.id);
@@ -12,16 +24,8 @@ const SolutionsPage: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [activeItemId]);
 
-    // Helper to find the active item object
-    const getActiveItem = (): SolutionItem | undefined => {
-        for (const category of solutionsCategories) {
-            const found = category.items.find(item => item.id === activeItemId);
-            if (found) return found;
-        }
-        return undefined;
-    };
-
-    const activeItem = getActiveItem() || defaultItem;
+    // PERFORMANCE OPTIMIZATION (Bolt): Replaced O(N*M) nested loop search with O(1) Map lookup
+    const activeItem = solutionsMap.get(activeItemId) || defaultItem;
 
     return (
         <div className="min-h-screen bg-secondary/30">

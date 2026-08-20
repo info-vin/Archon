@@ -202,3 +202,7 @@
 ## 2026-08-17 - Optimize string operations in map loops
 **Learning:** Using inline string manipulations like `.toUpperCase().replace('_', ' ')` inside a `.map()` render loop forces unnecessary string allocations and regex executions on every re-render.
 **Action:** Pre-calculate and consolidate all possible formatted status string combinations into a single static O(1) lookup dictionary outside the React component.
+
+## 2024-05-18 - Replacing O(N*M) nested render loop searches with O(1) module-level Maps
+**Learning:** Performing nested loop searches using `Array.prototype.find()` inside a React component's render function to locate static config items creates an O(N*M) performance bottleneck that executes on every render cycle.
+**Action:** When a component relies on static configuration data imported from another file, extract the lookup logic by pre-calculating a flat `Map` at the module level (outside the component). This guarantees O(1) constant-time property access during rendering without needing `useMemo` overhead.
