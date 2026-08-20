@@ -1,11 +1,14 @@
-from typing import Any, cast
+from typing import Any, cast, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .manager import CredentialManager
 
 from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
 
-async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[str, Any]:
+async def get_active_provider(manager: "CredentialManager", service_type: str = "llm") -> dict[str, Any]:
     """
     Get the currently active provider configuration.
     Searches across critical categories with deep fallback to OS environment.
@@ -50,7 +53,7 @@ async def get_active_provider(manager: Any, service_type: str = "llm") -> dict[s
         }
 
 
-async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
+async def get_embedding_provider_configs(manager: "CredentialManager") -> list[dict[str, Any]]:
     """
     Get the currently active primary and fallback embedding provider configurations.
     Designed for failover and separate from the main LLM provider logic.
@@ -116,7 +119,7 @@ async def get_embedding_provider_configs(manager: Any) -> list[dict[str, Any]]:
         return []
 
 
-async def _get_provider_api_key(manager: Any, provider: str) -> str | None:
+async def _get_provider_api_key(manager: "CredentialManager", provider: str) -> str | None:
     """Get API key for a specific provider."""
     key_mapping = {
         "openai": "OPENAI_API_KEY",
@@ -166,7 +169,7 @@ def _get_provider_base_url(provider: str, rag_settings: dict) -> str | None:
     return None
 
 
-async def set_active_provider(manager: Any, provider: str, service_type: str = "llm") -> bool:
+async def set_active_provider(manager: "CredentialManager", provider: str, service_type: str = "llm") -> bool:
     """Set the active provider for a service type."""
     try:
         return bool(

@@ -1,8 +1,11 @@
 import os
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .manager import CredentialManager
 
 
-async def check_credentials_exist(manager, keys: list[str]) -> dict[str, dict[str, Any]]:
+async def check_credentials_exist(manager: "CredentialManager", keys: list[str]) -> dict[str, dict[str, Any]]:
     """
     Check if a list of credentials exist and have a value.
     Returns a dictionary with the status for each key.
