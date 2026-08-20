@@ -116,11 +116,19 @@
 * **13. 防範虛假測試與型別斷層 (False Mock & Signature Sync)**
     * **核心**: 單元測試通過不代表代碼安全。修改任何核心服務 (Service/Repository) 的**回傳型別 (Return Type)**（例如將字串改為 Tuple）時，**必須**使用全域搜尋 (`grep`) 同步更新所有依賴該服務的測試 Mock，確保 `mock_service.return_value` 與物理現實 100% 一致。否則單元測試會淪為掩護 `too many values to unpack` 或寫入亂碼的遮羞布。
 
+* **14. 探針先行與零虛假開發 (Probe-First & Zero Fake Development)**
+    * **核心**: 在撰寫實作計畫前，**必須**先在 `scratch/` 寫「探針腳本 (Probe Script)」去真實觸碰外部 API 或環境變數。嚴禁在 Agent 或業務邏輯中寫死 `os.urandom` 假資料來欺騙測試或使用者 (虛假開發)。當外部憑證 (如 Google Drive Token) 缺失時，必須立刻 `Fail-Fast` 拋出錯誤並拒絕服務，絕不能「優雅降級」成假資料。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+
+### 08-20 (追加): NotebookLM 與 Google Drive 整合開發 (Phase 5.11.1)
+- **PresentationAgent 核心邏輯**: 實作了繼承自 `BaseAgent` 的 `PresentationAgent`，將核心的 `generate_and_archive` 抽離為實體方法以提昇可測試性，輸出型別定義為 `PresentationOperation`。
+- **NotebookLM MCP 模組與測試**: 完成自定義 MCP 工具的單元測試 (`test_notebooklm_tools.py`)，驗證 `notebooklm_list_notebooks`, `notebooklm_create_notebook`, `notebooklm_ask_question` 的 mocks 行為。
+- **Agent 與 Mock 整合測試自癒**: 在 `test_presentation_agent.py` 中，修復了 `conftest.py` 全域 `Agent.run` 的 mock 污染與 `AsyncMock` 異步調用 awaitable 問題，完成全量單元測試，660 項測試 100% 綠燈通過。
 
 ### 08-20: 任務指派人 SSOT 重構與 Scope 崩潰修復
 - **SSOT 硬化與硬編碼清理**: 於 `shared_constants.py` 宣告唯一的 `DEFAULT_ASSIGNEE = "Charlie"`，並全面重構 `projects.py` Schema、`task_service.py`、`query_logic.py` 與 `task_tools.py`，徹底消除散落的 `"User"` 字串硬編碼，將預設任務責任明確歸屬給專案經理。

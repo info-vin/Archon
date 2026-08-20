@@ -59,6 +59,7 @@ class PromptNameEnum(StrEnum):
     NEXUS_ORACLE_AGENT_PROMPT = "nexus_oracle_agent_prompt"
     SUMMARY_AGENT_PROMPT = "summary_agent_prompt"
     RAG_AGENT_PROMPT = "rag_agent_prompt"
+    PRESENTATION_AGENT_PROMPT = "presentation_agent_prompt"
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,7 @@ class AgentUUIDs:
     DEV_BOT = "e1682371-0000-0000-0000-000000000000"
     PO_BOT = "p0b00000-0000-0000-0000-000000000000"
     CLOCKWORK = "e1bf7a99-44bf-44ce-a460-cb4e31e798f4"
+    PRESENTATION_BOT = "d0d00000-0000-0000-0000-000000000000"
 
 
 class ProcessingMode(StrEnum):
@@ -106,4 +108,5 @@ AI_AGENT_ROLES = {
     "DevBot (Engineering)": AgentUUIDs.DEV_BOT,
     "POBot (Product)": AgentUUIDs.PO_BOT,
     "Clockwork (Ops)": AgentUUIDs.CLOCKWORK,
+    "PresentationBot (Slides)": AgentUUIDs.PRESENTATION_BOT,
 }

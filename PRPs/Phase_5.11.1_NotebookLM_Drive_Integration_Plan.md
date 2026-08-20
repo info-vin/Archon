@@ -71,15 +71,23 @@ graph TB
 ### 1. Agent 核心邏輯
 #### [NEW] `python/src/agents/presentation/__init__.py`
 #### [NEW] `python/src/agents/presentation/presentation_agent.py`
-繼承 `BaseAgent`。呼叫 RAG -> 呼叫 Port 8051 MCP 的 `notebooklm_ask_question` -> 呼叫 GDrive 工具歸檔。
+繼承 `BaseAgent`。
+* **絕對禁止虛假歸檔**：移除所有 `os.urandom` 產生的假檔案 ID。
+* 必須真實透過 `mcp_client.call_tool("gdrive_upload_file", ...)` 呼叫 MCP 伺服器，並依據回應的 `success` 狀態決定是否成功，若失敗則直接回報異常。
 
 ### 2. MCP 工具鏈 (相容本地與 HF)
 #### [NEW] `python/src/mcp_server/features/notebooklm/__init__.py`
 #### [NEW] `python/src/mcp_server/features/notebooklm/notebooklm_tools.py`
 定義 `notebooklm_list_notebooks`, `notebooklm_ask_question`, `notebooklm_create_notebook` 等 MCP 工具。
 
-#### [MODIFY] `python/src/mcp_server/server.py`
-將 `notebooklm_tools` 註冊進主 MCP Server。
+#### [NEW] `python/src/mcp_server/features/google_drive/__init__.py`
+#### [NEW] `python/src/mcp_server/features/google_drive/gdrive_tools.py`
+定義 `gdrive_upload_file` 工具。
+* **Fail Fast 原則**：讀取 `GOOGLE_DRIVE_OAUTH_TOKEN`。若環境變數缺失，**絕對禁止**模擬上傳或回傳假 ID，必須直接 Return `{"success": False, "error": "Missing GOOGLE_DRIVE_OAUTH_TOKEN"}`，讓系統在缺乏組態時明確報錯。
+* 串接 `googleapiclient.discovery` 進行真實的 API 上傳。
+
+#### [MODIFY] `python/src/mcp_server/mcp_server.py`
+將 `notebooklm_tools` 與 `gdrive_tools` 註冊進主 MCP Server。
 
 ### 3. 生命週期與依賴
 #### [MODIFY] `python/pyproject.toml`

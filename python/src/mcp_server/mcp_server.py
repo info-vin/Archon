@@ -182,6 +182,24 @@ def register_modules() -> None:
     except Exception as e:
         logger.error(f"✗ Failed to register version tools: {e}")
 
+    try:
+        from src.mcp_server.features.notebooklm import register_notebooklm_tools
+
+        register_notebooklm_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ NotebookLM tools registered")
+    except Exception as e:
+        logger.error(f"✗ Failed to register NotebookLM tools: {e}")
+
+    try:
+        from src.mcp_server.features.google_drive import register_gdrive_tools
+
+        register_gdrive_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ Google Drive tools registered")
+    except Exception as e:
+        logger.error(f"✗ Failed to register Google Drive tools: {e}")
+
     logger.info(f"📦 Total modules registered: {modules_registered}")
     if modules_registered == 0:
         raise RuntimeError("No MCP modules available")
