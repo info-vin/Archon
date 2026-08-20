@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, cast
 
 from src.server.config.logfire_config import get_logger
+from src.server.services.shared_constants import AI_AGENT_ROLES, DEFAULT_ASSIGNEE
 
 logger = get_logger(__name__)
 
@@ -77,7 +78,7 @@ async def create_task_logic(
     project_id: str,
     title: str,
     description: str = "",
-    assignee: str = "User",
+    assignee: str = DEFAULT_ASSIGNEE,
     task_order: int = 0,
     feature: str | None = None,
     sources: list[dict[str, Any]] | None = None,
@@ -102,13 +103,30 @@ async def create_task_logic(
         if not project_id or not isinstance(project_id, str):
             return False, {"error": "Project ID is required and must be a string"}
 
-        # SSOT/DRY: Auto-resolve assignee name from assignee_id if it's the default 'User'
-        if assignee == "User" and assignee_id:
-            from src.server.services.shared_constants import AI_AGENT_ROLES
-            for name, uuid in AI_AGENT_ROLES.items():
-                if uuid == assignee_id:
-                    assignee = name
-                    break
+        # SSOT/DRY: Auto-resolve assignee name from assignee_id if it's the legacy 'User' or DEFAULT_ASSIGNEE
+        if assignee in ("User", DEFAULT_ASSIGNEE) or not assignee:
+            # 1. Check if it's an AI Agent
+            if assignee_id:
+                for name, uuid in AI_AGENT_ROLES.items():
+                    if uuid == assignee_id:
+                        assignee = name
+                        break
+
+            # 2. If it's a human user but has an ID, look up their actual name
+            if assignee in ("User", DEFAULT_ASSIGNEE) and assignee_id:
+                try:
+                    p_query = task_service_instance.supabase_client.table("profiles").select("name").eq("id", assignee_id).limit(1)
+                    success, p_res = task_service_instance.execute_query(p_query, "Get human profile name", require_data=False)
+                    if success and p_res.get("data") and len(p_res["data"]) > 0:
+                        name_val = p_res["data"][0].get("name")
+                        if name_val:
+                            assignee = name_val
+                except Exception as ex:
+                    logger.warning(f"Failed to fetch profile name for human user: {ex}")
+
+            # 3. If it cannot be resolved (or no assignee_id), fallback to SSOT DEFAULT_ASSIGNEE
+            if assignee in ("User", DEFAULT_ASSIGNEE) or not assignee:
+                assignee = DEFAULT_ASSIGNEE
 
         # Validate assignee
         is_valid, error_msg = task_service_instance.validate_assignee(assignee)

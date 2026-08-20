@@ -5,10 +5,9 @@ Version checking service with GitHub API integration.
 from datetime import datetime, timedelta
 from typing import Any, NotRequired, TypedDict, cast
 
-from supabase import Client
-
 import httpx
 import logfire
+from supabase import Client
 
 from ..config.version import ARCHON_VERSION, GITHUB_REPO_NAME, GITHUB_REPO_OWNER
 from ..repositories.base_repository import BaseRepository

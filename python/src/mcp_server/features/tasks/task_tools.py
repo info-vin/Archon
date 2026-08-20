@@ -10,6 +10,8 @@ from typing import Any
 
 from mcp.server.fastmcp import Context, FastMCP
 
+from src.server.services.shared_constants import DEFAULT_ASSIGNEE
+
 from ...utils.error_handling import MCPErrorFormatter
 from ...utils.http_client import call_api
 
@@ -180,7 +182,7 @@ def register_task_tools(mcp: FastMCP):
                         "project_id": project_id,
                         "title": title,
                         "description": description or "",
-                        "assignee": assignee or "User",
+                        "assignee": assignee or DEFAULT_ASSIGNEE,
                         "task_order": task_order or 0,
                         "feature": feature,
                         "sources": [],

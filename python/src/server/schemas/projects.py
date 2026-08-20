@@ -7,6 +7,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from src.server.services.shared_constants import DEFAULT_ASSIGNEE
+
 
 class CreateProjectRequest(BaseModel):
     title: str
@@ -44,7 +46,7 @@ class CreateTaskRequest(BaseModel):
     description: str | None = None
     status: str | None = "todo"
     priority: str | None = "medium"
-    assignee: str | None = "User"
+    assignee: str | None = DEFAULT_ASSIGNEE
     assignee_id: str | None = None
     task_order: int | None = 0
     feature: str | None = None

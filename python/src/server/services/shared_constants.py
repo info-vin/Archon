@@ -96,6 +96,9 @@ class ProcessingMode(StrEnum):
 
 
 # Known AI agent roles that can be assigned tasks
+# SSOT: Default assignee for unassigned tasks
+DEFAULT_ASSIGNEE = "Charlie"
+
 AI_AGENT_ROLES = {
     "Supervisor (Group Chat)": AgentUUIDs.SUPERVISOR,
     "MarketBot (Sales)": AgentUUIDs.MARKET_BOT,

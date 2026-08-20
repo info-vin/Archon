@@ -13,7 +13,7 @@ from src.server.repositories.base_repository import BaseRepository
 from src.server.utils import get_supabase_client
 
 from ...config.logfire_config import get_logger
-from ..shared_constants import TaskStatusEnum
+from ..shared_constants import DEFAULT_ASSIGNEE, TaskStatusEnum
 
 logger = get_logger(__name__)
 
@@ -62,7 +62,7 @@ class TaskService(BaseRepository):
         project_id: str,
         title: str,
         description: str = "",
-        assignee: str = "User",
+        assignee: str = DEFAULT_ASSIGNEE,
         task_order: int = 0,
         feature: str | None = None,
         sources: list[dict[str, Any]] | None = None,

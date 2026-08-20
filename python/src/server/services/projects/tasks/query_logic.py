@@ -10,7 +10,7 @@ from typing import Any, cast
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
 
-from ...shared_constants import TaskStatusEnum
+from ...shared_constants import DEFAULT_ASSIGNEE, TaskStatusEnum
 
 logger = get_logger(__name__)
 
@@ -55,8 +55,8 @@ async def list_tasks_logic(
 
         if assignee_name and not assignee_id:
             if include_unassigned:
-                query = query.or_(f"assignee.eq.{assignee_name},assignee.eq.User")
-                filters_applied.append(f"assignee={assignee_name} OR User")
+                query = query.or_(f"assignee.eq.{assignee_name},assignee.eq.{DEFAULT_ASSIGNEE}")
+                filters_applied.append(f"assignee={assignee_name} OR {DEFAULT_ASSIGNEE}")
             else:
                 query = query.eq("assignee", assignee_name)
                 filters_applied.append(f"assignee={assignee_name}")
@@ -92,7 +92,7 @@ async def list_tasks_logic(
                 "title": task["title"],
                 "description": task["description"],
                 "status": task["status"],
-                "assignee": task.get("assignee", "User"),
+                "assignee": task.get("assignee", DEFAULT_ASSIGNEE),
                 "assignee_id": task.get("assignee_id"),
                 "task_order": task.get("task_order", 0),
                 "feature": task.get("feature"),
