@@ -47,7 +47,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                             <button 
                                 onClick={() => handleDispatch(alert.id)}
                                 disabled={processingId === alert.id}
-                                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:opacity-50"
+                                className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                             >
                                 {processingId === alert.id ? '...' : 'DISPATCH'}
                             </button>
@@ -95,7 +95,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                     <button
                         onClick={handleSaveRules}
                         disabled={isSavingRules}
-                        className="text-xs font-bold text-indigo-600 hover:underline disabled:opacity-50 flex items-center gap-1"
+                        className="text-xs font-bold text-indigo-600 hover:underline disabled:opacity-50 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1"
                     >
                         {isSavingRules ? (
                             <>

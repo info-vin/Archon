@@ -40,3 +40,6 @@
 ## 2024-08-16 - Add aria-pressed to toggle buttons
 **Learning:** Filter buttons that act as toggles (e.g., 'All Leads' vs 'Review Queue') often lack state indicators. Screen reader users need to know which filter is currently active.
 **Action:** Always add `aria-pressed={condition}` to button elements that function as stateful toggles in React.
+## 2024-08-19 - Manager UI Keyboard Accessibility Focus States
+**Learning:** While reviewing `ContentReviewPanel`, `ActiveForce`, and other manager components, it was observed that many interactive buttons (especially icon-only actions and state-toggling tabs) lacked visible focus indicators for keyboard users. Specifically, Tailwind classes `focus-visible:outline-none`, `focus-visible:ring-2`, and `focus-visible:ring-offset-2` were inconsistently applied.
+**Action:** Applied a systematic sweep to ensure `focus-visible` ring styling is attached to actionable components to meet WCAG focus visibility standards without affecting mouse interactions.

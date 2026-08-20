@@ -72,7 +72,7 @@ export const KnowledgeROI: React.FC<KnowledgeROIProps> = ({ knowledgeRoi, handle
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <button className="text-[9px] font-black text-indigo-600 uppercase hover:underline">Block</button>
+                                        <button className="text-[9px] font-black text-indigo-600 uppercase hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1">Block</button>
                                     </td>
                                 </tr>
                             ))}
@@ -97,7 +97,7 @@ export const KnowledgeROI: React.FC<KnowledgeROIProps> = ({ knowledgeRoi, handle
                     <button 
                         onClick={handleRebuildIndex}
                         disabled={processingId === 'rebuild_index'}
-                        className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl font-black text-[10px] uppercase shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                         aria-label="Trigger full index rebuild"
                     >
                         {processingId === 'rebuild_index' ? (
