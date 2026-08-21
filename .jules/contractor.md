@@ -14,3 +14,7 @@
 ## 2025-05-15 - Pydantic Instantiation from Services
 **Learning:** When using a dictionary return from a service in FastAPI, it is safer to return `Model.model_validate(data)` rather than `Model(**data)` since it provides better compatibility with Pydantic V2 and ensures correct parsing logic.
 **Action:** Always prefer `Model.model_validate()` when returning the data directly.
+
+## 2025-03-08 - Preserving Original Service Invocation
+**Learning:** When retrofitting existing FastAPI routes with Pydantic response models, it is crucial to preserve the exact original data-fetching and tuple-unpacking logic (e.g., `await service.list_items()`). Attempting to "clean up" or modify the internal service call signature in the router to match the new return structure often breaks existing test mocks or causes tuple-unpacking validation failures.
+**Action:** When adding Pydantic models to a route, only touch the final return statement. Unpack the original data structure cleanly and pass the values into the `ResponseModel(**data)` constructor, leaving all preceding business logic completely intact.
