@@ -38,6 +38,9 @@ class ArchonContext:
     service_client: Any
     health_status: dict | None = None
     startup_time: float | None = None
+    client: Any = None
+    file_transfer: Any = None
+    cancelled_research: Any = None
 
     def __post_init__(self) -> None:
         if self.health_status is None:
@@ -115,10 +118,31 @@ async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
 
         logger.info(f"🚀 [PID {os.getpid()}] Starting MCP server...")
 
+        notebook_client_ctx = None
         try:
             get_session_manager()
             service_client = get_mcp_service_client()
-            context = ArchonContext(service_client=service_client)
+
+            # Dynamic NotebookLMClient setup for duck-typing
+            from notebooklm import NotebookLMClient
+            from notebooklm.mcp._context import CancelledResearchTracker
+
+            try:
+                # We can configure a profile if needed, or default is resolved automatically
+                notebook_client_ctx = NotebookLMClient.from_storage(keepalive=600.0)
+                client = await notebook_client_ctx.__aenter__()
+                logger.info("✓ NotebookLMClient initialized successfully from storage")
+            except Exception as ex:
+                logger.warning(f"⚠️ Failed to initialize NotebookLMClient (might lack authentication): {ex}")
+                client = None
+                notebook_client_ctx = None
+
+            context = ArchonContext(
+                service_client=service_client,
+                client=client,
+                file_transfer=None,
+                cancelled_research=CancelledResearchTracker()
+            )
             await perform_health_checks(context)
 
             # --- PHYSICAL REGISTRY POPULATION (Phase 4.6.19) ---
@@ -143,3 +167,9 @@ async def lifespan(server: FastMCP) -> AsyncIterator[ArchonContext]:
             raise
         finally:
             logger.info("🧹 Cleaning up MCP server...")
+            if notebook_client_ctx is not None:
+                try:
+                    await notebook_client_ctx.__aexit__(None, None, None)
+                    logger.info("✓ Closed NotebookLMClient session")
+                except Exception as ex:
+                    logger.error(f"Error closing NotebookLMClient session: {ex}")

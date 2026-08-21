@@ -116,11 +116,20 @@
 * **13. 防範虛假測試與型別斷層 (False Mock & Signature Sync)**
     * **核心**: 單元測試通過不代表代碼安全。修改任何核心服務 (Service/Repository) 的**回傳型別 (Return Type)**（例如將字串改為 Tuple）時，**必須**使用全域搜尋 (`grep`) 同步更新所有依賴該服務的測試 Mock，確保 `mock_service.return_value` 與物理現實 100% 一致。否則單元測試會淪為掩護 `too many values to unpack` 或寫入亂碼的遮羞布。
 
+* **14. 探針先行與零虛假開發 (Probe-First & Zero Fake Development)**
+    * **核心**: 在撰寫實作計畫前，**必須**先在 `scratch/` 寫「探針腳本 (Probe Script)」去真實觸碰外部 API 或環境變數。嚴禁在 Agent 或業務邏輯中寫死 `os.urandom` 假資料來欺騙測試或使用者 (虛假開發)。當外部憑證 (如 Google Drive Token) 缺失時，必須立刻 `Fail-Fast` 拋出錯誤並拒絕服務，絕不能「優雅降級」成假資料。
+
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+
+### 08-20 (追加2): NotebookLM 原生簡報生成與 Drive 物理上傳 (Phase 5.11.1 貫通)
+- **OAuth 防呆與文件對帳**: 修正 `CONTRIBUTING_tw.md` 附錄 G，確立「先開無痕視窗登入新帳號，再進入 OAuth Playground」的流程，消滅 unauthorized_client 錯誤。
+- **消滅虛假開發**: 廢除 `python-pptx` 底層手刻。重構 `PresentationAgent`，全面使用 `notebooklm-py` 原生 API (`generate_slide_deck` 及 `wait_for_completion`)，成功呼叫雲端 AI 生成 6MB+ 實體簡報。
+- **MCP 二進位支援**: 升級 `gdrive_upload_file`，導入 `MediaFileUpload` 與 `local_file_path`，徹底支援 `.pptx` 等二進位實體檔案上傳。
+- **E2E 零假資料公證**: 撰寫 `verify_native_pptx_e2e.py`，完整跑通從 NotebookLM 抓取 PPTX 到使用新 OAuth 憑證上傳 Google Drive 的流程，證明無虛假代碼。
 
 ### 08-20: 任務指派人 SSOT 重構與 Scope 崩潰修復
 - **SSOT 硬化與硬編碼清理**: 於 `shared_constants.py` 宣告唯一的 `DEFAULT_ASSIGNEE = "Charlie"`，並全面重構 `projects.py` Schema、`task_service.py`、`query_logic.py` 與 `task_tools.py`，徹底消除散落的 `"User"` 字串硬編碼，將預設任務責任明確歸屬給專案經理。

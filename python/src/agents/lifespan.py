@@ -10,12 +10,14 @@ from fastapi import FastAPI
 
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
+from .presentation.presentation_agent import PresentationAgent
 
 logger = logging.getLogger(__name__)
 
 AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
+    "presentation": PresentationAgent,
 }
 
 AGENT_CREDENTIALS: dict[str, str] = {}

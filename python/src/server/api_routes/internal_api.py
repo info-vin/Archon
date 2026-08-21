@@ -128,6 +128,7 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
             "WORKER_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
             "DOCUMENT_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
             "RAG_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
+            "PRESENTATION_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
         }
 
         logger.info(

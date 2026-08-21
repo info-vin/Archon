@@ -196,6 +196,66 @@ class DraftFromLeadsStrategy(BaseAgentStrategy):
             logger.error(f"DraftFromLeadsStrategy failed: {e}")
             await task_service.update_task(task_id, {"status": "failed"})
 
+class PresentationStrategy(BaseAgentStrategy):
+    """Executes the PresentationAgent via the archon-agents microservice."""
+
+    async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
+        import httpx
+
+        from ...schemas.settings import NetworkConfig
+        from ..settings_service import SettingsService
+
+        logger.info(f"[{agent_id}] Strategy: Presentation agent triggered for task {task_id}")
+        try:
+            try:
+                net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
+                agents_url = net_config.agents_service_url
+            except Exception:
+                agents_url = NetworkConfig().agents_service_url
+
+            prompt = f"Topic: {task_data.get('title', '')}\nDetails: {task_data.get('description', '')}"
+
+            metadata = task_data.get("metadata") or {}
+            notebook_id = metadata.get("notebook_id")
+            
+            if not notebook_id:
+                error_msg = f"Task {task_id} missing 'notebook_id' in metadata."
+                logger.error(error_msg)
+                await task_service.update_task(task_id, {"status": "failed"})
+                return
+
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{agents_url}/agents/run",
+                    json={
+                        "agent_type": "presentation",
+                        "prompt": prompt,
+                        "context": {
+                            "task_id": task_id,
+                            "project_id": task_data.get("project_id", ""),
+                            "topic": task_data.get("title", ""),
+                            "notebook_id": str(notebook_id),
+                        }
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("success"):
+                    await task_service.update_task(task_id, {"status": "done"})
+                    final_result = data.get("result", {}).get("data", "")
+
+                    save_payload = {"content": str(final_result)}
+                    await task_service.save_agent_output(task_id, save_payload, agent_id)
+                    await agent_service._award_agent_xp(agent_id, task_data, str(final_result))
+                else:
+                    logger.error(f"Presentation agent failed: {data.get('error')}")
+                    await task_service.update_task(task_id, {"status": "failed"})
+
+        except Exception as e:
+            logger.error(f"PresentationStrategy failed: {e}")
+            await task_service.update_task(task_id, {"status": "failed"})
+
 
 class AgentDispatcher:
     """Routes tasks to the appropriate strategy based on agent_id and task_data."""
@@ -228,6 +288,14 @@ class AgentDispatcher:
                 and (t_data.get("feature") == "blog_drafting" or "AI Draft from Leads" in t_data.get("title", ""))
             ),
             DraftFromLeadsStrategy(),
+        )
+
+        # Presentation Agent routing
+        self.register_strategy(
+            lambda a_id, t_data: (
+                a_id == AgentUUIDs.PRESENTATION_BOT or "Presentation" in t_data.get("title", "")
+            ),
+            PresentationStrategy(),
         )
 
     def register_strategy(self, condition_func: Any, strategy: BaseAgentStrategy):

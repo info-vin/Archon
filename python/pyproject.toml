@@ -7,8 +7,11 @@ requires-python = ">=3.12"
 # Base dependencies - empty since we're using dependency groups
 dependencies = [
     "browser-use>=0.3.2",
+    "google-api-python-client>=2.196.0",
+    "google-auth>=2.49.2",
     "langchain-google-genai>=2.1.5",
     "mcp>=1.12.2",
+    "notebooklm-py>=0.8.1",
     "pydantic-ai==1.44.0",
     "tenacity>=9.1.4",
 ]
@@ -98,6 +101,7 @@ mcp = [
     "lxml==5.4.0",
     "crawl4ai==0.7.4",
     "tenacity>=9.1.4",
+    "notebooklm-py",
 ]
 
 # Agents container dependencies
@@ -156,6 +160,7 @@ all = [
     "beautifulsoup4>=4.13.4",
     "lxml>=5.4.0",
     "aiofiles==25.1.0",
+    "notebooklm-py",
 ]
 
 
