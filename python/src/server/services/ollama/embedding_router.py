@@ -9,6 +9,8 @@ automatic fallback strategies for optimal performance across distributed Ollama 
 from dataclasses import dataclass
 from typing import Any
 
+from src.server.services.embeddings.multi_dimensional_embedding_service import multi_dimensional_embedding_service
+
 from ...config.logfire_config import get_logger
 from .model_discovery_service import model_discovery_service
 from .routing.fallback_strategy import FallbackStrategy
@@ -103,11 +105,15 @@ class EmbeddingRouter:
             logger.error(f"Error routing embedding for {model_name}: {e}")
 
             # Emergency fallback to largest supported dimension
+            supported_dims = sorted(multi_dimensional_embedding_service.get_supported_dimensions().keys())
+            max_dim = supported_dims[-1] if supported_dims else 3072
+            max_column = multi_dimensional_embedding_service.get_embedding_column_name(max_dim)
+
             return RoutingDecision(
-                target_column="embedding_3072",
+                target_column=max_column,
                 model_name=model_name,
                 instance_url=instance_url,
-                dimensions=3072,
+                dimensions=max_dim,
                 confidence=0.1,
                 fallback_applied=True,
                 routing_strategy="emergency-fallback",
@@ -167,10 +173,10 @@ class EmbeddingRouter:
         target_column = VectorNormalization.get_target_column(dimensions)
 
         # Calculate confidence based on exact dimension match
-        confidence = 1.0 if dimensions in VectorNormalization.DIMENSION_COLUMNS else 0.7
+        confidence = 1.0 if multi_dimensional_embedding_service.is_dimension_supported(dimensions) else 0.7
 
         # Check if fallback was applied
-        fallback_applied = dimensions not in VectorNormalization.DIMENSION_COLUMNS
+        fallback_applied = not multi_dimensional_embedding_service.is_dimension_supported(dimensions)
 
         if fallback_applied:
             logger.warning(

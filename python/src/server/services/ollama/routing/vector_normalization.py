@@ -1,12 +1,11 @@
 from src.server.config.logfire_config import get_logger
+from src.server.services.embeddings.multi_dimensional_embedding_service import multi_dimensional_embedding_service
 
 logger = get_logger(__name__)
-
 
 class VectorNormalization:
     """Handles logic related to embedding dimensions, padding, and performance scoring."""
 
-    DIMENSION_COLUMNS = {768: "embedding_768", 1024: "embedding_1024", 1536: "embedding_1536", 3072: "embedding_3072"}
     INDEX_PREFERENCES = {
         768: "ivfflat",
         1024: "ivfflat",
@@ -15,23 +14,27 @@ class VectorNormalization:
     }
 
     @classmethod
+    def _get_supported_dimensions(cls) -> list[int]:
+        return sorted(multi_dimensional_embedding_service.get_supported_dimensions().keys())
+
+    @classmethod
     def get_target_column(cls, dimensions: int) -> str:
         """Get the appropriate database column for the given dimensions."""
-        if dimensions in cls.DIMENSION_COLUMNS:
-            return cls.DIMENSION_COLUMNS[dimensions]
+        supported_dims = cls._get_supported_dimensions()
 
-        if dimensions <= 768:
-            logger.warning(f"Dimensions {dimensions} ≤ 768, using embedding_768 with padding")
-            return "embedding_768"
-        elif dimensions <= 1024:
-            logger.warning(f"Dimensions {dimensions} ≤ 1024, using embedding_1024 with padding")
-            return "embedding_1024"
-        elif dimensions <= 1536:
-            logger.warning(f"Dimensions {dimensions} ≤ 1536, using embedding_1536 with padding")
-            return "embedding_1536"
-        else:
-            logger.warning(f"Dimensions {dimensions} > 1536, using embedding_3072 (may truncate)")
-            return "embedding_3072"
+        if multi_dimensional_embedding_service.is_dimension_supported(dimensions):
+            return multi_dimensional_embedding_service.get_embedding_column_name(dimensions)
+
+        for supported_dim in supported_dims:
+            if dimensions <= supported_dim:
+                col_name = multi_dimensional_embedding_service.get_embedding_column_name(supported_dim)
+                logger.warning(f"Dimensions {dimensions} <= {supported_dim}, using {col_name} with padding")
+                return col_name
+
+        max_dim = supported_dims[-1] if supported_dims else 3072
+        max_col = multi_dimensional_embedding_service.get_embedding_column_name(max_dim)
+        logger.warning(f"Dimensions {dimensions} > {max_dim}, using {max_col} (may truncate)")
+        return max_col
 
     @classmethod
     def get_optimal_index_type(cls, dimensions: int) -> str:
@@ -41,7 +44,7 @@ class VectorNormalization:
     @classmethod
     def calculate_performance_score(cls, dimensions: int) -> float:
         """Calculate performance score for embedding dimensions."""
-        if dimensions in cls.DIMENSION_COLUMNS:
+        if multi_dimensional_embedding_service.is_dimension_supported(dimensions):
             base_score = 1.0
         else:
             base_score = 0.7  # Penalize non-standard dimensions
