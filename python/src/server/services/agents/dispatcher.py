@@ -217,7 +217,7 @@ class PresentationStrategy(BaseAgentStrategy):
 
             metadata = task_data.get("metadata") or {}
             notebook_id = metadata.get("notebook_id")
-            
+
             if not notebook_id:
                 error_msg = f"Task {task_id} missing 'notebook_id' in metadata."
                 logger.error(error_msg)

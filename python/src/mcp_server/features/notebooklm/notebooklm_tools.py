@@ -19,7 +19,7 @@ def register_notebooklm_tools(mcp: FastMCP):
     try:
         from notebooklm.mcp.server import register_all
 
-        register_all(mcp)
+        register_all(mcp)  # type: ignore[arg-type]
         logger.info("✓ Registered official notebooklm-py MCP tools")
     except Exception as e:
         logger.error(f"Failed to register official notebooklm-py tools: {e}")

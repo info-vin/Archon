@@ -20,7 +20,7 @@ def register_gdrive_tools(mcp: FastMCP):
     ) -> str:
         """
         Upload a file to Google Drive.
-        
+
         Args:
             filename: The name of the file to create in Google Drive.
             content: The text content of the file (if uploading text).
@@ -31,7 +31,7 @@ def register_gdrive_tools(mcp: FastMCP):
         refresh_token = os.getenv("GOOGLE_DRIVE_REFRESH_TOKEN")
         client_id = os.getenv("GOOGLE_DRIVE_CLIENT_ID")
         client_secret = os.getenv("GOOGLE_DRIVE_CLIENT_SECRET")
-        
+
         if not refresh_token or not client_id or not client_secret:
             logger.error("Missing Google Drive OAuth refresh credentials in environment.")
             return json.dumps(
@@ -43,7 +43,7 @@ def register_gdrive_tools(mcp: FastMCP):
 
             from google.oauth2.credentials import Credentials
             from googleapiclient.discovery import build
-            from googleapiclient.http import MediaInMemoryUpload, MediaFileUpload
+            from googleapiclient.http import MediaFileUpload, MediaInMemoryUpload
 
             creds = Credentials(
                 token=token,

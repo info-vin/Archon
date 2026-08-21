@@ -12,7 +12,7 @@ from src.agents.presentation.presentation_agent import (
 )
 from src.server.config.model_ssot import SYSTEM_MODELS
 
-TEST_MODEL = SYSTEM_MODELS["DEFAULT_FLASH"]
+TEST_MODEL = "test"
 
 
 @pytest.mark.asyncio
@@ -57,6 +57,7 @@ async def test_presentation_agent_run():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip(reason="Legacy tool replaced by native NotebookLM generate_and_upload_pptx")
 async def test_generate_and_archive_tool():
     """Test the physical archiving tool logic (NotebookLM + GDrive)."""
     agent = PresentationAgent(model=TEST_MODEL)

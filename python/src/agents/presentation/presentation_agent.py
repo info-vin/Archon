@@ -55,10 +55,10 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
             "You are an expert Presentation Agent. Your job is to create comprehensive slide deck content by first querying NotebookLM for deep insights, and finally generating and uploading a native PPTX slide deck to Google Drive using NotebookLM's native Slide Deck generation API."
         )
 
-        agent = Agent(
+        agent = Agent(  # type: ignore[call-overload]
             model=self.model,
             deps_type=PresentationDependencies,
-            result_type=PresentationOperation,
+            output_type=PresentationOperation,
             system_prompt=system_prompt,
             **kwargs,
         )
@@ -68,7 +68,7 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
             """Query NotebookLM for insights on the current topic. Use this to gather data before generating the slide deck."""
             if ctx.deps.progress_callback:
                 await ctx.deps.progress_callback({"step": "query_notebooklm", "log": f"🧠 Querying NotebookLM: {question}"})
-            
+
             mcp_client = await get_mcp_client(agent_type="presentation")
             import json
             try:
@@ -78,9 +78,9 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                     question=question,
                 )
                 try:
-                    return json.loads(res).get("answer", res)
+                    return str(json.loads(res).get("answer", res))
                 except Exception:
-                    return res
+                    return str(res)
             except Exception as e:
                 return f"Error querying NotebookLM: {str(e)}"
 
@@ -89,10 +89,10 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
             """Generate a native PPTX Slide Deck in NotebookLM based on instructions, download it, and upload it to Google Drive."""
             if ctx.deps.progress_callback:
                 await ctx.deps.progress_callback({"step": "generate_pptx", "log": f"📊 Generating native PPTX via NotebookLM with instructions: {instructions[:50]}..."})
-            
-            import asyncio
-            from notebooklm import NotebookLMClient
+
             import json
+
+            from notebooklm import NotebookLMClient
 
             # 1. Use NotebookLM Client directly to generate PPTX
             try:
@@ -100,15 +100,15 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                 if not os.path.exists(auth_json_path) and os.getenv("NOTEBOOKLM_AUTH_JSON"):
                     os.makedirs(os.path.dirname(auth_json_path), exist_ok=True)
                     with open(auth_json_path, "w") as f:
-                        f.write(os.getenv("NOTEBOOKLM_AUTH_JSON"))
-                
+                        f.write(os.getenv("NOTEBOOKLM_AUTH_JSON") or "")
+
                 ctx_client = NotebookLMClient.from_storage()
                 async with ctx_client as client:
                     status = await client.artifacts.generate_slide_deck(
                         notebook_id=ctx.deps.notebook_id,
                         instructions=instructions
                     )
-                    
+
                     task_id = getattr(status, "task_id", None)
                     if not task_id and isinstance(status, dict):
                         task_id = status.get("task_id")
@@ -120,7 +120,11 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                     final_status = await client.artifacts.wait_for_completion(ctx.deps.notebook_id, task_id)
                     if getattr(final_status, "status", None) != "completed":
                         return f"PPTX generation did not complete successfully. Status: {final_status}"
-                    
+
+                    artifact_id = getattr(final_status, "artifact_id", None)
+                    if not artifact_id and isinstance(final_status, dict):
+                        artifact_id = final_status.get("artifact_id") or final_status.get("id")
+
                     # Download PPTX
                     output_path = f"/tmp/notebooklm_{uuid.uuid4().hex}.pptx"
                     await client.artifacts.download_slide_deck(
@@ -135,7 +139,7 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
 
             if ctx.deps.progress_callback:
                 await ctx.deps.progress_callback({"step": "upload_gdrive", "log": f"📁 Uploading native PPTX '{title}' to Google Drive..."})
-            
+
             # 2. Upload to Google Drive
             mcp_client = await get_mcp_client(agent_type="presentation")
             try:
@@ -150,11 +154,11 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                     data = json.loads(res)
                     if data.get("success"):
                         file_id = data.get("file_id", "")
-                        
+
                         # Clean up temp file
                         if os.path.exists(output_path):
                             os.remove(output_path)
-                            
+
                         # Update task in DB
                         if ctx.deps.task_id and ctx.deps.project_id:
                             await mcp_client.call_tool(
@@ -168,14 +172,14 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                                     "gdrive_file_id": file_id,
                                 }
                             )
-                        return file_id
+                        return str(file_id)
                     return f"Upload failed: {data.get('error')}"
                 except Exception:
-                    return res
+                    return str(res)
             except Exception as e:
                 return f"Error uploading to Google Drive: {str(e)}"
 
-        return agent
+        return agent  # type: ignore[no-any-return]
 
     def get_system_prompt(self) -> str:
         return "You are an expert Presentation Agent using NotebookLM's native PPTX generation."

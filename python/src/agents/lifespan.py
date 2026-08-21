@@ -9,8 +9,8 @@ import httpx
 from fastapi import FastAPI
 
 from .document_agent import DocumentAgent
-from .rag_agent import RagAgent
 from .presentation.presentation_agent import PresentationAgent
+from .rag_agent import RagAgent
 
 logger = logging.getLogger(__name__)
 
