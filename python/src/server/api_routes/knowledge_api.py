@@ -32,12 +32,17 @@ async def list_knowledge_items_root(page: int = 1, per_page: int = 20) -> Knowle
     from ..services.knowledge.knowledge_item_service import KnowledgeItemService
 
     service = KnowledgeItemService(get_supabase_client())
-    items = await service.list_items()
-    total = len(items)
-    # Basic slicing for compatibility
-    start = (page - 1) * per_page
-    end = start + per_page
-    return KnowledgeItemsResponse(items=items[start:end], total=total, page=page, per_page=per_page)
+    success, result_dict = await service.list_items(page=page, per_page=per_page)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="Failed to list knowledge items")
+
+    return KnowledgeItemsResponse(
+        items=result_dict.get("items", []),
+        total=result_dict.get("total", 0),
+        page=page,
+        per_page=per_page
+    )
 
 
 @router.get("/knowledge/database/metrics", response_model=DatabaseMetricsResponse)

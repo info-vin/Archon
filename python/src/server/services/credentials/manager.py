@@ -1,18 +1,18 @@
 import os
 import re
 import time
-from typing import Any, TYPE_CHECKING, TypeVar
-
-if TYPE_CHECKING:
-    from .repository import CredentialRepository
-
-T = TypeVar("T")
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from supabase import Client, create_client
 
 from ...config.logfire_config import get_logger
 from .crypto_utils import CryptoUtils
 from .models import CredentialItem
+
+if TYPE_CHECKING:
+    from .repository import CredentialRepository
+
+T = TypeVar("T")
 
 logger = get_logger(__name__)
 
@@ -125,7 +125,7 @@ class CredentialManager:
             logger.error(f"Error loading credentials: {e}")
             raise
 
-    async def get_credential(self, key: str, default: T = None, decrypt: bool = True) -> T | str | dict[str, Any] | None:
+    async def get_credential(self, key: str, default: Any = None, decrypt: bool = True) -> Any:
         """
         Get a credential value by key.
 
