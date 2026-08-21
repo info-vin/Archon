@@ -43,3 +43,7 @@
 ## 2024-08-19 - Manager UI Keyboard Accessibility Focus States
 **Learning:** While reviewing `ContentReviewPanel`, `ActiveForce`, and other manager components, it was observed that many interactive buttons (especially icon-only actions and state-toggling tabs) lacked visible focus indicators for keyboard users. Specifically, Tailwind classes `focus-visible:outline-none`, `focus-visible:ring-2`, and `focus-visible:ring-offset-2` were inconsistently applied.
 **Action:** Applied a systematic sweep to ensure `focus-visible` ring styling is attached to actionable components to meet WCAG focus visibility standards without affecting mouse interactions.
+
+## 2023-10-27 - 確保 ThemeToggle 按鈕具備 FocusVisible 狀態
+**Learning:** Icon-only 按鈕或 Theme Toggles 通常只專注 hover 狀態，而忽略了鍵盤無障礙支援 (`focus-visible`)。這導致依賴鍵盤瀏覽的用戶無法辨識焦點。
+**Action:** 所有互動元件均須包含 `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`，以符合 a11y 規範。
