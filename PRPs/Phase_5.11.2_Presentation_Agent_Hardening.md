@@ -51,6 +51,6 @@
 2. 於 `create_logic.py` 或 Task 介面增加防呆檢查或日誌提醒，確保所有 Agent 任務的生命週期可被 `TaskDispatcher` 正確追蹤與排程。
 
 ## 4. 驗收標準 (Acceptance Criteria)
-- [ ] `gdrive_tools.py` 不再依賴短效期的 Access Token，成功使用 Service Account JSON 進行實體驗證上傳。
-- [ ] `dispatcher.py` 中不存在 `"default-notebook"` 字串，確實從任務 metadata 中解析參數。
-- [ ] 全域模型 SSOT (`PRESENTATION_AGENT_MODEL`) 維持指向 `SYSTEM_MODELS`，沒有任何自訂模型環境變數散落在 `.env` 中。
+- [x] `gdrive_tools.py` 不再依賴短效期的 Access Token，成功使用 Refresh Token 進行實體驗證展期與上傳。
+- [x] `dispatcher.py` 中不存在 `"default-notebook"` 字串，確實從任務 metadata 中解析參數。
+- [x] 全域模型 SSOT (`PRESENTATION_AGENT_MODEL`) 維持指向 `SYSTEM_MODELS`，沒有任何自訂模型環境變數散落在 `.env` 中。

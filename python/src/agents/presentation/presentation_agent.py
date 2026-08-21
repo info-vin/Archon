@@ -42,7 +42,8 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
 
     def __init__(self, model: str | None = None, **kwargs):
         if model is None:
-            model = os.getenv("PRESENTATION_AGENT_MODEL")
+            from src.server.config.model_ssot import SYSTEM_MODELS
+            model = SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1]
         super().__init__(model=model, name="PresentationAgent", retries=3, enable_rate_limiting=True, **kwargs)
 
     def _create_agent(self, **kwargs) -> Agent[PresentationDependencies, PresentationOperation]:
