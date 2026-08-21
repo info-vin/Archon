@@ -62,6 +62,34 @@ class ProjectService(BaseRepository):
             "data": {},
         }
 
+        # --- Phase 5.11.3: Lifecycle Provisioning Debt ---
+        try:
+            import os
+
+            from notebooklm import NotebookLMClient
+
+            from src.server.services.settings_service import SettingsService
+
+            auth_json_path = os.path.join(os.path.expanduser("~"), ".notebooklm", "profiles", "default", "storage_state.json")
+            settings = SettingsService()
+            auth_json = settings.get_setting("notebooklm_auth_json", default=None)
+
+            if os.path.exists(auth_json_path) or auth_json:
+                if not os.path.exists(auth_json_path) and auth_json:
+                    os.makedirs(os.path.dirname(auth_json_path), exist_ok=True)
+                    with open(auth_json_path, "w") as f:
+                        f.write(auth_json)
+
+                ctx_client = NotebookLMClient.from_storage()
+                async with ctx_client as client:
+                    nb = await client.notebooks.create(title=title)
+                    nb_id = getattr(nb, "id", None) or (nb.get("id") if isinstance(nb, dict) else None)
+                    if nb_id:
+                        project_data["data"]["notebook_id"] = nb_id
+                        logger.info(f"Provisioned NotebookLM (ID: {nb_id}) for project '{title}'")
+        except Exception as e:
+            logger.warning(f"Failed to provision NotebookLM during project creation: {e}")
+
 
         success, result = self.execute_query(self.supabase_client.table("archon_projects").insert(project_data), "Database operation failed") # 合法
         if success:

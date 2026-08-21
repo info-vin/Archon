@@ -118,3 +118,34 @@ class SettingsService(BaseRepository):
         query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key") # 合法
         success, res = self.execute_query(query, "Error upserting setting", require_data=False)
         return success
+
+    def check_and_increment_notebooklm_quota(self) -> bool:
+        """
+        Checks if the daily limit (10) for NotebookLM generation has been reached.
+        If not, increments the count and returns True.
+        If reached, returns False.
+        """
+        import json
+        from datetime import datetime
+
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        setting_val = self.get_setting("notebooklm_daily_usage", default=None)
+
+        if setting_val:
+            try:
+                usage_data = json.loads(setting_val)
+            except json.JSONDecodeError:
+                usage_data = {"date": current_date, "count": 0}
+        else:
+            usage_data = {"date": current_date, "count": 0}
+
+        if usage_data.get("date") != current_date:
+            # Reset for new day
+            usage_data = {"date": current_date, "count": 0}
+
+        if usage_data.get("count", 0) >= 9:
+            return False
+
+        usage_data["count"] = usage_data.get("count", 0) + 1
+        self.set_setting("notebooklm_daily_usage", json.dumps(usage_data))
+        return True

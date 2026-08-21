@@ -206,9 +206,17 @@ class PresentationStrategy(BaseAgentStrategy):
         from ..settings_service import SettingsService
 
         logger.info(f"[{agent_id}] Strategy: Presentation agent triggered for task {task_id}")
+
+        # --- Phase 5.11.3: Quota Lock Debt ---
+        settings = SettingsService()
+        if not settings.check_and_increment_notebooklm_quota():
+            logger.error(f"[{agent_id}] Strategy: NotebookLM Daily Quota Exceeded (10/day). Task {task_id} failed.")
+            await task_service.update_task(task_id, {"status": "failed"})
+            return
+
         try:
             try:
-                net_config = NetworkConfig.model_validate(SettingsService().get_all_settings())
+                net_config = NetworkConfig.model_validate(settings.get_all_settings())
                 agents_url = net_config.agents_service_url
             except Exception:
                 agents_url = NetworkConfig().agents_service_url

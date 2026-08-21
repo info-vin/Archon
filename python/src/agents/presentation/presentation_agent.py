@@ -134,6 +134,15 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                         artifact_id=artifact_id,
                         output_format="pptx"
                     )
+
+                    # --- Phase 5.11.3: Download PDF for Dual-Track Storage ---
+                    output_path_pdf = f"/tmp/notebooklm_{uuid.uuid4().hex}.pdf"
+                    await client.artifacts.download_slide_deck(
+                        notebook_id=ctx.deps.notebook_id,
+                        output_path=output_path_pdf,
+                        artifact_id=artifact_id,
+                        output_format="pdf"
+                    )
             except Exception as e:
                 logger.error(f"Error generating PPTX via NotebookLM: {e}")
                 return f"Error generating PPTX via NotebookLM: {str(e)}"
@@ -141,7 +150,7 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
             if ctx.deps.progress_callback:
                 await ctx.deps.progress_callback({"step": "upload_gdrive", "log": f"📁 Uploading native PPTX '{title}' to Google Drive..."})
 
-            # 2. Upload to Google Drive
+            # 2. Upload to Google Drive (PPTX)
             mcp_client = await get_mcp_client(agent_type="presentation")
             try:
                 res = await mcp_client.call_tool(
@@ -151,6 +160,44 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
                     mime_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
                     local_file_path=output_path
                 )
+
+                # --- Phase 5.11.3: Process PDF for Supabase Knowledge Base (Dual-Track) ---
+                if ctx.deps.progress_callback:
+                    await ctx.deps.progress_callback({"step": "upload_supabase", "log": "🗄️ Indexing PDF to Supabase Knowledge Base..."})
+                try:
+                    if os.path.exists(output_path_pdf):
+                        import pdfplumber
+
+                        from src.server.services.storage.storage_services import DocumentStorageService
+                        from src.server.utils import get_supabase_client
+
+                        # 1. Extract text & vectorize
+                        pdf_text = ""
+                        with pdfplumber.open(output_path_pdf) as pdf:
+                            for page in pdf.pages:
+                                extracted = page.extract_text()
+                                if extracted:
+                                    pdf_text += extracted + "\n"
+                        storage_service = DocumentStorageService()
+                        await storage_service.upload_document(
+                            file_content=pdf_text,
+                            filename=f"{title}.pdf",
+                            source_id="notebooklm_presentation",
+                            knowledge_type="presentation"
+                        )
+
+                        # 2. Upload binary to Storage
+                        supabase = get_supabase_client()
+                        with open(output_path_pdf, "rb") as f:
+                            supabase.storage.from_("knowledge_base").upload(
+                                path=f"presentations/{title}_{uuid.uuid4().hex[:8]}.pdf",
+                                file=f.read(),
+                                file_options={"content-type": "application/pdf", "upsert": "true"}
+                            )
+                        os.remove(output_path_pdf)
+                except Exception as pdf_e:
+                    logger.error(f"Error processing PDF dual-track: {pdf_e}")
+
                 try:
                     data = json.loads(res)
                     if data.get("success"):
