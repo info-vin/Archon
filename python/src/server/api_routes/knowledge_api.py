@@ -1,7 +1,7 @@
 
-from typing import Any
-
 from fastapi import APIRouter
+
+from ..schemas.knowledge import DatabaseMetricsResponse, KnowledgeItemsResponse
 
 # EXPORTS for test compatibility (GAP-012)
 from ..services.storage.storage_services import storage_service
@@ -25,9 +25,9 @@ router.include_router(crawling_router)
 router.include_router(upload_router)
 
 
-@router.get("/knowledge")
-@router.get("/knowledge/")
-async def list_knowledge_items_root(page: int = 1, per_page: int = 20):
+@router.get("/knowledge", response_model=KnowledgeItemsResponse)
+@router.get("/knowledge/", response_model=KnowledgeItemsResponse)
+async def list_knowledge_items_root(page: int = 1, per_page: int = 20) -> KnowledgeItemsResponse:
     """Satisfy front-end base /api/knowledge requests by delegating to items logic."""
     from ..services.knowledge.knowledge_item_service import KnowledgeItemService
 
@@ -37,11 +37,11 @@ async def list_knowledge_items_root(page: int = 1, per_page: int = 20):
     # Basic slicing for compatibility
     start = (page - 1) * per_page
     end = start + per_page
-    return {"items": items[start:end], "total": total, "page": page, "per_page": per_page}
+    return KnowledgeItemsResponse(items=items[start:end], total=total, page=page, per_page=per_page)
 
 
-@router.get("/knowledge/database/metrics")
-async def get_database_metrics() -> Any:
+@router.get("/knowledge/database/metrics", response_model=DatabaseMetricsResponse)
+async def get_database_metrics() -> DatabaseMetricsResponse:
     from fastapi import HTTPException
 
     from ..config.logfire_config import safe_logfire_error
@@ -49,7 +49,8 @@ async def get_database_metrics() -> Any:
 
     try:
         service = DatabaseMetricsService(get_supabase_client())
-        return await service.get_metrics()
+        metrics = await service.get_metrics()
+        return DatabaseMetricsResponse(**metrics)
     except Exception as e:
         safe_logfire_error(f"Failed to get database metrics: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
