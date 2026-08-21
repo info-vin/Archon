@@ -30,7 +30,8 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit'
 });
 
-export const VictoryFeedList: React.FC<VictoryFeedListProps> = ({
+// PERFORMANCE: Wrapped list component in React.memo to prevent O(N) re-renders when parent layout state changes
+export const VictoryFeedList: React.FC<VictoryFeedListProps> = React.memo(({
   sources,
   activeId,
   onSelect,
@@ -145,4 +146,4 @@ export const VictoryFeedList: React.FC<VictoryFeedListProps> = ({
       </div>
     </div>
   );
-};
+});

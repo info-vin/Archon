@@ -206,3 +206,7 @@
 ## 2024-05-18 - Replacing O(N*M) nested render loop searches with O(1) module-level Maps
 **Learning:** Performing nested loop searches using `Array.prototype.find()` inside a React component's render function to locate static config items creates an O(N*M) performance bottleneck that executes on every render cycle.
 **Action:** When a component relies on static configuration data imported from another file, extract the lookup logic by pre-calculating a flat `Map` at the module level (outside the component). This guarantees O(1) constant-time property access during rendering without needing `useMemo` overhead.
+
+## 2024-10-25 - React.memo Component Wrapping for Rendering Optimization
+**Learning:** In heavily nested list view components (like `VictoryFeedList` rendering a long array of `ContentSource`), any unrelated state update in the parent layout component causes the entire list to completely re-render, creating an O(N) rendering bottleneck. Wrapping `Array.prototype.find()` in `useMemo` for tiny lists, or using `Map.get()` for < 5 item static configurations are anti-patterns due to the memory allocation overhead exceeding linear search performance.
+**Action:** Always wrap leaf list view components (`VictoryFeedList`, `KanbanColumn`) with `React.memo` to intercept unnecessary reconciliation when parent component state updates. Do not attempt `useMemo` on primitive arrays or O(1) Dictionary conversions for arrays smaller than 5 items.
