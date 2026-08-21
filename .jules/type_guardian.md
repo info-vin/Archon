@@ -13,3 +13,6 @@
 ## 2025-03-01 - ParamSpec kwargs restriction
 **Learning:** `ParamSpec.kwargs` can only be used in conjunction with `ParamSpec.args` and must be bound to a generic context (such as taking a `Callable[P, ...]`). Using it standalone on a standard method will cause static type checkers to fail. The correct annotation for untyped, variable keyword arguments in standard methods is `**kwargs: Any` or to replace them with explicit keyword arguments.
 **Action:** Always replace `**kwargs` with explicit arguments when possible to favor explicit over implicit. Do not use `ParamSpec.kwargs` outside of its intended generic context.
+## 2025-03-09 - Type Hinting Optional Return Types with TypeVar
+**Learning:** When a method's return type depends on an unbound generic TypeVar `T` (e.g., `default: T = None`), strict type checkers might flag `None` as incompatible if `T` itself does not encompass `None`.
+**Action:** When using `TypeVar` for default arguments that can be `None`, explicitly type the return signature to include the `TypeVar` along with the other possible return types (e.g., `T | str | dict[str, Any] | None`).

@@ -1,7 +1,12 @@
 import os
 import re
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    from .repository import CredentialRepository
+
+T = TypeVar("T")
 
 from supabase import Client, create_client
 
@@ -39,7 +44,7 @@ class CredentialManager:
         """Set the active model tier (1, 2, or 3)."""
         self._active_tier = tier
 
-    def _get_repository(self) -> Any:
+    def _get_repository(self) -> "CredentialRepository":
         """Get or create the CredentialRepository."""
         if self._repository is None:
             from .repository import CredentialRepository
@@ -120,7 +125,7 @@ class CredentialManager:
             logger.error(f"Error loading credentials: {e}")
             raise
 
-    async def get_credential(self, key: str, default: Any = None, decrypt: bool = True) -> Any:
+    async def get_credential(self, key: str, default: T = None, decrypt: bool = True) -> T | str | dict[str, Any] | None:
         """
         Get a credential value by key.
 
