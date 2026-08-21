@@ -10,7 +10,6 @@ from src.agents.presentation.presentation_agent import (
     PresentationDependencies,
     PresentationOperation,
 )
-from src.server.config.model_ssot import SYSTEM_MODELS
 
 TEST_MODEL = "test"
 

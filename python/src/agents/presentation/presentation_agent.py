@@ -55,7 +55,7 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
             "You are an expert Presentation Agent. Your job is to create comprehensive slide deck content by first querying NotebookLM for deep insights, and finally generating and uploading a native PPTX slide deck to Google Drive using NotebookLM's native Slide Deck generation API."
         )
 
-        agent = Agent(  # type: ignore[call-overload]
+        agent = Agent(
             model=self.model,
             deps_type=PresentationDependencies,
             output_type=PresentationOperation,
@@ -179,7 +179,7 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
             except Exception as e:
                 return f"Error uploading to Google Drive: {str(e)}"
 
-        return agent  # type: ignore[no-any-return]
+        return agent
 
     def get_system_prompt(self) -> str:
         return "You are an expert Presentation Agent using NotebookLM's native PPTX generation."
