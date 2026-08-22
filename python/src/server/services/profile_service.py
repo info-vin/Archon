@@ -1,6 +1,7 @@
 # python/src/server/services/profile_service.py
 
 from typing import Any
+from supabase import Client
 
 from src.server.models.auth_models import UserProfileDTO
 from src.server.repositories.base_repository import BaseRepository
@@ -14,7 +15,7 @@ logger = get_logger(__name__)
 class ProfileService(BaseRepository):
     """Service for handling business logic related to user profiles."""
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         """Initialize with optional supabase client."""
         client = supabase_client or get_supabase_client()
         super().__init__(client)
@@ -100,7 +101,7 @@ class ProfileService(BaseRepository):
 
         return False, "Profile not found"
 
-    def update_profile(self, user_id: str, updates: dict) -> tuple[bool, UserProfileDTO | str]:
+    def update_profile(self, user_id: str, updates: dict[str, Any]) -> tuple[bool, UserProfileDTO | str]:
         """
         Updates a user profile.
 
