@@ -125,6 +125,12 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-22: Beta Graph 動態 Map-Reduce 重構與 Pydantic 型別防禦
+- **動態 Map-Reduce 解耦 (SSOT/DRY)**: 徹底消除 `engine_beta_graph.py` 中寫死的 `"sales", "marketing"` 目標與提示詞。改由外部呼叫端透過 `BetaState.worker_targets` 與 `worker_prompts` 動態注入，使引擎能同時服務「每日營運報告」與「每週工程回顧」而不互相干擾 (不改 A 壞 B)。
+- **修補 Reducer 資訊斷層**: 發現並修復了 `final_summary_step` 中 Reducer 丟失原始上下文的架構斷層，強制將 `original_context` (Git log / GEMINI.md) 注入 LLM Prompt，使 DevBot 能根據實體數據生成經驗值，消滅虛假開發與幻覺。
+- **認知失調自癒**: 將 `ENGINEERING_RETRO_DEFAULT` 內帶有強烈身份宣告的文案 (`你是 DevBot...`) 拔除，改為中立的「原始數據 Context」，防止 POBot 與 Business 代理人產生身份錯亂。
+- **型別安全化**: 為 `agents_api.py` 的路由回傳值補齊 Pydantic `response_model` (如 `ApprovalRequestResponse`)，並修復 MyPy 在 Graph State 型別推導的 `list[str]` 警告。全數改動皆通過 `test_routing.py` 實體驗證與 `make lint-be` 公證。
+
 ### 08-20 (追加2): NotebookLM 原生簡報生成與 Drive 物理上傳 (Phase 5.11.1 貫通)
 - **OAuth 防呆與文件對帳**: 修正 `CONTRIBUTING_tw.md` 附錄 G，確立「先開無痕視窗登入新帳號，再進入 OAuth Playground」的流程，消滅 unauthorized_client 錯誤。
 - **消滅虛假開發**: 廢除 `python-pptx` 底層手刻。重構 `PresentationAgent`，全面使用 `notebooklm-py` 原生 API (`generate_slide_deck` 及 `wait_for_completion`)，成功呼叫雲端 AI 生成 6MB+ 實體簡報。
