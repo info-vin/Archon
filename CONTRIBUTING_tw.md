@@ -597,8 +597,14 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ## 附錄 B：技術債監控 (Technical Debt Monitor)
 
-> **結算日期**: Phase 5.9.15 (全後端四大架構動態健康度掃描與 3.3 巡檢戰線型別重構)
+> **結算日期**: Phase 5.11.3
 > **狀態**: 🟢 **全系統 0 Monolith 巨型檔案 (>400行)**，由 `make phase-audit` (Step 6) 與 `make tech-debt-audit` 自動化動態監控過期腳本與 PRPs 雜亂檔案。
+
+### 第三方依賴已知問題 (Third-Party Known Issues)
+1. **`notebooklm-py` MCP 註冊失敗 (0.8.1 vs FastMCP 2.12.4)**
+   - **現象**: 啟動時報錯 `Failed to register official notebooklm-py tools: The @tool decorator was used incorrectly.`
+   - **原因**: `notebooklm-py` 源碼遺留 `@mcp.tool` 寫法 (無括號)，觸發新版 FastMCP 的嚴格型別校驗。
+   - **處置**: **維持現狀 (Ignored)**。我們在 `notebooklm_tools.py` 已透過 `try-except` 物理攔截防禦，並成功掛載自定義的 Fallback Tools。系統功能 100% 正常，無須改動代碼，等待官方套件更新。
 
 ---
 
