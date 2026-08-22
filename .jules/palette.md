@@ -47,3 +47,6 @@
 ## 2023-10-27 - 確保 ThemeToggle 按鈕具備 FocusVisible 狀態
 **Learning:** Icon-only 按鈕或 Theme Toggles 通常只專注 hover 狀態，而忽略了鍵盤無障礙支援 (`focus-visible`)。這導致依賴鍵盤瀏覽的用戶無法辨識焦點。
 **Action:** 所有互動元件均須包含 `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`，以符合 a11y 規範。
+## 2026-08-21 - Ensure Clickable Containers have Keyboard Support
+**Learning:** Found that custom clickable components acting as buttons (like `AiCollaborationWidget` which uses `onClick` on a generic `div`) lack keyboard support (Enter/Space to trigger, `tabIndex`, `role`). This makes them inaccessible to keyboard users, even if focus rings are applied.
+**Action:** When adding `onClick` to a non-interactive element like a `div` to make it behave like a button, always add `role="button"`, `tabIndex={0}`, an `onKeyDown` handler for 'Enter' and ' ', and appropriate ARIA labels along with `focus-visible` styling.
