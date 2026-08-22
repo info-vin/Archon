@@ -3,6 +3,12 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.server.models.agent_models import (
+    AgentCheckpointResponse,
+    ApprovalRequestResponse,
+    ResumeExecutionResult,
+    ReviewApprovalResponse,
+)
 from src.server.models.auth_models import UserProfileDTO
 
 from ..auth.dependencies import get_current_user
@@ -44,8 +50,8 @@ async def get_assignable_agents(
 
 # Phase 5.9.13: Agent DB State Checkpointing & HITL Endpoints
 
-@router.get("/approvals/pending", response_model=list[dict])
-async def get_pending_approvals() -> Any:
+@router.get("/approvals/pending", response_model=list[ApprovalRequestResponse])
+async def get_pending_approvals() -> list[ApprovalRequestResponse]:
     """
     Get all active PENDING human approval requests for sensitive agent tool calls.
     """
@@ -72,8 +78,8 @@ async def get_pending_approvals() -> Any:
         raise HTTPException(status_code=500, detail="Failed to retrieve pending approvals") from e
 
 
-@router.post("/approvals/{approval_id}/review", response_model=dict)
-async def review_approval(approval_id: str, approved: bool, reason: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/approvals/{approval_id}/review", response_model=ReviewApprovalResponse)
+async def review_approval(approval_id: str, approved: bool, reason: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)) -> ReviewApprovalResponse:
     """
     Approve or reject a pending sensitive tool execution.
     """
@@ -95,8 +101,8 @@ async def review_approval(approval_id: str, approved: bool, reason: str | None =
         raise HTTPException(status_code=500, detail="Failed to process approval review") from e
 
 
-@router.post("/tasks/{conversation_id}/resume", response_model=dict)
-async def resume_agent_task(conversation_id: str):
+@router.post("/tasks/{conversation_id}/resume", response_model=ResumeExecutionResult)
+async def resume_agent_task(conversation_id: str) -> ResumeExecutionResult:
     """
     Resume an agent task execution from its latest checkpoint.
     """
@@ -112,8 +118,8 @@ async def resume_agent_task(conversation_id: str):
         raise HTTPException(status_code=500, detail="Failed to resume agent task") from e
 
 
-@router.get("/checkpoints/{conversation_id}", response_model=list[dict])
-async def list_agent_checkpoints(conversation_id: str):
+@router.get("/checkpoints/{conversation_id}", response_model=list[AgentCheckpointResponse])
+async def list_agent_checkpoints(conversation_id: str) -> list[AgentCheckpointResponse]:
     """
     Get all state checkpoints for a given agent conversation.
     """
