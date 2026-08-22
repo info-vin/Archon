@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
 from src.server.repositories.base_repository import BaseRepository
-from src.server.services.shared_constants import AgentUUIDs
+from src.server.services.shared_constants import AgentUUIDs, PromptNameEnum
 
 logger = get_logger(__name__)
 CST = ZoneInfo("Asia/Taipei")
@@ -221,6 +221,14 @@ class ReportService(BaseRepository):
             context_md = await report_enrichment_service.inject_nexus_oracle_insights(context_md)
 
             state = BetaState(shared=SharedState())
+            state.worker_targets = ["sales", "marketing", "system"]
+            state.worker_prompts = {
+                "sales": PromptNameEnum.MAP_REDUCE_ALICE_PROMPT,
+                "marketing": PromptNameEnum.MAP_REDUCE_BOB_PROMPT,
+                "system": PromptNameEnum.MAP_REDUCE_SYSTEM_PROMPT,
+            }
+            state.reducer_prompt_name = PromptNameEnum.MAP_REDUCE_SUPERVISOR_PROMPT
+
             prompt_template = prompt_service.get_prompt(prompt_key)
             prompt_content = prompt_template.replace("{context_md}", context_md)
             state.shared.messages = [{"role": "user", "content": prompt_content}]

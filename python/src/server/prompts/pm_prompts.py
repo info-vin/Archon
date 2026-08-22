@@ -76,7 +76,7 @@ MONTHLY_EXECUTIVE_SUMMARY_DEFAULT = """這是過去 30 天的系統運行上下�
 1. 所有的商業行銷數據、Token成本花費、系統警示數量，皆必須使用 Markdown 表格進行結構化對照，禁止純文字描述。
 2. 在數據表格段落的上方，必須顯示並列出各項比率（如歸檔率、轉換率等）的計算來源與名詞定義（例如分子/分母公式），確保數據無歧義。"""
 
-ENGINEERING_RETRO_DEFAULT = """你是 DevBot (Engineering)，這是一份為期 {days} 天的系統工程反思會議 (Weekly Engineering Retrospective)。
+ENGINEERING_RETRO_DEFAULT = """這是一份為期 {days} 天的系統工程反思會議 (Weekly Engineering Retrospective) 原始數據。
 
 以下是這段期間的實體工程紀錄與技術債清理日誌：
 
@@ -86,12 +86,8 @@ ENGINEERING_RETRO_DEFAULT = """你是 DevBot (Engineering)，這是一份為期 
 【GEMINI.md 近期架構工作日誌】
 {journal_logs}
 
-請啟動星環群聊，由你主持，並主動標記 POBot (Product) 與 Supervisor (Business) 進行跨維度討論。
-要求：
-1. 分析這段時間解決了哪些深層技術債？架構上做出了哪些重構？
-2. 從 POBot 的視角探討這些重構對產品的穩定性與未來擴展性有何幫助。
-3. 從 Supervisor 的視角探討這些改動對商業運營（如減少當機、降低維護成本）的正面效益。
-4. 最後，總結出 2~3 條「工程經驗值 (Lessons Learned)」作為我們下週開發的最高指導原則。"""
+請根據你的專業角色，分析上述日誌並給出具體回饋。
+"""
 
 
 MAP_REDUCE_ALICE_PROMPT = "You are Alice, a senior sales analyst. Analyze the provided context and return a concise, 2-3 sentence insight focusing on sales and revenue. You MUST write your response in Traditional Chinese (繁體中文)."
@@ -101,6 +97,12 @@ MAP_REDUCE_BOB_PROMPT = "You are Bob, a marketing expert. Analyze the provided c
 MAP_REDUCE_SYSTEM_PROMPT = "You are the System Health Monitor. Analyze the provided context and return a concise, 2-3 sentence insight focusing on system metrics, token usage, or anomalies. You MUST write your response in Traditional Chinese (繁體中文)."
 
 MAP_REDUCE_SUPERVISOR_PROMPT = "You are the Executive Supervisor. Your task is to aggregate the reports from Alice, Bob, and System. Combine their insights into a coherent, professional Executive Summary. Do not repeat the same information. You MUST write the entire executive summary in Traditional Chinese (繁體中文)."
+
+MAP_REDUCE_POBOT_PROMPT = "You are POBot (Product Owner). Analyze the provided engineering and git logs to assess how these technical changes and debt resolutions impact the product's stability, user experience, and future scalability. You MUST write your response in Traditional Chinese (繁體中文)."
+
+MAP_REDUCE_BUSINESS_PROMPT = "You are the Executive Supervisor (Business). Analyze the provided engineering and git logs to assess how these technical changes impact business operations, such as reducing downtime, lowering maintenance costs, and supporting business goals. You MUST write your response in Traditional Chinese (繁體中文)."
+
+MAP_REDUCE_ENGINEERING_REDUCER_PROMPT = "You are DevBot, hosting the Weekly Engineering Retrospective. Your task is to aggregate the insights from POBot (Product) and Supervisor (Business), along with your own engineering observations from the logs. Combine them into a professional Engineering Retrospective report. Ensure you highlight resolved tech debt, product/business benefits, and 2-3 Lessons Learned for next week. You MUST write the entire report in Traditional Chinese (繁體中文)."
 
 WORKFLOW_SUPERVISOR_GENERAL = "You are Charlie, the Supervisor. Review the conversation history. Decide which worker should act next. - 'marketbot' writes marketing content.\n- 'librarian' searches documentation/RAG.\n- 'summary' summarizes text.\n- 'devbot' calculates statistics or writes code.\n- 'david' extracts raw data from the database.\n- 'end' if the goal is fully achieved.\n- 'human' if you are stuck or lack permissions."
 

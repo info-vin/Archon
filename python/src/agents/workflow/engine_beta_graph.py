@@ -27,6 +27,11 @@ class BetaState:
     shared: SharedState = field(default_factory=SharedState)
     map_results: dict[str, str] = field(default_factory=dict)
 
+    # SSOT Configuration for Map-Reduce Workflow
+    worker_targets: list[str] = field(default_factory=lambda: ["sales", "marketing", "system"])
+    worker_prompts: dict[str, str] = field(default_factory=dict)
+    reducer_prompt_name: str = field(default=PromptNameEnum.MAP_REDUCE_SUPERVISOR_PROMPT)
+
 
 # Our graph dependencies will be the standard DepsT (e.g. any context we need)
 builder = GraphBuilder(state_type=BetaState, deps_type=Any, output_type=str)
@@ -42,10 +47,12 @@ MODEL = os.getenv("WORKER_AGENT_MODEL", "gemini-3.1-flash-lite")
 async def supervisor_step(ctx: Any) -> list[str]:
     """
     Supervisor returning a list of targets to map over.
-    This triggers the Map phase.
+    This triggers the Map phase dynamically via BetaState config.
     """
-    logger.info("🧪 [Beta Graph] Supervisor thinking... Dispatching to workers.")
-    return ["sales", "marketing", "system"]
+    import typing
+    targets = typing.cast(list[str], ctx.state.worker_targets)
+    logger.info(f"🧪 [Beta Graph] Supervisor thinking... Dispatching to workers: {targets}")
+    return targets
 
 
 @builder.step
@@ -58,18 +65,23 @@ async def worker_step(ctx: Any) -> dict[str, str]:
     async with sem:
         logger.info(f"👷 [Worker] Processing target: {target} (Semaphore Acquired)")
 
-        # Determine the agent and fetch dynamic prompt
-        if target == "sales":
-            prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_ALICE_PROMPT, "You are Alice.")
-            agent = Agent(model=MODEL, system_prompt=prompt_text)
-        elif target == "marketing":
-            prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_BOB_PROMPT, "You are Bob.")
-            agent = Agent(model=MODEL, system_prompt=prompt_text)
-        elif target == "system":
-            prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_SYSTEM_PROMPT, "You are System Monitor.")
-            agent = Agent(model=MODEL, system_prompt=prompt_text)
-        else:
+        # Fetch dynamic prompt via BetaState config
+        prompt_name = ctx.state.worker_prompts.get(target)
+        if not prompt_name:
+            # Fallback to hardcoded for legacy compatibility if BetaState is not fully initialized
+            legacy_map = {
+                "sales": PromptNameEnum.MAP_REDUCE_ALICE_PROMPT,
+                "marketing": PromptNameEnum.MAP_REDUCE_BOB_PROMPT,
+                "system": PromptNameEnum.MAP_REDUCE_SYSTEM_PROMPT,
+            }
+            prompt_name = legacy_map.get(target)
+
+        if not prompt_name:
+            logger.error(f"❌ [Worker] Unknown target '{target}' and no prompt config provided.")
             return {target: f"Unknown target '{target}'."}
+
+        prompt_text = prompt_service.get_prompt(prompt_name, f"You are {target}.")
+        agent = Agent(model=MODEL, system_prompt=prompt_text)
 
         # Build prompt using the shared history
         context = (
@@ -118,8 +130,18 @@ async def final_summary_step(ctx: Any) -> str:
     for k, v in ctx.inputs.items():
         combined_reports += f"--- {k.upper()} REPORT ---\n{v}\n\n"
 
+    # Provide the original context so the reducer doesn't lose the base facts
+    original_context = (
+        _build_pruned_history(ctx.state.shared.messages)
+        if ctx.state.shared.messages
+        else ""
+    )
+    if original_context:
+        combined_reports += f"\n--- ORIGINAL CONTEXT ---\n{original_context}\n"
+
     # Get supervisor agent with dynamic prompt
-    prompt_text = prompt_service.get_prompt(PromptNameEnum.MAP_REDUCE_SUPERVISOR_PROMPT, "You are Supervisor.")
+    reducer_prompt = ctx.state.reducer_prompt_name or PromptNameEnum.MAP_REDUCE_SUPERVISOR_PROMPT
+    prompt_text = prompt_service.get_prompt(reducer_prompt, "You are the Reducer/Supervisor.")
     supervisor_agent = Agent(model=MODEL, system_prompt=prompt_text)
 
     try:

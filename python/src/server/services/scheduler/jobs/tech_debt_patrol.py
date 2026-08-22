@@ -225,7 +225,7 @@ async def run_engineering_retrospective() -> None:
         from src.server.config.config import get_config
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
-        from src.server.services.shared_constants import AgentUUIDs
+        from src.server.services.shared_constants import AgentUUIDs, PromptNameEnum
         from src.server.utils import get_supabase_client
 
         config = get_config()
@@ -256,9 +256,10 @@ async def run_engineering_retrospective() -> None:
             except Exception:
                 journal_logs = "無法讀取 GEMINI.md"
 
+        from src.server.prompts.pm_prompts import ENGINEERING_RETRO_DEFAULT
         from src.server.services.prompt_service import prompt_service
 
-        prompt_template = prompt_service.get_prompt("ENGINEERING_RETRO_DEFAULT")
+        prompt_template = prompt_service.get_prompt("ENGINEERING_RETRO_DEFAULT", default=ENGINEERING_RETRO_DEFAULT)
         prompt_content = prompt_template.format(
             days=days,
             git_logs=git_logs[:3000],  # truncate if too large
@@ -266,6 +267,12 @@ async def run_engineering_retrospective() -> None:
         )
 
         state = BetaState(shared=SharedState())
+        state.worker_targets = ["product", "business"]
+        state.worker_prompts = {
+            "product": PromptNameEnum.MAP_REDUCE_POBOT_PROMPT,
+            "business": PromptNameEnum.MAP_REDUCE_BUSINESS_PROMPT,
+        }
+        state.reducer_prompt_name = PromptNameEnum.MAP_REDUCE_ENGINEERING_REDUCER_PROMPT
         state.shared.messages = [{"role": "user", "content": prompt_content}]
 
         logger.info("🛠️ Clockwork: Executing beta_graph Map-Reduce for Engineering Retro...")

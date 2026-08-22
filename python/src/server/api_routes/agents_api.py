@@ -60,17 +60,17 @@ async def get_pending_approvals() -> list[ApprovalRequestResponse]:
         mgr = AgentApprovalManager()
         approvals = await mgr.list_pending_approvals()
         return [
-            {
-                "approval_id": a.approval_id,
-                "conversation_id": a.conversation_id,
-                "checkpoint_id": a.checkpoint_id,
-                "tool_name": a.tool_name,
-                "tool_args": a.tool_args,
-                "risk_level": a.risk_level,
-                "status": a.status,
-                "created_at": a.created_at,
-                "expires_at": a.expires_at,
-            }
+            ApprovalRequestResponse(
+                approval_id=a.approval_id,
+                conversation_id=a.conversation_id,
+                checkpoint_id=a.checkpoint_id,
+                tool_name=a.tool_name,
+                tool_args=a.tool_args,
+                risk_level=a.risk_level,
+                status=a.status,
+                created_at=a.created_at,
+                expires_at=a.expires_at,
+            )
             for a in approvals
         ]
     except Exception as e:
@@ -88,12 +88,12 @@ async def review_approval(approval_id: str, approved: bool, reason: str | None =
         mgr = AgentApprovalManager()
         reviewer_id = current_user.id
         res = await mgr.review_approval(approval_id=approval_id, approved=approved, reviewer_id=reviewer_id, reason=reason)
-        return {
-            "success": True,
-            "approval_id": res.approval_id,
-            "status": res.status,
-            "message": f"Approval {approval_id} successfully marked as {res.status}.",
-        }
+        return ReviewApprovalResponse(
+            success=True,
+            approval_id=res.approval_id,
+            status=res.status,
+            message=f"Approval {approval_id} successfully marked as {res.status}.",
+        )
     except ValueError as ve:
         raise HTTPException(status_code=404, detail=str(ve)) from ve
     except Exception as e:
@@ -128,16 +128,16 @@ async def list_agent_checkpoints(conversation_id: str) -> list[AgentCheckpointRe
         mgr = AgentCheckpointManager()
         checkpoints = await mgr.list_checkpoints(conversation_id=conversation_id)
         return [
-            {
-                "id": c.id,
-                "conversation_id": c.conversation_id,
-                "step_index": c.step_index,
-                "agent_role": c.agent_role,
-                "status": c.status,
-                "state_snapshot": c.state_snapshot,
-                "last_tool_call": c.last_tool_call,
-                "created_at": c.created_at,
-            }
+            AgentCheckpointResponse(
+                id=c.id,
+                conversation_id=c.conversation_id,
+                step_index=c.step_index,
+                agent_role=c.agent_role,
+                status=c.status,
+                state_snapshot=c.state_snapshot,
+                last_tool_call=c.last_tool_call,
+                created_at=c.created_at,
+            )
             for c in checkpoints
         ]
     except Exception as e:

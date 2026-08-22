@@ -1,6 +1,7 @@
 # python/src/server/services/profile_service.py
 
 from typing import Any
+
 from supabase import Client
 
 from src.server.models.auth_models import UserProfileDTO
