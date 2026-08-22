@@ -7,6 +7,7 @@ Handles server-side provider connectivity testing without exposing API keys to f
 
 import httpx
 from fastapi import APIRouter, HTTPException, Path
+from pydantic import BaseModel, Field
 
 from ..config.logfire_config import get_logger
 from ..services.credential_service import credential_service
@@ -14,6 +15,12 @@ from ..services.credentials.provider_configs import _get_provider_api_key, _get_
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/providers", tags=["providers"])
+
+class ProviderStatusResponse(BaseModel):
+    ok: bool = Field(..., description="Whether the connectivity test passed")
+    reason: str = Field(..., description="Reason for the result (e.g. connected, connection_failed, no_key)")
+    provider: str | None = Field(None, description="The name of the provider tested")
+
 
 
 async def test_provider_connection(provider: str, api_key: str, base_url: str) -> bool:
@@ -41,12 +48,12 @@ async def test_provider_connection(provider: str, api_key: str, base_url: str) -
         return False
 
 
-@router.get("/{provider}/status")
+@router.get("/{provider}/status", response_model=ProviderStatusResponse)
 async def get_provider_status(
     provider: str = Path(
         ..., description="Provider name to test connectivity for", regex="^[a-z0-9_]+$", max_length=20
     ),
-):
+) -> ProviderStatusResponse:
     """Test provider connectivity using server-side API key (secure)"""
     try:
         # Supported providers for connectivity testing
@@ -70,24 +77,24 @@ async def get_provider_status(
 
         if not api_key or not isinstance(api_key, str) or not api_key.strip():
             logger.info(f"No API key configured for {safe_provider}")
-            return {"ok": False, "reason": "no_key"}
+            return ProviderStatusResponse(ok=False, reason="no_key")
 
         # Get base URL using the SSOT logic
         # For testing, we pass an empty rag_settings since standard base URLs don't depend on it
         base_url = _get_provider_base_url(provider, {})
         if not base_url:
             logger.warning(f"No base URL configured for {safe_provider}")
-            return {"ok": False, "reason": "no_base_url"}
+            return ProviderStatusResponse(ok=False, reason="no_base_url")
 
         # Test connectivity using server-side key and unified tester
         is_connected = await test_provider_connection(provider, api_key, base_url)
 
         logger.info(f"{safe_provider} connectivity test result: {is_connected}")
-        return {
-            "ok": is_connected,
-            "reason": "connected" if is_connected else "connection_failed",
-            "provider": provider,
-        }
+        return ProviderStatusResponse(
+            ok=is_connected,
+            reason="connected" if is_connected else "connection_failed",
+            provider=provider,
+        )
 
     except HTTPException:
         raise
