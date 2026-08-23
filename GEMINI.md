@@ -125,6 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-23: 終結虛假驗證與物理斷言修復 (Fail-Fast & Monkey Patch)
+- **NotebookLM 猴子補丁**: 修復了第三方 `notebooklm-py` 與 `fastmcp` 之間 `@tool` 語法與 `ToolResult` 的 Pydantic Schema 衝突。實作動態 Monkey Patch，在不修改源碼且不放棄官方工具的前提下，100% 成功掛載。並在 MCP 測試中加入物理存在性斷言 (`assert tool in _tools`)。
+- **TTS 安全攔截遙測**: 發現 TTS 失敗並非 Quota 超標，而是 Gemini Safety API 攔截了工程日誌中的敏感字眼 (`kill`, `execute`)。修改 `text_to_speech_service.py` 強制回報 `block_reason`，並拔除 `report_enrichment_service.py` 中誤導性的 `(Quota exceeded?)` 寫死字眼。
+- **Lifespan 快速失效**: 拔除 `lifespan.py` 中靜默吞錯的 `try...except`，強制在取得 credentials 失敗時拋出 `RuntimeError`，杜絕帶病啟動，並新增對應之物理斷言單元測試。
+
 ### 08-22: Beta Graph 動態 Map-Reduce 重構與 Pydantic 型別防禦
 - **動態 Map-Reduce 解耦 (SSOT/DRY)**: 徹底消除 `engine_beta_graph.py` 中寫死的 `"sales", "marketing"` 目標與提示詞。改由外部呼叫端透過 `BetaState.worker_targets` 與 `worker_prompts` 動態注入，使引擎能同時服務「每日營運報告」與「每週工程回顧」而不互相干擾 (不改 A 壞 B)。
 - **修補 Reducer 資訊斷層**: 發現並修復了 `final_summary_step` 中 Reducer 丟失原始上下文的架構斷層，強制將 `original_context` (Git log / GEMINI.md) 注入 LLM Prompt，使 DevBot 能根據實體數據生成經驗值，消滅虛假開發與幻覺。
