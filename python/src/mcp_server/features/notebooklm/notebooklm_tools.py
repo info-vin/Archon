@@ -27,7 +27,7 @@ def register_notebooklm_tools(mcp: FastMCP):
             return core_schema.any_schema()
 
     if not hasattr(fastmcp.tools.tool.ToolResult, "__get_pydantic_core_schema__"):
-        fastmcp.tools.tool.ToolResult.__get_pydantic_core_schema__ = _ToolResultPydanticPatch.__get_pydantic_core_schema__
+        fastmcp.tools.tool.ToolResult.__get_pydantic_core_schema__ = _ToolResultPydanticPatch.__get_pydantic_core_schema__  # type: ignore
 
     original_tool = mcp.tool
 
@@ -38,7 +38,7 @@ def register_notebooklm_tools(mcp: FastMCP):
         else:
             return original_tool(*args, **kwargs)
 
-    mcp.tool = patched_tool
+    mcp.tool = patched_tool  # type: ignore
 
     from notebooklm.mcp.server import register_all
 
@@ -46,7 +46,7 @@ def register_notebooklm_tools(mcp: FastMCP):
     logger.info("✓ Registered official notebooklm-py MCP tools (Monkey patched)")
 
     # Restore the original decorator to prevent side-effects on other tools
-    mcp.tool = original_tool
+    mcp.tool = original_tool  # type: ignore
 
     # 2. Register explicit names requested by the plan for exact compatibility
     @mcp.tool()
