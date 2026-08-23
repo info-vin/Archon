@@ -36,7 +36,7 @@ class AIModelHealthResponseDTO(BaseModel):
 router = APIRouter(prefix="/api/system", tags=["System"])
 
 
-@router.post("/scout/ingest", dependencies=[Depends(requires_permission(MCP_MANAGE))])
+@router.post("/scout/ingest", response_model=ScoutIngestionResultDTO, dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def ingest_scout_reports() -> ScoutIngestionResultDTO:
     """
     Manually triggers ingestion of Twin Scout diagnostic reports into the RAG Knowledge Base.
@@ -50,7 +50,7 @@ async def ingest_scout_reports() -> ScoutIngestionResultDTO:
         raise HTTPException(status_code=500, detail=f"Scout ingestion failed: {str(e)}") from e
 
 
-@router.get("/health/rag", dependencies=[Depends(requires_permission(MCP_MANAGE))])
+@router.get("/health/rag", response_model=HealthStatusResult, dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def get_rag_health_check() -> HealthStatusResult:
     """
     Performs a deep integrity check of the RAG system.
@@ -140,7 +140,7 @@ async def get_ai_model_health() -> AIModelHealthResponseDTO:
         )
 
 
-@router.get("/logs/connectivity", dependencies=[Depends(requires_permission(MCP_MANAGE))])
+@router.get("/logs/connectivity", response_model=list[ConnectivityLogDTO], dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def list_connectivity_logs() -> list[ConnectivityLogDTO]:
     """
     Lists system-level connectivity alerts (404, 429, etc) for Admin monitoring.
@@ -151,7 +151,7 @@ async def list_connectivity_logs() -> list[ConnectivityLogDTO]:
     return await system_service.list_connectivity_logs()
 
 
-@router.get("/settings", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.get("/settings", response_model=list[SystemSettingDTO], dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def list_system_settings(category: str | None = None) -> list[SystemSettingDTO]:
     """
     Lists system settings from the database.
