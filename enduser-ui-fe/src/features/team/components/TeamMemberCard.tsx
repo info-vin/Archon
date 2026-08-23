@@ -96,7 +96,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = React.memo(({
                         onClick={() => onEditRole(member)}
                         disabled={isAgent}
                         aria-disabled={isAgent}
-                        className={`flex-1 min-w-0 text-sm font-medium py-3 rounded-xl transition-colors min-h-[44px] flex items-center justify-center ${isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 active:bg-gray-200'}`}
+                        className={`flex-1 min-w-0 text-sm font-medium py-3 rounded-xl transition-colors min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${isAgent ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 active:bg-gray-200'}`}
                         aria-label={`Manage role for ${member.name}`}
                         title="Manage Role"
                     >
@@ -104,7 +104,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = React.memo(({
                     </button>
                     <button 
                         onClick={() => onViewActivity(member)}
-                        className="flex-1 min-w-0 text-sm font-medium py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors min-h-[44px] flex items-center justify-center"
+                        className="flex-1 min-w-0 text-sm font-medium py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                         aria-label={`View activity for ${member.name}`}
                         title="View Activity"
                     >
@@ -114,7 +114,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = React.memo(({
                     {member.name === 'Alice Johnson' && (
                         <button 
                             onClick={onViewSop}
-                            className="flex-1 min-w-0 text-sm font-bold bg-indigo-50 text-indigo-700 py-3 rounded-xl border border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 transition-colors min-h-[44px] flex items-center justify-center gap-1 shadow-sm"
+                            className="flex-1 min-w-0 text-sm font-bold bg-indigo-50 text-indigo-700 py-3 rounded-xl border border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 transition-colors min-h-[44px] flex items-center justify-center gap-1 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                             aria-label="View SOP Documentation"
                             title="View SOP"
                         >
