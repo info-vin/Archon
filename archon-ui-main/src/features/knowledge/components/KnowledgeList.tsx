@@ -3,6 +3,7 @@
  * Displays knowledge items in grid or table view
  */
 
+import React, { useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { ActiveOperation } from "../../progress/types";
@@ -60,10 +61,21 @@ export const KnowledgeList: React.FC<KnowledgeListProps> = ({
   activeOperations = [],
   onRefreshStarted,
 }) => {
+  // PERFORMANCE: Precalculate lookup map for active operations to prevent O(N*M) Array.find calls during render loop
+  const activeOperationsMap = useMemo(() => {
+    const map = new Map<string, ActiveOperation>();
+    activeOperations.forEach(op => {
+      if (op.source_id && !map.has(op.source_id)) {
+        map.set(op.source_id, op);
+      }
+    });
+    return map;
+  }, [activeOperations]);
+
   // Helper to check if an item is being recrawled
   const getActiveOperationForItem = (item: KnowledgeItem): ActiveOperation | undefined => {
-    // First try to match by source_id (most reliable for refresh operations)
-    const matchBySourceId = activeOperations.find((op) => op.source_id === item.source_id);
+    // First try to match by source_id (O(1) lookup)
+    const matchBySourceId = activeOperationsMap.get(item.source_id);
     if (matchBySourceId) {
       return matchBySourceId;
     }

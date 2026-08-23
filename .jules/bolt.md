@@ -213,3 +213,7 @@
 ## 2024-05-18 - React.memo fails with unmemoized callbacks
 **Learning:** When passing callback props (like `onEditRole`, `onViewActivity`) to a `React.memo()` optimized component inside a list (e.g. `TeamMemberCard`), if the parent component does not wrap these callbacks in `useCallback`, the shallow comparison will always fail on every render. This completely negates the benefit of `React.memo` and adds useless CPU overhead.
 **Action:** Always verify that components utilizing `React.memo()` only receive memoized callback functions or static props from their parents, especially within map iterations.
+
+## 2024-11-20 - Pre-calculating lookup maps to replace Array.prototype.find() in render loops with partial matching fallback
+**Learning:** Calling `Array.prototype.find()` inside React render loops causes O(N*M) overhead on every render cycle. While exact matching (like `source_id`) can be easily optimized with a `Map` for O(1) lookups, fallback logic that requires partial matching (like `message?.includes(url)`) cannot be easily mapped.
+**Action:** Always pre-calculate lookup maps (using `useMemo` and `Map`) outside of the render loop to guarantee fast O(1) property access for the exact match fast-path. Retain the `Array.prototype.find()` ONLY as a fallback for complex/partial matching conditions, ensuring the vast majority of items bypass the O(N) array scan.
