@@ -104,7 +104,7 @@ class SourceManagementService(BaseRepository):
             "source_records_deleted": source_deleted,
         }
 
-    def update_source_metadata(self, source_id: str, **kwargs) -> tuple[bool, dict[str, Any]]:
+    def update_source_metadata(self, source_id: str, **kwargs: Any) -> tuple[bool, dict[str, Any]]:
         """Update source metadata (title, summary, tags, etc)."""
         update_data: dict[str, Any] = {}
         if kwargs.get("title") is not None:
@@ -137,7 +137,7 @@ class SourceManagementService(BaseRepository):
             return True, {"source_id": source_id, "updated_fields": list(update_data.keys())}
         return False, {"error": f"Source with ID {source_id} not found: {result.get('error', '')}"}
 
-    async def create_source_info(self, source_id: str, content_sample: str, **kwargs) -> tuple[bool, dict[str, Any]]:
+    async def create_source_info(self, source_id: str, content_sample: str, **kwargs: Any) -> tuple[bool, dict[str, Any]]:
         """Delegated creation with behavior parity."""
         try:
             summary = await extract_source_summary(source_id, content_sample)
@@ -212,7 +212,7 @@ class SourceManagementService(BaseRepository):
             )
         return True, {"sources": sources, "total_count": len(sources), "knowledge_type_filter": knowledge_type}
 
-    def create_source_from_upload(self, source_id: str, filename: str, **kwargs) -> None:
+    def create_source_from_upload(self, source_id: str, filename: str, **kwargs: Any) -> None:
         """Delegated upload logic."""
         create_source_from_upload_logic(
             self.supabase_client,

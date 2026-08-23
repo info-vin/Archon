@@ -16,3 +16,6 @@
 ## 2025-03-09 - Type Hinting Optional Return Types with TypeVar
 **Learning:** When a method's return type depends on an unbound generic TypeVar `T` (e.g., `default: T = None`), strict type checkers might flag `None` as incompatible if `T` itself does not encompass `None`.
 **Action:** When using `TypeVar` for default arguments that can be `None`, explicitly type the return signature to include the `TypeVar` along with the other possible return types (e.g., `T | str | dict[str, Any] | None`).
+## 2026-08-23 - Type Hinting Missing Return annotations and kwargs
+**Learning:** Found multiple methods in service files (`threading_service.py`, `background_task_manager.py`, `source_management_service.py`) that were missing either explicit return types (like `-> None:` or `-> AsyncGenerator[None, None]:`) or argument type annotations specifically for `*args` and `**kwargs` (like `*args: Any` or `**kwargs: Any`).
+**Action:** Always ensure explicitly specifying `*args: Any` and `**kwargs: Any` if their types are not strictly defined, rather than leaving them untyped. Ensure all methods, especially setup or cleanup methods, have explicit return types even if it is just `-> None:`.
