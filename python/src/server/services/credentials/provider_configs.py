@@ -7,6 +7,8 @@ from ...config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
+SUPPORTED_PROVIDERS = {"openai", "google", "anthropic", "openrouter", "grok"} # 合法
+
 
 async def get_active_provider(manager: "CredentialManager", service_type: str = "llm") -> dict[str, Any]:
     """
@@ -167,6 +169,16 @@ def _get_provider_base_url(provider: str, rag_settings: dict) -> str | None:
     elif provider == "grok":
         return "https://api.x.ai/v1"
     return None
+
+
+def _get_provider_auth_headers(provider: str, api_key: str) -> dict[str, str]:
+    """Get authentication headers for provider."""
+    if provider == "google":
+        return {"x-goog-api-key": api_key}
+    elif provider == "anthropic":
+        return {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
+    else:
+        return {"Authorization": f"Bearer {api_key}"}
 
 
 async def set_active_provider(manager: "CredentialManager", provider: str, service_type: str = "llm") -> bool:

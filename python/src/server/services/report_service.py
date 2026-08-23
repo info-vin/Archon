@@ -221,7 +221,7 @@ class ReportService(BaseRepository):
             context_md = await report_enrichment_service.inject_nexus_oracle_insights(context_md)
 
             state = BetaState(shared=SharedState())
-            state.worker_targets = ["sales", "marketing", "system"]
+            state.worker_targets = ["sales", "marketing", "system"] # 合法
             state.worker_prompts = {
                 "sales": PromptNameEnum.MAP_REDUCE_ALICE_PROMPT,
                 "marketing": PromptNameEnum.MAP_REDUCE_BOB_PROMPT,

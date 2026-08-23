@@ -267,7 +267,7 @@ async def run_engineering_retrospective() -> None:
         )
 
         state = BetaState(shared=SharedState())
-        state.worker_targets = ["product", "business"]
+        state.worker_targets = ["product", "business"] # 合法
         state.worker_prompts = {
             "product": PromptNameEnum.MAP_REDUCE_POBOT_PROMPT,
             "business": PromptNameEnum.MAP_REDUCE_BUSINESS_PROMPT,

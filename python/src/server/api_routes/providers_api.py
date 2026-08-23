@@ -11,7 +11,12 @@ from pydantic import BaseModel, Field
 
 from ..config.logfire_config import get_logger
 from ..services.credential_service import credential_service
-from ..services.credentials.provider_configs import _get_provider_api_key, _get_provider_base_url
+from ..services.credentials.provider_configs import (
+    SUPPORTED_PROVIDERS,
+    _get_provider_api_key,
+    _get_provider_auth_headers,
+    _get_provider_base_url,
+)
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/providers", tags=["providers"])
@@ -26,13 +31,7 @@ class ProviderStatusResponse(BaseModel):
 async def test_provider_connection(provider: str, api_key: str, base_url: str) -> bool:
     """Unified tester for all supported LLM providers."""
     try:
-        headers = {}
-        if provider == "google":
-            headers = {"x-goog-api-key": api_key}
-        elif provider == "anthropic":
-            headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01"}
-        else:
-            headers = {"Authorization": f"Bearer {api_key}"}
+        headers = _get_provider_auth_headers(provider, api_key)
 
         endpoint = f"{base_url.rstrip('/')}/models"
 
@@ -58,15 +57,13 @@ async def get_provider_status(
     try:
         # Supported providers for connectivity testing
         # Note: ollama is explicitly excluded from active testing here.
-        supported_providers = {"openai", "google", "anthropic", "openrouter", "grok"} # 合法
-
-        if provider not in supported_providers:
+        if provider not in SUPPORTED_PROVIDERS:
             if provider == "ollama":
                 raise HTTPException(
                     status_code=400, detail="Provider 'ollama' not supported for connectivity testing"
                 )
             raise HTTPException(
-                status_code=400, detail=f"Invalid provider '{provider}'. Allowed: {sorted(supported_providers)}"
+                status_code=400, detail=f"Invalid provider '{provider}'. Allowed: {sorted(SUPPORTED_PROVIDERS)}"
             )
 
         safe_provider = provider[:20]
@@ -77,14 +74,14 @@ async def get_provider_status(
 
         if not api_key or not isinstance(api_key, str) or not api_key.strip():
             logger.info(f"No API key configured for {safe_provider}")
-            return ProviderStatusResponse(ok=False, reason="no_key")
+            return ProviderStatusResponse(ok=False, reason="no_key", provider=provider)
 
         # Get base URL using the SSOT logic
         # For testing, we pass an empty rag_settings since standard base URLs don't depend on it
         base_url = _get_provider_base_url(provider, {})
         if not base_url:
             logger.warning(f"No base URL configured for {safe_provider}")
-            return ProviderStatusResponse(ok=False, reason="no_base_url")
+            return ProviderStatusResponse(ok=False, reason="no_base_url", provider=provider)
 
         # Test connectivity using server-side key and unified tester
         is_connected = await test_provider_connection(provider, api_key, base_url)
