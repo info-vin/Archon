@@ -30,7 +30,7 @@ class BackgroundTaskManager:
             f"BackgroundTaskManager initialized with max {max_concurrent_tasks} concurrent tasks, {metadata_retention_hours}h metadata retention"
         )
 
-    def set_main_loop(self, loop: asyncio.AbstractEventLoop):
+    def set_main_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         """Set the main event loop for the task manager"""
         logger.info("BackgroundTaskManager uses pure async - main loop setting not required")
 

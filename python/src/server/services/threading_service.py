@@ -5,7 +5,7 @@ Threading Service for Archon (Facade)
 import asyncio
 import gc
 import time
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Any
@@ -71,11 +71,11 @@ class ThreadingService:
         self.io_executor.shutdown(wait=True)
         logfire_logger.info("Threading service stopped")
 
-    async def run_cpu_intensive(self, func: Callable, *args, **kwargs) -> Any:
+    async def run_cpu_intensive(self, func: Callable, *args: Any, **kwargs: Any) -> Any:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.cpu_executor, func, *args, **kwargs)
 
-    async def run_io_bound(self, func: Callable, *args, **kwargs) -> Any:
+    async def run_io_bound(self, func: Callable, *args: Any, **kwargs: Any) -> Any:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.io_executor, func, *args, **kwargs)
 
@@ -91,7 +91,7 @@ class ThreadingService:
         )
 
     @asynccontextmanager
-    async def rate_limited_operation(self, estimated_tokens: int = 8000, progress_callback: Callable | None = None):
+    async def rate_limited_operation(self, estimated_tokens: int = 8000, progress_callback: Callable | None = None) -> AsyncGenerator[None, None]:
         async with self.rate_limiter.semaphore:
             can_proceed = await self.rate_limiter.acquire(estimated_tokens, progress_callback)
             if not can_proceed:
