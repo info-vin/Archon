@@ -127,7 +127,8 @@
 
 ### 08-23: 終結虛假驗證與物理斷言修復 (Fail-Fast & Monkey Patch)
 - **NotebookLM 猴子補丁**: 修復了第三方 `notebooklm-py` 與 `fastmcp` 之間 `@tool` 語法與 `ToolResult` 的 Pydantic Schema 衝突。實作動態 Monkey Patch，在不修改源碼且不放棄官方工具的前提下，100% 成功掛載。並在 MCP 測試中加入物理存在性斷言 (`assert tool in _tools`)。
-- **TTS 安全攔截遙測**: 發現 TTS 失敗並非 Quota 超標，而是 Gemini Safety API 攔截了工程日誌中的敏感字眼 (`kill`, `execute`)。修改 `text_to_speech_service.py` 強制回報 `block_reason`，並拔除 `report_enrichment_service.py` 中誤導性的 `(Quota exceeded?)` 寫死字眼。
+- **TTS 安全攔截遙測與提示詞硬化**: 發現 TTS 失敗並非 Quota 超標，而是 Gemini Safety API 攔截了工程日誌中的敏感字眼 (`kill`, `execute`)。修改 `text_to_speech_service.py` 強制回報 `block_reason`。同時在 `pm_prompts.py` 注入 `[TTS Safety Instructions]`，指示 LLM 主動將工程黑話替換為廣播友善之中性詞，從根本繞過語音攔截。
+- **Telegram N+1 查詢崩潰修復**: 查明 HF 雲端發送 Telegram Timeout 的主因並非環境變數遺失，而是 `telegram_service.py` 濫用 `@property` 導致單次推播觸發 5 次連續同步 DB 查詢 (N+1 Anti-pattern)。重構為單次全域取值，消滅連線池阻塞與超時風險。
 - **Lifespan 快速失效**: 拔除 `lifespan.py` 中靜默吞錯的 `try...except`，強制在取得 credentials 失敗時拋出 `RuntimeError`，杜絕帶病啟動，並新增對應之物理斷言單元測試。
 
 ### 08-22: Beta Graph 動態 Map-Reduce 重構與 Pydantic 型別防禦
