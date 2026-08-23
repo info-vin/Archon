@@ -59,7 +59,10 @@ class TextToSpeechService:
                 or not response.candidates[0].content
                 or not response.candidates[0].content.parts
             ):
-                return False, "No audio generated."
+                feedback = getattr(response, "prompt_feedback", None)
+                if feedback and getattr(feedback, "block_reason", None):
+                    return False, f"Blocked by API Safety: {feedback.block_reason}"
+                return False, "No audio generated (Empty candidates)."
 
             # Log token usage for ROI calculation
             usage = getattr(response, "usage_metadata", None)

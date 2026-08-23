@@ -116,3 +116,14 @@ async def test_notebooklm_ask_question(mock_mcp, mock_context):
     assert res["answer"] == "This is the answer."
     assert res["conversation_id"] == "conv-1"
     client.chat.ask.assert_called_once_with("nb-1", "What is testing?")
+
+@pytest.mark.asyncio
+async def test_official_tools_registration(mock_mcp):
+    """Test that official notebooklm-py tools are registered via Monkey Patch."""
+    register_notebooklm_tools(mock_mcp)
+
+    # Assert at least some of the official tools were registered
+    assert "notebooks_list" in mock_mcp._tools or "chat_ask" in mock_mcp._tools or "sources_list" in mock_mcp._tools or "notebook_list" in mock_mcp._tools
+
+    # We also check that our custom wrapper tools are still registered
+    assert "notebooklm_list_notebooks" in mock_mcp._tools

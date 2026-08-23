@@ -71,6 +71,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await fetch_credentials_from_server()
     except Exception as e:
         logger.error(f"Failed to fetch credentials: {e}")
+        raise RuntimeError("Fail-Fast: Cannot start Agents service without credentials.") from e
 
     app.state.agents = {}
     for name, agent_class in AVAILABLE_AGENTS.items():

@@ -84,7 +84,7 @@ class ReportEnrichmentService:
                 except Exception as upload_err:
                     logger.error(f"❌ ReportEnrichmentService: Failed to upload TTS Podcast to Supabase: {upload_err}")
             else:
-                logger.warning(f"⚠️ ReportEnrichmentService: TTS generation skipped or failed (Quota exceeded?): {result}")
+                logger.warning(f"⚠️ ReportEnrichmentService: TTS generation skipped or failed: {result}")
 
         except Exception as e:
             logger.error(f"❌ ReportEnrichmentService: Failed to generate TTS Podcast: {e}")

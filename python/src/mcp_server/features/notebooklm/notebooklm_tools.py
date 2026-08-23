@@ -16,13 +16,37 @@ def register_notebooklm_tools(mcp: FastMCP):
     """Register NotebookLM integration tools with the MCP server."""
 
     # 1. Register the official complete tools from notebooklm-py
-    try:
-        from notebooklm.mcp.server import register_all
+    # [MONKEY PATCH] fastmcp 1.12.x enforces strict Pydantic core schemas and @tool() syntax.
+    # We dynamically patch ToolResult and the mcp.tool decorator before importing notebooklm.
+    import fastmcp.tools.tool
+    from pydantic_core import core_schema
 
-        register_all(mcp)  # type: ignore[arg-type]
-        logger.info("✓ Registered official notebooklm-py MCP tools")
-    except Exception as e:
-        logger.error(f"Failed to register official notebooklm-py tools: {e}")
+    class _ToolResultPydanticPatch:
+        @classmethod
+        def __get_pydantic_core_schema__(cls, source_type, handler):
+            return core_schema.any_schema()
+
+    if not hasattr(fastmcp.tools.tool.ToolResult, "__get_pydantic_core_schema__"):
+        fastmcp.tools.tool.ToolResult.__get_pydantic_core_schema__ = _ToolResultPydanticPatch.__get_pydantic_core_schema__
+
+    original_tool = mcp.tool
+
+    def patched_tool(*args, **kwargs):
+        if len(args) == 1 and callable(args[0]) and not kwargs:
+            # Called as @mcp.tool (without parenthesis)
+            return original_tool()(args[0])
+        else:
+            return original_tool(*args, **kwargs)
+
+    mcp.tool = patched_tool
+
+    from notebooklm.mcp.server import register_all
+
+    register_all(mcp)  # type: ignore[arg-type]
+    logger.info("✓ Registered official notebooklm-py MCP tools (Monkey patched)")
+
+    # Restore the original decorator to prevent side-effects on other tools
+    mcp.tool = original_tool
 
     # 2. Register explicit names requested by the plan for exact compatibility
     @mcp.tool()
