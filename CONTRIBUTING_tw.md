@@ -421,6 +421,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - `migration/20260815_seed_insight_report_blog.sql`
 - `migration/20260819_add_hybrid_router_settings.sql`
 - `migration/20260819_update_rag_threshold.sql`
+- `migration/20260821_update_leads_patrol_prompt.sql`
 
 
 此流程的最終目標，是成功將一個穩定的 `feature/...` 分支部署到 **Render**。

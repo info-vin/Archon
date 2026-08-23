@@ -50,3 +50,6 @@
 ## 2026-08-21 - Ensure Clickable Containers have Keyboard Support
 **Learning:** Found that custom clickable components acting as buttons (like `AiCollaborationWidget` which uses `onClick` on a generic `div`) lack keyboard support (Enter/Space to trigger, `tabIndex`, `role`). This makes them inaccessible to keyboard users, even if focus rings are applied.
 **Action:** When adding `onClick` to a non-interactive element like a `div` to make it behave like a button, always add `role="button"`, `tabIndex={0}`, an `onKeyDown` handler for 'Enter' and ' ', and appropriate ARIA labels along with `focus-visible` styling.
+## 2026-08-22 - Missing Focus Rings on Team Member Action Buttons
+**Learning:** Found that primary action buttons in mapped lists (like Manage Role, View Activity in `TeamMemberCard.tsx`) often lack proper keyboard focus rings despite having extensive mouse hover state styling. This leaves keyboard users without visual indicators on major interaction points.
+**Action:** Always verify that actionable elements within card components or lists include explicit `focus-visible` states like `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`.
