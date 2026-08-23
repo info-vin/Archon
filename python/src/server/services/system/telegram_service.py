@@ -22,34 +22,27 @@ class TelegramService:
             logger.warning(f"TelegramService: Failed to parse NotificationConfig: {e}")
             return NotificationConfig()
 
-    @property
-    def bot_token(self) -> str | None:
-        return self._get_config().telegram_token
-
-    @property
-    def chat_id(self) -> str | None:
-        return self._get_config().telegram_chat_id
-
-    @property
-    def api_url(self) -> str | None:
-        token = self.bot_token
-        return f"https://api.telegram.org/bot{token}/sendMessage" if token else None
-
     async def send_message(self, text: str, parse_mode: str = "Markdown") -> bool:
         """Sends a message via Telegram Bot API."""
-        if not self.bot_token or not self.chat_id or not self.api_url:
+        config = self._get_config()
+        bot_token = config.telegram_token
+        chat_id = config.telegram_chat_id
+
+        if not bot_token or not chat_id:
             logger.warning("TelegramService: TELEGRAM_TOKEN or TELEGRAM_TO not configured. Skipping alert.")
             return False
 
+        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+
         payload = {
-            "chat_id": self.chat_id,
+            "chat_id": chat_id,
             "text": text,
             "parse_mode": parse_mode
         }
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(self.api_url, json=payload)
+                response = await client.post(api_url, json=payload)
                 response.raise_for_status()
                 logger.info("✅ TelegramService: Message sent successfully.")
                 return True
