@@ -53,3 +53,6 @@
 ## 2026-08-22 - Missing Focus Rings on Team Member Action Buttons
 **Learning:** Found that primary action buttons in mapped lists (like Manage Role, View Activity in `TeamMemberCard.tsx`) often lack proper keyboard focus rings despite having extensive mouse hover state styling. This leaves keyboard users without visual indicators on major interaction points.
 **Action:** Always verify that actionable elements within card components or lists include explicit `focus-visible` states like `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`.
+## 2024-05-15 - Dynamic ARIA Labels in Date Pickers
+**Learning:** Screen reader users need dynamic context for highly interactive components like Date/Time pickers. Static labels like "Set Date" are insufficient once a date is selected. Presets (like "Tomorrow" or "+3 Days") need explicit explanatory text, as their relative nature might not be clear out of visual context.
+**Action:** Always ensure that trigger buttons for complex custom widgets (like modal pickers) dynamically update their `aria-label` to reflect the currently selected value.

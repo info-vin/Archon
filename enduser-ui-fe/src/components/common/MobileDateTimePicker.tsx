@@ -85,6 +85,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                 id={pickerId}
                 type="button"
                 onClick={() => setIsOpen(true)}
+                aria-label={value ? `Change ${label}, currently set to ${formatDisplay(new Date(value))}` : `Set ${label}`}
                 className="w-full p-3 flex items-center justify-between border dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm hover:border-indigo-500 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
             >
                 <div className="flex items-center gap-2">
@@ -112,6 +113,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 onClick={() => setIsOpen(false)}
                                 className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 aria-label="Close date picker"
+                                title="Close date picker"
                             >
                                 <XIcon className="w-6 h-6 text-slate-400" />
                             </button>
@@ -124,6 +126,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 <button 
                                     type="button"
                                     onClick={() => setPreset(1)}
+                                    aria-label="Set date to tomorrow"
                                     className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 >
                                     Tomorrow
@@ -131,6 +134,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 <button 
                                     type="button"
                                     onClick={() => setPreset(3)}
+                                    aria-label="Set date to 3 days from now"
                                     className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 >
                                     +3 Days
@@ -138,6 +142,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 <button 
                                     type="button"
                                     onClick={() => setPreset(7)}
+                                    aria-label="Set date to next week"
                                     className="flex-1 py-3 px-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 >
                                     Next Week
