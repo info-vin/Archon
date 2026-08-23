@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { Employee } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
@@ -21,6 +21,10 @@ const TeamManagementPage: React.FC = () => {
     const [editingMember, setEditingMember] = useState<Employee | null>(null);
     const [activityMember, setActivityMember] = useState<Employee | null>(null);
     const [showSopModal, setShowSopModal] = useState<boolean>(false);
+
+    const handleViewSop = useCallback(() => {
+        setShowSopModal(true);
+    }, []);
     const [showTokenDetails, setShowTokenDetails] = useState(false);
     const [aiUsage, setAiUsage] = useState<any>(null);
 
@@ -97,7 +101,7 @@ const TeamManagementPage: React.FC = () => {
                                 aiUsage={aiUsage}
                                 onEditRole={setEditingMember}
                                 onViewActivity={setActivityMember}
-                                onViewSop={() => setShowSopModal(true)}
+                                onViewSop={handleViewSop}
                             />
                         ))}
                     </div>
