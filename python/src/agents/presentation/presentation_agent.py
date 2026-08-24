@@ -95,52 +95,51 @@ class PresentationAgent(BaseAgent[PresentationDependencies, PresentationOperatio
 
             from notebooklm import NotebookLMClient
 
+            from src.server.services.settings_service import SettingsService
+            from src.server.utils.notebooklm_auth import sync_notebooklm_session
+
             # 1. Use NotebookLM Client directly to generate PPTX
             try:
-                auth_json_path = os.path.join(os.path.expanduser("~"), ".notebooklm", "profiles", "default", "storage_state.json")
-                if not os.path.exists(auth_json_path) and os.getenv("NOTEBOOKLM_AUTH_JSON"):
-                    os.makedirs(os.path.dirname(auth_json_path), exist_ok=True)
-                    with open(auth_json_path, "w") as f:
-                        f.write(os.getenv("NOTEBOOKLM_AUTH_JSON") or "")
+                settings = SettingsService()
+                async with sync_notebooklm_session(settings):
+                    ctx_client = NotebookLMClient.from_storage()
+                    async with ctx_client as client:
+                        status = await client.artifacts.generate_slide_deck(
+                            notebook_id=ctx.deps.notebook_id,
+                            instructions=instructions
+                        )
 
-                ctx_client = NotebookLMClient.from_storage()
-                async with ctx_client as client:
-                    status = await client.artifacts.generate_slide_deck(
-                        notebook_id=ctx.deps.notebook_id,
-                        instructions=instructions
-                    )
+                        task_id = getattr(status, "task_id", None)
+                        if not task_id and isinstance(status, dict):
+                            task_id = status.get("task_id")
 
-                    task_id = getattr(status, "task_id", None)
-                    if not task_id and isinstance(status, dict):
-                        task_id = status.get("task_id")
+                        if not task_id:
+                            return "Failed to generate PPTX in NotebookLM: No task ID returned."
 
-                    if not task_id:
-                        return "Failed to generate PPTX in NotebookLM: No task ID returned."
+                        # Wait for completion
+                        final_status = await client.artifacts.wait_for_completion(ctx.deps.notebook_id, task_id)
+                        if getattr(final_status, "status", None) != "completed":
+                            return f"PPTX generation did not complete successfully. Status: {final_status}"
 
-                    # Wait for completion
-                    final_status = await client.artifacts.wait_for_completion(ctx.deps.notebook_id, task_id)
-                    if getattr(final_status, "status", None) != "completed":
-                        return f"PPTX generation did not complete successfully. Status: {final_status}"
+                        artifact_id = getattr(final_status, "artifact_id", None)
+                        if not artifact_id and isinstance(final_status, dict):
+                            artifact_id = final_status.get("artifact_id") or final_status.get("id")
 
-                    artifact_id = getattr(final_status, "artifact_id", None)
-                    if not artifact_id and isinstance(final_status, dict):
-                        artifact_id = final_status.get("artifact_id") or final_status.get("id")
+                        # Download PPTX
+                        output_path = f"/tmp/notebooklm_{uuid.uuid4().hex}.pptx"
+                        await client.artifacts.download_slide_deck(
+                            notebook_id=ctx.deps.notebook_id,
+                            output_path=output_path,
+                            artifact_id=artifact_id,
+                            output_format="pptx"
+                        )
 
-                    # Download PPTX
-                    output_path = f"/tmp/notebooklm_{uuid.uuid4().hex}.pptx"
-                    await client.artifacts.download_slide_deck(
-                        notebook_id=ctx.deps.notebook_id,
-                        output_path=output_path,
-                        artifact_id=artifact_id,
-                        output_format="pptx"
-                    )
-
-                    # --- Phase 5.11.3: Download PDF for Dual-Track Storage ---
-                    output_path_pdf = f"/tmp/notebooklm_{uuid.uuid4().hex}.pdf"
-                    await client.artifacts.download_slide_deck(
-                        notebook_id=ctx.deps.notebook_id,
-                        output_path=output_path_pdf,
-                        artifact_id=artifact_id,
+                        # --- Phase 5.11.3: Download PDF for Dual-Track Storage ---
+                        output_path_pdf = f"/tmp/notebooklm_{uuid.uuid4().hex}.pdf"
+                        await client.artifacts.download_slide_deck(
+                            notebook_id=ctx.deps.notebook_id,
+                            output_path=output_path_pdf,
+                            artifact_id=artifact_id,
                         output_format="pdf"
                     )
             except Exception as e:

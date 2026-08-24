@@ -125,6 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-24: Phase 5.11.4 NotebookLM 雙向同步與 SSOT 硬化
+- **消滅樂觀路徑 (Bi-Directional Sync)**: 修正 `project_service.py` 與 `presentation_agent.py` 中將憑證「單向寫入檔案」的致命斷層。導入 `sync_notebooklm_session` Context Manager，確保 Playwright 執行後刷新的 Cookie 會反向 Upsert 回 `SettingsService`，實現 Token 閉環自癒。
+- **SSOT 與 Cloud-Native 硬化**: 徹底剷除代碼中的 `os.getenv("NOTEBOOKLM_AUTH_JSON")` 後門，嚴格綁定資料庫為唯一事實來源。移除寫死的 `~/.notebooklm` 路徑，改用 `NOTEBOOKLM_DATA_DIR` 支援 Docker Volume 持久化掛載。
+- **物理防呆公證**: 新增 `verify_phase_5_11_4_ssot.py` 探針，在測試前強制執行 `del os.environ["NOTEBOOKLM_AUTH_JSON"]` 破壞環境，以物理斷言證明雙向寫回邏輯真實生效，並通過全數 `make test-be` 門禁。
+
 ### 08-23: 終結虛假驗證與物理斷言修復 (Fail-Fast & Monkey Patch)
 - **NotebookLM 猴子補丁**: 修復了第三方 `notebooklm-py` 與 `fastmcp` 之間 `@tool` 語法與 `ToolResult` 的 Pydantic Schema 衝突。實作動態 Monkey Patch，在不修改源碼且不放棄官方工具的前提下，100% 成功掛載。並在 MCP 測試中加入物理存在性斷言 (`assert tool in _tools`)。
 - **TTS 安全攔截遙測與提示詞硬化**: 發現 TTS 失敗並非 Quota 超標，而是 Gemini Safety API 攔截了工程日誌中的敏感字眼 (`kill`, `execute`)。修改 `text_to_speech_service.py` 強制回報 `block_reason`。同時在 `pm_prompts.py` 注入 `[TTS Safety Instructions]`，指示 LLM 主動將工程黑話替換為廣播友善之中性詞，從根本繞過語音攔截。
