@@ -1,22 +1,21 @@
 from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 
 from ...config.logfire_config import get_logger
 from ...services.llm_provider_service import validate_provider_instance
 from ...services.ollama.model_discovery_service import model_discovery_service
-from .schemas import InstanceValidationRequest, InstanceValidationResponse
+from .schemas import InstanceHealthResponse, InstanceValidationRequest, InstanceValidationResponse
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/instances/health")
+@router.get("/instances/health", response_model=InstanceHealthResponse)
 async def health_check_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs to check"),
     include_models: bool = Query(False, description="Include model count in response"),
-) -> dict[str, Any]:
+) -> InstanceHealthResponse:
     """Check health status of multiple Ollama instances."""
     try:
         logger.info(f"Checking health for {len(instance_urls)} instances")
@@ -63,16 +62,16 @@ async def health_check_endpoint(
         if healthy_count > 0 and response_times_count > 0:
             avg_response_time = response_times_sum / response_times_count
 
-        return {
-            "summary": {
+        return InstanceHealthResponse(
+            summary={
                 "total_instances": len(instance_urls),
                 "healthy_instances": healthy_count,
                 "unhealthy_instances": len(instance_urls) - healthy_count,
                 "average_response_time_ms": avg_response_time,
             },
-            "instance_status": health_results,
-            "timestamp": datetime.now().isoformat(),
-        }
+            instance_status=health_results,
+            timestamp=datetime.now().isoformat(),
+        )
     except Exception as e:
         logger.error(f"Error in health check: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
