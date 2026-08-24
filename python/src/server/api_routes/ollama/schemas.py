@@ -97,3 +97,22 @@ class ModelCapabilityTestResponse(BaseModel):
     compatibility_assessment: dict[str, Any]
     test_duration_seconds: float
     errors: list[str] = Field(default_factory=list)
+
+
+class InstanceHealthSummary(BaseModel):
+    total_instances: int
+    healthy_instances: int
+    unhealthy_instances: int
+    average_response_time_ms: float | None = None
+
+class InstanceHealthDetail(BaseModel):
+    is_healthy: bool
+    response_time_ms: float | None = None
+    models_available: int | None = None
+    error_message: str | None = None
+    last_checked: str | None = None
+
+class InstanceHealthResponse(BaseModel):
+    summary: InstanceHealthSummary
+    instance_status: dict[str, InstanceHealthDetail]
+    timestamp: str
