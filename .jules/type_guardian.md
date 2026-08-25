@@ -19,3 +19,6 @@
 ## 2026-08-23 - Type Hinting Missing Return annotations and kwargs
 **Learning:** Found multiple methods in service files (`threading_service.py`, `background_task_manager.py`, `source_management_service.py`) that were missing either explicit return types (like `-> None:` or `-> AsyncGenerator[None, None]:`) or argument type annotations specifically for `*args` and `**kwargs` (like `*args: Any` or `**kwargs: Any`).
 **Action:** Always ensure explicitly specifying `*args: Any` and `**kwargs: Any` if their types are not strictly defined, rather than leaving them untyped. Ensure all methods, especially setup or cleanup methods, have explicit return types even if it is just `-> None:`.
+## 2024-05-18 - Type Hinting supabase_client
+**Learning:** When type hinting `supabase_client` initialization parameters in the Python backend (e.g., in `server/services/` or `server/repositories/`), import `Client` from the `supabase` package and explicitly annotate it as `Client | None = None` instead of leaving it untyped or using `typing.Any`.
+**Action:** Use `from supabase import Client` and `Client | None = None` for `supabase_client` arguments in `__init__` methods.
