@@ -23,6 +23,9 @@ interface BrandDashboardViewProps {
 
 // PERFORMANCE: Hoisted inline components out of the render loop to prevent full sub-tree remounts
 // on every parent state change (e.g., when the parent re-renders, React will now correctly reconcile).
+// ⚡ Bolt Optimization:
+// Wrapped KanbanColumn in React.memo to prevent unnecessary re-renders in the list views.
+// This reduces CPU overhead by preventing re-rendering of the entire column when parent state updates but the column's posts haven't changed.
 const KanbanColumn: React.FC<{
     title: string;
     columnPosts: BlogPost[];
@@ -32,7 +35,7 @@ const KanbanColumn: React.FC<{
     onEditSmart: (post: BlogPost) => void;
     onNavigateAdvanced: (id: string) => void;
     onDeletePost: (id: string) => void;
-}> = ({ title, columnPosts, icon: Icon, colorClass, onUpdateStatus, onEditSmart, onNavigateAdvanced, onDeletePost }) => {
+}> = React.memo(({ title, columnPosts, icon: Icon, colorClass, onUpdateStatus, onEditSmart, onNavigateAdvanced, onDeletePost }) => {
     return (
         <div className="flex-1 min-w-[300px] bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col max-h-[600px]">
             <h3 className={`text-sm font-black uppercase tracking-widest mb-4 flex items-center justify-between border-b pb-2 ${colorClass}`}>
@@ -67,11 +70,18 @@ const KanbanColumn: React.FC<{
             </div>
         </div>
     )
-};
+});
 
 export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
     posts, trendsData, logoSvg, isGeneratingLogo, onNewPost, onEditSmart, onUpdateStatus, onDeletePost, onNavigateAdvanced, onGenerateLogo
 }) => {
+    // ⚡ Bolt Optimization:
+    // Wrapped column post filtering in React.useMemo to prevent creating new array references on every render.
+    // This ensures KanbanColumn's React.memo can properly shallow-compare props and avoid O(N) re-renders when other state changes.
+    const draftsPosts = React.useMemo(() => posts.filter((p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested'), [posts]);
+    const reviewPosts = React.useMemo(() => posts.filter((p: BlogPost) => p.status === 'review'), [posts]);
+    const publishedPosts = React.useMemo(() => posts.filter((p: BlogPost) => p.status === 'published'), [posts]);
+
     const downloadLogo = () => {
         if (!logoSvg) return;
         const blob = new Blob([logoSvg], { type: 'image/svg+xml' });
@@ -148,7 +158,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                 <div className="flex flex-wrap gap-6">
                     <KanbanColumn
                         title="Drafts & Returned"
-                        columnPosts={posts.filter((p: BlogPost) => p.status === 'draft' || p.status === 'changes_requested')}
+                        columnPosts={draftsPosts}
                         icon={FileEditIcon}
                         colorClass="text-gray-600 border-gray-200"
                         onUpdateStatus={onUpdateStatus}
@@ -158,7 +168,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                     />
                     <KanbanColumn
                         title="In Review"
-                        columnPosts={posts.filter((p: BlogPost) => p.status === 'review')}
+                        columnPosts={reviewPosts}
                         icon={EyeIcon}
                         colorClass="text-amber-600 border-amber-200"
                         onUpdateStatus={onUpdateStatus}
@@ -168,7 +178,7 @@ export const BrandDashboardView: React.FC<BrandDashboardViewProps> = ({
                     />
                     <KanbanColumn
                         title="Published"
-                        columnPosts={posts.filter((p: BlogPost) => p.status === 'published')}
+                        columnPosts={publishedPosts}
                         icon={CheckCircleIcon}
                         colorClass="text-green-600 border-green-200"
                         onUpdateStatus={onUpdateStatus}
