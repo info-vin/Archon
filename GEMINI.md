@@ -125,6 +125,12 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-25: DAG 物理鑑識、Telegram 隱式連通與 Vite 架構錯位修復
+- **DAG 物理溯源與 MCP 自癒公證**: 針對「星期一缺失的每日報告」進行資料庫與程式碼聯合探勘。證實是排程設定 (`ALICE_AUTO_FETCH_DAYS="tue,wed,fri"`) 觸發的正常防禦性跳過，並非 Bug。透過即時 Docker 日誌監控，見證了 10:25 Alice 爬蟲準時啟動，並自動推倒 `Bob -> Supervisor` 事件鏈骨牌，同時確認 `mcp-neural-wiring` 具備自動重試自癒能力。
+- **Telegram 隱式寫入驗證**: 拒絕猜測配置狀態，透過撰寫實體腳本直連 Telegram API 的 `getMe` 與 `sendChatAction` (狀態改為 "typing...")，在不打擾頻道的情況下，100% 物理證實 Bot 憑證與 Chat ID 皆精準掛載且具備寫入權限。
+- **Vite (Rollup) 架構錯位硬修復**: 針對本地 `make dev` 發生的 `MODULE_NOT_FOUND` (缺失 `rollup-darwin-arm64`) 崩潰，實體鑑識 `node_modules` 揪出殘留的 Intel x64 檔案。執行 `rm -rf node_modules pnpm-lock.yaml && pnpm install` 徹底根除架構污染，並公證該問題被 `.dockerignore` 完美隔離，絕無污染 HF Docker 部署之風險。
+- **探針生命週期管理**: 落實環境潔癖，任務結束後已將 `scratch/` 內的 10+ 支一次性探勘與除錯腳本全數清理完畢。
+
 ### 08-24: Phase 5.11.4 NotebookLM 雙向同步與 SSOT 硬化
 - **消滅樂觀路徑 (Bi-Directional Sync)**: 修正 `project_service.py` 與 `presentation_agent.py` 中將憑證「單向寫入檔案」的致命斷層。導入 `sync_notebooklm_session` Context Manager，確保 Playwright 執行後刷新的 Cookie 會反向 Upsert 回 `SettingsService`，實現 Token 閉環自癒。
 - **SSOT 與 Cloud-Native 硬化**: 徹底剷除代碼中的 `os.getenv("NOTEBOOKLM_AUTH_JSON")` 後門，嚴格綁定資料庫為唯一事實來源。移除寫死的 `~/.notebooklm` 路徑，改用 `NOTEBOOKLM_DATA_DIR` 支援 Docker Volume 持久化掛載。
