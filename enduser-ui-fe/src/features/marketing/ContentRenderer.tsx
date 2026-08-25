@@ -27,7 +27,7 @@ const ContentRenderer: React.FC<ContentRendererProps> = ({ item }) => {
                 </p>
                 <button
                     onClick={() => navigate('/auth')}
-                    className="px-6 py-3 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors"
+                    className="px-6 py-3 bg-primary text-primary-foreground rounded-md font-semibold hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                     Log In to Access
                 </button>

@@ -53,7 +53,7 @@ const SolutionsPage: React.FC = () => {
                                         <li key={item.id}>
                                             <button
                                                 onClick={() => setActiveItemId(item.id)}
-                                                className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors text-left ${
+                                                className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                                                     activeItemId === item.id 
                                                         ? 'bg-secondary text-primary font-medium border-l-4 border-l-primary' 
                                                         : 'text-muted-foreground border-l-4 border-l-transparent hover:bg-secondary/30'

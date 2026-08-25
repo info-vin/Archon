@@ -65,14 +65,14 @@ export const LeadPitchDrawer = ({ lead, onClose }: PitchDrawerProps) => {
                 <div className="grid grid-cols-2 gap-3">
                     <button 
                         onClick={handleCopy}
-                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        className={`flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                     >
                         {copied ? <CheckCircleIcon className="w-5 h-5" /> : <CopyIcon className="w-5 h-5" />}
                         {copied ? "Copied" : "Copy Text"}
                     </button>
                     <button 
                         onClick={handleShare}
-                        className="flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all"
+                        className="flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
                         <ShareIcon className="w-5 h-5" />
                         Share
