@@ -56,3 +56,6 @@
 ## 2024-05-15 - Dynamic ARIA Labels in Date Pickers
 **Learning:** Screen reader users need dynamic context for highly interactive components like Date/Time pickers. Static labels like "Set Date" are insufficient once a date is selected. Presets (like "Tomorrow" or "+3 Days") need explicit explanatory text, as their relative nature might not be clear out of visual context.
 **Action:** Always ensure that trigger buttons for complex custom widgets (like modal pickers) dynamically update their `aria-label` to reflect the currently selected value.
+## 2024-08-24 - Add Keyboard Focus Indicators
+**Learning:** Found multiple interactive buttons lacking visible focus indicators. While hover states existed, keyboard users would not see what was focused. Using `focus-visible:outline-none focus-visible:ring-2` combined with offset rings is highly effective and simple to implement in Tailwind, greatly improving a11y across the site.
+**Action:** Always include `focus-visible` classes by default when creating custom buttons or interactive elements in this app's components, as standard hover classes do not cover keyboard navigation.

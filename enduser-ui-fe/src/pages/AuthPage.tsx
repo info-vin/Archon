@@ -123,7 +123,7 @@ const AuthPage: React.FC = () => {
           <button
             type="button"
             onClick={() => { setIsLogin(!isLogin); setErrorMessage(null); }}
-            className="font-medium text-primary hover:text-primary/90"
+            className="font-medium text-primary hover:text-primary/90 rounded px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             {isLogin ? 'Don\'t have an account? Sign up' : 'Already have an account? Sign in'}
           </button>
