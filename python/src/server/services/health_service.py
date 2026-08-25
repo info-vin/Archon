@@ -4,6 +4,8 @@ import datetime
 import json
 from typing import Any, NotRequired, TypedDict
 
+from supabase import Client
+
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
@@ -39,12 +41,14 @@ class HealthHistoryResult(TypedDict):
 logger = get_logger(__name__)
 
 
+
+
 class HealthService(BaseRepository):
     """
     Service for checking the health of system components including the database.
     """
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     def check_db_health(self) -> bool:
