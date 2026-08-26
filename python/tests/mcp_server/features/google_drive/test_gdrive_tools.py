@@ -90,3 +90,66 @@ async def test_gdrive_upload_file_success(mock_mcp):
                 call_kwargs = mock_files.create.call_args[1]
                 assert call_kwargs["body"]["name"] == "test.txt"
                 assert call_kwargs["body"]["mimeType"] == "application/vnd.google-apps.document"
+
+@pytest.mark.asyncio
+async def test_gdrive_upload_file_binary_local_file(mock_mcp):
+    """Test gdrive_upload_file works with a physical local_file_path (binary upload)."""
+    register_gdrive_tools(mock_mcp)
+    upload_file = mock_mcp._tools.get("gdrive_upload_file")
+    ctx = MagicMock(spec=Context)
+
+    env_mock = {
+        "GOOGLE_DRIVE_OAUTH_TOKEN": "fake-token",
+        "GOOGLE_DRIVE_REFRESH_TOKEN": "fake-refresh",
+        "GOOGLE_DRIVE_CLIENT_ID": "fake-client",
+        "GOOGLE_DRIVE_CLIENT_SECRET": "fake-secret"
+    }
+    with patch.dict(os.environ, env_mock):
+        with patch("google.oauth2.credentials.Credentials"):
+            with patch("googleapiclient.discovery.build") as mock_build:
+                with patch("os.path.exists", return_value=True):
+                    with patch("googleapiclient.http.MediaFileUpload") as mock_media:
+                        mock_service = MagicMock()
+                        mock_build.return_value = mock_service
+                        mock_files = MagicMock()
+                        mock_service.files.return_value = mock_files
+                        mock_create = MagicMock()
+                        mock_files.create.return_value = mock_create
+                        mock_create.execute.return_value = {"id": "binary_file_123"}
+
+                        res_str = await upload_file(
+                            ctx, 
+                            filename="test.pptx", 
+                            mime_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                            local_file_path="/fake/path/test.pptx"
+                        )
+                        res = json.loads(res_str)
+
+                        assert res["success"] is True
+                        assert res["file_id"] == "binary_file_123"
+                        mock_media.assert_called_once_with(
+                            "/fake/path/test.pptx", 
+                            mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+                            resumable=True
+                        )
+
+@pytest.mark.asyncio
+async def test_gdrive_upload_file_exception(mock_mcp):
+    """Test gdrive_upload_file handles unexpected exceptions properly."""
+    register_gdrive_tools(mock_mcp)
+    upload_file = mock_mcp._tools.get("gdrive_upload_file")
+    ctx = MagicMock(spec=Context)
+
+    env_mock = {
+        "GOOGLE_DRIVE_OAUTH_TOKEN": "fake-token",
+        "GOOGLE_DRIVE_REFRESH_TOKEN": "fake-refresh",
+        "GOOGLE_DRIVE_CLIENT_ID": "fake-client",
+        "GOOGLE_DRIVE_CLIENT_SECRET": "fake-secret"
+    }
+    with patch.dict(os.environ, env_mock):
+        with patch("google.oauth2.credentials.Credentials", side_effect=Exception("Simulated API Error")):
+            res_str = await upload_file(ctx, filename="test.txt", content="hello")
+            res = json.loads(res_str)
+
+            assert res["success"] is False
+            assert "Simulated API Error" in res["error"]
