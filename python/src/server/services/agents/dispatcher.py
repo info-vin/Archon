@@ -171,7 +171,7 @@ class DailyMarketReportStrategy(BaseAgentStrategy):
         logger.info(f"[{agent_id}] Strategy: Daily Market Report pipeline triggered for task {task_id}")
         try:
             from src.server.services.marketing.content_handler import ContentHandler
-            from src.server.services.supabase.supabase_client import get_supabase_client
+            from src.server.services.client_manager import get_supabase_client
 
             handler = ContentHandler(get_supabase_client())
             output_msg = await handler.blog_generator.draft_daily_market_report_physical(task_id, task_data)
