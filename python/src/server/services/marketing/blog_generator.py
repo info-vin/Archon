@@ -148,6 +148,51 @@ class BlogGenerator(BaseRepository):
             logger.error(f"BlogGenerator: Async draft from leads failed: {e}")
             return False, {"error_code": 500, "message": str(e)}
 
+
+    async def draft_daily_market_report_physical(self, task_id: str, task_data: dict) -> str:
+        """Physical execution of the daily market report blog drafting."""
+        try:
+            from ..credential_service import credential_service
+            api_key = await credential_service.get_credential(
+                "GEMINI_API_KEY"
+            ) or await credential_service.get_credential("GOOGLE_API_KEY")
+            client = genai.Client(api_key=api_key)
+
+            # Use BLOG_DRAFT prompt to enforce JSON
+            sys_prompt = prompt_service.get_prompt("BLOG_DRAFT")
+
+            task_desc = task_data.get("description", "")
+
+            @retry_with_backoff(max_retries=2)
+            async def _call_gemini() -> Any:
+                return await client.aio.models.generate_content(
+                    model=SYSTEM_MODELS["DEFAULT_TEXT"],
+                    contents=f"Generate the daily market report based on this instruction:\n\n{task_desc}",
+                    config=types.GenerateContentConfig(
+                        system_instruction=sys_prompt, response_mime_type="application/json"
+                    ),
+                )
+
+            response = await _call_gemini()
+            if not response.text:
+                return "Failed to generate market report."
+
+            result = safe_json_loads(response.text)
+            new_post = {
+                "title": str(result.get("title", task_data.get("title", "Daily Market Intelligence"))),
+                "content": str(result.get("content", "")),
+                "excerpt": str(result.get("excerpt", "")),
+                "status": "draft",
+                "ai_score": self.calculate_ai_score(str(result.get("content", ""))),
+            }
+
+            self.execute_query(self.supabase_client.table("blog_posts").insert(new_post), "Insert daily market report") # 合法
+            return "Successfully generated Daily Market Intelligence blog post."
+
+        except Exception as e:
+            logger.error(f"Error drafting daily market report physical: {e}", exc_info=True)
+            return f"Failed to draft daily market report: {e}"
+
     async def draft_from_leads_physical(self, task_id: str, lead_ids: list[str]) -> str:
         """Physical execution of the blog drafting."""
         try:

@@ -163,6 +163,29 @@ class DefaultLLMStrategy(BaseAgentStrategy):
             await task_service.update_task(task_id, {"status": "failed"})
 
 
+
+class DailyMarketReportStrategy(BaseAgentStrategy):
+    """Phase 5.1.5: Executes the Daily Market Intelligence blog drafting pipeline."""
+
+    async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
+        logger.info(f"[{agent_id}] Strategy: Daily Market Report pipeline triggered for task {task_id}")
+        try:
+            from src.server.services.marketing.content_handler import ContentHandler
+            from src.server.services.supabase.supabase_client import get_supabase_client
+
+            handler = ContentHandler(get_supabase_client())
+            output_msg = await handler.blog_generator.draft_daily_market_report_physical(task_id, task_data)
+
+            # Update task
+            from src.server.services.projects.task_service import task_service
+            await task_service.update_task(task_id, {"status": "done"})
+            await agent_service._award_agent_xp(agent_id, task_data, output_msg)
+
+        except Exception as e:
+            logger.error(f"Error executing DailyMarketReportStrategy: {e}", exc_info=True)
+            from src.server.services.projects.task_service import task_service
+            await task_service.update_task(task_id, {"status": "failed"})
+
 class DraftFromLeadsStrategy(BaseAgentStrategy):
     """Phase 5.1.1: Executes the blog drafting pipeline from lead parameters."""
 
@@ -274,6 +297,14 @@ class AgentDispatcher:
 
         # Register strategies (Condition function, Strategy instance)
         self.register_strategy(lambda a_id, t_data: a_id == AgentUUIDs.SUPERVISOR, SupervisorStrategy())
+
+        self.register_strategy(
+            lambda a_id, t_data: (
+                a_id == AgentUUIDs.MARKET_BOT
+                and "Daily Market Intelligence" in t_data.get("title", "")
+            ),
+            DailyMarketReportStrategy(),
+        )
         self.register_strategy(
             lambda a_id, t_data: (
                 a_id == AgentUUIDs.LIBRARIAN

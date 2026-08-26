@@ -99,6 +99,19 @@ class SchedulerConfig(BaseModel):
     hf_sleep_start: str = Field(default="17:18", alias="HF_SLEEP_START")
     hf_sleep_end: str = Field(default="07:20", alias="HF_SLEEP_END")
 
+    @property
+    def dynamic_token_analysis_hour(self) -> int:
+        from datetime import datetime, timedelta
+        t = datetime.strptime(self.hf_sleep_start, "%H:%M") - timedelta(minutes=30)
+        return t.hour
+
+    @property
+    def dynamic_token_analysis_minute(self) -> int:
+        from datetime import datetime, timedelta
+        t = datetime.strptime(self.hf_sleep_start, "%H:%M") - timedelta(minutes=30)
+        return t.minute
+
+
     scheduler_misfire_grace_time: int = Field(default=600, alias="SCHEDULER_MISFIRE_GRACE_TIME")
 
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")
@@ -115,8 +128,6 @@ class SchedulerConfig(BaseModel):
     alice_auto_fetch_hour: int = Field(default=10, alias="ALICE_AUTO_FETCH_HOUR")
     alice_auto_fetch_minute: int = Field(default=25, alias="ALICE_AUTO_FETCH_MINUTE")
     alice_auto_fetch_days: str = Field(default="tue,wed,fri", alias="ALICE_AUTO_FETCH_DAYS")
-    token_analysis_hour: int = Field(default=8, alias="TOKEN_ANALYSIS_HOUR")
-    token_analysis_minute: int = Field(default=20, alias="TOKEN_ANALYSIS_MINUTE")
     business_sentinel_hour: int = Field(default=8, alias="BUSINESS_SENTINEL_HOUR")
     business_sentinel_minute: int = Field(default=40, alias="BUSINESS_SENTINEL_MINUTE")
 
