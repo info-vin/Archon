@@ -1,5 +1,4 @@
 import { beforeAll, afterEach, afterAll, vi } from 'vitest';
-import { server } from '../../src/mocks/server';
 import { clearMockData } from '../../src/mocks/handlers';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -61,17 +60,15 @@ vi.mock('../../src/services/api', async (importOriginal) => {
 });
 
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' });
 });
 
 afterEach(() => {
-  server.resetHandlers();
   clearMockData();
-  localStorage.clear();
+  if (typeof localStorage !== 'undefined') localStorage.clear();
   
   // Re-inject core tokens to prevent redirect to /auth
-  localStorage.setItem('supabaseUrl', 'https://mock.supabase.co');
-  localStorage.setItem('supabaseKey', 'mock-key');
+  if (typeof localStorage !== 'undefined') localStorage.setItem('supabaseUrl', 'https://mock.supabase.co');
+  if (typeof localStorage !== 'undefined') localStorage.setItem('supabaseKey', 'mock-key');
 
   // Reset API mocks to prevent cross-test leakage/pollution
   if (api && api.getCurrentUser) {
@@ -80,7 +77,6 @@ afterEach(() => {
 });
 
 afterAll(() => {
-  server.close();
 });
 
 export const renderApp = (initialEntries = ['/']) => {

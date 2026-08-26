@@ -54,8 +54,8 @@ class SchedulerService:
     async def start(self) -> None:
         if self._scheduler and not self._scheduler.running:
             logger.info("🕒 Clockwork: Starting Lifecycle-Driven Scheduler Service...")
-            self._scheduler.start()
             await self._schedule_jobs()
+            self._scheduler.start()
             try:
                 from src.server.services.scheduler.jobs.leads_patrol import check_and_resume_dag
                 await check_and_resume_dag(self)

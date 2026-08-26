@@ -9,7 +9,7 @@ describe('Public Navigation & Dashboard Access', () => {
     // 1. Mock Guest User (Not logged in)
     // We need to override the default mock which returns a user
     vi.mocked(api.getCurrentUser).mockResolvedValue(null);
-    localStorage.removeItem('user'); // Clear local storage to ensure useAuth starts as unauthenticated
+    if (typeof localStorage !== 'undefined') localStorage.removeItem('user'); // Clear local storage to ensure useAuth starts as unauthenticated
 
     renderApp();
 
@@ -35,7 +35,7 @@ describe('Public Navigation & Dashboard Access', () => {
         status: 'active'
     };
     vi.mocked(api.getCurrentUser).mockResolvedValue(mockUser as any);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+    if (typeof localStorage !== 'undefined') localStorage.setItem('user', JSON.stringify(mockUser));
     
     renderApp(['/dashboard']);
 

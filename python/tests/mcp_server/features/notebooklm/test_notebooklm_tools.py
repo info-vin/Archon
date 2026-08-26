@@ -134,11 +134,11 @@ async def test_notebooklm_list_notebooks_exception(mock_mcp):
     register_notebooklm_tools(mock_mcp)
     list_notebooks = mock_mcp._tools.get("notebooklm_list_notebooks")
     ctx = MagicMock(spec=Context)
-    
+
     mock_client = AsyncMock()
     mock_client.notebooks.list.side_effect = Exception("List Error")
     ctx.request_context.lifespan_context.client = mock_client
-    
+
     res_str = await list_notebooks(ctx)
     res = json.loads(res_str)
     assert res["success"] is False
@@ -150,11 +150,11 @@ async def test_notebooklm_create_notebook_exception(mock_mcp):
     register_notebooklm_tools(mock_mcp)
     create_notebook = mock_mcp._tools.get("notebooklm_create_notebook")
     ctx = MagicMock(spec=Context)
-    
+
     mock_client = AsyncMock()
     mock_client.notebooks.create.side_effect = Exception("Create Error")
     ctx.request_context.lifespan_context.client = mock_client
-    
+
     res_str = await create_notebook(ctx, title="test")
     res = json.loads(res_str)
     assert res["success"] is False
@@ -166,11 +166,11 @@ async def test_notebooklm_ask_question_exception(mock_mcp):
     register_notebooklm_tools(mock_mcp)
     ask_question = mock_mcp._tools.get("notebooklm_ask_question")
     ctx = MagicMock(spec=Context)
-    
+
     mock_client = AsyncMock()
     mock_client.chat.ask.side_effect = Exception("Ask Error")
     ctx.request_context.lifespan_context.client = mock_client
-    
+
     res_str = await ask_question(ctx, notebook_id="123", question="test")
     res = json.loads(res_str)
     assert res["success"] is False
@@ -182,9 +182,9 @@ async def test_notebooklm_ask_question_missing_client(mock_mcp):
     register_notebooklm_tools(mock_mcp)
     ask_question = mock_mcp._tools.get("notebooklm_ask_question")
     ctx = MagicMock(spec=Context)
-    
+
     ctx.request_context.lifespan_context.client = None
-    
+
     res_str = await ask_question(ctx, notebook_id="123", question="test")
     res = json.loads(res_str)
     assert res["success"] is False

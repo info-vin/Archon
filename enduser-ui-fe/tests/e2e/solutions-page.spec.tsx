@@ -52,7 +52,7 @@ describe('Solutions Page (Phase 4.3)', () => {
     // Mock Guest
     vi.mocked(api.getCurrentUser).mockResolvedValue(null);
     vi.mocked(api.getEmployees).mockRejectedValue(new Error('Unauthorized')); // Ensure other calls don't leak
-    localStorage.removeItem('user');
+    if (typeof localStorage !== 'undefined') localStorage.removeItem('user');
 
     renderApp();
 

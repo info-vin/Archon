@@ -7,18 +7,18 @@ interface ThemeToggleProps {
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        if (typeof window !== 'undefined' && localStorage.theme === 'dark') return true;
-        if (typeof window !== 'undefined' && !('theme' in localStorage) && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches) return true;
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && localStorage.theme === 'dark') return true;
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && !('theme' in localStorage) && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches) return true;
         return false;
     });
 
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
+            if (typeof localStorage !== 'undefined') localStorage.setItem('theme', 'dark');
         } else {
             document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
+            if (typeof localStorage !== 'undefined') localStorage.setItem('theme', 'light');
         }
     }, [isDarkMode]);
 

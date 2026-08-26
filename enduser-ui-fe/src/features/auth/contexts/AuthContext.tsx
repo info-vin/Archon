@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.access_token && data.user) {
           setToken(data.access_token);
           // Store token for apiClient to pick up
-          localStorage.setItem('archon_token', data.access_token);
+          if (typeof localStorage !== 'undefined') localStorage.setItem('archon_token', data.access_token);
           
           setUser({
             id: data.user.id,

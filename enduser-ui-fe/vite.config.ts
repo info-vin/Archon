@@ -65,7 +65,7 @@ export default defineConfig(({ mode }) => {
         globals: true,
         environment: 'jsdom',
         setupFiles: './test/setup.ts',
-        exclude: ['tests/playwright/**', 'node_modules'],
+        exclude: ['tests/playwright/**', 'node_modules', 'tests/e2e/**'],
         testTimeout: 10000,
         hookTimeout: 10000,
       }

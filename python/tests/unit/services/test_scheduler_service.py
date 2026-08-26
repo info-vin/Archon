@@ -68,5 +68,7 @@ async def test_scheduler_jobs_configuration():
 
     token_hour_field = next(f for f in token_trigger.fields if f.name == "hour")
     token_minute_field = next(f for f in token_trigger.fields if f.name == "minute")
-    assert str(token_hour_field) == "8"
-    assert str(token_minute_field) == "20"
+    from src.server.schemas.settings import SchedulerConfig
+    config = SchedulerConfig()
+    assert str(token_hour_field) == str(config.dynamic_token_analysis_hour)
+    assert str(token_minute_field) == str(config.dynamic_token_analysis_minute)

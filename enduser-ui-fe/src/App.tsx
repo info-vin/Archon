@@ -42,7 +42,7 @@ export const AppRoutes: React.FC = () => {
 
   useEffect(() => {
     // Initialize theme on app load
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches)) {
+    if (typeof localStorage !== 'undefined' && localStorage.theme === 'dark' || ((typeof localStorage !== 'undefined' && !('theme' in localStorage)) && window.matchMedia?.('(prefers-color-scheme: dark)')?.matches)) {
         document.documentElement.classList.add('dark');
     } else {
         document.documentElement.classList.remove('dark');

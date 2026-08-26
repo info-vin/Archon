@@ -33,6 +33,18 @@ const BlogDetailPage: React.FC = () => {
         fetchPost();
     }, [id]);
 
+    const citations = post?.generation_metadata?.citations || [];
+
+    const citationMap = React.useMemo(() => {
+        const map = new Map();
+        citations.forEach(c => {
+            if (!map.has(c.id)) {
+                map.set(c.id, c);
+            }
+        });
+        return map;
+    }, [citations]);
+
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading...</div>;
     }
@@ -57,20 +69,10 @@ const BlogDetailPage: React.FC = () => {
     };
 
     const processedContent = processCitations(post.content || '');
-    const citations = post.generation_metadata?.citations || [];
 
     // ⚡ Bolt Optimization:
     // Precalculate a lookup map for citations to prevent O(N) Array.find() lookups
     // for every citation rendered inside the Markdown tree.
-    const citationMap = React.useMemo(() => {
-        const map = new Map();
-        citations.forEach(c => {
-            if (!map.has(c.id)) {
-                map.set(c.id, c);
-            }
-        });
-        return map;
-    }, [citations]);
 
     return (
         <div className="container mx-auto px-4 py-12 max-w-4xl">

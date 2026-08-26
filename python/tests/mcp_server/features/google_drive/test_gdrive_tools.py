@@ -118,8 +118,8 @@ async def test_gdrive_upload_file_binary_local_file(mock_mcp):
                         mock_create.execute.return_value = {"id": "binary_file_123"}
 
                         res_str = await upload_file(
-                            ctx, 
-                            filename="test.pptx", 
+                            ctx,
+                            filename="test.pptx",
                             mime_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
                             local_file_path="/fake/path/test.pptx"
                         )
@@ -128,8 +128,8 @@ async def test_gdrive_upload_file_binary_local_file(mock_mcp):
                         assert res["success"] is True
                         assert res["file_id"] == "binary_file_123"
                         mock_media.assert_called_once_with(
-                            "/fake/path/test.pptx", 
-                            mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation", 
+                            "/fake/path/test.pptx",
+                            mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
                             resumable=True
                         )
 

@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             const session = result?.data?.session;
             if (session?.access_token) {
-                localStorage.setItem('archon_token', session.access_token);
+                if (typeof localStorage !== 'undefined') localStorage.setItem('archon_token', session.access_token);
                 await syncIdentity();
             } else {
                 // Check if we have a legacy token or it's a headless state
@@ -63,11 +63,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (supabase) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session?.access_token) {
-                localStorage.setItem('archon_token', session.access_token);
+                if (typeof localStorage !== 'undefined') localStorage.setItem('archon_token', session.access_token);
                 syncIdentity();
             } else if (event === 'SIGNED_OUT') {
-                localStorage.removeItem('archon_token');
-                localStorage.removeItem('user_role');
+                if (typeof localStorage !== 'undefined') localStorage.removeItem('archon_token');
+                if (typeof localStorage !== 'undefined') localStorage.removeItem('user_role');
                 setUser(null);
             }
         });

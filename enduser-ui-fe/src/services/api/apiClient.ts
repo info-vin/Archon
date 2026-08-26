@@ -60,15 +60,15 @@ export async function callAPI<T>(
   try {
     // 1. JWT Injection (Authorization)
     // Primary: archon_token (Admin UI pattern), Fallback: Supabase session
-    let token = localStorage.getItem('archon_token');
+    let token = (typeof localStorage !== 'undefined' ? localStorage.getItem('archon_token') : null);
 
     if (!token && supabase) {
       // Resilient check: check localStorage directly to avoid Web Lock hangs in E2E
-      const keys = Object.keys(localStorage);
+      const keys = (typeof localStorage !== 'undefined' ? Object.keys(localStorage) : []);
       const sbKey = keys.find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
       if (sbKey) {
         try {
-          const sessionData = JSON.parse(localStorage.getItem(sbKey) || '{}');
+          const sessionData = JSON.parse((typeof localStorage !== 'undefined' ? localStorage.getItem(sbKey) : null) || '{}');
           token = sessionData?.access_token || null;
         } catch (e) {
           console.warn("apiClient: Failed to parse localStorage token", e);
@@ -94,7 +94,7 @@ export async function callAPI<T>(
 
     // 2. Persona Protection (RBAC / X-User-Role Injection)
     // This is CRITICAL for Alice (sales), Bob (marketing), Charlie (manager) functionality.
-    const savedRole = localStorage.getItem('user_role');
+    const savedRole = (typeof localStorage !== 'undefined' ? localStorage.getItem('user_role') : null);
     if (savedRole) {
       headers['X-User-Role'] = savedRole;
     }

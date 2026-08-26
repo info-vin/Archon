@@ -14,7 +14,7 @@ export const authApi = {
     if (error) throw new Error(error.message);
     if (data.user && data.session) {
       // --- Physical Parity: Ensure token is ready BEFORE the next API call ---
-      localStorage.setItem('archon_token', data.session.access_token);
+      if (typeof localStorage !== 'undefined') localStorage.setItem('archon_token', data.session.access_token);
       return this.getCurrentUser();
     }
     throw new Error("Login failed. Please check your credentials.");

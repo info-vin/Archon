@@ -170,8 +170,8 @@ class DailyMarketReportStrategy(BaseAgentStrategy):
     async def execute(self, task_id: str, task_data: dict[str, Any], agent_id: str, agent_service: Any) -> None:
         logger.info(f"[{agent_id}] Strategy: Daily Market Report pipeline triggered for task {task_id}")
         try:
-            from src.server.services.marketing.content_handler import ContentHandler
             from src.server.services.client_manager import get_supabase_client
+            from src.server.services.marketing.content_handler import ContentHandler
 
             handler = ContentHandler(get_supabase_client())
             output_msg = await handler.blog_generator.draft_daily_market_report_physical(task_id, task_data)

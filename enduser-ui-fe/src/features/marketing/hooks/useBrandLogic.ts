@@ -53,9 +53,9 @@ export const useBrandLogic = () => {
 
     useEffect(() => {
         if (activeSource?.id) {
-            localStorage.setItem(`draft_title_${activeSource.id}`, workbenchTitle);
-            localStorage.setItem(`draft_content_${activeSource.id}`, workbenchContent);
-            localStorage.setItem(`draft_image_${activeSource.id}`, workbenchImageUrl);
+            if (typeof localStorage !== 'undefined') localStorage.setItem(`draft_title_${activeSource.id}`, workbenchTitle);
+            if (typeof localStorage !== 'undefined') localStorage.setItem(`draft_content_${activeSource.id}`, workbenchContent);
+            if (typeof localStorage !== 'undefined') localStorage.setItem(`draft_image_${activeSource.id}`, workbenchImageUrl);
         }
     }, [workbenchTitle, workbenchContent, workbenchImageUrl, activeSource?.id]);
 
@@ -121,9 +121,9 @@ export const useBrandLogic = () => {
                 setWorkbenchImageUrl(finalImage);
                 setActivePostId(blogRes.id); 
                 
-                localStorage.setItem(`draft_title_${source.id}`, blogRes.title);
-                localStorage.setItem(`draft_content_${source.id}`, blogRes.content || '');
-                localStorage.setItem(`draft_image_${source.id}`, finalImage);
+                if (typeof localStorage !== 'undefined') localStorage.setItem(`draft_title_${source.id}`, blogRes.title);
+                if (typeof localStorage !== 'undefined') localStorage.setItem(`draft_content_${source.id}`, blogRes.content || '');
+                if (typeof localStorage !== 'undefined') localStorage.setItem(`draft_image_${source.id}`, finalImage);
                 
                 const taskId = (blogRes as any).generationMetadata?.task_id || (blogRes as any).task_id;
                 setActiveTaskId(taskId || null);

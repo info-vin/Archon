@@ -1,9 +1,11 @@
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock, ANY
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.server.services.agents.dispatcher import agent_dispatcher, DailyMarketReportStrategy
-from src.server.services.shared_constants import AgentUUIDs
+import pytest
+
+from src.server.services.agents.dispatcher import DailyMarketReportStrategy, agent_dispatcher
 from src.server.services.marketing.blog_generator import BlogGenerator
+from src.server.services.shared_constants import AgentUUIDs
+
 
 @pytest.mark.asyncio
 async def test_dispatcher_routes_to_daily_market_report_strategy():
@@ -57,21 +59,21 @@ async def test_blog_generator_draft_daily_market_report_physical(mock_get_prompt
     mock_table = MagicMock()
     mock_supabase.table.return_value = mock_table
     mock_table.insert.return_value = mock_table # for chaining
-    
+
     # Need to patch BaseRepository.execute_query since it executes the insert
     generator = BlogGenerator(mock_supabase)
-    
-    with patch.object(generator, "execute_query", return_value=(True, {"data": []})) as mock_execute_query:
+
+    with patch.object(generator, "execute_query", return_value=(True, {"data": []})):
         task_data = {"title": "Daily Market Intelligence (Test)", "description": "Raw data goes here"}
         result = await generator.draft_daily_market_report_physical("task-123", task_data)
-        
+
         assert "Successfully generated" in result
-        
+
         # Verify LLM was called
         mock_generate.assert_awaited_once()
         args, kwargs = mock_generate.call_args
         assert "Raw data goes here" in kwargs["contents"]
-        
+
         # Verify db insert was called
         mock_supabase.table.assert_called_once_with("blog_posts")
         mock_table.insert.assert_called_once()
