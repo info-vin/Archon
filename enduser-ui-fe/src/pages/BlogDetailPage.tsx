@@ -59,6 +59,19 @@ const BlogDetailPage: React.FC = () => {
     const processedContent = processCitations(post.content || '');
     const citations = post.generation_metadata?.citations || [];
 
+    // ⚡ Bolt Optimization:
+    // Precalculate a lookup map for citations to prevent O(N) Array.find() lookups
+    // for every citation rendered inside the Markdown tree.
+    const citationMap = React.useMemo(() => {
+        const map = new Map();
+        citations.forEach(c => {
+            if (!map.has(c.id)) {
+                map.set(c.id, c);
+            }
+        });
+        return map;
+    }, [citations]);
+
     return (
         <div className="container mx-auto px-4 py-12 max-w-4xl">
             <Link to="/blog" className="text-primary hover:underline mb-8 inline-block">&larr; Back to Blog</Link>
@@ -81,7 +94,7 @@ const BlogDetailPage: React.FC = () => {
                             a: ({ node, href, children, ...props }) => {
                                 if (href?.startsWith('#rag-citation-')) {
                                     const citationId = href.replace('#rag-citation-', '');
-                                    return <RAGCitation citationId={citationId} citations={citations} />;
+                                    return <RAGCitation citationId={citationId} citations={citations} citationObj={citationMap.get(citationId)} />;
                                 }
                                 return <a href={href} {...props}>{children}</a>;
                             },
