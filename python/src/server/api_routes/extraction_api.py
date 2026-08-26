@@ -1,6 +1,7 @@
 
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from src.server.models.auth_models import UserProfileDTO
 
@@ -17,10 +18,15 @@ from ..services.extraction_service import (
 )
 
 logger = get_logger(__name__)
+
+class DeleteSchemaResponseDTO(BaseModel):
+    success: bool = Field(default=True, description="Indicates if the schema deletion was successful")
+
+
 router = APIRouter(prefix="/api/extraction", tags=["Extraction"])
 
 
-@router.post("/analyze", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.post("/analyze", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=StructureAnalysisResultDTO)
 async def analyze_url(request: dict[str, str]) -> StructureAnalysisResultDTO:
     """
     Analyze a URL to discover potential data fields.
@@ -38,14 +44,14 @@ async def analyze_url(request: dict[str, str]) -> StructureAnalysisResultDTO:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.get("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=list[SchemaResponseDTO])
 async def list_schemas() -> list[SchemaResponseDTO]:
     """List all extraction schemas."""
     service = ExtractionService()
     return await service.list_schemas()
 
 
-@router.get("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.get("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=SchemaResponseDTO)
 async def get_schema(schema_id: str) -> SchemaResponseDTO:
     """Get a single schema by ID."""
     service = ExtractionService()
@@ -55,7 +61,7 @@ async def get_schema(schema_id: str) -> SchemaResponseDTO:
     return schema
 
 
-@router.post("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.post("/schemas", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=SchemaResponseDTO)
 async def create_schema(request: SchemaCreateDTO, current_user: UserProfileDTO = Depends(get_current_user)) -> SchemaResponseDTO:
     """Create a new extraction schema."""
     service = ExtractionService()
@@ -66,7 +72,7 @@ async def create_schema(request: SchemaCreateDTO, current_user: UserProfileDTO =
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.patch("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.patch("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=SchemaResponseDTO)
 async def update_schema(schema_id: str, request: SchemaUpdateDTO) -> SchemaResponseDTO:
     """Update an existing schema."""
     service = ExtractionService()
@@ -77,15 +83,15 @@ async def update_schema(schema_id: str, request: SchemaUpdateDTO) -> SchemaRespo
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.delete("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
-async def delete_schema(schema_id: str) -> dict[str, bool]:
+@router.delete("/schemas/{schema_id}", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=DeleteSchemaResponseDTO)
+async def delete_schema(schema_id: str) -> DeleteSchemaResponseDTO:
     """Delete a schema."""
     service = ExtractionService()
     await service.delete_schema(schema_id)
-    return {"success": True}
+    return DeleteSchemaResponseDTO(success=True)
 
 
-@router.post("/run", dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
+@router.post("/run", dependencies=[Depends(requires_permission(TASK_READ_TEAM))], response_model=ExtractionResultDTO)
 async def run_extraction(request: dict[str, str], current_user: UserProfileDTO = Depends(get_current_user)) -> ExtractionResultDTO:
     """
     Triggers an actual data extraction task.
