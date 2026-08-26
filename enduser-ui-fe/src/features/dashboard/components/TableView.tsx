@@ -57,7 +57,20 @@ export const TableView: React.FC<TableViewProps> = React.memo(({ tasks, setEditi
           </thead>
           <tbody className="divide-y dark:divide-slate-800">
             {tasks.map(task => (
-              <tr key={task.id} onClick={() => setEditingTask(task)} className="hover:bg-white dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+              <tr
+                key={task.id}
+                onClick={() => setEditingTask(task)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setEditingTask(task);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`View details for task: ${task.title}`}
+                className="hover:bg-white dark:hover:bg-slate-800/50 transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500"
+              >
                 <td className="px-6 py-4"><StatusBadge status={task.status} /></td>
                 <td className="px-6 py-4 text-slate-500 font-medium">
                     <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg truncate block max-w-[120px]">

@@ -59,3 +59,6 @@
 ## 2024-08-24 - Add Keyboard Focus Indicators
 **Learning:** Found multiple interactive buttons lacking visible focus indicators. While hover states existed, keyboard users would not see what was focused. Using `focus-visible:outline-none focus-visible:ring-2` combined with offset rings is highly effective and simple to implement in Tailwind, greatly improving a11y across the site.
 **Action:** Always include `focus-visible` classes by default when creating custom buttons or interactive elements in this app's components, as standard hover classes do not cover keyboard navigation.
+## 2026-08-25 - Improved Keyboard Accessibility for Task Lists
+**Learning:** In list and kanban views (e.g., `ListView.tsx`, `KanbanView.tsx`, `TableView.tsx`), rows and cards acting as buttons lacked native keyboard focus and interaction support. Hover states alone do not provide a visible focus indicator for screen readers and keyboard users.
+**Action:** When implementing custom interactive lists or cards, always add `tabIndex={0}`, `role="button"`, `aria-label`, a visible focus ring (`focus-visible:ring-2`), and an `onKeyDown` handler to support Enter/Space key navigation.
