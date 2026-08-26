@@ -75,16 +75,21 @@ export const IdentityMatrix: React.FC = () => {
     const rbacMap = React.useMemo(() => {
         const map = new Map<string, string[]>();
         rbacMatrix.forEach(r => {
-            map.set(r.role.toLowerCase(), r.permissions || []);
+            const lowerRole = r.role.toLowerCase();
+            // ⚡ Bolt: Check !map.has to strictly mimic Array.find()'s 'first match wins' behavior
+            if (!map.has(lowerRole)) {
+                map.set(lowerRole, r.permissions || []);
+            }
         });
         return map;
     }, [rbacMatrix]);
 
     if (loading) return <div className="p-12 text-center text-muted-foreground italic">Loading Identity Matrix...</div>;
 
-    const getPermissionsForRole = (roleName: string) => {
+    // ⚡ Bolt: Memoize callback to prevent breaking React.memo shallow comparison on list items during parent re-renders
+    const getPermissionsForRole = React.useCallback((roleName: string) => {
         return rbacMap.get(roleName.toLowerCase()) || [];
-    };
+    }, [rbacMap]);
 
     return (
         <div className="space-y-6">
