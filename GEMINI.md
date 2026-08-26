@@ -125,10 +125,18 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-26 (追加二): E2E與單元測試MSW污染修復、排程鎖死解除、線上環境解密密鑰比對與TTS自癒
+- **單元測試 MSW 隔離與 Node 22 防護**: 解決 `pnpm test:unit` 執行時 MSW 雙重載入導致的 `Invariant Violation` 與 `AbortSignal` 錯誤。將 `tests/e2e/**` 排除於 `vite.config.ts` 外，並為 `apiClient.ts` 補齊 `typeof localStorage !== 'undefined'` 的無頭 (JSDom) 特徵防禦。
+- **排程啟動順序死結修復**: 解決重啟伺服器時因 `self._scheduler.start()` 搶先於 `configure` 執行，造成 APScheduler 丟出 `SchedulerAlreadyRunningError` 的啟動崩潰。調整為先載入 `_schedule_jobs` 再啟動 scheduler。
+- **排程器時區 SSOT 斷言修復**: 修正 `test_scheduler_service.py` 中寫死的 `"8"` 與 `"20"` 小時斷言。改為直接讀取 `SchedulerConfig().dynamic_token_analysis_hour` 動態對齊，杜絕「改 A 壞 B」。
+- **線上環境解密密鑰 (SUPABASE_SERVICE_KEY) 斷層診斷**:
+  - 用實體腳本測試並證明：Vercel 線上版 `Save Draft` 失敗與 `TTS` 失敗的根本原因，在於資料庫中的 API 金鑰加密（使用舊的 `SUPABASE_SERVICE_KEY`）與生產環境解密所用的 Key 不一致。
+  - 比對資料庫解密結果與本地 `.env`，確認 `GEMINI_API_KEY` (末五碼 `eAoEM`) 與 `GOOGLE_API_KEY` (末五碼 `GCR94`) 100% 相同。指示用戶在 `archon-jet` UI 重新保存金鑰，並手動重啟 Hugging Face Space 完成 cache 刷新。
+
 ### 08-26: 排程架構防撞優化與 MCP 延遲掛載公證 (Phase 5.11.5)
-- **物理鑑識與零虛假開發公證**: 深度回顧 08-20 至 08-25 之 Git 歷史，物理證實包含 NotebookLM 動態補丁、Telegram N+1 修復與 Beta Graph 動態解耦等改動皆 100% 符合 SSOT 且無亂層 (Layer Violations) 或虛假驗證。
+- **物理鑑識與零虛假開發公證**: 深度回顧 08-20 至 08-25 之 Git 歷史，物理證實包含 NotebookLM 動態補丁、Telegram N+1 修復與 Beta Graph 動態解耦等改動皆 100% 符合 SSOT 且無亂層 (Layer Violations) 或逆向測試污染。
 - **Lazy MCP Neural Wiring 公證**: 透過擷取 Docker 實體日誌，見證 `Spawning Background MCP Neural Wiring Task` 與 `Dynamic injected with 64 tools` 之成功執行，證明非同步背景探測完美解除主線程啟動死鎖。
-- **排程雙重錯過 (Double Miss) 鑑識**: 調查爬蟲未發動原因，查明為架構防禦疊加：Catchup 機制提早觸發被時間鎖擋下 (10:20 < 10:25)，而正班車 (10:25) 遭遇 Event Loop 阻塞 62 秒，導致被 `misfire_grace_time=60` 強制沒收。
+- **排程雙重錯過 (Double Miss) 識**: 調查爬蟲未發動原因，查明為架構防禦疊加：Catchup 機制提早觸發被時間鎖擋下 (10:20 < 10:25)，而正班車 (10:25) 遭遇 Event Loop 阻塞 62 秒，導致被 `misfire_grace_time=60` 強制沒收。
 - **排程防碰撞與容錯硬化 (Anti-Collision)**:
   - 將 `misfire_grace_time` 透過 SSOT (`SchedulerConfig`) 放寬至 600 秒 (10 分鐘)，根除微小卡頓導致的放鳥。
   - 將 Category 2 (`system_probe_cleanup`, `prune_stale_leads`) 拆分至 45 分與 55 分。
