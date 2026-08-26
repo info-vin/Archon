@@ -1,3 +1,4 @@
+
 """
 Google Drive integration tools for Archon MCP Server.
 """
@@ -5,13 +6,14 @@ Google Drive integration tools for Archon MCP Server.
 import json
 import logging
 import os
+from typing import Any
 
 from mcp.server.fastmcp import Context, FastMCP
 
 logger = logging.getLogger(__name__)
 
 
-def register_gdrive_tools(mcp: FastMCP):
+def register_gdrive_tools(mcp: FastMCP) -> None:
     """Register Google Drive integration tools with the MCP server."""
 
     @mcp.tool()
@@ -53,7 +55,7 @@ def register_gdrive_tools(mcp: FastMCP):
                 client_secret=client_secret
             )
 
-            def _sync_upload():
+            def _sync_upload() -> Any:
                 service = build("drive", "v3", credentials=creds)
                 file_metadata = {"name": filename}
 

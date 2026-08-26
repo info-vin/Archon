@@ -1,9 +1,11 @@
+
 """
 NotebookLM integration tools for Archon MCP Server.
 """
 
 import json
 import logging
+from typing import Any
 
 from mcp.server.fastmcp import Context, FastMCP
 
@@ -12,7 +14,7 @@ from notebooklm import NotebookLMClient
 logger = logging.getLogger(__name__)
 
 
-def register_notebooklm_tools(mcp: FastMCP):
+def register_notebooklm_tools(mcp: FastMCP) -> None:
     """Register NotebookLM integration tools with the MCP server."""
 
     # 1. Register the official complete tools from notebooklm-py
@@ -23,7 +25,7 @@ def register_notebooklm_tools(mcp: FastMCP):
 
     class _ToolResultPydanticPatch:
         @classmethod
-        def __get_pydantic_core_schema__(cls, source_type, handler):
+        def __get_pydantic_core_schema__(cls, source_type: Any, handler: Any) -> Any:
             return core_schema.any_schema()
 
     if not hasattr(fastmcp.tools.tool.ToolResult, "__get_pydantic_core_schema__"):
@@ -31,7 +33,7 @@ def register_notebooklm_tools(mcp: FastMCP):
 
     original_tool = mcp.tool
 
-    def patched_tool(*args, **kwargs):
+    def patched_tool(*args: Any, **kwargs: Any) -> Any:
         if len(args) == 1 and callable(args[0]) and not kwargs:
             # Called as @mcp.tool (without parenthesis)
             return original_tool()(args[0])
