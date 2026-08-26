@@ -11,11 +11,13 @@ interface Citation {
 interface RAGCitationProps {
   citationId: string;
   citations: Citation[];
+  citationObj?: Citation;
 }
 
-export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations }) => {
+export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations, citationObj }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const citation = citations.find(c => c.id === citationId);
+  // ⚡ Bolt: Fast-path exact object prop to bypass O(N) Array.find() overhead during list/markdown rendering
+  const citation = citationObj || citations.find(c => c.id === citationId);
 
   // If citation metadata isn't found, just render the text
   if (!citation) {
