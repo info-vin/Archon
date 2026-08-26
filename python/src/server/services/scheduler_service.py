@@ -48,7 +48,7 @@ class SchedulerService:
     def __new__(cls) -> "SchedulerService":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._scheduler = AsyncIOScheduler(job_defaults={'misfire_grace_time': 60})
+            cls._instance._scheduler = AsyncIOScheduler(job_defaults={'misfire_grace_time': 600})
         return cls._instance
 
     async def start(self) -> None:
@@ -225,6 +225,8 @@ class SchedulerService:
             logger.warning(f"Failed to parse SchedulerConfig, falling back to defaults: {e}")
             config = SchedulerConfig()
 
+        self._scheduler.configure(job_defaults={'misfire_grace_time': config.scheduler_misfire_grace_time})
+
         # --- Category 1: Stateless Patrols ---
         self._schedule_stateless(self._run_system_probe, "system_probe", 1, config.system_probe_interval_mins)
         self._schedule_stateless(self._run_log_patrol, "log_patrol", 2, config.log_patrol_interval_mins)
@@ -253,9 +255,9 @@ class SchedulerService:
 
         # --- Category 4: Stateful Bi-weekly Maintenance ---
         await self._schedule_stateful_job(self._run_infrastructure_audit, "infrastructure_audit", 48, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
-        await self._schedule_stateful_job(self._run_api_deprecation_scan, "api_deprecation_scan", 50, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
-        await self._schedule_stateful_job(self._run_tech_debt_audit, "tech_debt_audit", 45, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
-        await self._schedule_stateful_job(self._run_ssot_audit, "ssot_audit", 47, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_api_deprecation_scan, "api_deprecation_scan", 50, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 15) % 60, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_tech_debt_audit, "tech_debt_audit", 45, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 30) % 60, timezone=DEFAULT_TIMEZONE), "Already run recently")
+        await self._schedule_stateful_job(self._run_ssot_audit, "ssot_audit", 47, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 45) % 60, timezone=DEFAULT_TIMEZONE), "Already run recently")
 
     # Delegation Methods
     async def _run_system_probe(self) -> None: await patrol.run_system_probe()

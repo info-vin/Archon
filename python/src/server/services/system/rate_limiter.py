@@ -15,11 +15,6 @@ class GlobalThrottler:
     _locks: dict[str, asyncio.Lock] = {}
     _last_call_times: dict[str, float] = {}
 
-    # Delays in seconds required between consecutive calls to the same tier.
-    # Pro: 2 RPM -> 1 call every 30s. Use 32s for safety margin.
-    # Lite: 15 RPM -> 1 call every 4s. Use 4.5s for safety margin.
-    _tier_delays = {"pro": 32.0, "lite": 4.5}
-
     @classmethod
     async def wait_for_capacity(cls, tier: str = "lite") -> None:
         """
@@ -34,7 +29,11 @@ class GlobalThrottler:
             cls._locks[tier] = asyncio.Lock()
             cls._last_call_times[tier] = 0.0
 
-        delay_required = cls._tier_delays.get(tier, 5.0)
+        from src.server.config.model_ssot import SYSTEM_MODELS, get_delay_for_model
+        model_key = "DEFAULT_PRO" if tier == "pro" else "DEFAULT_TEXT"
+        active_model = SYSTEM_MODELS.get(model_key, "")
+
+        delay_required = get_delay_for_model(active_model)
 
         async with cls._locks[tier]:
             now = time.time()
@@ -42,7 +41,7 @@ class GlobalThrottler:
 
             if elapsed < delay_required:
                 wait_time = delay_required - elapsed
-                logger.info(f"🛡️ Throttler: {tier.capitalize()} quota locked. Waiting {wait_time:.1f}s...")
+                logger.info(f"🛡️ Throttler: {tier.capitalize()} quota locked (Model: {active_model}). Waiting {wait_time:.1f}s...")
                 await asyncio.sleep(wait_time)
 
             cls._last_call_times[tier] = time.time()

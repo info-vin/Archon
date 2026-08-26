@@ -99,6 +99,8 @@ class SchedulerConfig(BaseModel):
     hf_sleep_start: str = Field(default="17:18", alias="HF_SLEEP_START")
     hf_sleep_end: str = Field(default="07:20", alias="HF_SLEEP_END")
 
+    scheduler_misfire_grace_time: int = Field(default=600, alias="SCHEDULER_MISFIRE_GRACE_TIME")
+
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")
     log_patrol_interval_mins: int = Field(default=30, alias="LOG_PATROL_INTERVAL_MINS")
     task_dispatcher_interval_mins: int = Field(default=15, alias="TASK_DISPATCHER_INTERVAL_MINS")
@@ -107,9 +109,9 @@ class SchedulerConfig(BaseModel):
 
     # Category 2: Stateful Daily Jobs
     system_probe_cleanup_hour: int = Field(default=11, alias="SYSTEM_PROBE_CLEANUP_HOUR")
-    system_probe_cleanup_minute: int = Field(default=50, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
+    system_probe_cleanup_minute: int = Field(default=45, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
     prune_stale_leads_hour: int = Field(default=11, alias="PRUNE_STALE_LEADS_HOUR")
-    prune_stale_leads_minute: int = Field(default=50, alias="PRUNE_STALE_LEADS_MINUTE")
+    prune_stale_leads_minute: int = Field(default=55, alias="PRUNE_STALE_LEADS_MINUTE")
     alice_auto_fetch_hour: int = Field(default=10, alias="ALICE_AUTO_FETCH_HOUR")
     alice_auto_fetch_minute: int = Field(default=25, alias="ALICE_AUTO_FETCH_MINUTE")
     alice_auto_fetch_days: str = Field(default="tue,wed,fri", alias="ALICE_AUTO_FETCH_DAYS")

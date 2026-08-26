@@ -1,5 +1,6 @@
 # python/src/server/core/lifespan.py
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,6 +9,32 @@ from src.server.config.logfire_config import api_logger
 
 from .app_state import app_state
 
+
+async def lazy_mcp_neural_wiring():
+    """Background task for MCP wiring with infinite retries."""
+    import os
+
+    from src.agents.mcp_client import get_mcp_client
+    from src.server.services.agent_service import agent_service
+
+    retry_delay = float(os.getenv("ARCHON_MCP_RETRY_DELAY", "3.0"))
+    mcp_client = await get_mcp_client()
+
+    api_logger.info("🧠 Background Neural Wiring: Probing MCP Server...")
+
+    while True:
+        try:
+            tools = await mcp_client.list_tools()
+            if tools:
+                agent_service.mcp_client = mcp_client
+                api_logger.info(f"🧠 Agent Neural Wiring Complete: Dynamic injected with {len(tools)} tools.")
+                break
+
+            api_logger.warning("MCP Server returned 0 tools. Retrying...")
+        except Exception as e:
+            api_logger.warning(f"MCP Server not responsive yet ({e}). Retrying in {retry_delay}s...")
+
+        await asyncio.sleep(retry_delay)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,13 +45,10 @@ async def lifespan(app: FastAPI):
     api_logger.info("Starting Archon Backend application...")
 
     # Imports moved inside the lifespan function to prevent circular dependencies
-    from src.agents.mcp_client import get_mcp_client
     from src.server.config.config import get_config
-    from src.server.services.agent_service import agent_service
     from src.server.services.background_task_manager import cleanup_task_manager, get_task_manager
     from src.server.services.crawler_manager import cleanup_crawler
     from src.server.services.credential_service import initialize_credentials
-    from src.server.services.log_service import log_service
     from src.server.services.prompt_service import prompt_service
     from src.server.services.scheduler_service import SchedulerService
     from src.server.services.search.reranking_strategy import reranking_strategy
@@ -69,38 +93,10 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not initialize prompt service: {e}")
 
-        # Initialize MCP Client
-        api_logger.info("Initializing MCP Client...")
-        mcp_client = await get_mcp_client()
-
-        # Initialize tool list to verify connection (with retries for race conditions)
-        import asyncio
-        import os
-
-        retry_limit = int(os.getenv("ARCHON_MCP_RETRY_LIMIT", "15"))
-        retry_delay = float(os.getenv("ARCHON_MCP_RETRY_DELAY", "2.0"))
-
-        tools = []
-        for attempt in range(retry_limit):
-            tools = await mcp_client.list_tools()
-            if tools:
-                break
-            api_logger.warning(f"MCP Server not ready yet. Retrying ({attempt+1}/{retry_limit})...")
-            await asyncio.sleep(retry_delay)
-
-        if not tools:
-            log_service.create_log_entry(
-                {
-                    "project_name": "mcp-neural-wiring",
-                    "gemini_response": "🧠 Agent Neural Wiring FAILED: MCP Client failed to connect or returned 0 tools after retries. Check if MCP server started successfully or check volumes/permissions if running locally.",
-                    "user_input": f"mcp_url: {mcp_client.mcp_url}",
-                }
-            )
-        else:
-            # Dependency Injection (Architectural Bridge)
-            agent_service.mcp_client = mcp_client
-            initialized_components.add("mcp_client")
-            api_logger.info(f"🧠 Agent Neural Wiring Complete: MCP Client injected with {len(tools)} tools.")
+        # Initialize MCP Client (Lazy Background Task)
+        api_logger.info("Spawning Background MCP Neural Wiring Task...")
+        asyncio.create_task(lazy_mcp_neural_wiring())
+        initialized_components.add("mcp_client") # Tracked assuming it eventually connects
 
         # Initialize Background Task Manager
         api_logger.info("Initializing Background Task Manager...")

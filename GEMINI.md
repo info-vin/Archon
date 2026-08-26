@@ -125,6 +125,15 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-26: 排程架構防撞優化與 MCP 延遲掛載公證 (Phase 5.11.5)
+- **物理鑑識與零虛假開發公證**: 深度回顧 08-20 至 08-25 之 Git 歷史，物理證實包含 NotebookLM 動態補丁、Telegram N+1 修復與 Beta Graph 動態解耦等改動皆 100% 符合 SSOT 且無亂層 (Layer Violations) 或虛假驗證。
+- **Lazy MCP Neural Wiring 公證**: 透過擷取 Docker 實體日誌，見證 `Spawning Background MCP Neural Wiring Task` 與 `Dynamic injected with 64 tools` 之成功執行，證明非同步背景探測完美解除主線程啟動死鎖。
+- **排程雙重錯過 (Double Miss) 鑑識**: 調查爬蟲未發動原因，查明為架構防禦疊加：Catchup 機制提早觸發被時間鎖擋下 (10:20 < 10:25)，而正班車 (10:25) 遭遇 Event Loop 阻塞 62 秒，導致被 `misfire_grace_time=60` 強制沒收。
+- **排程防碰撞與容錯硬化 (Anti-Collision)**:
+  - 將 `misfire_grace_time` 透過 SSOT (`SchedulerConfig`) 放寬至 600 秒 (10 分鐘)，根除微小卡頓導致的放鳥。
+  - 將 Category 2 (`system_probe_cleanup`, `prune_stale_leads`) 拆分至 45 分與 55 分。
+  - 將 Category 4 四大保養作業 (Infra, API, TechDebt, SSOT) 導入 `+15, +30, +45` 動態偏移邏輯，徹底消滅 14:00 瞬間併發造成的毀滅性阻塞，且未違反 DRY 原則。
+
 ### 08-25: DAG 物理鑑識、Telegram 隱式連通與 Vite 架構錯位修復
 - **DAG 物理溯源與 MCP 自癒公證**: 針對「星期一缺失的每日報告」進行資料庫與程式碼聯合探勘。證實是排程設定 (`ALICE_AUTO_FETCH_DAYS="tue,wed,fri"`) 觸發的正常防禦性跳過，並非 Bug。透過即時 Docker 日誌監控，見證了 10:25 Alice 爬蟲準時啟動，並自動推倒 `Bob -> Supervisor` 事件鏈骨牌，同時確認 `mcp-neural-wiring` 具備自動重試自癒能力。
 - **Telegram 隱式寫入驗證**: 拒絕猜測配置狀態，透過撰寫實體腳本直連 Telegram API 的 `getMe` 與 `sendChatAction` (狀態改為 "typing...")，在不打擾頻道的情況下，100% 物理證實 Bot 憑證與 Chat ID 皆精準掛載且具備寫入權限。

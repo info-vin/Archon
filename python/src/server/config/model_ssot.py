@@ -72,3 +72,18 @@ def get_active_fallback(key: str, available_models: list[str]) -> str:
         return f"models/{available_models[0]}"
 
     return default_model
+
+MODEL_TIER_DELAYS = {
+    "lite": 4.5,
+    "pro": 32.0,
+    "embedding": 0.5,
+}
+
+def get_delay_for_model(model_name: str) -> float:
+    """Returns the physical throttling delay required for a specific model."""
+    model_lower = model_name.lower()
+    if "lite" in model_lower:
+        return MODEL_TIER_DELAYS["lite"]
+    if "embedding" in model_lower:
+        return MODEL_TIER_DELAYS.get("embedding", 0.5)
+    return MODEL_TIER_DELAYS["pro"]
