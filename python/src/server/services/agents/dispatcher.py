@@ -133,7 +133,7 @@ class DefaultLLMStrategy(BaseAgentStrategy):
                     timeout=300
                 )
                 res_msg = response.choices[0].message
-                if res_msg.tool_calls and agent_service.mcp_client:
+                if getattr(res_msg, "tool_calls", None) and agent_service.mcp_client:
                     messages.append(res_msg)
                     tool_results = await agent_service.tool_executor.handle_tool_calls(
                         res_msg.tool_calls, agent_id=agent_id

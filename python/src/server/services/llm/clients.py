@@ -90,6 +90,12 @@ async def get_llm_client(
                 except Exception:
                     raise ValueError("OpenAI API key not found and Ollama fallback failed") from None
             else:
+                from ...config.config import get_config
+                if not get_config().is_testing:
+                    raise ValueError(
+                        f"CRITICAL: {provider_name.capitalize()} API key not found in environment or database. "
+                        "MockClient fallback is disabled in non-testing environments."
+                    )
                 logger.warning(f"No API key found for {provider_name}. Using MockClient.")
                 yield MockLLMClient(provider_name)
                 return
