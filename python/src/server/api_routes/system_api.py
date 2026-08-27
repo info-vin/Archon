@@ -161,7 +161,7 @@ async def list_system_settings(category: str | None = None) -> list[SystemSettin
     return await system_service.list_system_settings(category=category)
 
 
-@router.patch("/settings/{key}", dependencies=[Depends(requires_permission(MCP_MANAGE))])
+@router.patch("/settings/{key}", response_model=SystemSettingDTO, dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def update_system_setting(
     key: str, request: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)
 ) -> SystemSettingDTO:
