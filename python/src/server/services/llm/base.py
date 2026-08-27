@@ -9,24 +9,24 @@ logger = get_logger(__name__)
 
 # --- Mock Classes ---
 class MockMessage:
-    def __init__(self, content) -> None:
+    def __init__(self, content: str) -> None:
         self.content = content
         self.reasoning_content = None
 
 
 class MockChoice:
-    def __init__(self, content) -> None:
+    def __init__(self, content: str) -> None:
         self.message = MockMessage(content)
 
 
 class MockResponse:
-    def __init__(self, content) -> None:
+    def __init__(self, content: str) -> None:
         self.choices = [MockChoice(content)]
         self.usage = None
 
 
 class MockCompletions:
-    def __init__(self, provider_name) -> None:
+    def __init__(self, provider_name: str) -> None:
         self.provider_name = provider_name
 
     async def create(self, *args: Any, **kwargs: Any) -> Any:
@@ -49,12 +49,12 @@ class MockCompletions:
 
 
 class MockChat:
-    def __init__(self, provider_name) -> None:
+    def __init__(self, provider_name: str) -> None:
         self.completions = MockCompletions(provider_name)
 
 
 class MockLLMClient:
-    def __init__(self, provider_name="mock") -> None:
+    def __init__(self, provider_name: str = "mock") -> None:
         self.chat = MockChat(provider_name)
         self.models = None
 
@@ -83,7 +83,7 @@ class MockLLMClient:
 
 # --- Tracking Classes ---
 class UsageTrackingCompletions:
-    def __init__(self, original_completions, context) -> None:
+    def __init__(self, original_completions: Any, context: dict[str, Any]) -> None:
         self._original = original_completions
         self._context = context
 
@@ -100,7 +100,7 @@ class UsageTrackingCompletions:
         except Exception:
             forced_tier = 0
 
-        async def _execute_on_hf(model_name: str):
+        async def _execute_on_hf(model_name: str) -> Any:
             hf_token = await credential_service.get_credential("HF_TOKEN")
             if not hf_token:
                 raise ValueError("HF_TOKEN not configured for Tier 2 fallback")
@@ -124,8 +124,8 @@ class UsageTrackingCompletions:
             finally:
                 await client.close()
 
-        @retry_with_backoff(max_retries=5, initial_delay=2.0)
-        async def _execute(override_key: str | None = None):
+        @retry_with_backoff(max_retries=5, initial_delay=2.0)  # type: ignore
+        async def _execute(override_key: str | None = None) -> Any:
             original_client = self._original._client
             original_api_key = original_client.api_key
             original_headers = getattr(original_client, "default_headers", {})
@@ -276,7 +276,7 @@ class UsageTrackingCompletions:
 
 
 class UsageTrackingChat:
-    def __init__(self, original_chat, context) -> None:
+    def __init__(self, original_chat: Any, context: dict[str, Any]) -> None:
         self._original = original_chat
         self.completions = UsageTrackingCompletions(original_chat.completions, context)
 
@@ -285,7 +285,7 @@ class UsageTrackingChat:
 
 
 class UsageTrackingClient:
-    def __init__(self, original_client, user_id, request_id, provider) -> None:
+    def __init__(self, original_client: Any, user_id: str, request_id: str, provider: str) -> None:
         self._original = original_client
         self._context = {"user_id": user_id, "request_id": request_id, "provider": provider}
         self.chat = UsageTrackingChat(original_client.chat, self._context)
