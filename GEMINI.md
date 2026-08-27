@@ -125,8 +125,13 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 08-27: 降級 MockLLMClient 屬性缺失與無金鑰 Fail-Fast 防禦性硬化 (Phase 5.11.6)
+- **無金鑰靜默降級 Fail-Fast 攔截**：修改 `clients.py`，在非測試環境（`is_testing == False`）下若發現 LLM API 金鑰解密失敗或缺失，直接拋出 `ValueError`，徹底排除樂觀路徑，避免靜默生成 Mock 假數據誤導系統。
+- **MockMessage 屬性缺失自癒**：在 `dispatcher.py` 導入 `getattr(res_msg, "tool_calls", None)`，以防禦在測試環境降級使用 MockLLMClient 時因缺乏 `tool_calls` 屬性而引發 `AttributeError` 崩潰。
+- **自動化測試對帳驗證**：新增 `test_mock_client_hardening.py`，成功跑通 30 項單元測試。變更已合併並推送至 `dev/twins` 分支。
+
 ### 08-26 (追加二): E2E與單元測試MSW污染修復、排程鎖死解除、線上環境解密密鑰比對與TTS自癒
-- **單元測試 MSW 隔離與 Node 22 防護**: 解決 `pnpm test:unit` 執行時 MSW 雙重載入導致的 `Invariant Violation` 與 `AbortSignal` 錯誤。將 `tests/e2e/**` 排除於 `vite.config.ts` 外，並為 `apiClient.ts` 補齊 `typeof localStorage !== 'undefined'` 的無頭 (JSDom) 特徵防禦。
+- **單元測試 MSW 隔離與 Node 22 防護**: 解決 `pnpm test:unit` 執行時 MSW 雙重載入導致 of `Invariant Violation` 與 `AbortSignal` 錯誤。將 `tests/e2e/**` 排除於 `vite.config.ts` 外，並為 `apiClient.ts` 補齊 `typeof localStorage !== 'undefined'` 的無頭 (JSDom) 特徵防禦。
 - **排程啟動順序死結修復**: 解決重啟伺服器時因 `self._scheduler.start()` 搶先於 `configure` 執行，造成 APScheduler 丟出 `SchedulerAlreadyRunningError` 的啟動崩潰。調整為先載入 `_schedule_jobs` 再啟動 scheduler。
 - **排程器時區 SSOT 斷言修復**: 修正 `test_scheduler_service.py` 中寫死的 `"8"` 與 `"20"` 小時斷言。改為直接讀取 `SchedulerConfig().dynamic_token_analysis_hour` 動態對齊，杜絕「改 A 壞 B」。
 - **線上環境解密密鑰 (SUPABASE_SERVICE_KEY) 斷層診斷**:
