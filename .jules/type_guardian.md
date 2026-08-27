@@ -22,3 +22,6 @@
 ## 2024-05-18 - Type Hinting supabase_client
 **Learning:** When type hinting `supabase_client` initialization parameters in the Python backend (e.g., in `server/services/` or `server/repositories/`), import `Client` from the `supabase` package and explicitly annotate it as `Client | None = None` instead of leaving it untyped or using `typing.Any`.
 **Action:** Use `from supabase import Client` and `Client | None = None` for `supabase_client` arguments in `__init__` methods.
+## 2024-05-18 - Safe Refactoring of Legacy Tuple Types
+**Learning:** When refactoring legacy APIs that returned `tuple[bool, dict[str, Any]]` to use stricter Types/DTOs, adding `dict[str, Any]` to the return type union (e.g. `tuple[bool, ProjectResultDTO | dict[str, Any]]`) undermines static analysis entirely, because MyPy will still allow arbitrary key access under the assumption it might be a dict. `cast()` handles the boundary, but the signature must be strict to protect callers.
+**Action:** When migrating legacy dict returns to DTOs using `TypedDict`, do not union the DTO with `dict[str, Any]` in the function signature. Instead, union it with the error type (like `str` for error messages) and rely on `cast(DTO, result)` to enforce the contract at the repository boundary, ensuring all upstream consumers benefit from the strict type.
