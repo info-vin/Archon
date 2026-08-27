@@ -14,6 +14,12 @@ from src.server.schemas.projects import (
     CreateProjectRequest,
     UpdateProjectRequest,
 )
+from src.server.services.projects.project_service import (
+    ProjectDTO,
+    ProjectListResultDTO,
+    ProjectResultDTO,
+    ProjectUpdateDTO,
+)
 
 from ...auth.dependencies import get_current_user, requires_permission
 from ...auth.permissions import TASK_CREATE, TASK_READ_TEAM, TASK_UPDATE_ALL
@@ -73,11 +79,12 @@ async def list_projects(
     if not s or not isinstance(res, dict):
         _err(res)
 
-    projs = res.get("projects", [])
-    projs = RBACService().scope_projects(projs, current_user)
+    res_dto = cast(ProjectListResultDTO, res)
+    projs = res_dto.get("projects", [])
+    projs = cast(list[ProjectDTO], RBACService().scope_projects(cast(list[dict[str, Any]], projs), current_user))
 
     if include_content:
-        projs = await SourceLinkingService().format_projects_with_sources(projs)
+        projs = cast(list[ProjectDTO], await SourceLinkingService().format_projects_with_sources(cast(list[dict[str, Any]], projs)))
 
     etag = generate_etag({"projects": projs, "count": len(projs)})
     response.headers["ETag"] = etag
@@ -112,9 +119,10 @@ async def get_project(project_id: str, current_user: UserProfileDTO = Depends(ge
     s, res = await ProjectService().get_project(project_id)
     if not s or not isinstance(res, dict) or not res.get("project"):
         _err(res if s else "Project not found", 404 if "not found" in str(res).lower() or s else 500)
-    p = res.get("project", {})
+    res_dto2 = cast(ProjectResultDTO, res)
+    p = res_dto2.get("project", {})
 
-    if not RBACService().validate_project_access(p, current_user):
+    if not RBACService().validate_project_access(cast(dict[str, Any], p), current_user):
         _err("Access denied to this department's project.", 403)
 
     return {
@@ -130,15 +138,16 @@ async def get_project(project_id: str, current_user: UserProfileDTO = Depends(ge
 @router.patch("/projects/{project_id}")
 async def update_project(project_id: str, req: UpdateProjectRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await ProjectService().get_project(project_id)
-    if not s or not res.get("project"):
+    res_dto3 = cast(ProjectResultDTO, res)
+    if not s or not res_dto3.get("project"):
         _err("Project not found", 404)
 
-    p = res["project"]
-    if not RBACService().validate_project_access(p, current_user):
+    p = res_dto3["project"]
+    if not RBACService().validate_project_access(cast(dict[str, Any], p), current_user):
         _err("Permission denied: Cannot update other department's projects.", 403)
 
     fields = {k: v for k, v in req.model_dump().items() if v is not None}
-    s, res = await ProjectService().update_project(project_id, fields)
+    s, res = await ProjectService().update_project(project_id, cast(ProjectUpdateDTO, fields))
     if not s or not isinstance(res, dict):
         _err(res, 500)
 
@@ -146,21 +155,21 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
         await SourceLinkingService().update_project_sources(
             project_id=project_id, technical_sources=req.technical_sources, business_sources=req.business_sources
         )
-    return await SourceLinkingService().format_project_with_sources(res.get("project", {}))
+    return await SourceLinkingService().format_project_with_sources(cast(dict[str, Any], cast(ProjectResultDTO, res).get("project", {})))
 
 
 @router.delete("/projects/{project_id}")
 async def delete_project(project_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
     """Requires Admin level override for project deletion."""
     s, res = await ProjectService().delete_project(project_id)
-    res_data = cast(dict[str, Any], handle_service_result(s, res))
+    res_data = cast(dict[str, Any], handle_service_result(s, cast(Any, res)))
     return {"message": "Project deleted successfully", "deleted_tasks": res_data.get("deleted_tasks", 0)}
 
 
 @router.get("/projects/{project_id}/features")
 async def get_project_features(project_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
     s, res = await ProjectService().get_project_features(project_id)
-    return handle_service_result(s, res)
+    return handle_service_result(s, cast(Any, res))
 
 
 @router.get("/projects/{project_id}/docs")
@@ -168,7 +177,7 @@ async def list_project_documents(
     project_id: str, include_content: bool = False, current_user: UserProfileDTO = Depends(get_current_user)
 ):
     s, res = DocumentService().list_documents(project_id, include_content)
-    return handle_service_result(s, res)
+    return handle_service_result(s, cast(Any, res))
 
 
 @router.post("/projects/{project_id}/docs")
@@ -178,7 +187,7 @@ async def create_project_document(
     s, res = DocumentService().add_document(project_id=project_id, **req.model_dump())
     return {
         "message": "Document created successfully",
-        "document": cast(dict[str, Any], handle_service_result(s, res)).get("document"),
+        "document": cast(dict[str, Any], handle_service_result(s, cast(Any, res))).get("document"),
     }
 
 

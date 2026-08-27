@@ -86,7 +86,7 @@ class ProjectService(BaseRepository):
                     p.pop("features", None)
                     p.pop("data", None)
             return True, cast(ProjectListResultDTO, {"projects": projects})
-        return False, result
+        return False, str(result)
 
     async def create_project(self, title: str, github_repo: str | None = None) -> tuple[bool, ProjectResultDTO | str]:
         project_data: dict[str, Any] = {
@@ -124,28 +124,28 @@ class ProjectService(BaseRepository):
         success, result = self.execute_query(self.supabase_client.table("archon_projects").insert(project_data), "Database operation failed") # 合法
         if success:
             return True, cast(ProjectResultDTO, {"project": result["data"][0] if result["data"] else {}})
-        return False, result
+        return False, str(result)
 
     async def get_project(self, project_id: str) -> tuple[bool, ProjectResultDTO | str]:
 
         success, result = self.execute_query(self.supabase_client.table("archon_projects").select("*").eq("id", project_id), "DB operation logged error") # 合法
         if success:
             return True, cast(ProjectResultDTO, {"project": result["data"][0] if result["data"] else {}})
-        return False, result
+        return False, str(result)
 
     async def update_project(self, project_id: str, project_data: ProjectUpdateDTO) -> tuple[bool, ProjectResultDTO | str]:
 
         success, result = self.execute_query(self.supabase_client.table("archon_projects").update(project_data).eq("id", project_id), "Database operation failed") # 合法
         if success:
             return True, cast(ProjectResultDTO, {"project": result["data"][0] if result["data"] else {}})
-        return False, result
+        return False, str(result)
 
     async def delete_project(self, project_id: str) -> tuple[bool, ProjectResultDTO | str]:
 
         success, result = self.execute_query(self.supabase_client.table("archon_projects").delete().eq("id", project_id), "Database operation failed") # 合法
         if success:
             return True, cast(ProjectResultDTO, {"message": "Project deleted successfully", "project": {}})
-        return False, result
+        return False, str(result)
 
     async def get_project_features(self, project_id: str) -> tuple[bool, dict[str, Any]]:
         """Retrieve features for a project."""
