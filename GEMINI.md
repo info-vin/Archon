@@ -124,6 +124,13 @@
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+### 08-28: 爬蟲引擎協程斷層修復與全站日誌降噪公證 (Phase 5.11.8)
+- **爬蟲引擎物理斷層修復 (Coroutine Crash Fix)**: 鑑識出 UI 介面新增 Knowledge URLs 卻無法爬取的根本原因。`crawling.py` 路由在實例化 `CrawlOrchestrationService` 時遺漏了 `await`，導致傳入未執行的 Coroutine 而在背景靜默崩潰 (`AttributeError: 'coroutine' object has no attribute 'arun'`)。修補了兩處 `await get_crawler()`，徹底接通了前端 UI 到後端爬蟲與 Supabase `sources` 寫入的生命週期。
+- **全站日誌降噪 (System Log Reduction)**: 根除「日誌海嘯」，將 `apscheduler` 的常規啟動廢話透過 `logfire_config.py` 壓制為 `WARNING`，並透過掛載 `HealthCheckFilter` 濾除 Uvicorn 頻繁輪詢 `/api/system/fallback/status` 的存取紀錄；同時將 RBAC 攔截器與 Clockwork 例行巡邏等大量無效 `INFO` 降級為 `DEBUG`，確保日誌清晰可讀且不影響告警（保留 `is_safe=False` 時的 `logger.warning` 觸發）。
+- **Mypy 型別安全公證與二次修復**: Mypy 物理驗證攔截到 `HealthCheckFilter` 中透過 `record.args[2]` 索引 Tuple/Dict 的潛在型別不安全問題，旋即改寫為使用 `record.getMessage()` 進行子字串比對，全專案 390 個檔案再次通過 Ruff 與 Mypy 的 0 錯誤嚴格門禁。
+- **Markdown 與 TTS 前端防護**: 為 Markdown 渲染元件加上 `prose` 排版類別，並用 Regex `content.replace(/!\[.*?\]\(.*?\)/g, '')` 攔截 TTS 送出 Base64 圖片亂碼，徹底消滅語音 API 當機。
+- **環境清理與合規**: 刪除 `scratch/` 內多達 30+ 份的一次性探針腳本與日誌檔，維持開發環境的極致整潔。
+
 
 ### 08-27: 降級 MockLLMClient 屬性缺失與無金鑰 Fail-Fast 防禦性硬化 (Phase 5.11.6)
 - **無金鑰靜默降級 Fail-Fast 攔截**：修改 `clients.py`，在非測試環境（`is_testing == False`）下若發現 LLM API 金鑰解密失敗或缺失，直接拋出 `ValueError`，徹底排除樂觀路徑，避免靜默生成 Mock 假數據誤導系統。
