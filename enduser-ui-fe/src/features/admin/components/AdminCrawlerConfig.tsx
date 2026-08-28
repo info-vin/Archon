@@ -70,7 +70,7 @@ export const AdminCrawlerConfig: React.FC = () => {
                                     <td className="px-4 py-3 font-mono text-xs text-blue-600 dark:text-blue-400 break-all">{t.target_url}</td>
                                     <td className="px-4 py-3 text-muted-foreground">{t.description || '-'}</td>
                                     <td className="px-4 py-3 text-center font-bold">{t.max_depth}</td>
-                                    <td className="px-4 py-3 text-right"><button onClick={() => deleteTarget(t.id)} className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-all" aria-label="Delete target" title="Delete target"><XIcon className="w-4 h-4" /></button></td>
+                                    <td className="px-4 py-3 text-right"><button onClick={() => deleteTarget(t.id)} className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2" aria-label="Delete target" title="Delete target"><XIcon className="w-4 h-4" /></button></td>
                                 </tr>
                             ))}
                         </tbody>

@@ -62,3 +62,6 @@
 ## 2026-08-25 - Improved Keyboard Accessibility for Task Lists
 **Learning:** In list and kanban views (e.g., `ListView.tsx`, `KanbanView.tsx`, `TableView.tsx`), rows and cards acting as buttons lacked native keyboard focus and interaction support. Hover states alone do not provide a visible focus indicator for screen readers and keyboard users.
 **Action:** When implementing custom interactive lists or cards, always add `tabIndex={0}`, `role="button"`, `aria-label`, a visible focus ring (`focus-visible:ring-2`), and an `onKeyDown` handler to support Enter/Space key navigation.
+## 2024-05-24 - Add focus-visible to icon-only buttons
+**Learning:** Icon-only buttons often lack visual indicators for keyboard users when focused, causing accessibility issues. Adding `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` provides necessary feedback for keyboard navigation.
+**Action:** Always check icon-only buttons for focus visibility and add necessary Tailwind classes when improving a11y.

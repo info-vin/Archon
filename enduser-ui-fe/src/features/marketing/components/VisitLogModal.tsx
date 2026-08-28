@@ -185,7 +185,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                 <div className={`flex-1 p-3 rounded-lg border ${location ? 'bg-green-50 border-green-200 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
                                     {location ? `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}` : "No location data"}
                                 </div>
-                                <button onClick={handleLocation} aria-label="Get current location" className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-700">
+                                <button onClick={handleLocation} aria-label="Get current location" className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                                     <MapPinIcon className="w-5 h-5" />
                                 </button>
                             </div>
@@ -226,7 +226,7 @@ export const VisitLogModal: React.FC<VisitLogModalProps> = ({ onClose, onSuccess
                                         <p className="text-sm font-bold text-gray-800 truncate">{audioFile?.name}</p>
                                         <p className="text-xs text-gray-500">Ready to upload</p>
                                     </div>
-                                    <button onClick={clearAudio} aria-label="Remove audio recording" className="p-2 hover:bg-red-100 rounded-full text-red-500 transition-colors">
+                                    <button onClick={clearAudio} aria-label="Remove audio recording" className="p-2 hover:bg-red-100 rounded-full text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2">
                                         <TrashIcon className="w-4 h-4" />
                                     </button>
                                 </div>
