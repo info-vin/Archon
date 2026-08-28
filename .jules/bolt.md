@@ -220,3 +220,7 @@
 ## 2024-11-21 - Memoizing callback props to maintain list virtualization performance
 **Learning:** When passing locally defined functions (like `getPermissionsForRole`) down to list item components that are rendered dynamically via `.map()`, creating a new function reference on every parent render destroys any potential for React's shallow comparison (like in `React.memo`) to optimize rendering. This forces $O(N)$ re-renders of list item subtrees even when their explicit props haven't conceptually changed.
 **Action:** Always wrap functions passed to list items in `React.useCallback`, ensuring correct dependencies, to preserve the stable function identity required for child rendering optimizations.
+
+## 2026-08-28 - Unmemoized callbacks defeat React.memo on mapped list items
+**Learning:** Even if a list item component like `IdentityMatrixRow` is correctly wrapped in `React.memo`, passing unmemoized inline functions (e.g. `onClick={() => onEdit(emp.id)}`) from the parent `.map()` loop creates a brand new function reference for every item on every parent render. This fails shallow prop comparison, forcing O(N) re-renders of the entire list whenever the parent re-renders (even for unrelated state changes).
+**Action:** When mapping over lists to render `React.memo` components, always extract event handler callbacks to the parent component level using `React.useCallback`, and pass primitive identifiers (like `id`) from the child via the memoized callback instead of capturing the entire object in an inline closure.

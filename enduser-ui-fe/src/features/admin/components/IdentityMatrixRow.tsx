@@ -5,12 +5,12 @@ import UserAvatar from '@/components/UserAvatar.tsx';
 interface IdentityMatrixRowProps {
     emp: Employee;
     isSelected: boolean;
-    onToggleSelect: () => void;
-    onEdit: () => void;
+    onToggleSelect: (id: string) => void;
+    onEdit: (emp: Employee) => void;
     effectivePermissions: string[];
 }
 
-export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = ({
+export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = React.memo(({
     emp,
     isSelected,
     onToggleSelect,
@@ -29,8 +29,8 @@ export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = ({
             <tr 
                 role="button"
                 tabIndex={0}
-                onClick={onToggleSelect}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onToggleSelect(); }}
+                onClick={() => onToggleSelect(emp.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onToggleSelect(emp.id); }}
                 className={`cursor-pointer transition-colors ${rowClasses}`}
                 aria-expanded={isSelected}
             >
@@ -53,7 +53,7 @@ export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button 
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }} 
+                        onClick={(e) => { e.stopPropagation(); onEdit(emp); }}
                         className="text-primary hover:text-primary/90 font-bold transition-colors disabled:opacity-30" 
                         disabled={emp.role === EmployeeRole.SYSTEM_ADMIN}
                     >
@@ -77,4 +77,4 @@ export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = ({
             )}
         </React.Fragment>
     );
-};
+});

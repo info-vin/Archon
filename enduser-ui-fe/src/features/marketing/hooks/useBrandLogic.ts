@@ -154,7 +154,7 @@ export const useBrandLogic = () => {
         }
     };
 
-    const handleNewPost = () => {
+    const handleNewPost = useCallback(() => {
         setWorkbenchTitle('');
         setWorkbenchContent('');
         setWorkbenchImageUrl('/placeholder-blog.jpg');
@@ -168,7 +168,7 @@ export const useBrandLogic = () => {
             summary: 'Start creating from scratch.',
         } as any);
         setViewMode('workbench');
-    };
+    }, []);
 
     const handleMagicDraft = async (topic: string, config?: any) => {
         if (!activeSource) return;
@@ -283,7 +283,7 @@ export const useBrandLogic = () => {
         }
     };
 
-    const handleDeletePost = async (id: string) => {
+    const handleDeletePost = useCallback(async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this post?")) return;
         try {
             await api.deleteBlogPost(id);
@@ -291,16 +291,16 @@ export const useBrandLogic = () => {
         } catch (err: any) {
             alert(`Delete failed: ${err.message}`);
         }
-    };
+    }, []);
 
-    const updatePostStatus = async (id: string, newStatus: BlogPost['status']) => {
+    const updatePostStatus = useCallback(async (id: string, newStatus: BlogPost['status']) => {
         try {
             await api.updateBlogPostStatus(id, newStatus);
             setPosts(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
         } catch (err) {
             alert("Status update failed");
         }
-    };
+    }, []);
 
     const handleSavePost = async (postData: any, postId?: string) => {
         try {

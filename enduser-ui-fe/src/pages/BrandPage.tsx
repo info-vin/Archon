@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { BlogPost } from '../types';
 import { PermissionGuard } from '../features/auth/components/PermissionGuard';
 import { useBrandLogic } from '../features/marketing/hooks/useBrandLogic';
@@ -11,6 +11,7 @@ import {
 
 const BrandPage: React.FC = () => {
     const navigate = useNavigate();
+
     const {
         viewMode, setViewMode,
         posts, trendsData, loading,
@@ -26,10 +27,13 @@ const BrandPage: React.FC = () => {
         loadData
     } = useBrandLogic();
 
+    const handleGenerateLogoMemo = useCallback(() => handleGenerateImage('minimal'), [handleGenerateImage]);
+    const handleNavigateAdvancedMemo = useCallback((id: string) => navigate(`/brand/editor/${id}`), [navigate]);
+
     const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
-    const handleEditSmart = (post: BlogPost) => {
+    const handleEditSmart = useCallback((post: BlogPost) => {
         if (post.status === 'draft' || post.status === 'changes_requested') {
             setWorkbenchTitle(post.title || '');
             setWorkbenchContent(post.content || '');
@@ -45,7 +49,7 @@ const BrandPage: React.FC = () => {
             setEditingPost(post);
             setIsPostModalOpen(true);
         }
-    };
+    }, [setWorkbenchTitle, setWorkbenchContent, handleSelectSource, setViewMode, setIsPostModalOpen]);
 
     return (
         <PermissionGuard 
@@ -95,12 +99,12 @@ const BrandPage: React.FC = () => {
                             trendsData={trendsData}
                             logoSvg={logoSvg}
                             isGeneratingLogo={isGeneratingLogo}
-                            onGenerateLogo={() => handleGenerateImage('minimal')}
+                            onGenerateLogo={handleGenerateLogoMemo}
                             onNewPost={handleNewPost}
                             onEditSmart={handleEditSmart}
                             onUpdateStatus={updatePostStatus}
                             onDeletePost={handleDeletePost}
-                            onNavigateAdvanced={(id) => navigate(`/brand/editor/${id}`)}
+                            onNavigateAdvanced={handleNavigateAdvancedMemo}
                         />
                     ) : (
                         <BrandWorkbenchView 

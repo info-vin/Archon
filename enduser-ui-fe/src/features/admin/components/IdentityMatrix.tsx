@@ -84,12 +84,20 @@ export const IdentityMatrix: React.FC = () => {
         return map;
     }, [rbacMatrix]);
 
-    if (loading) return <div className="p-12 text-center text-muted-foreground italic">Loading Identity Matrix...</div>;
-
     // ⚡ Bolt: Memoize callback to prevent breaking React.memo shallow comparison on list items during parent re-renders
     const getPermissionsForRole = React.useCallback((roleName: string) => {
         return rbacMap.get(roleName.toLowerCase()) || [];
     }, [rbacMap]);
+
+    const handleToggleSelect = React.useCallback((id: string) => {
+        setSelectedUserId(prev => prev === id ? null : id);
+    }, []);
+
+    const handleEditUser = React.useCallback((emp: Employee) => {
+        setEditingUser(emp);
+    }, []);
+
+    if (loading) return <div className="p-12 text-center text-muted-foreground italic">Loading Identity Matrix...</div>;
 
     return (
         <div className="space-y-6">
@@ -137,8 +145,8 @@ export const IdentityMatrix: React.FC = () => {
                                         key={emp.id}
                                         emp={emp}
                                         isSelected={selectedUserId === emp.id}
-                                        onToggleSelect={() => setSelectedUserId(selectedUserId === emp.id ? null : emp.id)}
-                                        onEdit={() => setEditingUser(emp)}
+                                        onToggleSelect={handleToggleSelect}
+                                        onEdit={handleEditUser}
                                         effectivePermissions={getPermissionsForRole(emp.role)}
                                     />
                                 ))}
