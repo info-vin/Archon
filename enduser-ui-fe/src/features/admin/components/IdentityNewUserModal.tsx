@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '@/services/api.ts';
-import { Employee, EmployeeRole } from '@/types.ts';
+import { Employee, EmployeeRole, FORMATTED_ROLES } from '@/types.ts';
 import { XIcon } from '@/components/Icons.tsx';
 
 export const IdentityNewUserModal: React.FC<{ onClose: () => void; onSave: (newUser: Employee) => void; }> = ({ onClose, onSave }) => {
@@ -49,7 +49,7 @@ export const IdentityNewUserModal: React.FC<{ onClose: () => void; onSave: (newU
                     <div>
                         <label htmlFor="role-new" className="block text-sm font-medium mb-1">Role Assignment</label>
                         <select id="role-new" value={role} onChange={e => setRole(e.target.value as EmployeeRole)} className={inputClass}>
-                            {Object.values(EmployeeRole).map(r => <option key={r} value={r}>{r}</option>)}
+                            {FORMATTED_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                         </select>
                     </div>
                      <div>

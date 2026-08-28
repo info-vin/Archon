@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/services/api.ts';
-import { Employee, EmployeeRole } from '@/types.ts';
+import { Employee, EmployeeRole, FORMATTED_ROLES } from '@/types.ts';
 import { XIcon, CheckCircleIcon, KeyIcon, XCircleIcon } from '@/components/Icons.tsx';
 
 // --- ROLE TO PERMISSION MAPPING (Sync with Backend permissions.py) ---
@@ -74,7 +74,7 @@ export const IdentityEditUserModal: React.FC<{ user: Employee; onClose: () => vo
                         <div>
                             <label htmlFor="role" className="block text-xs font-bold uppercase text-muted-foreground mb-1">Base Role</label>
                             <select id="role" value={role} onChange={e => setRole(e.target.value as EmployeeRole)} className={inputClass}>
-                                {Object.values(EmployeeRole).map(r => <option key={r} value={r}>{r}</option>)}
+                                {FORMATTED_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                             </select>
                         </div>
                         <div>

@@ -26,6 +26,18 @@ export const ROLE_DISPLAY_NAMES: Record<string, string> = {
     [EmployeeRole.AI_AGENT]: 'AI AGENT'
 };
 
+// ⚡ Bolt: Pre-calculate an array of formatted roles to eliminate O(N) regex `.replace().toUpperCase()` inside `.map()` render loops
+export const FORMATTED_ROLES = Object.values(EmployeeRole).map(role => ({
+    value: role,
+    label: ROLE_DISPLAY_NAMES[role] || (role as string).replace(/_/g, ' ').toUpperCase()
+}));
+
+// ⚡ Bolt: Static dictionary lookup for O(1) single-role formatting
+export const FORMATTED_ROLES_MAP = FORMATTED_ROLES.reduce((acc, curr) => {
+    acc[curr.value] = curr.label;
+    return acc;
+}, {} as Record<string, string>);
+
 export enum TaskStatus {
   TODO = 'todo',
   DOING = 'doing',

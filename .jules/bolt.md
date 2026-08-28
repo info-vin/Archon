@@ -220,3 +220,7 @@
 ## 2024-11-21 - Memoizing callback props to maintain list virtualization performance
 **Learning:** When passing locally defined functions (like `getPermissionsForRole`) down to list item components that are rendered dynamically via `.map()`, creating a new function reference on every parent render destroys any potential for React's shallow comparison (like in `React.memo`) to optimize rendering. This forces $O(N)$ re-renders of list item subtrees even when their explicit props haven't conceptually changed.
 **Action:** Always wrap functions passed to list items in `React.useCallback`, ensuring correct dependencies, to preserve the stable function identity required for child rendering optimizations.
+
+## 2024-11-21 - Optimize repetitive enum string manipulations in map iterations
+**Learning:** Using `Object.values(Enum).map(v => v.replace(/_/g, ' ').toUpperCase())` inside of a React render loop (e.g. for dropdowns in modals) causes unnecessary O(N) regex evaluation and string allocation for every render, creating a performance bottleneck when rendering lists.
+**Action:** Extract this operation into a pre-calculated static array and a dictionary map in the types definition file to perform it exactly once at load time, and reuse the pre-calculated list inside render cycles, changing O(N) runtime overhead to O(1) property lookup.
