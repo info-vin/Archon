@@ -59,7 +59,7 @@ async def search_jobs(keyword: str = Query(...), limit: int = 8, page: int = Que
 async def list_leads(current_user: UserProfileDTO = Depends(get_current_user)) -> list[LeadResponse]:
     user_id = str(current_user.id)
     role = current_user.role
-    logger.info(f"DEBUG: list_leads accessed by UserID: {user_id}, Role: {role}")
+    logger.debug(f"DEBUG: list_leads accessed by UserID: {user_id}, Role: {role}")
     service = MarketingService()
     leads = await service.list_leads(user_id=user_id, role=role)
     return [LeadResponse(**lead) for lead in leads]

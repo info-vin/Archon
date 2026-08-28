@@ -87,7 +87,7 @@ export const EditorBody: React.FC<EditorBodyProps> = ({
           </button>
           
           <AudioPlayer 
-            text={content.substring(0, 500) || title} 
+            text={content.replace(/!\[.*?\]\(.*?\)/g, '').trim().substring(0, 500) || title} 
             scene="marketing_pitch" 
             className="shrink-0"
           />

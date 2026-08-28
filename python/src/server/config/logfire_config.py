@@ -127,6 +127,17 @@ def setup_logfire(
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("transformers").setLevel(logging.ERROR)
 
+    # Silence APScheduler verbose startup logs
+    logging.getLogger("apscheduler").setLevel(logging.WARNING)
+    logging.getLogger("apscheduler.scheduler").setLevel(logging.WARNING)
+
+    # Filter Uvicorn access logs for frequent health checks
+    class HealthCheckFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            return "/api/system/fallback/status" not in record.getMessage()
+
+    logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
+
     _logfire_configured = True
     logging.info(f"📋 Logging configured (Logfire: {'enabled' if _logfire_enabled else 'disabled'})")
 

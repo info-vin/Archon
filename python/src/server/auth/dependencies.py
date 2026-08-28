@@ -144,8 +144,8 @@ def requires_permission(permission: str) -> Any:
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.info(f"🛡️ [RBAC Check] User: {current_user.email} | Role: {role} | Checking: {permission}")
-        logger.info(f"🔑 [RBAC Matrix] Available for {role}: {user_permissions}")
+        logger.debug(f"🛡️ [RBAC Check] User: {current_user.email} | Role: {role} | Checking: {permission}")
+        logger.debug(f"🔑 [RBAC Matrix] Available for {role}: {user_permissions}")
 
         if permission not in user_permissions:
             raise HTTPException(

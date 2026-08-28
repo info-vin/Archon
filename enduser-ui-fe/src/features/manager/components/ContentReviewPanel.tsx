@@ -102,7 +102,9 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     className="w-full h-48 object-cover rounded-lg mb-6 shadow-md" 
                                 />
                             )}
-                            <ReactMarkdown>{selectedContent.content || ''}</ReactMarkdown>
+                            <div className="prose prose-indigo dark:prose-invert max-w-none">
+                                <ReactMarkdown>{selectedContent.content || ''}</ReactMarkdown>
+                            </div>
                         </div>
 
                         {isRejecting ? (

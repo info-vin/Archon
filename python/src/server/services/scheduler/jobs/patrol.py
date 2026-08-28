@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 async def run_system_probe() -> None:
     """Triggering System Probe via HealthService."""
-    logger.info("🤖 Clockwork: Triggering System Probe via HealthService...")
+    logger.debug("🤖 Clockwork: Triggering System Probe via HealthService...")
     try:
         from src.server.repositories.base_repository import BaseRepository
         from src.server.services.health_service import HealthService
@@ -31,7 +31,7 @@ async def run_system_probe() -> None:
         msg = "System Probe Passed" if success else "System Probe FAILED"
 
         if success:
-            logger.info(f"✅ Clockwork: {msg}")
+            logger.debug(f"✅ Clockwork: {msg}")
         else:
             logger.error(f"❌ Clockwork: {msg} | Details: {result.get('details', {})}")
 
@@ -69,7 +69,7 @@ async def run_system_probe() -> None:
 
 async def run_log_patrol() -> None:
     """Scans logs for errors and dispatches DevBot."""
-    logger.info("👮 Clockwork: Starting Log Patrol...")
+    logger.debug("👮 Clockwork: Starting Log Patrol...")
     try:
         from src.server.repositories.base_repository import BaseRepository
         from src.server.services.agent_service import agent_service
@@ -90,7 +90,7 @@ async def run_log_patrol() -> None:
         )
         errors = res.get("data", []) if success else []
         if not errors:
-            logger.info("👮 Clockwork: No recent errors found. All systems nominal.")
+            logger.debug("👮 Clockwork: No recent errors found. All systems nominal.")
             return
 
         logger.info(f"👮 Clockwork: Detected {len(errors)} errors. Analyzing...")
@@ -184,7 +184,7 @@ def is_hf_awake() -> bool:
 
 async def run_model_verification() -> None:
     """Verifies that the system is using the safe Lite model to prevent 429 errors."""
-    logger.info("🤖 Clockwork: Running Model Verification...")
+    logger.debug("🤖 Clockwork: Running Model Verification...")
     try:
         from src.server.utils import get_supabase_client
 
@@ -223,7 +223,10 @@ async def run_model_verification() -> None:
         )
         log_level = "INFO" if is_safe else "WARNING"
 
-        logger.info(f"{'✅' if is_safe else '⚠️'} Clockwork: {msg}")
+        if is_safe:
+            logger.debug(f"✅ Clockwork: {msg}")
+        else:
+            logger.warning(f"⚠️ Clockwork: {msg}")
 
         try:
             from src.server.repositories.base_repository import BaseRepository
