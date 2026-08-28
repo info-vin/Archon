@@ -120,8 +120,10 @@ class SinglePageCrawlStrategy:
                         exclude_all_images=False,
                         # Still remove popups
                         remove_overlay_elements=True,
-                        # Process iframes for complete content
-                        process_iframes=True,
+                        # Do NOT process iframes (often contain Marketo/tracking noise)
+                        process_iframes=False,
+                        # Aggressively exclude common UI noise (nav, footer, chatbots, banners, scripts)
+                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk", "[id*='chatbot']", "[class*='chatbot']", "[class*='assistant']"],
                     )
                 else:
                     # Configuration for regular sites
@@ -133,6 +135,9 @@ class SinglePageCrawlStrategy:
                         page_timeout=45000,  # 45 seconds timeout
                         delay_before_return_html=0.3,  # Reduced from 1.0s
                         scan_full_page=True,  # Trigger lazy loading
+                        remove_overlay_elements=True,
+                        process_iframes=False,
+                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk"],
                     )
 
                 logger.info(f"Crawling {url} (attempt {attempt + 1}/{retry_count})")
