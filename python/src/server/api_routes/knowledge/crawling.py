@@ -100,7 +100,7 @@ async def refresh_knowledge_item(
         from src.server.services.crawler_manager import get_crawler
         from src.server.services.crawling import CrawlOrchestrationService
 
-        crawler = get_crawler()
+        crawler = await get_crawler()
         crawl_service = CrawlOrchestrationService(crawler=crawler, supabase_client=get_supabase_client())
         crawl_service.set_progress_id(progress_id)
 
@@ -154,7 +154,7 @@ async def crawl_knowledge_item(
         from src.server.services.crawler_manager import get_crawler
         from src.server.services.crawling import CrawlOrchestrationService
 
-        crawler = get_crawler()
+        crawler = await get_crawler()
         orchestration_service = CrawlOrchestrationService(crawler, get_supabase_client())
         orchestration_service.set_progress_id(progress_id)
 
