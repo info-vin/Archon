@@ -179,6 +179,7 @@ async def get_task(task_id: str, current_user: UserProfileDTO = Depends(get_curr
 
 
 @router.put("/tasks/{task_id}")
+@router.patch("/tasks/{task_id}")
 async def update_task(task_id: str, req: UpdateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
     u_role = current_user.role.lower()
     fields = {k: v for k, v in req.model_dump().items() if v is not None}

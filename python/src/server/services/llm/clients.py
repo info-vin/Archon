@@ -154,7 +154,7 @@ async def get_llm_client(
                 client = openai.AsyncOpenAI(api_key=resolved_api_key or "unused", base_url=base_url)
 
         if client and hasattr(client, "chat") and hasattr(client.chat, "completions"):
-            yield UsageTrackingClient(client, user_id, request_id or str(uuid.uuid4()), provider_name or "unknown")
+            yield UsageTrackingClient(client, user_id or "system", request_id or str(uuid.uuid4()), provider_name or "unknown")
         else:
             yield client
 

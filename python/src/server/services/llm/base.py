@@ -124,7 +124,7 @@ class UsageTrackingCompletions:
             finally:
                 await client.close()
 
-        @retry_with_backoff(max_retries=5, initial_delay=2.0)  # type: ignore
+        @retry_with_backoff(max_retries=5, initial_delay=2.0)
         async def _execute(override_key: str | None = None) -> Any:
             original_client = self._original._client
             original_api_key = original_client.api_key
