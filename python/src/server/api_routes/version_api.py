@@ -37,7 +37,7 @@ class VersionCheckResponse(BaseModel):
     release_notes: str | None = Field(default=None, description="Markdown changelog or release body")
     published_at: datetime | None = Field(default=None, description="Publication timestamp of the release")
     check_error: str | None = Field(default=None, description="Error message if update check failed")
-    assets: list[dict[str, Any]] | None = Field(default=None, description="List of release assets")
+    assets: list[ReleaseAsset] | None = Field(default=None, description="List of release assets")
     author: str | None = Field(default=None, description="GitHub author username of the release")
 
 
