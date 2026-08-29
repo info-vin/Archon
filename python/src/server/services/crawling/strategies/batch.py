@@ -69,7 +69,6 @@ class BatchCrawlStrategy:
                 # CRAWL_MAX_CONCURRENT: Pages to crawl in parallel within this single crawl operation
                 # (Different from server-level CONCURRENT_CRAWL_LIMIT which limits total crawl operations)
                 max_concurrent = int(settings.get("CRAWL_MAX_CONCURRENT", "5"))
-            memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "80"))
             check_interval = float(settings.get("DISPATCHER_CHECK_INTERVAL", "0.5"))
         except (ValueError, KeyError, TypeError) as e:
             # Critical configuration errors should fail fast
@@ -81,7 +80,6 @@ class BatchCrawlStrategy:
             batch_size = 50
             if max_concurrent is None:
                 max_concurrent = 5  # Safe default to prevent memory issues
-            memory_threshold = 80.0
             check_interval = 0.5
             settings = {}  # Empty dict for defaults
 
@@ -117,7 +115,9 @@ class BatchCrawlStrategy:
             )
 
         dispatcher = MemoryAdaptiveDispatcher(
-            memory_threshold_percent=memory_threshold,
+            memory_threshold_percent=101.0,  # Disables task-halting memory pressure mode
+            critical_threshold_percent=101.0, # Disables task requeuing
+            recovery_threshold_percent=101.0,
             check_interval=check_interval,
             max_session_permit=max_concurrent,
             memory_wait_timeout=None,  # Disables the 600s crash limit
