@@ -125,6 +125,7 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 ### 08-29: 爬蟲層級與 OneTrust 解鎖暨自我連結過濾修復 (Phase 5.11.9)
+- **Crawl4AI 記憶體防禦超時自癒 (MemoryError Fix)**：鑑識出手動大批次爬蟲 (300+ 頁面) 失敗的根本原因，為 `crawl4ai` 的 `MemoryAdaptiveDispatcher` 中寫死的 600 秒防護中斷 (`memory_wait_timeout`)。為適應 Docker 容器環境，已將 `batch.py` 替換為無記憶體輪詢的 `SemaphoreDispatcher`，並將最大併發安全預設值降為 `5`，徹底解除長時爬蟲的定時炸彈。
 - **爬蟲層級與 RBAC 限制解鎖**：修正了 `crawling.py` 路由未向 `orchestrate_crawl` 傳遞 `user_role` 導致 `URLTypeRouter` 誤判其為 `None` 並強制退回 `1` 層深度的 Bug。同時調整了 `rbac_service.py`，在資料庫設定缺失時，針對 `admin` / `system_admin` 角色提供預設為 `5` 的最大爬取深度放行。
 - **OneTrust 彈窗阻擋硬化**：在 `single_page.py` 的 `CrawlerRunConfig` 中啟用了 `remove_consent_popups=True`，並注入了針對 OneTrust 同意按鈕 (`#onetrust-accept-btn-handler`) 的 `js_code_before_wait` 自動模擬點擊腳本，徹底解決 Cookie 宣告全螢幕遮罩造成的網頁加載阻塞。
 - **自我連結過濾 Bug 修復**：修正了 `url_handler.py` 中 `is_self_link` 誤將「同網域連結 (Same Domain)」當作「自我連結」而全部過濾的邏輯 Bug。將其修正為精準的 URL 路徑比對（忽略 anchor），釋放了 sitemap 與 llms.txt 對同網域子手冊連結的批次爬取能力。
