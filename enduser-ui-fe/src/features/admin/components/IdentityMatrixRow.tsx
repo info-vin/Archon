@@ -10,7 +10,7 @@ interface IdentityMatrixRowProps {
     effectivePermissions: string[];
 }
 
-export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = ({
+export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = React.memo(({
     emp,
     isSelected,
     onToggleSelect,
@@ -77,4 +77,4 @@ export const IdentityMatrixRow: React.FC<IdentityMatrixRowProps> = ({
             )}
         </React.Fragment>
     );
-};
+});
