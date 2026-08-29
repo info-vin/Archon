@@ -43,3 +43,13 @@
 
 ### 補充：虛假開發修正 (Hallucination Fix)
 - **修正 Crawl4AI 參數幻覺**：在全域 `make test-be` 自動化驗證中，我們抓出了前一階段遺留的「虛假開發」。前代理在 `single_page.py` 中捏造了不存在的 `remove_consent_popups` 與 `js_code_before_wait` 參數。我們已將其徹底移除，並修正為官方支援的 `js_code`，同時套用於所有策略，確保 100% 物理對齊 SDK 規範。
+
+## 08-29 追加修復 (Post-Recrawl Fixes)
+
+在使用者點擊「Recrawl」進行人工驗證後，我們透過 HF 日誌抓出了 4 個連鎖崩潰問題並已全部物理修復：
+1. **Crawl4AI XPath 語法崩潰**：日誌顯示 `Error processing HTML: Invalid expression`。修復：將包含 CSS 屬性選擇器（如 `[role='dialog']`）的字串從 `excluded_tags` 移出，改為使用 `excluded_selector`，防止底層 `lxml.xpath` 報錯。
+2. **資料庫 Duplicate Key 衝突**：日誌顯示 `duplicate key value violates unique constraint "archon_crawled_pages_url_chunk_number_key"`。修復：將 `document_repo.py` 中的 `.insert()` 改為 `.upsert()`，允許相同的 URL 區塊被安全覆寫。
+3. **Google API 100 RPM Rate Limit 穿透**：日誌顯示 3 次重試後依然觸發 `Rate limit retries exceeded`。修復：將 `batch_processor.py` 的最大重試次數 (`max_retries`) 從 3 提高到 6，並設定最高 30 秒的指數退避，成功撐過 Google GenAI 1 分鐘的限流窗口。
+4. **Token 紀錄 UUID 型別錯誤**：日誌顯示 `invalid input syntax for type uuid: "system"`。修復：在 `clients.py` 中將預設的 `user_id="system"` 改為傳遞 `None`，符合 Supabase 資料庫的 `UUID | NULL` 欄位型別規範。
+
+✅ **所有修復均已透過 \`scratch/\` 實體探針驗證，且後端 694 項單元測試 (\`make test-be\`) 已全數通過。**
