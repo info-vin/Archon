@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '@/services/api';
-import { Employee, EmployeeRole, ROLE_DISPLAY_NAMES } from '@/types';
+import { Employee, EmployeeRole, FORMATTED_ROLES } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { XIcon, RefreshCwIcon, ShieldCheckIcon, KeyIcon } from '@/components/Icons';
 
@@ -108,7 +108,7 @@ export const ManageMemberModal: React.FC<ManageMemberModalProps> = ({ member, on
                                 onChange={e => setRole(e.target.value as EmployeeRole)}
                                 className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                             >
-                                {Object.values(EmployeeRole).map(r => <option key={r} value={r}>{ROLE_DISPLAY_NAMES[r] || r.replace('_', ' ').toUpperCase()}</option>)}
+                                {FORMATTED_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                             </select>
                         </div>
                         <button 

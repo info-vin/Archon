@@ -1,5 +1,5 @@
 import React from 'react';
-import { Employee, ROLE_DISPLAY_NAMES } from '@/types';
+import { Employee, FORMATTED_ROLES_MAP } from '@/types';
 import UserAvatar from '@/components/UserAvatar';
 import { ShieldCheckIcon, MailIcon, BadgeCheckIcon, FileTextIcon } from '@/components/Icons';
 
@@ -47,7 +47,7 @@ export const TeamMemberCard: React.FC<TeamMemberCardProps> = React.memo(({
                         <p className="text-sm text-gray-500 truncate">{member.position}</p>
                         <div className={`mt-1 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${roleClasses}`}>
                             <BadgeCheckIcon className="w-3 h-3" />
-                            <span className="truncate">{ROLE_DISPLAY_NAMES[member.role] || member.role.replace('_', ' ').toUpperCase()}</span>
+                            <span className="truncate">{FORMATTED_ROLES_MAP[member.role] || member.role.replace(/_/g, ' ').toUpperCase()}</span>
                         </div>
                     </div>
                 </div>
