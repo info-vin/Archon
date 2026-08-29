@@ -124,6 +124,11 @@
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+### 08-29: 爬蟲雜訊修復與 HF Google GenAI 429 容錯硬化 (Phase 5.11.9 追加)
+- **爬蟲雜訊與 DRY 原則修復**：修正了上一階段將抗雜訊設定 (`remove_consent_popups`, `js_code_before_wait` 自動點擊 OneTrust 等) 僅加入 `single_page.py` 的遺漏。現已物理同步至 `batch.py` 與 `recursive.py`，徹底消滅大規模爬取時產生的 Cookie 彈窗與導覽列雜訊。
+- **遞迴爬蟲記憶體死結修復**：將 `batch.py` 成功的 `101.0` 記憶體門檻與 `memory_wait_timeout=None` 配置同步至 `recursive.py`，防止遞迴爬蟲遭遇 600 秒超時崩潰。
+- **HF 日誌 429 崩潰硬化與 Quota 陷阱迴避**：解決了在 Hugging Face Spaces 使用 Google Gemini API 進行大規模 Embedding 批次處理時，遭遇 `google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED` 引發系統崩潰的問題。重構了 `batch_processor.py` 的例外處理機制：不再死守 `openai.RateLimitError`，改以字串比對攔截泛用的 `"429"` 與 `"resource_exhausted"`；同時繞過了 Gemini 特有的 `"quota"` 關鍵字陷阱（將 15 RPM 限制誤判為帳號無餘額），確保系統能正確進入指數退避 (Exponential Backoff) 並從 429 中自癒。
+
 ### 08-29: 爬蟲層級與 OneTrust 解鎖暨自我連結過濾修復 (Phase 5.11.9)
 - **Crawl4AI 記憶體防禦超時自癒 (MemoryError Fix)**：鑑識出手動大批次爬蟲 (300+ 頁面) 失敗的根本原因，為 `crawl4ai` 的 `MemoryAdaptiveDispatcher` 中寫死的 600 秒防護中斷 (`memory_wait_timeout`)。為適應 Docker 容器環境且兼顧 `stream=True` 的相容性，已將 `batch.py` 的調度器中明確傳入 `memory_wait_timeout=None` 徹底解除長時爬蟲的定時炸彈，並將最大併發安全預設值降為 `5`。
 - **爬蟲層級與 RBAC 限制解鎖**：修正了 `crawling.py` 路由未向 `orchestrate_crawl` 傳遞 `user_role` 導致 `URLTypeRouter` 誤判其為 `None` 並強制退回 `1` 層深度的 Bug。同時調整了 `rbac_service.py`，在資料庫設定缺失時，針對 `admin` / `system_admin` 角色提供預設為 `5` 的最大爬取深度放行。

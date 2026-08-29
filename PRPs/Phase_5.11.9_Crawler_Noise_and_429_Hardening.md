@@ -40,3 +40,6 @@
 ### 人工驗證 (Manual Verification)
 - **雜訊修復驗證**：您可以再次觸發批次爬蟲（或透過 UI 重新爬取單一損壞的 UiPath 頁面），驗證「Confirm My Choices」與「searchSearchclose」等雜訊是否已消失，且乾淨的文件內容被正確提取。
 - **429 修復驗證**：在 Hugging Face Spaces 環境下執行大規模爬蟲時，背景日誌將在觸發 Gemini 15 RPM 限制時，優雅地印出 `search_logger.warning("Rate limit hit... Waiting X s before retry")`，而不是直接拋出 `google.genai.errors.ClientError` 並導致系統崩潰。
+
+### 補充：虛假開發修正 (Hallucination Fix)
+- **修正 Crawl4AI 參數幻覺**：在全域 `make test-be` 自動化驗證中，我們抓出了前一階段遺留的「虛假開發」。前代理在 `single_page.py` 中捏造了不存在的 `remove_consent_popups` 與 `js_code_before_wait` 參數。我們已將其徹底移除，並修正為官方支援的 `js_code`，同時套用於所有策略，確保 100% 物理對齊 SDK 規範。

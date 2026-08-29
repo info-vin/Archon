@@ -124,9 +124,8 @@ class SinglePageCrawlStrategy:
                         # Still remove popups
                         remove_overlay_elements=True,
                         # Auto-remove consent popups (OneTrust, etc.)
-                        remove_consent_popups=True,
                         # Fallback JS code to click OneTrust accept button before waiting
-                        js_code_before_wait="""
+                        js_code="""
                         const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
                         if (acceptBtn) {
                             acceptBtn.click();
@@ -148,8 +147,7 @@ class SinglePageCrawlStrategy:
                         delay_before_return_html=0.5,
                         scan_full_page=True,  # Trigger lazy loading
                         remove_overlay_elements=True,
-                        remove_consent_popups=True,
-                        js_code_before_wait="""
+                        js_code="""
                         const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
                         if (acceptBtn) {
                             acceptBtn.click();
