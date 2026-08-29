@@ -82,7 +82,7 @@ const BrandPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                        <button onClick={loadData} aria-label="Refresh brand data" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <button onClick={loadData} aria-label="Refresh brand data" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                             <RefreshCwIcon className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
@@ -135,7 +135,7 @@ const BrandPage: React.FC = () => {
                             <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
                                 {editingPost ? 'Edit Asset' : 'New Asset'}
                             </h3>
-                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
+                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
                         </div>
                         <CreatePostForm 
                             post={editingPost} 
@@ -178,7 +178,7 @@ const CreatePostForm: React.FC<{ post?: BlogPost | null, onSuccess: () => void, 
                 <label htmlFor="post-content" className="sr-only">Content</label>
                 <textarea id="post-content" value={content} onChange={e => setContent(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl min-h-[200px] outline-none focus:ring-2 focus:ring-indigo-500 custom-scrollbar resize-none" placeholder="Content" />
             </div>
-            <button type="submit" disabled={loading} aria-disabled={loading} aria-busy={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none">
+            <button type="submit" disabled={loading} aria-disabled={loading} aria-busy={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-indigo-200 dark:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                 {loading ? 'Saving...' : 'SAVE CHANGES'}
             </button>
         </form>

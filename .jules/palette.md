@@ -68,3 +68,7 @@
 ## 2026-08-28 - Missing Accessible Labels on action buttons with text and icons
 **Learning:** Action buttons that contain both text and icons (e.g., "Copy Text" and "Share" in `LeadPitchDrawer.tsx`) sometimes lack explicit `aria-label` attributes. While the text provides visual context, ensuring screen readers announce the action clearly is important for full accessibility, especially if the text changes based on state (e.g., "Copied").
 **Action:** When adding or reviewing action buttons, consider adding an explicit `aria-label` to provide a clear and consistent accessible name, even if there is text present, to ensure robust screen reader support.
+
+## 2025-02-27 - Add keyboard focus indicators to Brand Hub controls
+**Learning:** Found that custom or native buttons in `BrandPage.tsx` such as the "Refresh", "Close modal", and "Save changes" buttons were missing adequate or complete `focus-visible` outline styles, which decreases keyboard navigation accessibility.
+**Action:** Applied standard `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` to these buttons. Will continue explicitly reviewing interactive element states (focus, disabled, active) when inspecting or implementing custom modals and header controls.
