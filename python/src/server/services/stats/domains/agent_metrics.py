@@ -1,9 +1,28 @@
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 from ....repositories.base_repository import BaseRepository
 from ...shared_constants import AgentNames, StatusEnum
+
+
+class CommanderTrendDTO(TypedDict):
+    date: str
+    bob_tokens: int
+    decision_hours: float
+
+class ForceReadinessTrendDTO(TypedDict):
+    date: str
+    actual: int
+    baseline: float
+
+class ForceReadinessDTO(TypedDict):
+    baseline: float
+    trend: list[ForceReadinessTrendDTO]
+    total_done_90d: NotRequired[int]
+    automation_rate: NotRequired[float]
+    timestamp: NotRequired[str]
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +36,7 @@ class AgentMetrics(BaseRepository):
         super().__init__(supabase_client)
         self.supabase: Any = self.supabase_client
 
-    async def get_commander_trends(self) -> list[dict[str, Any]]:
+    async def get_commander_trends(self) -> list[CommanderTrendDTO]:
         """Strategic 30-day trend data including full Velocity (GAP-034)."""
         thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
@@ -97,7 +116,7 @@ class AgentMetrics(BaseRepository):
             for date in all_dates
         ]
 
-    async def get_force_readiness(self) -> dict[str, Any]:
+    async def get_force_readiness(self) -> ForceReadinessDTO:
         """Combat Power HUD: 90-Day Full Range."""
         try:
             now = datetime.now(UTC)
