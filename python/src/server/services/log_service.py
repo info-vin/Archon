@@ -7,6 +7,8 @@ This module provides business logic for logging Gemini interactions.
 from datetime import datetime
 from typing import Any, NotRequired, TypedDict
 
+from supabase import Client
+
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
@@ -30,7 +32,7 @@ class LogEntryResultDTO(TypedDict):
 class LogService(BaseRepository):
     """Service class for logging operations"""
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         """Initialize with optional supabase client"""
         client = supabase_client or get_supabase_client()
         super().__init__(client)
