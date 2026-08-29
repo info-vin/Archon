@@ -124,6 +124,12 @@
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+### 08-29: 爬蟲層級與 OneTrust 解鎖暨自我連結過濾修復 (Phase 5.11.9)
+- **爬蟲層級與 RBAC 限制解鎖**：修正了 `crawling.py` 路由未向 `orchestrate_crawl` 傳遞 `user_role` 導致 `URLTypeRouter` 誤判其為 `None` 並強制退回 `1` 層深度的 Bug。同時調整了 `rbac_service.py`，在資料庫設定缺失時，針對 `admin` / `system_admin` 角色提供預設為 `5` 的最大爬取深度放行。
+- **OneTrust 彈窗阻擋硬化**：在 `single_page.py` 的 `CrawlerRunConfig` 中啟用了 `remove_consent_popups=True`，並注入了針對 OneTrust 同意按鈕 (`#onetrust-accept-btn-handler`) 的 `js_code_before_wait` 自動模擬點擊腳本，徹底解決 Cookie 宣告全螢幕遮罩造成的網頁加載阻塞。
+- **自我連結過濾 Bug 修復**：修正了 `url_handler.py` 中 `is_self_link` 誤將「同網域連結 (Same Domain)」當作「自我連結」而全部過濾的邏輯 Bug。將其修正為精準的 URL 路徑比對（忽略 anchor），釋放了 sitemap 與 llms.txt 對同網域子手冊連結的批次爬取能力。
+- **資料庫 Upsert 語法修正**：修正了 `storage_ops.py` 中 `upsert().eq()` 的 Postgrest 鏈結語法錯誤（`SyncQueryRequestBuilder` 缺少 `eq` 屬性），改為在資料體中傳入 `source_id` 並移除 `.eq()`。
+
 ### 08-28: 爬蟲引擎協程斷層修復與全站日誌降噪公證 (Phase 5.11.8)
 - **爬蟲引擎物理斷層修復 (Coroutine Crash Fix)**: 鑑識出 UI 介面新增 Knowledge URLs 卻無法爬取的根本原因。`crawling.py` 路由在實例化 `CrawlOrchestrationService` 時遺漏了 `await`，導致傳入未執行的 Coroutine 而在背景靜默崩潰 (`AttributeError: 'coroutine' object has no attribute 'arun'`)。修補了兩處 `await get_crawler()`，徹底接通了前端 UI 到後端爬蟲與 Supabase `sources` 寫入的生命週期。
 - **全站日誌降噪 (System Log Reduction)**: 根除「日誌海嘯」，將 `apscheduler` 的常規啟動廢話透過 `logfire_config.py` 壓制為 `WARNING`，並透過掛載 `HealthCheckFilter` 濾除 Uvicorn 頻繁輪詢 `/api/system/fallback/status` 的存取紀錄；同時將 RBAC 攔截器與 Clockwork 例行巡邏等大量無效 `INFO` 降級為 `DEBUG`，確保日誌清晰可讀且不影響告警（保留 `is_safe=False` 時的 `logger.warning` 觸發）。
