@@ -224,3 +224,6 @@
 ## 2024-11-21 - Optimize repetitive enum string manipulations in map iterations
 **Learning:** Using `Object.values(Enum).map(v => v.replace(/_/g, ' ').toUpperCase())` inside of a React render loop (e.g. for dropdowns in modals) causes unnecessary O(N) regex evaluation and string allocation for every render, creating a performance bottleneck when rendering lists.
 **Action:** Extract this operation into a pre-calculated static array and a dictionary map in the types definition file to perform it exactly once at load time, and reuse the pre-calculated list inside render cycles, changing O(N) runtime overhead to O(1) property lookup.
+## 2024-05-19 - IdentityMatrixRow React.memo Optimization
+**Learning:** In React components that render large lists inside a `.map()` (like `IdentityMatrix`), inline handler functions (e.g., `onEdit={() => setEditingUser(emp)}`) break the shallow comparison of `React.memo` wrapped list items on every parent render, completely defeating the purpose of memoization and causing O(N) renders.
+**Action:** Always wrap the list item component in `React.memo` AND ensure that any callback handlers passed down from the parent map loop are either hoisted and memoized via `React.useCallback` or properly curried so they retain stable identities across renders.

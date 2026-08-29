@@ -89,6 +89,16 @@ export const IdentityMatrix: React.FC = () => {
         return rbacMap.get(roleName.toLowerCase()) || [];
     }, [rbacMap]);
 
+    // ⚡ Bolt Optimization: Wrap inline handlers in useCallback to prevent breaking React.memo
+    // in the IdentityMatrixRow component on every parent render
+    const handleToggleSelectUser = React.useCallback((id: string) => {
+        setSelectedUserId(prev => prev === id ? null : id);
+    }, []);
+
+    const handleEditUser = React.useCallback((emp: Employee) => {
+        setEditingUser(emp);
+    }, []);
+
     if (loading) return <div className="p-12 text-center text-muted-foreground italic">Loading Identity Matrix...</div>;
 
     return (
@@ -137,8 +147,8 @@ export const IdentityMatrix: React.FC = () => {
                                         key={emp.id}
                                         emp={emp}
                                         isSelected={selectedUserId === emp.id}
-                                        onToggleSelect={() => setSelectedUserId(selectedUserId === emp.id ? null : emp.id)}
-                                        onEdit={() => setEditingUser(emp)}
+                                        onToggleSelect={() => handleToggleSelectUser(emp.id)}
+                                        onEdit={() => handleEditUser(emp)}
                                         effectivePermissions={getPermissionsForRole(emp.role)}
                                     />
                                 ))}
