@@ -7,7 +7,7 @@ Handles batch crawling of multiple URLs in parallel.
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from crawl4ai import CacheMode, CrawlerRunConfig, SemaphoreDispatcher
+from crawl4ai import CacheMode, CrawlerRunConfig, MemoryAdaptiveDispatcher
 
 from ....config.logfire_config import get_logger
 from ...credential_service import credential_service
@@ -69,7 +69,8 @@ class BatchCrawlStrategy:
                 # CRAWL_MAX_CONCURRENT: Pages to crawl in parallel within this single crawl operation
                 # (Different from server-level CONCURRENT_CRAWL_LIMIT which limits total crawl operations)
                 max_concurrent = int(settings.get("CRAWL_MAX_CONCURRENT", "5"))
-
+            memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "80"))
+            check_interval = float(settings.get("DISPATCHER_CHECK_INTERVAL", "0.5"))
         except (ValueError, KeyError, TypeError) as e:
             # Critical configuration errors should fail fast
             logger.error(f"Invalid crawl settings format: {e}", exc_info=True)
@@ -80,7 +81,8 @@ class BatchCrawlStrategy:
             batch_size = 50
             if max_concurrent is None:
                 max_concurrent = 5  # Safe default to prevent memory issues
-
+            memory_threshold = 80.0
+            check_interval = 0.5
             settings = {}  # Empty dict for defaults
 
         # Check if any URLs are documentation sites
@@ -114,9 +116,11 @@ class BatchCrawlStrategy:
                 scan_full_page=True,
             )
 
-        dispatcher = SemaphoreDispatcher(
-            semaphore_count=max_concurrent,
+        dispatcher = MemoryAdaptiveDispatcher(
+            memory_threshold_percent=memory_threshold,
+            check_interval=check_interval,
             max_session_permit=max_concurrent,
+            memory_wait_timeout=None,  # Disables the 600s crash limit
         )
 
         async def report_progress(progress_val: int, message: str, **kwargs):
