@@ -51,6 +51,9 @@ class SinglePageCrawlStrategy:
         elif "milkdown" in url_lower:
             # Milkdown uses a custom rendering system
             return 'main, article, .prose, [class*="content"]'
+        elif "uipath" in url_lower:
+            # UiPath Documentation specific content selector
+            return "#DocContainer, article"
         else:
             # Simplified generic selector - just wait for body to have content
             return "body"
