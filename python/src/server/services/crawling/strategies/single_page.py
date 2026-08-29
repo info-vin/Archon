@@ -102,7 +102,7 @@ class SinglePageCrawlStrategy:
                 if is_doc_site:
                     wait_selector = self._get_wait_selector_for_docs(url)
                     logger.info(f"Detected documentation site, using wait selector: {wait_selector}")
-
+ 
                     crawl_config = CrawlerRunConfig(
                         cache_mode=cache_mode,
                         stream=True,  # Enable streaming for faster parallel processing
@@ -114,7 +114,7 @@ class SinglePageCrawlStrategy:
                         # Increased timeout for JavaScript rendering
                         page_timeout=30000,  # 30 seconds
                         # Give JavaScript time to render
-                        delay_before_return_html=0.5,  # Reduced from 2.0s
+                        delay_before_return_html=1.0,  # Increased slightly to allow content rendering
                         # Enable image waiting for completeness
                         wait_for_images=False,  # Skip images for faster crawling
                         # Scan full page to trigger lazy loading
@@ -123,6 +123,15 @@ class SinglePageCrawlStrategy:
                         exclude_all_images=False,
                         # Still remove popups
                         remove_overlay_elements=True,
+                        # Auto-remove consent popups (OneTrust, etc.)
+                        remove_consent_popups=True,
+                        # Fallback JS code to click OneTrust accept button before waiting
+                        js_code_before_wait="""
+                        const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
+                        if (acceptBtn) {
+                            acceptBtn.click();
+                        }
+                        """,
                         # Do NOT process iframes (often contain Marketo/tracking noise)
                         process_iframes=False,
                         # Aggressively exclude common UI noise (nav, footer, chatbots, banners, scripts)
@@ -136,9 +145,16 @@ class SinglePageCrawlStrategy:
                         markdown_generator=self.markdown_generator,
                         wait_until="domcontentloaded",  # Use domcontentloaded for better reliability
                         page_timeout=45000,  # 45 seconds timeout
-                        delay_before_return_html=0.3,  # Reduced from 1.0s
+                        delay_before_return_html=0.5,
                         scan_full_page=True,  # Trigger lazy loading
                         remove_overlay_elements=True,
+                        remove_consent_popups=True,
+                        js_code_before_wait="""
+                        const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
+                        if (acceptBtn) {
+                            acceptBtn.click();
+                        }
+                        """,
                         process_iframes=False,
                         excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk"],
                     )
