@@ -138,11 +138,11 @@ class AgentMetrics(BaseRepository):
                     d = task["completed_at"][:10]
                     daily_actual[d] = daily_actual.get(d, 0) + 1
 
-            trend_data = []
+            trend_data: list[ForceReadinessTrendDTO] = []
             for i in range(90, -1, -1):
                 date_str = (now - timedelta(days=i)).strftime("%Y-%m-%d")
                 trend_data.append(
-                    {"date": date_str[5:], "actual": daily_actual.get(date_str, 0), "baseline": baseline_daily}
+                    {"date": date_str[5:], "actual": daily_actual.get(date_str, 0), "baseline": float(baseline_daily)}
                 )
 
             ai_names = [

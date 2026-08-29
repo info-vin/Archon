@@ -122,7 +122,7 @@ async def check_for_updates(
             # Client needs new data
             response.headers["ETag"] = f'"{etag}"'
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            return VersionCheckResponse(**result)
+            return VersionCheckResponse(**result)  # type: ignore[arg-type]
 
     except Exception as e:
         logfire.error(f"Error checking for updates: {e}")

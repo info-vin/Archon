@@ -109,7 +109,7 @@ class ForceReadinessResponse(BaseModel):
 @router.get("/force-readiness", response_model=ForceReadinessResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_force_readiness() -> ForceReadinessResponse:
     try:
-        return ForceReadinessResponse(**await stats_service.get_force_readiness())
+        return ForceReadinessResponse(**await stats_service.get_force_readiness())  # type: ignore[arg-type]
     except Exception as e:
         logger.error(f"API: Force readiness failed: {e}")
         return ForceReadinessResponse(baseline=0.0, trend=[], error=str(e))

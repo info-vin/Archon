@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from ...repositories.base_repository import BaseRepository
+from .domains.agent_metrics import CommanderTrendDTO, ForceReadinessDTO
 from .metrics import MetricsManager
 from .performance import PerformanceManager
 
@@ -45,10 +46,10 @@ class StatsService(BaseRepository):
     async def get_marketing_intelligence(self) -> dict[str, Any]:
         return await self.metrics.get_marketing_intelligence()
 
-    async def get_commander_trends(self) -> list[dict[str, Any]]:
+    async def get_commander_trends(self) -> list[CommanderTrendDTO]:
         return await self.metrics.get_commander_trends()
 
-    async def get_force_readiness(self) -> dict[str, Any]:
+    async def get_force_readiness(self) -> ForceReadinessDTO:
         return await self.metrics.get_force_readiness()
 
     async def get_knowledge_roi(self) -> dict[str, Any]:

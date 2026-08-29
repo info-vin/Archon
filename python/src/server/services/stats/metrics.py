@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 from ...utils import get_supabase_client
-from .domains.agent_metrics import AgentMetrics
+from .domains.agent_metrics import AgentMetrics, CommanderTrendDTO, ForceReadinessDTO
 from .domains.knowledge_metrics import KnowledgeMetrics
 from .domains.marketing_metrics import MarketingMetrics
 from .domains.system_metrics import SystemMetrics
@@ -24,10 +24,10 @@ class MetricsManager:
         self.system_metrics = SystemMetrics(self.supabase)
         self.marketing_metrics = MarketingMetrics(self.supabase)
 
-    async def get_commander_trends(self) -> list[dict[str, Any]]:
+    async def get_commander_trends(self) -> list[CommanderTrendDTO]:
         return await self.agent_metrics.get_commander_trends()
 
-    async def get_force_readiness(self) -> dict[str, Any]:
+    async def get_force_readiness(self) -> ForceReadinessDTO:
         return await self.agent_metrics.get_force_readiness()
 
     async def get_knowledge_roi(self) -> dict[str, Any]:
