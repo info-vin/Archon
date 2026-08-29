@@ -93,8 +93,15 @@ class RBACService(BaseRepository):
         suffix = role_map.get(role, "SALES")  # Default to strictest (SALES) for unknown roles
 
         # Default safe values if DB fetch fails
+        role_default_depths = {
+            "admin": 5,
+            "system_admin": 5,
+            "manager": 3,
+            "marketing": 2,
+            "sales": 2,
+        }
         constraints = {
-            "max_depth": 2,
+            "max_depth": role_default_depths.get(role, 2),
             "max_concurrent": 3,
             "allowed_domains": ["104.com.tw", "github.com", "google.com"], # 合法
         }

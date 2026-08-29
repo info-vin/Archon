@@ -111,6 +111,7 @@ async def refresh_knowledge_item(
             "max_depth": max_depth,
             "is_refresh": True,
             "source_id": source_id,
+            "user_role": x_user_role,
         }
 
         task = asyncio.create_task(crawl_service.orchestrate_crawl(request_dict))
@@ -164,6 +165,7 @@ async def crawl_knowledge_item(
             "tags": request.tags,
             "max_depth": max_depth,
             "max_concurrent": constraints.get("max_concurrent", 3),
+            "user_role": x_user_role,
         }
 
         task = asyncio.create_task(orchestration_service.orchestrate_crawl(request_dict))
