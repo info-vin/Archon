@@ -65,3 +65,6 @@
 ## 2024-05-24 - Add focus-visible to icon-only buttons
 **Learning:** Icon-only buttons often lack visual indicators for keyboard users when focused, causing accessibility issues. Adding `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` provides necessary feedback for keyboard navigation.
 **Action:** Always check icon-only buttons for focus visibility and add necessary Tailwind classes when improving a11y.
+## 2026-08-28 - Missing Accessible Labels on action buttons with text and icons
+**Learning:** Action buttons that contain both text and icons (e.g., "Copy Text" and "Share" in `LeadPitchDrawer.tsx`) sometimes lack explicit `aria-label` attributes. While the text provides visual context, ensuring screen readers announce the action clearly is important for full accessibility, especially if the text changes based on state (e.g., "Copied").
+**Action:** When adding or reviewing action buttons, consider adding an explicit `aria-label` to provide a clear and consistent accessible name, even if there is text present, to ensure robust screen reader support.
