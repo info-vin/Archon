@@ -192,9 +192,24 @@ async def create_embeddings_batch(
                                                     emb_vals = emb_vals[:embedding_dimensions]
                                                 result.add_success(emb_vals, text_item)
                                         break
-                                    except openai.RateLimitError as e:
-                                        error_message = str(e)
-                                        if "insufficient_quota" in error_message:
+                                    except Exception as e:
+                                        error_message = str(e).lower()
+                                        
+                                        # Detect 429 / Rate Limit
+                                        is_rate_limit = (
+                                            isinstance(e, openai.RateLimitError) 
+                                            or "429" in error_message 
+                                            or "rate limit" in error_message 
+                                            or "resource_exhausted" in error_message
+                                            or "quota" in error_message
+                                        )
+                                        
+                                        if not is_rate_limit:
+                                            raise
+                                            
+                                        # Only hard-fail on OpenAI's specific out-of-money error. 
+                                        # Google GenAI uses 'quota' for standard RPM rate limits, so we MUST retry them!
+                                        if "insufficient_quota" in error_message and "openai" in str(type(e)).lower():
                                             search_logger.error(
                                                 f"Provider {provider_name} has insufficient quota.", exc_info=True
                                             )
@@ -215,14 +230,19 @@ async def create_embeddings_batch(
                                         await asyncio.sleep(wait_time)
                         except Exception as e:
                             # Re-raise specific exceptions that should trigger provider failover
+                            err_msg = str(e).lower()
+                            is_rate_limit_outer = (
+                                isinstance(e, openai.RateLimitError) 
+                                or "429" in err_msg 
+                                or "rate limit" in err_msg
+                                or "resource_exhausted" in err_msg
+                                or "quota" in err_msg
+                            )
+                            
                             if isinstance(
                                 e,
-                                openai.AuthenticationError
-                                | openai.PermissionDeniedError
-                                | openai.APIConnectionError
-                                | openai.RateLimitError
-                                | httpx.RequestError,
-                            ):
+                                (openai.AuthenticationError, openai.PermissionDeniedError, openai.APIConnectionError, httpx.RequestError)
+                            ) or is_rate_limit_outer:
                                 raise
 
                             all_batches_succeeded_for_provider = False

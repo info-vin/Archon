@@ -100,7 +100,15 @@ class BatchCrawlStrategy:
                 scan_full_page=True,  # Trigger lazy loading
                 exclude_all_images=False,
                 remove_overlay_elements=True,
-                process_iframes=True,
+                process_iframes=False,
+                remove_consent_popups=True,
+                js_code_before_wait='''
+                const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
+                if (acceptBtn) {
+                    acceptBtn.click();
+                }
+                ''',
+                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk", "[id*='chatbot']", "[class*='chatbot']", "[class*='assistant']"],
             )
         else:
             # Configuration for regular batch crawling
@@ -112,6 +120,14 @@ class BatchCrawlStrategy:
                 page_timeout=int(settings.get("CRAWL_PAGE_TIMEOUT", "45000")),
                 delay_before_return_html=float(settings.get("CRAWL_DELAY_BEFORE_HTML", "0.5")),
                 scan_full_page=True,
+                remove_consent_popups=True,
+                js_code_before_wait='''
+                const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
+                if (acceptBtn) {
+                    acceptBtn.click();
+                }
+                ''',
+                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk", "[id*='chatbot']", "[class*='chatbot']", "[class*='assistant']"],
             )
 
         dispatcher = MemoryAdaptiveDispatcher(
