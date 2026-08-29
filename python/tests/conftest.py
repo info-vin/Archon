@@ -182,6 +182,10 @@ class MockQueryBuilder:
         self.orders = []
         self.limit_val = None
 
+    def in_(self, field: str, values: list):
+        self.filters.append(lambda x: x.get(field) in values)
+        return self
+
     def eq(self, field: str, value: any):
         self.filters.append(lambda x: x.get(field) == value)
         return self
@@ -292,6 +296,9 @@ class MockTable:
         return MockQueryBuilder(self.data, self.table_name, self.client, 'select')
 
     def insert(self, data: dict | list):
+        return MockQueryBuilder(self.data, self.table_name, self.client, "insert", data)
+
+    def upsert(self, data: dict | list):
         return MockQueryBuilder(self.data, self.table_name, self.client, 'insert', data)
 
     def update(self, data: dict):

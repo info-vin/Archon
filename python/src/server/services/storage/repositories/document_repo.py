@@ -56,7 +56,7 @@ class DocumentRepository(BaseRepository):
     def insert_document_batch(self, batch_data: list[dict[str, Any]]) -> bool:
         """Inserts a batch of documents into archon_crawled_pages."""
         try:
-            self.execute_query(self.client.table("archon_crawled_pages").insert(batch_data), "Batch insert crawled pages")
+            self.execute_query(self.client.table("archon_crawled_pages").upsert(batch_data), "Batch insert crawled pages")
             return True
         except Exception as e:
             search_logger.error(f"Error inserting batch: {e}")

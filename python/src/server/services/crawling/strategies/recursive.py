@@ -108,12 +108,13 @@ class RecursiveCrawlStrategy:
                 remove_overlay_elements=True,
                 process_iframes=False,
                 js_code='''
-                const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
+                const acceptBtn = document.querySelector("#onetrust-accept-btn-handler");
                 if (acceptBtn) {
                     acceptBtn.click();
                 }
                 ''',
-                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk", "[id*='chatbot']", "[class*='chatbot']", "[class*='assistant']"],
+                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],
+                        excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk, [id*='chatbot'], [class*='chatbot'], [class*='assistant']",
             )
         else:
             # Configuration for regular recursive crawling
@@ -126,12 +127,13 @@ class RecursiveCrawlStrategy:
                 delay_before_return_html=float(settings.get("CRAWL_DELAY_BEFORE_HTML", "0.5")),
                 scan_full_page=True,
                 js_code='''
-                const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
+                const acceptBtn = document.querySelector("#onetrust-accept-btn-handler");
                 if (acceptBtn) {
                     acceptBtn.click();
                 }
                 ''',
-                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg", "[role='dialog']", "[role='banner']", "[role='navigation']", ".cookie-banner", "#onetrust-consent-sdk", "[id*='chatbot']", "[class*='chatbot']", "[class*='assistant']"],
+                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],
+                        excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk, [id*='chatbot'], [class*='chatbot'], [class*='assistant']",
             )
 
         dispatcher = MemoryAdaptiveDispatcher(

@@ -128,7 +128,7 @@ async def create_embeddings_batch(
                                 batch_tokens, rate_limit_callback
                             ):  # Re-introduced rate limiting
                                 retry_count = 0
-                                max_retries = 3
+                                max_retries = 6
                                 while retry_count < max_retries:
                                     try:
                                         embedding_model = config.get("embedding_model")
@@ -223,7 +223,7 @@ async def create_embeddings_batch(
                                             )
                                             raise
 
-                                        wait_time = 2**retry_count
+                                        wait_time = min(2**retry_count, 30)
                                         search_logger.warning(
                                             f"Rate limit hit for {provider_name}. Batch {batch_index}. Waiting {wait_time}s before retry {retry_count}/{max_retries}"
                                         )

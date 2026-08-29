@@ -67,16 +67,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_llm_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
@@ -101,16 +101,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_llm_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
@@ -134,16 +134,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
@@ -168,16 +168,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_llm_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
@@ -224,16 +224,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
@@ -266,16 +266,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
@@ -306,16 +306,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_llm_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "1"}),
             ),
@@ -344,16 +344,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(return_value=mock_llm_client)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "2"}),
             ),
@@ -422,16 +422,16 @@ class TestAsyncEmbeddingService:
         mock_create_client = AsyncMock(side_effect=create_client_side_effect)
 
         with (
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_threading_service",
                 return_value=mock_threading_service,
             ),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.get_embedding_provider_configs",
                 mock_get_configs,
             ),
-            patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
-            patch(
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch("src.server.services.embeddings.batch_processor.create_embedding_client", mock_create_client),
+            patch("src.server.services.embeddings.batch_processor.asyncio.sleep", AsyncMock()), patch(
                 "src.server.services.embeddings.batch_processor.credential_service.get_credentials_by_category",
                 AsyncMock(return_value={"EMBEDDING_BATCH_SIZE": "10"}),
             ),
