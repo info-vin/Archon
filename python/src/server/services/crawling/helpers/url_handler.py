@@ -106,10 +106,12 @@ class URLHandler:
         return URLNamingUtil.extract_display_name(url)
 
     def is_self_link(self, link: str, base_url: str) -> bool:
-        """Checks if link belongs to the same domain."""
+        """Checks if link is identical to base_url (ignoring fragment/anchor)."""
         try:
-            base_domain = urlparse(base_url).netloc
-            link_domain = urlparse(link).netloc
-            return not link_domain or link_domain == base_domain
+            parsed_link = urlparse(link)
+            parsed_base = urlparse(base_url)
+            link_clean = parsed_link._replace(fragment="", query="").geturl()
+            base_clean = parsed_base._replace(fragment="", query="").geturl()
+            return link_clean == base_clean
         except Exception:
             return False

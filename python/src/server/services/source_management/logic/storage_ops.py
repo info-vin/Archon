@@ -56,6 +56,7 @@ async def update_source_info(
                 metadata["original_url"] = original_url
 
             update_data = {
+                "source_id": source_id,
                 "summary": summary,
                 "total_word_count": word_count,
                 "metadata": metadata,
@@ -66,7 +67,7 @@ async def update_source_info(
             if source_display_name:
                 update_data["source_display_name"] = source_display_name
 
-            BaseRepository(client).execute_query(client.table("archon_sources").upsert(update_data).eq("source_id", source_id), "Update existing source metadata")
+            BaseRepository(client).execute_query(client.table("archon_sources").upsert(update_data), "Update existing source metadata")
             search_logger.info(f"Updated source {source_id} while preserving title: {existing_title}")
         else:
             if source_display_name:
