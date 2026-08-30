@@ -1,9 +1,23 @@
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from ...repositories.base_repository import BaseRepository
 from ...utils import get_supabase_client
+
+
+class AgentXPStatDTO(TypedDict):
+    name: str
+    agent_id: str
+    total_xp: int
+    success_count: int
+    total_cost: float
+    roi_ratio: float
+    level: str
+
+
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +213,7 @@ class PerformanceManager(BaseRepository):
             "timestamp": now.isoformat(),
         }
 
-    async def get_agent_xp_stats(self) -> list[dict[str, Any]]:
+    async def get_agent_xp_stats(self) -> list[AgentXPStatDTO]:
         """Calculates XP, Success Count, and Total Cost for all agents (Phase 5.5)."""
         try:
             success_xp, xp_res = self.execute_query(self.supabase.table("archon_logs").select("details").eq("source", "agent_action"), "Get XP logs") # 合法
