@@ -285,7 +285,7 @@ class UsageTrackingChat:
 
 
 class UsageTrackingClient:
-    def __init__(self, original_client: Any, user_id: str, request_id: str, provider: str) -> None:
+    def __init__(self, original_client: Any, user_id: str | None, request_id: str, provider: str) -> None:
         self._original = original_client
         self._context = {"user_id": user_id, "request_id": request_id, "provider": provider}
         self.chat = UsageTrackingChat(original_client.chat, self._context)

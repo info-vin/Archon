@@ -102,7 +102,7 @@ class SinglePageCrawlStrategy:
                 if is_doc_site:
                     wait_selector = self._get_wait_selector_for_docs(url)
                     logger.info(f"Detected documentation site, using wait selector: {wait_selector}")
- 
+
                     crawl_config = CrawlerRunConfig(
                         cache_mode=cache_mode,
                         stream=True,  # Enable streaming for faster parallel processing

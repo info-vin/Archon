@@ -194,20 +194,20 @@ async def create_embeddings_batch(
                                         break
                                     except Exception as e:
                                         error_message = str(e).lower()
-                                        
+
                                         # Detect 429 / Rate Limit
                                         is_rate_limit = (
-                                            isinstance(e, openai.RateLimitError) 
-                                            or "429" in error_message 
-                                            or "rate limit" in error_message 
+                                            isinstance(e, openai.RateLimitError)
+                                            or "429" in error_message
+                                            or "rate limit" in error_message
                                             or "resource_exhausted" in error_message
                                             or "quota" in error_message
                                         )
-                                        
+
                                         if not is_rate_limit:
                                             raise
-                                            
-                                        # Only hard-fail on OpenAI's specific out-of-money error. 
+
+                                        # Only hard-fail on OpenAI's specific out-of-money error.
                                         # Google GenAI uses 'quota' for standard RPM rate limits, so we MUST retry them!
                                         if "insufficient_quota" in error_message and "openai" in str(type(e)).lower():
                                             search_logger.error(
@@ -232,13 +232,13 @@ async def create_embeddings_batch(
                             # Re-raise specific exceptions that should trigger provider failover
                             err_msg = str(e).lower()
                             is_rate_limit_outer = (
-                                isinstance(e, openai.RateLimitError) 
-                                or "429" in err_msg 
+                                isinstance(e, openai.RateLimitError)
+                                or "429" in err_msg
                                 or "rate limit" in err_msg
                                 or "resource_exhausted" in err_msg
                                 or "quota" in err_msg
                             )
-                            
+
                             if isinstance(
                                 e,
                                 (openai.AuthenticationError, openai.PermissionDeniedError, openai.APIConnectionError, httpx.RequestError)

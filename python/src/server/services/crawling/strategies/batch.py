@@ -69,7 +69,10 @@ class BatchCrawlStrategy:
                 # CRAWL_MAX_CONCURRENT: Pages to crawl in parallel within this single crawl operation
                 # (Different from server-level CONCURRENT_CRAWL_LIMIT which limits total crawl operations)
                 max_concurrent = int(settings.get("CRAWL_MAX_CONCURRENT", "5"))
+            memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "101.0"))
             check_interval = float(settings.get("DISPATCHER_CHECK_INTERVAL", "0.5"))
+            memory_wait_timeout_str = str(settings.get("MEMORY_WAIT_TIMEOUT", "None"))
+            memory_wait_timeout = None if memory_wait_timeout_str.lower() == "none" else float(memory_wait_timeout_str)
         except (ValueError, KeyError, TypeError) as e:
             # Critical configuration errors should fail fast
             logger.error(f"Invalid crawl settings format: {e}", exc_info=True)
@@ -80,7 +83,9 @@ class BatchCrawlStrategy:
             batch_size = 50
             if max_concurrent is None:
                 max_concurrent = 5  # Safe default to prevent memory issues
+            memory_threshold = 101.0
             check_interval = 0.5
+            memory_wait_timeout = None
             settings = {}  # Empty dict for defaults
 
         # Check if any URLs are documentation sites
@@ -131,12 +136,12 @@ class BatchCrawlStrategy:
             )
 
         dispatcher = MemoryAdaptiveDispatcher(
-            memory_threshold_percent=101.0,  # Disables task-halting memory pressure mode
+            memory_threshold_percent=memory_threshold,
             critical_threshold_percent=101.0, # Disables task requeuing
             recovery_threshold_percent=101.0,
             check_interval=check_interval,
             max_session_permit=max_concurrent,
-            memory_wait_timeout=None,  # Disables the 600s crash limit
+            memory_wait_timeout=memory_wait_timeout
         )
 
         async def report_progress(progress_val: int, message: str, **kwargs):

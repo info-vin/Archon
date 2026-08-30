@@ -74,8 +74,10 @@ class RecursiveCrawlStrategy:
                 # CRAWL_MAX_CONCURRENT: Pages to crawl in parallel within this single crawl operation
                 # (Different from server-level CONCURRENT_CRAWL_LIMIT which limits total crawl operations)
                 max_concurrent = int(settings.get("CRAWL_MAX_CONCURRENT", "10"))
-            memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "80"))
+            memory_threshold = float(settings.get("MEMORY_THRESHOLD_PERCENT", "101.0"))
             check_interval = float(settings.get("DISPATCHER_CHECK_INTERVAL", "0.5"))
+            memory_wait_timeout_str = str(settings.get("MEMORY_WAIT_TIMEOUT", "None"))
+            memory_wait_timeout = None if memory_wait_timeout_str.lower() == "none" else float(memory_wait_timeout_str)
         except (ValueError, KeyError, TypeError) as e:
             # Critical configuration errors should fail fast
             logger.error(f"Invalid crawl settings format: {e}", exc_info=True)
@@ -86,8 +88,9 @@ class RecursiveCrawlStrategy:
             batch_size = 50
             if max_concurrent is None:
                 max_concurrent = 10  # Safe default to prevent memory issues
-            memory_threshold = 80.0
+            memory_threshold = 101.0
             check_interval = 0.5
+            memory_wait_timeout = None
             settings = {}  # Empty dict for defaults
 
         # Check if start URLs include documentation sites
@@ -137,12 +140,12 @@ class RecursiveCrawlStrategy:
             )
 
         dispatcher = MemoryAdaptiveDispatcher(
-            memory_threshold_percent=101.0,  # Disables task-halting memory pressure mode
+            memory_threshold_percent=memory_threshold,
             critical_threshold_percent=101.0, # Disables task requeuing
             recovery_threshold_percent=101.0,
             check_interval=check_interval,
             max_session_permit=max_concurrent,
-            memory_wait_timeout=None,  # INFINITE wait, crucial for Docker streaming bypass of the 600s crash
+            memory_wait_timeout=memory_wait_timeout
         )
 
         async def report_progress(progress_val: int, message: str, **kwargs):
