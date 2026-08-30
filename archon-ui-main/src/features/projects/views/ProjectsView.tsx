@@ -106,7 +106,8 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
 
     // If there's a projectId in the URL, select that project
     if (projectId) {
-      const project = sortedProjects.find((p) => p.id === projectId);
+      const projectMap = new Map((projects as Project[]).map(p => [p.id, p]));
+      const project = projectMap.get(projectId);
       if (project) {
         setSelectedProject(project);
         return;
@@ -126,7 +127,8 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
   // Handle pin toggle
   const handlePinProject = async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation();
-    const project = (projects as Project[]).find((p) => p.id === projectId);
+    const projectMap = new Map((projects as Project[]).map(p => [p.id, p]));
+    const project = projectMap.get(projectId);
     if (!project) return;
 
     updateProjectMutation.mutate({
