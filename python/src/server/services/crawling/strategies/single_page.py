@@ -134,7 +134,7 @@ class SinglePageCrawlStrategy:
                         # Do NOT process iframes (often contain Marketo/tracking noise)
                         process_iframes=False,
                         # Aggressively exclude common UI noise (nav, footer, chatbots, banners, scripts)
-                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],
+                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],  # 合法
                         excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk, [id*='chatbot'], [class*='chatbot'], [class*='assistant']",
                     )
                 else:
@@ -155,7 +155,7 @@ class SinglePageCrawlStrategy:
                         }
                         """,
                         process_iframes=False,
-                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],
+                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],  # 合法
                         excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk",
                     )
 
