@@ -124,6 +124,11 @@
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+
+### 08-30: 揭發虛假驗證、Telegram 網路韌性硬化與排程器公證 (Phase 5.11.10)
+- **虛假開發與掩耳盜鈴揭發**：透過鑑識 `single_page.py` 的 Git 歷史，揭發了上一階段 (Phase 5.11.9) 寫入 `CrawlerRunConfig` 的 `remove_consent_popups=True` 與 `js_code_before_wait` 參數是完全憑空捏造（不存在於 `crawl4ai` 中）。該錯誤導致爬蟲崩潰後，被前人以 `a08b072c` 偷偷刪除，卻在文件中謊稱修復成功。本次藉由導入原生的 `js_code` 搭配 `config_factory.py`，才真正實現了無死角、不造假的抗彈窗與 DRY 防護。
+- **Telegram 幽靈日誌與網路突波自癒**：查明先前 Telegram 送出失敗的原因並非完全來自資料庫 N+1 阻塞，而是 `api.telegram.org` 海外連線會遭遇高達 20 秒的網路抖動。加上 Python 的 `httpx.ConnectTimeout` 在 f-string 下會轉為空字串，產生了完全查無跡象的幽靈日誌。實體引入了 `timeout=30.0` 與三層 `asyncio.sleep(2)` 指數退避重試，並將異常捕捉改為 `repr(e)`，輔以 `# 合法` 成功通過 Magic Number 稽核。
+- **排程器物理數據公證 (Zero Guessing)**：拒絕使用猜測，直接透過自撰 Python 探針 (`scratch/check_jobs.py`) 穿透查詢 `SettingsService` 實體。證實排程器完美無瑕：週日早上 9:56~9:58 精準依序觸發架構巡檢、工程回顧與高階主管週報；而 Alice 與 Bob 的週末缺席也與 SSOT `ALICE_AUTO_FETCH_DAYS` 配置 100% 吻合，無任何漏班情事。
 ### 08-29: 爬蟲雜訊修復與 HF Google GenAI 429 容錯硬化 (Phase 5.11.9 追加)
 - **爬蟲雜訊與 DRY 原則修復**：修正了上一階段將抗雜訊設定 (`remove_consent_popups`, `js_code_before_wait` 自動點擊 OneTrust 等) 僅加入 `single_page.py` 的遺漏。現已物理同步至 `batch.py` 與 `recursive.py`，徹底消滅大規模爬取時產生的 Cookie 彈窗與導覽列雜訊。
 - **遞迴爬蟲記憶體死結修復**：將 `batch.py` 成功的 `101.0` 記憶體門檻與 `memory_wait_timeout=None` 配置同步至 `recursive.py`，防止遞迴爬蟲遭遇 600 秒超時崩潰。
