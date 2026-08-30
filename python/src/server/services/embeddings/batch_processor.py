@@ -20,6 +20,16 @@ from .embedding_exceptions import (
 from .models import EmbeddingBatchResult
 
 
+def _is_rate_limit_error(e: Exception, error_message: str) -> bool:
+    return (
+        isinstance(e, openai.RateLimitError)
+        or "429" in error_message
+        or "rate limit" in error_message
+        or "resource_exhausted" in error_message
+        or "quota" in error_message
+    )
+
+
 async def create_embeddings_batch(
     texts: list[str],
     progress_callback: Any | None = None,
@@ -196,13 +206,7 @@ async def create_embeddings_batch(
                                         error_message = str(e).lower()
 
                                         # Detect 429 / Rate Limit
-                                        is_rate_limit = (
-                                            isinstance(e, openai.RateLimitError)
-                                            or "429" in error_message
-                                            or "rate limit" in error_message
-                                            or "resource_exhausted" in error_message
-                                            or "quota" in error_message
-                                        )
+                                        is_rate_limit = _is_rate_limit_error(e, error_message)
 
                                         if not is_rate_limit:
                                             raise
@@ -231,13 +235,7 @@ async def create_embeddings_batch(
                         except Exception as e:
                             # Re-raise specific exceptions that should trigger provider failover
                             err_msg = str(e).lower()
-                            is_rate_limit_outer = (
-                                isinstance(e, openai.RateLimitError)
-                                or "429" in err_msg
-                                or "rate limit" in err_msg
-                                or "resource_exhausted" in err_msg
-                                or "quota" in err_msg
-                            )
+                            is_rate_limit_outer = _is_rate_limit_error(e, err_msg)
 
                             if isinstance(
                                 e,

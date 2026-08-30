@@ -24,6 +24,7 @@ class TelegramService:
 
     async def send_message(self, text: str, parse_mode: str = "Markdown") -> bool:
         """Sends a message via Telegram Bot API."""
+        import asyncio
         config = self._get_config()
         bot_token = config.telegram_token
         chat_id = config.telegram_chat_id
@@ -40,17 +41,28 @@ class TelegramService:
             "parse_mode": parse_mode
         }
 
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(api_url, json=payload)
-                response.raise_for_status()
-                logger.info("✅ TelegramService: Message sent successfully.")
-                return True
-        except httpx.HTTPError as e:
-            logger.error(f"❌ TelegramService: Failed to send message: {e}")
-            return False
-        except Exception as e:
-            logger.error(f"❌ TelegramService: Unexpected error sending message: {e}")
-            return False
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # 30.0s timeout to absorb network spikes
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(api_url, json=payload)
+                    response.raise_for_status()
+                    logger.info("✅ TelegramService: Message sent successfully.")
+                    return True
+            except httpx.RequestError as e:
+                # Catch connection errors, timeouts, etc. Use repr(e) to avoid empty string logs
+                logger.error(f"❌ TelegramService: Network error sending message (Attempt {attempt + 1}/{max_retries}): {repr(e)}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2)  # 合法
+            except httpx.HTTPStatusError as e:
+                # Catch 400, 401, 404, etc.
+                logger.error(f"❌ TelegramService: HTTP error sending message: {repr(e)} - Response: {e.response.text}")
+                return False
+            except Exception as e:
+                logger.error(f"❌ TelegramService: Unexpected error sending message: {repr(e)}")
+                return False
+
+        return False
 
 telegram_service = TelegramService()

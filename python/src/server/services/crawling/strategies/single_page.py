@@ -103,61 +103,20 @@ class SinglePageCrawlStrategy:
                     wait_selector = self._get_wait_selector_for_docs(url)
                     logger.info(f"Detected documentation site, using wait selector: {wait_selector}")
 
-                    crawl_config = CrawlerRunConfig(
-                        cache_mode=cache_mode,
-                        stream=True,  # Enable streaming for faster parallel processing
-                        markdown_generator=self.markdown_generator,
-                        # Wait for documentation content to load
-                        wait_for=wait_selector,
-                        # Use domcontentloaded for problematic sites
-                        wait_until="domcontentloaded",  # Always use domcontentloaded for speed
-                        # Increased timeout for JavaScript rendering
-                        page_timeout=30000,  # 30 seconds
-                        # Give JavaScript time to render
-                        delay_before_return_html=1.0,  # Increased slightly to allow content rendering
-                        # Enable image waiting for completeness
-                        wait_for_images=False,  # Skip images for faster crawling
-                        # Scan full page to trigger lazy loading
-                        scan_full_page=True,
-                        # Keep images for documentation sites
-                        exclude_all_images=False,
-                        # Still remove popups
-                        remove_overlay_elements=True,
-                        # Auto-remove consent popups (OneTrust, etc.)
-                        # Fallback JS code to click OneTrust accept button before waiting
-                        js_code="""
-                        const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
-                        if (acceptBtn) {
-                            acceptBtn.click();
-                        }
-                        """,
-                        # Do NOT process iframes (often contain Marketo/tracking noise)
-                        process_iframes=False,
-                        # Aggressively exclude common UI noise (nav, footer, chatbots, banners, scripts)
-                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],  # 合法
-                        excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk, [id*='chatbot'], [class*='chatbot'], [class*='assistant']",
-                    )
-                else:
-                    # Configuration for regular sites
-                    crawl_config = CrawlerRunConfig(
-                        cache_mode=cache_mode,
-                        stream=True,  # Enable streaming
-                        markdown_generator=self.markdown_generator,
-                        wait_until="domcontentloaded",  # Use domcontentloaded for better reliability
-                        page_timeout=45000,  # 45 seconds timeout
-                        delay_before_return_html=0.5,
-                        scan_full_page=True,  # Trigger lazy loading
-                        remove_overlay_elements=True,
-                        js_code="""
-                        const acceptBtn = document.querySelector('#onetrust-accept-btn-handler');
-                        if (acceptBtn) {
-                            acceptBtn.click();
-                        }
-                        """,
-                        process_iframes=False,
-                        excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],  # 合法
-                        excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk",
-                    )
+                from src.server.services.crawling.helpers.config_factory import get_base_crawler_config_kwargs
+                config_kwargs = get_base_crawler_config_kwargs({})
+                config_kwargs["stream"] = True
+                config_kwargs["markdown_generator"] = self.markdown_generator
+                config_kwargs["cache_mode"] = cache_mode
+
+                if is_doc_site:
+                    config_kwargs["wait_for"] = wait_selector
+                    config_kwargs["page_timeout"] = 30000
+                    config_kwargs["delay_before_return_html"] = 1.0
+                    config_kwargs["wait_for_images"] = False
+                    config_kwargs["exclude_all_images"] = False
+
+                crawl_config = CrawlerRunConfig(**config_kwargs)
 
                 logger.info(f"Crawling {url} (attempt {attempt + 1}/{retry_count})")
                 logger.info(f"Using wait_until: {crawl_config.wait_until}, page_timeout: {crawl_config.page_timeout}")

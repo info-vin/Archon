@@ -7,7 +7,7 @@ Handles batch crawling of multiple URLs in parallel.
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from crawl4ai import CacheMode, CrawlerRunConfig, MemoryAdaptiveDispatcher
+from crawl4ai import CrawlerRunConfig, MemoryAdaptiveDispatcher
 
 from ....config.logfire_config import get_logger
 from ...credential_service import credential_service
@@ -91,49 +91,19 @@ class BatchCrawlStrategy:
         # Check if any URLs are documentation sites
         has_doc_sites = any(is_documentation_site_func(url) for url in urls)
 
+        from src.server.services.crawling.helpers.config_factory import get_base_crawler_config_kwargs
+        config_kwargs = get_base_crawler_config_kwargs(settings)
+        config_kwargs["stream"] = True
+        config_kwargs["markdown_generator"] = self.markdown_generator
+
         if has_doc_sites:
             logger.info("Detected documentation sites in batch, using enhanced configuration")
-            # Use generic documentation selectors for batch crawling
-            crawl_config = CrawlerRunConfig(
-                cache_mode=CacheMode.BYPASS,
-                stream=True,  # Enable streaming for faster parallel processing
-                markdown_generator=self.markdown_generator,
-                wait_until=settings.get("CRAWL_WAIT_STRATEGY", "domcontentloaded"),
-                page_timeout=int(settings.get("CRAWL_PAGE_TIMEOUT", "30000")),
-                delay_before_return_html=float(settings.get("CRAWL_DELAY_BEFORE_HTML", "1.0")),
-                wait_for_images=False,  # Skip images for faster crawling
-                scan_full_page=True,  # Trigger lazy loading
-                exclude_all_images=False,
-                remove_overlay_elements=True,
-                process_iframes=False,
-                js_code='''
-                const acceptBtn = document.querySelector("#onetrust-accept-btn-handler");
-                if (acceptBtn) {
-                    acceptBtn.click();
-                }
-                ''',
-                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],  # 合法
-                        excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk, [id*='chatbot'], [class*='chatbot'], [class*='assistant']",
-            )
-        else:
-            # Configuration for regular batch crawling
-            crawl_config = CrawlerRunConfig(
-                cache_mode=CacheMode.BYPASS,
-                stream=True,  # Enable streaming
-                markdown_generator=self.markdown_generator,
-                wait_until=settings.get("CRAWL_WAIT_STRATEGY", "domcontentloaded"),
-                page_timeout=int(settings.get("CRAWL_PAGE_TIMEOUT", "45000")),
-                delay_before_return_html=float(settings.get("CRAWL_DELAY_BEFORE_HTML", "0.5")),
-                scan_full_page=True,
-                js_code='''
-                const acceptBtn = document.querySelector("#onetrust-accept-btn-handler");
-                if (acceptBtn) {
-                    acceptBtn.click();
-                }
-                ''',
-                excluded_tags=["nav", "footer", "header", "aside", "script", "noscript", "style", "iframe", "svg"],  # 合法
-                        excluded_selector="[role='dialog'], [role='banner'], [role='navigation'], .cookie-banner, #onetrust-consent-sdk, [id*='chatbot'], [class*='chatbot'], [class*='assistant']",
-            )
+            config_kwargs["page_timeout"] = int(settings.get("CRAWL_PAGE_TIMEOUT", "30000"))
+            config_kwargs["delay_before_return_html"] = float(settings.get("CRAWL_DELAY_BEFORE_HTML", "1.0"))
+            config_kwargs["wait_for_images"] = False
+            config_kwargs["exclude_all_images"] = False
+
+        crawl_config = CrawlerRunConfig(**config_kwargs)
 
         dispatcher = MemoryAdaptiveDispatcher(
             memory_threshold_percent=memory_threshold,
