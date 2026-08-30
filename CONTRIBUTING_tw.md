@@ -397,6 +397,18 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 
 ### 4.3 部署標準作業流程 (SOP)
 
+- `migration/0.2.3/01_schema_core.sql`
+- `migration/0.2.3/02_schema_features.sql`
+- `migration/0.2.3/03_logic_functions.sql`
+- `migration/0.2.3/04_logic_security_rls.sql`
+- `migration/0.2.3/05_seed_system_configs.sql`
+- `migration/0.2.3/06_seed_prompts_core.sql`
+- `migration/0.2.3/07_seed_prompts_assets.sql`
+- `migration/0.2.3/08_schema_task_retry_count.sql`
+- `migration/0.2.3/RESET_DB.sql`
+- `migration/0.2.3/rescue/fix_missing_agents.sql`
+- `migration/0.2.3/rescue/leads.sql`
+
 > **📝 遷移檔更新通知 (Migration Updates)**
 > 部署前請確保已套用最新版本的 SQL 遷移檔。所有遷移檔皆存放於 `migration/0.2.3/` 目錄中，並嚴格依照檔案前綴數字標號順序執行 (如 `01` -> `02` -> `07`，最後再執行 seed_*.sql)。
 

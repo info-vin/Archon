@@ -72,3 +72,6 @@
 ## 2025-02-27 - Add keyboard focus indicators to Brand Hub controls
 **Learning:** Found that custom or native buttons in `BrandPage.tsx` such as the "Refresh", "Close modal", and "Save changes" buttons were missing adequate or complete `focus-visible` outline styles, which decreases keyboard navigation accessibility.
 **Action:** Applied standard `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` to these buttons. Will continue explicitly reviewing interactive element states (focus, disabled, active) when inspecting or implementing custom modals and header controls.
+## 2024-03-24 - [Add aria-pressed to Marketing Page Tab Buttons]
+**Learning:** Found that custom tab buttons in `enduser-ui-fe/src/pages/MarketingPage.tsx` rely solely on visual styling (color classes) to indicate active state, lacking proper `aria-pressed` or `aria-selected` attributes for screen readers. They also missed `focus-visible` classes for keyboard navigation.
+**Action:** Always verify that custom tab-like buttons use `aria-pressed={isActive}` or role="tab" with `aria-selected={isActive}`. Ensure `focus-visible` styles are added for keyboard accessibility.
