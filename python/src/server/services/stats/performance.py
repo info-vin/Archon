@@ -261,7 +261,7 @@ class PerformanceManager(BaseRepository):
                     target_name = agent_id_to_name[u_id]
                     cost_map[target_name] = cost_map.get(target_name, 0.0) + float(row.get("cost_usd", 0))
 
-            result = []
+            result: list[AgentXPStatDTO] = []
             for key in FALLBACK_AGENT_CONFIG:
                 config = get_agent_config(key)
                 if not config:
@@ -289,7 +289,7 @@ class PerformanceManager(BaseRepository):
                         "level": self._get_agent_level(success_count, agent_overrides),
                     }
                 )
-            result.sort(key=lambda x: cast(int, x["success_count"]), reverse=True)
+            result.sort(key=lambda x: x["success_count"], reverse=True)
             return result
         except Exception as e:
             logger.error(f"PerformanceManager: XP Stats failed: {e}")

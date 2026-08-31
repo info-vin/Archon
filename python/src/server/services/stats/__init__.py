@@ -10,7 +10,7 @@ from typing import Any
 from ...repositories.base_repository import BaseRepository
 from .domains.agent_metrics import CommanderTrendDTO, ForceReadinessDTO
 from .metrics import MetricsManager
-from .performance import PerformanceManager
+from .performance import AgentXPStatDTO, PerformanceManager
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class StatsService(BaseRepository):
     ) -> None:
         await self.performance.add_agent_action_log(agent_name, xp_change, message, details, content, agent_id)
 
-    async def get_agent_xp_stats(self) -> list[dict[str, Any]]:
+    async def get_agent_xp_stats(self) -> list[AgentXPStatDTO]:
         return await self.performance.get_agent_xp_stats()
 
     async def get_member_performance(self) -> list[dict[str, Any]]:

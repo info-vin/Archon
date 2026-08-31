@@ -115,7 +115,7 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
     }
     // Note: We no longer auto-select the first project to allow the "All Projects" view (Dashboard)
     // when no specific project is selected.
-  }, [sortedProjects, projectId]);
+  }, [sortedProjects, projectId, projects]);
 
   // Refetch task counts when projects change
   useEffect(() => {
