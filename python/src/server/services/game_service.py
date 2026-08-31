@@ -1,5 +1,7 @@
 from typing import TypedDict, cast
 
+from supabase import Client
+
 from ..repositories.base_repository import BaseRepository
 
 
@@ -15,8 +17,9 @@ class GameSaveResultDTO(TypedDict):
     updated_at: str
 
 class GameService(BaseRepository):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, supabase_client: Client | None = None) -> None:
+        from ..utils import get_supabase_client
+        super().__init__(supabase_client or get_supabase_client())
 
     async def save_game(self, user_id: str, save_data: GameSaveDataDTO) -> GameSaveResultDTO:
         query = self.supabase_client.table("user_game_saves").upsert({ # 合法
