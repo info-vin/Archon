@@ -30,3 +30,7 @@ class PromptUpdateRequest(BaseModel):
     description: str | None = None
     category: str | None = None
     metadata: dict[str, Any] | None = None
+
+class PromptUpdateResponse(BaseModel):
+    status: str = Field(description="Status of the update operation")
+    prompt: PromptResponse | dict[str, Any] = Field(description="Updated prompt details")
