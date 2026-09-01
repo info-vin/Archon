@@ -12,6 +12,11 @@ from ..services.scout_ingestion_service import ScoutIngestionResultDTO
 from ..services.system_service import ConnectivityLogDTO, SystemSettingDTO
 
 
+class UpdateSystemSettingRequest(BaseModel):
+    value: Any = Field(description="The new value for the system setting.")
+    description: str | None = Field(default=None, description="Optional description or reason for setting update.")
+
+
 class FallbackStatusDTO(BaseModel):
     active_tier: int = Field(description="The currently active fallback model tier.")
     internet_connected: bool = Field(description="Indicates whether the system has active internet connectivity.")
@@ -163,24 +168,18 @@ async def list_system_settings(category: str | None = None) -> list[SystemSettin
 
 @router.patch("/settings/{key}", response_model=SystemSettingDTO, dependencies=[Depends(requires_permission(MCP_MANAGE))])
 async def update_system_setting(
-    key: str, request: dict[str, Any], current_user: UserProfileDTO = Depends(get_current_user)
+    key: str, request: UpdateSystemSettingRequest, current_user: UserProfileDTO = Depends(get_current_user)
 ) -> SystemSettingDTO:
     """
     Updates a specific system setting and records the change in the audit trail.
     Restricted to System Admin via MCP_MANAGE scope.
     """
-    new_value = request.get("value")
-    description = request.get("description")
-
-    if new_value is None:
-        raise HTTPException(status_code=400, detail="Setting value is required")
-
     from ..services.system_service import system_service
     try:
         return await system_service.update_system_setting(
             key=key,
-            new_value=str(new_value),
-            description=description,
+            new_value=str(request.value),
+            description=request.description,
             user_name=current_user.name or "System"
         )
     except Exception as e:
