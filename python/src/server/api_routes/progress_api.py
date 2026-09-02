@@ -7,7 +7,15 @@ from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi import status as http_status
 
 from ..config.logfire_config import get_logger
-from ..models.progress_models import ActiveOperation, ActiveOperationsResponse, create_progress_response
+from ..models.progress_models import (
+    ActiveOperation,
+    ActiveOperationsResponse,
+    BaseProgressResponse,
+    CrawlProgressResponse,
+    ProjectCreationProgressResponse,
+    UploadProgressResponse,
+    create_progress_response,
+)
 from ..services.shared_constants import StatusEnum
 from ..utils.etag_utils import check_etag, generate_etag
 from ..utils.progress import ProgressTracker
@@ -17,8 +25,16 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/api/progress", tags=["progress"])
 
 
-@router.get("/{operation_id}")
-async def get_progress(operation_id: str, response: Response, if_none_match: str | None = Header(None)):
+@router.get(
+    "/{operation_id}",
+    response_model=CrawlProgressResponse
+    | UploadProgressResponse
+    | ProjectCreationProgressResponse
+    | BaseProgressResponse,
+)
+async def get_progress(
+    operation_id: str, response: Response, if_none_match: str | None = Header(None)
+) -> CrawlProgressResponse | UploadProgressResponse | ProjectCreationProgressResponse | BaseProgressResponse | Response | None:
     """
     Get progress for an operation with ETag support.
 
@@ -62,7 +78,7 @@ async def get_progress(operation_id: str, response: Response, if_none_match: str
             response.status_code = http_status.HTTP_304_NOT_MODIFIED
             response.headers["ETag"] = current_etag
             response.headers["Cache-Control"] = "no-cache, must-revalidate"
-            return None
+            return Response(status_code=http_status.HTTP_304_NOT_MODIFIED, headers=response.headers)
 
         # Set headers for caching
         response.headers["ETag"] = current_etag
