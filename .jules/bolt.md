@@ -227,3 +227,7 @@
 ## 2024-05-19 - IdentityMatrixRow React.memo Optimization
 **Learning:** In React components that render large lists inside a `.map()` (like `IdentityMatrix`), inline handler functions (e.g., `onEdit={() => setEditingUser(emp)}`) break the shallow comparison of `React.memo` wrapped list items on every parent render, completely defeating the purpose of memoization and causing O(N) renders.
 **Action:** Always wrap the list item component in `React.memo` AND ensure that any callback handlers passed down from the parent map loop are either hoisted and memoized via `React.useCallback` or properly curried so they retain stable identities across renders.
+
+## 2024-09-03 - O(1) Map Lookup for Repetitive Array.find in Hooks
+**Learning:** In highly interactive hook instances like `useApprovalInbox` where actions (like `handleAction`) repeatedly search a list of items (`state.context.proposals.find`), the continuous `O(N)` lookups during render cycles or user interactions can cause unnecessary CPU overhead, especially with complex state machines.
+**Action:** Extract repetitive `Array.find` lookups within hooks into a `React.useMemo` backed `Map` to guarantee `O(1)` performance for all subsequent action handlers and render lookups.
