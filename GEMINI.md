@@ -125,6 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-03: Telegram 非同步硬化與 UI 日誌盲區公證 (Phase 5.11.11)
+- **5 秒同步陷阱修復**：深度鑑識發現先前 Telegram 發送失敗是因為 `SettingsService` 在非同步的 `send_message` 中使用了同步的 5 秒逾時連線。已將 `_get_config` 升級為非同步 (`asyncio.to_thread`) 且具備 3 次重試機制的架構，防止在 Hugging Face Spaces 剛完成 Map-Reduce 運算後，因連線卡頓而靜默跳過警報發送。
+- **打通 UI 日誌盲區 (Zero Ghost Logs)**：發現原先 Telegram 失敗時只使用 `logger.warning` 寫入標準輸出，導致使用者在 Admin UI 的 `archon_logs` 中完全查無錯誤。已新增 `_log_to_db`，強制將所有 Telegram 網路阻擋或超時錯誤寫入 `archon_logs`，讓未來除錯時 100% 可視。
+- **全自動化公證與 L2 倉庫層防護**：捨棄手動測試，透過 `test_telegram_service_hardening.py` 實作非同步 Mock 測試，驗證 3 大極端情境。並在 `make phase-audit` 揪出 `sb.table.insert().execute()` 違反 L2 Repository Bypass 後，迅速改用 `BaseRepository` 完美符合架構規範。
+
 ### 08-30: 揭發虛假驗證、Telegram 網路韌性硬化與排程器公證 (Phase 5.11.10)
 - **虛假開發與掩耳盜鈴揭發**：透過鑑識 `single_page.py` 的 Git 歷史，揭發了上一階段 (Phase 5.11.9) 寫入 `CrawlerRunConfig` 的 `remove_consent_popups=True` 與 `js_code_before_wait` 參數是完全憑空捏造（不存在於 `crawl4ai` 中）。該錯誤導致爬蟲崩潰後，被前人以 `a08b072c` 偷偷刪除，卻在文件中謊稱修復成功。本次藉由導入原生的 `js_code` 搭配 `config_factory.py`，才真正實現了無死角、不造假的抗彈窗與 DRY 防護。
 - **Telegram 幽靈日誌與網路突波自癒**：查明先前 Telegram 送出失敗的原因並非完全來自資料庫 N+1 阻塞，而是 `api.telegram.org` 海外連線會遭遇高達 20 秒的網路抖動。加上 Python 的 `httpx.ConnectTimeout` 在 f-string 下會轉為空字串，產生了完全查無跡象的幽靈日誌。實體引入了 `timeout=30.0` 與三層 `asyncio.sleep(2)` 指數退避重試，並將異常捕捉改為 `repr(e)`，輔以 `# 合法` 成功通過 Magic Number 稽核。
