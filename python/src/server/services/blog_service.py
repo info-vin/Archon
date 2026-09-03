@@ -1,6 +1,8 @@
 # python/src/server/services/blog_service.py
 
-from typing import Any
+from typing import Any, NotRequired, TypedDict, cast
+
+from supabase import Client
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -9,23 +11,42 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+class BlogPostDTO(TypedDict):
+    id: NotRequired[str]
+    title: NotRequired[str | None]
+    content: NotRequired[str | None]
+    cover_image: NotRequired[str | None]
+    image_url: NotRequired[str | None]
+    publish_date: NotRequired[str | None]
+    author_id: NotRequired[str | None]
+    status: NotRequired[str | None]
+
+class BlogPostsResultDTO(TypedDict):
+    posts: list[BlogPostDTO]
+
+class BlogPostResultDTO(TypedDict):
+    post: BlogPostDTO
+
+class MessageResultDTO(TypedDict):
+    message: str
+
 
 class BlogService(BaseRepository):
     """Service for handling blog post operations."""
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
-    async def list_posts(self) -> tuple[bool, dict[str, Any]]:
+    async def list_posts(self) -> tuple[bool, BlogPostsResultDTO | dict[str, Any]]:
         """Retrieve a list of all blog posts."""
 
 
         success, res = self.execute_query(self.supabase_client.table("blog_posts").select("*").order("publish_date", desc=True), "Failed to fetch blog posts") # 合法
         if success:
-            return True, {"posts": res.get("data", [])}
+            return True, cast(BlogPostsResultDTO, {"posts": res.get("data", [])})
         return False, res
 
-    async def get_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
+    async def get_post(self, post_id: str) -> tuple[bool, BlogPostResultDTO | dict[str, Any]]:
         """Retrieve a single blog post by its ID."""
 
         query = self.supabase_client.table("blog_posts").select("*").eq("id", post_id) # 合法
@@ -33,10 +54,10 @@ class BlogService(BaseRepository):
         if success:
             data = res.get("data", [])
             post_data = data[0] if isinstance(data, list) and data else (data if data else {})
-            return True, {"post": post_data}
+            return True, cast(BlogPostResultDTO, {"post": post_data})
         return False, res
 
-    async def create_post(self, post_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    async def create_post(self, post_data: BlogPostDTO | dict[str, Any]) -> tuple[bool, BlogPostResultDTO | dict[str, Any]]:
         """Create a new blog post with AI-generated visual asset."""
         # P6: Smart Polish - Extract image and clean content
         post_data = self._clean_content_images(post_data)
@@ -60,10 +81,10 @@ class BlogService(BaseRepository):
         success, res = self.execute_query(self.supabase_client.table("blog_posts").insert(post_data), "Error creating post") # 合法
         if success:
             data = res.get("data", [])
-            return True, {"post": data[0] if isinstance(data, list) and data else data}
+            return True, cast(BlogPostResultDTO, {"post": data[0] if isinstance(data, list) and data else data})
         return False, res
 
-    async def update_post(self, post_id: str, update_data: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    async def update_post(self, post_id: str, update_data: BlogPostDTO | dict[str, Any]) -> tuple[bool, BlogPostResultDTO | dict[str, Any]]:
         """Update an existing blog post."""
         # Phase 4.6.57: AI Correction Tracking
         if "content" in update_data:
@@ -109,10 +130,10 @@ class BlogService(BaseRepository):
         success, res = self.execute_query(self.supabase_client.table("blog_posts").update(update_data).eq("id", post_id), f"Error updating post {post_id}") # 合法
         if success:
             data = res.get("data", [])
-            return True, {"post": data[0] if isinstance(data, list) and data else data}
+            return True, cast(BlogPostResultDTO, {"post": data[0] if isinstance(data, list) and data else data})
         return False, res
 
-    def _clean_content_images(self, data: dict[str, Any]) -> dict[str, Any]:
+    def _clean_content_images(self, data: BlogPostDTO | dict[str, Any]) -> BlogPostDTO | dict[str, Any]:
         """
         P6 Implementation: Extracts image URL from Markdown syntax and strips it from content.
         Moves url to metadata 'image_url' field.
@@ -134,12 +155,12 @@ class BlogService(BaseRepository):
 
         return data
 
-    async def delete_post(self, post_id: str) -> tuple[bool, dict[str, Any]]:
+    async def delete_post(self, post_id: str) -> tuple[bool, MessageResultDTO | dict[str, Any]]:
         """Delete a blog post."""
 
 
         # execute_query with require_data=False for delete
         success, res = self.execute_query(self.supabase_client.table("blog_posts").delete().eq("id", post_id), f"Error deleting post {post_id}", require_data=False) # 合法
         if success:
-            return True, {"message": "Post deleted successfully."}
+            return True, cast(MessageResultDTO, {"message": "Post deleted successfully."})
         return False, res
