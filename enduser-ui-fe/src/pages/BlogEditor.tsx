@@ -90,7 +90,7 @@ const BlogEditor: React.FC = () => {
                 <div className="flex items-center gap-4 border-b border-transparent">
                     <button 
                         onClick={() => navigate('/admin')}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900"
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                         aria-label="Back to Admin"
                     >
                         <ArrowLeftIcon className="w-6 h-6" />
@@ -114,7 +114,7 @@ const BlogEditor: React.FC = () => {
                     <button
                         onClick={() => setShowDiff(!showDiff)}
                         className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-                            showDiff ? 'bg-indigo-600 text-white shadow-md' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                            showDiff ? 'bg-indigo-600 text-white shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2'
                         }`}
                     >
                         <Wand2Icon className="w-4 h-4" />
@@ -125,7 +125,7 @@ const BlogEditor: React.FC = () => {
                         disabled={saving}
                         aria-disabled={saving}
                         aria-busy={saving}
-                        className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-200"
+                        className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
                         {saving ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <SaveIcon className="w-4 h-4" />}
                         {saving ? 'Saving...' : 'Save Post'}
@@ -166,7 +166,7 @@ const BlogEditor: React.FC = () => {
                                 <button 
                                     onClick={() => setShowImagePicker('cover')}
                                     data-testid="smart-asset-search-btn"
-                                    className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                                    className="cursor-pointer flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                                 >
                                     <ImageIcon className="w-4 h-4" /> Smart Asset Search
                                 </button>
