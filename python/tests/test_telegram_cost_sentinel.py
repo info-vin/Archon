@@ -10,7 +10,7 @@ from src.server.services.system.telegram_service import TelegramService
 @pytest.mark.asyncio
 async def test_telegram_service_send_message():
     service = TelegramService()
-    service._get_config = MagicMock(return_value=NotificationConfig(TELEGRAM_TOKEN="fake_token", TELEGRAM_TO="fake_chat_id"))
+    service._get_config_async = AsyncMock(return_value=NotificationConfig(**{"TELEGRAM_TOKEN": "fake_token", "TELEGRAM_TO": "fake_chat_id"}))
 
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.return_value.status_code = 200
