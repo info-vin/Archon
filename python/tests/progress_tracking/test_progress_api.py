@@ -131,7 +131,7 @@ class TestProgressAPI:
         mock_get_progress.return_value = mock_progress_data
 
         mock_response = MagicMock()
-        mock_response.model_dump.return_value = {"progressId": "test-123", "status": "running"}
+        mock_response.model_dump.return_value = {"progressId": "test-123", "status": "running", "progress": 50}
         mock_create_response.return_value = mock_response
 
         response = client.get("/api/progress/test-123")
@@ -140,7 +140,7 @@ class TestProgressAPI:
         # Test completed operation
         mock_progress_data["status"] = "completed"
         mock_get_progress.return_value = mock_progress_data
-        mock_response.model_dump.return_value = {"progressId": "test-123", "status": "completed"}
+        mock_response.model_dump.return_value = {"progressId": "test-123", "status": "completed", "progress": 100}
 
         response = client.get("/api/progress/test-123")
         assert response.headers.get("X-Poll-Interval") == "0"  # No polling needed
