@@ -17,12 +17,15 @@ class TelegramService:
         import asyncio
         def _insert_log():
             try:
+                from src.server.repositories.base_repository import BaseRepository
                 sb = get_supabase_client()
-                sb.table("archon_logs").insert({
+                repo = BaseRepository(sb)
+                query = sb.table("archon_logs").insert({
                     "source": "system-telegram",
                     "level": level,
                     "message": message[:500]
-                }).execute()
+                })
+                repo.execute_query(query, "Failed to write to archon_logs")
             except Exception as ex:
                 logger.error(f"TelegramService: Failed to write to archon_logs: {repr(ex)}")
 

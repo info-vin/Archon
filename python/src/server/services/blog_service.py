@@ -91,8 +91,8 @@ class BlogService(BaseRepository):
             # Fetch old post to compare content
             old_post_success, old_post_res = await self.get_post(post_id)
             if old_post_success and "post" in old_post_res:
-                old_content = old_post_res["post"].get("content", "")
-                new_content = update_data["content"]
+                old_content = str(old_post_res["post"].get("content") or "")
+                new_content = str(update_data.get("content") or "")
 
                 # Calculate diff if content changed
                 if old_content and old_content != new_content:
