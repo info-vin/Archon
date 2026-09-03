@@ -75,3 +75,6 @@
 ## 2024-03-24 - [Add aria-pressed to Marketing Page Tab Buttons]
 **Learning:** Found that custom tab buttons in `enduser-ui-fe/src/pages/MarketingPage.tsx` rely solely on visual styling (color classes) to indicate active state, lacking proper `aria-pressed` or `aria-selected` attributes for screen readers. They also missed `focus-visible` classes for keyboard navigation.
 **Action:** Always verify that custom tab-like buttons use `aria-pressed={isActive}` or role="tab" with `aria-selected={isActive}`. Ensure `focus-visible` styles are added for keyboard accessibility.
+## 2024-10-27 - Add ARIA attributes to mobile menu toggle
+**Learning:** The mobile sidebar toggle button in `MainLayout.tsx` was relying solely on visual icons and a small text span to convey its purpose, which is insufficient for screen readers navigating dynamic menus. It lacked state tracking.
+**Action:** When creating toggle buttons that control expanding/collapsing sections (like sidebars or accordions), always include `aria-expanded` tied to the state variable, and `aria-controls` pointing to the ID of the controlled element.
