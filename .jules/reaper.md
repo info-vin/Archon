@@ -8,3 +8,7 @@
 2. 許多檔案透過 `index.ts` 匯出 (re-export)，必須追蹤匯出檔案是否被引用。例如 `workbench/index.ts` 匯出了所有 workbench 元件，而 `ContentWorkbench.tsx` 引用了這些匯出；`services/api/index.ts` 也是類似情況，因此不能輕易刪除。
 **行動：**
 在判定殭屍代碼前，一定要用 `grep -rn '目標名稱' src/` 搜尋所有可能被使用的地方。如果看到 components 被引用，或者 context 被使用，就不要刪除。寧可留著，也不要誤刪。
+
+## 2025-05-24 - [系統維護與動態呼叫]
+**學習心得：** 雖然 `SeedingService` 和 `GoogleStorageHandler` 在靜態搜尋 (`grep`, `vulture`) 中未顯示被外部明確 `import`，但它們的 docstrings 表明是為特定的管理員任務 (如重建 RAG 索引) 或特定檔案處理 (如超大錄音檔) 所設計。這些服務可能透過排程任務 (Cron)、動態匯入，或是直接從外部腳本觸發，不應僅依賴靜態搜尋結果就判定為殭屍代碼。
+**行動：** 對於 docstring 中明確標示為特定業務流程 (如 SOP-14, Phase 4.6.46 Hardening) 或管理員專用的獨立服務，即使靜態搜尋無結果，也必須視為高風險，直接放棄刪除。寧可留著，也不要誤刪。
