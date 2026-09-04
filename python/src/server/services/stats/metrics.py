@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from supabase import Client
+
 from ...utils import get_supabase_client
 from .domains.agent_metrics import AgentMetrics, CommanderTrendDTO, ForceReadinessDTO
 from .domains.knowledge_metrics import KnowledgeMetrics
@@ -17,7 +19,7 @@ class MetricsManager:
     Acts as a Coordinator delegating to domain-specific metric classes.
     """
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         self.supabase = supabase_client or get_supabase_client()
         self.agent_metrics = AgentMetrics(self.supabase)
         self.knowledge_metrics = KnowledgeMetrics(self.supabase)
