@@ -125,6 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-04: 週期排程日誌硬化與自動化品質門禁公證 (Phase 5.11.12)
+- **排程器幽靈日誌根除 (SSOT/DRY)**：鑑識出 `Catchup` 階段提早跳過任務時，因外層封裝寫死 `skip_msg` 導致誤印「今日已執行」的 Bug。已將所有 `_should_run_*` 回傳值從 `bool` 升級為 `tuple[bool, str]`，讓底層物理原因（如「Time not reached」）真實穿透至日誌，徹底消滅 12 處硬編碼。
+- **自動化公證取代肉眼 (Zero Fake Verification)**：拒絕使用人工查閱 Docker Log 驗證。撰寫 `verify_catchup_log.py` 實體探針攔截日誌並自動 Assert；同時升級 `test_scheduler_service.py` 補齊 Tuple Mock 與情境斷言，最終 100% 通過 `make lint` 與 `mypy` 品質門禁。
+- **商機日報連鎖驗證**：物理證實系統已完美運行一條龍排程：10:25 Alice 準時發動抓取 6 筆 Leads，並順利觸發下游 Bob 完成《AI狂潮席捲傳統產業！》之高品質商機日報，展現高度非同步協作穩定性。
+
 ### 09-03: Telegram 非同步硬化與 UI 日誌盲區公證 (Phase 5.11.11)
 - **5 秒同步陷阱修復**：深度鑑識發現先前 Telegram 發送失敗是因為 `SettingsService` 在非同步的 `send_message` 中使用了同步的 5 秒逾時連線。已將 `_get_config` 升級為非同步 (`asyncio.to_thread`) 且具備 3 次重試機制的架構，防止在 Hugging Face Spaces 剛完成 Map-Reduce 運算後，因連線卡頓而靜默跳過警報發送。
 - **打通 UI 日誌盲區 (Zero Ghost Logs)**：發現原先 Telegram 失敗時只使用 `logger.warning` 寫入標準輸出，導致使用者在 Admin UI 的 `archon_logs` 中完全查無錯誤。已新增 `_log_to_db`，強制將所有 Telegram 網路阻擋或超時錯誤寫入 `archon_logs`，讓未來除錯時 100% 可視。
