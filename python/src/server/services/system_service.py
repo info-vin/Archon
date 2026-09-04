@@ -1,5 +1,7 @@
 from typing import Any, NotRequired, TypedDict, cast
 
+from supabase import Client
+
 from ..repositories.base_repository import BaseRepository
 
 
@@ -40,8 +42,8 @@ class DocumentVersionDTO(TypedDict):
 
 
 class SystemService(BaseRepository):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, supabase_client: Client | None = None) -> None:
+        super().__init__(supabase_client)
 
     async def list_connectivity_logs(self, limit: int = 20) -> list[ConnectivityLogDTO]:
         query = self.supabase_client.table("archon_logs").select("*").eq("level", "ALERT").eq("type", "system").order("created_at", desc=True).limit(limit) # 合法
