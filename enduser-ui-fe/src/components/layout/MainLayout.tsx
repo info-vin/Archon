@@ -236,6 +236,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <button 
                     onClick={() => setIsSidebarOpen(true)}
                     className={`flex flex-col items-center justify-center p-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSidebarOpen ? 'text-primary' : 'text-muted-foreground'}`}
+                    aria-label="Toggle navigation menu"
+                    aria-expanded={isSidebarOpen}
+                    aria-controls="sidebar-nav"
                 >
                     <MenuIcon className="w-6 h-6" />
                     <span className="text-[10px] mt-1">Menu</span>
