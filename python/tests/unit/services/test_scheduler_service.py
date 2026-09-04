@@ -44,6 +44,7 @@ async def test_scheduler_jobs_configuration():
     """
     # Initialize scheduler configuration
     await scheduler_service._schedule_jobs()
+    assert scheduler_service._scheduler is not None
     jobs = scheduler_service._scheduler.get_jobs()
 
     # Create mapping of job ids to their triggers
@@ -72,3 +73,48 @@ async def test_scheduler_jobs_configuration():
     config = SchedulerConfig()
     assert str(token_hour_field) == str(config.dynamic_token_analysis_hour)
     assert str(token_minute_field) == str(config.dynamic_token_analysis_minute)
+
+@pytest.mark.asyncio
+async def test_should_run_daily_dynamic_reasons():
+    from datetime import datetime, timedelta, timezone
+    from unittest.mock import patch
+
+    from apscheduler.triggers.cron import CronTrigger
+
+    from src.server.services.scheduler_service import scheduler_service
+
+    # 建立亞洲台北時區
+    TAIPEI_TZ = timezone(timedelta(hours=8))
+
+    trigger = CronTrigger(day_of_week='tue,wed,fri', hour=10, minute=25, timezone='Asia/Taipei')
+
+    with patch("src.server.services.scheduler_service.datetime") as mock_datetime:
+        # 情境 A: 當前時間 < 目標時間 (例如 09:05，禮拜二)
+        mock_datetime.now.return_value = datetime(2026, 9, 1, 9, 5, tzinfo=TAIPEI_TZ) # 2026-09-01 is Tuesday
+        with patch.object(scheduler_service, "_get_last_run", return_value=None):
+            should_run, reason = await scheduler_service._should_run_daily("test_job", trigger)
+            assert should_run is False
+            assert "Time not reached" in reason
+
+        # 情境 B: 非排程日 (例如 11:00，禮拜四)
+        mock_datetime.now.return_value = datetime(2026, 9, 3, 11, 0, tzinfo=TAIPEI_TZ) # 2026-09-03 is Thursday
+        with patch.object(scheduler_service, "_get_last_run", return_value=None):
+            should_run, reason = await scheduler_service._should_run_daily("test_job", trigger)
+            assert should_run is False
+            assert "Not scheduled for thu" in reason
+
+        # 情境 C: 同日重複觸發 (今日已執行)
+        mock_datetime.now.return_value = datetime(2026, 9, 4, 11, 0, tzinfo=TAIPEI_TZ) # 2026-09-04 is Friday, time > 10:25
+        last_run_time = datetime(2026, 9, 4, 10, 25, tzinfo=TAIPEI_TZ)
+        with patch.object(scheduler_service, "_get_last_run", return_value=last_run_time):
+            should_run, reason = await scheduler_service._should_run_daily("test_job", trigger)
+            assert should_run is False
+            assert "Already run today at" in reason
+
+        # 情境 D: 正常觸發
+        mock_datetime.now.return_value = datetime(2026, 9, 4, 11, 0, tzinfo=TAIPEI_TZ)
+        last_run_time = datetime(2026, 9, 3, 10, 25, tzinfo=TAIPEI_TZ) # Yesterday
+        with patch.object(scheduler_service, "_get_last_run", return_value=last_run_time):
+            should_run, reason = await scheduler_service._should_run_daily("test_job", trigger)
+            assert should_run is True
+            assert reason == ""

@@ -4,6 +4,8 @@ Standardized RBAC Sealing with correct response unwrapping.
 """
 
 
+from typing import Any, cast
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.models.auth_models import UserProfileDTO
@@ -23,7 +25,7 @@ async def list_all_prompts(current_user: UserProfileDTO = Depends(get_current_us
     s, res = await prompt_service.list_prompts()
     if not s:
         raise HTTPException(status_code=500, detail=str(res))
-    return res.get("prompts", [])
+    return cast(list[PromptResponse], res.get("prompts", []))
 
 
 @router.post("/{prompt_name}", response_model=PromptUpdateResponse)
@@ -45,7 +47,7 @@ async def update_prompt(
         )
         if not s:
             raise HTTPException(status_code=500, detail=str(res))
-        return PromptUpdateResponse(status="success", prompt=res)
+        return PromptUpdateResponse(status="success", prompt=cast(dict[str, Any], res))
     except Exception as e:
         if "protected" in str(e).lower():
             raise HTTPException(status_code=403, detail="Cannot modify system protected prompts.") from e
