@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useMachine } from '@xstate/react';
 import { approvalMachine } from '../machines/approvalMachine';
 import { ProposedChange } from '@/types';
@@ -48,8 +48,15 @@ export const useApprovalInbox = () => {
     send({ type: 'SET_REJECT_REASON', reason });
   };
 
+  // PERFORMANCE: Precalculate a Map for O(1) proposal lookups to eliminate O(N) Array.find() overhead on every render/interaction
+  const proposalMap = React.useMemo(() => {
+    const map = new Map<string, UnifiedProposal>();
+    state.context.proposals.forEach(p => map.set(p.id, p));
+    return map;
+  }, [state.context.proposals]);
+
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
-    const proposal = state.context.proposals.find(p => p.id === id);
+    const proposal = proposalMap.get(id);
     if (!proposal) return;
 
     if (action === 'approve') {
@@ -74,7 +81,7 @@ export const useApprovalInbox = () => {
       actionError: !state.matches('error') ? state.context.error : null,
       selectedId: state.context.selectedId,
       setSelectedId,
-      selectedProposal: state.context.proposals.find(p => p.id === state.context.selectedId) || null,
+      selectedProposal: state.context.selectedId ? (proposalMap.get(state.context.selectedId) || null) : null,
       processingId: state.context.processingId,
       showRejectInput: state.context.showRejectInput,
       setShowRejectInput,
