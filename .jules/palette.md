@@ -78,3 +78,6 @@
 ## 2024-10-27 - Add ARIA attributes to mobile menu toggle
 **Learning:** The mobile sidebar toggle button in `MainLayout.tsx` was relying solely on visual icons and a small text span to convey its purpose, which is insufficient for screen readers navigating dynamic menus. It lacked state tracking.
 **Action:** When creating toggle buttons that control expanding/collapsing sections (like sidebars or accordions), always include `aria-expanded` tied to the state variable, and `aria-controls` pointing to the ID of the controlled element.
+## 2024-09-04 - Improve generic accessibility labels in dynamic lists
+**Learning:** Generic aria-labels like "Remove item" in dynamic lists (like tags or knowledge selectors) provide insufficient context for screen reader users, making it unclear which item is being acted upon.
+**Action:** Always inject the dynamic item name into aria-labels and titles (e.g., `Remove ${item.name}`) for repeated list actions to ensure precise contextual accessibility.

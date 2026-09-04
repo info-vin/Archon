@@ -96,8 +96,8 @@ export const KnowledgeSelector: React.FC<KnowledgeSelectorProps> = ({
               onClick={() => toggleItem(item.source_id)}
               className="hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
               disabled={disabled}
-              aria-label="Remove item"
-              title="Remove item"
+              aria-label={`Remove ${item.name}`}
+              title={`Remove ${item.name}`}
             >
               <XIcon className="w-3 h-3" />
             </button>
