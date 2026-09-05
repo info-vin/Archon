@@ -93,3 +93,23 @@ class DraftBlogRequest(BaseModel):
 
 class DraftFromLeadsRequest(BaseModel):
     lead_ids: list[str]
+
+
+class JobResponse(BaseModel):
+    title: str = Field(description="Title of the job posting")
+    company: str = Field(description="Company name offering the position")
+    location: str | None = Field(default=None, description="Job location")
+    salary: str | None = Field(default=None, description="Salary information")
+    url: str | None = Field(default=None, description="URL of the job posting")
+    description: str | None = Field(default=None, description="Short job description")
+    description_full: str | None = Field(default=None, description="Full job description")
+    skills: list[str] | None = Field(default=None, description="List of required skills")
+    source: str = Field(default="104", description="Source platform of the job posting")
+    company_website: str | None = Field(default=None, description="Company website URL")
+    keyword: str | None = Field(default=None, description="Search keyword used")
+    identified_need: str | None = Field(default=None, description="Identified need or pain point")
+    real_id: str | None = Field(default=None, description="Original source job ID")
+
+    model_config = {
+        "from_attributes": True
+    }
