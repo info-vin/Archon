@@ -7,6 +7,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from supabase import Client
+
 from src.server.config.logfire_config import get_logger
 from src.server.repositories.base_repository import BaseRepository
 from src.server.services.shared_constants import AgentUUIDs, PromptNameEnum
@@ -16,7 +18,7 @@ CST = ZoneInfo("Asia/Taipei")
 
 
 class ReportService(BaseRepository):
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client)
 
     def _get_leads_context(self, cutoff_date: str) -> str:
