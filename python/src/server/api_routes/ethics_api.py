@@ -11,14 +11,18 @@ router = APIRouter(prefix="/api/ethics", tags=["ethics"])
 
 
 @router.get("/events", response_model=list[EthicsEvent])
-async def get_ethics_events(limit: int = 20, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
+async def get_ethics_events(
+    limit: int = 20, current_user: dict = Depends(requires_permission(TASK_READ_TEAM))
+) -> list[EthicsEvent]:
     """
     Get recent ethics violation events.
     Accessible by roles with TASK_READ_TEAM scope (Managers/Admins).
     """
     try:
         from ..services.ethics_service import ethics_service
-        return await ethics_service.get_ethics_events(limit=limit)
+
+        raw_events = await ethics_service.get_ethics_events(limit=limit)
+        return [EthicsEvent(**event) for event in raw_events]
     except Exception as e:
         logger.error(f"API: Failed to fetch ethics events | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
