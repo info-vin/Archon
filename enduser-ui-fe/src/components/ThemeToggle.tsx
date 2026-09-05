@@ -22,7 +22,8 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
         }
     }, [isDarkMode]);
 
-    const buttonClasses = className ?? "p-2 rounded-md hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    const baseFocusClasses = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    const buttonClasses = className ? `${className} ${baseFocusClasses}` : `p-2 rounded-md hover:bg-secondary transition-colors ${baseFocusClasses}`;
 
     return (
         <button

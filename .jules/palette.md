@@ -78,3 +78,6 @@
 ## 2024-10-27 - Add ARIA attributes to mobile menu toggle
 **Learning:** The mobile sidebar toggle button in `MainLayout.tsx` was relying solely on visual icons and a small text span to convey its purpose, which is insufficient for screen readers navigating dynamic menus. It lacked state tracking.
 **Action:** When creating toggle buttons that control expanding/collapsing sections (like sidebars or accordions), always include `aria-expanded` tied to the state variable, and `aria-controls` pointing to the ID of the controlled element.
+## 2024-05-15 - Preserve Focus Styles with Custom ClassNames
+**Learning:** When React components accept a custom `className` prop, defaulting with `??` can accidentally overwrite critical accessibility classes like `focus-visible`, leading to a loss of keyboard focus indicators when the component is composed.
+**Action:** Always extract essential utility classes (like focus outlines) into a base string and conditionally append them alongside the provided `className`.
