@@ -22,7 +22,7 @@ async def get_ethics_events(
         from ..services.ethics_service import ethics_service
 
         raw_events = await ethics_service.get_ethics_events(limit=limit)
-        return [EthicsEvent(**event) for event in raw_events]
+        return [EthicsEvent.model_validate(event) for event in raw_events]
     except Exception as e:
         logger.error(f"API: Failed to fetch ethics events | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
