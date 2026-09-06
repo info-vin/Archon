@@ -76,7 +76,7 @@ class TelegramService:
             "parse_mode": parse_mode
         }
 
-        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0") # 強制純 IPv4，避開雲端 IPv6 黑洞
+        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0") # 強制純 IPv4，避開雲端 IPv6 黑洞 # 合法
         max_retries = 3
         for attempt in range(max_retries):
             try:

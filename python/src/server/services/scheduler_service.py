@@ -14,6 +14,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -111,6 +112,13 @@ class SchedulerService:
         if config.space_id is not None:
             return False, "Skipped in remote cloud environment"
         return await self._should_run_daily(job_id, trigger=trigger)
+
+    async def _should_run_weekly_local_only(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
+        from src.server.config.config import get_config
+        config = get_config()
+        if config.space_id is not None:
+            return False, "Skipped in remote cloud environment"
+        return await self._should_run_weekly(job_id, trigger=trigger)
 
     async def _should_run_daily(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
         now_local = datetime.now(DEFAULT_TIMEZONE)
@@ -247,12 +255,15 @@ class SchedulerService:
 
         # --- Category 2: Stateful Daily Jobs ---
         await self._schedule_stateful_job(self._cleanup_system_probes, "system_probe_cleanup", 5, self._should_run_daily, CronTrigger(hour=config.system_probe_cleanup_hour, minute=config.system_probe_cleanup_minute, timezone=DEFAULT_TIMEZONE))
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 6, self._should_run_local_only, CronTrigger(day_of_week=config.alice_auto_fetch_days, hour=config.alice_auto_fetch_hour, minute=config.alice_auto_fetch_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=config.dynamic_token_analysis_hour, minute=config.dynamic_token_analysis_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=config.business_sentinel_hour, minute=config.business_sentinel_minute, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_daily_executive_summary, "daily_executive_summary", 30, self._should_run_daily, CronTrigger(hour=23, minute=50, timezone=DEFAULT_TIMEZONE)) # 合法
 
         # --- Category 3: Stateful Weekly / Monthly Jobs ---
+        from apscheduler.triggers.interval import IntervalTrigger
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_weekly_local_only, IntervalTrigger(hours=12))
+
         weekly_h, weekly_m = self._parse_dynamic_hf_time(config, 3)
         await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_weekly, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE))
 
@@ -303,12 +314,11 @@ class SchedulerService:
     @API_RETRY_POLICY
     async def _run_auto_fetch_leads(self) -> None:
         await leads_patrol.run_auto_fetch_leads()
-        self._trigger_stateful_daily_event(self._run_daily_market_report, "bob_market_report")
+        self._trigger_stateful_daily_event(self._run_market_report, "bob_market_report")
 
     @API_RETRY_POLICY
-    async def _run_daily_market_report(self) -> None:
-        await leads_patrol.run_daily_market_report()
-        self._trigger_stateful_daily_event(self._run_daily_executive_summary, "daily_executive_summary")
+    async def _run_market_report(self) -> None:
+        await leads_patrol.run_market_report()
 
     async def _run_meta_twin_audit(self) -> None:
         from .system.meta_twin_service import meta_twin_service
