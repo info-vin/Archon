@@ -76,11 +76,12 @@ class TelegramService:
             "parse_mode": parse_mode
         }
 
+        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0") # 強制純 IPv4，避開雲端 IPv6 黑洞 # 合法
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 # 30.0s timeout to absorb network spikes
-                async with httpx.AsyncClient(timeout=30.0) as client:
+                async with httpx.AsyncClient(transport=transport, timeout=30.0) as client:
                     response = await client.post(api_url, json=payload)
                     response.raise_for_status()
                     logger.info("✅ TelegramService: Message sent successfully.")

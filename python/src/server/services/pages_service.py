@@ -1,5 +1,7 @@
 from typing import Any, NotRequired, TypedDict, cast
 
+from supabase import Client
+
 from ..repositories.base_repository import BaseRepository
 
 
@@ -33,8 +35,8 @@ class PageDTO(TypedDict):
 
 
 class PagesService(BaseRepository):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, supabase_client: Client | None = None) -> None:
+        super().__init__(supabase_client)
 
     async def list_pages(self, source_id: str, section: str | None = None) -> list[PageSummaryDTO]:
         query = self.supabase_client.table("archon_crawled_pages").select("id, url, section_title, section_order, word_count, char_count, chunk_count").eq("source_id", source_id) # 合法

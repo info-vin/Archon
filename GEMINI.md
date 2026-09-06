@@ -135,103 +135,6 @@
 - **打通 UI 日誌盲區 (Zero Ghost Logs)**：發現原先 Telegram 失敗時只使用 `logger.warning` 寫入標準輸出，導致使用者在 Admin UI 的 `archon_logs` 中完全查無錯誤。已新增 `_log_to_db`，強制將所有 Telegram 網路阻擋或超時錯誤寫入 `archon_logs`，讓未來除錯時 100% 可視。
 - **全自動化公證與 L2 倉庫層防護**：捨棄手動測試，透過 `test_telegram_service_hardening.py` 實作非同步 Mock 測試，驗證 3 大極端情境。並在 `make phase-audit` 揪出 `sb.table.insert().execute()` 違反 L2 Repository Bypass 後，迅速改用 `BaseRepository` 完美符合架構規範。
 
-### 08-30: 揭發虛假驗證、Telegram 網路韌性硬化與排程器公證 (Phase 5.11.10)
-- **虛假開發與掩耳盜鈴揭發**：透過鑑識 `single_page.py` 的 Git 歷史，揭發了上一階段 (Phase 5.11.9) 寫入 `CrawlerRunConfig` 的 `remove_consent_popups=True` 與 `js_code_before_wait` 參數是完全憑空捏造（不存在於 `crawl4ai` 中）。該錯誤導致爬蟲崩潰後，被前人以 `a08b072c` 偷偷刪除，卻在文件中謊稱修復成功。本次藉由導入原生的 `js_code` 搭配 `config_factory.py`，才真正實現了無死角、不造假的抗彈窗與 DRY 防護。
-- **Telegram 幽靈日誌與網路突波自癒**：查明先前 Telegram 送出失敗的原因並非完全來自資料庫 N+1 阻塞，而是 `api.telegram.org` 海外連線會遭遇高達 20 秒的網路抖動。加上 Python 的 `httpx.ConnectTimeout` 在 f-string 下會轉為空字串，產生了完全查無跡象的幽靈日誌。實體引入了 `timeout=30.0` 與三層 `asyncio.sleep(2)` 指數退避重試，並將異常捕捉改為 `repr(e)`，輔以 `# 合法` 成功通過 Magic Number 稽核。
-- **排程器物理數據公證 (Zero Guessing)**：拒絕使用猜測，直接透過自撰 Python 探針 (`scratch/check_jobs.py`) 穿透查詢 `SettingsService` 實體。證實排程器完美無瑕：週日早上 9:56~9:58 精準依序觸發架構巡檢、工程回顧與高階主管週報；而 Alice 與 Bob 的週末缺席也與 SSOT `ALICE_AUTO_FETCH_DAYS` 配置 100% 吻合，無任何漏班情事。
-### 08-29: 爬蟲雜訊修復與 HF Google GenAI 429 容錯硬化 (Phase 5.11.9 追加)
-- **爬蟲雜訊與 DRY 原則修復**：修正了上一階段將抗雜訊設定 (`remove_consent_popups`, `js_code_before_wait` 自動點擊 OneTrust 等) 僅加入 `single_page.py` 的遺漏。現已物理同步至 `batch.py` 與 `recursive.py`，徹底消滅大規模爬取時產生的 Cookie 彈窗與導覽列雜訊。
-- **遞迴爬蟲記憶體死結修復**：將 `batch.py` 成功的 `101.0` 記憶體門檻與 `memory_wait_timeout=None` 配置同步至 `recursive.py`，防止遞迴爬蟲遭遇 600 秒超時崩潰。
-- **HF 日誌 429 崩潰硬化與 Quota 陷阱迴避**：解決了在 Hugging Face Spaces 使用 Google Gemini API 進行大規模 Embedding 批次處理時，遭遇 `google.genai.errors.ClientError: 429 RESOURCE_EXHAUSTED` 引發系統崩潰的問題。重構了 `batch_processor.py` 的例外處理機制：不再死守 `openai.RateLimitError`，改以字串比對攔截泛用的 `"429"` 與 `"resource_exhausted"`；同時繞過了 Gemini 特有的 `"quota"` 關鍵字陷阱（將 15 RPM 限制誤判為帳號無餘額），確保系統能正確進入指數退避 (Exponential Backoff) 並從 429 中自癒。
-
-### 08-29: 爬蟲層級與 OneTrust 解鎖暨自我連結過濾修復 (Phase 5.11.9)
-- **Crawl4AI 記憶體防禦超時自癒 (MemoryError Fix)**：鑑識出手動大批次爬蟲 (300+ 頁面) 失敗的根本原因，為 `crawl4ai` 的 `MemoryAdaptiveDispatcher` 中寫死的 600 秒防護中斷 (`memory_wait_timeout`)。為適應 Docker 容器環境且兼顧 `stream=True` 的相容性，已將 `batch.py` 的調度器中明確傳入 `memory_wait_timeout=None` 徹底解除長時爬蟲的定時炸彈，並將最大併發安全預設值降為 `5`。
-- **爬蟲層級與 RBAC 限制解鎖**：修正了 `crawling.py` 路由未向 `orchestrate_crawl` 傳遞 `user_role` 導致 `URLTypeRouter` 誤判其為 `None` 並強制退回 `1` 層深度的 Bug。同時調整了 `rbac_service.py`，在資料庫設定缺失時，針對 `admin` / `system_admin` 角色提供預設為 `5` 的最大爬取深度放行。
-- **OneTrust 彈窗阻擋硬化**：在 `single_page.py` 的 `CrawlerRunConfig` 中啟用了 `remove_consent_popups=True`，並注入了針對 OneTrust 同意按鈕 (`#onetrust-accept-btn-handler`) 的 `js_code_before_wait` 自動模擬點擊腳本，徹底解決 Cookie 宣告全螢幕遮罩造成的網頁加載阻塞。
-- **自我連結過濾 Bug 修復**：修正了 `url_handler.py` 中 `is_self_link` 誤將「同網域連結 (Same Domain)」當作「自我連結」而全部過濾的邏輯 Bug。將其修正為精準的 URL 路徑比對（忽略 anchor），釋放了 sitemap 與 llms.txt 對同網域子手冊連結的批次爬取能力。
-- **資料庫 Upsert 語法修正**：修正了 `storage_ops.py` 中 `upsert().eq()` 的 Postgrest 鏈結語法錯誤（`SyncQueryRequestBuilder` 缺少 `eq` 屬性），改為在資料體中傳入 `source_id` 並移除 `.eq()`。
-
-### 08-28: 爬蟲引擎協程斷層修復與全站日誌降噪公證 (Phase 5.11.8)
-- **爬蟲引擎物理斷層修復 (Coroutine Crash Fix)**: 鑑識出 UI 介面新增 Knowledge URLs 卻無法爬取的根本原因。`crawling.py` 路由在實例化 `CrawlOrchestrationService` 時遺漏了 `await`，導致傳入未執行的 Coroutine 而在背景靜默崩潰 (`AttributeError: 'coroutine' object has no attribute 'arun'`)。修補了兩處 `await get_crawler()`，徹底接通了前端 UI 到後端爬蟲與 Supabase `sources` 寫入的生命週期。
-- **全站日誌降噪 (System Log Reduction)**: 根除「日誌海嘯」，將 `apscheduler` 的常規啟動廢話透過 `logfire_config.py` 壓制為 `WARNING`，並透過掛載 `HealthCheckFilter` 濾除 Uvicorn 頻繁輪詢 `/api/system/fallback/status` 的存取紀錄；同時將 RBAC 攔截器與 Clockwork 例行巡邏等大量無效 `INFO` 降級為 `DEBUG`，確保日誌清晰可讀且不影響告警（保留 `is_safe=False` 時的 `logger.warning` 觸發）。
-- **Mypy 型別安全公證與二次修復**: Mypy 物理驗證攔截到 `HealthCheckFilter` 中透過 `record.args[2]` 索引 Tuple/Dict 的潛在型別不安全問題，旋即改寫為使用 `record.getMessage()` 進行子字串比對，全專案 390 個檔案再次通過 Ruff 與 Mypy 的 0 錯誤嚴格門禁。
-- **Markdown 與 TTS 前端防護**: 為 Markdown 渲染元件加上 `prose` 排版類別，並用 Regex `content.replace(/!\[.*?\]\(.*?\)/g, '')` 攔截 TTS 送出 Base64 圖片亂碼，徹底消滅語音 API 當機。
-- **環境清理與合規**: 刪除 `scratch/` 內多達 30+ 份的一次性探針腳本與日誌檔，維持開發環境的極致整潔。
-
-
-### 08-27: 降級 MockLLMClient 屬性缺失與無金鑰 Fail-Fast 防禦性硬化 (Phase 5.11.6)
-- **無金鑰靜默降級 Fail-Fast 攔截**：修改 `clients.py`，在非測試環境（`is_testing == False`）下若發現 LLM API 金鑰解密失敗或缺失，直接拋出 `ValueError`，徹底排除樂觀路徑，避免靜默生成 Mock 假數據誤導系統。
-- **MockMessage 屬性缺失自癒**：在 `dispatcher.py` 導入 `getattr(res_msg, "tool_calls", None)`，以防禦在測試環境降級使用 MockLLMClient 時因缺乏 `tool_calls` 屬性而引發 `AttributeError` 崩潰。
-- **自動化測試對帳驗證**：新增 `test_mock_client_hardening.py`，成功跑通 30 項單元測試。變更已合併並推送至 `dev/twins` 分支。
-
-### 08-26 (追加二): E2E與單元測試MSW污染修復、排程鎖死解除、線上環境解密密鑰比對與TTS自癒
-- **單元測試 MSW 隔離與 Node 22 防護**: 解決 `pnpm test:unit` 執行時 MSW 雙重載入導致 of `Invariant Violation` 與 `AbortSignal` 錯誤。將 `tests/e2e/**` 排除於 `vite.config.ts` 外，並為 `apiClient.ts` 補齊 `typeof localStorage !== 'undefined'` 的無頭 (JSDom) 特徵防禦。
-- **排程啟動順序死結修復**: 解決重啟伺服器時因 `self._scheduler.start()` 搶先於 `configure` 執行，造成 APScheduler 丟出 `SchedulerAlreadyRunningError` 的啟動崩潰。調整為先載入 `_schedule_jobs` 再啟動 scheduler。
-- **排程器時區 SSOT 斷言修復**: 修正 `test_scheduler_service.py` 中寫死的 `"8"` 與 `"20"` 小時斷言。改為直接讀取 `SchedulerConfig().dynamic_token_analysis_hour` 動態對齊，杜絕「改 A 壞 B」。
-- **線上環境解密密鑰 (SUPABASE_SERVICE_KEY) 斷層診斷**:
-  - 用實體腳本測試並證明：Vercel 線上版 `Save Draft` 失敗與 `TTS` 失敗的根本原因，在於資料庫中的 API 金鑰加密（使用舊的 `SUPABASE_SERVICE_KEY`）與生產環境解密所用的 Key 不一致。
-  - 比對資料庫解密結果與本地 `.env`，確認 `GEMINI_API_KEY` (末五碼 `eAoEM`) 與 `GOOGLE_API_KEY` (末五碼 `GCR94`) 100% 相同。指示用戶在 `archon-jet` UI 重新保存金鑰，並手動重啟 Hugging Face Space 完成 cache 刷新。
-
-### 08-26: 排程架構防撞優化與 MCP 延遲掛載公證 (Phase 5.11.5)
-- **物理鑑識與零虛假開發公證**: 深度回顧 08-20 至 08-25 之 Git 歷史，物理證實包含 NotebookLM 動態補丁、Telegram N+1 修復與 Beta Graph 動態解耦等改動皆 100% 符合 SSOT 且無亂層 (Layer Violations) 或逆向測試污染。
-- **Lazy MCP Neural Wiring 公證**: 透過擷取 Docker 實體日誌，見證 `Spawning Background MCP Neural Wiring Task` 與 `Dynamic injected with 64 tools` 之成功執行，證明非同步背景探測完美解除主線程啟動死鎖。
-- **排程雙重錯過 (Double Miss) 識**: 調查爬蟲未發動原因，查明為架構防禦疊加：Catchup 機制提早觸發被時間鎖擋下 (10:20 < 10:25)，而正班車 (10:25) 遭遇 Event Loop 阻塞 62 秒，導致被 `misfire_grace_time=60` 強制沒收。
-- **排程防碰撞與容錯硬化 (Anti-Collision)**:
-  - 將 `misfire_grace_time` 透過 SSOT (`SchedulerConfig`) 放寬至 600 秒 (10 分鐘)，根除微小卡頓導致的放鳥。
-  - 將 Category 2 (`system_probe_cleanup`, `prune_stale_leads`) 拆分至 45 分與 55 分。
-  - 將 Category 4 四大保養作業 (Infra, API, TechDebt, SSOT) 導入 `+15, +30, +45` 動態偏移邏輯，徹底消滅 14:00 瞬間併發造成的毀滅性阻塞，且未違反 DRY 原則。
-
-### 08-25: DAG 物理鑑識、Telegram 隱式連通與 Vite 架構錯位修復
-- **DAG 物理溯源與 MCP 自癒公證**: 針對「星期一缺失的每日報告」進行資料庫與程式碼聯合探勘。證實是排程設定 (`ALICE_AUTO_FETCH_DAYS="tue,wed,fri"`) 觸發的正常防禦性跳過，並非 Bug。透過即時 Docker 日誌監控，見證了 10:25 Alice 爬蟲準時啟動，並自動推倒 `Bob -> Supervisor` 事件鏈骨牌，同時確認 `mcp-neural-wiring` 具備自動重試自癒能力。
-- **Telegram 隱式寫入驗證**: 拒絕猜測配置狀態，透過撰寫實體腳本直連 Telegram API 的 `getMe` 與 `sendChatAction` (狀態改為 "typing...")，在不打擾頻道的情況下，100% 物理證實 Bot 憑證與 Chat ID 皆精準掛載且具備寫入權限。
-- **Vite (Rollup) 架構錯位硬修復**: 針對本地 `make dev` 發生的 `MODULE_NOT_FOUND` (缺失 `rollup-darwin-arm64`) 崩潰，實體鑑識 `node_modules` 揪出殘留的 Intel x64 檔案。執行 `rm -rf node_modules pnpm-lock.yaml && pnpm install` 徹底根除架構污染，並公證該問題被 `.dockerignore` 完美隔離，絕無污染 HF Docker 部署之風險。
-- **探針生命週期管理**: 落實環境潔癖，任務結束後已將 `scratch/` 內的 10+ 支一次性探勘與除錯腳本全數清理完畢。
-
-### 08-24: Phase 5.11.4 NotebookLM 雙向同步與 SSOT 硬化
-- **消滅樂觀路徑 (Bi-Directional Sync)**: 修正 `project_service.py` 與 `presentation_agent.py` 中將憑證「單向寫入檔案」的致命斷層。導入 `sync_notebooklm_session` Context Manager，確保 Playwright 執行後刷新的 Cookie 會反向 Upsert 回 `SettingsService`，實現 Token 閉環自癒。
-- **SSOT 與 Cloud-Native 硬化**: 徹底剷除代碼中的 `os.getenv("NOTEBOOKLM_AUTH_JSON")` 後門，嚴格綁定資料庫為唯一事實來源。移除寫死的 `~/.notebooklm` 路徑，改用 `NOTEBOOKLM_DATA_DIR` 支援 Docker Volume 持久化掛載。
-- **物理防呆公證**: 新增 `verify_phase_5_11_4_ssot.py` 探針，在測試前強制執行 `del os.environ["NOTEBOOKLM_AUTH_JSON"]` 破壞環境，以物理斷言證明雙向寫回邏輯真實生效，並通過全數 `make test-be` 門禁。
-
-### 08-23: 終結虛假驗證與物理斷言修復 (Fail-Fast & Monkey Patch)
-- **NotebookLM 猴子補丁**: 修復了第三方 `notebooklm-py` 與 `fastmcp` 之間 `@tool` 語法與 `ToolResult` 的 Pydantic Schema 衝突。實作動態 Monkey Patch，在不修改源碼且不放棄官方工具的前提下，100% 成功掛載。並在 MCP 測試中加入物理存在性斷言 (`assert tool in _tools`)。
-- **TTS 安全攔截遙測與提示詞硬化**: 發現 TTS 失敗並非 Quota 超標，而是 Gemini Safety API 攔截了工程日誌中的敏感字眼 (`kill`, `execute`)。修改 `text_to_speech_service.py` 強制回報 `block_reason`。同時在 `pm_prompts.py` 注入 `[TTS Safety Instructions]`，指示 LLM 主動將工程黑話替換為廣播友善之中性詞，從根本繞過語音攔截。
-- **Telegram N+1 查詢崩潰修復**: 查明 HF 雲端發送 Telegram Timeout 的主因並非環境變數遺失，而是 `telegram_service.py` 濫用 `@property` 導致單次推播觸發 5 次連續同步 DB 查詢 (N+1 Anti-pattern)。重構為單次全域取值，消滅連線池阻塞與超時風險。
-- **Lifespan 快速失效**: 拔除 `lifespan.py` 中靜默吞錯的 `try...except`，強制在取得 credentials 失敗時拋出 `RuntimeError`，杜絕帶病啟動，並新增對應之物理斷言單元測試。
-
-### 08-22: Beta Graph 動態 Map-Reduce 重構與 Pydantic 型別防禦
-- **動態 Map-Reduce 解耦 (SSOT/DRY)**: 徹底消除 `engine_beta_graph.py` 中寫死的 `"sales", "marketing"` 目標與提示詞。改由外部呼叫端透過 `BetaState.worker_targets` 與 `worker_prompts` 動態注入，使引擎能同時服務「每日營運報告」與「每週工程回顧」而不互相干擾 (不改 A 壞 B)。
-- **修補 Reducer 資訊斷層**: 發現並修復了 `final_summary_step` 中 Reducer 丟失原始上下文的架構斷層，強制將 `original_context` (Git log / GEMINI.md) 注入 LLM Prompt，使 DevBot 能根據實體數據生成經驗值，消滅虛假開發與幻覺。
-- **認知失調自癒**: 將 `ENGINEERING_RETRO_DEFAULT` 內帶有強烈身份宣告的文案 (`你是 DevBot...`) 拔除，改為中立的「原始數據 Context」，防止 POBot 與 Business 代理人產生身份錯亂。
-- **型別安全化**: 為 `agents_api.py` 的路由回傳值補齊 Pydantic `response_model` (如 `ApprovalRequestResponse`)，並修復 MyPy 在 Graph State 型別推導的 `list[str]` 警告。全數改動皆通過 `test_routing.py` 實體驗證與 `make lint-be` 公證。
-
-### 08-20 (追加2): NotebookLM 原生簡報生成與 Drive 物理上傳 (Phase 5.11.1 貫通)
-- **OAuth 防呆與文件對帳**: 修正 `CONTRIBUTING_tw.md` 附錄 G，確立「先開無痕視窗登入新帳號，再進入 OAuth Playground」的流程，消滅 unauthorized_client 錯誤。
-- **消滅虛假開發**: 廢除 `python-pptx` 底層手刻。重構 `PresentationAgent`，全面使用 `notebooklm-py` 原生 API (`generate_slide_deck` 及 `wait_for_completion`)，成功呼叫雲端 AI 生成 6MB+ 實體簡報。
-- **MCP 二進位支援**: 升級 `gdrive_upload_file`，導入 `MediaFileUpload` 與 `local_file_path`，徹底支援 `.pptx` 等二進位實體檔案上傳。
-- **E2E 零假資料公證**: 撰寫 `verify_native_pptx_e2e.py`，完整跑通從 NotebookLM 抓取 PPTX 到使用新 OAuth 憑證上傳 Google Drive 的流程，證明無虛假代碼。
-
-### 08-20: 任務指派人 SSOT 重構與 Scope 崩潰修復
-- **SSOT 硬化與硬編碼清理**: 於 `shared_constants.py` 宣告唯一的 `DEFAULT_ASSIGNEE = "Charlie"`，並全面重構 `projects.py` Schema、`task_service.py`、`query_logic.py` 與 `task_tools.py`，徹底消除散落的 `"User"` 字串硬編碼，將預設任務責任明確歸屬給專案經理。
-- **變數 Scope 崩潰自癒**: 修復 `create_logic.py` 排程任務建立時，因局部作用域跳躍引發的 `UnboundLocalError: local variable 'AI_AGENT_ROLES'` 雲端當機問題，將依賴移至檔案頂層全域引入。
-- **資料與相容性防護**: `create_logic.py` 兼容解析舊版遺留之 `"User"` 負載，並透過 `profiles` 實體映射至人類實際姓名；所有重構通過 `uv run pytest` 共 655 項後端測試公證，確認無任何 API 衰退 (Regression)。
-
-### 08-19: 型別斷層修復與 SSOT 硬化 (Phase 5.10.24)
-- **API 強型別補齊**: 修正 `stats_api.py` 先前遺留的重構斷層，為 `/sla-reliability`, `/business-risks`, `/health-trend`, `/overview`, `/consolidated` 5 個端點補齊 Pydantic DTO (如 `SLAReliabilityResponse`)，消滅弱型別 (`Any` / `dict`)，通過 `make lint-be` 與 655 項測試。
-- **混合路由 SSOT 落實**: 拔除 `hybrid_router.py` 中寫死的字數上限與線上關鍵字，改由 `SettingsService` 動態讀取；同步新增 `migration/20260819_add_hybrid_router_settings.sql` 寫入初始種子，實現資料庫可控的單一事實來源。
-- **費率 SSOT 修正**: 查核網路資訊，將缺失的 `gemini-3.5-flash` ($1.50/$9.00) 與 `gemini-3.5-flash-lite` ($0.30/$2.50) 費率補入 `config.py`，確保 ROI 追蹤精準。
-
-### 08-17: 電腦版 Leads 介面初篩修復與資料庫安全硬化 (Phase 5.10.23)
-- **UI 響應式斷層修復**: 釐清 Tailwind `md` 斷點 (768px) 物理行為，確認平板與電腦版顯示的是 `md:table` 表格視圖而非滑動卡片。為桌面版表格 Action 欄位補齊了 ✅ (Shortlist) 與 ❌ (Archive) 按鈕，徹底解決了 Charlie 在非手機裝置無法針對單筆 Lead 進行狀態變更的操作死角。
-- **資料庫核彈刪除防護**: 揪出並修復了 `LeadHandler.reset_leads()` 的嚴重未爆彈。將「Clear History」按鈕的無差別物理刪除 (`DELETE FROM leads`)，硬化為僅針對廢棄資料的資源回收 (`DELETE FROM leads WHERE status = 'archived'`)，成功保護了活躍商機免遭誤刪。
-- **防呆與 SSOT 堅持**: 前端電腦版按鈕僅在 `new` 與 `pending` 狀態下顯示以防邏輯衝突，且嚴格重用既有的 `handleSwipeLeft`/`Right` 邏輯，未硬編碼新的 API 呼叫。改動順利通過 `make lint-be` 與前端 `npm run test:unit` 的 93 項自動化品質公證。
-
-### 08-15: Telegram 深層連結修復、HashRouter 參數攔截與任務 SSOT 重構
-- **任務 SSOT 重構**: 修改 `create_logic.py`，徹底根除硬編碼的 'User' 指派者，改由 `shared_constants.py` 的 `AI_AGENT_ROLES` 動態映射，落實單一事實來源。
-- **HashRouter 深層連結防禦**: 修正 `report_service.py` 的 Telegram 通知網址，將一般路徑改為 Hash 路由參數格式 (`#/dashboard?taskId=xxx`)，一併修復了日報、週報、月報的外部點擊連動。
-- **無侵入式 UI 攔截**: 在 `DashboardPage.tsx` 導入 `useSearchParams`，自動捕捉 `taskId` 參數並聯動既有之 `<TaskModal>`，實現外部網址無縫彈窗，完美遵守「不改 A 壞 B」的架構原則。
-- **雲端冷啟動偵錯**: 透過物理截圖法醫調查，釐清了 Vercel 上的 `API Error 503` 與 `#/approvals` 網址變形，純屬 Hugging Face 後端休眠期間加上前端手動切換頁籤的疊加結果，排除代碼異常。
-- **資料庫瘦身評估**: 盤點 `archon_tasks` 中歷史遺留的 498 筆 cancelled 與 203 筆 todo 髒資料，確認可安全刪除。
-
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
@@ -270,6 +173,15 @@
     *   **靜默降級防禦**: 於 `prompt_service.py` 注入 `logger.warning` 以攔截 missing key 錯誤，杜絕幽靈降級。
     *   **強韌斷言與測試 Set 聯集**: 重構 `test_prompts_loading.py` 的 brittle 長度斷言，改採 Set 聯集邏輯，防範 Mock 資料重疊；在 `test_prompt_ssot.py` 補足 warning log 驗證，後端 652 項測試全綠通過。
     *   **Auto-Upsert 重試機制**: 利用 `BaseRepository.execute_query` 將 upsert 包裝在具有指數退避的重試 (`max_retries=3`) 呼叫中，硬化分散式寫入時的網路抗性。
+
+
+7.  **無頭環境與自動化公證防禦 (Ref: 08-26, 08-27, 08-30)**:
+    *   **實體公證取代人工檢驗**: 導入自動化公證腳本，防範虛假開發與文件偽證 (08-30)。
+    *   **Mock 環境隔離與防護**: 針對降級 Mock 模式補齊屬性缺失防護 (08-27)；隔離 MSW 污染與解決排程啟動死結 (08-26)。
+
+8.  **非同步網路與爬蟲引擎硬化 (Ref: 08-28, 08-29)**:
+    *   **Telegram 突波自癒**: 延長超時至 30 秒，導入 3 次重試與異步取值，並將異常捕捉精細化 (08-30)。
+    *   **爬蟲深度與記憶體防禦**: 解除 Crawl4AI 600 秒超時炸彈；動態放行 Admin 爬取深度，同步抗彈窗腳本消除 Cookie 雜訊與自我連結過濾修復 (08-29)。
 
 ### 2026年7月：全域美術遷移、週期排程硬化與雲端單一容器部署
 七月份是專案視覺工藝大躍進，以及後端排程系統與雲端部署高度硬化的月份。我們將高品質的 SDXL/Flux 美術素材整合進 Godot 雙生專案，並在 Python 端完成了成本守門員、TTS 廣播與三級資料瘦身的排程自動化。最終，我們排除了阻礙 Hugging Face 部署的深層技術債，實現了雲端單一容器 (Monolith) 的無縫運行。

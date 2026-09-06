@@ -67,29 +67,46 @@ async def run_prune_stale_leads() -> None:
         logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}")
 
 
-async def run_daily_market_report() -> None:
-    """Triggering Bob (MarketingBot) to summarize today's leads."""
-    logger.info("✍️ Clockwork: Triggering Bob's Daily Market Report...")
+async def run_market_report() -> None:
+    """Triggering Bob (MarketingBot) to summarize recent leads."""
+    logger.info("✍️ Clockwork: Triggering Bob's Market Report...")
     try:
+        from src.server.config.config import get_config
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.settings_service import SettingsService
 
         supabase = get_supabase_client()
-        one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+
+        config = get_config()
+        env_prefix = config.archon_env or ""
+        if env_prefix and not env_prefix.endswith("_"):
+            env_prefix += "_"
+        db_key = f"{env_prefix}LAST_RUN_BOB_MARKET_REPORT"
+        settings = SettingsService(supabase)
+        val = settings.get_setting(db_key)
+        if val:
+            try:
+                last_run_time = datetime.fromisoformat(val.replace("Z", "+00:00")).isoformat()
+            except Exception:
+                last_run_time = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+        else:
+            last_run_time = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+
         from src.server.repositories.base_repository import BaseRepository
         base_repo = BaseRepository(supabase)
         success, res_dict = base_repo.execute_query(
-            supabase.table("leads").select("company_name, job_title, status").gt("created_at", one_day_ago),
+            supabase.table("leads").select("company_name, job_title, status").gt("created_at", last_run_time),
             "Failed to fetch leads for market report"
         )
         leads = res_dict.get("data", []) if success else []
         if not leads:
-            logger.info("✍️ Clockwork: No new leads today to report on. (Cycle logged)")
+            logger.info("✍️ Clockwork: No new leads to report on. (Cycle logged)")
             return
 
         cst = ZoneInfo("Asia/Taipei")
         lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
-        task_title = f"Daily Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
+        task_title = f"Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
 
 
         from src.server.services.prompt_service import prompt_service
@@ -139,11 +156,7 @@ async def check_and_resume_dag(scheduler) -> None:
 
     alice_date = get_last_run_date("alice_auto_fetch")
     bob_date = get_last_run_date("bob_market_report")
-    exec_date = get_last_run_date("daily_executive_summary")
 
     if alice_date == now_date and bob_date != now_date:
         logger.info("🔗 L2 DAG Catchup: Resuming 'bob_market_report'")
-        scheduler._trigger_stateful_daily_event(scheduler._run_daily_market_report, "bob_market_report")
-    elif bob_date == now_date and exec_date != now_date:
-        logger.info("🔗 L2 DAG Catchup: Resuming 'daily_executive_summary'")
-        scheduler._trigger_stateful_daily_event(scheduler._run_daily_executive_summary, "daily_executive_summary")
+        scheduler._trigger_stateful_daily_event(scheduler._run_market_report, "bob_market_report")

@@ -231,3 +231,6 @@
 ## 2024-09-03 - O(1) Map Lookup for Repetitive Array.find in Hooks
 **Learning:** In highly interactive hook instances like `useApprovalInbox` where actions (like `handleAction`) repeatedly search a list of items (`state.context.proposals.find`), the continuous `O(N)` lookups during render cycles or user interactions can cause unnecessary CPU overhead, especially with complex state machines.
 **Action:** Extract repetitive `Array.find` lookups within hooks into a `React.useMemo` backed `Map` to guarantee `O(1)` performance for all subsequent action handlers and render lookups.
+## 2024-05-20 - Extract Array.find() to O(1) Maps in XState contexts
+**Learning:** XState machines that manage large arrays of objects in context and frequently query them within `invoke.input` definitions (like `processAction` in `approvalMachine.ts`) can incur hidden O(N) lookup costs.
+**Action:** Always extract `Array.prototype.find()` lookups into pre-calculated O(1) Maps directly within the XState context object (e.g. `proposalMap`). Populate the map during the `FETCH` success action and maintain it alongside the array during state updates.

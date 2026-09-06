@@ -7,6 +7,7 @@ export const approvalMachine = setup({
   types: {
     context: {} as {
       proposals: UnifiedProposal[];
+      proposalMap: Map<string, UnifiedProposal>;
       selectedId: string | null;
       error: string | null;
       processingId: string | null;
@@ -91,6 +92,7 @@ export const approvalMachine = setup({
   initial: 'loading',
   context: {
     proposals: [],
+    proposalMap: new Map(),
     selectedId: null,
     error: null,
     processingId: null,
@@ -106,6 +108,11 @@ export const approvalMachine = setup({
           target: 'idle',
           actions: assign({
             proposals: ({ event }) => event.output,
+            proposalMap: ({ event }) => {
+              const map = new Map<string, UnifiedProposal>();
+              event.output.forEach((p: UnifiedProposal) => map.set(p.id, p));
+              return map;
+            },
             selectedId: ({ event, context }) => context.selectedId || (event.output.length > 0 ? event.output[0].id : null),
             error: null
           })
@@ -183,7 +190,7 @@ export const approvalMachine = setup({
                action = 'approve';
                id = event.id;
            }
-           const proposal = context.proposals.find(p => p.id === id)!;
+           const proposal = context.proposalMap.get(id)!;
            return {
                id,
                action,
@@ -194,7 +201,15 @@ export const approvalMachine = setup({
         onDone: {
           target: 'idle',
           actions: assign({
-            proposals: ({ context, event }) => context.proposals.filter(p => p.id !== event.output),
+            proposals: ({ context, event }) => {
+              const newProposals = context.proposals.filter(p => p.id !== event.output);
+              return newProposals;
+            },
+            proposalMap: ({ context, event }) => {
+              const nextMap = new Map(context.proposalMap);
+              nextMap.delete(event.output);
+              return nextMap;
+            },
             selectedId: ({ context, event }) => context.selectedId === event.output ? null : context.selectedId,
             processingId: null,
             showRejectInput: false,
@@ -214,7 +229,7 @@ export const approvalMachine = setup({
       invoke: {
         src: 'generateAiReason',
         input: ({ context }) => {
-           const proposal = context.proposals.find(p => p.id === context.selectedId)!;
+           const proposal = context.proposalMap.get(context.selectedId!)!;
            return { proposal };
         },
         onDone: {

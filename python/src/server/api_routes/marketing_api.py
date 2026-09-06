@@ -14,6 +14,7 @@ from src.server.schemas.marketing import (
     ApprovalRequest,
     DraftBlogRequest,
     DraftFromLeadsRequest,
+    JobResponse,
     LeadActionResponse,
     LeadCreateRequest,
     LeadResponse,
@@ -49,10 +50,13 @@ def _err(msg: str, code: int = 403):
     raise HTTPException(status_code=code, detail=msg)
 
 
-@router.get("/jobs")
-async def search_jobs(keyword: str = Query(...), limit: int = 8, page: int = Query(1), current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/jobs", response_model=list[JobResponse])
+async def search_jobs(
+    keyword: str = Query(...), limit: int = 8, page: int = Query(1), current_user: UserProfileDTO = Depends(get_current_user)
+) -> list[JobResponse]:
     service = MarketingService()
-    return await service.search_jobs(keyword, limit, page=page)
+    jobs = await service.search_jobs(keyword, limit, page=page)
+    return [JobResponse.model_validate(j) for j in jobs]
 
 
 @router.get("/leads", response_model=list[LeadResponse])
