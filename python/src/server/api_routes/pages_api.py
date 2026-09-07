@@ -88,11 +88,11 @@ def _handle_large_page_content(page_data: dict) -> dict:
     return page_data
 
 
-@router.get("/pages")
+@router.get("/pages", response_model=PageListResponse)
 async def list_pages(
     source_id: str = Query(..., description="Source ID to filter pages"),
     section: str | None = Query(None, description="Filter by section title (for llms-full.txt)"),
-):
+) -> PageListResponse:
     """
     List all pages for a given source.
 
@@ -116,8 +116,8 @@ async def list_pages(
         raise HTTPException(status_code=500, detail=f"Failed to list pages: {str(e)}") from e
 
 
-@router.get("/pages/by-url")
-async def get_page_by_url(url: str = Query(..., description="The URL of the page to retrieve")):
+@router.get("/pages/by-url", response_model=PageResponse)
+async def get_page_by_url(url: str = Query(..., description="The URL of the page to retrieve")) -> PageResponse:
     """
     Get a single page by its URL.
 
@@ -148,8 +148,8 @@ async def get_page_by_url(url: str = Query(..., description="The URL of the page
         raise HTTPException(status_code=500, detail=f"Failed to get page: {str(e)}") from e
 
 
-@router.get("/pages/{page_id}")
-async def get_page_by_id(page_id: str):
+@router.get("/pages/{page_id}", response_model=PageResponse)
+async def get_page_by_id(page_id: str) -> PageResponse:
     """
     Get a single page by its ID.
 
