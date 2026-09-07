@@ -118,11 +118,13 @@ export const useOllamaDiscovery = (
           });
         });
 
+        // PERFORMANCE: Build an O(1) Map for existing chat models to avoid O(N*M) lookups during embedding merging
+        const enrichedModelMap = new Map();
+        enrichedModels.forEach(m => enrichedModelMap.set(`${m.name}@${m.instance_url}`, m));
+
         discoveryResult.embedding_models.forEach((embeddingModel) => {
           const instance = instanceLookup[embeddingModel.instance_url];
-          const existingModel = enrichedModels.find(
-            (m) => m.name === embeddingModel.name && m.instance_url === embeddingModel.instance_url,
-          );
+          const existingModel = enrichedModelMap.get(`${embeddingModel.name}@${embeddingModel.instance_url}`);
           if (existingModel) {
             existingModel.capabilities.push("embedding");
             existingModel.embedding_dimensions = embeddingModel.dimensions;
