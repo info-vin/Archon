@@ -81,3 +81,7 @@
 ## 2024-09-04 - Improve generic accessibility labels in dynamic lists
 **Learning:** Generic aria-labels like "Remove item" in dynamic lists (like tags or knowledge selectors) provide insufficient context for screen reader users, making it unclear which item is being acted upon.
 **Action:** Always inject the dynamic item name into aria-labels and titles (e.g., `Remove ${item.name}`) for repeated list actions to ensure precise contextual accessibility.
+
+## 2025-03-07 - Add WAI-ARIA tab pattern to TaskModal
+**Learning:** WAI-ARIA tab patterns require a combination of `role="tab"`, `aria-selected`, and `aria-controls` on the tabs themselves, coupled with `id`, `role="tabpanel"`, `aria-labelledby`, and `hidden` on the content panels to correctly map structure for screen readers. Simply hiding/showing divs without these mappings breaks screen reader context.
+**Action:** Always ensure that custom tab implementations include full WAI-ARIA attribute linking between tabs and their corresponding panels.

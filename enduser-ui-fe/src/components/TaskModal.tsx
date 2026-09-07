@@ -257,9 +257,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           {tabs.map(tab => (
             <button
               key={tab.id}
+              id={`tab-${tab.id}`}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
               onClick={() => setActiveTab(tab.id as TabType)}
               className={`flex-1 px-2 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors text-center whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             >
@@ -271,7 +273,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto custom-scrollbar pr-1">
           <div className="space-y-4">
             {/* General Tab */}
-            <div className={activeTab === 'general' ? 'block' : 'hidden'}>
+            <div id="panel-general" role="tabpanel" aria-labelledby="tab-general" hidden={activeTab !== 'general'} className={activeTab === 'general' ? 'block' : 'hidden'}>
               <TaskGeneralTab 
                 title={title} setTitle={setTitle}
                 description={description} setDescription={setDescription}
@@ -287,7 +289,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             </div>
 
             {/* Assignment Tab */}
-            <div className={activeTab === 'assignment' ? 'block' : 'hidden'}>
+            <div id="panel-assignment" role="tabpanel" aria-labelledby="tab-assignment" hidden={activeTab !== 'assignment'} className={activeTab === 'assignment' ? 'block' : 'hidden'}>
               <TaskAssignmentTab 
                 assigneeId={assigneeId} setAssigneeId={setAssigneeId}
                 assignableUsers={assignableUsers}
@@ -301,7 +303,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             </div>
 
             {/* Knowledge Tab */}
-            <div className={activeTab === 'knowledge' ? 'space-y-4' : 'hidden'}>
+            <div id="panel-knowledge" role="tabpanel" aria-labelledby="tab-knowledge" hidden={activeTab !== 'knowledge'} className={activeTab === 'knowledge' ? 'space-y-4' : 'hidden'}>
               <KnowledgeSelector 
                 selectedIds={selectedKnowledgeIds} 
                 onChange={setSelectedKnowledgeIds}
@@ -310,7 +312,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
             </div>
 
             {/* AI Report Tab */}
-            <div className={activeTab === 'report' ? 'space-y-4' : 'hidden'}>
+            <div id="panel-report" role="tabpanel" aria-labelledby="tab-report" hidden={activeTab !== 'report'} className={activeTab === 'report' ? 'space-y-4' : 'hidden'}>
                {task && <TaskAgentGroupChat task={task} />}
             </div>
           </div>
