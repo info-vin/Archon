@@ -35,7 +35,7 @@ class TaskService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
-    def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str):
+    def _notify_ai_agent_of_assignment(self, task_id: str, agent_id: str) -> None:
         from .tasks.maintenance import notify_ai_agent_logic
 
         asyncio.create_task(notify_ai_agent_logic(task_id, agent_id))
