@@ -6,7 +6,12 @@ automated task generation from alerts (Smart Dispatch).
 """
 
 import textwrap
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from supabase import Client
+
+    from src.server.services.projects.task_service import TaskService
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.log_service import LogService
@@ -15,7 +20,7 @@ from src.server.utils.retry_utils import retry_with_backoff
 logger = get_logger(__name__)
 
 
-async def refine_task_description_logic(supabase_client, title: str, description: str) -> str:
+async def refine_task_description_logic(supabase_client: 'Client', title: str, description: str) -> str:
     """
     Uses POBot (RAG-enhanced) to transform a raw description into
     a structured product spec with User Stories and Technical Requirements.
@@ -118,7 +123,7 @@ async def refine_task_description_logic(supabase_client, title: str, description
 
 
 async def generate_task_from_alert_logic(
-    task_service_instance, alert_id: str, assignee_id: str | None = None
+    task_service_instance: 'TaskService', alert_id: str, assignee_id: str | None = None
 ) -> tuple[bool, dict[str, Any]]:
     """
     AI-powered task generation from a Sentinel alert.
