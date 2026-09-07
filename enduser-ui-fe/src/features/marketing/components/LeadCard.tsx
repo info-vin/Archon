@@ -93,7 +93,7 @@ export const LeadCard = ({ lead, style, onDragEnd, onPitch, onHistory }: LeadCar
                 <div className="absolute bottom-20 right-6 flex flex-col gap-3 z-50">
                      <button 
                         onClick={handleHistoryClick}
-                        className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-amber-500 hover:bg-amber-50 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-amber-500 hover:bg-amber-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                         onPointerDown={(e) => e.stopPropagation()}
                         title="View Timeline"
                         aria-label={`View Timeline for ${lead.company_name}`}
@@ -102,7 +102,7 @@ export const LeadCard = ({ lead, style, onDragEnd, onPitch, onHistory }: LeadCar
                     </button>
                     <button 
                         onClick={handleMap}
-                        className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        className="w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-blue-500 hover:bg-blue-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                         onPointerDown={(e) => e.stopPropagation()}
                         title="Open Map"
                         aria-label={`Open Map for ${lead.company_name}`}
@@ -111,7 +111,7 @@ export const LeadCard = ({ lead, style, onDragEnd, onPitch, onHistory }: LeadCar
                     </button>
                     <button 
                         onClick={handlePitchClick}
-                        className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 ${lead.pitch_content ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'}`}
+                        className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${lead.pitch_content ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'}`}
                         onPointerDown={(e) => e.stopPropagation()}
                         title={lead.pitch_content ? "View Saved Pitch" : "Generate AI Pitch"}
                         aria-label={lead.pitch_content ? `View Saved Pitch for ${lead.company_name}` : `Generate AI Pitch for ${lead.company_name}`}

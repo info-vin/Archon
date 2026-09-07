@@ -679,3 +679,10 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 6. 在 Step 1 選擇 Drive API v3 (`https://www.googleapis.com/auth/drive`) 並點擊授權。
 7. **(關鍵防呆)**：登入時，請確認畫面上的信箱是您在步驟 1 登入的新帳號！如果 GCP 專案處於測試中，請先去「OAuth 同意畫面」將該信箱加入「測試使用者 (Test users)」。
 8. 在 Step 2 點擊 Exchange 取得 `Refresh Token`，將其以 `1//...` 開頭的字串填入 `.env` 的 `GOOGLE_DRIVE_REFRESH_TOKEN`。
+
+### 4.3 部署標準作業流程 (SOP)
+migration/20260810_seed_rag_blog.sql
+migration/20260815_seed_insight_report_blog.sql
+migration/20260819_add_hybrid_router_settings.sql
+migration/20260819_update_rag_threshold.sql
+migration/20260821_update_leads_patrol_prompt.sql
