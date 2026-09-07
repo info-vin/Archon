@@ -389,4 +389,11 @@ test-lean:
 		echo "⚠️  WARNING: 'lake' command not found. Skipping Lean 4 tests. Please refer to ### 2.5 in CONTRIBUTING_tw.md for setup."; \
 	fi
 
-
+merge-twins:
+	@echo "🔀 Merging feat/twins into dev/twins and pushing..."
+	@git checkout dev/twins
+	@git pull origin dev/twins || true
+	@git merge feat/twins -m "chore: merge feat/twins into dev/twins"
+	@git push origin dev/twins
+	@git checkout feat/twins
+	@echo "✅ Merge complete and switched back to feat/twins."
