@@ -237,3 +237,6 @@
 ## 2024-09-06 - Replace O(N*M) nested array.find() with O(1) Map in Ollama discovery
 **Learning:** In list merging scenarios (like merging embedding capabilities into chat models), nested `Array.prototype.find()` calls create an O(N*M) performance bottleneck, especially when the lists of discovered models are large.
 **Action:** Always precalculate a Map keyed by the unique identifiers before the secondary loop to guarantee O(1) lookups during the merge operation.
+## 2024-05-18 - Pre-parsing dates before nested time window loops
+**Learning:** In `get_sla_reliability`, calling `datetime.fromisoformat()` repeatedly inside a 14-day rolling window loop causes an O(N*M) performance bottleneck, as the same date strings are parsed over and over.
+**Action:** Extract the date string parsing out of the nested loops. Pre-parse all dates into an in-memory list (e.g., `[(item, parsed_date, due_date)]`) before executing the time window loop to ensure O(N) date conversions and fast O(1) datetime comparisons.

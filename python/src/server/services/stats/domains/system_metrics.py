@@ -34,28 +34,32 @@ class SystemMetrics(BaseRepository):
                 if raw_comp := t.get("completed_at"):
                     try:
                         comp_dt = datetime.fromisoformat(str(raw_comp).replace("Z", "+00:00"))
-                        parsed_tasks.append((t, comp_dt))
+                        due_dt = None
+                        if raw_due := t.get("due_date"):
+                            try:
+                                due_dt = datetime.fromisoformat(str(raw_due).replace("Z", "+00:00"))
+                            except Exception:
+                                pass
+                        parsed_tasks.append((t, comp_dt, due_dt))
                     except Exception:
                         pass
+
 
             trend = []
             for i in range(180, 0, -14):
                 w_start, w_end = now - timedelta(days=i), now - timedelta(days=i - 14)
-                window_tasks = [(t, comp_dt) for t, comp_dt in parsed_tasks if w_start <= comp_dt < w_end]
+                window_tasks = [(t, comp_dt, due_dt) for t, comp_dt, due_dt in parsed_tasks if w_start <= comp_dt < w_end]
                 if not window_tasks:
                     trend.append({"date": w_start.strftime("%m-%d"), "rate": 100.0, "count": 0})
                     continue
                 met = 0
-                for t, comp_dt in window_tasks:
-                    if not t.get("due_date"):
+                for _t, comp_dt, due_dt in window_tasks:
+                    if not due_dt:
                         met += 1
                     else:
-                        try:
-                            d_dt = datetime.fromisoformat(str(t["due_date"]).replace("Z", "+00:00"))
-                            if comp_dt <= d_dt:
-                                met += 1
-                        except Exception:
-                            pass
+                        if comp_dt <= due_dt:
+                            met += 1
+
                 trend.append(
                     {
                         "date": w_start.strftime("%m-%d"),
