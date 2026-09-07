@@ -6,8 +6,12 @@ Standardized with Physical UUID resolution for Phase 4.6.15.
 from functools import lru_cache
 from typing import Any, NotRequired, TypedDict, cast
 
+from src.server.config.logfire_config import get_logger
+
 from ..utils import get_supabase_client
 from .prompt_service import prompt_service
+
+logger = get_logger(__name__)
 
 
 class ToolConfig(TypedDict):
@@ -44,8 +48,8 @@ def get_tool_min_level(tool_name: str) -> int:
         overrides = settings.get_setting("AGENT_TOOL_OVERRIDES")
         if overrides and isinstance(overrides, dict):
             return int(overrides.get(tool_name, {}).get("min_xp_level", static_level))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"AgentRegistry: DB fetch failed for get_tool_min_level (tool_name={tool_name}), falling back. Error: {repr(e)}")
 
     return static_level
 
@@ -122,8 +126,8 @@ def get_agent_uuid(agent_key: str) -> str | None:
         )
         if success and res.get("data"):
             return str(res["data"][0]["id"])
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"AgentRegistry: DB fetch failed for get_agent_uuid by key (agent_key={agent_key}), falling back. Error: {repr(e)}")
 
     try:
         supabase = get_supabase_client()
@@ -143,8 +147,8 @@ def get_agent_uuid(agent_key: str) -> str | None:
         )
         if success and res.get("data"):
             return str(res["data"][0]["id"])
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"AgentRegistry: DB fetch failed for get_agent_uuid by profile name (agent_name={agent_name}), falling back. Error: {repr(e)}")
     return None
 
 
@@ -209,8 +213,8 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
             if agent_data.get("default_tool"):
                 config["default_tool"] = agent_data["default_tool"]
             return config
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"AgentRegistry: DB fetch failed for get_agent_config (agent_id={agent_id}), falling back. Error: {repr(e)}")
 
     fallback = FALLBACK_AGENT_CONFIG.get(key)
     if fallback:
