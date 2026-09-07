@@ -234,3 +234,6 @@
 ## 2024-05-20 - Extract Array.find() to O(1) Maps in XState contexts
 **Learning:** XState machines that manage large arrays of objects in context and frequently query them within `invoke.input` definitions (like `processAction` in `approvalMachine.ts`) can incur hidden O(N) lookup costs.
 **Action:** Always extract `Array.prototype.find()` lookups into pre-calculated O(1) Maps directly within the XState context object (e.g. `proposalMap`). Populate the map during the `FETCH` success action and maintain it alongside the array during state updates.
+## 2024-09-06 - Replace O(N*M) nested array.find() with O(1) Map in Ollama discovery
+**Learning:** In list merging scenarios (like merging embedding capabilities into chat models), nested `Array.prototype.find()` calls create an O(N*M) performance bottleneck, especially when the lists of discovered models are large.
+**Action:** Always precalculate a Map keyed by the unique identifiers before the secondary loop to guarantee O(1) lookups during the merge operation.

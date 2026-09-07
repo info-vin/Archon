@@ -125,6 +125,14 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-07: Agent Registry 日誌硬化與靜默降級修復 (Phase 5.11.15)
+- **根除幽靈降級**: 發現並修復 `agent_registry.py` 中 4 處 `except Exception: pass` 的靜默吞噬異常漏洞，全面改用 `logger.warning(...)`。確保未來資料庫連線或動態設定讀取失敗時，能留下明確的 Traceback，嚴格遵守 "Detailed errors over graceful failures" 原則，保障系統維運可視性。
+- **全域公證防護**: 執行 `make lint-be` 與 `make test-be`，701 項測試全數綠燈通過。建立實體文件 `@PRPs/Phase_5.11.15_Agent_Registry_Log_Hardening.md`，完成 Phase 5.11.15 階段性架構強化與公證。
+### 09-06: 週期排程 DAG 解耦與網路防禦硬化 (Phase 5.11.13 ~ 5.11.14)
+- **Telegram 網路自癒與 IPv4 綁定 (Phase 5.11.13)**：消滅 5 秒超時，實作 `timeout=30.0` 與 3 次非同步重試。強制綁定 `local_address="0.0.0.0"` 避開雲端 IPv6 黑洞，並透過 `_log_to_db` 將連線錯誤 100% 穿透至 UI 日誌，嚴守 L2 Repository 架構規範。
+- **DAG 鏈條解耦與見縫插針排程 (Phase 5.11.14)**：將 Charlie (`daily_executive_summary`) 從 Bob 的事件鏈中物理解綁，賦予獨立排程 (`CronTrigger`)。將 Alice 改為 `IntervalTrigger(hours=12)` 以適應 Docker 碎片化啟動的見縫插針 (Opportunistic) 策略。
+- **SSOT 動態時間窗與自動化公證**：Bob 的報告生成移除寫死的 `timedelta(hours=24)`，改由 SSOT 動態讀取 `LAST_RUN_BOB_MARKET_REPORT`，確保降頻後 Leads 0% 遺漏。防護邊界透過 `test_dag_disconnect.py` 進行結構化物理斷言，全域 698 項單元測試與 `phase-audit` 靜態掃描 100% 通過。
+
 ### 09-04: 週期排程日誌硬化與自動化品質門禁公證 (Phase 5.11.12)
 - **排程器幽靈日誌根除 (SSOT/DRY)**：鑑識出 `Catchup` 階段提早跳過任務時，因外層封裝寫死 `skip_msg` 導致誤印「今日已執行」的 Bug。已將所有 `_should_run_*` 回傳值從 `bool` 升級為 `tuple[bool, str]`，讓底層物理原因（如「Time not reached」）真實穿透至日誌，徹底消滅 12 處硬編碼。
 - **自動化公證取代肉眼 (Zero Fake Verification)**：拒絕使用人工查閱 Docker Log 驗證。撰寫 `verify_catchup_log.py` 實體探針攔截日誌並自動 Assert；同時升級 `test_scheduler_service.py` 補齊 Tuple Mock 與情境斷言，最終 100% 通過 `make lint` 與 `mypy` 品質門禁。
