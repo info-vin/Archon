@@ -52,6 +52,28 @@ class TriggerCronResponse(BaseModel):
     jobs: int = Field(description="The number of jobs triggered")
     job_id: str | None = Field(None, description="The ID of the triggered job, if a specific job was triggered")
 
+class TokenUsageResponse(BaseModel):
+    success: bool = Field(True, description="Indicates whether token usage was logged successfully")
+
+class AgentCredentialsResponse(BaseModel):
+    OPENAI_API_KEY: str | None = Field(None, description="OpenAI API key")
+    GEMINI_API_KEY: str | None = Field(None, description="Gemini API key")
+    GOOGLE_API_KEY: str | None = Field(None, description="Google API key")
+    ANTHROPIC_API_KEY: str | None = Field(None, description="Anthropic API key")
+    LOGFIRE_TOKEN: str | None = Field(None, description="Logfire token")
+    AGENT_RATE_LIMIT_ENABLED: str | None = Field(None, description="Agent rate limit enabled setting")
+    AGENT_MAX_RETRIES: str | None = Field(None, description="Agent max retries setting")
+    MCP_SERVICE_URL: str | None = Field(None, description="MCP service URL")
+    LOG_LEVEL: str | None = Field(None, description="Log level setting")
+    SUPERVISOR_AGENT_MODEL: str = Field(description="Supervisor agent model")
+    WORKER_AGENT_MODEL: str = Field(description="Worker agent model")
+    DOCUMENT_AGENT_MODEL: str = Field(description="Document agent model")
+    RAG_AGENT_MODEL: str = Field(description="RAG agent model")
+    PRESENTATION_AGENT_MODEL: str = Field(description="Presentation agent model")
+
+class MCPCredentialsResponse(BaseModel):
+    LOG_LEVEL: str | None = Field(None, description="Log level setting")
+
 class TokenUsagePayload(BaseModel):
     model: str
     provider: str
@@ -60,8 +82,8 @@ class TokenUsagePayload(BaseModel):
     context_type: str = "agentic_workflow"
 
 
-@router.post("/stats/token-usage")
-async def log_token_usage(payload: TokenUsagePayload, request: Request):
+@router.post("/stats/token-usage", response_model=TokenUsageResponse)
+async def log_token_usage(payload: TokenUsagePayload, request: Request) -> TokenUsageResponse:
     """
     Internal endpoint to log token usage from agents service.
     Phase 5.4: Fix Token Logging Gap.
@@ -82,14 +104,14 @@ async def log_token_usage(payload: TokenUsagePayload, request: Request):
             output_tokens=payload.output_tokens,
             context_type=payload.context_type,
         )
-        return {"success": True}
+        return TokenUsageResponse(success=True)
     except Exception as e:
         logger.error(f"Error logging token usage: {e}")
         raise HTTPException(status_code=500, detail="Failed to log token usage") from e
 
 
-@router.get("/credentials/agents")
-async def get_agent_credentials(request: Request) -> dict[str, Any]:
+@router.get("/credentials/agents", response_model=AgentCredentialsResponse)
+async def get_agent_credentials(request: Request) -> AgentCredentialsResponse:
     """
     Get credentials needed by the agents service.
     """
@@ -134,15 +156,15 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
         logger.info(
             f"Provided credentials to agents service from {request.client.host if request.client else 'unknown'}"
         )
-        return credentials
+        return AgentCredentialsResponse(**credentials)
 
     except Exception as e:
         logger.error(f"Error retrieving agent credentials: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve credentials") from e
 
 
-@router.get("/credentials/mcp")
-async def get_mcp_credentials(request: Request) -> dict[str, Any]:
+@router.get("/credentials/mcp", response_model=MCPCredentialsResponse)
+async def get_mcp_credentials(request: Request) -> MCPCredentialsResponse:
     """
     Get credentials needed by the MCP service.
     """
@@ -158,7 +180,7 @@ async def get_mcp_credentials(request: Request) -> dict[str, Any]:
         }
 
         logger.info(f"Provided credentials to MCP service from {request.client.host if request.client else 'unknown'}")
-        return credentials
+        return MCPCredentialsResponse(**credentials)
 
     except Exception as e:
         logger.error(f"Error retrieving MCP credentials: {e}")
