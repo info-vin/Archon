@@ -85,3 +85,6 @@
 ## 2025-03-07 - Add WAI-ARIA tab pattern to TaskModal
 **Learning:** WAI-ARIA tab patterns require a combination of `role="tab"`, `aria-selected`, and `aria-controls` on the tabs themselves, coupled with `id`, `role="tabpanel"`, `aria-labelledby`, and `hidden` on the content panels to correctly map structure for screen readers. Simply hiding/showing divs without these mappings breaks screen reader context.
 **Action:** Always ensure that custom tab implementations include full WAI-ARIA attribute linking between tabs and their corresponding panels.
+## 2026-08-30 - Focus Rings on Floating Action Buttons in LeadCard
+**Learning:** Found that the absolute positioned FAB buttons (Timeline, Map, Pitch) in the LeadCard component only had partial focus-visible styles (focus-visible:ring-2) but lacked focus-visible:outline-none and focus-visible:ring-offset-2, making the focus ring harder to see on varied backgrounds and inconsistent with the design system.
+**Action:** Applied the full set of `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` to all icon-only floating action buttons for robust accessibility.
