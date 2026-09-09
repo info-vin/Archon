@@ -2,7 +2,6 @@
 """Progress API endpoints for polling operation status."""
 
 from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi import status as http_status
@@ -35,7 +34,7 @@ router = APIRouter(prefix="/api/progress", tags=["progress"])
 )
 async def get_progress(
     operation_id: str, response: Response, if_none_match: str | None = Header(None)
-) -> Any:
+) -> Response | CrawlProgressResponse | UploadProgressResponse | ProjectCreationProgressResponse | BaseProgressResponse:
     """
     Get progress for an operation with ETag support.
 
