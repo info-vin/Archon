@@ -237,3 +237,7 @@
 ## 2024-09-06 - Replace O(N*M) nested array.find() with O(1) Map in Ollama discovery
 **Learning:** In list merging scenarios (like merging embedding capabilities into chat models), nested `Array.prototype.find()` calls create an O(N*M) performance bottleneck, especially when the lists of discovered models are large.
 **Action:** Always precalculate a Map keyed by the unique identifiers before the secondary loop to guarantee O(1) lookups during the merge operation.
+
+## 2025-03-05 - Memoizing complex component maps for react-markdown
+**Learning:** Passing an inline object literal (e.g. `components={{ a: ..., code: ... }}`) to `react-markdown` causes the library to completely unmount and remount every custom component inside the markdown tree on every render cycle, severely impacting performance for long documents with complex components like `MermaidRenderer` or custom popovers (`RAGCitation`).
+**Action:** Always memoize the `components` map passed to `react-markdown` using `useMemo`, with strict dependency arrays to ensure stable references across renders.

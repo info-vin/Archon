@@ -14,7 +14,7 @@ interface RAGCitationProps {
   citationObj?: Citation;
 }
 
-export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations, citationObj }) => {
+export const RAGCitation: React.FC<RAGCitationProps> = React.memo(({ citationId, citations, citationObj }) => {
   const [isOpen, setIsOpen] = useState(false);
   // ⚡ Bolt: Fast-path exact object prop to bypass O(N) Array.find() overhead during list/markdown rendering
   const citation = citationObj || citations.find(c => c.id === citationId);
@@ -81,4 +81,4 @@ export const RAGCitation: React.FC<RAGCitationProps> = ({ citationId, citations,
       )}
     </span>
   );
-};
+});
