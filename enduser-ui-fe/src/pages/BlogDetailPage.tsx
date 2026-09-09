@@ -45,6 +45,32 @@ const BlogDetailPage: React.FC = () => {
         return map;
     }, [citations]);
 
+    // ⚡ Bolt Optimization:
+    // PERFORMANCE: Memoize the markdown components object to prevent React-Markdown from
+    // completely unmounting and remounting all custom components (like MermaidRenderer and RAGCitation)
+    // on every render cycle due to the inline object literal `{ a: ..., code: ... }` creating a new reference.
+    const markdownComponents = React.useMemo(() => ({
+        a: ({ node, href, children, ...props }: any) => {
+            if (href?.startsWith('#rag-citation-')) {
+                const citationId = href.replace('#rag-citation-', '');
+                return <RAGCitation citationId={citationId} citations={citations} citationObj={citationMap.get(citationId)} />;
+            }
+            return <a href={href} {...props}>{children}</a>;
+        },
+        code: ({ node, className, children, ...props }: any) => {
+            const match = /language-(\w+)/.exec(className || '');
+            const isMermaid = match && match[1] === 'mermaid';
+            if (isMermaid) {
+                return <MermaidRenderer code={String(children).replace(/\n$/, '')} />;
+            }
+            return (
+                <code className={className} {...props}>
+                    {children}
+                </code>
+            );
+        }
+    }), [citations, citationMap]);
+
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading...</div>;
     }
@@ -70,9 +96,7 @@ const BlogDetailPage: React.FC = () => {
 
     const processedContent = processCitations(post.content || '');
 
-    // ⚡ Bolt Optimization:
-    // Precalculate a lookup map for citations to prevent O(N) Array.find() lookups
-    // for every citation rendered inside the Markdown tree.
+
 
     return (
         <div className="container mx-auto px-4 py-12 max-w-4xl">
@@ -92,27 +116,7 @@ const BlogDetailPage: React.FC = () => {
                 <div className="markdown-content">
                     <Markdown
                         remarkPlugins={[remarkGfm]}
-                        components={{
-                            a: ({ node, href, children, ...props }) => {
-                                if (href?.startsWith('#rag-citation-')) {
-                                    const citationId = href.replace('#rag-citation-', '');
-                                    return <RAGCitation citationId={citationId} citations={citations} citationObj={citationMap.get(citationId)} />;
-                                }
-                                return <a href={href} {...props}>{children}</a>;
-                            },
-                            code: ({ node, className, children, ...props }) => {
-                                const match = /language-(\w+)/.exec(className || '');
-                                const isMermaid = match && match[1] === 'mermaid';
-                                if (isMermaid) {
-                                    return <MermaidRenderer code={String(children).replace(/\n$/, '')} />;
-                                }
-                                return (
-                                    <code className={className} {...props}>
-                                        {children}
-                                    </code>
-                                );
-                            }
-                        }}
+                        components={markdownComponents}
                     >
                         {processedContent}
                     </Markdown>
