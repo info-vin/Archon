@@ -91,3 +91,6 @@
 ## 2025-02-23 - Improve Action Button Accessibility
 **Learning:** Purely decorative `Icon` components nested inside `<button>` elements (that already contain descriptive text or have explicit `aria-label`s) can inadvertently clutter the accessibility tree or cause redundant announcements by screen readers if they expose internal SVG details.
 **Action:** When working on icon-heavy UI components like `BrandDashboardView` or `DevOpsProposalList`, systematically add `aria-hidden="true"` to such decorative icons (e.g., `<PlusIcon aria-hidden="true" />`) while ensuring the parent button has a robust accessible name (either via textual content or a proper `aria-label`).
+## 2024-09-09 - Improve Keyboard Accessibility in Nexus and Sidebar Components
+**Learning:** Found that secondary navigation and toggle buttons (like `SourceContextPane` toggle and `NexusHeader` action buttons) as well as clickable list items (`ApprovalSidebarList`) lacked `focus-visible` styling and robust keyboard event handlers, making them inaccessible to keyboard users.
+**Action:** Always add `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` to buttons. For custom clickable lists/cards, explicitly assign `role="button"`, `tabIndex={0}`, and `onKeyDown` handlers for Enter/Space to ensure complete accessibility.
