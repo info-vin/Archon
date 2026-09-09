@@ -44,10 +44,12 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                                 title="Inspect Code Difference"
                                 aria-label="Inspect Code Difference"
                             >
-                                <SearchIcon className="w-5 h-5" />
+                                <SearchIcon className="w-5 h-5" aria-hidden="true" />
                             </button>
                             <button 
                                 onClick={() => handleCodeAction(prop.id, 'reject')}
+                                aria-label="Reject proposal"
+                                title="Reject proposal"
                                 disabled={!!processingId}
                                 className="flex-1 px-6 py-4 text-xs font-bold text-red-600 border border-red-100 rounded-2xl hover:bg-red-50 transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                             >
@@ -56,6 +58,8 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                             </button>
                             <button 
                                 onClick={() => handleCodeAction(prop.id, 'approve')}
+                                aria-label="Approve proposal"
+                                title="Approve proposal"
                                 disabled={!!processingId}
                                 className="flex-1 px-6 py-4 text-xs font-black bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-100 dark:shadow-none transition-all active:scale-95 min-w-[80px] flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                             >

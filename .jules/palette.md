@@ -88,3 +88,6 @@
 ## 2026-08-30 - Focus Rings on Floating Action Buttons in LeadCard
 **Learning:** Found that the absolute positioned FAB buttons (Timeline, Map, Pitch) in the LeadCard component only had partial focus-visible styles (focus-visible:ring-2) but lacked focus-visible:outline-none and focus-visible:ring-offset-2, making the focus ring harder to see on varied backgrounds and inconsistent with the design system.
 **Action:** Applied the full set of `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2` to all icon-only floating action buttons for robust accessibility.
+## 2025-02-23 - Improve Action Button Accessibility
+**Learning:** Purely decorative `Icon` components nested inside `<button>` elements (that already contain descriptive text or have explicit `aria-label`s) can inadvertently clutter the accessibility tree or cause redundant announcements by screen readers if they expose internal SVG details.
+**Action:** When working on icon-heavy UI components like `BrandDashboardView` or `DevOpsProposalList`, systematically add `aria-hidden="true"` to such decorative icons (e.g., `<PlusIcon aria-hidden="true" />`) while ensuring the parent button has a robust accessible name (either via textual content or a proper `aria-label`).
