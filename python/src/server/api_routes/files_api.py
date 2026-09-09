@@ -16,7 +16,7 @@ class FileUploadResponse(BaseModel):
 
 
 @router.post("/upload", response_model=FileUploadResponse)
-async def upload_file(bucket_name: str = Form(...), file_path: str = Form(...), file: UploadFile = File(...)):
+async def upload_file(bucket_name: str = Form(...), file_path: str = Form(...), file: UploadFile = File(...)) -> FileUploadResponse:
     """
     Uploads a file to a specified Supabase Storage bucket.
 
