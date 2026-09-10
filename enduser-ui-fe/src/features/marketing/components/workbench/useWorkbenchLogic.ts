@@ -10,6 +10,9 @@ export const LENGTHS = [
   { id: 'deep', label: '深度報導 (1500字+)' }
 ];
 
+// PERFORMANCE: Precalculated map to avoid O(N) Array.find() overhead on lookup
+const LENGTHS_MAP = new Map(LENGTHS.map(l => [l.id, l.label]));
+
 interface UseWorkbenchLogicProps {
   activeSource: ContentSource | null;
   usedPrompt?: string;
@@ -45,7 +48,7 @@ export const useWorkbenchLogic = ({ activeSource, usedPrompt, content }: UseWork
   const getTempPromptPreview = () => {
     if (!activeSource) return "";
     const indStr = config.industry.length > 0 ? config.industry.join("與") : "通用";
-    const lenStr = LENGTHS.find(l => l.id === config.length)?.label || "標準";
+    const lenStr = LENGTHS_MAP.get(config.length) || "標準";
     const styleStr = config.style.length > 0 ? config.style.join("且") : "專業";
     const chartStr = config.charts.length > 0 ? `預留 ${config.charts.join("、")}。` : "";
     const searchStr = config.enableWebSearch ? "結合 Google 搜尋。" : "";
