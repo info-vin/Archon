@@ -15,7 +15,7 @@ class TelegramService:
     async def _log_to_db(self, level: str, message: str) -> None:
         """Writes directly to archon_logs to ensure errors are visible in Admin UI."""
         import asyncio
-        def _insert_log():
+        def _insert_log() -> None:
             try:
                 from src.server.repositories.base_repository import BaseRepository
                 sb = get_supabase_client()
@@ -36,7 +36,7 @@ class TelegramService:
 
         from src.server.utils import get_supabase_client
 
-        def _fetch_db_sync():
+        def _fetch_db_sync() -> dict[str, str]:
             supabase = get_supabase_client()
             settings_service = SettingsService(supabase)
             return settings_service.get_all_settings()
