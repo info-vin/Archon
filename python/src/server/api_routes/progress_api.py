@@ -97,7 +97,7 @@ async def get_progress(
             f"Progress retrieved | operation_id={operation_id} | status={response_data.get('status')} | progress={response_data.get('progress')}"
         )
 
-        return response_data
+        return response_data  # type: ignore
 
     except HTTPException:
         raise

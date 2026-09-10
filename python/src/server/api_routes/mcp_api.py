@@ -51,7 +51,7 @@ async def get_mcp_status(current_user: UserProfileDTO = Depends(get_current_user
 
     return MCPHealthResponse(
         status="healthy" if all(health.values()) else "degraded",
-        details=health,
+        details=dict(health),
         service="mcp",
     )
 

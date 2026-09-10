@@ -1,5 +1,5 @@
 from unittest.mock import AsyncMock, patch
-import pytest
+
 from fastapi.testclient import TestClient
 
 from src.server.main import app
@@ -7,7 +7,7 @@ from src.server.main import app
 client = TestClient(app)
 
 def test_log_token_usage_success():
-    with patch("src.server.services.token_usage_service.TokenUsageService.log_usage", new_callable=AsyncMock) as mock_log:
+    with patch("src.server.services.token_usage_service.TokenUsageService.log_usage", new_callable=AsyncMock):
         response = client.post(
             "/internal/stats/token-usage",
             json={
