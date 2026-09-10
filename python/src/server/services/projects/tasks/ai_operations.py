@@ -89,7 +89,7 @@ async def refine_task_description_logic(supabase_client: 'Client', title: str, d
         from src.server.services.prompt_service import prompt_service
         system_instruction = prompt_service.get_prompt("PROJECT_OWNER_ASSISTANT_PO")
 
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(

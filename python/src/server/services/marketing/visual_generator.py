@@ -29,7 +29,7 @@ class VisualAssetGenerator:
             if api_key:
                 client = genai.Client(api_key=api_key)
                 prompt = f"Professional tech logo, {style}, high resolution"
-                native_resp = client.models.generate_content(
+                native_resp = await client.aio.models.generate_content(
                     model=SYSTEM_MODELS.get("IMAGE_GEN", "imagen-3.0-generate-002"),
                     contents=cast(Any, [prompt]),
                     config=types.GenerateContentConfig(response_modalities=["IMAGE"]),

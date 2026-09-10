@@ -1,8 +1,8 @@
-## 2024-05-18 - String split vs find for extracting occurrences
+## 2025-05-18 - String split vs find for extracting occurrences
 **Learning:** Using `string.find("```", pos)` inside a while loop to extract all occurrences in a large text is significantly slower (~30-50% slower) than simply using `string.split("```")` and calculating the positions, or using `re.finditer`.
 **Action:** When extracting all positions of a substring in a large document, prefer `re.finditer` or string splitting with length accumulation instead of sequential `.find()` calls in a while loop.
 
-## 2024-05-18 - Pre-compiled arrays vs inline arrays in loops
+## 2025-05-18 - Pre-compiled arrays vs inline arrays in loops
 **Learning:** Defining constant arrays (like lists of stop words or syntax indicators) inside a function that runs in a tight loop is surprisingly costly due to repeated object creation and allocation overhead in Python. Pulling them out into module-level constants speeds up execution.
 **Action:** Always extract constant reference lists and tuples to module-level variables (e.g. `_DOC_INDICATORS`) when used inside loops, especially in text processing functions like `extract_code_blocks`.
 
@@ -10,18 +10,18 @@
 **Learning:** Using `sum(1 for x in y if condition)` generator expressions inside frequently executed paths or nested loops incurs a performance penalty due to generator object creation overhead in Python. Standard `for` loops with a counter variable or even `len([x for x in y if condition])` (list comprehensions) are faster.
 **Action:** Replace `sum(1 for ...)` with standard `for` loops and counters (or list comprehensions if appropriate) when optimizing Python code that runs in tight loops.
 
-## 2024-05-18 - Repeated string conversions in generator expressions
+## 2025-05-18 - Repeated string conversions in generator expressions
 **Learning:** Using a generator expression like `sum(1 for x in y if x in text.lower())` re-evaluates `text.lower()` on every iteration if it's placed in the loop condition, leading to O(N*M) string allocations instead of O(N) when iterating over strings. The creation of generator expressions also has some overhead compared to standard for loops.
 **Action:** When extracting data or checking multiple items against a string, always cache the string conversions (like `.lower()`) outside of loops, and consider standard for loops instead of generators on hot paths for better performance.
 
-## 2024-05-18 - Nested generator expressions vs explicit loops
+## 2025-05-18 - Nested generator expressions vs explicit loops
 **Learning:** Using nested generator expressions like `sum(1 for ... if any(...))` causes significant overhead in Python due to creating multiple generator objects per outer loop iteration. Replacing these nested generators with standard `for` loops, caching type conversions (like `str()`), and using early `break` statements can be ~4x faster on hot paths.
 **Action:** When filtering or counting based on compound conditions involving sub-lists or strings, unroll nested generators (`any()`, `all()`, or inner comprehensions) into standard `for` loops to avoid allocation overhead and enable true short-circuiting.
 ## 2025-05-18 - Pre-calculate feature strings before O(N^2) comparison loops
 **Learning:** In `extract_code_blocks_logic`, calling `_normalize_code_for_comparison` inside the O(N^2) nested deduplication loop caused massive performance degradation because expensive regex substitutions were run redundantly.
 **Action:** Always pre-calculate normalized codes or feature vectors into an O(N) list comprehension BEFORE executing an O(N^2) similarity or comparison loop.
 
-## 2024-05-18 - Fast upper-bound ratio checks for SequenceMatcher
+## 2025-05-18 - Fast upper-bound ratio checks for SequenceMatcher
 **Learning:** In Python, calling `difflib.SequenceMatcher.ratio()` inside O(N^2) loops (like deduplicating code blocks) is a severe performance bottleneck because `.ratio()` calculates the actual longest common subsequence in O(L_a * L_b) time.
 **Action:** Always optimize `SequenceMatcher` inside loops by pre-calculating sequence lengths to allow a fast O(1) upper-bound check (`2.0 * min(l1, l2) / (l1 + l2) < threshold`), and always call the heuristic guards `.real_quick_ratio()` and `.quick_ratio()` before committing to `.ratio()`.
 
@@ -32,15 +32,15 @@
 ## 2025-05-18 - Batch database fetches for related entities using .in_()
 **Learning:** Using O(N) individual database queries through loop mechanisms like `asyncio.gather(*[format_with_sources(p) for p in projects])` produces an N+1 query bottleneck when looking up relationships, such as linked sources for project IDs.
 **Action:** Always batch these database lookups into a single O(1) `.in_("id", id_list)` database query, and map the bulk response data back to the entity list in memory in order to speed up the loop processing execution path.
-## 2024-05-18 - Replacing multiple list comprehensions with single iteration over lists
+## 2025-05-18 - Replacing multiple list comprehensions with single iteration over lists
 **Learning:** Traversing the exact same list twice using list comprehensions like `[s["source_id"] for s in sources if ...]` adds unnecessary O(N) overhead compared to a single pass accumulation.
 **Action:** When extracting grouped items from a list, use a single for-loop with O(1) appends to respective lists to prevent redundant iteration loops over large datasets.
 
-## 2024-05-18 - Single pass accumulation over multiple generators
+## 2025-05-18 - Single pass accumulation over multiple generators
 **Learning:** In Python, calculating multiple aggregates (like sums) from the exact same list using multiple generator expressions (e.g., `sum(r['a'] for r in data)` and `sum(r['b'] for r in data)`) adds unnecessary O(N) iteration overhead and generator allocations.
 **Action:** Use a single pass `for` loop to accumulate multiple values simultaneously to save CPU time and memory spikes.
 
-## 2024-05-18 - Beware Supabase 1000-row limit for aggregate counts
+## 2025-05-18 - Beware Supabase 1000-row limit for aggregate counts
 **Learning:** Using an O(1) `.in_("id", ids)` fetch to retrieve ALL rows into memory in Python to emulate a `GROUP BY COUNT` is functionally dangerous because Supabase/PostgREST enforces a strict 1000-row limit by default. If the total relations exceed this, the query silently truncates, resulting in wildly inaccurate counts.
 **Action:** Do NOT use `.in_()` to pull raw rows to emulate aggregate database counts. Use `count="exact", head=True` inside individual `.eq()` lookups if an RPC is not available, as it delegates the true count to the database engine and respects pagination limits.
 
@@ -48,7 +48,7 @@
 **Learning:** When splitting large text files into chunks for database storage, inserting each chunk in a loop (`.insert().execute()`) creates an N+1 query bottleneck. The database insertion overhead can dominate the function's execution time for large files.
 **Action:** Batch multiple Supabase row insertions by accumulating data into a list and calling a single `.insert([...]).execute()`. Add a fallback to individual insertions in case of batch failure to preserve data and detailed logging.
 
-## 2024-05-18 - Avoid text.split() for fast word counting
+## 2025-05-18 - Avoid text.split() for fast word counting
 **Learning:** Using `len(text.split())` to estimate token or word counts is extremely inefficient because it allocates a new list and string objects for every word. When inside a generator expression like `sum(len(t.split()) for t in batch)`, it can be ~10x slower than alternative approaches.
 **Action:** When you only need to estimate word counts (like for rate limit calculations), use `text.count(' ') + 1` inside a standard for-loop. This executes in optimized C code, bypassing massive string and list allocations.
 ## 2025-05-18 - Pre-parsing dates before nested time window loops
@@ -63,21 +63,21 @@
 ## 2025-05-18 - Replacing len(text.split()) with text.count(' ') is functionally incorrect
 **Learning:** In Python, replacing `len(text.split())` with `text.count(' ') + 1` for word counting or token estimations is functionally incorrect because `split()` handles all whitespace characters (tabs, newlines, multiple spaces) and groups them, whereas `count(' ')` introduces logical bugs by ignoring other whitespaces and miscounting consecutive spaces.
 **Action:** Do not use `text.count(' ') + 1` to replace `len(text.split())`. If performance is a critical issue without allocations, use regex iterators like `sum(1 for _ in re.finditer(r'\S+', text))` or stick to the highly optimized CPython `split()` for general cases.
-## 2024-05-18 - Nested list comprehensions vs explicit loops for counting
+## 2025-05-18 - Nested list comprehensions vs explicit loops for counting
 **Learning:** Using `len([1 for x in y for z in x if condition])` causes unnecessary list allocation and generator overhead in Python, slowing down execution.
 **Action:** Replace `len([1 for ...])` with standard `for` loops and a counter variable to prevent allocation overhead.
-## 2024-05-18 - String conversions inside array iterators
+## 2025-05-18 - String conversions inside array iterators
 **Learning:** In React/JavaScript frontend applications, calling string transformations like `.toLowerCase()` inside iterative array methods (e.g., `.filter()`, `.some()`) causes O(N) redundant string allocations.
 **Action:** Precalculate these values outside the loop to improve rendering performance and memory efficiency.
 ## 2026-05-06 - Separating pre-calculation from active filtering in React
 **Learning:** When optimizing React frontend search filters to avoid redundant string allocations (e.g., `.toLowerCase()`), separating the pre-calculation and filtering logic into two distinct `useMemo` hooks is crucial. Combining them executes the allocations on every keystroke, resulting in a de-optimization. The first `useMemo` must cache the pre-calculated search strings (dependent on the source data), and the second `useMemo` should handle the active filtering (dependent on the cached strings and search query).
 **Action:** Always verify the dependency arrays of `useMemo` hooks when pre-calculating string values to ensure they do not re-run on frequent user inputs like search queries.
 
-## 2024-05-18 - Avoid object cloning inside memoized filters
+## 2025-05-18 - Avoid object cloning inside memoized filters
 **Learning:** When optimizing React frontend search filters to avoid redundant string allocations, hoisting operations like `searchQuery.toLowerCase()` outside the `.filter()` loop into a `useMemo` hook is good, but mapping or cloning the original data array (e.g., `data.map(item => ({...item, searchStr}))`) just to cache search strings breaks object reference equality and causes unnecessary memory allocations that often outweigh the CPU savings.
 **Action:** Filter the original array directly without cloning objects.
 
-## 2024-05-18 - Avoid meaningless micro-optimizations
+## 2025-05-18 - Avoid meaningless micro-optimizations
 **Learning:** Extracting string operations (e.g., `.toLowerCase()`) from small, fixed-size array iterations (e.g., mapping over a 4-item status list) saves no measurable time and violates the rule against meaningless micro-optimizations.
 **Action:** Only optimize string transformations or allocations when they occur inside O(N) loops operating on potentially large datasets or frequent user input events.
 
@@ -91,7 +91,7 @@
 ## 2024-05-15 - React Component Primitive Array Filtering
 **Learning:** Inside core React primitives like a Combobox that get reused frequently, string operations like `.toLowerCase()` inside iterative filtering cause redundant O(N) string allocations on every keystroke. Using `.map(item => ({...item, searchStr}))` is dangerous as it breaks object reference equality and memoization.
 **Action:** Precalculate parallel arrays (e.g., `searchableLabels = options.map(opt => opt.label.toLowerCase())`) in a separate `useMemo` and use the index `(_, i)` to filter the original array, preserving references while eliminating per-keystroke allocations.
-## 2024-05-18 - Pre-calculating combined search strings in parallel arrays
+## 2025-05-18 - Pre-calculating combined search strings in parallel arrays
 **Learning:** When optimizing React search filters to prevent redundant `.toLowerCase()` string allocations, if the search requires matching across multiple object fields (e.g. `item.title` and `item.source_id`), creating a single pre-calculated parallel array of combined strings (e.g. `` `${item.title} ${item.source_id}`.toLowerCase() ``) provides O(1) active search speed without breaking object reference equality.
 **Action:** Use `useMemo` to pre-calculate combined string fields into a parallel array when multiple fields must be searchable, and use the array index `(_, index)` to filter the original array during active searches.
 ## 2024-10-24 - React Component Static Weights Dictionary Allocation
@@ -139,7 +139,7 @@
 **Learning:** When performing independent async AI inferences (like `_infer_need`) inside a loop over a list of items (e.g., job leads), using a sequential `for` loop with `await` creates a massive network waterfall bottleneck. This scales the execution time as O(N) instead of O(1) concurrent waiting time, severely slowing down processes like daily background data fetching.
 **Action:** Specifically look for `for` loops containing independent `await` calls, especially those hitting external network APIs, and refactor them to execute concurrently using `asyncio.gather` to eliminate the waterfall delay.
 
-## 2024-05-18 - Avoid redundant string allocations in Array.prototype.sort() comparators
+## 2025-05-18 - Avoid redundant string allocations in Array.prototype.sort() comparators
 **Learning:** Calling string methods like `.toLowerCase()` inside an `Array.prototype.sort()` comparator causes $O(N \log N)$ redundant string allocations during the sorting phase.
 **Action:** When optimizing frontend performance, pre-calculate sorting weights or normalized strings in an $O(N)$ loop or `useMemo` block before executing the sort operation to eliminate redundant allocations.
 ## 2026-07-26 - Static lookup dictionaries for repeated inline strings
@@ -162,18 +162,18 @@
 **Learning:** In React components that render lists (like `IdentityMatrix`), calling `.find()` with `.toLowerCase()` transformations inside the `.map()` render loop causes O(N*M) redundant string memory allocations on every render cycle.
 **Action:** Always pre-calculate case-insensitive lookup dictionaries (e.g., using `useMemo` and `Map`) outside of the render loop to guarantee fast O(1) property access without string allocations during iterative rendering.
 
-## 2024-05-18 - Preserving Array.find() behavior with Map caching
+## 2025-05-18 - Preserving Array.find() behavior with Map caching
 **Learning:** When optimizing a loop by replacing `Array.prototype.find()` with a pre-calculated `Map` for $O(1)$ lookups, simply calling `map.set()` for every item creates a 'last match wins' regression, because `find()` inherently returns the *first* match.
 **Action:** When converting `find()` to a `Map`, always ensure duplicate keys are handled gracefully to mimic `find()`'s 'first match' behavior by checking `if (!map.has(key)) { map.set(key, value); }`.
 ## 2026-07-29 - Pre-calculating Date parsing before array sorting
 **Learning:** Calling `Date.parse(string)` inside `Array.prototype.sort()` comparators causes redundant O(N log N) string-to-date parsing overhead, creating a hidden performance bottleneck similar to `new Date().getTime()`.
 **Action:** Always pre-calculate parsed timestamps in an O(N) loop (e.g. into a Map or parallel array) before executing the sorting operation to ensure O(1) attribute access during the sort.
 
-## 2024-05-18 - Extracting inline React components from render functions
+## 2025-05-18 - Extracting inline React components from render functions
 **Learning:** Defining a React component (e.g., `KanbanColumn`) inside the render function of its parent component (`BrandDashboardView`) causes React to create a new component type reference on every single parent render. This bypasses React's reconciliation engine, forcing it to unmount and entirely remount the DOM sub-tree on every state change, destroying local state and causing massive performance overhead.
 **Action:** Always extract inline component definitions outside of the parent component's body. If the child component needs data or callbacks from the parent, pass them explicitly as props (e.g., `onUpdateStatus`, `columnPosts`).
 
-## 2024-05-18 - Pre-calculating complex string manipulations with static lookup dictionaries
+## 2025-05-18 - Pre-calculating complex string manipulations with static lookup dictionaries
 **Learning:** Performing multiple chained string manipulations like `status.toUpperCase().replace('_', ' ')` inside a `.map()` render loop allocates several new strings per item on every render cycle. This is significantly slower and generates more garbage collection overhead than retrieving a pre-formatted string from a dictionary.
 **Action:** Extract repetitive and chained inline string operations into a static $O(1)$ lookup dictionary defined completely outside the component to prevent unnecessary memory allocations during list rendering.
 ## 2024-05-19 - Pre-calculating Date parsing before array sorting
@@ -203,14 +203,14 @@
 **Learning:** Using inline string manipulations like `.toUpperCase().replace('_', ' ')` inside a `.map()` render loop forces unnecessary string allocations and regex executions on every re-render.
 **Action:** Pre-calculate and consolidate all possible formatted status string combinations into a single static O(1) lookup dictionary outside the React component.
 
-## 2024-05-18 - Replacing O(N*M) nested render loop searches with O(1) module-level Maps
+## 2025-05-18 - Replacing O(N*M) nested render loop searches with O(1) module-level Maps
 **Learning:** Performing nested loop searches using `Array.prototype.find()` inside a React component's render function to locate static config items creates an O(N*M) performance bottleneck that executes on every render cycle.
 **Action:** When a component relies on static configuration data imported from another file, extract the lookup logic by pre-calculating a flat `Map` at the module level (outside the component). This guarantees O(1) constant-time property access during rendering without needing `useMemo` overhead.
 
 ## 2024-10-25 - React.memo Component Wrapping for Rendering Optimization
 **Learning:** In heavily nested list view components (like `VictoryFeedList` rendering a long array of `ContentSource`), any unrelated state update in the parent layout component causes the entire list to completely re-render, creating an O(N) rendering bottleneck. Wrapping `Array.prototype.find()` in `useMemo` for tiny lists, or using `Map.get()` for < 5 item static configurations are anti-patterns due to the memory allocation overhead exceeding linear search performance.
 **Action:** Always wrap leaf list view components (`VictoryFeedList`, `KanbanColumn`) with `React.memo` to intercept unnecessary reconciliation when parent component state updates. Do not attempt `useMemo` on primitive arrays or O(1) Dictionary conversions for arrays smaller than 5 items.
-## 2024-05-18 - React.memo fails with unmemoized callbacks
+## 2025-05-18 - React.memo fails with unmemoized callbacks
 **Learning:** When passing callback props (like `onEditRole`, `onViewActivity`) to a `React.memo()` optimized component inside a list (e.g. `TeamMemberCard`), if the parent component does not wrap these callbacks in `useCallback`, the shallow comparison will always fail on every render. This completely negates the benefit of `React.memo` and adds useless CPU overhead.
 **Action:** Always verify that components utilizing `React.memo()` only receive memoized callback functions or static props from their parents, especially within map iterations.
 
@@ -237,3 +237,11 @@
 ## 2024-09-06 - Replace O(N*M) nested array.find() with O(1) Map in Ollama discovery
 **Learning:** In list merging scenarios (like merging embedding capabilities into chat models), nested `Array.prototype.find()` calls create an O(N*M) performance bottleneck, especially when the lists of discovered models are large.
 **Action:** Always precalculate a Map keyed by the unique identifiers before the secondary loop to guarantee O(1) lookups during the merge operation.
+
+## 2025-03-05 - Memoizing complex component maps for react-markdown
+**Learning:** Passing an inline object literal (e.g. `components={{ a: ..., code: ... }}`) to `react-markdown` causes the library to completely unmount and remount every custom component inside the markdown tree on every render cycle, severely impacting performance for long documents with complex components like `MermaidRenderer` or custom popovers (`RAGCitation`).
+**Action:** Always memoize the `components` map passed to `react-markdown` using `useMemo`, with strict dependency arrays to ensure stable references across renders.
+
+## 2025-05-18 - Replacing Array.find with Map O(1) in UI generation
+**Learning:** In frequently called UI functions (like rendering dynamic prompt previews), searching arrays with `Array.find()` adds unnecessary O(N) CPU overhead, even for small arrays.
+**Action:** When working with static configuration arrays (e.g. mapping ID to Label), extract the array into an O(1) `Map` at module level, eliminating `Array.find()` lookups on each render or hook invocation.

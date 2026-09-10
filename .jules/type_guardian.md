@@ -34,3 +34,6 @@
 ## 2024-09-06 - Replacing Any with TYPE_CHECKING
 **Learning:** Using `Any` to cheat type coverage is strictly prohibited in TypeGuardian operations. When a parameter needs a class type from another module, but importing it would cause circular dependency issues, `TYPE_CHECKING` from `typing` should be used with forward string references like `'TaskService'` and `'Client'` to provide proper type safety while avoiding import errors.
 **Action:** Next time when patching methods, strictly analyze if there is an alternative type available and use `TYPE_CHECKING` for cross-module service dependencies instead of relying on `Any`.
+## 2024-05-18 - Replacing dict[str, Any] in HTTP integrations
+**Learning:** Returning `dict[str, Any]` for generic microservice HTTP responses causes blind spots in the service layer where keys could be missing. `httpx` json responses are easily cast and strongly structured via lightweight TypedDicts (`NotRequired[str]`) mapping exactly to HTTP JSON responses.
+**Action:** When auditing HTTP clients interacting with external or microservices, define specific TypedDicts for each endpoint's response (e.g., `CrawlResponseDTO`) instead of relying on `response.json()` returning an untyped dictionary.

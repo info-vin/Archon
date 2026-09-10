@@ -6,13 +6,43 @@ other services (API and Agents) instead of importing their modules directly.
 """
 
 import uuid
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 from urllib.parse import urljoin
 
 import httpx
 
 from ..config.logfire_config import mcp_logger
 from ..config.service_discovery import get_agents_url, get_api_url
+
+
+class ErrorDTO(TypedDict):
+    code: NotRequired[str]
+    message: str
+
+class CrawlResponseDTO(TypedDict):
+    success: bool
+    progressId: NotRequired[str | None]
+    message: NotRequired[str]
+    error: NotRequired[ErrorDTO | None]
+
+class SearchResponseDTO(TypedDict):
+    success: bool
+    results: list[dict[str, Any]]
+    reranked: NotRequired[bool]
+    error: NotRequired[ErrorDTO | None]
+
+class StoreDocumentResponseDTO(TypedDict):
+    success: bool
+    documents_stored: int
+    chunks_created: int
+    message: str
+
+class HealthCheckResponseDTO(TypedDict):
+    api_service: bool
+    agents_service: bool
+
+
+
 
 
 class MCPServiceClient:
@@ -41,7 +71,7 @@ class MCPServiceClient:
             headers["X-Request-ID"] = str(uuid.uuid4())
         return headers
 
-    async def crawl_url(self, url: str, options: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def crawl_url(self, url: str, options: dict[str, Any] | None = None) -> CrawlResponseDTO:
         """
         Crawl a URL by calling the API service's knowledge-items/crawl endpoint.
         Transforms MCP's simple format to the API's KnowledgeItemRequest format.
@@ -98,7 +128,7 @@ class MCPServiceClient:
         source_filter: str | None = None,
         match_count: int = 5,
         use_reranking: bool = False,
-    ) -> dict[str, Any]:
+    ) -> SearchResponseDTO:
         """
         Perform a search by calling the API service's rag/query endpoint.
         Transforms MCP's simple format to the API's RagQueryRequest format.
@@ -144,7 +174,7 @@ class MCPServiceClient:
 
     async def store_documents(
         self, documents: list[dict[str, Any]], generate_embeddings: bool = True
-    ) -> dict[str, Any]:
+    ) -> StoreDocumentResponseDTO:
         """
         Store documents by transforming them into the format expected by the API.
         Note: The regular API expects file uploads, so this is a simplified version.
@@ -183,14 +213,14 @@ class MCPServiceClient:
 
     # Removed analyze_document - document analysis should be handled by Agents via MCP tools
 
-    async def health_check(self) -> dict[str, Any]:
+    async def health_check(self) -> HealthCheckResponseDTO:
         """
         Check health of all dependent services.
 
         Returns:
             Combined health status
         """
-        health_status = {"api_service": False, "agents_service": False}
+        health_status: HealthCheckResponseDTO = {"api_service": False, "agents_service": False}
 
         # Check API service
         api_health_url = urljoin(self.api_url, "/api/health")

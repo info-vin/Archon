@@ -6,6 +6,7 @@ from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
 
 import aiofiles
+from supabase import Client
 
 from ..utils import get_supabase_client
 
@@ -65,14 +66,14 @@ class ActionExecutor:
 
 
 class ProposeChangeService:
-    def __init__(self, db_client: Any | None = None) -> None:
+    def __init__(self, db_client: Client | None = None) -> None:
         self.db_client = db_client or get_supabase_client()
         from ..repositories.base_repository import BaseRepository
         self.base_repo = BaseRepository(self.db_client)
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)
 
-    def _resolve_user_id(self, user_id: Any) -> str:
+    def _resolve_user_id(self, user_id: str | UUID) -> str:
         """
         Dynamically handles both UUIDs and simplified IDs ('1', '2', '3').
         Ensures the ID is returned in a format suitable for the database column.
@@ -176,7 +177,7 @@ class ProposeChangeService:
         )
         return cast(ProposedChangeDict, res["data"][0])
 
-    async def approve_proposal(self, proposal_id: UUID, user_id: Any) -> ProposedChangeDict:
+    async def approve_proposal(self, proposal_id: UUID, user_id: str | UUID) -> ProposedChangeDict:
         resolved_id = self._resolve_user_id(user_id)
         success, res = self.base_repo.execute_query(
             self.db_client.table("proposed_changes") # 合法
@@ -219,7 +220,7 @@ class ProposeChangeService:
 
         return cast(ProposedChangeDict, res["data"][0])
 
-    async def reject_proposal(self, proposal_id: UUID, user_id: Any) -> ProposedChangeDict:
+    async def reject_proposal(self, proposal_id: UUID, user_id: str | UUID) -> ProposedChangeDict:
         resolved_id = self._resolve_user_id(user_id)
         success, res = self.base_repo.execute_query(
             self.db_client.table("proposed_changes") # 合法

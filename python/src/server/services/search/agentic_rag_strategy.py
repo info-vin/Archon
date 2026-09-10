@@ -12,7 +12,7 @@ Key features:
 - Programming language and framework-aware search
 """
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from supabase import Client
 
@@ -207,44 +207,3 @@ def create_agentic_rag_strategy(supabase_client: Client) -> AgenticRAGStrategy:
     base_strategy = BaseSearchStrategy(supabase_client)
     return AgenticRAGStrategy(supabase_client, base_strategy)
 
-
-async def search_code_examples_agentic(
-    client: Client,
-    query: str,
-    match_count: int = 10,
-    filter_metadata: dict[str, Any] | None = None,
-    source_id: str | None = None,
-) -> list[dict[str, Any]]:
-    """
-    Standalone function for agentic code example search.
-
-    Args:
-        client: Supabase client
-        query: Search query
-        match_count: Number of results to return
-        filter_metadata: Optional metadata filter
-        source_id: Optional source filter
-
-    Returns:
-        List of code example results
-    """
-    strategy = create_agentic_rag_strategy(client)
-    return await strategy.search_code_examples(query, match_count, filter_metadata, source_id)
-
-
-if TYPE_CHECKING:
-    from src.server.services.search.query_analyzer import CodeQueryAnalysisResult
-
-def analyze_query_for_code_search(query: str) -> "CodeQueryAnalysisResult":
-    """
-    Standalone function to analyze if a query is code-related.
-
-    Args:
-        query: Query to analyze
-
-    Returns:
-        CodeQueryAnalysisResult: Analysis results
-    """
-    from src.server.services.search.query_analyzer import analyze_code_query
-
-    return analyze_code_query(query)
