@@ -125,6 +125,10 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-10: 根除 LLM 同步阻塞斷層與排程器死鎖 (Phase 5.11.16)
+- **非同步邊界防禦 (Zero Fake Development)**: 鑑識出導致 APScheduler 卡死長達 26 分鐘的真正元凶，並非缺乏 503 重試（`google-genai` SDK 早就內建指數退避），而是部分 Agent 在 `async def` 中錯誤地呼叫了「同步」的 SDK 介面 (`client.models.generate_content`)。這導致當遇到 503 時，SDK 內部的 `time.sleep()` 霸佔了主執行緒。
+- **物理公證與修復**: 已將 `ai_operations.py` 與 `visual_generator.py` 中的同步呼叫全面升級為非同步 (`await client.aio.models...`)，讓重試機制能正確釋放執行權給排程器。修復後全域 705 項測試與靜態掃描 100% 綠燈通過。
+
 ### 09-07: Agent Registry 日誌硬化與靜默降級修復 (Phase 5.11.15)
 - **根除幽靈降級**: 發現並修復 `agent_registry.py` 中 4 處 `except Exception: pass` 的靜默吞噬異常漏洞，全面改用 `logger.warning(...)`。確保未來資料庫連線或動態設定讀取失敗時，能留下明確的 Traceback，嚴格遵守 "Detailed errors over graceful failures" 原則，保障系統維運可視性。
 - **全域公證防護**: 執行 `make lint-be` 與 `make test-be`，701 項測試全數綠燈通過。建立實體文件 `@PRPs/Phase_5.11.15_Agent_Registry_Log_Hardening.md`，完成 Phase 5.11.15 階段性架構強化與公證。
