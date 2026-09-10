@@ -24,7 +24,7 @@ export const NexusHeader: React.FC<NexusHeaderProps> = ({ onOpenSpec, dailyData 
                 
                 <button
                     onClick={onOpenSpec}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95 border border-amber-100 h-9"
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95 border border-amber-100 h-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                     aria-label="View Specs: Nexus Metrics Specification"
                     title="View Nexus Metrics Specification"
                 >
