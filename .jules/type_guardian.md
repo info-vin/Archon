@@ -37,3 +37,6 @@
 ## 2024-05-18 - Replacing dict[str, Any] in HTTP integrations
 **Learning:** Returning `dict[str, Any]` for generic microservice HTTP responses causes blind spots in the service layer where keys could be missing. `httpx` json responses are easily cast and strongly structured via lightweight TypedDicts (`NotRequired[str]`) mapping exactly to HTTP JSON responses.
 **Action:** When auditing HTTP clients interacting with external or microservices, define specific TypedDicts for each endpoint's response (e.g., `CrawlResponseDTO`) instead of relying on `response.json()` returning an untyped dictionary.
+## 2025-05-18 - TypeGuardian: Add explicit type hints and DTOs to tasks update_logic
+**Learning:** Adding TypedDict DTOs (`NotRequired`) provides much better type safety than generic dictionaries for Supabase updates while allowing incremental fields updating in task update logic.
+**Action:** When updating database tables that expect partial data dictionary, define `TypedDict` DTO classes with `NotRequired` instead of using `dict[str, Any]` parameters and return types.
