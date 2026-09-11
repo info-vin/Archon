@@ -3,18 +3,45 @@ Update Logic Submodule for Task Service
 """
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AI_AGENT_ROLES
 from src.server.utils.sse_manager import sse_manager
 
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
+
+class TaskUpdateFieldsDTO(TypedDict):
+    title: NotRequired[str]
+    description: NotRequired[str]
+    status: NotRequired[str]
+    assignee: NotRequired[str]
+    assignee_id: NotRequired[str]
+    collaborator_agent_ids: NotRequired[list[str]]
+    task_order: NotRequired[int]
+    feature: NotRequired[str]
+    attachments: NotRequired[list[dict[str, Any]]]
+    due_date: NotRequired[Any]
+    priority: NotRequired[str]
+    is_recurring: NotRequired[bool]
+    crawler_target_id: NotRequired[str]
+    schedule_config: NotRequired[dict[str, Any]]
+    completed_at: NotRequired[Any]
+    retry_count: NotRequired[int]
+
+class TaskUpdateResponseDTO(TypedDict):
+    task: NotRequired[dict[str, Any]]
+    message: NotRequired[str]
+    error: NotRequired[str]
+
+
 logger = get_logger(__name__)
 
 
 async def update_task_logic(
-    task_service_instance, task_id: str, update_fields: dict[str, Any]
-) -> tuple[bool, dict[str, Any]]:
+    task_service_instance: "TaskService", task_id: str, update_fields: TaskUpdateFieldsDTO
+) -> tuple[bool, TaskUpdateResponseDTO]:
     """
     Update task with specified fields.
     """
