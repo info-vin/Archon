@@ -50,3 +50,16 @@ class AgentCheckpointResponse(BaseModel):
     state_snapshot: dict[str, Any] = Field(description="Complete state snapshot at this checkpoint")
     last_tool_call: dict[str, Any] | None = Field(description="The last tool call made before this checkpoint")
     created_at: str | None = Field(description="Timestamp when the checkpoint was created")
+
+
+class AgentHealthResponse(BaseModel):
+    status: str = Field(..., description="Health status of the service")
+    service: str = Field(..., description="Name of the service")
+
+
+class AssignableAgentResponse(BaseModel):
+    id: str = Field(..., description="Unique identifier or UUID of the agent")
+    name: str = Field(..., description="Display name or role name of the agent")
+    role: str = Field(..., description="Role designation of the agent")
+    tools: list[str] = Field(default_factory=list, description="List of tool names assigned to the agent")
+    description: str = Field(default="AI Agent", description="Brief description or prompt summary of the agent")
