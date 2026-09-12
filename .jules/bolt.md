@@ -245,3 +245,6 @@
 ## 2025-05-18 - Replacing Array.find with Map O(1) in UI generation
 **Learning:** In frequently called UI functions (like rendering dynamic prompt previews), searching arrays with `Array.find()` adds unnecessary O(N) CPU overhead, even for small arrays.
 **Action:** When working with static configuration arrays (e.g. mapping ID to Label), extract the array into an O(1) `Map` at module level, eliminating `Array.find()` lookups on each render or hook invocation.
+## 2025-03-05 - Extracted static components for ReactMarkdown to separate module files
+**Learning:** Moving static ReactMarkdown components to a separate module avoids unnecessary unmounting and remounting on every render, ensuring stable references across renders when the components are static and don't require inline context.
+**Action:** Always declare static `components` objects passed to `ReactMarkdown` at the module level outside the component or in a separate file, instead of using inline object literals.
