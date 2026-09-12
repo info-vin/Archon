@@ -1,3 +1,5 @@
+from typing import Any
+
 import aiofiles
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
@@ -17,6 +19,16 @@ from ..services.shared_constants import RoleEnum
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+class AdminLogResponse(BaseModel):
+    id: str | None = Field(None, description="Unique log identifier")
+    source: str | None = Field(None, description="Log source component")
+    level: str | None = Field(None, description="Log severity level")
+    message: str | None = Field(None, description="Log entry message")
+    details: dict[str, Any] | None = Field(None, description="Additional structured log metadata")
+    created_at: str | None = Field(None, description="ISO timestamp when log was created")
+    type: str | None = Field(None, description="Type/category of log entry")
 
 
 class UsersListResponse(BaseModel):
@@ -240,9 +252,10 @@ async def delete_crawler_target(target_id: str, current_user: UserProfileDTO = D
     return {"success": True}
 
 
-@router.get("/logs", dependencies=[Depends(verify_manager_role)])
+@router.get("/logs", dependencies=[Depends(verify_manager_role)], response_model=list[AdminLogResponse])
 async def get_admin_logs(
     type: str | None = None, time_range: str | None = "7d", current_user: UserProfileDTO = Depends(get_current_user)
-):
+) -> list[AdminLogResponse]:
     """Fetch system logs (e.g., AI_CORRECTION)."""
-    return await admin_service.get_admin_logs(type=type, time_range=time_range)
+    raw_logs = await admin_service.get_admin_logs(type=type, time_range=time_range)
+    return [AdminLogResponse(**log) for log in raw_logs]
