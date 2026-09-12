@@ -5,7 +5,10 @@ This module handles complex task listing with RBAC filters and
 batch project task counting.
 """
 
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
 
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
@@ -16,7 +19,7 @@ logger = get_logger(__name__)
 
 
 async def list_tasks_logic(
-    task_service_instance,
+    task_service_instance: "TaskService",
     project_id: str | None = None,
     status: str | None = None,
     include_closed: bool = False,
@@ -155,7 +158,7 @@ async def list_tasks_logic(
         return False, {"error": f"Error listing tasks: {str(e)}"}
 
 
-async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool, dict[str, dict[str, int]]]:
+async def get_all_project_task_counts_logic(task_service_instance: "TaskService") -> tuple[bool, dict[str, dict[str, int]]]:
     """
     Get task counts for all projects in a single optimized query.
     """
@@ -195,7 +198,7 @@ async def get_all_project_task_counts_logic(task_service_instance) -> tuple[bool
         return False, cast(dict[str, dict[str, int]], error_data)
 
 
-async def get_task_logic(task_service_instance, task_id: str) -> tuple[bool, dict[str, Any]]:
+async def get_task_logic(task_service_instance: "TaskService", task_id: str) -> tuple[bool, dict[str, Any]]:
     """
     Get a specific task by ID, including AI usage metrics.
     """

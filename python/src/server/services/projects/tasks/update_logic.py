@@ -3,7 +3,10 @@ Update Logic Submodule for Task Service
 """
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AI_AGENT_ROLES
@@ -13,7 +16,7 @@ logger = get_logger(__name__)
 
 
 async def update_task_logic(
-    task_service_instance, task_id: str, update_fields: dict[str, Any]
+    task_service_instance: "TaskService", task_id: str, update_fields: dict[str, Any]
 ) -> tuple[bool, dict[str, Any]]:
     """
     Update task with specified fields.

@@ -3,7 +3,10 @@ Create Logic Submodule for Task Service
 """
 
 from datetime import datetime
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AI_AGENT_ROLES, DEFAULT_ASSIGNEE
@@ -12,7 +15,7 @@ logger = get_logger(__name__)
 
 
 async def create_info_request_task_logic(
-    task_service_instance, requester_id: str, subject: str, context: str, lead_id: str | None = None
+    task_service_instance: "TaskService", requester_id: str, subject: str, context: str, lead_id: str | None = None
 ) -> tuple[bool, dict[str, Any]]:
     """
     Creates a specialized task for requesting information (Alice Loop).
@@ -74,7 +77,7 @@ async def create_info_request_task_logic(
 
 
 async def create_task_logic(
-    task_service_instance,
+    task_service_instance: "TaskService",
     project_id: str,
     title: str,
     description: str = "",
