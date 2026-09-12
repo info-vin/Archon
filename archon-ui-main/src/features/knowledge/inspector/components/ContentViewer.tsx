@@ -5,7 +5,21 @@
 
 import { Check, Code, Copy, FileText, Layers } from "lucide-react";
 import Prism from "prismjs";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { Components } from "react-markdown";
+
+// PERFORMANCE: Extracted static markdown components map outside the component to prevent
+// react-markdown from unmounting and remounting all custom components on every render.
+const markdownComponents: Components = {
+                p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+                h1: ({ children }) => <h1 className="text-xl font-bold mb-3 mt-6">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-lg font-bold mb-3 mt-5">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-base font-semibold mb-2 mt-4">{children}</h3>,
+                ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>,
+                li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                code: ({ children }) => <code className="px-1.5 py-0.5 rounded bg-black/30">{children}</code>,
+              };
+
 import { Button } from "../../../ui/primitives";
 import type { InspectorSelectedItem } from "../../types";
 
@@ -168,16 +182,7 @@ export const ContentViewer: React.FC<ContentViewerProps> = ({ selectedItem, onCo
         {selectedItem.type === "document" ? (
           <div className="prose prose-invert prose-sm max-w-none prose-headings:text-cyan-400 prose-a:text-cyan-400 prose-code:text-purple-400 prose-strong:text-white prose-pre:bg-black/30 prose-pre:border prose-pre:border-white/10">
             <ReactMarkdown
-              components={{
-                p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
-                h1: ({ children }) => <h1 className="text-xl font-bold mb-3 mt-6">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-lg font-bold mb-3 mt-5">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-base font-semibold mb-2 mt-4">{children}</h3>,
-                ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-1">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-1">{children}</ol>,
-                li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                code: ({ children }) => <code className="px-1.5 py-0.5 rounded bg-black/30">{children}</code>,
-              }}
+              components={markdownComponents}
             >
               {stripOuterBackticks(selectedItem.content || "No content available")}
             </ReactMarkdown>

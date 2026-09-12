@@ -245,3 +245,6 @@
 ## 2025-05-18 - Replacing Array.find with Map O(1) in UI generation
 **Learning:** In frequently called UI functions (like rendering dynamic prompt previews), searching arrays with `Array.find()` adds unnecessary O(N) CPU overhead, even for small arrays.
 **Action:** When working with static configuration arrays (e.g. mapping ID to Label), extract the array into an O(1) `Map` at module level, eliminating `Array.find()` lookups on each render or hook invocation.
+## 2025-01-20 - Memoize react-markdown components to prevent unmounting
+**Learning:** Passing an inline object literal to `ReactMarkdown`'s `components` prop causes the library to completely unmount and remount all custom components on every render cycle, which can severely impact performance.
+**Action:** Always extract the `components` map passed to `react-markdown` into a statically defined object outside the component or memoize it using `React.useMemo`.
