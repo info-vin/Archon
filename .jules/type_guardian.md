@@ -37,3 +37,6 @@
 ## 2024-05-18 - Replacing dict[str, Any] in HTTP integrations
 **Learning:** Returning `dict[str, Any]` for generic microservice HTTP responses causes blind spots in the service layer where keys could be missing. `httpx` json responses are easily cast and strongly structured via lightweight TypedDicts (`NotRequired[str]`) mapping exactly to HTTP JSON responses.
 **Action:** When auditing HTTP clients interacting with external or microservices, define specific TypedDicts for each endpoint's response (e.g., `CrawlResponseDTO`) instead of relying on `response.json()` returning an untyped dictionary.
+## 2025-01-20 - Using TYPE_CHECKING with stringified forward references for Service instances
+**Learning:** When injecting task service instances across multiple files in a submodule (like `projects/tasks/`), importing the main `TaskService` directly for type hints causes circular dependencies at runtime because the main service imports these submodules.
+**Action:** Use `typing.TYPE_CHECKING` to guard the import of `TaskService` and use stringified forward references (e.g., `task_service_instance: "TaskService"`) to provide static typing without runtime overhead.
