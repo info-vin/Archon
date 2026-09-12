@@ -37,7 +37,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
             <ImageIcon className="w-5 h-5 text-indigo-600" />
             Smart Image Picker
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close Smart Image Picker">
+          <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close Smart Image Picker">
             <XIcon className="w-5 h-5" />
           </button>
         </div>
@@ -81,7 +81,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
             <div className="flex flex-col items-center justify-center h-full text-red-500">
               <p data-testid="image-search-error-msg" className="font-bold mb-2">Error searching images</p>
               <p className="text-sm mb-4">{error}</p>
-              <button data-testid="image-search-retry-btn" onClick={() => send({ type: 'RETRY' })} className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm font-bold transition-colors">
+              <button type="button" data-testid="image-search-retry-btn" onClick={() => send({ type: 'RETRY' })} className="px-6 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm font-bold transition-colors">
                 Retry
               </button>
             </div>
@@ -122,7 +122,7 @@ export const SmartImagePicker: React.FC<SmartImagePickerProps> = ({ onSelect, on
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-          <button onClick={onClose} className="px-6 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+          <button type="button" onClick={onClose} className="px-6 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
             Cancel
           </button>
           <button

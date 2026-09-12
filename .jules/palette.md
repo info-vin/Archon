@@ -97,3 +97,6 @@
 ## 2024-03-09 - Fix missing button types inside forms causing accidental submission
 **Learning:** React forms default to submitting when ANY button inside them is clicked unless explicitly set to `type="button"`. This means utility buttons (like "Cancel", "Close Modal", or custom toggles) inside or near a form context can unintentionally trigger submissions if they lack the type attribute.
 **Action:** Always verify that non-submit buttons (especially "Close" or "Cancel" actions) explicitly declare `type="button"` to prevent accidental form submission in React/HTML5 applications.
+## 2024-05-24 - Explicit Button Types for UI Stability
+**Learning:** Utilities and modal action buttons (like Close, Cancel, Share) inside or near form contexts frequently lack `type="button"`, causing unintended form submissions because the browser defaults `<button>` to `type="submit"`.
+**Action:** Always explicitly specify `type="button"` on non-submit interactive buttons during creation to prevent accidental page reloads or form submission cascades.

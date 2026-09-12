@@ -51,7 +51,7 @@ export const LeadPitchDrawer = ({ lead, onClose }: PitchDrawerProps) => {
                         </div>
                         <h3 className="text-lg font-bold">{lead.pitch_content ? 'Saved Pitch' : 'AI Pitch Generator'}</h3>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close Pitch Generator">
+                    <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" aria-label="Close Pitch Generator">
                         <XIcon className="w-5 h-5 text-gray-500" />
                     </button>
                 </div>
@@ -63,7 +63,7 @@ export const LeadPitchDrawer = ({ lead, onClose }: PitchDrawerProps) => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button type="button"
                         onClick={handleCopy}
                         aria-label="Copy Pitch"
                         className={`flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
@@ -71,7 +71,7 @@ export const LeadPitchDrawer = ({ lead, onClose }: PitchDrawerProps) => {
                         {copied ? <CheckCircleIcon className="w-5 h-5" /> : <CopyIcon className="w-5 h-5" />}
                         {copied ? "Copied" : "Copy Text"}
                     </button>
-                    <button 
+                    <button type="button"
                         onClick={handleShare}
                         aria-label="Share Pitch"
                         className="flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
