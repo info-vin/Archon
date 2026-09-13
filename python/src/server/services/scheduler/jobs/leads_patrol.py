@@ -156,7 +156,7 @@ async def check_and_resume_dag(scheduler) -> None:
     def get_last_run_date(job_id: str):
         db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
         val = settings.get_setting(db_key)
-        
+
         from src.server.schemas.settings import SchedulerConfig
         try:
             raw_settings = settings.get_all_settings()
@@ -164,7 +164,7 @@ async def check_and_resume_dag(scheduler) -> None:
             tz_str = scheduler_config.system_timezone
         except Exception:
             tz_str = "Asia/Taipei"
-            
+
         if val:
             try:
                 return datetime.fromisoformat(val.replace("Z", "+00:00")).astimezone(ZoneInfo(tz_str)).date()
@@ -179,7 +179,7 @@ async def check_and_resume_dag(scheduler) -> None:
         tz_str = scheduler_config.system_timezone
     except Exception:
         tz_str = "Asia/Taipei"
-        
+
     now_date = datetime.now(ZoneInfo(tz_str)).date()
 
     alice_date = get_last_run_date("alice_auto_fetch")

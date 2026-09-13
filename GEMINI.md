@@ -125,6 +125,10 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-13: 徹底消滅幽靈降級與週期狀態斷層 (Phase 5.11.17)
+- **排程語意解耦 (DAG 斷層修復)**: 鑑識出原有 `_should_run_weekly` 同時被「見縫插針的 Alice」與「嚴格排程的週報」共用，導致伺服器重啟時週報被錯誤提早觸發。已將兩者拆分，對排程任務導入 `trigger.get_next_fire_time` 的精準數學驗證，確保未到期絕不偷跑。
+- **消滅靜默降級與硬編碼 (Log Hardening & SSOT)**: 發現 `ai_operations.py` 與 `leads_patrol.py` 在讀取 Config 時，若發生 Pydantic 解析錯誤會被 `except Exception:` 靜默吞噬並降級為 0.7 溫度或寫死時區。已全面補上 `logger.warning` 記錄真實原因。並將 `ZoneInfo`、24 小時回溯、以及散落的生成 Prompt 徹底抽離至 `settings.py` 與 `pm_prompts.py` 進行集中管理，實踐 DRY。
+- **物理公證與 100% 無假**: 不以肉眼判斷，透過 706 項 `make test-be` 與 `make phase-audit` (無 L2 Bypass) 全數過關證實修復有效，並修正了測試 Mock 中因 Local Import 導致的 AttributeError。
 ### 09-10: 根除 LLM 同步阻塞斷層與排程器死鎖 (Phase 5.11.16)
 - **非同步邊界防禦 (Zero Fake Development)**: 鑑識出導致 APScheduler 卡死長達 26 分鐘的真正元凶，並非缺乏 503 重試（`google-genai` SDK 早就內建指數退避），而是部分 Agent 在 `async def` 中錯誤地呼叫了「同步」的 SDK 介面 (`client.models.generate_content`)。這導致當遇到 503 時，SDK 內部的 `time.sleep()` 霸佔了主執行緒。
 - **物理公證與修復**: 已將 `ai_operations.py` 與 `visual_generator.py` 中的同步呼叫全面升級為非同步 (`await client.aio.models...`)，讓重試機制能正確釋放執行權給排程器。修復後全域 705 項測試與靜態掃描 100% 綠燈通過。
