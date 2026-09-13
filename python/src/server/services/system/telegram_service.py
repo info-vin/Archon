@@ -15,7 +15,7 @@ class TelegramService:
     async def _log_to_db(self, level: str, message: str) -> None:
         """Writes directly to archon_logs to ensure errors are visible in Admin UI."""
         import asyncio
-        def _insert_log():
+        def _insert_log() -> None:
             try:
                 from src.server.repositories.base_repository import BaseRepository
                 sb = get_supabase_client()
@@ -36,7 +36,7 @@ class TelegramService:
 
         from src.server.utils import get_supabase_client
 
-        def _fetch_db_sync():
+        def _fetch_db_sync() -> dict[str, str]:
             supabase = get_supabase_client()
             settings_service = SettingsService(supabase)
             return settings_service.get_all_settings()
@@ -76,12 +76,11 @@ class TelegramService:
             "parse_mode": parse_mode
         }
 
-        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0") # 強制純 IPv4，避開雲端 IPv6 黑洞 # 合法
-        max_retries = 3
+        max_retries = config.telegram_retries
         for attempt in range(max_retries):
             try:
-                # 30.0s timeout to absorb network spikes
-                async with httpx.AsyncClient(transport=transport, timeout=30.0) as client:
+                # Use SSOT configured timeout to absorb network spikes
+                async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
                     response = await client.post(api_url, json=payload)
                     response.raise_for_status()
                     logger.info("✅ TelegramService: Message sent successfully.")

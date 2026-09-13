@@ -129,9 +129,13 @@ class TaskService(BaseRepository):
         return await get_task_logic(self, task_id)
 
     async def update_task(self, task_id: str, update_fields: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
-        from .tasks.update_logic import update_task_logic
+        from typing import cast
 
-        return await update_task_logic(self, task_id, update_fields)
+        from .tasks.update_logic import TaskUpdateFieldsDTO, update_task_logic
+
+        fields = cast(TaskUpdateFieldsDTO, update_fields)
+        success, result = await update_task_logic(self, task_id, fields)
+        return success, cast(dict[str, Any], result)
 
     async def archive_task(self, task_id: str, archived_by: str = "mcp") -> tuple[bool, dict[str, Any]]:
         from .tasks.maintenance import archive_task_logic

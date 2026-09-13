@@ -1,11 +1,11 @@
 
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.server.models.agent_models import (
     AgentCheckpointResponse,
+    AgentHealthResponse,
     ApprovalRequestResponse,
+    AssignableAgentResponse,
     ResumeExecutionResult,
     ReviewApprovalResponse,
 )
@@ -23,18 +23,18 @@ router = APIRouter(
 )
 
 
-@router.get("/health")
-async def agents_health() -> Any:
+@router.get("/health", response_model=AgentHealthResponse)
+async def agents_health() -> AgentHealthResponse:
     """
     Health check for the AI agents service.
     """
-    return {"status": "healthy", "service": "agents"}
+    return AgentHealthResponse(status="healthy", service="agents")
 
 
-@router.get("/assignable", response_model=list[dict])
+@router.get("/assignable", response_model=list[AssignableAgentResponse])
 async def get_assignable_agents(
     current_user: UserProfileDTO = Depends(get_current_user), service: AgentService = Depends(lambda: agent_service)
-):
+) -> list[AssignableAgentResponse]:
     """
     Get a list of all assignable AI agents.
     Filtered by user role (RBAC).
@@ -42,7 +42,7 @@ async def get_assignable_agents(
     try:
         user_role = current_user.role
         agents = await service.get_assignable_agents(user_role=user_role)
-        return agents
+        return [AssignableAgentResponse.model_validate(agent) for agent in agents]
     except Exception as e:
         logger.error(f"Failed to get assignable agents: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve assignable agents") from e
@@ -79,7 +79,12 @@ async def get_pending_approvals() -> list[ApprovalRequestResponse]:
 
 
 @router.post("/approvals/{approval_id}/review", response_model=ReviewApprovalResponse)
-async def review_approval(approval_id: str, approved: bool, reason: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)) -> ReviewApprovalResponse:
+async def review_approval(
+    approval_id: str,
+    approved: bool,
+    reason: str | None = None,
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> ReviewApprovalResponse:
     """
     Approve or reject a pending sensitive tool execution.
     """
@@ -143,4 +148,3 @@ async def list_agent_checkpoints(conversation_id: str) -> list[AgentCheckpointRe
     except Exception as e:
         logger.error(f"Failed to get checkpoints for {conversation_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve agent checkpoints") from e
-

@@ -31,6 +31,9 @@ test('User can select knowledge items when creating a task', async () => {
   await user.click(await screen.findByRole('button', { name: /Tomorrow/i }, { timeout: 15000 }));
   await user.click(screen.getByRole('button', { name: /CONFIRM SELECTION/i }));
 
+  const knowledgeTab = await screen.findByRole('tab', { name: /Knowledge/i }, { timeout: 15000 });
+  await user.click(knowledgeTab);
+
   await user.click(await screen.findByRole('button', { name: /Select internal knowledge/i }, { timeout: 15000 }));
   await user.click(await screen.findByText('Onboarding Guide', {}, { timeout: 15000 }));
   

@@ -125,11 +125,20 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-13: 徹底消滅幽靈降級與週期狀態斷層 (Phase 5.11.17)
+- **排程語意解耦 (DAG 斷層修復)**: 鑑識出原有 `_should_run_weekly` 同時被「見縫插針的 Alice」與「嚴格排程的週報」共用，導致伺服器重啟時週報被錯誤提早觸發。已將兩者拆分，對排程任務導入 `trigger.get_next_fire_time` 的精準數學驗證，確保未到期絕不偷跑。
+- **消滅靜默降級與硬編碼 (Log Hardening & SSOT)**: 發現 `ai_operations.py` 與 `leads_patrol.py` 在讀取 Config 時，若發生 Pydantic 解析錯誤會被 `except Exception:` 靜默吞噬並降級為 0.7 溫度或寫死時區。已全面補上 `logger.warning` 記錄真實原因。並將 `ZoneInfo`、24 小時回溯、以及散落的生成 Prompt 徹底抽離至 `settings.py` 與 `pm_prompts.py` 進行集中管理，實踐 DRY。
+- **物理公證與 100% 無假**: 不以肉眼判斷，透過 706 項 `make test-be` 與 `make phase-audit` (無 L2 Bypass) 全數過關證實修復有效，並修正了測試 Mock 中因 Local Import 導致的 AttributeError。
+### 09-10: 根除 LLM 同步阻塞斷層與排程器死鎖 (Phase 5.11.16)
+- **非同步邊界防禦 (Zero Fake Development)**: 鑑識出導致 APScheduler 卡死長達 26 分鐘的真正元凶，並非缺乏 503 重試（`google-genai` SDK 早就內建指數退避），而是部分 Agent 在 `async def` 中錯誤地呼叫了「同步」的 SDK 介面 (`client.models.generate_content`)。這導致當遇到 503 時，SDK 內部的 `time.sleep()` 霸佔了主執行緒。
+- **物理公證與修復**: 已將 `ai_operations.py` 與 `visual_generator.py` 中的同步呼叫全面升級為非同步 (`await client.aio.models...`)，讓重試機制能正確釋放執行權給排程器。修復後全域 705 項測試與靜態掃描 100% 綠燈通過。
+
 ### 09-07: Agent Registry 日誌硬化與靜默降級修復 (Phase 5.11.15)
 - **根除幽靈降級**: 發現並修復 `agent_registry.py` 中 4 處 `except Exception: pass` 的靜默吞噬異常漏洞，全面改用 `logger.warning(...)`。確保未來資料庫連線或動態設定讀取失敗時，能留下明確的 Traceback，嚴格遵守 "Detailed errors over graceful failures" 原則，保障系統維運可視性。
 - **全域公證防護**: 執行 `make lint-be` 與 `make test-be`，701 項測試全數綠燈通過。建立實體文件 `@PRPs/Phase_5.11.15_Agent_Registry_Log_Hardening.md`，完成 Phase 5.11.15 階段性架構強化與公證。
 ### 09-06: 週期排程 DAG 解耦與網路防禦硬化 (Phase 5.11.13 ~ 5.11.14)
-- **Telegram 網路自癒與 IPv4 綁定 (Phase 5.11.13)**：消滅 5 秒超時，實作 `timeout=30.0` 與 3 次非同步重試。強制綁定 `local_address="0.0.0.0"` 避開雲端 IPv6 黑洞，並透過 `_log_to_db` 將連線錯誤 100% 穿透至 UI 日誌，嚴守 L2 Repository 架構規範。
+- **Telegram 網路自癒、SSOT 化與假性黑洞修復 (Phase 5.11.13 更新)**：先前在 Phase 5.11.13 中，AI 誤判 HF 雲端有 IPv6 黑洞，加入了 `local_address="0.0.0.0"` 企圖強制綁定 IPv4。但對 Client 而言，`0.0.0.0` 會被 Linux 容器網路視為無效來源 IP 並直接丟棄 (Drop)，反而造成了 100% 觸發的 `ConnectTimeout`。
+- **真實病因與 SSOT/DRY 拔除**：真正的超時元兇其實是 Phase 5.11.16 修復的 Event Loop 阻塞。因此，我們已徹底拔除有害的 `local_address="0.0.0.0"`，恢復 `httpx` 的原生路由 (Happy Eyeballs)。同時消滅硬編碼，將 `timeout` 與 `max_retries` 抽離至 `NotificationConfig` SSOT 中，徹底杜絕魔術數字。
 - **DAG 鏈條解耦與見縫插針排程 (Phase 5.11.14)**：將 Charlie (`daily_executive_summary`) 從 Bob 的事件鏈中物理解綁，賦予獨立排程 (`CronTrigger`)。將 Alice 改為 `IntervalTrigger(hours=12)` 以適應 Docker 碎片化啟動的見縫插針 (Opportunistic) 策略。
 - **SSOT 動態時間窗與自動化公證**：Bob 的報告生成移除寫死的 `timedelta(hours=24)`，改由 SSOT 動態讀取 `LAST_RUN_BOB_MARKET_REPORT`，確保降頻後 Leads 0% 遺漏。防護邊界透過 `test_dag_disconnect.py` 進行結構化物理斷言，全域 698 項單元測試與 `phase-audit` 靜態掃描 100% 通過。
 

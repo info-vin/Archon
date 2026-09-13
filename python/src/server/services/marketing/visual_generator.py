@@ -27,8 +27,10 @@ class VisualAssetGenerator:
             ) or await credential_service.get_credential("GOOGLE_API_KEY")
 
             if api_key:
+                from src.server.services.prompt_service import prompt_service
                 client = genai.Client(api_key=api_key)
-                prompt = f"Professional tech logo, {style}, high resolution"
+                prompt_template = prompt_service.get_prompt("VISUAL_GENERATOR_PROMPT", "Professional tech logo, {style}, high resolution")
+                prompt = prompt_template.format(style=style)
                 native_resp = await client.aio.models.generate_content(
                     model=SYSTEM_MODELS.get("IMAGE_GEN", "imagen-3.0-generate-002"),
                     contents=cast(Any, [prompt]),

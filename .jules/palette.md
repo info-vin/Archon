@@ -94,3 +94,6 @@
 ## 2024-09-09 - Improve Keyboard Accessibility in Nexus and Sidebar Components
 **Learning:** Found that secondary navigation and toggle buttons (like `SourceContextPane` toggle and `NexusHeader` action buttons) as well as clickable list items (`ApprovalSidebarList`) lacked `focus-visible` styling and robust keyboard event handlers, making them inaccessible to keyboard users.
 **Action:** Always add `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` to buttons. For custom clickable lists/cards, explicitly assign `role="button"`, `tabIndex={0}`, and `onKeyDown` handlers for Enter/Space to ensure complete accessibility.
+## 2024-03-09 - Fix missing button types inside forms causing accidental submission
+**Learning:** React forms default to submitting when ANY button inside them is clicked unless explicitly set to `type="button"`. This means utility buttons (like "Cancel", "Close Modal", or custom toggles) inside or near a form context can unintentionally trigger submissions if they lack the type attribute.
+**Action:** Always verify that non-submit buttons (especially "Close" or "Cancel" actions) explicitly declare `type="button"` to prevent accidental form submission in React/HTML5 applications.

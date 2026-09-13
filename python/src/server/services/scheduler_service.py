@@ -113,12 +113,12 @@ class SchedulerService:
             return False, "Skipped in remote cloud environment"
         return await self._should_run_daily(job_id, trigger=trigger)
 
-    async def _should_run_weekly_local_only(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
+    async def _should_run_opportunistic_weekly_local_only(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
         from src.server.config.config import get_config
         config = get_config()
         if config.space_id is not None:
             return False, "Skipped in remote cloud environment"
-        return await self._should_run_weekly(job_id, trigger=trigger)
+        return await self._should_run_opportunistic_weekly(job_id, trigger=trigger)
 
     async def _should_run_daily(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
         now_local = datetime.now(DEFAULT_TIMEZONE)
@@ -144,7 +144,7 @@ class SchedulerService:
             return False, f"Already run today at {last_run.astimezone(DEFAULT_TIMEZONE).strftime('%H:%M:%S')}"
         return True, ""
 
-    async def _should_run_weekly(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
+    async def _should_run_opportunistic_weekly(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True, ""
@@ -157,23 +157,22 @@ class SchedulerService:
             return False, f"Already run this week at {last_run.astimezone(DEFAULT_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')}"
         return True, ""
 
-    async def _should_run_monthly(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
+    async def _should_run_scheduled_job(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True, ""
-        last_run_local = last_run.astimezone(DEFAULT_TIMEZONE)
-        now_local = datetime.now(DEFAULT_TIMEZONE)
-        if (last_run_local.year, last_run_local.month) >= (now_local.year, now_local.month):
-            return False, f"Already run this month at {last_run_local.strftime('%Y-%m-%d %H:%M:%S')}"
-        return True, ""
 
-    async def _should_run_biweekly(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
-        last_run = await self._get_last_run(job_id)
-        if not last_run:
-            return True, ""
+        now_local = datetime.now(DEFAULT_TIMEZONE)
         last_run_local = last_run.astimezone(DEFAULT_TIMEZONE)
-        if (datetime.now(DEFAULT_TIMEZONE).date() - last_run_local.date()).days < 13:
-            return False, f"Already run recently at {last_run_local.strftime('%Y-%m-%d %H:%M:%S')} (needs 13 gap days)"
+
+        if trigger:
+            try:
+                next_expected = trigger.get_next_fire_time(last_run_local, last_run_local)
+                if next_expected and now_local < next_expected:
+                    return False, f"Not reached next schedule {next_expected.strftime('%Y-%m-%d %H:%M:%S')}"
+            except Exception:
+                pass
+
         return True, ""
 
     def _schedule_stateless(self, job_func: Callable[..., Any], job_id: str, delay_mins: int, interval_mins: int) -> None:
@@ -260,26 +259,25 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=config.business_sentinel_hour, minute=config.business_sentinel_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._run_daily_executive_summary, "daily_executive_summary", 30, self._should_run_daily, CronTrigger(hour=23, minute=50, timezone=DEFAULT_TIMEZONE)) # 合法
 
-        # --- Category 3: Stateful Weekly / Monthly Jobs ---
-        from apscheduler.triggers.interval import IntervalTrigger
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_weekly_local_only, IntervalTrigger(hours=12))
+        # Category 3: Stateful Weekly / Monthly Jobs
+        weekly_h, weekly_m = self._parse_dynamic_hf_time(config, offset_hours=2)
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_opportunistic_weekly_local_only, IntervalTrigger(hours=12))
 
-        weekly_h, weekly_m = self._parse_dynamic_hf_time(config, 3)
-        await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_weekly, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_scheduled_job, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE))
 
-        health_h, health_m = self._parse_dynamic_hf_time(config, 1)
-        await self._schedule_stateful_job(self._run_architecture_health_audit, "architecture_health_audit", 40, self._should_run_weekly, CronTrigger(day_of_week=config.architecture_health_audit_days, hour=health_h, minute=health_m, timezone=DEFAULT_TIMEZONE))
+        health_h, health_m = self._parse_dynamic_hf_time(config, offset_hours=3)
+        await self._schedule_stateful_job(self._run_architecture_health_audit, "architecture_health_audit", 40, self._should_run_scheduled_job, CronTrigger(day_of_week=config.architecture_health_audit_days, hour=health_h, minute=health_m, timezone=DEFAULT_TIMEZONE))
 
-        retro_h, retro_m = self._parse_dynamic_hf_time(config, 1)
-        await self._schedule_stateful_job(self._run_engineering_retrospective, "weekly_engineering_retro", 41, self._should_run_weekly, CronTrigger(day_of_week=config.weekly_engineering_retro_days, hour=retro_h, minute=retro_m, timezone=DEFAULT_TIMEZONE))
+        retro_h, retro_m = self._parse_dynamic_hf_time(config, offset_hours=4)
+        await self._schedule_stateful_job(self._run_engineering_retrospective, "weekly_engineering_retro", 41, self._should_run_scheduled_job, CronTrigger(day_of_week=config.weekly_engineering_retro_days, hour=retro_h, minute=retro_m, timezone=DEFAULT_TIMEZONE))
 
-        await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_monthly, CronTrigger(day=config.monthly_summary_day, hour=config.monthly_summary_hour, minute=config.monthly_summary_minute, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_scheduled_job, CronTrigger(day=config.monthly_summary_day, hour=config.monthly_summary_hour, minute=config.monthly_summary_minute, timezone=DEFAULT_TIMEZONE))
 
-        # --- Category 4: Stateful Bi-weekly Maintenance ---
-        await self._schedule_stateful_job(self._run_infrastructure_audit, "infrastructure_audit", 48, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE))
-        await self._schedule_stateful_job(self._run_api_deprecation_scan, "api_deprecation_scan", 50, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 15) % 60, timezone=DEFAULT_TIMEZONE))
-        await self._schedule_stateful_job(self._run_tech_debt_audit, "tech_debt_audit", 45, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 30) % 60, timezone=DEFAULT_TIMEZONE))
-        await self._schedule_stateful_job(self._run_ssot_audit, "ssot_audit", 47, self._should_run_biweekly, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 45) % 60, timezone=DEFAULT_TIMEZONE))
+        # Category 4: Bi-weekly maintenance
+        await self._schedule_stateful_job(self._run_infrastructure_audit, "infrastructure_audit", 48, self._should_run_scheduled_job, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_api_deprecation_scan, "api_deprecation_scan", 50, self._should_run_scheduled_job, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 15) % 60, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_tech_debt_audit, "tech_debt_audit", 45, self._should_run_scheduled_job, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 30) % 60, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_ssot_audit, "ssot_audit", 47, self._should_run_scheduled_job, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=(config.maintenance_audit_minute + 45) % 60, timezone=DEFAULT_TIMEZONE))
 
     # Delegation Methods
     async def _run_system_probe(self) -> None: await patrol.run_system_probe()
