@@ -53,8 +53,7 @@ class RateLimitHandler:
         """Log the rate limit hit as a system ALERT in archon_logs."""
         try:
             from src.server.repositories.base_repository import BaseRepository
-
-            from ..utils import get_supabase_client
+            from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
             repo = BaseRepository(supabase)
