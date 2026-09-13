@@ -73,7 +73,7 @@ async def cleanup_system_probes() -> None:
                 logger.info(f"🧹 Clockwork: Found {len(orphaned_sources)} orphaned RAG sources. Pruning...")
                 for sid in orphaned_sources:
                     # Capturing sid in a closure to fix B023
-                    def delete_task(s_id=sid):
+                    def delete_task(s_id: str = sid) -> None:
                         repo.execute_query(supabase.table("archon_document_versions").delete().eq("document_id", s_id), "Delete versions") # 合法
                         repo.execute_query(supabase.table("archon_project_sources").delete().eq("source_id", s_id), "Delete project sources") # 合法
                         repo.execute_query(supabase.table("archon_sources").delete().eq("source_id", s_id), "Delete sources") # 合法
