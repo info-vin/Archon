@@ -83,7 +83,8 @@ async def run_market_report() -> None:
         try:
             raw_settings = settings.get_all_settings()
             scheduler_config = SchedulerConfig.model_validate(raw_settings)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"LeadsPatrol: Failed to load SchedulerConfig, falling back to defaults. Error: {repr(e)}")
             scheduler_config = SchedulerConfig()
 
         config = get_config()
@@ -97,7 +98,8 @@ async def run_market_report() -> None:
         if val:
             try:
                 last_run_time = datetime.fromisoformat(val.replace("Z", "+00:00")).isoformat()
-            except Exception:
+            except Exception as e:
+                logger.warning(f"LeadsPatrol: Failed to parse LAST_RUN_BOB_MARKET_REPORT ({val}), falling back. Error: {repr(e)}")
                 last_run_time = (datetime.now(UTC) - fallback_td).isoformat()
         else:
             last_run_time = (datetime.now(UTC) - fallback_td).isoformat()
@@ -154,14 +156,31 @@ async def check_and_resume_dag(scheduler) -> None:
     def get_last_run_date(job_id: str):
         db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
         val = settings.get_setting(db_key)
+        
+        from src.server.schemas.settings import SchedulerConfig
+        try:
+            raw_settings = settings.get_all_settings()
+            scheduler_config = SchedulerConfig.model_validate(raw_settings)
+            tz_str = scheduler_config.system_timezone
+        except Exception:
+            tz_str = "Asia/Taipei"
+            
         if val:
             try:
-                return datetime.fromisoformat(val.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Taipei")).date()
-            except Exception:
-                pass
+                return datetime.fromisoformat(val.replace("Z", "+00:00")).astimezone(ZoneInfo(tz_str)).date()
+            except Exception as e:
+                logger.warning(f"LeadsPatrol: Failed to parse {db_key} ({val}), returning None. Error: {repr(e)}")
         return None
 
-    now_date = datetime.now(ZoneInfo("Asia/Taipei")).date()
+    from src.server.schemas.settings import SchedulerConfig
+    try:
+        raw_settings = settings.get_all_settings()
+        scheduler_config = SchedulerConfig.model_validate(raw_settings)
+        tz_str = scheduler_config.system_timezone
+    except Exception:
+        tz_str = "Asia/Taipei"
+        
+    now_date = datetime.now(ZoneInfo(tz_str)).date()
 
     alice_date = get_last_run_date("alice_auto_fetch")
     bob_date = get_last_run_date("bob_market_report")

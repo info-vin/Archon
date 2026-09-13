@@ -95,7 +95,8 @@ async def refine_task_description_logic(supabase_client: 'Client', title: str, d
             raw_settings = SettingsService(get_supabase_client()).get_all_settings()
             sys_config = SystemTaskConfig.model_validate(raw_settings)
             llm_temp = sys_config.default_llm_temperature
-        except Exception:
+        except Exception as e:
+            logger.warning(f"POBot (ai_operations): Failed to load SystemTaskConfig, falling back to 0.7. Error: {repr(e)}")
             llm_temp = 0.7
 
         system_instruction = prompt_service.get_prompt("PROJECT_OWNER_ASSISTANT_PO")
@@ -277,7 +278,8 @@ async def generate_task_from_alert_logic(
                 raw_settings = SettingsService(get_supabase_client()).get_all_settings()
                 sys_config = SystemTaskConfig.model_validate(raw_settings)
                 llm_temp = sys_config.default_llm_temperature
-            except Exception:
+            except Exception as e:
+                logger.warning(f"CharlieBot (ai_operations): Failed to load SystemTaskConfig, falling back to 0.7. Error: {repr(e)}")
                 llm_temp = 0.7
 
             system_instruction = prompt_service.get_prompt("CHARLIE_ASSISTANT_PM")
