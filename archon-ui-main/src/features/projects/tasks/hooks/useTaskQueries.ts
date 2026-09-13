@@ -25,8 +25,12 @@ export function useProjectTasks(projectId: string | undefined, enabled = true) {
   const { refetchInterval: smartInterval } = useSmartPolling(2000); // 2s active per guideline for real-time task updates
   const isMutating = useIsMutating({ mutationKey: taskKeys.byProject(projectId!) }) > 0;
 
-  // Disable polling while any task mutation is in-flight to prevent race conditions
-  const refetchInterval = isMutating ? false : smartInterval;
+  // Disable polling while any task mutation is in-flight to prevent race conditions, and backoff on errors
+  const refetchInterval = (query: any) => {
+    if (isMutating) return false;
+    if (query.state.error) return 60000; // 60s backoff on 504/500 errors
+    return smartInterval;
+  };
 
   return useQuery<Task[]>({
     queryKey: projectId ? taskKeys.byProject(projectId) : DISABLED_QUERY_KEY,
@@ -47,7 +51,7 @@ export function useTaskCounts() {
   return useQuery<Awaited<ReturnType<typeof taskService.getTaskCountsForAllProjects>>>({
     queryKey: taskKeys.counts(),
     queryFn: () => taskService.getTaskCountsForAllProjects(),
-    refetchInterval: countsRefetchInterval,
+    refetchInterval: (query: any) => (query.state.error ? 60000 : countsRefetchInterval),
     staleTime: STALE_TIMES.frequent,
   });
 }
