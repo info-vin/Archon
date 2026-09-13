@@ -80,6 +80,8 @@ class NetworkConfig(BaseModel):
 class NotificationConfig(BaseModel):
     telegram_token: str | None = Field(default=None, alias="TELEGRAM_TOKEN")
     telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_TO")
+    telegram_timeout: float = Field(default=30.0, alias="TELEGRAM_TIMEOUT")
+    telegram_retries: int = Field(default=3, alias="TELEGRAM_RETRIES")
 
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.05, alias="WEEKLY_BUDGET_THRESHOLD")
@@ -113,6 +115,8 @@ class SchedulerConfig(BaseModel):
 
 
     scheduler_misfire_grace_time: int = Field(default=600, alias="SCHEDULER_MISFIRE_GRACE_TIME")
+    system_timezone: str = Field(default="Asia/Taipei", alias="SYSTEM_TIMEZONE")
+    market_report_fallback_hours: int = Field(default=24, alias="MARKET_REPORT_FALLBACK_HOURS")
 
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")
     log_patrol_interval_mins: int = Field(default=30, alias="LOG_PATROL_INTERVAL_MINS")
@@ -174,6 +178,7 @@ class SystemTaskConfig(BaseModel):
     background_cleanup_interval_secs: int = Field(default=300, alias="BACKGROUND_CLEANUP_INTERVAL_SECS")
     background_error_retry_secs: int = Field(default=60, alias="BACKGROUND_ERROR_RETRY_SECS")
     embedding_process_delay_secs: int = Field(default=15, alias="EMBEDDING_PROCESS_DELAY_SECS")
+    default_llm_temperature: float = Field(default=0.7, alias="DEFAULT_LLM_TEMPERATURE")
 
 
 class CodeExtractionConfig(BaseModel):

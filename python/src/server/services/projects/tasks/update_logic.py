@@ -49,11 +49,11 @@ async def update_task_logic(
         # Get current task state to check for status change
         success, result = await task_service_instance.get_task(task_id)
         if not success:
-            return False, result
+            return False, {"error": str(result.get("error", "Task not found"))}
         current_task = result["task"]
 
         # Build update data
-        update_data = {"updated_at": datetime.now().isoformat()}
+        update_data: dict[str, Any] = {"updated_at": datetime.now().isoformat()}
 
         # Validate and add fields
         if "title" in update_fields:
@@ -74,7 +74,7 @@ async def update_task_logic(
                 update_data["completed_at"] = datetime.now().isoformat()
             # If task is being moved from 'done' to another status, clear completed_at
             elif new_status != "done" and current_task.get("status") == "done":
-                update_data["completed_at"] = None  # type: ignore
+                update_data["completed_at"] = None
 
         if "assignee" in update_fields:
             is_valid, error_msg = task_service_instance.validate_assignee(update_fields["assignee"])
@@ -158,7 +158,7 @@ async def update_task_logic(
             )
 
             return True, {"task": task, "message": "Task updated successfully"}
-        return False, update_result
+        return False, {"error": str(update_result.get("error", "Update failed"))}
 
     except Exception as e:
         logger.error(f"Error updating task: {e}")

@@ -7,9 +7,9 @@ from functools import lru_cache
 from typing import Any, NotRequired, TypedDict, cast
 
 from src.server.config.logfire_config import get_logger
+from src.server.services.prompt_service import prompt_service
 
 from ..utils import get_supabase_client
-from .prompt_service import prompt_service
 
 logger = get_logger(__name__)
 
@@ -199,7 +199,8 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
             # Mypy inference failure on module-level dict constant
             prompt_key = PROMPT_NAME_MAP[key] if key in PROMPT_NAME_MAP else f"{key.upper()}_SYSTEM_PROMPT"
             fallback_agent = FALLBACK_AGENT_CONFIG.get(key)
-            fallback_prompt = fallback_agent.get("system_prompt", "You are a helpful AI assistant.") if fallback_agent else "You are a helpful AI assistant."
+            default_fallback = prompt_service.get_prompt("GLOBAL_DEFAULT_FALLBACK", "You are a helpful AI assistant.")
+            fallback_prompt = fallback_agent.get("system_prompt", default_fallback) if fallback_agent else default_fallback
             # Ensure fallback_prompt is a string
             str_fallback = str(fallback_prompt) if isinstance(fallback_prompt, list) else str(fallback_prompt)
             system_prompt = prompt_service.get_prompt(prompt_key, str_fallback)

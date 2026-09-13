@@ -72,26 +72,35 @@ async def run_market_report() -> None:
     logger.info("✍️ Clockwork: Triggering Bob's Market Report...")
     try:
         from src.server.config.config import get_config
+        from src.server.schemas.settings import SchedulerConfig
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
         from src.server.services.settings_service import SettingsService
 
         supabase = get_supabase_client()
+        settings = SettingsService(supabase)
+
+        try:
+            raw_settings = settings.get_all_settings()
+            scheduler_config = SchedulerConfig.model_validate(raw_settings)
+        except Exception:
+            scheduler_config = SchedulerConfig()
 
         config = get_config()
         env_prefix = config.archon_env or ""
         if env_prefix and not env_prefix.endswith("_"):
             env_prefix += "_"
         db_key = f"{env_prefix}LAST_RUN_BOB_MARKET_REPORT"
-        settings = SettingsService(supabase)
         val = settings.get_setting(db_key)
+
+        fallback_td = timedelta(hours=scheduler_config.market_report_fallback_hours)
         if val:
             try:
                 last_run_time = datetime.fromisoformat(val.replace("Z", "+00:00")).isoformat()
             except Exception:
-                last_run_time = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+                last_run_time = (datetime.now(UTC) - fallback_td).isoformat()
         else:
-            last_run_time = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+            last_run_time = (datetime.now(UTC) - fallback_td).isoformat()
 
         from src.server.repositories.base_repository import BaseRepository
         base_repo = BaseRepository(supabase)
@@ -104,7 +113,7 @@ async def run_market_report() -> None:
             logger.info("✍️ Clockwork: No new leads to report on. (Cycle logged)")
             return
 
-        cst = ZoneInfo("Asia/Taipei")
+        cst = ZoneInfo(scheduler_config.system_timezone)
         lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
         task_title = f"Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
 

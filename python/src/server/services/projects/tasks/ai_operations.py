@@ -86,7 +86,18 @@ async def refine_task_description_logic(supabase_client: 'Client', title: str, d
 
         await GlobalThrottler.wait_for_capacity(tier="pro")
 
+        from src.server.schemas.settings import SystemTaskConfig
         from src.server.services.prompt_service import prompt_service
+        from src.server.services.settings_service import SettingsService
+        from src.server.utils import get_supabase_client
+
+        try:
+            raw_settings = SettingsService(get_supabase_client()).get_all_settings()
+            sys_config = SystemTaskConfig.model_validate(raw_settings)
+            llm_temp = sys_config.default_llm_temperature
+        except Exception:
+            llm_temp = 0.7
+
         system_instruction = prompt_service.get_prompt("PROJECT_OWNER_ASSISTANT_PO")
 
         response = await client.aio.models.generate_content(
@@ -94,7 +105,7 @@ async def refine_task_description_logic(supabase_client: 'Client', title: str, d
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                temperature=0.7,
+                temperature=llm_temp,
             ),
         )
 
@@ -257,14 +268,25 @@ async def generate_task_from_alert_logic(
 
         @retry_with_backoff(max_retries=2)
         async def _call_gemini() -> Any:
+            from src.server.schemas.settings import SystemTaskConfig
             from src.server.services.prompt_service import prompt_service
+            from src.server.services.settings_service import SettingsService
+            from src.server.utils import get_supabase_client
+
+            try:
+                raw_settings = SettingsService(get_supabase_client()).get_all_settings()
+                sys_config = SystemTaskConfig.model_validate(raw_settings)
+                llm_temp = sys_config.default_llm_temperature
+            except Exception:
+                llm_temp = 0.7
+
             system_instruction = prompt_service.get_prompt("CHARLIE_ASSISTANT_PM")
             return await client.aio.models.generate_content(
                 model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
-                    temperature=0.7,
+                    temperature=llm_temp,
                 ),
             )
 

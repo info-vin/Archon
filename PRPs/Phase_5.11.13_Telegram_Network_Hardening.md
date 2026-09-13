@@ -1,6 +1,10 @@
 # Phase 5.11.15: Telegram Network Hardening (IPv6 Blackhole Defense)
 
 ## 📌 背景 (Context)
+> [!WARNING]
+> **更新 (2026-09-13)**: 本文件當初將 `ConnectTimeout` 歸咎於「IPv6 路由黑洞」並企圖用 `local_address="0.0.0.0"` 修復，**這是一個錯誤的診斷與實作**。在 Linux 容器中，Client 端綁定 `0.0.0.0` 會被視為無效來源 IP (INADDR_ANY) 而遭網卡直接丟棄，反而 100% 造成 `ConnectTimeout`。
+> 真實的歷史病因是 **Phase 5.11.16** 中指出的 Event Loop 被 `time.sleep()` 阻塞。目前有害的 `0.0.0.0` 綁定已全數拔除，並將 `timeout` 與 `max_retries` 徹底 SSOT 化，交由 `NotificationConfig` 管理。
+
 在 Phase 5.11.11 的硬化中，我們為 `TelegramService` 導入了 `timeout=30.0` 與 3 次重試機制，意圖防範網路突波。然而，在實際營運環境 (Hugging Face Spaces 等 Docker 雲端主機) 中，依然連續遭遇 3 次 `ConnectTimeout` 失敗。
 
 經由 Git Log 溯源與實體除錯（與本地端 `test_telegram2.py` 的對照），確認這並非暫時性網路突波，而是著名的 **IPv6 Blackhole (路由黑洞)** 缺陷。`httpx.AsyncClient` 預設啟用雙棧 (Happy Eyeballs)，當解析到 Telegram 伺服器的 IPv6 位址時會優先嘗試，但在缺乏 IPv6 對外路由的雲端環境中，封包會遭到靜默丟棄 (Blackholed)，導致程式死等直到 30 秒觸發超時。

@@ -133,7 +133,8 @@
 - **根除幽靈降級**: 發現並修復 `agent_registry.py` 中 4 處 `except Exception: pass` 的靜默吞噬異常漏洞，全面改用 `logger.warning(...)`。確保未來資料庫連線或動態設定讀取失敗時，能留下明確的 Traceback，嚴格遵守 "Detailed errors over graceful failures" 原則，保障系統維運可視性。
 - **全域公證防護**: 執行 `make lint-be` 與 `make test-be`，701 項測試全數綠燈通過。建立實體文件 `@PRPs/Phase_5.11.15_Agent_Registry_Log_Hardening.md`，完成 Phase 5.11.15 階段性架構強化與公證。
 ### 09-06: 週期排程 DAG 解耦與網路防禦硬化 (Phase 5.11.13 ~ 5.11.14)
-- **Telegram 網路自癒與 IPv4 綁定 (Phase 5.11.13)**：消滅 5 秒超時，實作 `timeout=30.0` 與 3 次非同步重試。強制綁定 `local_address="0.0.0.0"` 避開雲端 IPv6 黑洞，並透過 `_log_to_db` 將連線錯誤 100% 穿透至 UI 日誌，嚴守 L2 Repository 架構規範。
+- **Telegram 網路自癒、SSOT 化與假性黑洞修復 (Phase 5.11.13 更新)**：先前在 Phase 5.11.13 中，AI 誤判 HF 雲端有 IPv6 黑洞，加入了 `local_address="0.0.0.0"` 企圖強制綁定 IPv4。但對 Client 而言，`0.0.0.0` 會被 Linux 容器網路視為無效來源 IP 並直接丟棄 (Drop)，反而造成了 100% 觸發的 `ConnectTimeout`。
+- **真實病因與 SSOT/DRY 拔除**：真正的超時元兇其實是 Phase 5.11.16 修復的 Event Loop 阻塞。因此，我們已徹底拔除有害的 `local_address="0.0.0.0"`，恢復 `httpx` 的原生路由 (Happy Eyeballs)。同時消滅硬編碼，將 `timeout` 與 `max_retries` 抽離至 `NotificationConfig` SSOT 中，徹底杜絕魔術數字。
 - **DAG 鏈條解耦與見縫插針排程 (Phase 5.11.14)**：將 Charlie (`daily_executive_summary`) 從 Bob 的事件鏈中物理解綁，賦予獨立排程 (`CronTrigger`)。將 Alice 改為 `IntervalTrigger(hours=12)` 以適應 Docker 碎片化啟動的見縫插針 (Opportunistic) 策略。
 - **SSOT 動態時間窗與自動化公證**：Bob 的報告生成移除寫死的 `timedelta(hours=24)`，改由 SSOT 動態讀取 `LAST_RUN_BOB_MARKET_REPORT`，確保降頻後 Leads 0% 遺漏。防護邊界透過 `test_dag_disconnect.py` 進行結構化物理斷言，全域 698 項單元測試與 `phase-audit` 靜態掃描 100% 通過。
 

@@ -1,20 +1,21 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
 
 from src.server.services.system.telegram_service import telegram_service
 
 
 @pytest.mark.asyncio
-async def test_telegram_service_uses_ipv4_transport():
+async def test_telegram_service_uses_default_transport_and_ssot_timeout():
     """
-    Test that TelegramService uses a custom httpx.AsyncHTTPTransport
-    with local_address="0.0.0.0" to prevent IPv6 blackhole timeouts.
+    Test that TelegramService does not use local_address="0.0.0.0" (to prevent cloud routing drop)
+    and fetches timeout/retries from SSOT config.
     """
     mock_config = MagicMock()
     mock_config.telegram_token = "fake_token"
     mock_config.telegram_chat_id = "fake_chat_id"
+    mock_config.telegram_timeout = 30.0
+    mock_config.telegram_retries = 3
 
     with patch.object(telegram_service, "_get_config_async", new_callable=AsyncMock) as mock_get_config:
         mock_get_config.return_value = mock_config
@@ -43,14 +44,7 @@ async def test_telegram_service_uses_ipv4_transport():
 
             # Get the kwargs used to instantiate AsyncClient
             _, kwargs = mock_async_client_class.call_args
-
-            assert "transport" in kwargs, "AsyncClient must be instantiated with a custom transport"
             assert "timeout" in kwargs, "AsyncClient must have a timeout specified"
-            assert kwargs["timeout"] == 30.0, "Timeout must be 30.0 seconds"
+            assert kwargs["timeout"] == 30.0, "Timeout must be correctly fetched from SSOT config"
 
-            transport = kwargs["transport"]
-            assert isinstance(transport, httpx.AsyncHTTPTransport), "Transport must be httpx.AsyncHTTPTransport"
-
-            # Check the local_address binding
-            assert transport._pool._local_address == "0.0.0.0", "Transport must be bound to 0.0.0.0 to prevent IPv6 blackholes"
-
+            assert "transport" not in kwargs, "Transport must NOT be customized, rely on default Happy Eyeballs"
