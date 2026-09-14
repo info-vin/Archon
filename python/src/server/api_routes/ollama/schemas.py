@@ -116,3 +116,44 @@ class InstanceHealthResponse(BaseModel):
     summary: InstanceHealthSummary
     instance_status: dict[str, InstanceHealthDetail]
     timestamp: str
+
+
+class AvailableEmbeddingRouteInfo(BaseModel):
+    model_name: str = Field(..., description="Name of the embedding model")
+    instance_url: str = Field(..., description="URL of the Ollama instance")
+    dimensions: int = Field(..., description="Vector embedding dimensions")
+    column_name: str = Field(..., description="Target database column name")
+    performance_score: float = Field(..., description="Performance score for route")
+    index_type: str = Field(..., description="Optimal index type (e.g. ivfflat or hnsw)")
+
+
+class DimensionAnalysisInfo(BaseModel):
+    count: int = Field(..., description="Count of models with this dimension")
+    models: list[str] = Field(..., description="List of model names with this dimension")
+    avg_performance: float = Field(..., description="Average performance score for this dimension")
+
+
+class ConfidenceDistribution(BaseModel):
+    high: int = Field(..., description="Count of high confidence routes")
+    medium: int = Field(..., description="Count of medium confidence routes")
+    low: int = Field(..., description="Count of low confidence routes")
+
+
+class RoutingStatistics(BaseModel):
+    total_cached_routes: int = Field(..., description="Total cached routes")
+    auto_detect_routes: int = Field(..., description="Count of auto-detected routes")
+    model_mapping_routes: int = Field(..., description="Count of model-mapped routes")
+    fallback_routes: int = Field(..., description="Count of fallback routes")
+    dimension_distribution: dict[str, int] = Field(..., description="Distribution of dimensions")
+    confidence_distribution: ConfidenceDistribution = Field(..., description="Confidence distribution")
+
+
+class AvailableEmbeddingRoutesResponse(BaseModel):
+    total_routes: int = Field(..., description="Total available routes count")
+    routes: list[AvailableEmbeddingRouteInfo] = Field(..., description="List of available routes")
+    dimension_analysis: dict[int, DimensionAnalysisInfo] = Field(..., description="Analysis grouped by dimension")
+    routing_statistics: RoutingStatistics = Field(..., description="Current routing statistics")
+
+
+class ClearCacheResponse(BaseModel):
+    message: str = Field(..., description="Status message confirming cache clearance")
