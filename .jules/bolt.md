@@ -248,3 +248,7 @@
 ## 2025-01-20 - Memoize react-markdown components to prevent unmounting
 **Learning:** Passing an inline object literal to `ReactMarkdown`'s `components` prop causes the library to completely unmount and remount all custom components on every render cycle, which can severely impact performance.
 **Action:** Always extract the `components` map passed to `react-markdown` into a statically defined object outside the component or memoize it using `React.useMemo`.
+
+## 2024-09-13 - O(1) Map Lookup for Repetitive Array.find in Leaf Components
+**Learning:** Performing `Array.prototype.find()` lookups on static arrays within frequently rendered leaf components (like `TaskPriorityComponent` within a Kanban board) creates an O(N*M) performance bottleneck that executes on every render cycle of every item in the list.
+**Action:** Extract the static array lookup into a pre-calculated O(1) `Map` at the module level (outside the component) to guarantee fast property access and eliminate unnecessary CPU overhead during list rendering.

@@ -23,6 +23,9 @@ const PRIORITY_OPTIONS: Array<{
   { value: "low", label: "Low", color: "text-gray-600" },
 ];
 
+// PERFORMANCE: Extract O(1) Map lookup outside the component to prevent O(N) Array.find() on every render
+const PRIORITY_MAP = new Map(PRIORITY_OPTIONS.map((opt) => [opt.value, opt]));
+
 export const TaskPriorityComponent: React.FC<TaskPriorityProps> = ({
   priority: newPriority,
   onPriorityChange,
@@ -77,7 +80,7 @@ export const TaskPriorityComponent: React.FC<TaskPriorityProps> = ({
   };
 
   const currentStyles = getPriorityStyles(currentPriority);
-  const currentOption = PRIORITY_OPTIONS.find((opt) => opt.value === currentPriority) || PRIORITY_OPTIONS[2]; // Default to medium
+  const currentOption = PRIORITY_MAP.get(currentPriority) || PRIORITY_OPTIONS[2]; // Default to medium
 
   // If no change handler, just show a static button
   if (!onPriorityChange) {
