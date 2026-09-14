@@ -247,7 +247,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
       <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 relative my-8 md:my-0 max-h-none md:max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-2xl font-bold">{isEditMode ? 'Edit Task' : 'Create New Task'}</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary focus-visible:outline-none focus-visible:ring-2" aria-label="Close" title="Close">
+          <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-secondary focus-visible:outline-none focus-visible:ring-2" aria-label="Close" title="Close">
             <XIcon className="w-6 h-6" />
           </button>
         </div>
