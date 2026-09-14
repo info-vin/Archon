@@ -41,7 +41,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ onClose, onProjectCr
       <div className="bg-card rounded-lg shadow-xl p-6 w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-2xl font-bold">New Project</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-secondary focus-visible:ring-2 focus-visible:outline-none" aria-label="Close" title="Close">
+          <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-secondary focus-visible:ring-2 focus-visible:outline-none" aria-label="Close" title="Close">
             <XIcon className="w-6 h-6" />
           </button>
         </div>

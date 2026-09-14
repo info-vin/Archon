@@ -396,6 +396,11 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - **`cherry-pick` 卡住**: 若 `git cherry-pick --continue` 卡住，請改用 `git cherry-pick --continue --no-edit --no-gpg-sign`。
 
 ### 4.3 部署標準作業流程 (SOP)
+- `migration/20260810_seed_rag_blog.sql`
+- `migration/20260815_seed_insight_report_blog.sql`
+- `migration/20260819_add_hybrid_router_settings.sql`
+- `migration/20260819_update_rag_threshold.sql`
+- `migration/20260821_update_leads_patrol_prompt.sql`
 
 - `migration/0.2.3/01_schema_core.sql`
 - `migration/0.2.3/02_schema_features.sql`
