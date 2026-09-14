@@ -1,11 +1,19 @@
 # python/src/server/services/settings_service.py
 
-from typing import Any, TypedDict
+from typing import NotRequired, TypedDict
+
+from supabase import Client
 
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
+
+
+class SystemSettingPayloadDTO(TypedDict):
+    key: str
+    value: str
+    description: NotRequired[str | None]
 
 
 class DatabaseStatisticsDict(TypedDict):
@@ -20,7 +28,7 @@ logger = get_logger(__name__)
 class SettingsService(BaseRepository):
     """Service for handling business logic related to application settings and statistics."""
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         """Initialize with optional supabase client."""
         client = supabase_client or get_supabase_client()
         super().__init__(client)
@@ -114,7 +122,7 @@ class SettingsService(BaseRepository):
         )
         return success
 
-    async def upsert_setting(self, payload: dict[str, Any]) -> bool:
+    async def upsert_setting(self, payload: SystemSettingPayloadDTO) -> bool:
         query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key") # 合法
         success, res = self.execute_query(query, "Error upserting setting", require_data=False)
         return success
