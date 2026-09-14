@@ -125,6 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-14: 物理硬化與 SSOT 徹底落實 (Phase 5.11.18)
+- **解鎖排程停滯**: 鑑識出 `Alice Auto Fetch` 誤用 `_should_run_opportunistic_weekly_local_only` 導致在雲端環境被 100% 阻斷，連帶餓死下游的 `Bob Market Report` 達 4 天之久。已將其換回標準的 `_should_run_opportunistic_weekly`，解放雲端 opportunistic 執行能力。
+- **消滅 504 Gateway Timeout**: 日誌顯示 `Task Dispatcher` 仍觸發 504，證實 `archon_tasks.is_recurring` 索引未被建立。已由人類手動在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，徹底解決全表掃描與 Schema Cache 崩潰。
+- **前端 SSOT 重構 (零虛假驗證)**: 審查前端 `useTaskQueries.ts` 發現為解決 504 而遺留的魔術數字 `60000` 退避時間。已將其抽離至 `queryPatterns.ts` 中的 `POLLING_INTERVALS`，並通過 100% `make lint` 物理驗證，徹底根除 DRY 違規。
+
 ### 09-13: 徹底消滅幽靈降級與週期狀態斷層 (Phase 5.11.17)
 - **排程語意解耦 (DAG 斷層修復)**: 鑑識出原有 `_should_run_weekly` 同時被「見縫插針的 Alice」與「嚴格排程的週報」共用，導致伺服器重啟時週報被錯誤提早觸發。已將兩者拆分，對排程任務導入 `trigger.get_next_fire_time` 的精準數學驗證，確保未到期絕不偷跑。
 - **消滅靜默降級與硬編碼 (Log Hardening & SSOT)**: 發現 `ai_operations.py` 與 `leads_patrol.py` 在讀取 Config 時，若發生 Pydantic 解析錯誤會被 `except Exception:` 靜默吞噬並降級為 0.7 溫度或寫死時區。已全面補上 `logger.warning` 記錄真實原因。並將 `ZoneInfo`、24 小時回溯、以及散落的生成 Prompt 徹底抽離至 `settings.py` 與 `pm_prompts.py` 進行集中管理，實踐 DRY。
