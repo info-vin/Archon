@@ -19,7 +19,7 @@ router = APIRouter(prefix="/rag", tags=["rag"])
 async def hybrid_search(
     request: RagSearchRequest,
     current_user: UserProfileDTO = Depends(get_current_user),
-):
+) -> RagSearchResponse:
     try:
         results = await RagService.hybrid_search(
             query=request.query,
@@ -44,7 +44,7 @@ async def hybrid_search(
 async def graph_search(
     request: GraphSearchRequest,
     current_user: UserProfileDTO = Depends(get_current_user),
-):
+) -> GraphSearchResponse:
     try:
         results = await RagService.graph_search(
             start_entity_name=request.start_entity_name,
