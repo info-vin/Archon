@@ -21,7 +21,7 @@ export const Toggle: React.FC<ToggleProps> = ({
       onCheckedChange(!checked);
     }
   };
-  return <button role="switch" aria-checked={checked} aria-label={ariaLabel || "Toggle"} onClick={handleClick} disabled={disabled} className={`
+  return <button type="button" role="switch" aria-checked={checked} aria-label={ariaLabel || "Toggle"} onClick={handleClick} disabled={disabled} className={`
         toggle-switch
         ${checked ? 'toggle-checked' : ''}
         ${disabled ? 'toggle-disabled' : ''}

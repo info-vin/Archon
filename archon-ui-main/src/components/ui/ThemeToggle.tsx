@@ -16,7 +16,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
  
-  return <button onClick={toggleTheme} className={`
+  return <button type="button" onClick={toggleTheme} className={`
         relative p-2 rounded-md backdrop-blur-md 
         bg-gradient-to-b ${accentColorMap[accentColor].gradientFrom} ${accentColorMap[accentColor].gradientTo}
         border ${accentColorMap[accentColor].border}
