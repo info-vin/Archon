@@ -1,9 +1,14 @@
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.server.services.credential_service import CredentialService
+
 
 logger = logging.getLogger(__name__)
 
 
-async def get_role_based_max_depth(user_role: str | None, credential_service) -> int:
+async def get_role_based_max_depth(user_role: str | None, credential_service: "CredentialService") -> int:
     """
     Fetches max crawl depth from database based on user role.
     Physically isolated for Phase 4.6.16 modularization.
