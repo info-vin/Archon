@@ -33,8 +33,10 @@ def _err(res: Any, code: int = 500):
     raise HTTPException(status_code=code, detail=detail)
 
 
-@router.get("/projects/task-counts")
-async def get_all_task_counts(request: Request, response: Response, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/projects/task-counts", response_model=dict[str, dict[str, int]])
+async def get_all_task_counts(
+    request: Request, response: Response, current_user: UserProfileDTO = Depends(get_current_user)
+) -> Response | dict[str, dict[str, int]]:
     s, res = await TaskService().get_all_project_task_counts()
     if not s:
         _err(res)
@@ -42,7 +44,7 @@ async def get_all_task_counts(request: Request, response: Response, current_user
     response.headers["ETag"] = etag
     if check_etag(request.headers.get("If-None-Match"), etag):
         response.status_code = 304
-        return None
+        return Response(status_code=304, headers=response.headers)
     return res
 
 
