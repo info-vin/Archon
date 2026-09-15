@@ -49,6 +49,45 @@ const containerVariants = {
   },
 };
 
+// PERFORMANCE: Wrapper to properly memoize the callback props for KnowledgeCard
+const KnowledgeCardMemoWrapper = React.memo(
+  ({
+    item,
+    onViewDocument,
+    onViewCodeExamples,
+    onDeleteSuccess,
+    activeOperation,
+    onRefreshStarted,
+  }: {
+    item: KnowledgeItem;
+    onViewDocument: (sourceId: string) => void;
+    onViewCodeExamples?: (sourceId: string) => void;
+    onDeleteSuccess: () => void;
+    activeOperation?: ActiveOperation;
+    onRefreshStarted?: (progressId: string) => void;
+  }) => {
+    const handleViewDocument = React.useCallback(() => {
+      onViewDocument(item.source_id);
+    }, [item.source_id, onViewDocument]);
+
+    const handleViewCodeExamples = React.useCallback(() => {
+      if (onViewCodeExamples) onViewCodeExamples(item.source_id);
+    }, [item.source_id, onViewCodeExamples]);
+
+    return (
+      <KnowledgeCard
+        item={item}
+        onViewDocument={handleViewDocument}
+        onViewCodeExamples={onViewCodeExamples ? handleViewCodeExamples : undefined}
+        onDeleteSuccess={onDeleteSuccess}
+        activeOperation={activeOperation}
+        onRefreshStarted={onRefreshStarted}
+      />
+    );
+  },
+);
+KnowledgeCardMemoWrapper.displayName = "KnowledgeCardMemoWrapper";
+
 export const KnowledgeList: React.FC<KnowledgeListProps> = ({
   items,
   viewMode,
@@ -64,7 +103,7 @@ export const KnowledgeList: React.FC<KnowledgeListProps> = ({
   // PERFORMANCE: Precalculate lookup map for active operations to prevent O(N*M) Array.find calls during render loop
   const activeOperationsMap = useMemo(() => {
     const map = new Map<string, ActiveOperation>();
-    activeOperations.forEach(op => {
+    activeOperations.forEach((op) => {
       if (op.source_id && !map.has(op.source_id)) {
         map.set(op.source_id, op);
       }
@@ -179,10 +218,10 @@ export const KnowledgeList: React.FC<KnowledgeListProps> = ({
           const activeOperation = getActiveOperationForItem(item);
           return (
             <motion.div key={item.source_id} layout variants={itemVariants} exit="exit">
-              <KnowledgeCard
+              <KnowledgeCardMemoWrapper
                 item={item}
-                onViewDocument={() => onViewDocument(item.source_id)}
-                onViewCodeExamples={onViewCodeExamples ? () => onViewCodeExamples(item.source_id) : undefined}
+                onViewDocument={onViewDocument}
+                onViewCodeExamples={onViewCodeExamples}
                 onDeleteSuccess={onDeleteSuccess}
                 activeOperation={activeOperation}
                 onRefreshStarted={onRefreshStarted}
