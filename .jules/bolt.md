@@ -252,3 +252,7 @@
 ## 2024-09-13 - O(1) Map Lookup for Repetitive Array.find in Leaf Components
 **Learning:** Performing `Array.prototype.find()` lookups on static arrays within frequently rendered leaf components (like `TaskPriorityComponent` within a Kanban board) creates an O(N*M) performance bottleneck that executes on every render cycle of every item in the list.
 **Action:** Extract the static array lookup into a pre-calculated O(1) `Map` at the module level (outside the component) to guarantee fast property access and eliminate unnecessary CPU overhead during list rendering.
+
+## 2025-05-18 - Component displayName requirement for React.memo
+**Learning:** When wrapping a React component in `React.memo()` (or creating a wrapper component), omitting the `.displayName` property will cause `eslint` to fail with `react/display-name` errors, preventing successful linting and deployment.
+**Action:** Always assign a explicit `.displayName` string property to any `React.memo` or `React.forwardRef` wrapped component immediately after definition.
