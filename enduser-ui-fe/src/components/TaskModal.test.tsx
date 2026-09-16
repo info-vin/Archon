@@ -75,6 +75,7 @@ describe('TaskModal', () => {
     expect(screen.getByLabelText('Title')).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Create task' })).toBeInTheDocument();
     // Wait for users to load
+    fireEvent.click(screen.getByRole('tab', { name: 'Assignment & Automation' }));
     await screen.findByRole('option', { name: 'Alice Johnson' });
     await screen.findByRole('option', { name: '(AI) Assistant' });
   });
@@ -93,6 +94,7 @@ describe('TaskModal', () => {
     expect(screen.getByLabelText('Priority')).toHaveValue(TaskPriority.HIGH);
     
     // Wait for users to load to check assignee
+    fireEvent.click(screen.getByRole('tab', { name: 'Assignment & Automation' }));
     await screen.findByRole('option', { name: 'Alice Johnson' });
     const assigneeSelect = await screen.findByLabelText('Assignee');
     expect(assigneeSelect).toHaveValue(mockTask.assignee_id);
@@ -111,6 +113,7 @@ describe('TaskModal', () => {
     const onTaskCreated = vi.fn();
     setup({ onTaskCreated });
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Assignment & Automation' }));
     await screen.findByRole('option', { name: 'Alice Johnson' });
 
     await user.type(screen.getByLabelText('Title'), 'New Test Task');
@@ -138,6 +141,7 @@ describe('TaskModal', () => {
     const onTaskUpdated = vi.fn();
     setup({ task: mockTask, onTaskUpdated });
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Assignment & Automation' }));
     await screen.findByRole('option', { name: 'Alice Johnson' });
 
     const titleInput = screen.getByLabelText('Title');
