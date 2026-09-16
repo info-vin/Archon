@@ -47,7 +47,7 @@ export const KnowledgeView = () => {
   // Fetch knowledge summaries (no automatic polling!)
   const { data, isLoading, error, refetch, setActiveCrawlIds, activeOperations } = useKnowledgeSummaries(filter);
 
-  const knowledgeItems = data?.items || [];
+  const knowledgeItems = React.useMemo(() => data?.items || [], [data?.items]);
   const totalItems = data?.total || 0;
   const hasActiveOperations = activeOperations.length > 0;
 
@@ -115,27 +115,27 @@ export const KnowledgeView = () => {
     setIsAddDialogOpen(true);
   };
 
-  const handleViewDocument = (sourceId: string) => {
+  const handleViewDocument = React.useCallback((sourceId: string) => {
     // Find the item and open inspector to documents tab
     const item = knowledgeItems.find((k) => k.source_id === sourceId);
     if (item) {
       setInspectorInitialTab("documents");
       setInspectorItem(item);
     }
-  };
+  }, [knowledgeItems]);
 
-  const handleViewCodeExamples = (sourceId: string) => {
+  const handleViewCodeExamples = React.useCallback((sourceId: string) => {
     // Open the inspector to code examples tab
     const item = knowledgeItems.find((k) => k.source_id === sourceId);
     if (item) {
       setInspectorInitialTab("code");
       setInspectorItem(item);
     }
-  };
+  }, [knowledgeItems]);
 
-  const handleDeleteSuccess = () => {
+  const handleDeleteSuccess = React.useCallback(() => {
     // TanStack Query will automatically refetch
-  };
+  }, []);
 
   return (
     <div className="h-full flex flex-col">
