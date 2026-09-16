@@ -8,3 +8,7 @@
 2. 許多檔案透過 `index.ts` 匯出 (re-export)，必須追蹤匯出檔案是否被引用。例如 `workbench/index.ts` 匯出了所有 workbench 元件，而 `ContentWorkbench.tsx` 引用了這些匯出；`services/api/index.ts` 也是類似情況，因此不能輕易刪除。
 **行動：**
 在判定殭屍代碼前，一定要用 `grep -rn '目標名稱' src/` 搜尋所有可能被使用的地方。如果看到 components 被引用，或者 context 被使用，就不要刪除。寧可留著，也不要誤刪。
+
+## 2025-05-24 - [Python 參數 unused 問題與 FastAPI query/dependency]
+**學習心得：** 在使用 vulture 等工具時，FastAPI 的路徑操作函式中定義的 Query 或 Dependency 參數，即使在函數主體內沒有直接被當作變數使用，它們也提供了 API 文件的 Schema 以及 request 驗證機制。這些不能被直接移除，否則會破壞 API 介面。同時，對於繼承或實現某個介面的方法中，為了維持簽章一致性而未被使用的參數，這類情況也屬於誤報。
+**行動：** 對於 API endpoints（有 FastAPI 裝飾器的函式）以及為了介面一致性保留的參數，如果被標記為 unused，應該將參數名稱加上前綴 `_`，並在需要時使用 `alias` 來維持外部接口，例如：`_include_capabilities: bool = Query(..., alias="include_capabilities")`。這能消除 vulture 警告，同時不改變 API 的實際輸入輸出定義，亦不違反寧可留著不要誤刪的原則。

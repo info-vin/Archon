@@ -39,7 +39,7 @@ async def analyze_embedding_route_endpoint(request: EmbeddingRouteRequest) -> Em
 @router.get("/embedding/routes", response_model=AvailableEmbeddingRoutesResponse)
 async def get_available_embedding_routes_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
-    sort_by_performance: bool = Query(True, description="Sort by performance score"),
+    _sort_by_performance: bool = Query(True, description="Sort by performance score", alias="sort_by_performance"),
 ) -> AvailableEmbeddingRoutesResponse:
     """Get all available embedding routes across multiple instances."""
     try:

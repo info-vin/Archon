@@ -28,7 +28,7 @@ router = APIRouter()
 async def discover_models_endpoint(
     background_tasks: BackgroundTasks,
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
-    include_capabilities: bool = Query(True, description="Include capability detection"),
+    _include_capabilities: bool = Query(True, description="Include capability detection", alias="include_capabilities"),
     fetch_details: bool = Query(False, description="Fetch comprehensive model details via /api/show"),
     current_user: UserProfileDTO = Depends(get_current_user),
 ) -> ModelDiscoveryResponse:
