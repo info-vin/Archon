@@ -125,6 +125,11 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-17: 環境潔癖與型別硬化 (Phase 5.11.x Cleanup)
+- **環境污染消毒**: 嚴格執行「零一次性腳本」原則。物理刪除錯誤合入 `feat/twins` 分支的 4 個臨時測試與 `sed` 補丁腳本 (`patch_*.sh`, `test_empty_state.tsx`)，維持專案倉庫潔癖。
+- **強型別邊界修復**: 鑑識出 `routing.py` 中 `AvailableEmbeddingRoutesResponse` 錯誤返回原生 `dict` 導致 `mypy` 報錯。改用 `model_validate()` 進行 Pydantic 轉換，100% 通過 `make lint` 檢查。
+- **全域併發公證**: 執行 `make test-be` (708 項通過) 與 `make phase-audit`。物理證實 `test_concurrent_rag_queries` 高併發測試順利通過，證實 Phase 5.11.16~18 的非同步優化在壓力下表現穩健。
+
 ### 09-14: 物理硬化與 SSOT 徹底落實 (Phase 5.11.18)
 - **解鎖排程停滯**: 鑑識出 `Alice Auto Fetch` 誤用 `_should_run_opportunistic_weekly_local_only` 導致在雲端環境被 100% 阻斷，連帶餓死下游的 `Bob Market Report` 達 4 天之久。已將其換回標準的 `_should_run_opportunistic_weekly`，解放雲端 opportunistic 執行能力。
 - **消滅 504 Gateway Timeout**: 日誌顯示 `Task Dispatcher` 仍觸發 504，證實 `archon_tasks.is_recurring` 索引未被建立。已由人類手動在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，徹底解決全表掃描與 Schema Cache 崩潰。
