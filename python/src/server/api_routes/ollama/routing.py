@@ -72,12 +72,12 @@ async def get_available_embedding_routes_endpoint(
             if dim_data["count"] > 0:
                 dim_data["avg_performance"] /= dim_data["count"]
 
-        return {
+        return AvailableEmbeddingRoutesResponse.model_validate({
             "total_routes": len(routes),
             "routes": route_data,
             "dimension_analysis": dimension_stats,
             "routing_statistics": embedding_router.get_routing_statistics(),
-        }
+        })
     except Exception as e:
         logger.error(f"Error getting embedding routes: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get embedding routes: {str(e)}") from e
@@ -92,7 +92,7 @@ async def clear_ollama_cache_endpoint() -> ClearCacheResponse:
         model_discovery_service.capability_cache.clear()
         model_discovery_service.health_cache.clear()
         embedding_router.clear_routing_cache()
-        return {"message": "All Ollama caches cleared successfully"}
+        return ClearCacheResponse(message="All Ollama caches cleared successfully")
     except Exception as e:
         logger.error(f"Error clearing caches: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear caches: {str(e)}") from e

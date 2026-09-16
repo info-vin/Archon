@@ -3,7 +3,7 @@
  * Orchestrates the knowledge base UI using vertical slice architecture
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useToast } from "@/features/shared/hooks/useToast";
 import { CrawlingProgress } from "../../progress/components/CrawlingProgress";
 import type { ActiveOperation } from "../../progress/types";
@@ -47,7 +47,7 @@ export const KnowledgeView = () => {
   // Fetch knowledge summaries (no automatic polling!)
   const { data, isLoading, error, refetch, setActiveCrawlIds, activeOperations } = useKnowledgeSummaries(filter);
 
-  const knowledgeItems = React.useMemo(() => data?.items || [], [data?.items]);
+  const knowledgeItems = useMemo(() => data?.items || [], [data?.items]);
   const totalItems = data?.total || 0;
   const hasActiveOperations = activeOperations.length > 0;
 
@@ -115,7 +115,7 @@ export const KnowledgeView = () => {
     setIsAddDialogOpen(true);
   };
 
-  const handleViewDocument = React.useCallback((sourceId: string) => {
+  const handleViewDocument = useCallback((sourceId: string) => {
     // Find the item and open inspector to documents tab
     const item = knowledgeItems.find((k) => k.source_id === sourceId);
     if (item) {
@@ -124,7 +124,7 @@ export const KnowledgeView = () => {
     }
   }, [knowledgeItems]);
 
-  const handleViewCodeExamples = React.useCallback((sourceId: string) => {
+  const handleViewCodeExamples = useCallback((sourceId: string) => {
     // Open the inspector to code examples tab
     const item = knowledgeItems.find((k) => k.source_id === sourceId);
     if (item) {
@@ -133,7 +133,7 @@ export const KnowledgeView = () => {
     }
   }, [knowledgeItems]);
 
-  const handleDeleteSuccess = React.useCallback(() => {
+  const handleDeleteSuccess = useCallback(() => {
     // TanStack Query will automatically refetch
   }, []);
 
