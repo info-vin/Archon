@@ -129,6 +129,7 @@
 - **環境污染消毒**: 嚴格執行「零一次性腳本」原則。物理刪除錯誤合入 `feat/twins` 分支的 4 個臨時測試與 `sed` 補丁腳本 (`patch_*.sh`, `test_empty_state.tsx`)，維持專案倉庫潔癖。
 - **強型別邊界修復**: 鑑識出 `routing.py` 中 `AvailableEmbeddingRoutesResponse` 錯誤返回原生 `dict` 導致 `mypy` 報錯。改用 `model_validate()` 進行 Pydantic 轉換，100% 通過 `make lint` 檢查。
 - **全域併發公證**: 執行 `make test-be` (708 項通過) 與 `make phase-audit`。物理證實 `test_concurrent_rag_queries` 高併發測試順利通過，證實 Phase 5.11.16~18 的非同步優化在壓力下表現穩健。
+- **技術債清理與排程動態化**: 從 `Makefile` 中物理拔除已廢棄的 `llm_judge_content.py` 測試門禁，解除舊裁判對新版商業 Mock Data 的誤擋。同時重構 Charlie `daily_executive_summary` 的 CronTrigger，改為動態追蹤 `HF_SLEEP_START` 並提前 1 小時發送 Telegram 戰報，避免因 HF 關機導致漏訊。
 
 ### 09-14: 物理硬化與 SSOT 徹底落實 (Phase 5.11.18)
 - **解鎖排程停滯**: 鑑識出 `Alice Auto Fetch` 誤用 `_should_run_opportunistic_weekly_local_only` 導致在雲端環境被 100% 阻斷，連帶餓死下游的 `Bob Market Report` 達 4 天之久。已將其換回標準的 `_should_run_opportunistic_weekly`，解放雲端 opportunistic 執行能力。
