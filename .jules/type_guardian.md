@@ -40,3 +40,7 @@
 ## 2025-05-18 - TypeGuardian: Add explicit type hints and DTOs to tasks update_logic
 **Learning:** Adding TypedDict DTOs (`NotRequired`) provides much better type safety than generic dictionaries for Supabase updates while allowing incremental fields updating in task update logic.
 **Action:** When updating database tables that expect partial data dictionary, define `TypedDict` DTO classes with `NotRequired` instead of using `dict[str, Any]` parameters and return types.
+## 2026-09-17 - Stringified Forward References with UP045
+
+**Learning:** Ruff's `UP045` rule enforces `X | None` over `Optional[X]`, even when the type annotation is inside a stringified forward reference (e.g., `"Client | None"` instead of `"Optional[Client]"`).
+**Action:** Use `X | None` explicitly in all type hints, even within string quotes when avoiding runtime evaluation.
