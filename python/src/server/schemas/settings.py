@@ -113,6 +113,18 @@ class SchedulerConfig(BaseModel):
         t = datetime.strptime(self.hf_sleep_start, "%H:%M") - timedelta(minutes=30)
         return t.minute
 
+    @property
+    def dynamic_daily_summary_hour(self) -> int:
+        from datetime import datetime, timedelta
+        t = datetime.strptime(self.hf_sleep_start, "%H:%M") - timedelta(hours=1)
+        return t.hour
+
+    @property
+    def dynamic_daily_summary_minute(self) -> int:
+        from datetime import datetime, timedelta
+        t = datetime.strptime(self.hf_sleep_start, "%H:%M") - timedelta(hours=1)
+        return t.minute
+
 
     scheduler_misfire_grace_time: int = Field(default=600, alias="SCHEDULER_MISFIRE_GRACE_TIME")
     system_timezone: str = Field(default="Asia/Taipei", alias="SYSTEM_TIMEZONE")
