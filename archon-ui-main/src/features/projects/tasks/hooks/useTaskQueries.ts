@@ -5,7 +5,7 @@ import {
   removeDuplicateEntities,
   replaceOptimisticEntity,
 } from "@/features/shared/utils/optimistic";
-import { DISABLED_QUERY_KEY, STALE_TIMES } from "../../../shared/config/queryPatterns";
+import { DISABLED_QUERY_KEY, STALE_TIMES, POLLING_INTERVALS } from "../../../shared/config/queryPatterns";
 import { useSmartPolling } from "../../../shared/hooks";
 import { useToast } from "../../../shared/hooks/useToast";
 import { taskService } from "../services";
@@ -28,7 +28,7 @@ export function useProjectTasks(projectId: string | undefined, enabled = true) {
   // Disable polling while any task mutation is in-flight to prevent race conditions, and backoff on errors
   const refetchInterval = (query: any) => {
     if (isMutating) return false;
-    if (query.state.error) return 60000; // 60s backoff on 504/500 errors
+    if (query.state.error) return POLLING_INTERVALS.errorBackoff; // 60s backoff on 504/500 errors
     return smartInterval;
   };
 
@@ -51,7 +51,7 @@ export function useTaskCounts() {
   return useQuery<Awaited<ReturnType<typeof taskService.getTaskCountsForAllProjects>>>({
     queryKey: taskKeys.counts(),
     queryFn: () => taskService.getTaskCountsForAllProjects(),
-    refetchInterval: (query: any) => (query.state.error ? 60000 : countsRefetchInterval),
+    refetchInterval: (query: any) => (query.state.error ? POLLING_INTERVALS.errorBackoff : countsRefetchInterval),
     staleTime: STALE_TIMES.frequent,
   });
 }

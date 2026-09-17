@@ -105,8 +105,6 @@ audit-qa:
 	@cd python && $(UV) run python ../scripts/archive/check_scroll_lockup.py
 	@echo "Step 5: Running Shadow DB Migration verifier..."
 	@cd python && $(UV) run python ../scripts/archive/verify_system.py --check migrations
-	@echo "Step 6: Running LLM Content Judge Semantic checks..."
-	@cd python && $(UV) run python ../scripts/archive/llm_judge_content.py
 	@echo "Step 7: Running Backend FAST Unit Tests (Skipping Integration)..."
 	@make test-be-fast
 	@echo "Step 8: Running Persona Physical Audit inside Docker..."

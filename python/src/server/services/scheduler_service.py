@@ -257,11 +257,12 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=config.dynamic_token_analysis_hour, minute=config.dynamic_token_analysis_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=config.business_sentinel_hour, minute=config.business_sentinel_minute, timezone=DEFAULT_TIMEZONE))
-        await self._schedule_stateful_job(self._run_daily_executive_summary, "daily_executive_summary", 30, self._should_run_daily, CronTrigger(hour=23, minute=50, timezone=DEFAULT_TIMEZONE)) # 合法
+        await self._schedule_stateful_job(self._run_daily_executive_summary, "daily_executive_summary", 30, self._should_run_daily, CronTrigger(hour=config.dynamic_daily_summary_hour, minute=config.dynamic_daily_summary_minute, timezone=DEFAULT_TIMEZONE))
+
 
         # Category 3: Stateful Weekly / Monthly Jobs
         weekly_h, weekly_m = self._parse_dynamic_hf_time(config, offset_hours=2)
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_opportunistic_weekly_local_only, IntervalTrigger(hours=12))
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_opportunistic_weekly, IntervalTrigger(hours=12))
 
         await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_scheduled_job, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE))
 

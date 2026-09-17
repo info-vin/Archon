@@ -136,7 +136,7 @@ export const IdentityEditUserModal: React.FC<{ user: Employee; onClose: () => vo
                     </div>
 
                     <div className="flex justify-end space-x-3 pt-4 border-t border-border mt-4 shrink-0">
-                        <button onClick={onClose} className="px-6 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold transition-colors">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-6 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold transition-colors">Cancel</button>
                         <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-all font-black shadow-lg shadow-indigo-200 disabled:opacity-50">
                             {isSaving ? 'Syncing...' : 'APPLY ACCESS OVERRIDE'}
                         </button>

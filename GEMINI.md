@@ -125,6 +125,17 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
 
+### 09-17: 環境潔癖與型別硬化 (Phase 5.11.x Cleanup)
+- **環境污染消毒**: 嚴格執行「零一次性腳本」原則。物理刪除錯誤合入 `feat/twins` 分支的 4 個臨時測試與 `sed` 補丁腳本 (`patch_*.sh`, `test_empty_state.tsx`)，維持專案倉庫潔癖。
+- **強型別邊界修復**: 鑑識出 `routing.py` 中 `AvailableEmbeddingRoutesResponse` 錯誤返回原生 `dict` 導致 `mypy` 報錯。改用 `model_validate()` 進行 Pydantic 轉換，100% 通過 `make lint` 檢查。
+- **全域併發公證**: 執行 `make test-be` (708 項通過) 與 `make phase-audit`。物理證實 `test_concurrent_rag_queries` 高併發測試順利通過，證實 Phase 5.11.16~18 的非同步優化在壓力下表現穩健。
+- **技術債清理與排程動態化**: 從 `Makefile` 中物理拔除已廢棄的 `llm_judge_content.py` 測試門禁，解除舊裁判對新版商業 Mock Data 的誤擋。同時重構 Charlie `daily_executive_summary` 的 CronTrigger，改為動態追蹤 `HF_SLEEP_START` 並提前 1 小時發送 Telegram 戰報，避免因 HF 關機導致漏訊。
+
+### 09-14: 物理硬化與 SSOT 徹底落實 (Phase 5.11.18)
+- **解鎖排程停滯**: 鑑識出 `Alice Auto Fetch` 誤用 `_should_run_opportunistic_weekly_local_only` 導致在雲端環境被 100% 阻斷，連帶餓死下游的 `Bob Market Report` 達 4 天之久。已將其換回標準的 `_should_run_opportunistic_weekly`，解放雲端 opportunistic 執行能力。
+- **消滅 504 Gateway Timeout**: 日誌顯示 `Task Dispatcher` 仍觸發 504，證實 `archon_tasks.is_recurring` 索引未被建立。已由人類手動在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，徹底解決全表掃描與 Schema Cache 崩潰。
+- **前端 SSOT 重構 (零虛假驗證)**: 審查前端 `useTaskQueries.ts` 發現為解決 504 而遺留的魔術數字 `60000` 退避時間。已將其抽離至 `queryPatterns.ts` 中的 `POLLING_INTERVALS`，並通過 100% `make lint` 物理驗證，徹底根除 DRY 違規。
+
 ### 09-13: 徹底消滅幽靈降級與週期狀態斷層 (Phase 5.11.17)
 - **排程語意解耦 (DAG 斷層修復)**: 鑑識出原有 `_should_run_weekly` 同時被「見縫插針的 Alice」與「嚴格排程的週報」共用，導致伺服器重啟時週報被錯誤提早觸發。已將兩者拆分，對排程任務導入 `trigger.get_next_fire_time` 的精準數學驗證，確保未到期絕不偷跑。
 - **消滅靜默降級與硬編碼 (Log Hardening & SSOT)**: 發現 `ai_operations.py` 與 `leads_patrol.py` 在讀取 Config 時，若發生 Pydantic 解析錯誤會被 `except Exception:` 靜默吞噬並降級為 0.7 溫度或寫死時區。已全面補上 `logger.warning` 記錄真實原因。並將 `ZoneInfo`、24 小時回溯、以及散落的生成 Prompt 徹底抽離至 `settings.py` 與 `pm_prompts.py` 進行集中管理，實踐 DRY。

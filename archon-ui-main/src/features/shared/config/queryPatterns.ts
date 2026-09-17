@@ -24,6 +24,11 @@ export const STALE_TIMES = {
   static: Infinity, // Never stale - for static data like settings
 } as const;
 
+// Consistent polling intervals for smart polling and error backoff
+export const POLLING_INTERVALS = {
+  errorBackoff: 60_000, // 60s backoff on 504/500 errors
+} as const;
+
 // Re-export commonly used TanStack Query types for convenience
 export type { QueryKey, QueryOptions } from "@tanstack/react-query";
 

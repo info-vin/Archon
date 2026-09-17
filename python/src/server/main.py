@@ -83,6 +83,7 @@ from .api_routes.log_api import router as log_router
 from .api_routes.marketing_api import router as marketing_router  # NEW IMPORT
 from .api_routes.mcp_api import router as mcp_api_router  # NEW IMPORT
 from .api_routes.migration_api import router as migration_router
+from .api_routes.ollama import router as ollama_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
 from .api_routes.prompts_api import router as prompts_router  # MISSING
@@ -176,6 +177,7 @@ app.include_router(progress_router)
 app.include_router(knowledge_router)
 app.include_router(agents_router)
 app.include_router(prompts_router)
+app.include_router(ollama_router)
 
 # Group 2: Routers that NEED an "/api" prefix (defined without prefix internally)
 app.include_router(auth_router, prefix="/api")

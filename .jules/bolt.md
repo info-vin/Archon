@@ -248,3 +248,15 @@
 ## 2025-01-20 - Memoize react-markdown components to prevent unmounting
 **Learning:** Passing an inline object literal to `ReactMarkdown`'s `components` prop causes the library to completely unmount and remount all custom components on every render cycle, which can severely impact performance.
 **Action:** Always extract the `components` map passed to `react-markdown` into a statically defined object outside the component or memoize it using `React.useMemo`.
+
+## 2024-09-13 - O(1) Map Lookup for Repetitive Array.find in Leaf Components
+**Learning:** Performing `Array.prototype.find()` lookups on static arrays within frequently rendered leaf components (like `TaskPriorityComponent` within a Kanban board) creates an O(N*M) performance bottleneck that executes on every render cycle of every item in the list.
+**Action:** Extract the static array lookup into a pre-calculated O(1) `Map` at the module level (outside the component) to guarantee fast property access and eliminate unnecessary CPU overhead during list rendering.
+
+## 2025-05-18 - Component displayName requirement for React.memo
+**Learning:** When wrapping a React component in `React.memo()` (or creating a wrapper component), omitting the `.displayName` property will cause `eslint` to fail with `react/display-name` errors, preventing successful linting and deployment.
+**Action:** Always assign a explicit `.displayName` string property to any `React.memo` or `React.forwardRef` wrapped component immediately after definition.
+
+## 2026-09-16 - Memoizing callback props to maintain list virtualization performance
+**Learning:** When passing locally defined functions (like `handleViewDocument`) down to list item components that are rendered dynamically (e.g. inside `KnowledgeList`), creating a new function reference on every parent render destroys any potential for React's shallow comparison (like in `React.memo`) to optimize rendering. This forces O(N) re-renders of list item subtrees even when their explicit props haven't conceptually changed.
+**Action:** Always wrap functions passed to list items in `React.useCallback`, ensuring correct dependencies, to preserve the stable function identity required for child rendering optimizations. To prevent `react-hooks/exhaustive-deps` warnings and unnecessary re-renders when using fallback arrays (e.g., `data?.items || []`) as dependencies in `useCallback`, wrap the array initialization in `React.useMemo(() => data?.items || [], [data?.items])` to maintain a stable reference across renders instead of generating a new empty array literal.

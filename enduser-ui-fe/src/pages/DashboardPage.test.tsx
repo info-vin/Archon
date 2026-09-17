@@ -110,6 +110,7 @@ describe('DashboardPage', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
+    fireEvent.click(screen.getByRole('tab', { name: 'Assignment & Automation' }));
     expect(await screen.findByRole('option', { name: 'Alice Johnson' })).toBeInTheDocument();
     expect(await screen.findByRole('option', { name: '(AI) Assistant' })).toBeInTheDocument();
   });

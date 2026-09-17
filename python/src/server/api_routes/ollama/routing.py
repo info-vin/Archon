@@ -6,7 +6,7 @@ from ...config.logfire_config import get_logger
 from ...services.ollama.embedding_router import embedding_router
 from ...services.ollama.model_discovery_service import model_discovery_service
 from ...services.ollama.routing.vector_normalization import VectorNormalization
-from .schemas import EmbeddingRouteRequest, EmbeddingRouteResponse
+from .schemas import AvailableEmbeddingRoutesResponse, ClearCacheResponse, EmbeddingRouteRequest, EmbeddingRouteResponse
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -36,11 +36,11 @@ async def analyze_embedding_route_endpoint(request: EmbeddingRouteRequest) -> Em
         raise HTTPException(status_code=500, detail=f"Embedding route analysis failed: {str(e)}") from e
 
 
-@router.get("/embedding/routes")
+@router.get("/embedding/routes", response_model=AvailableEmbeddingRoutesResponse)
 async def get_available_embedding_routes_endpoint(
     instance_urls: list[str] = Query(..., description="Ollama instance URLs"),
-    sort_by_performance: bool = Query(True, description="Sort by performance score"),
-) -> dict[str, Any]:
+    _sort_by_performance: bool = Query(True, description="Sort by performance score", alias="sort_by_performance"),
+) -> AvailableEmbeddingRoutesResponse:
     """Get all available embedding routes across multiple instances."""
     try:
         logger.info(f"Getting embedding routes for {len(instance_urls)} instances")
@@ -72,19 +72,19 @@ async def get_available_embedding_routes_endpoint(
             if dim_data["count"] > 0:
                 dim_data["avg_performance"] /= dim_data["count"]
 
-        return {
+        return AvailableEmbeddingRoutesResponse.model_validate({
             "total_routes": len(routes),
             "routes": route_data,
             "dimension_analysis": dimension_stats,
             "routing_statistics": embedding_router.get_routing_statistics(),
-        }
+        })
     except Exception as e:
         logger.error(f"Error getting embedding routes: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get embedding routes: {str(e)}") from e
 
 
-@router.delete("/cache")
-async def clear_ollama_cache_endpoint() -> dict[str, str]:
+@router.delete("/cache", response_model=ClearCacheResponse)
+async def clear_ollama_cache_endpoint() -> ClearCacheResponse:
     """Clear all Ollama-related caches."""
     try:
         logger.info("Clearing Ollama caches")
@@ -92,7 +92,7 @@ async def clear_ollama_cache_endpoint() -> dict[str, str]:
         model_discovery_service.capability_cache.clear()
         model_discovery_service.health_cache.clear()
         embedding_router.clear_routing_cache()
-        return {"message": "All Ollama caches cleared successfully"}
+        return ClearCacheResponse(message="All Ollama caches cleared successfully")
     except Exception as e:
         logger.error(f"Error clearing caches: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear caches: {str(e)}") from e
