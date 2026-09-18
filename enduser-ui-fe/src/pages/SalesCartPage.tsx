@@ -53,7 +53,7 @@ const SalesCartPage: React.FC = () => {
                     <div className="flex items-center gap-3">
                          <h1 className="text-2xl font-bold">Sales Cart ({leads.length})</h1>
                          {leads.length > 0 && (
-                            <button 
+                            <button type="button"
                                 onClick={toggleSelectAll}
                                 className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded hover:bg-primary/20 transition-colors"
                             >
@@ -61,7 +61,7 @@ const SalesCartPage: React.FC = () => {
                             </button>
                          )}
                     </div>
-                    <button
+                    <button type="button"
                         onClick={fetchCart}
                         className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1 disabled:opacity-50"
                         disabled={loading}
@@ -111,7 +111,7 @@ const SalesCartPage: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2" onClick={e => e.stopPropagation()}>
-                                        <button 
+                                        <button type="button"
                                             onClick={() => handleGeneratePitch(lead)}
                                             disabled={generatingPitchId === lead.id}
                                             className="col-span-2 flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 disabled:opacity-50"
@@ -123,7 +123,7 @@ const SalesCartPage: React.FC = () => {
                                             )}
                                             {generatingPitchId === lead.id ? "Generating..." : "Generate AI Pitch"}
                                         </button>
-                                        <button 
+                                        <button type="button"
                                             onClick={() => handleRemove(lead.id)}
                                             className="py-2 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:bg-secondary flex items-center justify-center gap-2 disabled:opacity-50"
                                             disabled={processing}
@@ -131,7 +131,7 @@ const SalesCartPage: React.FC = () => {
                                             {processing && state.context.processingLeadAction === 'remove' && state.context.processingLeadId === lead.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : <TrashIcon className="w-4 h-4" />}
                                             Remove
                                         </button>
-                                        <button 
+                                        <button type="button"
                                             onClick={() => handlePromote(lead)}
                                             className="py-2 rounded-lg text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-50 flex items-center justify-center gap-2"
                                             disabled={processing || promotingLeadId === lead.id}
@@ -153,21 +153,21 @@ const SalesCartPage: React.FC = () => {
                             {selectedIds.size} Selected
                         </div>
                         <div className="flex gap-2 w-full overflow-x-auto">
-                             <button 
+                             <button type="button"
                                 onClick={() => handleBatchAction('remove')}
                                 disabled={processing}
                                 className="flex-1 bg-red-500/20 hover:bg-red-500/40 text-red-200 py-2 px-3 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
                              >
                                 {processing && state.context.processingAction === 'remove' ? 'Processing...' : 'Remove'}
                              </button>
-                             <button 
+                             <button type="button"
                                 onClick={() => handleBatchAction('export')}
                                 disabled={processing}
                                 className="flex-1 bg-white/10 hover:bg-white/20 py-2 px-3 rounded-xl text-xs font-bold transition-colors whitespace-nowrap disabled:opacity-50"
                              >
                                 {processing && state.context.processingAction === 'export' ? 'Processing...' : 'Export CRM'}
                              </button>
-                             <button 
+                             <button type="button"
                                 onClick={() => handleBatchAction('content')}
                                 disabled={processing}
                                 data-testid="magic-draft-button"
@@ -214,7 +214,7 @@ const PitchModal: React.FC<{ isOpen: boolean; onClose: () => void; content: stri
                     </div>
                 </div>
                 <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                    <button 
+                    <button type="button"
                         onClick={() => {
                             navigator.clipboard.writeText(content);
                             alert("Copied to clipboard!");
