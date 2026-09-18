@@ -1,4 +1,8 @@
 import uuid
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from supabase import Client
 
 from ...config.logfire_config import get_logger
 from ...repositories.knowledge_repository import KnowledgeRepository
@@ -11,7 +15,12 @@ logger = get_logger(__name__)
 
 
 class FileArchiver:
-    def __init__(self, supabase=None, repo=None, chunker=None) -> None:
+    def __init__(
+        self,
+        supabase: "Client | None" = None,
+        repo: KnowledgeRepository | None = None,
+        chunker: KnowledgeChunkingService | None = None,
+    ) -> None:
         self.supabase = supabase or get_supabase_client()
         self.repo = repo or KnowledgeRepository(self.supabase)
         self.chunker = chunker or KnowledgeChunkingService()
