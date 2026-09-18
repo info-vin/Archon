@@ -407,6 +407,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - `migration/0.2.3/03_logic_functions.sql`
 - `migration/0.2.3/04_logic_security_rls.sql`
 - `migration/0.2.3/05_seed_system_configs.sql`
+- `migration/0.2.3/06_add_missing_indexes.sql`
 - `migration/0.2.3/06_seed_prompts_core.sql`
 - `migration/0.2.3/07_seed_prompts_assets.sql`
 - `migration/0.2.3/08_schema_task_retry_count.sql`
@@ -422,6 +423,7 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - `migration/0.2.3/03_logic_functions.sql`
 - `migration/0.2.3/04_logic_security_rls.sql`
 - `migration/0.2.3/05_seed_system_configs.sql`
+- `migration/0.2.3/06_add_missing_indexes.sql`
 - `migration/0.2.3/06_seed_prompts_core.sql`
 - `migration/0.2.3/07_seed_prompts_assets.sql`
 - `migration/0.2.3/08_schema_task_retry_count.sql`
