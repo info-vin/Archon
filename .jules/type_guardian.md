@@ -44,3 +44,6 @@
 
 **Learning:** Ruff's `UP045` rule enforces `X | None` over `Optional[X]`, even when the type annotation is inside a stringified forward reference (e.g., `"Client | None"` instead of `"Optional[Client]"`).
 **Action:** Use `X | None` explicitly in all type hints, even within string quotes when avoiding runtime evaluation.
+## 2024-05-14 - Type Hinting Injected Service Dependencies
+**Learning:** When adding type hints to submodule files that accept a parent service instance as an argument (like `task_service_instance` being passed to logic submodules), a circular import is almost guaranteed because the parent service imports the submodules.
+**Action:** Use `from typing import TYPE_CHECKING` and `if TYPE_CHECKING: from src.server.services.projects.task_service import TaskService`. Then, use a string forward reference (e.g., `task_service_instance: "TaskService"`) to provide type safety without triggering runtime `ImportError`s.
