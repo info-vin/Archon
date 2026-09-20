@@ -14,6 +14,7 @@ from src.server.schemas.settings import (
     CredentialCreate,
     CredentialResponse,
     CredentialStatusRequest,
+    DatabaseMetricsResponse,
     UserUpdateRequest,
 )
 from src.server.services.credential_service import credential_service
@@ -41,8 +42,8 @@ def get_credential_service() -> Any:
     return credential_service
 
 
-@router.get("/database/metrics")
-async def database_metrics(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/database/metrics", response_model=DatabaseMetricsResponse)
+async def database_metrics(current_user: UserProfileDTO = Depends(get_current_user)) -> DatabaseMetricsResponse:
     """Get database metrics and statistics. Frontend expectation."""
     try:
         settings_service = SettingsService()
