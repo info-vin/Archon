@@ -55,7 +55,36 @@ class TelegramService:
         await self._log_to_db("ERROR", "TelegramService: Failed to fetch TELEGRAM_TOKEN from Database after 3 retries (Timeout or network drop).")
         return NotificationConfig()
 
-    async def send_message(self, text: str, parse_mode: str = "Markdown") -> bool:
+
+    async def _queue_failed_message(self, text: str) -> None:
+        import asyncio
+        def _insert_task() -> None:
+            try:
+                from src.server.repositories.base_repository import BaseRepository
+                sb = get_supabase_client()
+                repo = BaseRepository(sb)
+
+                # Fetch any project ID
+                success, p_res = repo.execute_query(sb.table("archon_projects").select("id").limit(1), "Fetch project")
+                if not success or not p_res.get("data"):
+                    logger.error("TelegramService: No project found to attach pending task.")
+                    return
+                project_id = p_res["data"][0]["id"]
+
+                query = sb.table("archon_tasks").insert({
+                    "title": "[System] Pending Telegram Alert",
+                    "description": text,
+                    "status": "todo",
+                    "project_id": project_id
+                })
+                repo.execute_query(query, "Failed to write to archon_tasks")
+                logger.info("📦 TelegramService: Successfully persisted failed message to archon_tasks.")
+            except Exception as ex:
+                logger.error(f"TelegramService: Failed to persist to archon_tasks: {repr(ex)}")
+
+        await asyncio.to_thread(_insert_task)
+
+    async def send_message(self, text: str, parse_mode: str = "Markdown", is_retry: bool = False) -> bool:
         """Sends a message via Telegram Bot API."""
         import asyncio
         config = await self._get_config_async()
@@ -93,11 +122,17 @@ class TelegramService:
                     await asyncio.sleep(2)  # 合法
                 else:
                     await self._log_to_db("ERROR", err_msg)
+                    if not is_retry:
+                        await self._queue_failed_message(text)
             except httpx.HTTPStatusError as e:
                 # Catch 400, 401, 404, etc.
                 err_msg = f"TelegramService: HTTP error sending message: {repr(e)} - Response: {e.response.text}"
                 logger.error(f"❌ {err_msg}")
                 await self._log_to_db("ERROR", err_msg)
+                # Note: 4xx errors are usually bad requests (e.g. text too long), queuing them will just fail again.
+                # However, 5xx errors (Bad Gateway) might be recoverable.
+                if e.response.status_code >= 500 and not is_retry:
+                    await self._queue_failed_message(text)
                 return False
             except Exception as e:
                 err_msg = f"TelegramService: Unexpected error sending message: {repr(e)}"

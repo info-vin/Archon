@@ -60,7 +60,7 @@ const BrandPage: React.FC = () => {
                             Brand Hub
                         </h1>
                         <nav className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                            <button
+                            <button type="button"
                                 onClick={() => setViewMode('dashboard')}
                                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
                                     viewMode === 'dashboard' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-500'
@@ -69,7 +69,7 @@ const BrandPage: React.FC = () => {
                                 <LayoutIcon className="w-3.5 h-3.5 inline mr-2" />
                                 Insights
                             </button>
-                            <button
+                            <button type="button"
                                 onClick={() => setViewMode('workbench')}
                                 className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
                                     viewMode === 'workbench' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600' : 'text-slate-500'
@@ -82,7 +82,7 @@ const BrandPage: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-3">
-                        <button onClick={loadData} aria-label="Refresh brand data" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
+                        <button type="button" onClick={loadData} aria-label="Refresh brand data" className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                             <RefreshCwIcon className={`w-5 h-5 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
@@ -135,7 +135,7 @@ const BrandPage: React.FC = () => {
                             <h3 className="text-2xl font-bold text-gray-800 dark:text-white">
                                 {editingPost ? 'Edit Asset' : 'New Asset'}
                             </h3>
-                            <button onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
+                            <button type="button" onClick={() => setIsPostModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" aria-label="Close modal"><XIcon className="w-5 h-5" /></button>
                         </div>
                         <CreatePostForm 
                             post={editingPost} 

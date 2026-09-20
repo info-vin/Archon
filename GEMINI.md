@@ -123,51 +123,45 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-> 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案。
+> 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
-### 09-17: 環境潔癖與型別硬化 (Phase 5.11.x Cleanup)
-- **環境污染消毒**: 嚴格執行「零一次性腳本」原則。物理刪除錯誤合入 `feat/twins` 分支的 4 個臨時測試與 `sed` 補丁腳本 (`patch_*.sh`, `test_empty_state.tsx`)，維持專案倉庫潔癖。
-- **強型別邊界修復**: 鑑識出 `routing.py` 中 `AvailableEmbeddingRoutesResponse` 錯誤返回原生 `dict` 導致 `mypy` 報錯。改用 `model_validate()` 進行 Pydantic 轉換，100% 通過 `make lint` 檢查。
-- **全域併發公證**: 執行 `make test-be` (708 項通過) 與 `make phase-audit`。物理證實 `test_concurrent_rag_queries` 高併發測試順利通過，證實 Phase 5.11.16~18 的非同步優化在壓力下表現穩健。
-- **技術債清理與排程動態化**: 從 `Makefile` 中物理拔除已廢棄的 `llm_judge_content.py` 測試門禁，解除舊裁判對新版商業 Mock Data 的誤擋。同時重構 Charlie `daily_executive_summary` 的 CronTrigger，改為動態追蹤 `HF_SLEEP_START` 並提前 1 小時發送 Telegram 戰報，避免因 HF 關機導致漏訊。
+### 09/20: 雲端關機盲區防禦與 Apple Silicon 環境公證
 
-### 09-14: 物理硬化與 SSOT 徹底落實 (Phase 5.11.18)
-- **解鎖排程停滯**: 鑑識出 `Alice Auto Fetch` 誤用 `_should_run_opportunistic_weekly_local_only` 導致在雲端環境被 100% 阻斷，連帶餓死下游的 `Bob Market Report` 達 4 天之久。已將其換回標準的 `_should_run_opportunistic_weekly`，解放雲端 opportunistic 執行能力。
-- **消滅 504 Gateway Timeout**: 日誌顯示 `Task Dispatcher` 仍觸發 504，證實 `archon_tasks.is_recurring` 索引未被建立。已由人類手動在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，徹底解決全表掃描與 Schema Cache 崩潰。
-- **前端 SSOT 重構 (零虛假驗證)**: 審查前端 `useTaskQueries.ts` 發現為解決 504 而遺留的魔術數字 `60000` 退避時間。已將其抽離至 `queryPatterns.ts` 中的 `POLLING_INTERVALS`，並通過 100% `make lint` 物理驗證，徹底根除 DRY 違規。
-
-### 09-13: 徹底消滅幽靈降級與週期狀態斷層 (Phase 5.11.17)
-- **排程語意解耦 (DAG 斷層修復)**: 鑑識出原有 `_should_run_weekly` 同時被「見縫插針的 Alice」與「嚴格排程的週報」共用，導致伺服器重啟時週報被錯誤提早觸發。已將兩者拆分，對排程任務導入 `trigger.get_next_fire_time` 的精準數學驗證，確保未到期絕不偷跑。
-- **消滅靜默降級與硬編碼 (Log Hardening & SSOT)**: 發現 `ai_operations.py` 與 `leads_patrol.py` 在讀取 Config 時，若發生 Pydantic 解析錯誤會被 `except Exception:` 靜默吞噬並降級為 0.7 溫度或寫死時區。已全面補上 `logger.warning` 記錄真實原因。並將 `ZoneInfo`、24 小時回溯、以及散落的生成 Prompt 徹底抽離至 `settings.py` 與 `pm_prompts.py` 進行集中管理，實踐 DRY。
-- **物理公證與 100% 無假**: 不以肉眼判斷，透過 706 項 `make test-be` 與 `make phase-audit` (無 L2 Bypass) 全數過關證實修復有效，並修正了測試 Mock 中因 Local Import 導致的 AttributeError。
-### 09-10: 根除 LLM 同步阻塞斷層與排程器死鎖 (Phase 5.11.16)
-- **非同步邊界防禦 (Zero Fake Development)**: 鑑識出導致 APScheduler 卡死長達 26 分鐘的真正元凶，並非缺乏 503 重試（`google-genai` SDK 早就內建指數退避），而是部分 Agent 在 `async def` 中錯誤地呼叫了「同步」的 SDK 介面 (`client.models.generate_content`)。這導致當遇到 503 時，SDK 內部的 `time.sleep()` 霸佔了主執行緒。
-- **物理公證與修復**: 已將 `ai_operations.py` 與 `visual_generator.py` 中的同步呼叫全面升級為非同步 (`await client.aio.models...`)，讓重試機制能正確釋放執行權給排程器。修復後全域 705 項測試與靜態掃描 100% 綠燈通過。
-
-### 09-07: Agent Registry 日誌硬化與靜默降級修復 (Phase 5.11.15)
-- **根除幽靈降級**: 發現並修復 `agent_registry.py` 中 4 處 `except Exception: pass` 的靜默吞噬異常漏洞，全面改用 `logger.warning(...)`。確保未來資料庫連線或動態設定讀取失敗時，能留下明確的 Traceback，嚴格遵守 "Detailed errors over graceful failures" 原則，保障系統維運可視性。
-- **全域公證防護**: 執行 `make lint-be` 與 `make test-be`，701 項測試全數綠燈通過。建立實體文件 `@PRPs/Phase_5.11.15_Agent_Registry_Log_Hardening.md`，完成 Phase 5.11.15 階段性架構強化與公證。
-### 09-06: 週期排程 DAG 解耦與網路防禦硬化 (Phase 5.11.13 ~ 5.11.14)
-- **Telegram 網路自癒、SSOT 化與假性黑洞修復 (Phase 5.11.13 更新)**：先前在 Phase 5.11.13 中，AI 誤判 HF 雲端有 IPv6 黑洞，加入了 `local_address="0.0.0.0"` 企圖強制綁定 IPv4。但對 Client 而言，`0.0.0.0` 會被 Linux 容器網路視為無效來源 IP 並直接丟棄 (Drop)，反而造成了 100% 觸發的 `ConnectTimeout`。
-- **真實病因與 SSOT/DRY 拔除**：真正的超時元兇其實是 Phase 5.11.16 修復的 Event Loop 阻塞。因此，我們已徹底拔除有害的 `local_address="0.0.0.0"`，恢復 `httpx` 的原生路由 (Happy Eyeballs)。同時消滅硬編碼，將 `timeout` 與 `max_retries` 抽離至 `NotificationConfig` SSOT 中，徹底杜絕魔術數字。
-- **DAG 鏈條解耦與見縫插針排程 (Phase 5.11.14)**：將 Charlie (`daily_executive_summary`) 從 Bob 的事件鏈中物理解綁，賦予獨立排程 (`CronTrigger`)。將 Alice 改為 `IntervalTrigger(hours=12)` 以適應 Docker 碎片化啟動的見縫插針 (Opportunistic) 策略。
-- **SSOT 動態時間窗與自動化公證**：Bob 的報告生成移除寫死的 `timedelta(hours=24)`，改由 SSOT 動態讀取 `LAST_RUN_BOB_MARKET_REPORT`，確保降頻後 Leads 0% 遺漏。防護邊界透過 `test_dag_disconnect.py` 進行結構化物理斷言，全域 698 項單元測試與 `phase-audit` 靜態掃描 100% 通過。
-
-### 09-04: 週期排程日誌硬化與自動化品質門禁公證 (Phase 5.11.12)
-- **排程器幽靈日誌根除 (SSOT/DRY)**：鑑識出 `Catchup` 階段提早跳過任務時，因外層封裝寫死 `skip_msg` 導致誤印「今日已執行」的 Bug。已將所有 `_should_run_*` 回傳值從 `bool` 升級為 `tuple[bool, str]`，讓底層物理原因（如「Time not reached」）真實穿透至日誌，徹底消滅 12 處硬編碼。
-- **自動化公證取代肉眼 (Zero Fake Verification)**：拒絕使用人工查閱 Docker Log 驗證。撰寫 `verify_catchup_log.py` 實體探針攔截日誌並自動 Assert；同時升級 `test_scheduler_service.py` 補齊 Tuple Mock 與情境斷言，最終 100% 通過 `make lint` 與 `mypy` 品質門禁。
-- **商機日報連鎖驗證**：物理證實系統已完美運行一條龍排程：10:25 Alice 準時發動抓取 6 筆 Leads，並順利觸發下游 Bob 完成《AI狂潮席捲傳統產業！》之高品質商機日報，展現高度非同步協作穩定性。
-
-### 09-03: Telegram 非同步硬化與 UI 日誌盲區公證 (Phase 5.11.11)
-- **5 秒同步陷阱修復**：深度鑑識發現先前 Telegram 發送失敗是因為 `SettingsService` 在非同步的 `send_message` 中使用了同步的 5 秒逾時連線。已將 `_get_config` 升級為非同步 (`asyncio.to_thread`) 且具備 3 次重試機制的架構，防止在 Hugging Face Spaces 剛完成 Map-Reduce 運算後，因連線卡頓而靜默跳過警報發送。
-- **打通 UI 日誌盲區 (Zero Ghost Logs)**：發現原先 Telegram 失敗時只使用 `logger.warning` 寫入標準輸出，導致使用者在 Admin UI 的 `archon_logs` 中完全查無錯誤。已新增 `_log_to_db`，強制將所有 Telegram 網路阻擋或超時錯誤寫入 `archon_logs`，讓未來除錯時 100% 可視。
-- **全自動化公證與 L2 倉庫層防護**：捨棄手動測試，透過 `test_telegram_service_hardening.py` 實作非同步 Mock 測試，驗證 3 大極端情境。並在 `make phase-audit` 揪出 `sb.table.insert().execute()` 違反 L2 Repository Bypass 後，迅速改用 `BaseRepository` 完美符合架構規範。
-
+*   **Telegram 關機盲區防禦 (持久化佇列)**:
+    *   **實體真相**: 測量 09-19 日誌，發現 HF Spaces 排程時斷網長達 84 秒。舊版 `asyncio.sleep` (記憶體重試) 會因無 HTTP 流量引發容器休眠而永久遺失通知。
+    *   **架構修復**: 修改 `telegram_service.py` 拔除 sleep，發送失敗時將通知包裝為 `[System] Pending Telegram Alert` 持久化至 `archon_tasks`。由 `task_dispatcher.py` 定期掃描，於機器喚醒且網路健康時自動補發。
+*   **Lean 4 原生架構公證 (`Error 126`)**:
+    *   **問題**: `make audit-qa` 漏看 `test-lean` 噴出的 `Bad CPU type in executable` 錯誤。主因為 `elan` 誤裝 `x86_64` (Intel) 版本。
+    *   **修復**: 強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，Lean 4 證明子專案 18 項編譯成功。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年9月：SSOT 治理、排程防禦與零虛假公證
+
+九月份是深入解決非同步阻塞、週期排程 (DAG) 解耦、以及徹底落實 SSOT/DRY 治理的關鍵月份。我們消滅了大量隱藏的靜默降級 (Silent Fallback)、幽靈日誌，並建立起了嚴格的自動化品質門禁公證體系。
+
+**核心主題歸類**:
+1.  **非同步阻塞與排程器死鎖修復 (Ref: 09-10, 09-13, 09-14)**:
+    *   **事件迴圈解鎖**: 鑑識出 SDK 的同步介面呼叫 (`generate_content`) 是導致 APScheduler 卡死長達 26 分鐘的真正元凶，已全面升級為非同步 (`client.aio`) 釋放執行緒。
+    *   **DAG 解耦與防偷跑**: 將 `_should_run_weekly` 從 Alice 與週報的共用中解綁，導入精準數學時間斷言 `trigger.get_next_fire_time`，防範伺服器重啟時的排程偷跑與提早觸發。
+    *   **解鎖排程停滯**: 修正 `Alice Auto Fetch` 誤用本地專屬排程器，解放雲端 opportunistic 執行能力。
+
+2.  **Telegram 網路防禦與盲區公證 (Ref: 09-03, 09-06)**:
+    *   **網路自癒與黑洞除錯**: 釐清了 Telegram `ConnectTimeout` 失敗並非 IPv6 黑洞，而是 Event Loop 阻塞，拔除錯誤的 `local_address="0.0.0.0"`，回歸原生路由並抽離 Config 至 SSOT 控管。
+    *   **打通日誌盲區**: 將 Telegram 網路阻擋錯誤全面引入資料庫 `_log_to_db`，根除 UI 查無錯誤的幽靈降級現象。針對非同步網路操作建立 3 次重試機制與安全執行緒封裝。
+
+3.  **環境潔癖與 SSOT 徹底落實 (Ref: 09-07, 09-13, 09-14, 09-17)**:
+    *   **零虛假開發與魔術數字拔除**: 將 `ai_operations.py` 中的硬編碼時區、退避時間徹底抽離至 `settings.py`，並消除前端為解決 504 所遺留的 `60000` 魔術數字。
+    *   **消除靜默降級**: 修復 `agent_registry.py` 與 `leads_patrol.py` 中被 `except Exception: pass` 吞噬的異常漏洞，全面補上明確的日誌記錄與報錯機制。
+    *   **環境污染消毒**: 嚴格執行「零一次性腳本」，清理合入分支的臨時腳本，並修復了 `routing.py` 等原生型別引發的 MyPy 報錯。
+
+4.  **自動化品質門禁與全域公證 (Ref: 09-04, 09-14, 09-17)**:
+    *   **物理公證取代肉眼**: 拒絕人工查閱 Docker 驗證。實作 `verify_catchup_log.py` 探針與結構化 Tuple Mock，推動 100% 透過 `make test-be` 與 `make phase-audit` 公證。
+    *   **504 Gateway Timeout 根除**: 由人類配合在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，解決 Task Dispatcher 全表掃描崩潰問題。
+    *   **全域高併發公證**: 透過 708 項全數通過的單元測試，物理證實高併發檢索 `test_concurrent_rag_queries` 的非同步優化穩健運行。
 
 ### 2026年8月：SSOT 治理、排程防禦、MCP 安全鎖定與週期任務硬化
 八月份是提示詞與配置 SSOT 治理落地、排程防禦與 Docker 依賴硬化的月份。我們對 RAG 與報告模組進行了深度的 DRY 重構，解決了 Docker 環境下的 MCP 依賴缺失與 WAF 限流極限問題，並實作了防禦性的提示詞 Upsert 與測試門禁以確保系統零降級。

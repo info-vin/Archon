@@ -377,7 +377,7 @@ deploy-hf:
 
 # Phase Audit Automation
 phase-audit:
-	@set -a; [ -f .env ] && . ./.env; set +a; $(UV) run python scripts/phase_audit.py
+	@set -a; [ -f .env ] && . ./.env; set +a; $(UV) run --with requests python scripts/phase_audit.py
 
 test-lean:
 	@echo "--- Testing Lean 4 Subproject (lean_proofs) ---"

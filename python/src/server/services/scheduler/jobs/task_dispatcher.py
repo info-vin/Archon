@@ -26,6 +26,32 @@ async def run_task_dispatcher() -> None:
         repo = BaseRepository(supabase)
         settings = SettingsService(supabase)
 
+        # 0. Flush Pending Telegram Alerts
+        try:
+            success, pending_res = repo.execute_query(
+                supabase.table("archon_tasks")
+                .select("id, description")
+                .eq("title", "[System] Pending Telegram Alert")
+                .eq("status", "todo"),
+                "Failed to fetch pending telegram tasks"
+            )
+            if success and pending_res.get("data"):
+                pending_tasks = pending_res["data"]
+                if pending_tasks:
+                    logger.info(f"📡 Clockwork: Found {len(pending_tasks)} pending Telegram alerts. Flushing queue...")
+                    for p_task in pending_tasks:
+                        t_id = p_task["id"]
+                        text = p_task["description"]
+                        is_sent = await telegram_service.send_message(text, is_retry=True)
+                        if is_sent:
+                            repo.execute_query(
+                                supabase.table("archon_tasks").update({"status": "done"}).eq("id", t_id),
+                                f"Failed to update telegram task {t_id}"
+                            )
+                            logger.info(f"✅ Clockwork: Sent and cleared pending Telegram alert {t_id}.")
+        except Exception as e:
+            logger.error(f"💥 TaskDispatcher: Error flushing telegram queue: {e}")
+
         # 1. Reclaim stuck tasks (Zombie management)
         raw_settings = settings.get_all_settings()
         try:
