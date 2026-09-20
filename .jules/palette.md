@@ -103,3 +103,6 @@
 ## 2024-05-24 - Make table headers keyboard accessible
 **Learning:** Clickable table headers that are sortable need keyboard support (role="button", tabIndex={0}, and onKeyDown handler) to be accessible.
 **Action:** Add these attributes to clickable table headers in the future.
+## 2024-11-20 - Add explicit button types and focus rings to hardcoded buttons
+**Learning:** Found that `<button>` tags without an explicit `type` default to `type="submit"`, causing unintended form submissions. Also, `ChatHeader`, `ChatInput`, and `DeleteConfirmModal` buttons were missing keyboard navigation (`focus-visible`) styling despite relying on standard mouse interaction.
+**Action:** When adding or auditing action buttons or common UI wrappers (e.g. `Button.tsx`), ensure `type="button"` is set either directly or via a prop fallback to prevent form hijacking. Ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` (and an appropriate ring color) is included.
