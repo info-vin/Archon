@@ -97,13 +97,22 @@ class TelegramService:
             await self._log_to_db("ERROR", msg)
             return False
 
-        api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-
-        payload = {
-            "chat_id": chat_id,
-            "text": text,
-            "parse_mode": parse_mode
-        }
+        proxy_url = config.telegram_proxy_url
+        if proxy_url:
+            api_url = proxy_url
+            payload = {
+                "bot_token": bot_token,
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": parse_mode
+            }
+        else:
+            api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            payload = {
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": parse_mode
+            }
 
         max_retries = config.telegram_retries
         for attempt in range(max_retries):
