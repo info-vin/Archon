@@ -3,7 +3,7 @@ Create Logic Submodule for Task Service
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from src.server.config.logfire_config import get_logger
 from src.server.services.shared_constants import AI_AGENT_ROLES, DEFAULT_ASSIGNEE
@@ -58,9 +58,7 @@ async def create_info_request_task_logic(
                 project_id = "field_ops_001"  # Ultimate safety fallback
 
         # 3. Create Task
-        return cast(
-            tuple[bool, dict[str, Any]],
-            await task_service_instance.create_task(
+        return await task_service_instance.create_task(
                 project_id=project_id,
                 title=f"Info Request: {subject}",
                 description=description,
@@ -68,8 +66,7 @@ async def create_info_request_task_logic(
                 priority="high",
                 feature="information_request",
                 task_order=0,
-            ),
-        )
+            )
 
     except Exception as e:
         logger.error(f"Error creating info request task: {e}")
