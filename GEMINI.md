@@ -125,6 +125,15 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 09/20: 雲端關機盲區防禦與 Apple Silicon 環境公證
+
+*   **Telegram 關機盲區防禦 (持久化佇列)**:
+    *   **實體真相**: 測量 09-19 日誌，發現 HF Spaces 排程時斷網長達 84 秒。舊版 `asyncio.sleep` (記憶體重試) 會因無 HTTP 流量引發容器休眠而永久遺失通知。
+    *   **架構修復**: 修改 `telegram_service.py` 拔除 sleep，發送失敗時將通知包裝為 `[System] Pending Telegram Alert` 持久化至 `archon_tasks`。由 `task_dispatcher.py` 定期掃描，於機器喚醒且網路健康時自動補發。
+*   **Lean 4 原生架構公證 (`Error 126`)**:
+    *   **問題**: `make audit-qa` 漏看 `test-lean` 噴出的 `Bad CPU type in executable` 錯誤。主因為 `elan` 誤裝 `x86_64` (Intel) 版本。
+    *   **修復**: 強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，Lean 4 證明子專案 18 項編譯成功。
+
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
