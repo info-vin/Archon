@@ -188,6 +188,12 @@ class EnrichmentConfig(BaseModel):
     enrichment_api_delay_long: float = Field(default=3.0, alias="ENRICHMENT_API_DELAY_LONG")
     enrichment_api_delay_short: float = Field(default=1.5, alias="ENRICHMENT_API_DELAY_SHORT")
 
+
+class OracleConfig(BaseModel):
+    oracle_telemetry_days: int = Field(default=7, alias="ORACLE_TELEMETRY_DAYS")
+    oracle_max_payload_length: int = Field(default=1000, alias="ORACLE_MAX_PAYLOAD_LENGTH")
+
+
 class SystemTaskConfig(BaseModel):
     background_cleanup_interval_secs: int = Field(default=300, alias="BACKGROUND_CLEANUP_INTERVAL_SECS")
     background_error_retry_secs: int = Field(default=60, alias="BACKGROUND_ERROR_RETRY_SECS")

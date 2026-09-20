@@ -37,6 +37,15 @@ class BlogService(BaseRepository):
     def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
+    async def get_pending_reviews_metadata(self) -> tuple[bool, Any]:
+        """Retrieve metadata for blog posts pending review (without large content fields)."""
+        return self.execute_query(
+            self.supabase_client.table("blog_posts")
+            .select("id, title, status, created_at")
+            .eq("status", "review"),
+            "Failed to fetch pending blog reviews metadata"
+        )
+
     async def list_posts(self) -> tuple[bool, BlogPostsResultDTO | dict[str, Any]]:
         """Retrieve a list of all blog posts."""
 

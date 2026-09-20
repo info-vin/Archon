@@ -37,6 +37,17 @@ class LogService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
+    async def get_recent_alerts(self, limit: int = 10) -> tuple[bool, Any]:
+        """Retrieve recent alert logs with trimmed payload for AI ingestion."""
+        return self.execute_query(
+            self.supabase_client.table("archon_logs")
+            .select("id, level, message, created_at")
+            .eq("level", "ALERT")
+            .order("created_at", desc=True)
+            .limit(limit),
+            "Failed to fetch recent alerts"
+        )
+
     def create_log_entry(self, log_data: LogDataDTO) -> tuple[bool, LogEntryResultDTO]:
         """
         Creates a new log entry in the archon_logs table.
