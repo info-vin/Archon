@@ -63,14 +63,14 @@ async def test_task_dispatcher_expiration(mock_sb_client):
     mock_sb = MagicMock()
     mock_repo = MagicMock()
     mock_sb_client.return_value = mock_sb
-    
+
     with patch("src.server.repositories.base_repository.BaseRepository") as mock_base_repo_class:
         mock_base_repo_class.return_value = mock_repo
-        
+
         # Return a task created 48 hours ago
-        from datetime import datetime, UTC, timedelta
+        from datetime import UTC, datetime, timedelta
         old_time = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
-        
+
         call_count = 0
         def mock_exec(query, err):
             nonlocal call_count
@@ -81,16 +81,16 @@ async def test_task_dispatcher_expiration(mock_sb_client):
                 return True, {"data": []}
             raise Exception("Stop here")
         mock_repo.execute_query = mock_exec
-        
+
         with patch("src.server.services.system.telegram_service.TelegramService.send_message", new_callable=AsyncMock) as mock_send:
             try:
                 await run_task_dispatcher()
             except Exception:
-                pass 
-            
+                pass
+
             # Should NOT have called send_message
             mock_send.assert_not_called()
-            
+
             # Should have called update to 'errored'
             assert mock_sb.table.called
             tables_called = [call.args[0] for call in mock_sb.table.call_args_list]
