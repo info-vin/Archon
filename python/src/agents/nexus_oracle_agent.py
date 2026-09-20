@@ -115,10 +115,21 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             """
             Asynchronously queries all existing backend services for current system and operational metrics.
             """
+            from src.server.schemas.settings import OracleConfig
+            from src.server.services.blog_service import BlogService
+            from src.server.services.log_service import LogService
+            from src.server.services.settings_service import SettingsService
             from src.server.services.stats import stats_service
             from src.server.utils import get_supabase_client
 
             supabase = get_supabase_client()
+
+            # Load SSOT Settings
+            raw_settings = SettingsService().get_all_settings()
+            try:
+                config = OracleConfig.model_validate(raw_settings)
+            except Exception:
+                config = OracleConfig()
 
             async def run_query(query: Any) -> Any:
                 try:
@@ -127,19 +138,22 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                     logger.warning(f"NexusOracleAgent query failed: {e}")
                     return e
 
+            blog_service = BlogService(supabase)
+            log_service = LogService(supabase)
+
             # Execute gather tasks in parallel to avoid endpoint lag (Map-Reduce)
             results = await asyncio.gather(
                 stats_service.get_system_health_overview(),
                 stats_service.get_force_readiness(),
-                stats_service.get_detailed_ai_usage(days=30),
+                stats_service.get_detailed_ai_usage(days=config.oracle_telemetry_days),
                 stats_service.get_knowledge_roi(),
                 stats_service.get_sla_reliability(),
                 stats_service.get_collab_synergy(),
                 stats_service.get_business_risks(),
                 # Fetch pending approvals & changes directly from DB/service layers
-                run_query(supabase.table("archon_logs").select("*").eq("level", "ALERT").limit(10)),
-                run_query(supabase.table("agent_pending_approvals").select("*").eq("status", "pending")),
-                run_query(supabase.table("blog_posts").select("*").eq("status", "review")),
+                log_service.get_recent_alerts(limit=10),
+                run_query(supabase.table("agent_pending_approvals").select("id, request_type, status, created_at").eq("status", "pending")),
+                blog_service.get_pending_reviews_metadata(),
                 return_exceptions=True
             )
 
@@ -151,15 +165,16 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             sla = results[4] if not isinstance(results[4], Exception) else {}
             synergy = results[5] if not isinstance(results[5], Exception) else {}
             biz_risks = results[6] if not isinstance(results[6], Exception) else []
+
             alerts_res = results[7]
             approvals_res = results[8]
             blogs_res = results[9]
 
-            alerts = getattr(alerts_res, "data", []) if not isinstance(alerts_res, Exception) else []
+            alerts = alerts_res[1].get("data", []) if not isinstance(alerts_res, Exception) and isinstance(alerts_res, tuple) and alerts_res[0] else []
             approvals = getattr(approvals_res, "data", []) if not isinstance(approvals_res, Exception) else []
-            blogs = getattr(blogs_res, "data", []) if not isinstance(blogs_res, Exception) else []
+            blogs = blogs_res[1].get("data", []) if not isinstance(blogs_res, Exception) and isinstance(blogs_res, tuple) and blogs_res[0] else []
 
-            return {
+            raw_data = {
                 "system_telemetry": telemetry,
                 "team_readiness": readiness,
                 "ai_token_usage_30d": ai_usage,
@@ -171,6 +186,17 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                 "pending_approvals": approvals,
                 "pending_blogs": blogs
             }
+
+            def truncate_strings(obj: Any, limit: int) -> Any:
+                if isinstance(obj, str):
+                    return obj[:limit] + "...(truncated)" if len(obj) > limit else obj
+                elif isinstance(obj, dict):
+                    return {k: truncate_strings(v, limit) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [truncate_strings(item, limit) for item in obj]
+                return obj
+
+            return truncate_strings(raw_data, config.oracle_max_payload_length)
 
         return agent
 

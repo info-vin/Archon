@@ -166,6 +166,11 @@
     *   **504 Gateway Timeout 根除**: 由人類配合在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，解決 Task Dispatcher 全表掃描崩潰問題。
     *   **全域高併發公證**: 透過 708 項全數通過的單元測試，物理證實高併發檢索 `test_concurrent_rag_queries` 的非同步優化穩健運行。
 
+5.  **Oracle Payload Optimization (Ref: 09-20, Phase 5.11.21)**:
+    *   **架構升級 (SSOT/DRY)**: 解決 `NexusOracleAgent` 因懶惰查詢 (`select *`) 撈取萬字文章導致 429 Token 爆表。拔除 Agent 裸寫 SQL，將欄位投影 (`id, title, status`) 嚴格封裝至 `BlogService` 與 `LogService`。
+    *   **環境變數抽離**: 將時間窗與字元上限收斂至 `settings.py` (`OracleConfig`)，消除魔術數字。
+    *   **防禦性截斷**: 實裝 JSON 遞迴攔截，超過 `1000` 字元強制 `...(truncated)`。物理探針公證 Payload 體積縮減 97%。
+
 ### 2026年8月：SSOT 治理、排程防禦、MCP 安全鎖定與週期任務硬化
 八月份是提示詞與配置 SSOT 治理落地、排程防禦與 Docker 依賴硬化的月份。我們對 RAG 與報告模組進行了深度的 DRY 重構，解決了 Docker 環境下的 MCP 依賴缺失與 WAF 限流極限問題，並實作了防禦性的提示詞 Upsert 與測試門禁以確保系統零降級。
 
