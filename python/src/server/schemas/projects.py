@@ -100,6 +100,11 @@ class AgentOutputUpdateRequest(BaseModel):
     agent_id: str
 
 
+class AgentCallbackResponse(BaseModel):
+    task: dict[str, Any] | None = None
+    message: str | None = None
+
+
 class CreateDocumentRequest(BaseModel):
     document_type: str
     title: str
