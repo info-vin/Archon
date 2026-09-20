@@ -30,7 +30,7 @@ async def run_task_dispatcher() -> None:
         try:
             success, pending_res = repo.execute_query(
                 supabase.table("archon_tasks")
-                .select("id, description")
+                .select("id, description, created_at")
                 .eq("title", "[System] Pending Telegram Alert")
                 .eq("status", "todo"),
                 "Failed to fetch pending telegram tasks"
@@ -42,6 +42,23 @@ async def run_task_dispatcher() -> None:
                     for p_task in pending_tasks:
                         t_id = p_task["id"]
                         text = p_task["description"]
+                        created_at_str = p_task.get("created_at")
+
+                        # TTL Dead Letter Queue: Discard tasks older than 24 hours
+                        if created_at_str:
+                            try:
+                                # Ensure timezone aware parsing
+                                task_time = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                                if datetime.now(UTC) - task_time > timedelta(hours=24):
+                                    repo.execute_query(
+                                        supabase.table("archon_tasks").update({"status": "errored"}).eq("id", t_id),
+                                        f"Failed to cancel expired telegram task {t_id}"
+                                    )
+                                    logger.warning(f"🗑️ Clockwork: Telegram alert {t_id} expired (>24h). Discarded.")
+                                    continue
+                            except Exception as parse_ex:
+                                logger.error(f"Failed to parse created_at for task {t_id}: {parse_ex}")
+
                         is_sent = await telegram_service.send_message(text, is_retry=True)
                         if is_sent:
                             repo.execute_query(
