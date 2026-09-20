@@ -130,6 +130,9 @@
 *   **Telegram 關機盲區防禦 (持久化佇列)**:
     *   **實體真相**: 測量 09-19 日誌，發現 HF Spaces 排程時斷網長達 84 秒。舊版 `asyncio.sleep` (記憶體重試) 會因無 HTTP 流量引發容器休眠而永久遺失通知。
     *   **架構修復**: 修改 `telegram_service.py` 拔除 sleep，發送失敗時將通知包裝為 `[System] Pending Telegram Alert` 持久化至 `archon_tasks`。由 `task_dispatcher.py` 定期掃描，於機器喚醒且網路健康時自動補發。
+*   **HF 防火牆繞道 (Vercel 反向代理)**:
+    *   **實體真相**: 偵測確認 HF 官方防火牆直接 Drop 對 `api.telegram.org` 的請求，導致 `ConnectTimeout`。
+    *   **架構修復**: 不硬編碼，從 SSOT 讀取 `TELEGRAM_PROXY_URL`。透過已部署的 Vercel 前端 (`/api/telegram`) 進行 Serverless 轉發以繞過封鎖，且在未設定時無縫降級回原生直連，保障本地開發。
 *   **Lean 4 原生架構公證 (`Error 126`)**:
     *   **問題**: `make audit-qa` 漏看 `test-lean` 噴出的 `Bad CPU type in executable` 錯誤。主因為 `elan` 誤裝 `x86_64` (Intel) 版本。
     *   **修復**: 強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，Lean 4 證明子專案 18 項編譯成功。

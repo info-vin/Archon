@@ -80,6 +80,7 @@ class NetworkConfig(BaseModel):
 
 class NotificationConfig(BaseModel):
     telegram_token: str | None = Field(default=None, alias="TELEGRAM_TOKEN")
+    telegram_proxy_url: str | None = Field(default=None, alias="TELEGRAM_PROXY_URL")
     telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_TO")
     telegram_timeout: float = Field(default=30.0, alias="TELEGRAM_TIMEOUT")
     telegram_retries: int = Field(default=3, alias="TELEGRAM_RETRIES")
