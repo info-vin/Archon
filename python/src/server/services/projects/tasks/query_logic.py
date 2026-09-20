@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
 
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
+
 from ...shared_constants import DEFAULT_ASSIGNEE, TaskStatusEnum
 
 logger = get_logger(__name__)
@@ -198,7 +201,8 @@ async def get_all_project_task_counts_logic(task_service_instance: "TaskService"
         return False, cast(dict[str, dict[str, int]], error_data)
 
 
-async def get_task_logic(task_service_instance: "TaskService", task_id: str) -> tuple[bool, dict[str, Any]]:
+async def get_task_logic(
+    task_service_instance: "TaskService", task_id: str) -> tuple[bool, dict[str, Any]]:
     """
     Get a specific task by ID, including AI usage metrics.
     """

@@ -14,6 +14,9 @@ if TYPE_CHECKING:
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
 
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
+
 logger = get_logger(__name__)
 
 
@@ -27,7 +30,7 @@ def validate_status_logic(status: str, valid_statuses: list[str]) -> tuple[bool,
     return True, ""
 
 
-def validate_assignee_logic(assignee: str) -> tuple[bool, str]:
+def validate_assignee_logic(assignee: str | None) -> tuple[bool, str]:
     """Validate task assignee consistency"""
     if not assignee or not isinstance(assignee, str) or len(assignee.strip()) == 0:
         return False, "Assignee must be a non-empty string"
