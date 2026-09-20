@@ -21,9 +21,11 @@
 
 ### 2. `task_dispatcher.py` (健康狀態下的補發機制)
 *   **佇列消化 (Queue Flush)**：在 `task_dispatcher.py` 定期執行時 (每 3 分鐘)，新增一個輕量級的查詢，找出所有 `title = '[System] Pending Telegram Alert'` 且 `status = 'todo'` 的任務。
-*   **發送與核銷**：嘗試透過 `telegram_service.send_message` 發送。若發送成功，將該任務狀態更新為 `"done"`。若失敗則維持 `"todo"` 留待下次處理。
+*   **發送與核銷**：嘗試透過 `telegram_service.send_message` 發送。若發送成功，將該任務狀態更新為 `"done"`。
+*   **逾時超渡 (TTL/Dead Letter Queue)**：發送前檢查該任務的 `created_at`。若滯留在佇列超過 **24 小時**，直接將狀態更新為 `"errored"` 並捨棄，絕不進行無限重試，防範日誌轟炸 (Log Spam)。
 
 ## 🛡️ 邊界防禦與原則對齊 (Defensive Checks)
+*   **死信防禦 (Dead Letter Queue)**：徹底落實「全面影響分析原則」，預判永久性失敗 (如 4xx Token 失效) 會導致排程器陷入每 3 分鐘一次的無限重試迴圈。強制導入 24 小時 TTL 機制，超時即超渡，確保系統效能與 Log 儲存不被垃圾訊息淹沒。
 *   **避免無限遞迴**：當 `task_dispatcher` 嘗試發送 Pending 任務時，若再次遇到 Timeout，`telegram_service` 會察覺這是補發操作（可透過參數傳遞），避免再次將其重複寫入 `archon_tasks` 造成無限增生。
 *   **SSOT 遵循**：不新增任何資料表，完全複用現有的 `archon_tasks` 狀態機機制。
 
@@ -31,3 +33,4 @@
 *   新增 `tests/services/test_telegram_persistence.py`。
 *   **斷言 1 (Mock Blackout)**：模擬 `httpx` 拋出連線失敗，斷言系統確實將訊息寫入 `archon_tasks` 且狀態為 `todo`。
 *   **斷言 2 (Mock Recovery)**：模擬呼叫 `task_dispatcher` 且網路恢復，斷言訊息成功送出，且該任務狀態成功轉為 `done`。
+*   **斷言 3 (Mock Expiration)**：模擬一個 `created_at` 超過 24 小時的過期任務，斷言 `task_dispatcher` 會直接將其狀態更新為 `errored` 且**不會**呼叫 `send_message`。
