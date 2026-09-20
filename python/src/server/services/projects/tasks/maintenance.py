@@ -6,7 +6,10 @@ archiving, and maintenance tasks like pruning.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
 
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
@@ -31,7 +34,7 @@ def validate_assignee_logic(assignee: str) -> tuple[bool, str]:
     return True, ""
 
 
-async def notify_ai_agent_logic(task_id: str, agent_id: str):
+async def notify_ai_agent_logic(task_id: str, agent_id: str) -> None:
     """
     Triggers the agent service call in a non-blocking way.
     """
@@ -45,7 +48,7 @@ async def notify_ai_agent_logic(task_id: str, agent_id: str):
 
 
 async def archive_task_logic(
-    task_service_instance, task_id: str, archived_by: str = "mcp"
+    task_service_instance: "TaskService", task_id: str, archived_by: str = "mcp"
 ) -> tuple[bool, dict[str, Any]]:
     """
     Archive a task and all its subtasks (soft delete).
@@ -82,7 +85,7 @@ async def archive_task_logic(
         return False, {"error": str(e)}
 
 
-async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) -> tuple[bool, dict[str, Any]]:
+async def prune_archived_tasks_logic(task_service_instance: "TaskService", days_old: int = 30) -> tuple[bool, dict[str, Any]]:
     """
     Permanently delete archived tasks older than X days.
     """
@@ -121,7 +124,7 @@ async def prune_archived_tasks_logic(task_service_instance, days_old: int = 30) 
 
 
 async def update_task_status_from_agent_logic(
-    task_service_instance, task_id: str, new_status: str, agent_id: str
+    task_service_instance: "TaskService", task_id: str, new_status: str, agent_id: str
 ) -> tuple[bool, dict[str, Any]]:
     """
     Update a task's status from an agent with authority validation.
@@ -147,7 +150,7 @@ async def update_task_status_from_agent_logic(
 
 
 async def save_agent_output_logic(
-    task_service_instance, task_id: str, output: dict[str, Any], agent_id: str
+    task_service_instance: "TaskService", task_id: str, output: dict[str, Any], agent_id: str
 ) -> tuple[bool, dict[str, Any]]:
     """
     Save the output from an AI agent to the task's attachments.
