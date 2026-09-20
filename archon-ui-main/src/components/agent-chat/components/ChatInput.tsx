@@ -57,9 +57,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
         {/* Send button */}
         <button 
+          type="button"
           onClick={handleSend} 
           disabled={connectionStatus !== 'online' || isTyping || !inputValue.trim()} 
-          className="relative flex items-center justify-center p-2 rounded-md overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative flex items-center justify-center p-2 rounded-md overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           aria-label="Send message"
           title="Send message"
         >
