@@ -7,6 +7,9 @@ batch project task counting.
 
 from typing import TYPE_CHECKING, Any, cast
 
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
+
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
 

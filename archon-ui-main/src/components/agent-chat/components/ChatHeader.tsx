@@ -38,10 +38,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               Chat Offline
             </div>
             <button
+              type="button"
               onClick={onReconnect}
               disabled={isReconnecting}
               aria-label={isReconnecting ? 'Reconnecting to chat server' : 'Reconnect to chat server'}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 bg-blue-100/80 hover:bg-blue-200/80 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 bg-blue-100/80 hover:bg-blue-200/80 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 px-2 py-1 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               <RefreshCw className={`w-3 h-3 ${isReconnecting ? 'animate-spin' : ''}`} />
               {isReconnecting ? 'Connecting...' : 'Reconnect'}

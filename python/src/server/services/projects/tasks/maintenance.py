@@ -8,6 +8,9 @@ archiving, and maintenance tasks like pruning.
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Literal, cast
 
+if TYPE_CHECKING:
+    from src.server.services.projects.task_service import TaskService
+
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.agent_outputs import AgentOutputSchema
 
@@ -85,8 +88,7 @@ async def archive_task_logic(
         return False, {"error": str(e)}
 
 
-async def prune_archived_tasks_logic(
-    task_service_instance: "TaskService", days_old: int = 30) -> tuple[bool, dict[str, Any]]:
+async def prune_archived_tasks_logic(task_service_instance: "TaskService", days_old: int = 30) -> tuple[bool, dict[str, Any]]:
     """
     Permanently delete archived tasks older than X days.
     """

@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -213,3 +214,11 @@ class RagConfig(BaseModel):
 
 class ProjectConfig(BaseModel):
     default_business_project: str = Field(default="", alias="default_business_project")
+
+
+class DatabaseMetricsResponse(BaseModel):
+    status: str
+    database: str
+    tables: dict[str, Any]
+    total_records: int
+    timestamp: str

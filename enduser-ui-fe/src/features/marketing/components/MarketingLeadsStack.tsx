@@ -192,12 +192,12 @@ export const MarketingLeadsStack: React.FC<MarketingLeadsStackProps> = ({
             <table className="hidden md:table w-full text-sm text-left">
               <thead className="bg-gray-50 text-gray-500 font-medium">
                 <tr>
-                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('created_at')}>Date {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
-                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('company_name')}>Company {sortConfig?.key === 'company_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" onClick={() => requestSort('created_at')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); requestSort('created_at'); } }}>Date {sortConfig?.key === 'created_at' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" onClick={() => requestSort('company_name')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); requestSort('company_name'); } }}>Company {sortConfig?.key === 'company_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
                   <th className="px-6 py-3 w-1/4">Job Summary</th>
-                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('status')}>Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" onClick={() => requestSort('status')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); requestSort('status'); } }}>Status {sortConfig?.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
                   <th className="px-6 py-3">Source</th>
-                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100" onClick={() => requestSort('next_followup_date')}>Follow Up {sortConfig?.key === 'next_followup_date' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th className="px-6 py-3 cursor-pointer hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" onClick={() => requestSort('next_followup_date')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); requestSort('next_followup_date'); } }}>Follow Up {sortConfig?.key === 'next_followup_date' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
                   <th className="px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
