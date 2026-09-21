@@ -196,7 +196,8 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                     return [truncate_strings(item, limit) for item in obj]
                 return obj
 
-            return truncate_strings(raw_data, config.oracle_max_payload_length)
+            from typing import cast
+            return cast(dict, truncate_strings(raw_data, config.oracle_max_payload_length))
 
         return agent
 
