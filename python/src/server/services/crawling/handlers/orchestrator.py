@@ -19,7 +19,7 @@ class CrawlOrchestrator:
     def __init__(self, service: "CrawlingService") -> None:
         self.service = service
 
-    async def run(self, request: dict[str, Any], task_id: str):
+    async def run(self, request: dict[str, Any], task_id: str) -> None:
         """
         Async orchestration that runs in the main event loop.
         """
@@ -54,7 +54,7 @@ class CrawlOrchestrator:
             original_source_id = self.service.url_handler.generate_unique_source_id(url)
             source_display_name = self.service.url_handler.extract_display_name(url)
 
-            async def update_mapped_progress(stage: str, stage_progress: int, message: str, **kwargs):
+            async def update_mapped_progress(stage: str, stage_progress: int, message: str, **kwargs: Any) -> None:
                 overall_progress = self.service.progress_mapper.map_progress(stage, stage_progress)
                 await self.service._handle_progress_update(
                     task_id,
@@ -91,7 +91,7 @@ class CrawlOrchestrator:
             await update_mapped_progress("processing", 50, "Processing crawled content")
             self.service._check_cancellation()
 
-            async def doc_storage_callback(status: str, progress: int, message: str, **kwargs):
+            async def doc_storage_callback(status: str, progress: int, message: str, **kwargs: Any) -> None:
                 if self.service.progress_tracker:
                     mapped_progress = self.service.progress_mapper.map_progress("document_storage", progress)
                     await self.service.progress_tracker.update(
@@ -123,7 +123,7 @@ class CrawlOrchestrator:
                 self.service._check_cancellation()
                 await update_mapped_progress("code_extraction", 0, "Starting code extraction...")
 
-                async def code_progress_callback(data: dict):
+                async def code_progress_callback(data: dict[str, Any]) -> None:
                     if self.service.progress_tracker:
                         raw_progress = data.get("progress", data.get("percentage", 0))
                         mapped_progress = self.service.progress_mapper.map_progress("code_extraction", raw_progress)
