@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClockIcon, MapPinIcon } from './Icons';
+import { ClockIcon, MapPinIcon , RefreshCwIcon, LogInIcon, LogOutIcon} from './Icons';
 
 import { api } from '../services/api';
 
@@ -7,6 +7,11 @@ import { api } from '../services/api';
 const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
 
 export const ClockInWidget: React.FC = () => {
+  if (window.location.hash.includes('auth')) return <div className='p-8'><ClockInWidget_Internal /></div>;
+  return <ClockInWidget_Internal />;
+}
+
+const ClockInWidget_Internal: React.FC = () => {
     const [status, setStatus] = useState<'in' | 'out'>('out');
     const [lastTime, setLastTime] = useState<Date | null>(null);
     const [locationName, setLocationName] = useState<string>("Ready to Scan");
@@ -117,7 +122,7 @@ export const ClockInWidget: React.FC = () => {
                     : 'bg-gray-800 hover:bg-gray-900 shadow-gray-200'
                 }`}
             >
-                <ClockIcon className="w-5 h-5" />
+                {loading ? <RefreshCwIcon className="w-5 h-5 animate-spin" /> : <ClockIcon className="w-5 h-5" />}
                 {loading ? 'Syncing...' : (status === 'out' ? 'Clock In' : 'Clock Out')}
             </button>
         </div>
