@@ -48,3 +48,6 @@
 ## 2025-03-05 - Safe Circular Dependencies in Type Hints
 **Learning:** Adding accurate type hints across modular service implementations (like `query_logic.py` accessing `TaskService` which relies on `query_logic.py`) can cause `ImportError` runtime crashes. Using stringified forward references (e.g. `"TaskService"`) combined with `from typing import TYPE_CHECKING` and `if TYPE_CHECKING:` provides robust static typing benefits without introducing circular import issues at runtime.
 **Action:** When hinting dependent classes injected into a submodule, always place the import inside a `TYPE_CHECKING` block and use string literals for the type hint instead of direct object references.
+## 2026-09-21 - Stringified Forward References
+**Learning:** In Python type hinting, wrapping available runtime imports in string quotes (e.g., `'KnowledgeRepository | None'`) is an anti-pattern when the class is already imported and available at runtime.
+**Action:** Only use stringified forward references when the type is not available in the runtime namespace (e.g., guarded behind `if TYPE_CHECKING:` to avoid circular dependencies).
