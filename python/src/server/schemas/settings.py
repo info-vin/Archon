@@ -229,3 +229,29 @@ class DatabaseMetricsResponse(BaseModel):
     tables: dict[str, Any]
     total_records: int
     timestamp: str
+
+
+class UserPasswordResetResponse(BaseModel):
+    success: bool
+    message: str
+
+
+class CredentialDeleteResponse(BaseModel):
+    status: str
+    success: bool
+
+
+class CredentialUpdateResponse(BaseModel):
+    success: bool
+    message: str
+
+
+class CredentialsByCategoryResponse(BaseModel):
+    credentials: list[dict[str, Any]]
+
+
+class SingleCredentialResponse(BaseModel):
+    key: str
+    value: Any
+    is_encrypted: bool | None = False
+    category: str | None = None

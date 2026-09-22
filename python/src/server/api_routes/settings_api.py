@@ -12,9 +12,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.settings import (
     CredentialCreate,
+    CredentialDeleteResponse,
     CredentialResponse,
+    CredentialsByCategoryResponse,
     CredentialStatusRequest,
+    CredentialUpdateResponse,
     DatabaseMetricsResponse,
+    SingleCredentialResponse,
+    UserPasswordResetResponse,
     UserUpdateRequest,
 )
 from src.server.services.credential_service import credential_service
@@ -89,8 +94,10 @@ async def list_credentials(category: str | None = None, current_user: UserProfil
     return all_creds
 
 
-@router.post("/users/{user_id}/reset-password")
-async def reset_user_password(user_id: str, current_user: dict = Depends(requires_permission(USER_MANAGE))):
+@router.post("/users/{user_id}/reset-password", response_model=UserPasswordResetResponse)
+async def reset_user_password(
+    user_id: str, current_user: dict = Depends(requires_permission(USER_MANAGE))
+) -> UserPasswordResetResponse:
     """Reset user password to default (Admin only)."""
     # DX-001 Standard Password
     DEFAULT_PW = "qwer45tyuiop"
@@ -98,23 +105,27 @@ async def reset_user_password(user_id: str, current_user: dict = Depends(require
 
     try:
         get_supabase_client().auth.admin.update_user_by_id(user_id, {"password": DEFAULT_PW})
-        return {"success": True, "message": "Password reset to default successfully"}
+        return UserPasswordResetResponse(success=True, message="Password reset to default successfully")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/credentials/categories/{category}")
-async def get_credentials_by_category(category: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/credentials/categories/{category}", response_model=CredentialsByCategoryResponse)
+async def get_credentials_by_category(
+    category: str, current_user: UserProfileDTO = Depends(get_current_user)
+) -> CredentialsByCategoryResponse:
     """
     Get all credentials for a specific category.
     Frontend compatibility endpoint.
     """
     credentials = await credential_service.get_credentials_by_category(category)
-    return {"credentials": credentials}
+    return CredentialsByCategoryResponse(credentials=credentials)
 
 
-@router.get("/credentials/{key}")
-async def get_credential(key: str, current_user: dict | None = Depends(get_current_user_optional)):
+@router.get("/credentials/{key}", response_model=SingleCredentialResponse)
+async def get_credential(
+    key: str, current_user: dict | None = Depends(get_current_user_optional)
+) -> SingleCredentialResponse:
     """
     Fetch a specific credential.
     Public UI settings can be fetched without authentication.
@@ -129,14 +140,14 @@ async def get_credential(key: str, current_user: dict | None = Depends(get_curre
     val = await credential_service.get_credential(key)
     if val is None:
         if key in OPTIONAL_SETTINGS_WITH_DEFAULTS:
-            return {
-                "key": key,
-                "value": OPTIONAL_SETTINGS_WITH_DEFAULTS[key],
-                "is_encrypted": False,
-                "category": "features",
-            }
+            return SingleCredentialResponse(
+                key=key,
+                value=OPTIONAL_SETTINGS_WITH_DEFAULTS[key],
+                is_encrypted=False,
+                category="features",
+            )
         raise HTTPException(status_code=404, detail={"error": "Credential not found"})
-    return {"key": key, "value": val}
+    return SingleCredentialResponse(key=key, value=val)
 
 
 @router.post("/credentials", response_model=CredentialResponse)
@@ -159,10 +170,10 @@ async def create_credential(req: CredentialCreate, current_user: dict = Depends(
     }
 
 
-@router.put("/credentials/{key}")
+@router.put("/credentials/{key}", response_model=CredentialUpdateResponse)
 async def update_credential(
     key: str, req: dict[str, Any], current_user: dict = Depends(requires_permission(USER_MANAGE))
-):
+) -> CredentialUpdateResponse:
     """Update an existing credential. Frontend compatibility."""
     value = req.get("value", "")
     is_encrypted = req.get("is_encrypted", False)
@@ -174,16 +185,18 @@ async def update_credential(
     if not success:
         raise HTTPException(status_code=500, detail="Failed to update credential")
 
-    return {"success": True, "message": f"Credential {key} updated successfully"}
+    return CredentialUpdateResponse(success=True, message=f"Credential {key} updated successfully")
 
 
-@router.delete("/credentials/{key}")
-async def delete_credential(key: str, current_user: dict = Depends(requires_permission(USER_MANAGE))):
+@router.delete("/credentials/{key}", response_model=CredentialDeleteResponse)
+async def delete_credential(
+    key: str, current_user: dict = Depends(requires_permission(USER_MANAGE))
+) -> CredentialDeleteResponse:
     """Deletes a credential. Admin only."""
     success = await credential_service.delete_credential(key)
     if not success:
         raise HTTPException(status_code=404, detail="Credential not found")
-    return {"status": "deleted", "success": True}
+    return CredentialDeleteResponse(status="deleted", success=True)
 
 
 @router.get("/users")
