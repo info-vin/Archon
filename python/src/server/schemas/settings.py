@@ -247,7 +247,7 @@ class CredentialUpdateResponse(BaseModel):
 
 
 class CredentialsByCategoryResponse(BaseModel):
-    credentials: list[dict[str, Any]]
+    credentials: dict[str, Any]
 
 
 class SingleCredentialResponse(BaseModel):
