@@ -1,5 +1,7 @@
 import uuid
 
+import supabase
+
 from ...config.logfire_config import get_logger
 from ...repositories.knowledge_repository import KnowledgeRepository
 from ...services.embeddings.embedding_service import create_embedding
@@ -12,7 +14,7 @@ logger = get_logger(__name__)
 
 
 class WebArchiver:
-    def __init__(self, supabase=None, repo=None, file_archiver=None) -> None:
+    def __init__(self, supabase: supabase.Client | None = None, repo: KnowledgeRepository | None = None, file_archiver: FileArchiver | None = None) -> None:
         self.supabase = supabase or get_supabase_client()
         self.repo = repo or KnowledgeRepository(self.supabase)
         self.file_archiver = file_archiver or FileArchiver(self.supabase, self.repo)
@@ -47,7 +49,7 @@ class WebArchiver:
                 # We limit to first 5 links to avoid runaway costs/load
                 target_links = links[:5]
 
-                async def process_link(link: str):
+                async def process_link(link: str) -> str | None:
                     if not link.endswith(".xml"):
                         return await self.archive_any_url(
                             link, user_role=user_role, depth=depth + 1, max_depth=max_depth
