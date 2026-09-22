@@ -115,23 +115,38 @@ export const KnowledgeView = () => {
     setIsAddDialogOpen(true);
   };
 
-  const handleViewDocument = useCallback((sourceId: string) => {
-    // Find the item and open inspector to documents tab
-    const item = knowledgeItems.find((k) => k.source_id === sourceId);
-    if (item) {
-      setInspectorInitialTab("documents");
-      setInspectorItem(item);
-    }
+  // PERFORMANCE: Precalculate map for O(1) item lookups to prevent O(N) Array.find() on document/code view
+  const knowledgeItemsMap = useMemo(() => {
+    const map = new Map<string, KnowledgeItem>();
+    knowledgeItems.forEach((item) => {
+      map.set(item.source_id, item);
+    });
+    return map;
   }, [knowledgeItems]);
 
-  const handleViewCodeExamples = useCallback((sourceId: string) => {
-    // Open the inspector to code examples tab
-    const item = knowledgeItems.find((k) => k.source_id === sourceId);
-    if (item) {
-      setInspectorInitialTab("code");
-      setInspectorItem(item);
-    }
-  }, [knowledgeItems]);
+  const handleViewDocument = useCallback(
+    (sourceId: string) => {
+      // Find the item and open inspector to documents tab
+      const item = knowledgeItemsMap.get(sourceId);
+      if (item) {
+        setInspectorInitialTab("documents");
+        setInspectorItem(item);
+      }
+    },
+    [knowledgeItemsMap],
+  );
+
+  const handleViewCodeExamples = useCallback(
+    (sourceId: string) => {
+      // Open the inspector to code examples tab
+      const item = knowledgeItemsMap.get(sourceId);
+      if (item) {
+        setInspectorInitialTab("code");
+        setInspectorItem(item);
+      }
+    },
+    [knowledgeItemsMap],
+  );
 
   const handleDeleteSuccess = useCallback(() => {
     // TanStack Query will automatically refetch
