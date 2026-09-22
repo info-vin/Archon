@@ -321,8 +321,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
           <div className="flex justify-between items-center pt-4 mt-6 border-t border-border flex-shrink-0">
             <div>
               {canArchive && (
-                <button 
-                  type="button" 
+                <button type="button"
+
                   onClick={handleDelete} 
                   disabled={isSubmitting}
                   aria-disabled={isSubmitting}

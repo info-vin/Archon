@@ -106,7 +106,7 @@ export const ClockInWidget: React.FC = () => {
                 </div>
             </div>
 
-            <button 
+            <button type="button"
                 onClick={toggleClock}
                 disabled={loading}
                 aria-disabled={loading}
