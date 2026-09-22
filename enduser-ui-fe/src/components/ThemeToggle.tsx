@@ -25,7 +25,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
     const buttonClasses = className ?? "p-2 rounded-md hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
     return (
-        <button
+        <button type="button"
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={buttonClasses}
             aria-label={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
