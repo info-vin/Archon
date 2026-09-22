@@ -50,8 +50,7 @@ class ProjectCreationService(BaseRepository):
             "title": title,
             "description": description,
             "github_repo": github_repo,
-            "status": "planning",
-            "docs": {},
+            "docs": [],
             "features": [],
             "data": {},
         }
