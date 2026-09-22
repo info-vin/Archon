@@ -8,10 +8,10 @@ from src.server.config.logfire_config import search_logger
 class ProgressTracker:
     """Manages progress reporting and SSE communication for storage operations."""
 
-    def __init__(self, progress_callback: Callable | None = None) -> None:
+    def __init__(self, progress_callback: Callable[..., Any] | None = None) -> None:
         self.progress_callback = progress_callback
 
-    async def report_progress(self, message: str, progress: int, batch_info: dict[str, Any] | None = None):
+    async def report_progress(self, message: str, progress: int, batch_info: dict[str, Any] | None = None) -> None:
         if self.progress_callback and asyncio.iscoroutinefunction(self.progress_callback):
             try:
                 if batch_info:
@@ -21,7 +21,7 @@ class ProgressTracker:
             except Exception as e:
                 search_logger.warning(f"Progress callback failed: {e}. Storage continuing...")
 
-    async def embedding_progress_wrapper(self, message: str, percentage: float, current_progress: int, batch_num: int):
+    async def embedding_progress_wrapper(self, message: str, percentage: float, current_progress: int, batch_num: int) -> None:
         # Forward rate limiting messages to the main progress callback
         if self.progress_callback and "rate limit" in message.lower():
             try:
@@ -35,7 +35,7 @@ class ProgressTracker:
             except Exception as e:
                 search_logger.warning(f"Progress callback failed during rate limiting: {e}")
 
-    async def report_final_progress(self, total_contents: int, total_batches: int):
+    async def report_final_progress(self, total_contents: int, total_batches: int) -> None:
         if self.progress_callback and asyncio.iscoroutinefunction(self.progress_callback):
             try:
                 await self.progress_callback(

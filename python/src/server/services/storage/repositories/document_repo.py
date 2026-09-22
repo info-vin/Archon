@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Callable
 from typing import Any
 
 from src.server.config.logfire_config import search_logger
@@ -13,8 +14,8 @@ class DocumentRepository(BaseRepository):
         self.client = self.supabase_client
 
     async def delete_existing_urls_in_batches(
-        self, urls: list[str], delete_batch_size: int = 50, cancellation_check=None
-    ):
+        self, urls: list[str], delete_batch_size: int = 50, cancellation_check: Callable[[], None] | None = None
+    ) -> None:
         unique_urls = list(set(urls))
         if not unique_urls:
             return
@@ -34,7 +35,7 @@ class DocumentRepository(BaseRepository):
             search_logger.warning(f"Batch delete failed: {e}. Trying smaller batches as fallback.")
             self._delete_urls_fallback(unique_urls, max(10, delete_batch_size // 5), cancellation_check)
 
-    def _delete_urls_fallback(self, unique_urls: list[str], fallback_batch_size: int, cancellation_check):
+    def _delete_urls_fallback(self, unique_urls: list[str], fallback_batch_size: int, cancellation_check: Callable[[], None] | None = None) -> None:
         failed_urls = []
         for i in range(0, len(unique_urls), fallback_batch_size):
             if cancellation_check:
