@@ -263,3 +263,6 @@
 ## 2024-05-15 - [O(1) Map Lookup for ComboBox Options]
 **Learning:** Extracting `Array.find()` into a pre-computed O(1) Map inside a `useMemo` block in the `ComboBox` component avoids O(N) array scans during frequent re-renders and keystrokes, improving responsiveness when dealing with large option sets.
 **Action:** Always consider converting static or slow-changing arrays into O(1) Maps when frequent lookups occur during rendering cycles or user interactions, especially in foundational UI primitives like `ComboBox`.
+## 2024-05-16 - Replacing Array.find() with Map O(1) inside heavily used views
+**Learning:** Using `Array.find()` inside `useCallback` handlers for list views (`KnowledgeView.tsx`) creates an unnecessary O(N) penalty whenever the interaction occurs. Extracting the list into a memoized `Map` object ensures O(1) performance for these handlers.
+**Action:** When a parent component manages a large collection and passes handlers to child list items, wrap the collection in a `useMemo` backed `Map` to optimize lookup speed and maintain stable hook dependencies.
