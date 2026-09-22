@@ -15,6 +15,7 @@ from src.server.schemas.settings import (
     CredentialDeleteResponse,
     CredentialResponse,
     CredentialsByCategoryResponse,
+    CredentialStatusItem,
     CredentialStatusRequest,
     CredentialUpdateResponse,
     DatabaseMetricsResponse,
@@ -70,28 +71,42 @@ async def database_metrics(current_user: UserProfileDTO = Depends(get_current_us
         raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
-@router.post("/credentials/status-check")
+@router.post("/credentials/status-check", response_model=dict[str, CredentialStatusItem])
 async def check_credentials_status(
     req: CredentialStatusRequest | None = None, current_user: UserProfileDTO = Depends(get_current_user)
-):
+) -> dict[str, CredentialStatusItem]:
     """
     Checks if configured AI keys or specific requested keys exist.
     """
     if req and req.keys:
-        return await credential_service.check_credentials_exist(req.keys)
+        res = await credential_service.check_credentials_exist(req.keys)
+    else:
+        # Default behavior for general status check
+        target_keys = ["GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+        res = await credential_service.check_credentials_exist(target_keys)
 
-    # Default behavior for general status check
-    target_keys = ["GOOGLE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"] # 合法
-    return await credential_service.check_credentials_exist(target_keys)
+    return {k: CredentialStatusItem(key=v.get("key", k), has_value=v.get("has_value", False)) for k, v in res.items()}
 
 
-@router.get("/credentials")
-async def list_credentials(category: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/credentials", response_model=list[CredentialResponse])
+async def list_credentials(
+    category: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)
+) -> list[CredentialResponse]:
     """Lists all credentials or filters by category. Restricted to Admin."""
     all_creds = await credential_service.list_all_credentials()
     if category:
-        return [c for c in all_creds if getattr(c, "category", "") == category]
-    return all_creds
+        all_creds = [c for c in all_creds if getattr(c, "category", "") == category]
+    return [
+        CredentialResponse(
+            key=c.key,
+            value=c.value,
+            encrypted_value=c.encrypted_value,
+            is_encrypted=c.is_encrypted,
+            category=c.category,
+            description=c.description,
+        )
+        for c in all_creds
+    ]
 
 
 @router.post("/users/{user_id}/reset-password", response_model=UserPasswordResetResponse)
@@ -199,30 +214,42 @@ async def delete_credential(
     return CredentialDeleteResponse(status="deleted", success=True)
 
 
-@router.get("/users")
-async def list_users(current_user: dict = Depends(requires_permission(USER_MANAGE))):
+@router.get("/users", response_model=list[UserProfileDTO])
+async def list_users(current_user: dict = Depends(requires_permission(USER_MANAGE))) -> list[UserProfileDTO]:
     """Lists all system users. Admin only."""
     ok, users = ProfileService().list_all_users()
     if not ok:
         raise HTTPException(status_code=500, detail="Failed to list users")
-    return users
+    if isinstance(users, list):
+        return users
+    raise HTTPException(status_code=500, detail=str(users))
 
 
-@router.put("/users/me")
-async def update_own_profile(req: UserUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.put("/users/me", response_model=UserProfileDTO)
+async def update_own_profile(
+    req: UserUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> UserProfileDTO:
     """Users can update their own metadata (avatar, name)."""
     ok, res = ProfileService().update_profile(str(current_user.id), req.model_dump(exclude_unset=True))
     if not ok:
         raise HTTPException(status_code=400, detail=str(res))
-    return res
+    if isinstance(res, UserProfileDTO):
+        return res
+    if isinstance(res, dict):
+        return UserProfileDTO(**res)
+    raise HTTPException(status_code=400, detail=str(res))
 
 
-@router.put("/users/{user_id}")
+@router.put("/users/{user_id}", response_model=UserProfileDTO)
 async def update_user_role(
     user_id: str, req: UserUpdateRequest, current_user: dict = Depends(requires_permission(USER_MANAGE))
-):
+) -> UserProfileDTO:
     """Admins update user roles or departments."""
     ok, res = ProfileService().update_profile(user_id, req.model_dump(exclude_unset=True))
     if not ok:
         raise HTTPException(status_code=400, detail=str(res))
-    return res
+    if isinstance(res, UserProfileDTO):
+        return res
+    if isinstance(res, dict):
+        return UserProfileDTO(**res)
+    raise HTTPException(status_code=400, detail=str(res))
