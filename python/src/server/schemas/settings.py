@@ -22,6 +22,11 @@ class CredentialResponse(BaseModel):
     updated_at: str | None = None
 
 
+class CredentialStatusItem(BaseModel):
+    key: str
+    has_value: bool
+
+
 class CredentialStatusResponse(BaseModel):
     provider: str
     status: str
