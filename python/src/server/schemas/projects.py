@@ -5,7 +5,7 @@ Project Schemas for API Requests and Responses
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.server.services.shared_constants import DEFAULT_ASSIGNEE
 
@@ -60,6 +60,10 @@ class CreateTaskRequest(BaseModel):
 class RefineTaskRequest(BaseModel):
     title: str
     description: str
+
+
+class RefineTaskResponse(BaseModel):
+    refined_description: str = Field(..., description="The AI-refined task description")
 
 
 class GenerateTaskFromAlertRequest(BaseModel):
