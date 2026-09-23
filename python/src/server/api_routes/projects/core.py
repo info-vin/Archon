@@ -103,7 +103,7 @@ async def create_project(req: CreateProjectRequest, current_user: UserProfileDTO
     project_data = req.model_dump()
     project_data["department"] = current_user.department
 
-    s, res = await ProjectCreationService().create_project_with_ai(progress_id="direct", **project_data)
+    s, res = await ProjectCreationService().create_project_with_ai(progress_id="direct", project_data=req, department=current_user.department)
     if s and isinstance(res, dict):
         return {
             "project_id": res.get("project_id"),

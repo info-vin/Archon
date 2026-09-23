@@ -9,6 +9,7 @@ AI-assisted documentation generation and progress tracking.
 from typing import Any
 
 from src.server.repositories.base_repository import BaseRepository
+from src.server.schemas.projects import CreateProjectRequest
 
 from ...config.logfire_config import get_logger
 
@@ -25,37 +26,39 @@ class ProjectCreationService(BaseRepository):
     async def create_project_with_ai(
         self,
         progress_id: str,
-        title: str,
-        description: str | None = None,
-        github_repo: str | None = None,
-        **kwargs,
+        project_data: CreateProjectRequest,
+        department: str | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Create a project with AI-assisted documentation generation.
 
         Args:
             progress_id: Progress tracking identifier
-            title: Project title
-            description: Project description
-            github_repo: GitHub repository URL
-            **kwargs: Additional project data
+            project_data: DTO containing project information
+            department: Department associated with the project
 
         Returns:
             Tuple of (success, result_dict)
         """
         logger.info(
-            f"🏗️ [PROJECT-CREATION] Starting create_project_with_ai for progress_id: {progress_id}, title: {title}"
+            f"🏗️ [PROJECT-CREATION] Starting create_project_with_ai for progress_id: {progress_id}, title: {project_data.title}"
         )
-        project_data: dict[str, Any] = {
-            "title": title,
-            "description": description,
-            "github_repo": github_repo,
-            "docs": [],
-            "features": [],
-            "data": {},
-        }
+        db_project_data: dict[str, Any] = project_data.model_dump(exclude_unset=True)
+        db_project_data["department"] = department
+        if "docs" not in db_project_data or db_project_data["docs"] is None:
+            db_project_data["docs"] = []
+        if "features" not in db_project_data or db_project_data["features"] is None:
+            db_project_data["features"] = []
+        if "data" not in db_project_data or db_project_data["data"] is None:
+            db_project_data["data"] = {}
+        if "technical_sources" not in db_project_data or db_project_data["technical_sources"] is None:
+            db_project_data["technical_sources"] = []
+        if "business_sources" not in db_project_data or db_project_data["business_sources"] is None:
+            db_project_data["business_sources"] = []
+        if "pinned" not in db_project_data or db_project_data["pinned"] is None:
+            db_project_data["pinned"] = False
 
-        query = self.supabase_client.table("archon_projects").insert(project_data) # 合法
+        query = self.supabase_client.table("archon_projects").insert(db_project_data) # 合法
         success, result = self.execute_query(query_func=query, error_context="DB operation logged error")
         if success:
             # TODO: Extract properties via 'result["data"]' as per original logic
@@ -103,7 +106,7 @@ class ProjectCreationService(BaseRepository):
                 prd_request += f" (GitHub repo: {github_repo})"
 
             # Create a progress callback for the document agent
-            async def agent_progress_callback(update_data) -> Any:
+            async def agent_progress_callback(update_data: dict[str, Any]) -> Any:
                 pass  # Progress tracking removed
 
             # Run the document agent to create PRD
