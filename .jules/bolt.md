@@ -266,3 +266,7 @@
 ## 2024-05-16 - Replacing Array.find() with Map O(1) inside heavily used views
 **Learning:** Using `Array.find()` inside `useCallback` handlers for list views (`KnowledgeView.tsx`) creates an unnecessary O(N) penalty whenever the interaction occurs. Extracting the list into a memoized `Map` object ensures O(1) performance for these handlers.
 **Action:** When a parent component manages a large collection and passes handlers to child list items, wrap the collection in a `useMemo` backed `Map` to optimize lookup speed and maintain stable hook dependencies.
+
+## 2025-05-18 - Replacing inline toLocaleDateString() with hoisted Intl.DateTimeFormat
+**Learning:** Calling `new Date().toLocaleDateString()` inside an array `.map()` render loop creates a new `Intl.DateTimeFormat` instance behind the scenes for every mapped item on every render cycle, causing massive garbage collection pressure and rendering bottlenecks for long lists.
+**Action:** Always hoist `Intl.DateTimeFormat` outside of the component or array loop to instantiate it only once upon module load, and use `.format()` inside the render function.

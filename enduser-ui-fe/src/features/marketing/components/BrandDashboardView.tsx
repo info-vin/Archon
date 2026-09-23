@@ -26,6 +26,9 @@ interface BrandDashboardViewProps {
 // ⚡ Bolt Optimization:
 // Wrapped KanbanColumn in React.memo to prevent unnecessary re-renders in the list views.
 // This reduces CPU overhead by preventing re-rendering of the entire column when parent state updates but the column's posts haven't changed.
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
+const dateFormatter = new Intl.DateTimeFormat();
+
 const KanbanColumn: React.FC<{
     title: string;
     columnPosts: BlogPost[];
@@ -50,7 +53,7 @@ const KanbanColumn: React.FC<{
                             <p className="text-xs text-gray-500 line-clamp-2 mb-3 h-8">{post.excerpt}</p>
                             <div className="flex items-center justify-between mt-4">
                                 <span className="text-[10px] text-gray-400 font-mono">
-                                    {new Date(post.publishDate).toLocaleDateString()}
+                                    {isNaN(new Date(post.publishDate).getTime()) ? "Invalid Date" : dateFormatter.format(new Date(post.publishDate))}
                                 </span>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                     <button onClick={() => onEditSmart(post)} className="p-1 hover:bg-gray-100 rounded text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" title="Edit Content" aria-label="Edit Content"><FileEditIcon className="w-4 h-4" aria-hidden="true" /></button>
