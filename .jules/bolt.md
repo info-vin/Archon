@@ -260,3 +260,13 @@
 ## 2026-09-16 - Memoizing callback props to maintain list virtualization performance
 **Learning:** When passing locally defined functions (like `handleViewDocument`) down to list item components that are rendered dynamically (e.g. inside `KnowledgeList`), creating a new function reference on every parent render destroys any potential for React's shallow comparison (like in `React.memo`) to optimize rendering. This forces O(N) re-renders of list item subtrees even when their explicit props haven't conceptually changed.
 **Action:** Always wrap functions passed to list items in `React.useCallback`, ensuring correct dependencies, to preserve the stable function identity required for child rendering optimizations. To prevent `react-hooks/exhaustive-deps` warnings and unnecessary re-renders when using fallback arrays (e.g., `data?.items || []`) as dependencies in `useCallback`, wrap the array initialization in `React.useMemo(() => data?.items || [], [data?.items])` to maintain a stable reference across renders instead of generating a new empty array literal.
+## 2024-05-15 - [O(1) Map Lookup for ComboBox Options]
+**Learning:** Extracting `Array.find()` into a pre-computed O(1) Map inside a `useMemo` block in the `ComboBox` component avoids O(N) array scans during frequent re-renders and keystrokes, improving responsiveness when dealing with large option sets.
+**Action:** Always consider converting static or slow-changing arrays into O(1) Maps when frequent lookups occur during rendering cycles or user interactions, especially in foundational UI primitives like `ComboBox`.
+## 2024-05-16 - Replacing Array.find() with Map O(1) inside heavily used views
+**Learning:** Using `Array.find()` inside `useCallback` handlers for list views (`KnowledgeView.tsx`) creates an unnecessary O(N) penalty whenever the interaction occurs. Extracting the list into a memoized `Map` object ensures O(1) performance for these handlers.
+**Action:** When a parent component manages a large collection and passes handlers to child list items, wrap the collection in a `useMemo` backed `Map` to optimize lookup speed and maintain stable hook dependencies.
+
+## 2025-05-18 - Replacing inline toLocaleDateString() with hoisted Intl.DateTimeFormat
+**Learning:** Calling `new Date().toLocaleDateString()` inside an array `.map()` render loop creates a new `Intl.DateTimeFormat` instance behind the scenes for every mapped item on every render cycle, causing massive garbage collection pressure and rendering bottlenecks for long lists.
+**Action:** Always hoist `Intl.DateTimeFormat` outside of the component or array loop to instantiate it only once upon module load, and use `.format()` inside the render function.

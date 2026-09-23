@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.projects import (
+    AgentCallbackResponse,
     AgentOutputUpdateRequest,
     AgentStatusUpdateRequest,
     CreateTaskRequest,
@@ -209,19 +210,19 @@ async def delete_task(task_id: str, current_user: UserProfileDTO = Depends(get_c
     return {"message": "Task archived successfully"}
 
 
-@router.post("/tasks/{task_id}/agent-status", tags=["Agent Callback"])
-async def report_task_status_from_agent(task_id: str, req: AgentStatusUpdateRequest):
+@router.post("/tasks/{task_id}/agent-status", response_model=AgentCallbackResponse, tags=["Agent Callback"])
+async def report_task_status_from_agent(task_id: str, req: AgentStatusUpdateRequest) -> AgentCallbackResponse:
     s, res = await TaskService().update_task_status_from_agent(
         task_id=task_id, new_status=req.status, agent_id=req.agent_id
     )
     if not s:
         _err(res, 400)
-    return res
+    return AgentCallbackResponse(**res)
 
 
-@router.post("/tasks/{task_id}/agent-output", tags=["Agent Callback"])
-async def report_task_output_from_agent(task_id: str, req: AgentOutputUpdateRequest):
+@router.post("/tasks/{task_id}/agent-output", response_model=AgentCallbackResponse, tags=["Agent Callback"])
+async def report_task_output_from_agent(task_id: str, req: AgentOutputUpdateRequest) -> AgentCallbackResponse:
     s, res = await TaskService().save_agent_output(task_id=task_id, output=req.output, agent_id=req.agent_id)
     if not s:
         _err(res, 400)
-    return res
+    return AgentCallbackResponse(**res)

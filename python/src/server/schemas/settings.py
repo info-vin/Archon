@@ -22,6 +22,11 @@ class CredentialResponse(BaseModel):
     updated_at: str | None = None
 
 
+class CredentialStatusItem(BaseModel):
+    key: str
+    has_value: bool
+
+
 class CredentialStatusResponse(BaseModel):
     provider: str
     status: str
@@ -229,3 +234,29 @@ class DatabaseMetricsResponse(BaseModel):
     tables: dict[str, Any]
     total_records: int
     timestamp: str
+
+
+class UserPasswordResetResponse(BaseModel):
+    success: bool
+    message: str
+
+
+class CredentialDeleteResponse(BaseModel):
+    status: str
+    success: bool
+
+
+class CredentialUpdateResponse(BaseModel):
+    success: bool
+    message: str
+
+
+class CredentialsByCategoryResponse(BaseModel):
+    credentials: dict[str, Any]
+
+
+class SingleCredentialResponse(BaseModel):
+    key: str
+    value: Any
+    is_encrypted: bool | None = False
+    category: str | None = None

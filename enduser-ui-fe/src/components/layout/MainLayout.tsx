@@ -177,7 +177,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                            </div>
                        )}
                    </Link>
-                   <button onClick={logout} title={isCollapsed ? "Logout" : undefined} className={`w-full flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px]' : 'items-center justify-center p-2'} rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}>
+                   <button type="button" onClick={logout} title={isCollapsed ? "Logout" : undefined} className={`w-full flex ${isCollapsed ? 'flex-col items-center justify-center p-2 text-[10px]' : 'items-center justify-center p-2'} rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}>
                        <LogOutIcon className={`w-5 h-5 ${isCollapsed ? 'mb-1' : 'mr-2'}`} />
                        <span className={`${isCollapsed ? 'leading-tight' : 'truncate'}`}>Logout</span>
                    </button>
@@ -233,7 +233,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </Link>
                 )}
 
-                <button 
+                <button type="button"
                     onClick={() => setIsSidebarOpen(true)}
                     className={`flex flex-col items-center justify-center p-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSidebarOpen ? 'text-primary' : 'text-muted-foreground'}`}
                     aria-label="Toggle navigation menu"

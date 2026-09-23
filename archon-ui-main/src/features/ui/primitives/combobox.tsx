@@ -76,9 +76,17 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
     const optionsRef = React.useRef<HTMLDivElement>(null);
     const listboxId = React.useId();
 
+
     // PERFORMANCE: Precalculate lowercased values to prevent O(N) string allocations during search filtering
     const searchableLabels = React.useMemo(() => options.map((opt) => opt.label.toLowerCase()), [options]);
     const searchableValues = React.useMemo(() => options.map((opt) => opt.value.toLowerCase()), [options]);
+
+    // PERFORMANCE: Precalculate map for O(1) selected option lookups instead of O(N) Array.find() on render
+    const optionsMap = React.useMemo(() => {
+      const map = new Map<string, ComboBoxOption>();
+      options.forEach(opt => map.set(opt.value, opt));
+      return map;
+    }, [options]);
 
     // Memoized filtered options
     const filteredOptions = React.useMemo(() => {
@@ -91,7 +99,7 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
     }, [options, search, searchableLabels, searchableValues]);
 
     // Derived state
-    const selectedOption = React.useMemo(() => options.find((opt) => opt.value === value), [options, value]);
+    const selectedOption = React.useMemo(() => value !== undefined ? optionsMap.get(value) : undefined, [optionsMap, value]);
     const displayValue = selectedOption?.label || value || "";
 
     // PERFORMANCE: Extract .toLowerCase() outside loop to prevent O(N) redundant string allocations
