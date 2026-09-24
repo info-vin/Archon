@@ -2,6 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Target, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleTimeString) inside the render loop.
+// eslint-disable-next-line no-restricted-syntax
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+
 export interface CoverageMetrics {
   lines: { pct: number; covered: number; total: number };
   statements: { pct: number; covered: number; total: number };
@@ -267,10 +271,14 @@ export const CoverageVisualization: React.FC<CoverageVisualizationProps> = ({
           </h3>
         </div>
         {coverage.timestamp && (
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            {/* eslint-disable-next-line no-restricted-syntax */}
-            Updated {new Date(coverage.timestamp).toLocaleTimeString()}
-          </div>
+          (() => {
+            const timestampDate = new Date(coverage.timestamp);
+            return (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Updated {isNaN(timestampDate.getTime()) ? 'Invalid Date' : timeFormatter.format(timestampDate)}
+              </div>
+            );
+          })()
         )}
       </div>
 
