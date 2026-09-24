@@ -1,7 +1,7 @@
 # python/src/server/api_routes/test_api.py
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, Field
 from supabase import Client  # Needed for type hinting for get_supabase_client
 
 # This router should only be included if the environment allows it.
@@ -9,6 +9,22 @@ from supabase import Client  # Needed for type hinting for get_supabase_client
 from src.server.services.settings_service import SettingsService
 
 from ..services.client_manager import get_supabase_client  # Found this definition
+
+
+class ResetDatabaseResponse(BaseModel):
+    message: str = Field(description="Status message")
+
+
+class TriggerAgentTaskRequest(BaseModel):
+    task_id: str = Field(description="Target task ID")
+    agent_id: str = Field(description="Target agent ID")
+    command: str | None = Field(default=None, description="Optional command instruction")
+
+
+class TriggerAgentTaskResponse(BaseModel):
+    message: str = Field(description="Status message")
+    command: str | None = Field(default=None, description="Command instruction executed")
+
 
 if SettingsService().get_setting("ENABLE_TEST_ENDPOINTS") != "true":
     # If the env var is not set, we create a dummy router that does nothing.
@@ -20,8 +36,8 @@ else:
         tags=["Test"],
     )
 
-    @router.post("/reset-database", status_code=status.HTTP_200_OK)
-    async def reset_database() -> Any:
+    @router.post("/reset-database", status_code=status.HTTP_200_OK, response_model=ResetDatabaseResponse)
+    async def reset_database() -> ResetDatabaseResponse:
         """
         Resets and seeds the database using pre-defined database functions.
         THIS IS FOR TESTING ONLY AND SHOULD NOT BE ENABLED IN PRODUCTION.
@@ -36,7 +52,7 @@ else:
             supabase_client.rpc("reset_test_database").execute()
             supabase_client.rpc("seed_test_database").execute()
 
-            return {"message": "Database reset and seeded successfully via API."}
+            return ResetDatabaseResponse(message="Database reset and seeded successfully via API.")
         except Exception as e:
             # Log the error for debugging purposes
             print(f"ERROR: Database reset via API failed: {e}")
@@ -45,8 +61,8 @@ else:
                 detail=f"Database setup failed via API: {str(e)}",
             ) from e
 
-    @router.post("/trigger-agent-task", status_code=status.HTTP_200_OK)
-    async def trigger_agent_task(payload: dict):
+    @router.post("/trigger-agent-task", status_code=status.HTTP_200_OK, response_model=TriggerAgentTaskResponse)
+    async def trigger_agent_task(payload: TriggerAgentTaskRequest) -> TriggerAgentTaskResponse:
         """
         Manually triggers an AI Agent task execution for testing self-healing.
         Required fields: task_id, agent_id, command
@@ -54,9 +70,9 @@ else:
         from ..services.agent_service import agent_service
         from ..services.projects.task_service import task_service
 
-        task_id = payload.get("task_id")
-        agent_id = payload.get("agent_id")
-        command = payload.get("command")
+        task_id = payload.task_id
+        agent_id = payload.agent_id
+        command = payload.command
 
         if not task_id or not agent_id:
             raise HTTPException(status_code=400, detail="Missing task_id or agent_id")
@@ -75,4 +91,4 @@ else:
 
         asyncio.create_task(agent_service.run_agent_task(task_id, agent_id))
 
-        return {"message": f"Task {task_id} triggered for agent {agent_id}", "command": command}
+        return TriggerAgentTaskResponse(message=f"Task {task_id} triggered for agent {agent_id}", command=command)
