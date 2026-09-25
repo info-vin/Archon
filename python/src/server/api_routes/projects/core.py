@@ -25,7 +25,7 @@ from ...auth.dependencies import get_current_user, requires_permission
 from ...auth.permissions import TASK_CREATE, TASK_READ_TEAM, TASK_UPDATE_ALL
 from ...services.profile_service import ProfileService
 from ...services.projects.document_service import DocumentService
-from ...services.projects.project_creation_service import ProjectCreationService
+from ...services.projects.project_creation_service import ProjectCreationResultDTO, ProjectCreationService
 from ...services.projects.project_service import ProjectService
 from ...services.projects.source_linking_service import SourceLinkingService
 from ...services.rbac_service import RBACService
@@ -104,13 +104,22 @@ async def create_project(req: CreateProjectRequest, current_user: UserProfileDTO
     project_data["department"] = current_user.department
 
     s, res = await ProjectCreationService().create_project_with_ai(progress_id="direct", **project_data)
-    if s and isinstance(res, dict):
-        return {
-            "project_id": res.get("project_id"),
-            "project": res.get("project"),
-            "status": "completed",
-            "message": f"Project '{req.title}' created successfully",
-        }
+    if s:
+        if isinstance(res, ProjectCreationResultDTO):
+            proj = res.data[0] if res.data else {}
+            return {
+                "project_id": proj.get("id"),
+                "project": proj,
+                "status": "completed",
+                "message": f"Project '{req.title}' created successfully",
+            }
+        elif isinstance(res, dict):
+            return {
+                "project_id": res.get("project_id"),
+                "project": res.get("project"),
+                "status": "completed",
+                "message": f"Project '{req.title}' created successfully",
+            }
     _err(res)
 
 
