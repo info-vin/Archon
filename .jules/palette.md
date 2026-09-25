@@ -106,3 +106,6 @@
 ## 2024-11-20 - Add explicit button types and focus rings to hardcoded buttons
 **Learning:** Found that `<button>` tags without an explicit `type` default to `type="submit"`, causing unintended form submissions. Also, `ChatHeader`, `ChatInput`, and `DeleteConfirmModal` buttons were missing keyboard navigation (`focus-visible`) styling despite relying on standard mouse interaction.
 **Action:** When adding or auditing action buttons or common UI wrappers (e.g. `Button.tsx`), ensure `type="button"` is set either directly or via a prop fallback to prevent form hijacking. Ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` (and an appropriate ring color) is included.
+## 2024-09-25 - Focus visibility on generic button component
+**Learning:** Found that the generic `Button` component in `src/components/ui/Button.tsx` lacked focus indicators for keyboard navigation, making it difficult for keyboard users to identify which button is currently focused.
+**Action:** Added `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-current` to the base styling of the generic `Button` component to improve accessibility across the application.

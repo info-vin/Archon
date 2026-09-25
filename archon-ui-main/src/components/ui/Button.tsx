@@ -64,7 +64,7 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
   };
   return <button type={props.type || "button"} disabled={disabled || isLoading} aria-disabled={disabled || isLoading} aria-busy={isLoading} className={`
         inline-flex items-center justify-center transition-all duration-200
-        disabled:opacity-50 disabled:cursor-not-allowed
+        disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-current
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${className}
