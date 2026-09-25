@@ -12,6 +12,7 @@ from src.server.schemas.projects import (
     AssignableUser,
     CreateDocumentRequest,
     CreateProjectRequest,
+    ProjectListResponse,
     UpdateProjectRequest,
 )
 from src.server.services.projects.project_service import (
@@ -64,14 +65,14 @@ async def list_assignable_users(current_user: UserProfileDTO = Depends(get_curre
     return filtered_users
 
 
-@router.get("/projects")
+@router.get("/projects", response_model=ProjectListResponse)
 async def list_projects(
     response: Response,
     include_content: bool = True,
     include_computed_status: bool = False,
     if_none_match: str | None = Header(None),
     current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM)),
-):
+) -> ProjectListResponse | Response:
     """Lists projects, with department isolation managed by RBACService."""
     s, res = await ProjectService().list_projects(
         include_content=include_content, include_computed_status=include_computed_status
@@ -90,8 +91,12 @@ async def list_projects(
     response.headers["ETag"] = etag
     if check_etag(if_none_match, etag):
         response.status_code = 304
-        return None
-    return {"projects": projs, "timestamp": datetime.now(UTC).isoformat(), "count": len(projs)}
+        return Response(status_code=304, headers=response.headers)
+    return ProjectListResponse(
+        projects=cast(list[dict[str, Any]], projs),
+        timestamp=datetime.now(UTC).isoformat(),
+        count=len(projs),
+    )
 
 
 @router.post("/projects")

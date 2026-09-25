@@ -5,7 +5,7 @@ Project Schemas for API Requests and Responses
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.server.services.shared_constants import DEFAULT_ASSIGNEE
 
@@ -131,3 +131,9 @@ class CreateVersionRequest(BaseModel):
 
 class RestoreVersionRequest(BaseModel):
     restored_by: str | None = "system"
+
+
+class ProjectListResponse(BaseModel):
+    projects: list[dict[str, Any]] = Field(description="List of scoped projects")
+    timestamp: str = Field(description="ISO timestamp of response generation")
+    count: int = Field(description="Total count of projects returned")
