@@ -90,7 +90,7 @@ class PerformanceManager(BaseRepository):
                     "timestamp_v": "v4.6.23",  # Updated for identity alignment
                 },
             }
-            self.execute_query(self.supabase.table("archon_logs").insert(payload), "Insert action log") # 合法
+            await self.execute_query_async(self.supabase.table("archon_logs").insert(payload), "Insert action log") # 合法
         except Exception as e:
             logger.error(f"PerformanceManager: Action log failed: {e}")
 
@@ -101,23 +101,23 @@ class PerformanceManager(BaseRepository):
         thirty_days_ago = (now - timedelta(days=30)).isoformat()
 
         # Dynamic Nodes Extraction
-        success_p, profiles_res = self.execute_query(self.supabase.table("profiles").select("id, name, email"), "Get profiles") # 合法
+        success_p, profiles_res = await self.execute_query_async(self.supabase.table("profiles").select("id, name, email"), "Get profiles") # 合法
         profile_map = {str(p["id"]): p["name"] for p in (profiles_res.get("data", []) if success_p else [])}
         email_to_name = {str(p["email"]).split("@")[0].lower(): p["name"] for p in (profiles_res.get("data", []) if success_p else [])}
 
-        success_t, tasks_res = self.execute_query(
+        success_t, tasks_res = await self.execute_query_async(
             self.supabase.table("archon_tasks") # 合法
             .select("assignee_id, created_at, sources")
             .gt("created_at", thirty_days_ago),
             "Get tasks synergy"
         )
-        success_b, blogs_res = self.execute_query(
+        success_b, blogs_res = await self.execute_query_async(
             self.supabase.table("blog_posts") # 合法
             .select("author_name, lead_id, created_at, status")
             .gt("created_at", thirty_days_ago),
             "Get blogs synergy"
         )
-        success_l, logs_res = self.execute_query(
+        success_l, logs_res = await self.execute_query_async(
             self.supabase.table("archon_logs") # 合法
             .select("source")
             .eq("level", "ALERT")
@@ -216,7 +216,7 @@ class PerformanceManager(BaseRepository):
     async def get_agent_xp_stats(self) -> list[AgentXPStatDTO]:
         """Calculates XP, Success Count, and Total Cost for all agents (Phase 5.5)."""
         try:
-            success_xp, xp_res = self.execute_query(self.supabase.table("archon_logs").select("details").eq("source", "agent_action"), "Get XP logs") # 合法
+            success_xp, xp_res = await self.execute_query_async(self.supabase.table("archon_logs").select("details").eq("source", "agent_action"), "Get XP logs") # 合法
             xp_map: dict[str, int] = {}
             success_map: dict[str, int] = {}
 
@@ -233,7 +233,7 @@ class PerformanceManager(BaseRepository):
                     success_map[name] = success_map.get(name, 0) + 1
 
             # Fetch overrides for Level 7 check
-            success_o, overrides_res = self.execute_query(
+            success_o, overrides_res = await self.execute_query_async(
                 self.supabase.table("profiles") # 合法
                 .select("id, name, role, permission_overrides")
                 .eq("role", "ai_agent"),
@@ -243,7 +243,7 @@ class PerformanceManager(BaseRepository):
             overrides_map = {r.get("id"): r.get("permission_overrides", {}) for r in o_data}
             name_to_overrides = {r.get("name"): r.get("permission_overrides", {}) for r in o_data}
 
-            success_c, cost_res = self.execute_query(self.supabase.table("token_usage").select("user_id, cost_usd"), "Get token usage") # 合法
+            success_c, cost_res = await self.execute_query_async(self.supabase.table("token_usage").select("user_id, cost_usd"), "Get token usage") # 合法
             from ..agent_registry import FALLBACK_AGENT_CONFIG, get_agent_config, get_agent_uuid
 
             agent_id_to_name: dict[str, str] = {}
@@ -298,7 +298,7 @@ class PerformanceManager(BaseRepository):
     async def get_member_performance(self) -> list[dict[str, Any]]:
         """Calculates performance for human members."""
         try:
-            success, res = self.execute_query(self.supabase.table("archon_tasks").select("assignee").eq("status", "done"), "Get done tasks assignee") # 合法
+            success, res = await self.execute_query_async(self.supabase.table("archon_tasks").select("assignee").eq("status", "done"), "Get done tasks assignee") # 合法
             counts: dict[str, int] = {}
             for row in (res.get("data", []) if success else []):
                 a = row.get("assignee", "Unassigned")
@@ -313,7 +313,7 @@ class PerformanceManager(BaseRepository):
     async def get_business_risks(self) -> list[dict[str, Any]]:
         """Drives the Sentinel Risk Radar HUD."""
         try:
-            success, res = self.execute_query(
+            success, res = await self.execute_query_async(
                 self.supabase.table("archon_logs") # 合法
                 .select("*")
                 .eq("level", "ALERT")

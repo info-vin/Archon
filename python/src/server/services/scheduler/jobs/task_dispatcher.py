@@ -41,8 +41,17 @@ async def run_task_dispatcher() -> None:
                     logger.info(f"📡 Clockwork: Found {len(pending_tasks)} pending Telegram alerts. Flushing queue...")
                     for p_task in pending_tasks:
                         t_id = p_task["id"]
-                        text = p_task["description"]
+                        raw_desc = p_task["description"]
                         created_at_str = p_task.get("created_at")
+
+                        import json
+                        try:
+                            payload = json.loads(raw_desc)
+                            text = payload.get("text", raw_desc)
+                            p_mode = payload.get("parse_mode", "Markdown")
+                        except Exception:
+                            text = raw_desc
+                            p_mode = "Markdown"
 
                         # TTL Dead Letter Queue: Discard tasks older than 24 hours
                         if created_at_str:
@@ -59,7 +68,7 @@ async def run_task_dispatcher() -> None:
                             except Exception as parse_ex:
                                 logger.error(f"Failed to parse created_at for task {t_id}: {parse_ex}")
 
-                        is_sent = await telegram_service.send_message(text, is_retry=True)
+                        is_sent = await telegram_service.send_message(text, parse_mode=p_mode, is_retry=True)
                         if is_sent:
                             repo.execute_query(
                                 supabase.table("archon_tasks").update({"status": "done"}).eq("id", t_id),

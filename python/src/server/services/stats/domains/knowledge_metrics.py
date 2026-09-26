@@ -21,13 +21,13 @@ class KnowledgeMetrics(BaseRepository):
         now = datetime.now(UTC)
         cutoff = (now - timedelta(days=60)).isoformat()
         try:
-            success_s, sources_res = self.execute_query(
+            success_s, sources_res = await self.execute_query_async(
                 self.supabase.table("archon_sources") # 合法
                 .select("source_id, source_url, created_at")
                 .gt("created_at", cutoff),
                 "Get knowledge sources"
             )
-            success_p, pages_res = self.execute_query(
+            success_p, pages_res = await self.execute_query_async(
                 self.supabase.table("archon_crawled_pages") # 合法
                 .select("source_id, created_at")
                 .gt("created_at", cutoff),
