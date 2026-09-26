@@ -137,3 +137,18 @@ class ProjectListResponse(BaseModel):
     projects: list[dict[str, Any]] = Field(description="List of scoped projects")
     timestamp: str = Field(description="ISO timestamp of response generation")
     count: int = Field(description="Total count of projects returned")
+
+
+class VersionListResponse(BaseModel):
+    versions: list[dict[str, Any]] = Field(description="List of document versions")
+    total_count: int = Field(description="Total number of versions")
+
+
+class CreateVersionResponse(BaseModel):
+    message: str = Field(description="Status message")
+    version: dict[str, Any] | None = Field(default=None, description="Created version object")
+
+
+class RestoreVersionResponse(BaseModel):
+    message: str = Field(description="Status message")
+    restored_content: dict[str, Any] | None = Field(default=None, description="Restored content")
