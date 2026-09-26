@@ -23,6 +23,16 @@ class BaseRepository:
             self.supabase_client.postgrest.auth(token)
         return self
 
+
+    async def execute_query_async(
+        self, query_func: Any, error_context: str = "Query failed", require_data: bool = False, max_retries: int = 1
+    ) -> tuple[bool, Any]:
+        """
+        非同步版本的 execute_query，使用 asyncio.to_thread 防止阻塞 Event Loop。
+        """
+        import asyncio
+        return await asyncio.to_thread(self.execute_query, query_func, error_context, require_data, max_retries)
+
     def execute_query(
         self, query_func: Any, error_context: str = "Query failed", require_data: bool = False, max_retries: int = 1
     ) -> tuple[bool, dict[str, Any]]:
