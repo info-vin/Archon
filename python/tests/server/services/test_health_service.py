@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -16,14 +16,15 @@ def health_service(mock_supabase):
     service.supabase_client = mock_supabase
     return service
 
-def test_check_db_health(health_service, mock_supabase):
+@pytest.mark.asyncio
+async def test_check_db_health(health_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.limit.return_value = mock_query
 
-    mock_execute_query = MagicMock(return_value=(True, {}))
-    health_service.execute_query = mock_execute_query
+    mock_execute_query = AsyncMock(return_value=(True, {}))
+    health_service.execute_query_async = mock_execute_query
 
-    assert health_service.check_db_health() is True
+    assert await health_service.check_db_health() is True
 
 def test_verify_auth_config_success(health_service, mock_supabase):
     mock_supabase.auth = MagicMock()
