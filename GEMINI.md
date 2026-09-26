@@ -125,29 +125,7 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
-### 09/26: 虛假驗證的慘痛教訓、時區校正與雙生環境排程鎖公證
 
-*   **絕對禁止「推論式」虛假驗證 (零猜測鐵律)**:
-    *   **災難回顧**: 在判定 Hugging Face (HF) 伺服器狀態時，因為觀察到本機 Docker 啟動且有共用資料庫的日誌，便自作聰明「推論」HF 仍處於關機狀態，甚至給出虛假的停擺報告。被指揮官嚴厲訓斥後，才執行 `make phase-audit`，確認 HF 其實處於 `RUNNING` 狀態。
-    *   **核心教訓**: **基礎設施狀態絕對禁止用猜的**。必須 100% 依賴實體工具 (如 `make phase-audit` 的 Step 5 API 探測) 進行物理查核。日誌來源必須透過 `source` 或實體隔離來釐清，絕不可在變因未隔離 (Local 與 HF 雙開共用 DB) 的情況下盲目下結論。
-*   **CronTrigger 時區雙重換算錯誤校正**:
-    *   **災難回顧**: 誤將 `Asia/Taipei` 的排程時間 (如 `16:18`) 當作 UTC 再次加上 8 小時，導致給出荒謬的「凌晨 00:18」排程表。
-    *   **實體真相**: 當 `DEFAULT_TIMEZONE` 為 `Asia/Taipei`，資料庫中的 `hour=16` 就是實體台灣時間下午 4 點。單元測試與 `archon_tasks` 寫入時間 (`08:18 UTC`) 皆完美證實此點。嚴禁對帶有正確時區的 CronTrigger 進行畫蛇添足的二次 UTC 換算。
-*   **「時間閘門」補跑機制與雙開排程鎖 (Race Condition 防禦) 公證**:
-    *   **實體公證**: 驗證了 Phase 5.9.26 導入的「SSOT 時間閘門 (`trigger.fields`)」。它確實成功阻擋了提早偷跑，但在 09:16 開機、09:41 觸發 Catchup 時，因為 `09:41 > 08:40`，閘門合法放行了 `business_sentinel` 的補跑。
-    *   **架構韌性**: 在本機 Docker 與 HF 雲端伺服器**雙雙存活且同時觸發**的極端情境下，基於 Supabase `LAST_RUN` 的狀態鎖完美生效。資料庫物理查核證實，剛才的補跑任務 (如漢威聯合) **精準只產生了一筆**，徹底粉碎了重複執行的競態條件 (Race Condition) 風暴。
-
-### 09/20: 雲端關機盲區防禦與 Apple Silicon 環境公證
-
-*   **Telegram 關機盲區防禦 (持久化佇列)**:
-    *   **實體真相**: 測量 09-19 日誌，發現 HF Spaces 排程時斷網長達 84 秒。舊版 `asyncio.sleep` (記憶體重試) 會因無 HTTP 流量引發容器休眠而永久遺失通知。
-    *   **架構修復**: 修改 `telegram_service.py` 拔除 sleep，發送失敗時將通知包裝為 `[System] Pending Telegram Alert` 持久化至 `archon_tasks`。由 `task_dispatcher.py` 定期掃描，於機器喚醒且網路健康時自動補發。
-*   **HF 防火牆繞道 (Vercel 反向代理)**:
-    *   **實體真相**: 偵測確認 HF 官方防火牆直接 Drop 對 `api.telegram.org` 的請求，導致 `ConnectTimeout`。
-    *   **架構修復**: 不硬編碼，從 SSOT 讀取 `TELEGRAM_PROXY_URL`。透過已部署的 Vercel 前端 (`/api/telegram`) 進行 Serverless 轉發以繞過封鎖，且在未設定時無縫降級回原生直連，保障本地開發。
-*   **Lean 4 原生架構公證 (`Error 126`)**:
-    *   **問題**: `make audit-qa` 漏看 `test-lean` 噴出的 `Bad CPU type in executable` 錯誤。主因為 `elan` 誤裝 `x86_64` (Intel) 版本。
-    *   **修復**: 強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，Lean 4 證明子專案 18 項編譯成功。
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
@@ -164,7 +142,9 @@
     *   **DAG 解耦與防偷跑**: 將 `_should_run_weekly` 從 Alice 與週報的共用中解綁，導入精準數學時間斷言 `trigger.get_next_fire_time`，防範伺服器重啟時的排程偷跑與提早觸發。
     *   **解鎖排程停滯**: 修正 `Alice Auto Fetch` 誤用本地專屬排程器，解放雲端 opportunistic 執行能力。
 
-2.  **Telegram 網路防禦與盲區公證 (Ref: 09-03, 09-06)**:
+2.  **Telegram 網路防禦與盲區公證 (Ref: 09-03, 09-06, 09-20)**:
+    *   **關機盲區防禦 (持久化佇列)**: 實體測量發現 HF Spaces 排程斷網長達 84 秒。拔除舊版 `asyncio.sleep`，發送失敗時將通知包裝持久化至 `archon_tasks`，由任務分配器在網路健康時自動補發。
+    *   **HF 防火牆繞道**: 偵測確認 HF 防火牆封鎖 `api.telegram.org`。改為從 SSOT 讀取代理網址，透過部署的 Vercel 前端進行 Serverless 轉發，本地則無縫降級直連。
     *   **網路自癒與黑洞除錯**: 釐清了 Telegram `ConnectTimeout` 失敗並非 IPv6 黑洞，而是 Event Loop 阻塞，拔除錯誤的 `local_address="0.0.0.0"`，回歸原生路由並抽離 Config 至 SSOT 控管。
     *   **打通日誌盲區**: 將 Telegram 網路阻擋錯誤全面引入資料庫 `_log_to_db`，根除 UI 查無錯誤的幽靈降級現象。針對非同步網路操作建立 3 次重試機制與安全執行緒封裝。
 
@@ -173,7 +153,8 @@
     *   **消除靜默降級**: 修復 `agent_registry.py` 與 `leads_patrol.py` 中被 `except Exception: pass` 吞噬的異常漏洞，全面補上明確的日誌記錄與報錯機制。
     *   **環境污染消毒**: 嚴格執行「零一次性腳本」，清理合入分支的臨時腳本，並修復了 `routing.py` 等原生型別引發的 MyPy 報錯。
 
-4.  **自動化品質門禁與全域公證 (Ref: 09-04, 09-14, 09-17)**:
+4.  **自動化品質門禁與全域公證 (Ref: 09-04, 09-14, 09-17, 09-20)**:
+    *   **Lean 4 原生架構公證**: 解決 `make audit-qa` 漏看的 `Bad CPU type in executable` 錯誤。強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，確保 18 項 Lean 4 證明子專案編譯成功。
     *   **物理公證取代肉眼**: 拒絕人工查閱 Docker 驗證。實作 `verify_catchup_log.py` 探針與結構化 Tuple Mock，推動 100% 透過 `make test-be` 與 `make phase-audit` 公證。
     *   **504 Gateway Timeout 根除**: 由人類配合在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，解決 Task Dispatcher 全表掃描崩潰問題。
     *   **全域高併發公證**: 透過 708 項全數通過的單元測試，物理證實高併發檢索 `test_concurrent_rag_queries` 的非同步優化穩健運行。
@@ -182,6 +163,11 @@
     *   **架構升級 (SSOT/DRY)**: 解決 `NexusOracleAgent` 因懶惰查詢 (`select *`) 撈取萬字文章導致 429 Token 爆表。拔除 Agent 裸寫 SQL，將欄位投影 (`id, title, status`) 嚴格封裝至 `BlogService` 與 `LogService`。
     *   **環境變數抽離**: 將時間窗與字元上限收斂至 `settings.py` (`OracleConfig`)，消除魔術數字。
     *   **防禦性截斷**: 實裝 JSON 遞迴攔截，超過 `1000` 字元強制 `...(truncated)`。物理探針公證 Payload 體積縮減 97%。
+
+6.  **零虛假公證與雙生環境防禦 (Ref: 09-26)**:
+    *   **零猜測鐵律 (拒絕推論)**: 在判定 HF 伺服器狀態時，嚴禁因觀察到本機 Docker 共用 DB 活躍而盲目推論 HF 停擺。必須 100% 依賴實體探測 (`make phase-audit` Step 5) 進行物理查核，落實證據至上。
+    *   **雙開排程鎖 (Race Condition 防禦)**: 驗證了 Phase 5.9.26 導入的「SSOT 時間閘門 (`trigger.fields`)」。在 HF 與 Local Docker 雙雙存活且同時觸發 Catchup 時，基於 Supabase `LAST_RUN` 的狀態鎖完美生效，精準阻擋重複執行與提早偷跑。
+    *   **時區雙重換算錯誤校正**: 確立 `DEFAULT_TIMEZONE` (`Asia/Taipei`) 的唯一性。資料庫中的 `hour=16` 就是實體台灣時間下午 4 點，嚴禁對 CronTrigger 進行畫蛇添足的二次 UTC 換算。
 
 ### 2026年8月：SSOT 治理、排程防禦、MCP 安全鎖定與週期任務硬化
 八月份是提示詞與配置 SSOT 治理落地、排程防禦與 Docker 依賴硬化的月份。我們對 RAG 與報告模組進行了深度的 DRY 重構，解決了 Docker 環境下的 MCP 依賴缺失與 WAF 限流極限問題，並實作了防禦性的提示詞 Upsert 與測試門禁以確保系統零降級。
