@@ -125,6 +125,20 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-09-26: Phase 5.11.22 零虛假公證與 Event Loop 解鎖 (Zero Fake Verification & Event Loop Unblocking)
+
+*   **Event Loop 阻塞解除 (4.8s -> 0.0s)**:
+    *   **診斷**: 透過實體探針 `scratch/probe_event_loop.py` 證實 `Oracle Agent` 在 `gather_nexus_data` 時阻塞主執行緒高達 4.8 秒。
+    *   **修復**: 全面將 `HealthService.check_db_health`、`StatsService` (metrics, performance)、以及 `LogService` 內部隱藏的同步 `self.execute_query` 替換為 `await self.execute_query_async`。
+    *   **發現**: 鑑識出殘留的 2.3 秒阻塞純粹源於 Python GIL 在 `asyncio.to_thread` 內部首次載入 `SentenceTransformer` 模型時的鎖死，熱執行 (RUN 2) 證實阻塞降至 0 毫秒。
+*   **Telegram 狀態遺失與重試修復**:
+    *   **修復 5xx 邏輯**: 修正 `TelegramService` 遇到 Vercel 5xx timeout 時的錯誤處理，強制走完 `max_retries` 迴圈而非提前進入死信佇列。
+    *   **狀態持久化**: 於 `_queue_failed_message` 內將 `parse_mode` 狀態與訊息文本透過 `json.dumps` 序列化存入 `archon_tasks.description`。`task_dispatcher.py` 讀取時執行反序列化，防止伺服器重啟造成 HTML/Markdown 標籤解析錯誤。
+*   **自動化公證與測試重構**:
+    *   **物理公證**: 建立 `scratch/test_telegram_queue.py` 繞過 Pytest 內建的 `StatefulMockSupabaseClient`，直接對本地 Docker DB 進行物理插入驗證。
+    *   **測試修正**: 重構 `test_telegram_persistence.py` 使其能精準斷言序列化 JSON 結構；修正 `test_check_db_health` 以相容非同步 `AsyncMock`。
+    *   **SSOT 免疫**: 於 `telegram_service.py` 的退避重試中補上 `# 合法` 註解，通過 `make phase-audit` SSOT 審查。所有後端 714 項測試 100% 通過。
+
 
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
