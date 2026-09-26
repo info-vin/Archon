@@ -270,3 +270,7 @@
 ## 2025-05-18 - Replacing inline toLocaleDateString() with hoisted Intl.DateTimeFormat
 **Learning:** Calling `new Date().toLocaleDateString()` inside an array `.map()` render loop creates a new `Intl.DateTimeFormat` instance behind the scenes for every mapped item on every render cycle, causing massive garbage collection pressure and rendering bottlenecks for long lists.
 **Action:** Always hoist `Intl.DateTimeFormat` outside of the component or array loop to instantiate it only once upon module load, and use `.format()` inside the render function.
+
+## 2024-05-20 - Replacing inline toLocaleTimeString() with hoisted Intl.DateTimeFormat
+**Learning:** Calling `new Date().toLocaleTimeString()` inside a React component render loop or callback creates a new `Intl.DateTimeFormat` instance behind the scenes on every invocation, causing unnecessary garbage collection pressure and rendering bottlenecks.
+**Action:** Always hoist `Intl.DateTimeFormat` outside of the component to instantiate it only once upon module load, and use `.format()` instead of `.toLocaleTimeString()`. Ensure an explicit invalid date check (`isNaN(date.getTime())`) is added when migrating to `Intl.DateTimeFormat`.

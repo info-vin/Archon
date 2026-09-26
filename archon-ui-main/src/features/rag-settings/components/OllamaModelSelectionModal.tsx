@@ -8,6 +8,10 @@ import { OllamaModelCard } from './shared/OllamaModelCard';
 import { ModelInfo } from '../types/ModelInterfaces';
 import { useOllamaModelFilter } from '../hooks/useOllamaModelFilter';
 
+// PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleTimeString) inside the render loop.
+// eslint-disable-next-line no-restricted-syntax
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+
 type ApiOllamaModel = {
   name: string;
   size: number;
@@ -87,9 +91,9 @@ export const OllamaModelSelectionModal: React.FC<OllamaModelSelectionModalProps>
         if (Date.now() - parsed.timestamp < 300000) {
           setModels(parsed.models);
           setLoadedFromCache(true);
-                    // TECH_DEBT: 採用原生 toLocaleTimeString 以維持顯示需求，暫不遷移至 date-fns 以維持效能基線。
           // eslint-disable-next-line no-restricted-syntax
-          setCacheTimestamp(new Date(parsed.timestamp).toLocaleTimeString());
+          const timestampDate = new Date(parsed.timestamp);
+          setCacheTimestamp(isNaN(timestampDate.getTime()) ? 'Invalid Date' : timeFormatter.format(timestampDate));
           setLoading(false);
           return;
         }

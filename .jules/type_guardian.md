@@ -51,3 +51,6 @@
 ## 2026-09-21 - Stringified Forward References
 **Learning:** In Python type hinting, wrapping available runtime imports in string quotes (e.g., `'KnowledgeRepository | None'`) is an anti-pattern when the class is already imported and available at runtime.
 **Action:** Only use stringified forward references when the type is not available in the runtime namespace (e.g., guarded behind `if TYPE_CHECKING:` to avoid circular dependencies).
+## 2026-09-24 - Handling Union DTO Returns in API Routes
+**Learning:** When refactoring a Python service method to return a Union of a DTO or a raw dict (e.g., `tuple[bool, ProjectCreationResultDTO | dict[str, Any]]`), directly unpacking attributes using unreadable inline ternary operators (`res.data[0] if hasattr(res, 'data') else res.get(...)`) in the API route is dangerous. It can inadvertently break boolean operator precedence in other endpoints if not careful.
+**Action:** When updating API routes to consume a new DTO from a refactored service, always explicitly import the DTO into the route module and use clean `isinstance(res, MyNewDTO):` conditional blocks to safely unpack the data, keeping the error-handling fallback logic explicitly separated.

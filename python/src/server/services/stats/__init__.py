@@ -33,7 +33,7 @@ class StatsService(BaseRepository):
     async def get_tasks_by_status(self) -> list[dict[str, Any]]:
         """Backwards compatibility for frontend stats."""
         try:
-            success, response = self.execute_query(self.supabase.table("archon_tasks").select("status"), "Get tasks by status") # 合法
+            success, response = await self.execute_query_async(self.supabase.table("archon_tasks").select("status"), "Get tasks by status") # 合法
             counts: dict[str, int] = {}
             for row in (response.get("data", []) if success else []):
                 s = row.get("status", "unknown")
@@ -101,7 +101,7 @@ class StatsService(BaseRepository):
             one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
 
             # 1. Error Count
-            success, error_res = self.execute_query(
+            success, error_res = await self.execute_query_async(
                 self.supabase.table("archon_logs") # 合法
                 .select("id", count="exact")
                 .eq("level", "ERROR")
@@ -111,12 +111,12 @@ class StatsService(BaseRepository):
             error_count = error_res.get("count", 0) if success else 0
 
             # 2. 24h Cost
-            success_cost, cost_res = self.execute_query(self.supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago), "Get token cost") # 合法
+            success_cost, cost_res = await self.execute_query_async(self.supabase.table("token_usage").select("cost_usd").gt("created_at", one_day_ago), "Get token cost") # 合法
             total_cost_24h = sum(float(r.get("cost_usd", 0)) for r in (cost_res.get("data", []) if success_cost else []))
 
             # 3. Active Agents
             one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
-            success_logs, logs_res = self.execute_query(self.supabase.table("archon_logs").select("source").gt("created_at", one_hour_ago), "Get active agents logs") # 合法
+            success_logs, logs_res = await self.execute_query_async(self.supabase.table("archon_logs").select("source").gt("created_at", one_hour_ago), "Get active agents logs") # 合法
             active_sources = {log["source"] for log in (logs_res.get("data", []) if success_logs else [])}
             # PERFORMANCE: Extract string conversion outside loop and unroll nested generator
             active_sources_lower = [s.lower() for s in active_sources]
@@ -177,7 +177,7 @@ class StatsService(BaseRepository):
                 env_prefix = get_config().archon_env
                 last_run_prefix = f"{env_prefix}LAST_RUN_"
 
-                success_db, db_keys_res = self.execute_query(self.supabase.table("archon_settings").select("key, value").like("key", f"{last_run_prefix}%"), "Get db keys") # 合法
+                success_db, db_keys_res = await self.execute_query_async(self.supabase.table("archon_settings").select("key, value").like("key", f"{last_run_prefix}%"), "Get db keys") # 合法
                 for row in (db_keys_res.get("data", []) if success_db else []):
                     job_id = row["key"].replace(last_run_prefix, "").lower()
                     if not any(j["id"] == job_id for j in clockwork_jobs):

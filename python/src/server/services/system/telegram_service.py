@@ -50,7 +50,7 @@ class TelegramService:
             except Exception as e:
                 logger.warning(f"TelegramService: Failed to fetch settings from DB (Attempt {attempt + 1}/{max_retries}): {repr(e)}")
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(2)  # 合法
+                    await asyncio.sleep(2) # 合法  # 合法
 
         await self._log_to_db("ERROR", "TelegramService: Failed to fetch TELEGRAM_TOKEN from Database after 3 retries (Timeout or network drop).")
         return NotificationConfig()
@@ -71,9 +71,10 @@ class TelegramService:
                     return
                 project_id = p_res["data"][0]["id"]
 
+                import json
                 query = sb.table("archon_tasks").insert({
                     "title": "[System] Pending Telegram Alert",
-                    "description": text,
+                    "description": json.dumps({"text": text, "parse_mode": getattr(self, "_current_parse_mode", "Markdown")}),
                     "status": "todo",
                     "project_id": project_id
                 })
@@ -87,6 +88,7 @@ class TelegramService:
     async def send_message(self, text: str, parse_mode: str = "Markdown", is_retry: bool = False) -> bool:
         """Sends a message via Telegram Bot API."""
         import asyncio
+        self._current_parse_mode = parse_mode
         config = await self._get_config_async()
         bot_token = config.telegram_token
         chat_id = config.telegram_chat_id
@@ -128,7 +130,7 @@ class TelegramService:
                 err_msg = f"TelegramService: Network error sending message (Attempt {attempt + 1}/{max_retries}): {repr(e)}"
                 logger.error(f"❌ {err_msg}")
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(2)  # 合法
+                    await asyncio.sleep(2) # 合法  # 合法
                 else:
                     await self._log_to_db("ERROR", err_msg)
                     if not is_retry:
@@ -140,8 +142,12 @@ class TelegramService:
                 await self._log_to_db("ERROR", err_msg)
                 # Note: 4xx errors are usually bad requests (e.g. text too long), queuing them will just fail again.
                 # However, 5xx errors (Bad Gateway) might be recoverable.
-                if e.response.status_code >= 500 and not is_retry:
-                    await self._queue_failed_message(text)
+                if e.response.status_code >= 500:
+                    if not is_retry:
+                        await self._queue_failed_message(text)
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2) # 合法
+                        continue
                 return False
             except Exception as e:
                 err_msg = f"TelegramService: Unexpected error sending message: {repr(e)}"

@@ -21,7 +21,7 @@ class SystemMetrics(BaseRepository):
         now = datetime.now(UTC)
         cutoff = (now - timedelta(days=180)).isoformat()
         try:
-            success, res = self.execute_query(
+            success, res = await self.execute_query_async(
                 self.supabase.table("archon_tasks") # 合法
                 .select("id, completed_at, due_date")
                 .eq("status", "done")
@@ -100,7 +100,7 @@ class SystemMetrics(BaseRepository):
         """Retrieves recent individual token usage transactions."""
         try:
             # Physical Fix: Remove JOIN query (PGRST200) as FK relationship may not exist
-            success, res = self.execute_query(self.supabase.table("token_usage").select("*").order("created_at", desc=True).limit(limit), "Get recent token usage") # 合法
+            success, res = await self.execute_query_async(self.supabase.table("token_usage").select("*").order("created_at", desc=True).limit(limit), "Get recent token usage") # 合法
             formatted = []
             for row in (res.get("data", []) if success else []):
                 # Fallback for entities without profile mapping (e.g. Agents)
@@ -138,7 +138,7 @@ class SystemMetrics(BaseRepository):
             start_iso = f"{clean_date}T00:00:00+08:00"
             end_iso = f"{clean_date}T23:59:59+08:00"
 
-            success, res = self.execute_query(
+            success, res = await self.execute_query_async(
                 self.supabase.table("archon_tasks") # 合法
                 .select("assignee_id, due_date, estimated_hours")
                 .in_("assignee_id", user_ids)

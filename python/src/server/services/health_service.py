@@ -51,11 +51,11 @@ class HealthService(BaseRepository):
     def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
-    def check_db_health(self) -> bool:
+    async def check_db_health(self) -> bool:
         """Checks if the database is reachable and responding."""
 
         query = self.supabase_client.table("profiles").select("id", count="exact").limit(1) # 合法
-        success, _ = self.execute_query(query, "DB health check failed")
+        success, _ = await self.execute_query_async(query, "DB health check failed")
         return success
 
     def verify_auth_config(self) -> bool:
@@ -75,7 +75,7 @@ class HealthService(BaseRepository):
         logger.info("📊 Calculating Composite System Integrity Score (Read-Only)...")
 
         # 1. DB Connectivity Check (15% weight)
-        db_ok = self.check_db_health()
+        db_ok = await self.check_db_health()
         db_score = 15.0 if db_ok else 0.0
 
         if not db_ok:
@@ -83,7 +83,7 @@ class HealthService(BaseRepository):
 
         # 2. Knowledge Alignment Check (70% weight)
         query_sources = self.supabase_client.table("archon_sources").select("source_id", count="exact") # 合法
-        success, res = self.execute_query(query_sources, "Error counting sources", require_data=False)
+        success, res = await self.execute_query_async(query_sources, "Error counting sources", require_data=False)
         if not success:
             logger.error("💥 System Integrity Calculation Failed")
             return {"status": "unhealthy", "score": 0.0, "details": {"error": str(res.get("error") or "Unknown database error")}}
@@ -103,7 +103,7 @@ class HealthService(BaseRepository):
                 .select("source_id", count="exact")
                 .not_.is_("embedding", "null")
             )
-            idx_success, idx_res = self.execute_query(
+            idx_success, idx_res = await self.execute_query_async(
                 query_indexed, "Error counting indexed sources", require_data=False
             )
             if idx_success:
@@ -156,7 +156,7 @@ class HealthService(BaseRepository):
             .gt("created_at", since)
             .order("created_at", desc=True)
         )
-        success, res = self.execute_query(query, "History fetch failed", require_data=False)
+        success, res = await self.execute_query_async(query, "History fetch failed", require_data=False)
         if not success:
             return {"trend": [], "audit": []}
 

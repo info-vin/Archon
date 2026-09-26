@@ -41,11 +41,11 @@ class AgentMetrics(BaseRepository):
         thirty_days_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         # 1. Token Analytics (Bob/Alice Usage)
-        success_m, marketing_res = self.execute_query(self.supabase.table("profiles").select("id").eq("role", "marketing"), "Get marketing profiles") # 合法
+        success_m, marketing_res = await self.execute_query_async(self.supabase.table("profiles").select("id").eq("role", "marketing"), "Get marketing profiles") # 合法
         m_ids = [r["id"] for r in (marketing_res.get("data", []) if success_m else [])]
         token_map: dict[str, int] = {}
         if m_ids:
-            success_t, token_res = self.execute_query(
+            success_t, token_res = await self.execute_query_async(
                 self.supabase.table("token_usage") # 合法
                 .select("created_at, total_tokens")
                 .in_("user_id", m_ids)
@@ -66,7 +66,7 @@ class AgentMetrics(BaseRepository):
             velocity_raw[d].append(max(0.1, min(168.0, duration_hours)))
 
         # A. Blog Velocity
-        success_b, blog_res = self.execute_query(
+        success_b, blog_res = await self.execute_query_async(
             self.supabase.table("blog_posts") # 合法
             .select("created_at, updated_at")
             .in_("status", [StatusEnum.PUBLISHED, StatusEnum.CHANGES_REQUESTED])
@@ -79,7 +79,7 @@ class AgentMetrics(BaseRepository):
             add_velocity(row["updated_at"], (end - start).total_seconds() / 3600)
 
         # B. Task Velocity (SLA Tracking)
-        success_ta, task_res = self.execute_query(
+        success_ta, task_res = await self.execute_query_async(
             self.supabase.table("archon_tasks") # 合法
             .select("created_at, completed_at")
             .eq("status", "done")
@@ -92,7 +92,7 @@ class AgentMetrics(BaseRepository):
             add_velocity(row["completed_at"], (end - start).total_seconds() / 3600)
 
         # C. Lead Conversion Velocity
-        success_l, lead_res = self.execute_query(
+        success_l, lead_res = await self.execute_query_async(
             self.supabase.table("leads") # 合法
             .select("created_at, updated_at")
             .eq("status", "converted")
@@ -121,7 +121,7 @@ class AgentMetrics(BaseRepository):
         try:
             now = datetime.now(UTC)
             ninety_days_ago = (now - timedelta(days=90)).isoformat()
-            success_r, res = self.execute_query(
+            success_r, res = await self.execute_query_async(
                 self.supabase.table("archon_tasks") # 合法
                 .select("id, completed_at, assignee")
                 .eq("status", "done")

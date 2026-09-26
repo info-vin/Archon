@@ -22,7 +22,7 @@ class MarketingMetrics(BaseRepository):
             query = self.supabase.table("leads").select("*") # 合法
             if user_id:
                 query = query.or_(f"assigned_sales_id.eq.{user_id},assigned_sales_id.is.null")
-            success, res = self.execute_query(query, "Get marketing intelligence leads")
+            success, res = await self.execute_query_async(query, "Get marketing intelligence leads")
             leads = res.get("data", []) if success else []
 
             # 1. Conversion Funnel (Physical Data)

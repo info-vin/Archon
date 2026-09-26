@@ -12,6 +12,7 @@ from src.server.schemas.projects import (
     AssignableUser,
     CreateDocumentRequest,
     CreateProjectRequest,
+    ProjectListResponse,
     UpdateProjectRequest,
 )
 from src.server.services.projects.project_service import (
@@ -25,7 +26,7 @@ from ...auth.dependencies import get_current_user, requires_permission
 from ...auth.permissions import TASK_CREATE, TASK_READ_TEAM, TASK_UPDATE_ALL
 from ...services.profile_service import ProfileService
 from ...services.projects.document_service import DocumentService
-from ...services.projects.project_creation_service import ProjectCreationService
+from ...services.projects.project_creation_service import ProjectCreationResultDTO, ProjectCreationService
 from ...services.projects.project_service import ProjectService
 from ...services.projects.source_linking_service import SourceLinkingService
 from ...services.rbac_service import RBACService
@@ -64,14 +65,14 @@ async def list_assignable_users(current_user: UserProfileDTO = Depends(get_curre
     return filtered_users
 
 
-@router.get("/projects")
+@router.get("/projects", response_model=ProjectListResponse)
 async def list_projects(
     response: Response,
     include_content: bool = True,
     include_computed_status: bool = False,
     if_none_match: str | None = Header(None),
     current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM)),
-):
+) -> ProjectListResponse | Response:
     """Lists projects, with department isolation managed by RBACService."""
     s, res = await ProjectService().list_projects(
         include_content=include_content, include_computed_status=include_computed_status
@@ -90,8 +91,12 @@ async def list_projects(
     response.headers["ETag"] = etag
     if check_etag(if_none_match, etag):
         response.status_code = 304
-        return None
-    return {"projects": projs, "timestamp": datetime.now(UTC).isoformat(), "count": len(projs)}
+        return Response(status_code=304, headers=response.headers)
+    return ProjectListResponse(
+        projects=cast(list[dict[str, Any]], projs),
+        timestamp=datetime.now(UTC).isoformat(),
+        count=len(projs),
+    )
 
 
 @router.post("/projects")
@@ -104,13 +109,22 @@ async def create_project(req: CreateProjectRequest, current_user: UserProfileDTO
     project_data["department"] = current_user.department
 
     s, res = await ProjectCreationService().create_project_with_ai(progress_id="direct", **project_data)
-    if s and isinstance(res, dict):
-        return {
-            "project_id": res.get("project_id"),
-            "project": res.get("project"),
-            "status": "completed",
-            "message": f"Project '{req.title}' created successfully",
-        }
+    if s:
+        if isinstance(res, ProjectCreationResultDTO):
+            proj = res.data[0] if res.data else {}
+            return {
+                "project_id": proj.get("id"),
+                "project": proj,
+                "status": "completed",
+                "message": f"Project '{req.title}' created successfully",
+            }
+        elif isinstance(res, dict):
+            return {
+                "project_id": res.get("project_id"),
+                "project": res.get("project"),
+                "status": "completed",
+                "message": f"Project '{req.title}' created successfully",
+            }
     _err(res)
 
 
