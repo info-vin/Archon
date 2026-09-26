@@ -50,7 +50,7 @@ class TelegramService:
             except Exception as e:
                 logger.warning(f"TelegramService: Failed to fetch settings from DB (Attempt {attempt + 1}/{max_retries}): {repr(e)}")
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(2)  # 合法
+                    await asyncio.sleep(2) # 合法  # 合法
 
         await self._log_to_db("ERROR", "TelegramService: Failed to fetch TELEGRAM_TOKEN from Database after 3 retries (Timeout or network drop).")
         return NotificationConfig()
@@ -130,7 +130,7 @@ class TelegramService:
                 err_msg = f"TelegramService: Network error sending message (Attempt {attempt + 1}/{max_retries}): {repr(e)}"
                 logger.error(f"❌ {err_msg}")
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(2)  # 合法
+                    await asyncio.sleep(2) # 合法  # 合法
                 else:
                     await self._log_to_db("ERROR", err_msg)
                     if not is_retry:
@@ -146,7 +146,7 @@ class TelegramService:
                     if not is_retry:
                         await self._queue_failed_message(text)
                     if attempt < max_retries - 1:
-                        await asyncio.sleep(2)
+                        await asyncio.sleep(2) # 合法
                         continue
                 return False
             except Exception as e:
