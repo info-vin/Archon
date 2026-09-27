@@ -42,7 +42,9 @@ def _err(res: Any, code: int = 500):
 
 
 @router.get("/assignable-users", response_model=list[AssignableUser])
-async def list_assignable_users(current_user: UserProfileDTO = Depends(get_current_user)):
+async def list_assignable_users(
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> list[AssignableUser]:
     """Lists users that can be assigned tasks, respecting RBAC visibility."""
     current_user_role = current_user.role
     s, users = ProfileService().list_all_users()
