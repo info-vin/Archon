@@ -75,12 +75,15 @@ export const KnowledgeView = () => {
 
   // Track crawl completions and errors for toast notifications
   useEffect(() => {
+    // PERFORMANCE: Precalculate Set for O(1) ID lookups to eliminate O(N*M) Array.find() on polling diffs
+    const activeOpIds = new Set(activeOperations.map(op => op.operation_id));
+
     // Find operations that just completed or failed
     const finishedOps = previousOperations.current.filter((prevOp) => {
-      const currentOp = activeOperations.find((op) => op.operation_id === prevOp.operation_id);
+      const isStillActive = activeOpIds.has(prevOp.operation_id);
       // Operation disappeared from active list - check its final status
       return (
-        !currentOp &&
+        !isStillActive &&
         ["crawling", "processing", "storing", "document_storage", "completed", "error", "failed"].includes(
           prevOp.status,
         )
