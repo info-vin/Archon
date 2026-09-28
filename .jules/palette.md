@@ -109,6 +109,6 @@
 ## 2024-09-25 - Focus visibility on generic button component
 **Learning:** Found that the generic `Button` component in `src/components/ui/Button.tsx` lacked focus indicators for keyboard navigation, making it difficult for keyboard users to identify which button is currently focused.
 **Action:** Added `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-current` to the base styling of the generic `Button` component to improve accessibility across the application.
-## 2025-03-08 - Add explicit button types and focus rings
-**Learning:** Found multiple button elements without explicit `type="button"` attributes, defaulting to `type="submit"` which can cause accidental form submissions. These elements also lacked `focus-visible` classes, making keyboard navigation difficult and inconsistent with accessibility guidelines.
-**Action:** When adding or auditing buttons, ensure `type="button"` is set where appropriate, and always include `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` (and an appropriate ring color like `focus-visible:ring-blue-500`) for robust keyboard accessibility.
+## 2025-03-08 - Fix missing button types and focus rings
+**Learning:** Custom components like `AudioPlayer` and `MobileDateTimePicker` often omit `type="button"` on internal `<button>` tags, leading to accidental form submissions (form hijacking) when used inside forms. Additionally, modal action buttons like those in `ProjectModal` missed standard `focus-visible` styling, reducing keyboard accessibility.
+**Action:** Always ensure that any `<button>` not meant to submit a form has `type="button"` explicitly set. Continuously verify that modal action buttons implement the full `focus-visible:outline-none focus-visible:ring-2` styling pattern.

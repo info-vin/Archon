@@ -2,7 +2,7 @@ import asyncio
 import json
 import re
 import uuid
-from typing import Any, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 import aiofiles
 
@@ -13,6 +13,15 @@ from .agent_tool_executor import AgentToolExecutor
 from .credential_service import credential_service
 from .llm_provider_service import get_llm_client
 
+
+class FileHealthResultDTO(TypedDict):
+    file_path: NotRequired[str]
+    line_count: NotRequired[int]
+    has_direct_sql: NotRequired[bool]
+    severity_level: NotRequired[int]
+    advice: NotRequired[str]
+    timestamp: NotRequired[str]
+    error: NotRequired[str]
 
 class DevOpsAgentService:
     def __init__(self, tool_executor: AgentToolExecutor) -> None:
@@ -162,7 +171,7 @@ class DevOpsAgentService:
             self.code_modifier.revert_sandbox(original_branch)
             return False, f"Repair error: {e}"
 
-    async def diagnose_file_health(self, file_path: str) -> dict[str, Any]:
+    async def diagnose_file_health(self, file_path: str) -> FileHealthResultDTO:
         """
         Performs a physical diagnostic of a file based on SOP metrics (1.7.1).
         Assigns L1 (Green), L2 (Yellow), or L3 (Red) severity.

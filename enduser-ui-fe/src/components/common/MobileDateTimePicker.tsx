@@ -110,6 +110,7 @@ export const MobileDateTimePicker: React.FC<MobileDateTimePickerProps> = ({ valu
                                 <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">{formatDisplay(tempDate)}</p>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setIsOpen(false)}
                                 className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                                 aria-label="Close date picker"

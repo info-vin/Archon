@@ -7,7 +7,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, Code, FileText, Link, Loader2 } from "lucide-react";
 import { cn } from "../../ui/primitives/styles";
-import type { ActiveOperation } from "../types/progress";
+import { type ActiveOperation, type ProgressStatus, FORMATTED_STATUS_MAP } from "../types/progress";
 
 interface KnowledgeCardProgressProps {
   operation: ActiveOperation;
@@ -63,7 +63,7 @@ export const KnowledgeCardProgress: React.FC<KnowledgeCardProgressProps> = ({ op
   };
 
   // Format the status text
-  const currentStep = operation.message || operation.status.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+  const currentStep = operation.message || FORMATTED_STATUS_MAP[operation.status as ProgressStatus] || operation.status;
   const stats = operation.stats || operation.progress_data;
 
   return (

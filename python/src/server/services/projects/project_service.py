@@ -26,6 +26,7 @@ class ProjectDTO(TypedDict):
     features: NotRequired[list[dict[str, Any]]]
     data: NotRequired[dict[str, Any]]
     stats: NotRequired[ProjectStatsDTO]
+    department: NotRequired[str | None]
 
 class ProjectUpdateDTO(TypedDict):
     title: NotRequired[str]
