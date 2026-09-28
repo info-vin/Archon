@@ -146,6 +146,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         } ${className}`}>
             
             <button
+                type="button"
                 onClick={handlePlayPause}
                 disabled={isLoading}
                 aria-busy={isLoading}
