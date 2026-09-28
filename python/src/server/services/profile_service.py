@@ -21,6 +21,7 @@ class UserProfileUpdateDict(TypedDict):
     position: NotRequired[str | None]
     avatar: NotRequired[str | None]
     tenant_id: NotRequired[str | None]
+    id: NotRequired[str]
 
 class ProfileService(BaseRepository):
     """Service for handling business logic related to user profiles."""

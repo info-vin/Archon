@@ -66,11 +66,12 @@ class ActionExecutor:
         return f"Changes applied to branch {branch_name}"
 
 
-class ProposeChangeService:
+class ProposeChangeService(BaseRepository):
     """Handles the lifecycle of proposed changes from AI or users."""
 
     def __init__(self, db_client: Client | None = None) -> None:
-        self.db_client = db_client or get_supabase_client()
+        super().__init__(db_client)
+        self.db_client = self.supabase_client
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)
 
@@ -90,21 +91,27 @@ class ProposeChangeService:
         query = self.db_client.table("proposed_changes").select("*")
         if status:
             query = query.eq("status", status)
+        # Physical Department Isolation (Phase 4.6.23 Hardening)
         if user_id:
             user_str = self._resolve_user_id(user_id)
             if user_str:
-                query = query.eq("created_by", user_str)
+                p_success, p_res = self.execute_query(self.db_client.table("profiles").select("department, role").eq("id", user_str), "Fetch profile")
+                if p_success and p_res.get("data") and len(p_res["data"]) > 0:
+                    profile = p_res["data"][0]
+                    if profile.get("role") != "system_admin":
+                        dept = profile.get("department")
+                        query = query.filter("request_payload->>created_by_dept", "eq", dept)
 
         query = query.order("created_at", desc=True)
-        response = query.execute()
+        success, response = self.execute_query(query, "Failed to list proposals")
 
-        return cast(list[ProposedChangeDict], response.data)
+        return cast(list[ProposedChangeDict], response.get("data", []) if success else [])
 
     async def get_proposal(self, proposal_id: UUID) -> ProposedChangeDict | None:
-        response = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute()
-        if not response.data:
+        success, response = self.execute_query(self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)), "Get proposal")
+        if not success or not response.get("data"):
             return None
-        return cast(ProposedChangeDict, response.data[0])
+        return cast(ProposedChangeDict, response["data"][0])
 
     async def create_file_proposal(
         self,
@@ -124,9 +131,9 @@ class ProposeChangeService:
         dept = "General"
         if user_str:
             try:
-                u_res = self.db_client.table("profiles").select("department").eq("id", user_str).execute()
-                if u_res.data:
-                    dept = u_res.data[0].get("department", "General")
+                s, u_res = self.execute_query(self.db_client.table("profiles").select("department").eq("id", user_str), "Get user dept")
+                if s and u_res.get("data"):
+                    dept = u_res["data"][0].get("department", "General")
             except Exception:
                 pass
 
@@ -155,9 +162,9 @@ class ProposeChangeService:
         dept = "General"
         if user_id:
             try:
-                u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
-                if u_res.data:
-                    dept = u_res.data[0].get("department", "General")
+                s, u_res = self.execute_query(self.db_client.table("profiles").select("department").eq("id", user_id), "Get user dept")
+                if s and u_res.get("data"):
+                    dept = u_res["data"][0].get("department", "General")
             except Exception:
                 pass
 
@@ -174,12 +181,12 @@ class ProposeChangeService:
             "status": "pending",
         }
 
-        response = self.db_client.table("proposed_changes").insert(data).execute()
-        if not response.data:
+        success, response = self.execute_query(self.db_client.table("proposed_changes").insert(data), "Insert proposal")
+        if not success or not response.get("data"):
             raise RuntimeError("Failed to insert proposal")
 
-        self.logger.info(f"Created proposal {response.data[0].get('id')} of type {change_type}")
-        return cast(ProposedChangeDict, response.data[0])
+        self.logger.info(f"Created proposal {response['data'][0].get('id')} of type {change_type}")
+        return cast(ProposedChangeDict, response["data"][0])
 
     async def approve_proposal(self, proposal_id: UUID, user_id: str | UUID | None = None) -> ProposedChangeDict:
         """Approve and execute a proposal."""
@@ -198,11 +205,11 @@ class ProposeChangeService:
             "approved_by": user_str,
             "approved_at": "now()",
         }
-        response = self.db_client.table("proposed_changes").update(success_data).eq("id", str(proposal_id)).execute()
+        success, response = self.execute_query(self.db_client.table("proposed_changes").update(success_data).eq("id", str(proposal_id)), "Approve proposal")
 
         # 3. Execute
-        if response.data:
-            proposal_data = response.data[0]
+        if success and response.get("data"):
+            proposal_data = response["data"][0]
             try:
                 await self.executor.execute_file_change(
                     payload=proposal_data.get("request_payload", {}), task_id=str(proposal_id)[:8]
@@ -215,9 +222,9 @@ class ProposeChangeService:
         try:
             user_name = "Unknown Admin"
             if user_str:
-                u_res = self.db_client.table("profiles").select("name").eq("id", str(user_str)).execute()
-                if u_res.data:
-                    user_name = u_res.data[0].get("name", "Unknown Admin")
+                s, u_res = self.execute_query(self.db_client.table("profiles").select("name").eq("id", str(user_str)), "Get user name")
+                if s and u_res.get("data"):
+                    user_name = u_res["data"][0].get("name", "Unknown Admin")
             from .log_service import log_service
             log_service.create_log_entry(
                 {
@@ -231,7 +238,7 @@ class ProposeChangeService:
             self.logger.warning(f"Audit log failed: {e}")
 
         self.logger.info(f"Proposal {proposal_id} approved by {user_str}")
-        return cast(ProposedChangeDict, response.data[0])
+        return cast(ProposedChangeDict, response["data"][0])
 
     async def reject_proposal(self, proposal_id: UUID, user_id: str | UUID | None = None) -> ProposedChangeDict:
         """Reject a proposal without executing."""
@@ -243,17 +250,17 @@ class ProposeChangeService:
             "approved_at": "now()",
         }
 
-        response = self.db_client.table("proposed_changes").update(data).eq("id", str(proposal_id)).execute()
-        if not response.data:
+        success, response = self.execute_query(self.db_client.table("proposed_changes").update(data).eq("id", str(proposal_id)), "Reject proposal")
+        if not success or not response.get("data"):
             raise RuntimeError(f"Failed to reject proposal {proposal_id}")
 
         # Audit log
         try:
             user_name = "Unknown Admin"
             if user_str:
-                u_res = self.db_client.table("profiles").select("name").eq("id", str(user_str)).execute()
-                if u_res.data:
-                    user_name = u_res.data[0].get("name", "Unknown Admin")
+                s, u_res = self.execute_query(self.db_client.table("profiles").select("name").eq("id", str(user_str)), "Get user name")
+                if s and u_res.get("data"):
+                    user_name = u_res["data"][0].get("name", "Unknown Admin")
             from .log_service import log_service
             log_service.create_log_entry(
                 {
@@ -267,4 +274,4 @@ class ProposeChangeService:
             self.logger.warning(f"Audit log failed: {e}")
 
         self.logger.info(f"Proposal {proposal_id} rejected by {user_str}")
-        return cast(ProposedChangeDict, response.data[0])
+        return cast(ProposedChangeDict, response["data"][0])

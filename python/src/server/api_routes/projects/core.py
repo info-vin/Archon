@@ -84,7 +84,7 @@ async def list_projects(
 
     res_dto = cast(ProjectListResultDTO, res)
     projs = res_dto.get("projects", [])
-    projs = cast(list[ProjectDTO], RBACService().scope_projects(cast(list[dict[str, Any]], projs), current_user))
+    projs = RBACService().scope_projects(projs, current_user)
 
     if include_content:
         projs = cast(list[ProjectDTO], await SourceLinkingService().format_projects_with_sources(cast(list[dict[str, Any]], projs)))
@@ -138,7 +138,7 @@ async def get_project(project_id: str, current_user: UserProfileDTO = Depends(ge
     res_dto2 = cast(ProjectResultDTO, res)
     p = res_dto2.get("project", {})
 
-    if not RBACService().validate_project_access(cast(dict[str, Any], p), current_user):
+    if not RBACService().validate_project_access(p, current_user):
         _err("Access denied to this department's project.", 403)
 
     return {
@@ -159,7 +159,7 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
         _err("Project not found", 404)
 
     p = res_dto3["project"]
-    if not RBACService().validate_project_access(cast(dict[str, Any], p), current_user):
+    if not RBACService().validate_project_access(p, current_user):
         _err("Permission denied: Cannot update other department's projects.", 403)
 
     fields = {k: v for k, v in req.model_dump().items() if v is not None}

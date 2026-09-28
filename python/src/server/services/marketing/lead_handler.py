@@ -26,7 +26,7 @@ class LeadHandler(BaseRepository):
         success, res = self.execute_query(query, "Failed to fetch leads")
         return res.get("data", []) if success and isinstance(res, dict) else []
 
-    async def create_lead(self, lead_data: dict, creator_id: str | None = None) -> tuple[bool, dict]:
+    async def create_lead(self, lead_data: dict[str, Any] | Any, creator_id: str | None = None) -> tuple[bool, dict]:
         if "created_from_user_id" in lead_data:
             del lead_data["created_from_user_id"]
 
@@ -52,7 +52,7 @@ class LeadHandler(BaseRepository):
             return True, {"lead": res["data"][0]}
         return False, res
 
-    async def update_lead(self, lead_id: str, update_data: dict) -> tuple[bool, dict]:
+    async def update_lead(self, lead_id: str, update_data: dict[str, Any] | Any) -> tuple[bool, dict[str, Any] | Any]:
 
         success, res = self.execute_query(self.supabase_client.table("leads").update(update_data).eq("id", lead_id), f"Failed to update lead {lead_id}")  # 合法
         if success and isinstance(res, dict) and res.get("data"):

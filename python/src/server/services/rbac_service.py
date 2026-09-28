@@ -1,6 +1,6 @@
 # python/src/server/services/rbac_service.py
 
-from typing import Any, TypedDict, cast
+from typing import Any, TypedDict
 
 from src.server.repositories.base_repository import BaseRepository
 from src.server.services.projects.project_service import ProjectDTO
@@ -141,7 +141,7 @@ class RBACService(BaseRepository):
             d_success, dynamic_result = self.execute_query(dynamic_query, "Failed to fetch dynamic crawler targets", require_data=False)
 
             if d_success and dynamic_result.get("data"):
-                allowed_domains = cast(list[str], constraints["allowed_domains"])
+                allowed_domains = constraints["allowed_domains"]
 
                 for target in dynamic_result["data"]:
                     # 加入主網址網域 (Domain) 作為基本許可
