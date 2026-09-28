@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
+from ..repositories.base_repository import BaseRepository
 
 import aiofiles
 from supabase import Client
