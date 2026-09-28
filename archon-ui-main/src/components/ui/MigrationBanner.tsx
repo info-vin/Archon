@@ -45,9 +45,9 @@ export const MigrationBanner: React.FC<MigrationBannerProps> = ({
               Open Supabase Dashboard
             </a>
             {onDismiss && (
-              <button
+              <button type="button"
                 onClick={onDismiss}
-                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm font-medium"
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded"
                 aria-label="Dismiss migration banner"
               >
                 Dismiss (temporarily)

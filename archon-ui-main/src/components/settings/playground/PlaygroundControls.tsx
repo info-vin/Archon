@@ -80,11 +80,11 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
 
   const CornerInput = ({ layer, corner, value, linked, onChange }: any) => (
     <div className="flex items-center gap-1">
-      <button
+      <button type="button"
         onClick={() => toggleLink(layer, corner)}
         aria-label={linked ? 'Unlink corner radius' : 'Link corner radius'}
         className={cn(
-          'w-5 h-5 rounded border transition-all flex items-center justify-center',
+          'w-5 h-5 rounded border transition-all flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
           linked ? 'bg-blue-500 border-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600'
         )}
       >
@@ -109,11 +109,11 @@ export const PlaygroundControls: React.FC<PlaygroundControlsProps> = (props) => 
         </label>
         
         <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
-          <button onClick={() => setActiveTab('layer1')} className={cn('px-4 py-2 text-sm font-medium relative', activeTab === 'layer1' ? 'text-purple-600' : 'text-gray-500')}>
+          <button type="button" onClick={() => setActiveTab('layer1')} className={cn('px-4 py-2 text-sm font-medium relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2', activeTab === 'layer1' ? 'text-purple-600' : 'text-gray-500')}>
             Layer 1 {activeTab === 'layer1' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600" />}
           </button>
           <div className="flex items-center gap-2">
-            <button onClick={() => setActiveTab('layer2')} className={cn('px-4 py-2 text-sm font-medium relative', activeTab === 'layer2' ? 'text-purple-600' : 'text-gray-500')}>
+            <button type="button" onClick={() => setActiveTab('layer2')} className={cn('px-4 py-2 text-sm font-medium relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2', activeTab === 'layer2' ? 'text-purple-600' : 'text-gray-500')}>
               Layer 2 {activeTab === 'layer2' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-600" />}
             </button>
             <input type="checkbox" checked={showLayer2} aria-label="Toggle layer 2" onChange={(e) => setShowLayer2(e.target.checked)} className="w-4 h-4 rounded text-purple-600" />

@@ -589,3 +589,20 @@
 - **單一事實來源與無斷層設計**: 審閱並制定了 `Phase_5.11.1_NotebookLM_Drive_Integration_Plan.md`，完全對齊 Hugging Face Spaces `scripts/deploy_to_hf.sh` 之單一容器架構。
 - **微服務拓樸防禦**: 捨棄獨立容器，將 `notebooklm-py` 與 NotebookLM API 封裝進既有之 `archon-mcp` (`src/mcp_server/features/notebooklm`)，確保 `start_all.sh` 啟動時雲端與本地端雙向容。
 - **跨平台加密避讓**: 使用 `.env` 變數取代 Mac Keychain Cookie，防禦 Docker 無法解密之限制。
+
+### 2026-09-28: Phase 5.11.23 零虛假公證與 L2 架構修復 (Zero Fake Verification & L2 Architecture Fix)
+
+*   **TypeGuardian 型別與架構修復**:
+    *   **診斷**: `bddebe14` (TypeGuardian PR) 引入了 MyPy 型別錯誤 (如 `UserProfileUpdateDict` 缺少 `id`、`list[ProjectDTO]` 冗餘轉型) 以及嚴重的 L2 架構破壞 (在 `ProposeChangeService` 中拔除 `BaseRepository` 並濫用 `query.execute()`)。
+    *   **修復**: 物理修正 `profile_service.py`、`marketing_service.py`、`rbac_service.py` 與 `projects/core.py` 的 DTO 型別。重建 `ProposeChangeService` 對 `BaseRepository` 的繼承，將所有 9 處 `.execute()` 替換為標準的 `self.execute_query()`，通過 `make phase-audit` 的 Step 10 攔截網。
+*   **物理部門隔離 (Physical Department Isolation) 還原**:
+    *   **診斷**: 發現 `test_department_isolation_physical_logic` 測試報錯 (`assert 0 == 2`)，原因是 `bddebe14` 誤刪除了 `list_proposals` 中的部門隔離邏輯，將其退化為單純的 `created_by` 過濾。
+    *   **修復**: 物理還原 `query.filter("request_payload->>created_by_dept", "eq", dept)` 安全隔離網。
+*   **公證**:
+    *   `make lint-be` 與 `make lint-fe` 100% 零錯誤。
+    *   `make test-be` (718 passed)。
+    *   `make phase-audit` 全面亮綠燈通過。
+
+*   **⚠️ 致命的反面教材：改 A 壞 B (Event Loop 阻塞)**:
+    *   **診斷**: 在修復 L2 違規時，我使用了同步的 `self.execute_query`，這在 `ProposeChangeService` 的 `async def` 方法中引發了 Event Loop 阻塞 (重蹈了 Phase 5.11.22 的覆轍)。
+    *   **修復**: 立刻將所有相關調用修正為 `await self.execute_query_async()`，解除效能癱瘓風險。

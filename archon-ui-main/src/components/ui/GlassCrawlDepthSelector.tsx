@@ -62,7 +62,7 @@ export const GlassCrawlDepthSelector: React.FC<GlassCrawlDepthSelectorProps> = (
           const isCurrentValue = level === value;
           
           return (
-            <button
+            <button type="button"
               key={level}
               onClick={() => onChange(level)}
               onMouseEnter={() => setHoveredLevel(level)}
@@ -70,7 +70,7 @@ export const GlassCrawlDepthSelector: React.FC<GlassCrawlDepthSelectorProps> = (
               className={cn(
                 "relative z-10 w-12 h-12 rounded-full transition-all duration-300",
                 "flex items-center justify-center flex-shrink-0",
-                "hover:scale-110 active:scale-95"
+                "hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               )}
               aria-label={`Select crawl depth level ${level}`}
               aria-pressed={isSelected}

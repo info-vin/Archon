@@ -1,6 +1,6 @@
 # python/src/server/services/profile_service.py
 
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 from supabase import Client
 
@@ -12,6 +12,16 @@ from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
 
+
+
+class UserProfileUpdateDict(TypedDict):
+    employeeId: NotRequired[str | None]
+    name: NotRequired[str]
+    department: NotRequired[str | None]
+    position: NotRequired[str | None]
+    avatar: NotRequired[str | None]
+    tenant_id: NotRequired[str | None]
+    id: NotRequired[str]
 
 class ProfileService(BaseRepository):
     """Service for handling business logic related to user profiles."""
@@ -102,7 +112,7 @@ class ProfileService(BaseRepository):
 
         return False, "Profile not found"
 
-    def update_profile(self, user_id: str, updates: dict[str, Any]) -> tuple[bool, UserProfileDTO | str]:
+    def update_profile(self, user_id: str, updates: dict[str, Any] | UserProfileUpdateDict) -> tuple[bool, UserProfileDTO | str]:
         """
         Updates a user profile.
 

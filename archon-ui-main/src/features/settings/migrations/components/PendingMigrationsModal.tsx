@@ -82,7 +82,7 @@ export function PendingMigrationsModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               aria-label="Close pending migrations modal"
               title="Close pending migrations modal"
             >
@@ -109,7 +109,7 @@ export function PendingMigrationsModal({
               <button
                 type="button"
                 onClick={handleCopyAll}
-                className="mt-3 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded text-blue-400 text-sm font-medium transition-colors"
+                className="mt-3 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded text-blue-400 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
               >
                 Copy All Migrations
               </button>
@@ -148,7 +148,7 @@ export function PendingMigrationsModal({
                             onClick={() =>
                               handleCopy(migration.sql_content, index)
                             }
-                            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 flex items-center gap-2 transition-colors"
+                            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
                           >
                             {copiedIndex === index ? (
                               <>
@@ -169,7 +169,7 @@ export function PendingMigrationsModal({
                                 expandedIndex === index ? null : index,
                               )
                             }
-                            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 transition-colors"
+                            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800"
                           >
                             {expandedIndex === index ? "Hide" : "Show"} SQL
                           </button>
@@ -204,14 +204,14 @@ export function PendingMigrationsModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-300 font-medium transition-colors"
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-300 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
             >
               Close
             </button>
             <button
               type="button"
               onClick={onMigrationsApplied}
-              className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-purple-400 font-medium transition-colors"
+              className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 rounded-lg text-purple-400 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
             >
               Refresh Status
             </button>

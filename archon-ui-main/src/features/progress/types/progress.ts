@@ -24,6 +24,29 @@ export type ProgressStatus =
   | "cancelled"
   | "stopping";
 
+// PERFORMANCE: Pre-calculate the formatted string variations for status to avoid O(N) regex evaluation during render
+export const FORMATTED_STATUS_MAP: Record<ProgressStatus, string> = {
+  starting: "Starting",
+  initializing: "Initializing",
+  analyzing: "Analyzing",
+  crawling: "Crawling",
+  processing: "Processing",
+  source_creation: "Source creation",
+  document_storage: "Document storage",
+  code_extraction: "Code extraction",
+  finalization: "Finalization",
+  reading: "Reading",
+  text_extraction: "Text extraction",
+  chunking: "Chunking",
+  summarizing: "Summarizing",
+  storing: "Storing",
+  completed: "Completed",
+  error: "Error",
+  failed: "Failed",
+  cancelled: "Cancelled",
+  stopping: "Stopping",
+};
+
 export type CrawlType = "normal" | "sitemap" | "llms-txt" | "text_file" | "refresh";
 export type UploadType = "document";
 
