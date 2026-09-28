@@ -80,7 +80,7 @@ export const ButtonPlayground: React.FC = () => {
         <div className="relative rounded-xl backdrop-blur-md bg-card border border-border shadow-lg h-full">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <h3 className="text-lg font-semibold">CSS Styles</h3>
-            <button onClick={handleCopyToClipboard} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg transition-colors flex items-center gap-2">
+            <button type="button" onClick={handleCopyToClipboard} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copied ? 'Copied!' : 'Copy Styles'}
             </button>

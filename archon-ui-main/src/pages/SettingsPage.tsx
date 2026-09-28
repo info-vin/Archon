@@ -257,9 +257,9 @@ export const SettingsPage = (): JSX.Element => {
 
       {/* Button Playground Toggle - Subtle blue circle */}
       <motion.div variants={itemVariants} className="mt-12 flex justify-center">
-        <button
+        <button type="button"
           onClick={() => setShowButtonPlayground(!showButtonPlayground)}
-          className="relative w-8 h-8 rounded-full border border-blue-400/30 bg-blue-500/5 hover:bg-blue-500/10 transition-all duration-200 flex items-center justify-center group"
+          className="relative w-8 h-8 rounded-full border border-blue-400/30 bg-blue-500/5 hover:bg-blue-500/10 transition-all duration-200 flex items-center justify-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           title="Toggle Button Playground"
           aria-label="Toggle Button Playground"
           aria-expanded={showButtonPlayground}

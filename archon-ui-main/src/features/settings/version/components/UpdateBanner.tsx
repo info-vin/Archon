@@ -57,7 +57,7 @@ export function UpdateBanner() {
             <button
               type="button"
               onClick={() => setIsDismissed(true)}
-              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
               aria-label="Dismiss update banner"
             >
               <X className="w-4 h-4 text-gray-400" />

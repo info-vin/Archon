@@ -33,7 +33,7 @@ export function MigrationStatusCard() {
             type="button"
             onClick={handleRefresh}
             disabled={isLoading}
-            className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
             aria-label="Refresh migration status"
           >
             <RefreshCw className={`w-4 h-4 text-gray-400 ${isLoading ? "animate-spin" : ""}`} />
@@ -104,7 +104,7 @@ export function MigrationStatusCard() {
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 rounded text-yellow-400 text-sm font-medium transition-colors"
+              className="px-3 py-1.5 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 rounded text-yellow-400 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2"
             >
               View Pending Migrations
             </button>

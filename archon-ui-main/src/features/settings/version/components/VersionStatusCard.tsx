@@ -41,7 +41,7 @@ export function VersionStatusCard() {
           type="button"
           onClick={handleRefreshClick}
           disabled={isLoading || clearCache.isPending}
-          className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           aria-label="Refresh version check"
         >
           <RefreshCw className={`w-4 h-4 text-gray-400 ${isLoading || clearCache.isPending ? "animate-spin" : ""}`} />
