@@ -1,4 +1,3 @@
-# python/src/server/services/propose_change_service.py
 import asyncio
 import logging
 from pathlib import Path
@@ -59,64 +58,60 @@ class ActionExecutor:
         # 1. Create a sandbox branch for safety
         branch_name = modifier.create_sandbox_branch(task_id)
 
-        # 2. Apply the modification
-        modifier.apply_modification(file_path_str, new_content)
+        # 2. Modify the file
+        file_path = Path(str(file_path_str))
+        async with aiofiles.open(file_path, "w") as f:
+            await f.write(str(new_content))
 
-        return f"File '{file_path_str}' written to branch '{branch_name}'"
+        return f"Changes applied to branch {branch_name}"
 
 
 class ProposeChangeService:
+    """Handles the lifecycle of proposed changes from AI or users."""
+
     def __init__(self, db_client: Client | None = None) -> None:
         self.db_client = db_client or get_supabase_client()
-        from ..repositories.base_repository import BaseRepository
-        self.base_repo = BaseRepository(self.db_client)
         self.executor = ActionExecutor()
         self.logger = logging.getLogger(__name__)
 
-    def _resolve_user_id(self, user_id: str | UUID) -> str:
-        """
-        Dynamically handles both UUIDs and simplified IDs ('1', '2', '3').
-        Ensures the ID is returned in a format suitable for the database column.
-        """
-        uid_str = str(user_id)
-        # If it's a simple numeric string, we treat it as a valid identity
-        # but keep it as a string to match the updated TEXT column type.
-        return uid_str
+    def _resolve_user_id(self, user_id: str | UUID | None) -> str | None:
+        """Centralized check: ensure only strings are passed to Supabase"""
+        if user_id is None:
+            return None
+        if isinstance(user_id, UUID):
+            return str(user_id)
+        if hasattr(user_id, "id"):
+            # Some dependencies accidentally pass a user object
+            return str(user_id.id)
+        return str(user_id)
 
     async def list_proposals(self, status: str | None = "pending", user_id: str | None = None) -> list[ProposedChangeDict]:
-        """Lists proposals, optionally filtered by status and user department scope."""
-        query = self.db_client.table("proposed_changes").select("*") # 合法
+        """List proposals based on status and optionally filtered by creator."""
+        query = self.db_client.table("proposed_changes").select("*")
         if status:
             query = query.eq("status", status)
-
-        # Physical Department Isolation (Phase 4.6.23 Hardening)
         if user_id:
-            # First, get the department of the requesting manager
-            success, p_res = self.base_repo.execute_query(
-                self.db_client.table("profiles").select("department, role").eq("id", user_id), # 合法
-                error_context="Failed to query profiles"
-            )
-            if success and p_res.get("data") and len(p_res["data"]) > 0:
-                profile = p_res["data"][0]
-                if profile.get("role") != "system_admin":
-                    dept = profile.get("department")
-                    query = query.filter("request_payload->>created_by_dept", "eq", dept)
+            user_str = self._resolve_user_id(user_id)
+            if user_str:
+                query = query.eq("created_by", user_str)
 
-        success, res = self.base_repo.execute_query(
-            query.order("created_at", desc=True),
-            error_context="Failed to list proposals"
-        )
-        return cast(list[ProposedChangeDict], res.get("data", []) if success else [])
+        query = query.order("created_at", desc=True)
+        response = query.execute()
+
+        return cast(list[ProposedChangeDict], response.data)
 
     async def get_proposal(self, proposal_id: UUID) -> ProposedChangeDict | None:
-        success, res = self.base_repo.execute_query(
-            self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)), # 合法
-            error_context="Failed to get proposal"
-        )
-        return res["data"][0] if success and res.get("data") else None
+        response = self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)).execute()
+        if not response.data:
+            return None
+        return cast(ProposedChangeDict, response.data[0])
 
     async def create_file_proposal(
-        self, file_path: str, new_content: str, summary: str, user_id: str | None = None
+        self,
+        file_path: str,
+        new_content: str,
+        summary: str,
+        user_id: str | UUID | None = None,
     ) -> ProposedChangeDict:
         """Creates a file change proposal, capturing current content as old_content."""
         p = Path(file_path)
@@ -125,43 +120,46 @@ class ProposeChangeService:
             async with aiofiles.open(p, encoding="utf-8") as f:
                 old_content = await f.read()
 
-        # Physical identity embedding (Phase 4.6.23)
+        user_str = self._resolve_user_id(user_id)
         dept = "General"
-        if user_id:
-            success, u_res = self.base_repo.execute_query(
-                self.db_client.table("profiles").select("department").eq("id", user_id), # 合法
-                error_context="Failed to query profiles"
-            )
-            dept = u_res["data"][0].get("department", "General") if success and u_res.get("data") else "General"
+        if user_str:
+            try:
+                u_res = self.db_client.table("profiles").select("department").eq("id", user_str).execute()
+                if u_res.data:
+                    dept = u_res.data[0].get("department", "General")
+            except Exception:
+                pass
 
-        payload = {
+        payload: FileChangePayloadDict = {
             "file_path": file_path,
             "old_content": old_content,
             "new_content": new_content,
-            "created_by": user_id,
+            "created_by": user_str,
             "created_by_dept": dept,
             "change_summary": summary,
         }
 
-        success, res = self.base_repo.execute_query(
-            self.db_client.table("proposed_changes") # 合法
-            .insert({"type": "file", "status": "pending", "request_payload": payload}),
-            error_context="Failed to create file proposal"
+        return await self.create_proposal(
+            change_type="file",
+            payload=payload,
+            user_id=user_str,
         )
-        return cast(ProposedChangeDict, res["data"][0])
 
     async def create_proposal(
-        self, change_type: str, payload: dict[str, Any], user_id: str | None = None
+        self,
+        change_type: str,
+        payload: dict[str, Any] | FileChangePayloadDict,
+        user_id: str | None = None,
     ) -> ProposedChangeDict:
         """Creates a generic proposal (e.g. git commands, feature management) in proposed_changes."""
-        # Embed physical identity (Phase 4.6.23)
         dept = "General"
         if user_id:
-            success, u_res = self.base_repo.execute_query(
-                self.db_client.table("profiles").select("department").eq("id", user_id), # 合法
-                error_context="Failed to query profiles"
-            )
-            dept = u_res["data"][0].get("department", "General") if success and u_res.get("data") else "General"
+            try:
+                u_res = self.db_client.table("profiles").select("department").eq("id", user_id).execute()
+                if u_res.data:
+                    dept = u_res.data[0].get("department", "General")
+            except Exception:
+                pass
 
         # Inject created_by and created_by_dept into request_payload for audit
         request_payload = {
@@ -170,43 +168,57 @@ class ProposeChangeService:
             "created_by_dept": dept,
         }
 
-        success, res = self.base_repo.execute_query(
-            self.db_client.table("proposed_changes") # 合法
-            .insert({"type": change_type, "status": "pending", "request_payload": request_payload}),
-            error_context="Failed to create proposal"
-        )
-        return cast(ProposedChangeDict, res["data"][0])
+        data = {
+            "type": change_type,
+            "request_payload": request_payload,
+            "status": "pending",
+        }
 
-    async def approve_proposal(self, proposal_id: UUID, user_id: str | UUID) -> ProposedChangeDict:
-        resolved_id = self._resolve_user_id(user_id)
-        success, res = self.base_repo.execute_query(
-            self.db_client.table("proposed_changes") # 合法
-            .update({"status": "approved", "approved_by": resolved_id, "approved_at": "now()"})
-            .eq("id", str(proposal_id)),
-            error_context="Failed to approve proposal"
-        )
+        response = self.db_client.table("proposed_changes").insert(data).execute()
+        if not response.data:
+            raise RuntimeError("Failed to insert proposal")
 
-        # Physical Execution Trigger (Phase 5.1.3)
-        if success and res.get("data"):
-            proposal = res["data"][0]
+        self.logger.info(f"Created proposal {response.data[0].get('id')} of type {change_type}")
+        return cast(ProposedChangeDict, response.data[0])
+
+    async def approve_proposal(self, proposal_id: UUID, user_id: str | UUID | None = None) -> ProposedChangeDict:
+        """Approve and execute a proposal."""
+        user_str = self._resolve_user_id(user_id)
+
+        # 1. Fetch proposal
+        proposal = await self.get_proposal(proposal_id)
+        if not proposal:
+            raise ValueError(f"Proposal {proposal_id} not found")
+        if proposal.get("status") != "pending":
+            raise ValueError(f"Proposal is already {proposal.get('status')}")
+
+        # 2. Update DB with success
+        success_data = {
+            "status": "approved",
+            "approved_by": user_str,
+            "approved_at": "now()",
+        }
+        response = self.db_client.table("proposed_changes").update(success_data).eq("id", str(proposal_id)).execute()
+
+        # 3. Execute
+        if response.data:
+            proposal_data = response.data[0]
             try:
                 await self.executor.execute_file_change(
-                    proposal.get("request_payload", {}), task_id=str(proposal_id)[:8]
+                    payload=proposal_data.get("request_payload", {}), task_id=str(proposal_id)[:8]
                 )
             except Exception as e:
                 self.logger.error(f"Failed to execute approved change: {e}")
                 raise
 
-        # Physical Audit Log (Phase 4.6.41)
+        # 4. Audit log
         try:
-            success, u_res = self.base_repo.execute_query(
-                self.db_client.table("profiles").select("name").eq("id", str(user_id)), # 合法
-                error_context="Failed to query profile for audit"
-            )
-            user_name = u_res["data"][0].get("name", "Unknown Admin") if success and u_res.get("data") else "Unknown Admin"
-
+            user_name = "Unknown Admin"
+            if user_str:
+                u_res = self.db_client.table("profiles").select("name").eq("id", str(user_str)).execute()
+                if u_res.data:
+                    user_name = u_res.data[0].get("name", "Unknown Admin")
             from .log_service import log_service
-
             log_service.create_log_entry(
                 {
                     "project_name": "admin-audit",
@@ -218,27 +230,31 @@ class ProposeChangeService:
         except Exception as e:
             self.logger.warning(f"Audit log failed: {e}")
 
-        return cast(ProposedChangeDict, res["data"][0])
+        self.logger.info(f"Proposal {proposal_id} approved by {user_str}")
+        return cast(ProposedChangeDict, response.data[0])
 
-    async def reject_proposal(self, proposal_id: UUID, user_id: str | UUID) -> ProposedChangeDict:
-        resolved_id = self._resolve_user_id(user_id)
-        success, res = self.base_repo.execute_query(
-            self.db_client.table("proposed_changes") # 合法
-            .update({"status": "rejected", "approved_by": resolved_id, "approved_at": "now()"})
-            .eq("id", str(proposal_id)),
-            error_context="Failed to reject proposal"
-        )
+    async def reject_proposal(self, proposal_id: UUID, user_id: str | UUID | None = None) -> ProposedChangeDict:
+        """Reject a proposal without executing."""
+        user_str = self._resolve_user_id(user_id)
 
-        # Physical Audit Log (Phase 4.6.41)
+        data = {
+            "status": "rejected",
+            "approved_by": user_str,
+            "approved_at": "now()",
+        }
+
+        response = self.db_client.table("proposed_changes").update(data).eq("id", str(proposal_id)).execute()
+        if not response.data:
+            raise RuntimeError(f"Failed to reject proposal {proposal_id}")
+
+        # Audit log
         try:
-            success, u_res = self.base_repo.execute_query(
-                self.db_client.table("profiles").select("name").eq("id", str(user_id)), # 合法
-                error_context="Failed to query profile for audit"
-            )
-            user_name = u_res["data"][0].get("name", "Unknown Admin") if success and u_res.get("data") else "Unknown Admin"
-
+            user_name = "Unknown Admin"
+            if user_str:
+                u_res = self.db_client.table("profiles").select("name").eq("id", str(user_str)).execute()
+                if u_res.data:
+                    user_name = u_res.data[0].get("name", "Unknown Admin")
             from .log_service import log_service
-
             log_service.create_log_entry(
                 {
                     "project_name": "admin-audit",
@@ -250,4 +266,5 @@ class ProposeChangeService:
         except Exception as e:
             self.logger.warning(f"Audit log failed: {e}")
 
-        return cast(ProposedChangeDict, res["data"][0])
+        self.logger.info(f"Proposal {proposal_id} rejected by {user_str}")
+        return cast(ProposedChangeDict, response.data[0])
