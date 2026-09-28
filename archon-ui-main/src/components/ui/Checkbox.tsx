@@ -34,7 +34,7 @@ export const Checkbox = ({
   };
 
   return (
-    <button
+    <button type="button"
       onClick={handleClick}
       disabled={disabled}
       aria-label={ariaLabel || "Toggle checkbox"}

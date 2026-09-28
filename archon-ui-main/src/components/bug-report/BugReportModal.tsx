@@ -54,9 +54,9 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
                   Report Bug
                 </h2>
               </div>
-              <button
+              <button type="button"
                 onClick={onClose}
-                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
                 aria-label="Close Bug Report"
                 title="Close Bug Report"
               >
