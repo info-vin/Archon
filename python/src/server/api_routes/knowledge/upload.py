@@ -18,19 +18,20 @@ from ...auth.permissions import TASK_CREATE
 
 # Domain State
 from . import active_crawl_tasks
+from .schemas import DocumentUploadResponse
 
 router = APIRouter()
 logger = get_logger(__name__)
 
 
-@router.post("/documents/upload")
+@router.post("/documents/upload", response_model=DocumentUploadResponse)
 async def upload_document(
     file: UploadFile = File(...),
     knowledge_type: str = Form("technical"),
     tags: str = Form("[]"),
     x_user_role: str | None = Header(None, alias="X-User-Role"),
     current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
-):
+) -> DocumentUploadResponse:
     """Upload a document and process it into knowledge chunks. Requires TASK_CREATE."""
     try:
         tag_list = json.loads(tags)
@@ -59,7 +60,9 @@ async def upload_document(
 
         active_crawl_tasks[progress_id] = task
 
-        return {"status": "success", "progress_id": progress_id, "message": "Upload started in background"}
+        return DocumentUploadResponse(
+            status="success", progress_id=progress_id, message="Upload started in background"
+        )
 
     except Exception as e:
         safe_logfire_error(f"Upload initialization failed: {e}")

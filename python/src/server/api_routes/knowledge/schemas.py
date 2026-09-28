@@ -37,3 +37,11 @@ class CrawlStartResponse(BaseModel):
     progressId: str
     message: str
     estimatedDuration: str = "3-5 minutes"
+
+
+class DocumentUploadResponse(BaseModel):
+    """Response model for document upload endpoint."""
+
+    status: str = Field(description="Upload status string, e.g., 'success'")
+    progress_id: str = Field(description="Unique progress tracking ID for the upload task")
+    message: str = Field(description="Informational message about the upload background process")

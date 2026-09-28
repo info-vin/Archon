@@ -92,3 +92,38 @@ async def test_file_upload_runs_to_completion(mock_dependencies):
     # (Checking .called on the mock instance we linked)
     assert source_manager.create_source_info.called
     assert storage.store_documents.called
+
+
+def test_upload_document_endpoint():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from src.server.api_routes.knowledge.upload import router
+    from src.server.auth.dependencies import get_current_user
+    from src.server.models.auth_models import UserProfileDTO
+
+    app = FastAPI()
+    app.include_router(router)
+
+    # Override authentication dependency to simulate authorized user
+    mock_user = UserProfileDTO(
+        id="usr-123", email="test@example.com", name="Test User", role="admin"
+    )
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+
+    client = TestClient(app)
+
+    with patch("src.server.api_routes.knowledge.upload.ProgressTracker") as mock_pt:
+        mock_pt_inst = MagicMock()
+        mock_pt_inst.start = AsyncMock()
+        mock_pt.return_value = mock_pt_inst
+
+        files = {"file": ("sample.txt", b"Hello World", "text/plain")}
+        data = {"knowledge_type": "technical", "tags": '["test", "doc"]'}
+
+        response = client.post("/documents/upload", files=files, data=data)
+
+        assert response.status_code == 200
+        json_data = response.json()
+        assert json_data["status"] == "success"
+        assert "progress_id" in json_data
+        assert json_data["message"] == "Upload started in background"
