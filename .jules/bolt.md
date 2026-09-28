@@ -274,3 +274,6 @@
 ## 2024-05-20 - Replacing inline toLocaleTimeString() with hoisted Intl.DateTimeFormat
 **Learning:** Calling `new Date().toLocaleTimeString()` inside a React component render loop or callback creates a new `Intl.DateTimeFormat` instance behind the scenes on every invocation, causing unnecessary garbage collection pressure and rendering bottlenecks.
 **Action:** Always hoist `Intl.DateTimeFormat` outside of the component to instantiate it only once upon module load, and use `.format()` instead of `.toLocaleTimeString()`. Ensure an explicit invalid date check (`isNaN(date.getTime())`) is added when migrating to `Intl.DateTimeFormat`.
+## 2024-05-24 - Extracting inline string manipulation to O(1) map
+**Learning:** Using chained `.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase())` directly within render loops creates unnecessary O(N) regex evaluation and string allocations on every render cycle for each item in the list.
+**Action:** Pre-calculate the formatted string variations for static enum/type values into a constant module-level Map or object dictionary to enable O(1) constant-time property lookups during render.

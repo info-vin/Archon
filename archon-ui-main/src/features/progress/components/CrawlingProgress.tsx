@@ -11,7 +11,7 @@ import { useStopCrawl } from "../../knowledge/hooks";
 import { Button } from "../../ui/primitives";
 import { cn } from "../../ui/primitives/styles";
 import { useCrawlProgressPolling } from "../hooks";
-import type { ActiveOperation } from "../types/progress";
+import { type ActiveOperation, type ProgressStatus, FORMATTED_STATUS_MAP } from "../types/progress";
 
 interface CrawlingProgressProps {
   onSwitchToBrowse: () => void;
@@ -163,7 +163,7 @@ export const CrawlingProgress: React.FC<CrawlingProgressProps> = ({ onSwitchToBr
                       </h3>
                       <div className="flex items-center gap-2 mt-2">
                         <span className={cn("px-2 py-1 text-xs rounded", getStatusColor(operation.status))}>
-                          {operation.status.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase())}
+                          {FORMATTED_STATUS_MAP[operation.status as ProgressStatus] || operation.status}
                         </span>
                         {operation.operation_type && (
                           <span className="px-2 py-1 text-xs border border-white/20 rounded bg-black/20">
