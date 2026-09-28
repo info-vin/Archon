@@ -96,7 +96,7 @@ class ProposeChangeService(BaseRepository):
         if user_id:
             user_str = self._resolve_user_id(user_id)
             if user_str:
-                p_success, p_res = self.execute_query(self.db_client.table("profiles").select("department, role").eq("id", user_str), "Fetch profile")
+                p_success, p_res = await self.execute_query_async(self.db_client.table("profiles").select("department, role").eq("id", user_str), "Fetch profile")
                 if p_success and p_res.get("data") and len(p_res["data"]) > 0:
                     profile = p_res["data"][0]
                     if profile.get("role") != "system_admin":
@@ -104,12 +104,12 @@ class ProposeChangeService(BaseRepository):
                         query = query.filter("request_payload->>created_by_dept", "eq", dept)
 
         query = query.order("created_at", desc=True)
-        success, response = self.execute_query(query, "Failed to list proposals")
+        success, response = await self.execute_query_async(query, "Failed to list proposals")
 
         return cast(list[ProposedChangeDict], response.get("data", []) if success else [])
 
     async def get_proposal(self, proposal_id: UUID) -> ProposedChangeDict | None:
-        success, response = self.execute_query(self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)), "Get proposal")
+        success, response = await self.execute_query_async(self.db_client.table("proposed_changes").select("*").eq("id", str(proposal_id)), "Get proposal")
         if not success or not response.get("data"):
             return None
         return cast(ProposedChangeDict, response["data"][0])
@@ -132,7 +132,7 @@ class ProposeChangeService(BaseRepository):
         dept = "General"
         if user_str:
             try:
-                s, u_res = self.execute_query(self.db_client.table("profiles").select("department").eq("id", user_str), "Get user dept")
+                s, u_res = await self.execute_query_async(self.db_client.table("profiles").select("department").eq("id", user_str), "Get user dept")
                 if s and u_res.get("data"):
                     dept = u_res["data"][0].get("department", "General")
             except Exception:
@@ -163,7 +163,7 @@ class ProposeChangeService(BaseRepository):
         dept = "General"
         if user_id:
             try:
-                s, u_res = self.execute_query(self.db_client.table("profiles").select("department").eq("id", user_id), "Get user dept")
+                s, u_res = await self.execute_query_async(self.db_client.table("profiles").select("department").eq("id", user_id), "Get user dept")
                 if s and u_res.get("data"):
                     dept = u_res["data"][0].get("department", "General")
             except Exception:
@@ -182,7 +182,7 @@ class ProposeChangeService(BaseRepository):
             "status": "pending",
         }
 
-        success, response = self.execute_query(self.db_client.table("proposed_changes").insert(data), "Insert proposal")
+        success, response = await self.execute_query_async(self.db_client.table("proposed_changes").insert(data), "Insert proposal")
         if not success or not response.get("data"):
             raise RuntimeError("Failed to insert proposal")
 
@@ -206,7 +206,7 @@ class ProposeChangeService(BaseRepository):
             "approved_by": user_str,
             "approved_at": "now()",
         }
-        success, response = self.execute_query(self.db_client.table("proposed_changes").update(success_data).eq("id", str(proposal_id)), "Approve proposal")
+        success, response = await self.execute_query_async(self.db_client.table("proposed_changes").update(success_data).eq("id", str(proposal_id)), "Approve proposal")
 
         # 3. Execute
         if success and response.get("data"):
@@ -223,7 +223,7 @@ class ProposeChangeService(BaseRepository):
         try:
             user_name = "Unknown Admin"
             if user_str:
-                s, u_res = self.execute_query(self.db_client.table("profiles").select("name").eq("id", str(user_str)), "Get user name")
+                s, u_res = await self.execute_query_async(self.db_client.table("profiles").select("name").eq("id", str(user_str)), "Get user name")
                 if s and u_res.get("data"):
                     user_name = u_res["data"][0].get("name", "Unknown Admin")
             from .log_service import log_service
@@ -251,7 +251,7 @@ class ProposeChangeService(BaseRepository):
             "approved_at": "now()",
         }
 
-        success, response = self.execute_query(self.db_client.table("proposed_changes").update(data).eq("id", str(proposal_id)), "Reject proposal")
+        success, response = await self.execute_query_async(self.db_client.table("proposed_changes").update(data).eq("id", str(proposal_id)), "Reject proposal")
         if not success or not response.get("data"):
             raise RuntimeError(f"Failed to reject proposal {proposal_id}")
 
@@ -259,7 +259,7 @@ class ProposeChangeService(BaseRepository):
         try:
             user_name = "Unknown Admin"
             if user_str:
-                s, u_res = self.execute_query(self.db_client.table("profiles").select("name").eq("id", str(user_str)), "Get user name")
+                s, u_res = await self.execute_query_async(self.db_client.table("profiles").select("name").eq("id", str(user_str)), "Get user name")
                 if s and u_res.get("data"):
                     user_name = u_res["data"][0].get("name", "Unknown Admin")
             from .log_service import log_service

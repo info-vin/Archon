@@ -602,3 +602,7 @@
     *   `make lint-be` 與 `make lint-fe` 100% 零錯誤。
     *   `make test-be` (718 passed)。
     *   `make phase-audit` 全面亮綠燈通過。
+
+*   **⚠️ 致命的反面教材：改 A 壞 B (Event Loop 阻塞)**:
+    *   **診斷**: 在修復 L2 違規時，我使用了同步的 `self.execute_query`，這在 `ProposeChangeService` 的 `async def` 方法中引發了 Event Loop 阻塞 (重蹈了 Phase 5.11.22 的覆轍)。
+    *   **修復**: 立刻將所有相關調用修正為 `await self.execute_query_async()`，解除效能癱瘓風險。
