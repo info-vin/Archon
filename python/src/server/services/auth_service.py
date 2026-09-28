@@ -1,5 +1,3 @@
-# python/src/server/services/auth_service.py
-
 from typing import Any, NotRequired, TypedDict, cast
 
 from src.server.repositories.base_repository import BaseRepository

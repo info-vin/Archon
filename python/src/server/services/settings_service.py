@@ -1,6 +1,4 @@
-# python/src/server/services/settings_service.py
-
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -100,7 +98,7 @@ class SettingsService(BaseRepository):
             query_func=query, error_context="Error fetching all settings", require_data=False
         )
         if success and result["data"]:
-            return {item["key"]: item["value"] for item in result["data"]}
+            return {item["key"]: item["value"] for item in cast(list[dict[str, Any]], result["data"])}
         return {}
 
     def set_setting(self, key: str, value: str) -> bool:

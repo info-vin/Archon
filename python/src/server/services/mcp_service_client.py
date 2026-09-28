@@ -42,9 +42,6 @@ class HealthCheckResponseDTO(TypedDict):
     agents_service: bool
 
 
-
-
-
 class MCPServiceClient:
     """
     Client for MCP service to communicate with other microservices via HTTP.
@@ -64,7 +61,7 @@ class MCPServiceClient:
 
     def _get_headers(self, request_id: str | None = None) -> dict[str, str]:
         """Get common headers for internal requests"""
-        headers = {"X-Service-Auth": self.service_auth, "Content-Type": "application/json"}
+        headers: dict[str, str] = {"X-Service-Auth": self.service_auth, "Content-Type": "application/json"}
         if request_id:
             headers["X-Request-ID"] = request_id
         else:
@@ -73,71 +70,66 @@ class MCPServiceClient:
 
     async def crawl_url(self, url: str, options: dict[str, Any] | None = None) -> CrawlResponseDTO:
         """
-        Crawl a URL by calling the API service's knowledge-items/crawl endpoint.
-        Transforms MCP's simple format to the API's KnowledgeItemRequest format.
-
-        Args:
-            url: URL to crawl
-            options: Crawling options (max_depth, chunk_size, smart_crawl)
-
-        Returns:
-            Crawl response with success status and results
+        Request the API service to crawl a URL.
         """
-        endpoint = urljoin(self.api_url, "/api/knowledge-items/crawl")
+        request_id = str(uuid.uuid4())
+        mcp_logger.info(f"[{request_id}] Requesting crawl for {url}")
 
-        # Transform to API's expected format
-        request_data = {
+        if options is None:
+            options = {}
+
+        payload: dict[str, Any] = {
             "url": url,
-            "knowledge_type": "documentation",  # Default type
-            "tags": [],
-            "update_frequency": 7,  # Default to weekly
-            "metadata": options or {},
+            "wait_for_selector": options.get("wait_for_selector"),
+            "extract_schema": options.get("extract_schema"),
+            "exclude_patterns": options.get("exclude_patterns"),
+            "timeout": options.get("timeout", 30),
         }
-
-        mcp_logger.info(f"Calling API service to crawl {url}")
+        # Remove None values
+        payload = {k: v for k, v in payload.items() if v is not None}
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(endpoint, json=request_data, headers=self._get_headers())
-                response.raise_for_status()
-                result = response.json()
+                response = await client.post(
+                    urljoin(self.api_url, "/api/tools/crawl"),
+                    json=payload,
+                    headers=self._get_headers(request_id),
+                )
 
-                # Transform API response to MCP expected format
-                return {
-                    "success": result.get("success", False),
-                    "progressId": result.get("progressId"),
-                    "message": result.get("message", "Crawling started"),
-                    "error": None if result.get("success") else {"message": "Crawl failed"},
-                }
-        except httpx.TimeoutException:
-            mcp_logger.error(f"Timeout crawling {url}")
-            return {
-                "success": False,
-                "error": {"code": "TIMEOUT", "message": "Crawl operation timed out"},
-            }
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("success"):
+                    return {
+                        "success": True,
+                        "progressId": data.get("progressId"),
+                        "message": data.get("message", "Crawling started")
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": {"message": data.get("error", "Unknown crawl error")}
+                    }
         except httpx.HTTPStatusError as e:
-            mcp_logger.error(f"HTTP error crawling {url}: {e.response.status_code}")
-            return {"success": False, "error": {"code": "HTTP_ERROR", "message": str(e)}}
+            mcp_logger.error(f"[{request_id}] Crawl request failed with status {e.response.status_code}: {e.response.text}")
+            return {"success": False, "error": {"code": str(e.response.status_code), "message": f"HTTP error: {e.response.text}"}}
         except Exception as e:
-            mcp_logger.error(f"Error crawling {url}: {str(e)}")
-            return {"success": False, "error": {"code": "CRAWL_FAILED", "message": str(e)}}
+            mcp_logger.error(f"[{request_id}] Error in crawl_url: {e}", exc_info=True)
+            return {"success": False, "error": {"message": f"Connection error: {e!s}"}}
 
     async def search(
-        self,
-        query: str,
-        source_filter: str | None = None,
-        match_count: int = 5,
-        use_reranking: bool = False,
+        self, query: str, source_filter: str | None = None, match_count: int = 10
     ) -> SearchResponseDTO:
         """
-        Perform a search by calling the API service's rag/query endpoint.
-        Transforms MCP's simple format to the API's RagQueryRequest format.
+        Search for documents using the API service.
+        Note: The actual tool uses Tavily, but this internal method is for retrieving
+        documents already in the system.
 
         Args:
             query: Search query
-            source_filter: Optional source ID to filter results
-            match_count: Number of results to return
-            use_reranking: Whether to rerank results (handled in Server's service layer)
+            source_filter: Optional source filter
+            match_count: Maximum number of results
+            rerank: Whether to rerank results (handled in Server's service layer)
 
         Returns:
             Search response with results
@@ -169,8 +161,6 @@ class MCPServiceClient:
                 "results": [],
                 "error": {"code": "SEARCH_FAILED", "message": str(e)},
             }
-
-    # Removed _rerank_results method - reranking should be handled by Server's service layer
 
     async def store_documents(
         self, documents: list[dict[str, Any]], generate_embeddings: bool = True
@@ -211,8 +201,6 @@ class MCPServiceClient:
         mcp_logger.warning("Direct embedding generation not needed for MCP tools")
         raise NotImplementedError("Embeddings should be handled by Server's service layer")
 
-    # Removed analyze_document - document analysis should be handled by Agents via MCP tools
-
     async def health_check(self) -> HealthCheckResponseDTO:
         """
         Check health of all dependent services.
@@ -244,10 +232,8 @@ class MCPServiceClient:
 
         return health_status
 
-
 # Global client instance
 _mcp_client = None
-
 
 def get_mcp_service_client() -> MCPServiceClient:
     """Get or create the global MCP service client"""
