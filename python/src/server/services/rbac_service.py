@@ -1,8 +1,9 @@
 # python/src/server/services/rbac_service.py
 
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 from src.server.repositories.base_repository import BaseRepository
+from src.server.services.projects.project_service import ProjectDTO
 
 from ..auth.permissions import ROLE_PERMISSIONS
 from ..config.logfire_config import get_logger
@@ -11,6 +12,11 @@ from ..utils import get_supabase_client
 from .shared_constants import RoleEnum
 
 logger = get_logger(__name__)
+
+class CrawlerConstraintsDTO(TypedDict):
+    max_depth: int
+    max_concurrent: int
+    allowed_domains: list[str]
 
 
 class RBACService(BaseRepository):
@@ -75,7 +81,7 @@ class RBACService(BaseRepository):
         RBACService._matrix_cache = static_matrix
         return static_matrix
 
-    def get_crawler_constraints(self, current_user_role: str | None) -> dict:
+    def get_crawler_constraints(self, current_user_role: str | None) -> CrawlerConstraintsDTO:
         """
         Retrieves crawler constraints (max depth, concurrent) for a specific role
         from archon_settings.
@@ -100,7 +106,7 @@ class RBACService(BaseRepository):
             "marketing": 2,
             "sales": 2,
         }
-        constraints = {
+        constraints: CrawlerConstraintsDTO = {
             "max_depth": role_default_depths.get(role, 2),
             "max_concurrent": 3,
             "allowed_domains": ["104.com.tw", "github.com", "google.com"], # 合法
@@ -235,7 +241,7 @@ class RBACService(BaseRepository):
         content_manager_roles = [RoleEnum.ADMIN.value, RoleEnum.SYSTEM_ADMIN.value, RoleEnum.MANAGER.value, RoleEnum.MARKETING.value, RoleEnum.SALES.value]
         return current_user_role.lower() in content_manager_roles
 
-    def scope_projects(self, projects: list[dict], user: UserProfileDTO) -> list[dict]:
+    def scope_projects(self, projects: list[ProjectDTO], user: UserProfileDTO) -> list[ProjectDTO]:
         """
         Filters a list of projects based on user's department and role.
         Centralized logic from projects/core.py for Phase 4.6.30.
@@ -248,7 +254,7 @@ class RBACService(BaseRepository):
 
         return [p for p in projects if p.get("department") == dept or not p.get("department")]
 
-    def validate_project_access(self, project: dict | UserProfileDTO, user: UserProfileDTO) -> bool:
+    def validate_project_access(self, project: ProjectDTO | UserProfileDTO, user: UserProfileDTO) -> bool:
         """
         Validates if a user has access to a specific project based on department.
         Centralized logic from projects/core.py for Phase 4.6.30.
