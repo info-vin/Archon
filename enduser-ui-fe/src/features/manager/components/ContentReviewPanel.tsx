@@ -128,7 +128,7 @@ export const ContentReviewPanel: React.FC<ContentReviewPanelProps> = ({
                                     onChange={e => setRejectReason(e.target.value)}
                                 />
                                 <div className="flex gap-2 justify-end">
-                                    <button onClick={() => setIsRejecting(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 rounded">Cancel</button>
+                                    <button type="button" onClick={() => setIsRejecting(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 rounded">Cancel</button>
                                     <button 
                                         disabled={!rejectReason.trim() || !!processingId}
                                         onClick={handleRejectContent} 

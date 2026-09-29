@@ -61,7 +61,7 @@ export const IdentityNewUserModal: React.FC<{ onClose: () => void; onSave: (newU
                         </select>
                     </div>
                     <div className="flex justify-end space-x-2 pt-4 border-t border-border mt-4">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors">Cancel</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 transition-colors">Cancel</button>
                         <button type="submit" disabled={isLoading} aria-disabled={isLoading} aria-busy={isLoading} className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all font-bold">{isLoading ? 'Creating...' : 'Create User'}</button>
                     </div>
                 </form>
