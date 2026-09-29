@@ -112,3 +112,7 @@
 ## 2025-03-08 - Fix missing button types and focus rings
 **Learning:** Custom components like `AudioPlayer` and `MobileDateTimePicker` often omit `type="button"` on internal `<button>` tags, leading to accidental form submissions (form hijacking) when used inside forms. Additionally, modal action buttons like those in `ProjectModal` missed standard `focus-visible` styling, reducing keyboard accessibility.
 **Action:** Always ensure that any `<button>` not meant to submit a form has `type="button"` explicitly set. Continuously verify that modal action buttons implement the full `focus-visible:outline-none focus-visible:ring-2` styling pattern.
+
+## 2024-10-24 - Focus Visible for Keyboard Accessibility
+**Learning:** The app's components sometimes lack proper focus states for keyboard accessibility, specifically on secondary 'Cancel' buttons.
+**Action:** Always ensure `focus-visible` styles are included for interactive elements to improve keyboard accessibility.

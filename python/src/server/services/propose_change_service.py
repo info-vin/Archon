@@ -3,12 +3,11 @@ import logging
 from pathlib import Path
 from typing import Any, NotRequired, TypedDict, cast
 from uuid import UUID
-from ..repositories.base_repository import BaseRepository
 
 import aiofiles
 from supabase import Client
 
-from ..utils import get_supabase_client
+from ..repositories.base_repository import BaseRepository
 
 
 class FileChangePayloadDict(TypedDict):

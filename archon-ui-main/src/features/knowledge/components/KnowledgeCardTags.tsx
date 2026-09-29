@@ -364,7 +364,7 @@ export const KnowledgeCardTags: React.FC<KnowledgeCardTagsProps> = ({ sourceId, 
             disabled={updateMutation.isPending}
             className={[
               "px-2 py-1 text-xs bg-gray-500 dark:bg-gray-500 text-white",
-              "hover:bg-gray-600 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors",
+              "hover:bg-gray-600 dark:hover:bg-gray-600 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors",
             ].join(" ")}
           >
             Cancel
