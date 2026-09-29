@@ -24,9 +24,28 @@ class LogDataDTO(TypedDict):
     user_name: NotRequired[str | None]
 
 
+class LogEntryDTO(TypedDict):
+    id: NotRequired[int | str]
+    source: NotRequired[str | None]
+    level: NotRequired[str | None]
+    message: NotRequired[str | None]
+    details: NotRequired[dict[str, Any] | None]
+    created_at: NotRequired[str | None]
+    project_name: NotRequired[str | None]
+
+
 class LogEntryResultDTO(TypedDict):
-    log: NotRequired[dict[str, Any]]
+    log: NotRequired[LogEntryDTO]
     error: NotRequired[str]
+
+
+class SystemAlertDTO(TypedDict):
+    id: str
+    level: str
+    message: str
+    created_at: NotRequired[str | None]
+    source: NotRequired[str | None]
+    project_name: NotRequired[str | None]
 
 
 class LogService(BaseRepository):
@@ -37,7 +56,7 @@ class LogService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
-    async def get_recent_alerts(self, limit: int = 10) -> tuple[bool, Any]:
+    async def get_recent_alerts(self, limit: int = 10) -> tuple[bool, dict[str, Any]]:
         """Retrieve recent alert logs with trimmed payload for AI ingestion."""
         return self.execute_query(
             self.supabase_client.table("archon_logs")
@@ -92,7 +111,7 @@ class LogService(BaseRepository):
         success, res = self.create_log_entry(log_data)
         return res if success else {"error": "Failed to log"}
 
-    async def get_active_alerts(self) -> list[dict[str, Any]]:
+    async def get_active_alerts(self) -> list[SystemAlertDTO]:
         """Physical Placeholder for Charlie's Sentinel Alerts."""
         return []
 
