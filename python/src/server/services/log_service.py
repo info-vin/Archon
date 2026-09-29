@@ -58,7 +58,7 @@ class LogService(BaseRepository):
 
     async def get_recent_alerts(self, limit: int = 10) -> tuple[bool, dict[str, Any]]:
         """Retrieve recent alert logs with trimmed payload for AI ingestion."""
-        return self.execute_query(
+        return await self.execute_query_async(
             self.supabase_client.table("archon_logs")
             .select("id, level, message, created_at")
             .eq("level", "ALERT")
