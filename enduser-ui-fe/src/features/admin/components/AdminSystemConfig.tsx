@@ -12,8 +12,15 @@ export const AdminSystemConfig: React.FC = () => {
             .filter((curr: any) => curr.key !== 'HF_TOKEN' && curr.key !== 'forced_fallback_tier')
             .reduce((acc: Record<string, any[]>, curr: any) => {
                 const cat = curr.category || 'general';
-                if (!acc[cat]) acc[cat] = [];
-                acc[cat].push(curr);
+                // Pre-calculate formatted strings to avoid O(N) regex evaluation on every render cycle
+                const formattedCategory = cat.replace('_', ' ');
+                const formattedKey = curr.key.replace(/_/g, ' ');
+
+                if (!acc[formattedCategory]) acc[formattedCategory] = [];
+                acc[formattedCategory].push({
+                    ...curr,
+                    formatted_key: formattedKey
+                });
                 return acc;
             }, {} as Record<string, any[]>);
     }, [settings]);
@@ -37,15 +44,14 @@ export const AdminSystemConfig: React.FC = () => {
                     <div key={category} className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                         <h3 className="text-lg font-bold mb-6 capitalize flex items-center gap-2">
                             <ShieldCheckIcon className="w-5 h-5 text-indigo-500" />
-                            {category.replace('_', ' ')}
+                            {category}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {catSettings
-                                .filter((s: any) => s.key !== 'HF_TOKEN' && s.key !== 'forced_fallback_tier')
                                 .map((s: any) => {
                                 let fieldConfig: any = { 
                                     key: s.key, 
-                                    label: s.key.replace(/_/g, ' '), 
+                                    label: s.formatted_key,
                                     type: !isNaN(Number(s.value)) ? 'number' : 'text' 
                                 };
 

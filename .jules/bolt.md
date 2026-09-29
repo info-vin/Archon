@@ -277,3 +277,7 @@
 ## 2024-05-24 - Extracting inline string manipulation to O(1) map
 **Learning:** Using chained `.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase())` directly within render loops creates unnecessary O(N) regex evaluation and string allocations on every render cycle for each item in the list.
 **Action:** Pre-calculate the formatted string variations for static enum/type values into a constant module-level Map or object dictionary to enable O(1) constant-time property lookups during render.
+
+## 2025-05-18 - Pre-calculate string formatting in map iterations
+**Learning:** Using inline string manipulations like `.replace(/_/g, ' ')` inside a `.map()` during a React component's render loop causes unnecessary O(N) regex evaluation and string allocation on every render cycle.
+**Action:** Always extract and pre-calculate formatted strings within a `useMemo` block or during initial data transformation so that the expensive string operations execute only when the underlying data changes, maintaining O(1) property lookup during renders.
