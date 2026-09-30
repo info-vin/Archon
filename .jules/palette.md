@@ -116,3 +116,6 @@
 ## 2024-10-24 - Focus Visible for Keyboard Accessibility
 **Learning:** The app's components sometimes lack proper focus states for keyboard accessibility, specifically on secondary 'Cancel' buttons.
 **Action:** Always ensure `focus-visible` styles are included for interactive elements to improve keyboard accessibility.
+## 2024-10-27 - Focus Rings on Mobile FABs
+**Learning:** Floating action buttons (FABs) designed for mobile (e.g., hidden on desktop via `md:hidden`) often miss `focus-visible` styles. Keyboard users on tablets or resized windows rely on these visible focus rings for accessibility. Also, utility FABs without form context often lack the explicit `type="button"` attribute.
+**Action:** When implementing or auditing floating action buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` is included, and always declare `type="button"` on non-submit FABs.

@@ -101,6 +101,7 @@ const MarketingPage: React.FC = () => {
 
         {/* Alice's FAB for Visit Logs (Mobile Optimization) */}
         <button
+          type="button"
           onClick={() => {
             if (leads.length > 0) {
               handleOpenVisitLog(leads[0]);
@@ -108,7 +109,7 @@ const MarketingPage: React.FC = () => {
               alert("Add a lead first to create a visit log!");
             }
           }}
-          className="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-95 z-40 md:hidden"
+          className="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-indigo-700 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 z-40 md:hidden"
           title="New Visit Log"
           aria-label="New Visit Log"
         >
