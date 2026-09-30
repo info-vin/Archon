@@ -89,6 +89,7 @@ class NotificationConfig(BaseModel):
     telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_TO")
     telegram_timeout: float = Field(default=30.0, alias="TELEGRAM_TIMEOUT")
     telegram_retries: int = Field(default=3, alias="TELEGRAM_RETRIES")
+    telegram_snippet_length: int = Field(default=150, alias="TELEGRAM_SNIPPET_LENGTH")
 
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.05, alias="WEEKLY_BUDGET_THRESHOLD")

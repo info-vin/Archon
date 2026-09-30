@@ -1,5 +1,7 @@
 from typing import TypedDict, cast
 
+from supabase import Client
+
 from ..repositories.base_repository import BaseRepository
 
 
@@ -8,21 +10,23 @@ class GameSaveDataDTO(TypedDict, total=False):
     reputation: int
     # Add other flexible game state fields as needed...
 
+
 class GameSaveResultDTO(TypedDict):
     id: str
     user_id: str
     save_data: GameSaveDataDTO
     updated_at: str
 
+
 class GameService(BaseRepository):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, supabase_client: Client | None = None) -> None:
+        super().__init__(supabase_client)
 
     async def save_game(self, user_id: str, save_data: GameSaveDataDTO) -> GameSaveResultDTO:
-        query = self.supabase_client.table("user_game_saves").upsert({ # 合法
+        query = self.supabase_client.table("user_game_saves").upsert({
             "user_id": user_id,
             "save_data": save_data,
-            "updated_at": "now()"
+            "updated_at": "now()",
         })
         success, res = self.execute_query(query, "Failed to save game state", require_data=True)
         if not success:
@@ -30,7 +34,7 @@ class GameService(BaseRepository):
         return cast(GameSaveResultDTO, res.get("data", [{}])[0])
 
     async def load_game(self, user_id: str) -> GameSaveDataDTO | None:
-        query = self.supabase_client.table("user_game_saves").select("save_data").eq("user_id", user_id) # 合法
+        query = self.supabase_client.table("user_game_saves").select("save_data").eq("user_id", user_id)
         success, res = self.execute_query(query, "Failed to load game state")
         if not success:
             raise ValueError("Failed to load game state.")
@@ -40,5 +44,6 @@ class GameService(BaseRepository):
             return None
 
         return cast(GameSaveDataDTO, data[0].get("save_data"))
+
 
 game_service = GameService()

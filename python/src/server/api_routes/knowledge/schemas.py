@@ -37,3 +37,11 @@ class CrawlStartResponse(BaseModel):
     progressId: str
     message: str
     estimatedDuration: str = "3-5 minutes"
+
+
+class CrawlActionResponse(BaseModel):
+    """Response model for generic crawl actions (e.g., stop, refresh)."""
+
+    success: bool
+    message: str
+    progressId: str | None = Field(default=None, description="Optional progress ID if an operation was initiated")

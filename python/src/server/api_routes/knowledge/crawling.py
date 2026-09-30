@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-from src.server.api_routes.knowledge.schemas import CrawlRequest
+from src.server.api_routes.knowledge.schemas import CrawlActionResponse, CrawlRequest, CrawlStartResponse
 from src.server.config.logfire_config import safe_logfire_error, safe_logfire_info
 from src.server.models.auth_models import UserProfileDTO
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
@@ -35,8 +35,10 @@ async def get_crawl_progress(progress_id: str):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/knowledge-items/stop/{progress_id}")
-async def stop_crawl_operation(progress_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE))):
+@router.post("/knowledge-items/stop/{progress_id}", response_model=CrawlActionResponse)
+async def stop_crawl_operation(
+    progress_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE))
+) -> CrawlActionResponse:
     """Stop an active crawl or refresh operation. Requires TASK_CREATE."""
     from src.server.services.crawling import unregister_orchestration
 
@@ -49,21 +51,21 @@ async def stop_crawl_operation(progress_id: str, current_user: UserProfileDTO = 
 
             tracker = ProgressTracker(progress_id)
             await tracker.update(status="stopped", progress=100, log="Operation stopped by user")
-            return {"success": True, "message": f"Operation {progress_id} stopped"}
+            return CrawlActionResponse(success=True, message=f"Operation {progress_id} stopped")
         else:
             unregister_orchestration(progress_id)
-            return {"success": True, "message": f"Stop signal sent to {progress_id}"}
+            return CrawlActionResponse(success=True, message=f"Stop signal sent to {progress_id}")
     except Exception as e:
         safe_logfire_error(f"Failed to stop operation {progress_id} | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/knowledge-items/{source_id}/refresh")
+@router.post("/knowledge-items/{source_id}/refresh", response_model=CrawlActionResponse)
 async def refresh_knowledge_item(
     source_id: str,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
     current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
-):
+) -> CrawlActionResponse:
     """Refresh an existing knowledge item by re-crawling its source. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
     from src.server.services.rbac_service import RBACService
@@ -118,7 +120,7 @@ async def refresh_knowledge_item(
         active_crawl_tasks[progress_id] = task
         safe_logfire_info(f"Refresh task created | progress_id={progress_id} | url={url}")
 
-        return {"success": True, "progressId": progress_id, "message": "Refresh started"}
+        return CrawlActionResponse(success=True, progressId=progress_id, message="Refresh started")
 
     except HTTPException:
         raise
@@ -127,12 +129,12 @@ async def refresh_knowledge_item(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/knowledge-items/crawl")
+@router.post("/knowledge-items/crawl", response_model=CrawlStartResponse)
 async def crawl_knowledge_item(
     request: CrawlRequest,
     x_user_role: str | None = Header(None, alias="X-User-Role"),
     current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE)),
-):
+) -> CrawlStartResponse:
     """Start a new web crawl to populate the knowledge base. Requires TASK_CREATE."""
     # LATE IMPORT to share the same physical registry with other modules
     from src.server.services.rbac_service import RBACService
@@ -171,12 +173,12 @@ async def crawl_knowledge_item(
         task = asyncio.create_task(orchestration_service.orchestrate_crawl(request_dict))
         active_crawl_tasks[progress_id] = task
 
-        return {
-            "success": True,
-            "progressId": progress_id,
-            "message": "Crawling started",
-            "estimatedDuration": "3-5 minutes",
-        }
+        return CrawlStartResponse(
+            success=True,
+            progressId=progress_id,
+            message="Crawling started",
+            estimatedDuration="3-5 minutes",
+        )
     except Exception as e:
         safe_logfire_error(f"Failed to start crawl | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e

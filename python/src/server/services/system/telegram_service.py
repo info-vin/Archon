@@ -1,3 +1,4 @@
+import re
 
 import httpx
 
@@ -11,6 +12,18 @@ logger = get_logger(__name__)
 class TelegramService:
     def __init__(self) -> None:
         pass
+
+    @staticmethod
+    def sanitize_markdown_snippet(text: str, max_length: int = 150) -> str:
+        """Sanitizes text for safe Markdown parsing and truncates to a snippet."""
+        if not text:
+            return ""
+        text = re.sub(r'http[s]?://\S+', '', text)
+        text = re.sub(r'[*_`\[\]()#]', '', text)
+        text = ' '.join(text.split())
+        if len(text) > max_length:
+            return text[:max_length].strip() + "..."
+        return text
 
     async def _log_to_db(self, level: str, message: str) -> None:
         """Writes directly to archon_logs to ensure errors are visible in Admin UI."""
