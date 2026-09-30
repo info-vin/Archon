@@ -125,6 +125,18 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-09-30: Phase 5.11.23 Telegram 簡化版報告防禦與 SSOT 重構 (Telegram Snippet Defense & SSOT Refactoring)
+
+*   **Telegram 報告快覽 (Snippet) 防禦性優化**:
+    *   **診斷**: 使用者反饋 Telegram 報告通知過於簡化 (僅有連結)。調查發現直接傳送 AI 生成的 `task_desc` 容易因包含 Markdown 表格或未閉合標籤導致 Telegram `parse_mode='Markdown'` 崩潰 (400 Bad Request)。
+    *   **修復**: 實裝 `TelegramService.sanitize_markdown_snippet()` 靜態方法，利用 `re` 正規表示式安全剝除網址與所有 Markdown 符號 (`*`, `_`, `[`, `]`, `\``, `#`)，並截取前 N 個字元作為「📝 報告快覽」，讓使用者能在通訊軟體內直接無痛預覽。
+*   **SSOT 與 DRY 鐵律落實**:
+    *   **DRY (不要重複)**: 避免在 `report_service.py` 裸寫正規表示式，將邏輯集中至 `telegram_service.py` 以利未來其他 Agent 共用。
+    *   **SSOT (單一真實來源)**: 消除魔術數字 `150`。將 Telegram 摘要字元長度上限收斂至 `settings.py` 中的 `NotificationConfig.telegram_snippet_length` 進行單一控管。
+*   **零虛假開發與物理公證**:
+    *   透過 `make phase-audit` 確認無 L2 耦合與系統依賴錯誤。
+    *   透過 `make test-be` (724 passed) 物理公證重構並未破壞任何現有 Mock 與型別斷言。
+
 ### 2026-09-26: Phase 5.11.22 零虛假公證與 Event Loop 解鎖 (Zero Fake Verification & Event Loop Unblocking)
 
 *   **Event Loop 阻塞解除 (4.8s -> 0.0s)**:
