@@ -95,6 +95,11 @@ class DraftFromLeadsRequest(BaseModel):
     lead_ids: list[str]
 
 
+class DraftFromLeadsResponse(BaseModel):
+    task_id: str = Field(description="Unique identifier of the created background task")
+    status: str = Field(description="Task dispatch status")
+
+
 class JobResponse(BaseModel):
     title: str = Field(description="Title of the job posting")
     company: str = Field(description="Company name offering the position")
