@@ -281,3 +281,6 @@
 ## 2025-05-18 - Pre-calculate string formatting in map iterations
 **Learning:** Using inline string manipulations like `.replace(/_/g, ' ')` inside a `.map()` during a React component's render loop causes unnecessary O(N) regex evaluation and string allocation on every render cycle.
 **Action:** Always extract and pre-calculate formatted strings within a `useMemo` block or during initial data transformation so that the expensive string operations execute only when the underlying data changes, maintaining O(1) property lookup during renders.
+## 2026-10-01 - Replace nested Array.find() with Map lookup in useEffect
+**Learning:** Array.find() inside a loop (like .filter or .map) on arrays of objects causes hidden O(N*M) complexity, especially in React useEffects that process lists of operations.
+**Action:** Always precalculate a Map for O(1) lookups before the loop when comparing two lists (e.g., previous state vs current state).
