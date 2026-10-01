@@ -119,3 +119,6 @@
 ## 2024-10-27 - Focus Rings on Mobile FABs
 **Learning:** Floating action buttons (FABs) designed for mobile (e.g., hidden on desktop via `md:hidden`) often miss `focus-visible` styles. Keyboard users on tablets or resized windows rely on these visible focus rings for accessibility. Also, utility FABs without form context often lack the explicit `type="button"` attribute.
 **Action:** When implementing or auditing floating action buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` is included, and always declare `type="button"` on non-submit FABs.
+## 2024-05-30 - Conflicting ARIA labels on buttons with visible text
+**Learning:** Adding `aria-label` to buttons that already have clear visible text (e.g. `aria-label="View diff for prompt change"` on a button displaying "VIEW DIFF") violates WCAG 2.5.3 "Label in Name". It overrides the visible text for screen readers and breaks voice-control activation.
+**Action:** Never use `aria-label` on a button if the visible text is already descriptive. Only use `aria-label` for icon-only buttons or when the visible text is ambiguous (and even then, `aria-labelledby` or ensuring the visible text is included in the label is preferred).
