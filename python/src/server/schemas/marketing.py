@@ -95,6 +95,10 @@ class DraftFromLeadsRequest(BaseModel):
     lead_ids: list[str]
 
 
+class ResetLeadsResponse(BaseModel):
+    success: bool = Field(description="Indicates whether leads reset was successful")
+
+
 class JobResponse(BaseModel):
     title: str = Field(description="Title of the job posting")
     company: str = Field(description="Company name offering the position")
