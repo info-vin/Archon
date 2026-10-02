@@ -31,13 +31,13 @@ const TaskCardExample = ({ task, index }: { task: any; index: number }) => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" aria-label={`Edit ${task.title}`} className="p-1 rounded hover:bg-cyan-500/10 text-gray-500 hover:text-cyan-500 transition-colors"><Edit className="w-3 h-3" /></button>
+                    <button type="button" aria-label={`Edit ${task.title}`} className="p-1 rounded hover:bg-cyan-500/10 text-gray-500 hover:text-cyan-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-cyan-500"><Edit aria-hidden="true" className="w-3 h-3" /></button>
                   </TooltipTrigger>
                   <TooltipContent>Edit task</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" aria-label={`Delete ${task.title}`} className="p-1 rounded hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors"><Trash2 className="w-3 h-3" /></button>
+                    <button type="button" aria-label={`Delete ${task.title}`} className="p-1 rounded hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-red-500"><Trash2 aria-hidden="true" className="w-3 h-3" /></button>
                   </TooltipTrigger>
                   <TooltipContent>Delete task</TooltipContent>
                 </Tooltip>
