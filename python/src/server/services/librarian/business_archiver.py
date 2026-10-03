@@ -1,6 +1,9 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any, TypedDict
+
+if TYPE_CHECKING:
+    from supabase import Client
 
 from ...config.logfire_config import get_logger
 from ...repositories.knowledge_repository import KnowledgeRepository
@@ -13,8 +16,19 @@ from ..shared_constants import AgentUUIDs
 logger = get_logger(__name__)
 
 
+class FailureCaseMetadataDTO(TypedDict, total=False):
+    outcome: str
+    reason: str
+    company: str
+    job: str
+
+
 class BusinessArchiver:
-    def __init__(self, supabase=None, repo=None) -> None:
+    def __init__(
+        self,
+        supabase: "Client | None" = None,
+        repo: KnowledgeRepository | None = None,
+    ) -> None:
         self.supabase = supabase or get_supabase_client()
         self.repo = repo or KnowledgeRepository(self.supabase)
 
@@ -124,7 +138,12 @@ class BusinessArchiver:
             return ""
 
     async def archive_failure_case(
-        self, content: str, reason: str, company: str, job_title: str, metadata: dict | None = None
+        self,
+        content: str,
+        reason: str,
+        company: str,
+        job_title: str,
+        metadata: FailureCaseMetadataDTO | None = None,
     ) -> str:
         """
         Archives a failed sales lead or rejected content as negative expertise.
