@@ -122,3 +122,6 @@
 ## 2024-05-30 - Conflicting ARIA labels on buttons with visible text
 **Learning:** Adding `aria-label` to buttons that already have clear visible text (e.g. `aria-label="View diff for prompt change"` on a button displaying "VIEW DIFF") violates WCAG 2.5.3 "Label in Name". It overrides the visible text for screen readers and breaks voice-control activation.
 **Action:** Never use `aria-label` on a button if the visible text is already descriptive. Only use `aria-label` for icon-only buttons or when the visible text is ambiguous (and even then, `aria-labelledby` or ensuring the visible text is included in the label is preferred).
+## 2024-05-24 - Keyboard Accessibility for Custom List Items
+**Learning:** When building custom list items with `onClick` on `div`s (like the source selector in BrandWorkbenchView), it's easy to forget keyboard navigation.
+**Action:** Always pair `onClick` with `role="button"`, `tabIndex={0}`, and `onKeyDown` for Space/Enter, along with visible focus states.

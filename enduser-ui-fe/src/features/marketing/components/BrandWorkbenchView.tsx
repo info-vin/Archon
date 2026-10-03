@@ -53,8 +53,11 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
                         {sources.map(source => (
                         <div 
                             key={`${source.type}-${source.id}`}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => handleSelectSource(source)}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectSource(source); } }}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset ${
                                 activeSource?.id === source.id ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-100' : 'bg-white border-slate-100 hover:border-indigo-100'
                             }`}
                         >
@@ -96,8 +99,9 @@ export const BrandWorkbenchView: React.FC<BrandWorkbenchViewProps> = ({
 
             {/* Sidebar Toggle */}
             <button 
+                type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="absolute left-0 bottom-10 z-30 bg-indigo-600 text-white p-2 rounded-r-lg shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-110 active:scale-95"
+                className="absolute left-0 bottom-10 z-30 bg-indigo-600 text-white p-2 rounded-r-lg shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
                 {isSidebarOpen ? <XIcon className="w-4 h-4" /> : <LayoutIcon className="w-4 h-4" />}
