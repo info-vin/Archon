@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -60,3 +60,15 @@ async def test_get_active_alerts(log_service):
     result = await log_service.get_active_alerts()
     assert isinstance(result, list)
     assert len(result) == 0
+
+
+@pytest.mark.asyncio
+async def test_get_recent_alerts(log_service):
+    mock_execute_query_async = AsyncMock(return_value=(True, {"data": [{"id": "1", "level": "ALERT", "message": "High CPU"}]}))
+    log_service.execute_query_async = mock_execute_query_async
+
+    success, res = await log_service.get_recent_alerts(limit=5)
+    assert success is True
+    assert "data" in res
+    assert len(res["data"]) == 1
+    assert res["data"][0]["message"] == "High CPU"

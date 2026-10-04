@@ -14,6 +14,7 @@ from src.server.schemas.projects import (
     CreateTaskRequest,
     GenerateTaskFromAlertRequest,
     RefineTaskRequest,
+    RefineTaskResponse,
     UpdateTaskRequest,
 )
 
@@ -74,10 +75,12 @@ async def list_project_tasks(
     return tasks
 
 
-@router.post("/tasks/refine-description")
-async def refine_task_description(req: RefineTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/tasks/refine-description", response_model=RefineTaskResponse)
+async def refine_task_description(
+    req: RefineTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> RefineTaskResponse:
     res = await TaskService().refine_task_description(req.title, req.description)
-    return {"refined_description": res}
+    return RefineTaskResponse(refined_description=res)
 
 
 @router.post("/tasks/generate-from-alert")

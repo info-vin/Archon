@@ -119,3 +119,13 @@
 ## 2024-10-27 - Focus Rings on Mobile FABs
 **Learning:** Floating action buttons (FABs) designed for mobile (e.g., hidden on desktop via `md:hidden`) often miss `focus-visible` styles. Keyboard users on tablets or resized windows rely on these visible focus rings for accessibility. Also, utility FABs without form context often lack the explicit `type="button"` attribute.
 **Action:** When implementing or auditing floating action buttons, always ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` is included, and always declare `type="button"` on non-submit FABs.
+## 2024-05-30 - Conflicting ARIA labels on buttons with visible text
+**Learning:** Adding `aria-label` to buttons that already have clear visible text (e.g. `aria-label="View diff for prompt change"` on a button displaying "VIEW DIFF") violates WCAG 2.5.3 "Label in Name". It overrides the visible text for screen readers and breaks voice-control activation.
+**Action:** Never use `aria-label` on a button if the visible text is already descriptive. Only use `aria-label` for icon-only buttons or when the visible text is ambiguous (and even then, `aria-labelledby` or ensuring the visible text is included in the label is preferred).
+## 2025-03-08 - Fix missing button types inside manager components
+**Learning:** Custom tab buttons, rejection, and approval buttons in `OpLoadPanel` and `ContentReviewPanel` missed `type="button"`, causing unintended form submissions if wrapped or nested in forms. Additionally, the same buttons missed standard `focus-visible` ring styling.
+**Action:** When working on panels that switch content dynamically, make sure to set `type="button"` for all tab buttons. Ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` are added to action buttons.
+
+## 2025-03-08 - Add focus-visible:ring-offset to EmptyState action button
+**Learning:** Generic components like `EmptyState` which provide actionable buttons must maintain consistent and fully visible focus states. The action button in `EmptyState` had `focus-visible:ring-2` but lacked `focus-visible:ring-offset-2`, making the focus ring harder to distinguish against varied background colors.
+**Action:** Always ensure the full `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` styling is applied to action buttons, especially in reusable generic components, to guarantee consistent keyboard navigation visibility.

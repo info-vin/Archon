@@ -76,7 +76,7 @@ class LogEntry(BaseModel):
     source: str | None = None
     level: str | None = None
     message: str | None = None
-    details: dict[str, Any] | None = None
+    details: dict[str, Any] | Any | None = None
     created_at: str | None = None
     project_name: str | None = None
 

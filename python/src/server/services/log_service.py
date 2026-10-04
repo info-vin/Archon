@@ -5,7 +5,7 @@ This module provides business logic for logging Gemini interactions.
 """
 
 from datetime import datetime
-from typing import Any, NotRequired, TypedDict
+from typing import NotRequired, TypedDict, cast
 
 from supabase import Client
 
@@ -24,12 +24,17 @@ class LogDataDTO(TypedDict):
     user_name: NotRequired[str | None]
 
 
+class LogDetailsDTO(TypedDict):
+    user_input: NotRequired[str | None]
+    user_name: NotRequired[str | None]
+
+
 class LogEntryDTO(TypedDict):
     id: NotRequired[int | str]
     source: NotRequired[str | None]
     level: NotRequired[str | None]
     message: NotRequired[str | None]
-    details: NotRequired[dict[str, Any] | None]
+    details: NotRequired[LogDetailsDTO | None]
     created_at: NotRequired[str | None]
     project_name: NotRequired[str | None]
 
@@ -48,6 +53,11 @@ class SystemAlertDTO(TypedDict):
     project_name: NotRequired[str | None]
 
 
+class RecentAlertsResultDTO(TypedDict):
+    data: NotRequired[list[SystemAlertDTO]]
+    error: NotRequired[str]
+
+
 class LogService(BaseRepository):
     """Service class for logging operations"""
 
@@ -56,9 +66,9 @@ class LogService(BaseRepository):
         client = supabase_client or get_supabase_client()
         super().__init__(client)
 
-    async def get_recent_alerts(self, limit: int = 10) -> tuple[bool, dict[str, Any]]:
+    async def get_recent_alerts(self, limit: int = 10) -> tuple[bool, RecentAlertsResultDTO]:
         """Retrieve recent alert logs with trimmed payload for AI ingestion."""
-        return await self.execute_query_async(
+        success, res = await self.execute_query_async(
             self.supabase_client.table("archon_logs")
             .select("id, level, message, created_at")
             .eq("level", "ALERT")
@@ -66,6 +76,7 @@ class LogService(BaseRepository):
             .limit(limit),
             "Failed to fetch recent alerts"
         )
+        return success, cast(RecentAlertsResultDTO, res)
 
     def create_log_entry(self, log_data: LogDataDTO) -> tuple[bool, LogEntryResultDTO]:
         """
@@ -79,12 +90,16 @@ class LogService(BaseRepository):
             Tuple of (success, result_dict)
         """
         gemini_resp = str(log_data.get("gemini_response") or "Unknown AI Response")
+        details_data: LogDetailsDTO = {
+            "user_input": log_data.get("user_input"),
+            "user_name": log_data.get("user_name"),
+        }
         # Prepare data for archon_logs (Unified Logging Pattern)
         insert_data = {
             "source": log_data.get("project_name", "system"),
             "level": "ERROR" if "Error" in gemini_resp else "INFO",
             "message": gemini_resp[:500],
-            "details": {"user_input": log_data.get("user_input"), "user_name": log_data.get("user_name")},
+            "details": details_data,
             "created_at": datetime.now().isoformat(),
             "project_name": log_data.get("project_name"),
         }
@@ -101,10 +116,10 @@ class LogService(BaseRepository):
 
         if success and result["data"]:
             logger.info(f"Successfully created log entry with id: {result['data'][0]['id']}")
-            return True, {"log": result["data"][0]}
+            return True, {"log": cast(LogEntryDTO, result["data"][0])}
 
         logger.error(f"Failed to create log entry in database. Response: {result['error']}")
-        return False, {"error": result.get("error", "Failed to insert log into database.")}
+        return False, {"error": str(result.get("error", "Failed to insert log into database."))}
 
     async def record_interaction(self, user_id: str, log_data: LogDataDTO) -> LogEntryResultDTO:
         """Compatibility wrapper for API routes."""

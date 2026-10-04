@@ -14,6 +14,7 @@ from src.server.schemas.marketing import (
     ApprovalRequest,
     DraftBlogRequest,
     DraftFromLeadsRequest,
+    DraftFromLeadsResponse,
     JobResponse,
     LeadActionResponse,
     LeadCreateRequest,
@@ -125,15 +126,15 @@ async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(re
     return res
 
 
-@router.post("/draft-from-leads")
+@router.post("/draft-from-leads", response_model=DraftFromLeadsResponse)
 async def draft_from_leads(
     req: DraftFromLeadsRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))
-):
+) -> DraftFromLeadsResponse:
     service = MarketingService()
     success, res = await service.draft_from_leads(req.lead_ids)
     if not success:
         _err(res.get("message", "AI Draft from leads failed"), res.get("error_code", 500))
-    return res
+    return DraftFromLeadsResponse(**res)
 
 
 @router.post("/blog/{post_id}/submit")

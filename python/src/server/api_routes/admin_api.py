@@ -35,8 +35,15 @@ class UsersListResponse(BaseModel):
     profiles: list[UserProfileDTO] = Field(description="List of user profiles")
 
 
-@router.post("/scheduler/job/{job_id}/run", dependencies=[Depends(verify_manager_role)])
-async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, current_user: UserProfileDTO = Depends(get_current_user)):
+class TriggerJobResponse(BaseModel):
+    status: str = Field(..., description="Job execution trigger status")
+    job_id: str = Field(..., description="The ID of the triggered job")
+
+
+@router.post("/scheduler/job/{job_id}/run", dependencies=[Depends(verify_manager_role)], response_model=TriggerJobResponse)
+async def trigger_scheduler_job(
+    job_id: str, background_tasks: BackgroundTasks, current_user: UserProfileDTO = Depends(get_current_user)
+) -> TriggerJobResponse:
     """
     Phase 5.1.15: Manually trigger a specific Clockwork job from the Admin UI.
     Requires Manager or Admin role.
@@ -64,7 +71,7 @@ async def trigger_scheduler_job(job_id: str, background_tasks: BackgroundTasks, 
 
     background_tasks.add_task(job_map[job_id])
     logger.info(f"Admin {current_user.email} manually triggered Clockwork job: {job_id}")
-    return {"status": "triggered", "job_id": job_id}
+    return TriggerJobResponse(status="triggered", job_id=job_id)
 
 
 @router.post("/upload")
@@ -221,6 +228,10 @@ class CrawlerTargetResponse(CrawlerTargetCreate):
     created_at: str
 
 
+class DeleteCrawlerTargetResponse(BaseModel):
+    success: bool = Field(..., description="Indicates whether deletion was successful")
+
+
 @router.get("/crawler-targets", dependencies=[Depends(verify_manager_role)], response_model=list[CrawlerTargetResponse])
 async def list_crawler_targets(current_user: UserProfileDTO = Depends(get_current_user)) -> list[CrawlerTargetResponse]:
     """List specialized crawler targets (Respects Department Isolation)."""
@@ -245,11 +256,11 @@ async def create_crawler_target(request: CrawlerTargetCreate, current_user: User
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)])
-async def delete_crawler_target(target_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.delete("/crawler-targets/{target_id}", dependencies=[Depends(verify_manager_role)], response_model=DeleteCrawlerTargetResponse)
+async def delete_crawler_target(target_id: str, current_user: UserProfileDTO = Depends(get_current_user)) -> DeleteCrawlerTargetResponse:
     """Remove a target (Protected by DB RLS for Managers)."""
     await admin_service.delete_crawler_target(target_id)
-    return {"success": True}
+    return DeleteCrawlerTargetResponse(success=True)
 
 
 @router.get("/logs", dependencies=[Depends(verify_manager_role)], response_model=list[AdminLogResponse])
