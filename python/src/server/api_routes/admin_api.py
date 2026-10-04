@@ -40,6 +40,27 @@ class TriggerJobResponse(BaseModel):
     job_id: str = Field(..., description="The ID of the triggered job")
 
 
+class AdminDocumentVersionItem(BaseModel):
+    id: str | None = Field(default=None, description="Version ID")
+    document_id: str | None = Field(default=None, description="Associated document ID")
+    created_by: str | None = Field(default=None, description="User ID who created version")
+    change_type: str | None = Field(default=None, description="Type of document change")
+    field_name: str | None = Field(default=None, description="Document field name")
+    old_value: str | None = Field(default=None, description="Old field value before change")
+    new_value: str | None = Field(default=None, description="New field value after change")
+    change_summary: str | None = Field(default=None, description="Summary of changes in version")
+    version_number: int | None = Field(default=None, description="Version sequence number")
+    created_at: str | None = Field(default=None, description="Creation timestamp ISO string")
+    project_id: str | None = Field(default=None, description="Associated project ID")
+    task_id: str | None = Field(default=None, description="Associated task ID")
+    content: dict[str, Any] | None = Field(default=None, description="Document snapshot content")
+    status: str | None = Field(default=None, description="Status of the version entry")
+
+
+class AdminDocumentVersionsResponse(BaseModel):
+    versions: list[AdminDocumentVersionItem] = Field(description="List of historical document versions")
+
+
 @router.post("/scheduler/job/{job_id}/run", dependencies=[Depends(verify_manager_role)], response_model=TriggerJobResponse)
 async def trigger_scheduler_job(
     job_id: str, background_tasks: BackgroundTasks, current_user: UserProfileDTO = Depends(get_current_user)
@@ -124,17 +145,21 @@ async def david_read_file(path: str, current_user: UserProfileDTO = Depends(get_
         raise HTTPException(status_code=404, detail=f"File not found or unreadable: {str(e)}") from e
 
 
-@router.get("/document-versions")
-async def get_document_versions(limit: int = 100, current_user: dict = Depends(verify_admin_role)):
+@router.get("/document-versions", response_model=AdminDocumentVersionsResponse)
+async def get_document_versions(
+    limit: int = 100, current_user: dict = Depends(verify_admin_role)
+) -> AdminDocumentVersionsResponse:
     """
     Get document versions for the Admin audit trail.
     """
     try:
         versions = await admin_service.get_document_versions(limit=limit)
-        return {"versions": versions}
+        return AdminDocumentVersionsResponse(
+            versions=[AdminDocumentVersionItem(**v) for v in versions]
+        )
     except Exception as e:
         logger.error(f"Admin API: Failed to fetch document versions: {e}")
-        return {"versions": []}
+        return AdminDocumentVersionsResponse(versions=[])
 
 
 @router.get("/users", response_model=UsersListResponse)
