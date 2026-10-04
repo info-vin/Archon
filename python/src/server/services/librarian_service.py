@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from supabase import Client
+
 from ..config.logfire_config import get_logger
 from ..repositories.knowledge_repository import KnowledgeRepository
 from ..services.source_management_service import SourceManagementService
 from ..utils import get_supabase_client
 from .knowledge.chunking_service import KnowledgeChunkingService
-from .librarian.business_archiver import BusinessArchiver
+from .librarian.business_archiver import BusinessArchiver, FailureCaseMetadataDTO
 from .librarian.file_archiver import FileArchiver
 from .librarian.web_archiver import WebArchiver
 
@@ -15,8 +20,8 @@ class LibrarianService:
     Facade for Librarian operations, delegating to specialized archivers.
     """
 
-    def __init__(self) -> None:
-        self.supabase = get_supabase_client()
+    def __init__(self, supabase: "Client | None" = None) -> None:
+        self.supabase = supabase or get_supabase_client()
         self.source_service = SourceManagementService(self.supabase)
         self.repo = KnowledgeRepository(self.supabase)
         self.chunker = KnowledgeChunkingService()
@@ -48,7 +53,12 @@ class LibrarianService:
         return await self.business_archiver.get_style_constraints(category)
 
     async def archive_failure_case(
-        self, content: str, reason: str, company: str, job_title: str, metadata: dict | None = None
+        self,
+        content: str,
+        reason: str,
+        company: str,
+        job_title: str,
+        metadata: FailureCaseMetadataDTO | None = None,
     ) -> str:
         return await self.business_archiver.archive_failure_case(content, reason, company, job_title, metadata)
 
