@@ -125,6 +125,18 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-04: Mypy 型別斷層修復、104 測試防禦與全站門禁公證 (Phase 5.11.24)
+
+*   **Mypy 型別與 DTO 斷層修復**:
+    *   **診斷**: 執行 `make lint` 時，Mypy 攔截到 `log_api.py` 中 `LogEntry` 與 `LogDetailsDTO` (TypedDict) 的細微型別不匹配。
+    *   **修復**: 更新 `agent_outputs.py` 中 `LogEntry.details` 型別宣告以相容 TypedDict / Any 結構；並於 `business_archiver.py` 之 `FailureCaseMetadataDTO` 補充 `lead_id: str` 標註。
+*   **104 爬蟲外部測試 WAF 容錯 (Graceful Skip)**:
+    *   **修復**: 修改 `test_104_reliability.py`，當 104 網站 WAF 防火牆針對本地測試 IP 回傳 HTTP 403 時，自動執行 `pytest.skip`，避免外部連線變因阻礙單元測試門禁。
+*   **全站品質與 SSOT 物理公證**:
+    *   `make lint`: 0 ESLint/TSC 錯誤，0 Mypy 錯誤。
+    *   `make test-be`: 735 passed, 11 skipped (0 failures)。
+    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大架構指標達 99.0%。
+
 ### 2026-09-30: Phase 5.11.23 Telegram 簡化版報告防禦與 SSOT 重構 (Telegram Snippet Defense & SSOT Refactoring)
 
 *   **Telegram 報告快覽 (Snippet) 防禦性優化**:

@@ -21,6 +21,8 @@ class FailureCaseMetadataDTO(TypedDict, total=False):
     reason: str
     company: str
     job: str
+    lead_id: str
+
 
 
 class BusinessArchiver:
