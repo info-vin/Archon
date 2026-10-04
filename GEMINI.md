@@ -137,33 +137,7 @@
     *   `make test-be`: 735 passed, 11 skipped (0 failures)。
     *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大架構指標達 99.0%。
 
-### 2026-09-30: Phase 5.11.23 Telegram 簡化版報告防禦與 SSOT 重構 (Telegram Snippet Defense & SSOT Refactoring)
-
-*   **Telegram 報告快覽 (Snippet) 防禦性優化**:
-    *   **診斷**: 使用者反饋 Telegram 報告通知過於簡化 (僅有連結)。調查發現直接傳送 AI 生成的 `task_desc` 容易因包含 Markdown 表格或未閉合標籤導致 Telegram `parse_mode='Markdown'` 崩潰 (400 Bad Request)。
-    *   **修復**: 實裝 `TelegramService.sanitize_markdown_snippet()` 靜態方法，利用 `re` 正規表示式安全剝除網址與所有 Markdown 符號 (`*`, `_`, `[`, `]`, `\``, `#`)，並截取前 N 個字元作為「📝 報告快覽」，讓使用者能在通訊軟體內直接無痛預覽。
-*   **SSOT 與 DRY 鐵律落實**:
-    *   **DRY (不要重複)**: 避免在 `report_service.py` 裸寫正規表示式，將邏輯集中至 `telegram_service.py` 以利未來其他 Agent 共用。
-    *   **SSOT (單一真實來源)**: 消除魔術數字 `150`。將 Telegram 摘要字元長度上限收斂至 `settings.py` 中的 `NotificationConfig.telegram_snippet_length` 進行單一控管。
-*   **零虛假開發與物理公證**:
-    *   透過 `make phase-audit` 確認無 L2 耦合與系統依賴錯誤。
-    *   透過 `make test-be` (724 passed) 物理公證重構並未破壞任何現有 Mock 與型別斷言。
-
-### 2026-09-26: Phase 5.11.22 零虛假公證與 Event Loop 解鎖 (Zero Fake Verification & Event Loop Unblocking)
-
-*   **Event Loop 阻塞解除 (4.8s -> 0.0s)**:
-    *   **診斷**: 透過實體探針 `scratch/probe_event_loop.py` 證實 `Oracle Agent` 在 `gather_nexus_data` 時阻塞主執行緒高達 4.8 秒。
-    *   **修復**: 全面將 `HealthService.check_db_health`、`StatsService` (metrics, performance)、以及 `LogService` 內部隱藏的同步 `self.execute_query` 替換為 `await self.execute_query_async`。
-    *   **發現**: 鑑識出殘留的 2.3 秒阻塞純粹源於 Python GIL 在 `asyncio.to_thread` 內部首次載入 `SentenceTransformer` 模型時的鎖死，熱執行 (RUN 2) 證實阻塞降至 0 毫秒。
-*   **Telegram 狀態遺失與重試修復**:
-    *   **修復 5xx 邏輯**: 修正 `TelegramService` 遇到 Vercel 5xx timeout 時的錯誤處理，強制走完 `max_retries` 迴圈而非提前進入死信佇列。
-    *   **狀態持久化**: 於 `_queue_failed_message` 內將 `parse_mode` 狀態與訊息文本透過 `json.dumps` 序列化存入 `archon_tasks.description`。`task_dispatcher.py` 讀取時執行反序列化，防止伺服器重啟造成 HTML/Markdown 標籤解析錯誤。
-*   **自動化公證與測試重構**:
-    *   **物理公證**: 建立 `scratch/test_telegram_queue.py` 繞過 Pytest 內建的 `StatefulMockSupabaseClient`，直接對本地 Docker DB 進行物理插入驗證。
-    *   **測試修正**: 重構 `test_telegram_persistence.py` 使其能精準斷言序列化 JSON 結構；修正 `test_check_db_health` 以相容非同步 `AsyncMock`。
-    *   **SSOT 免疫**: 於 `telegram_service.py` 的退避重試中補上 `# 合法` 註解，通過 `make phase-audit` SSOT 審查。所有後端 714 項測試 100% 通過。
-
-
+---
 
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
@@ -172,30 +146,30 @@
 
 ### 2026年9月：SSOT 治理、排程防禦與零虛假公證
 
-九月份是深入解決非同步阻塞、週期排程 (DAG) 解耦、以及徹底落實 SSOT/DRY 治理的關鍵月份。我們消滅了大量隱藏的靜默降級 (Silent Fallback)、幽靈日誌，並建立起了嚴格的自動化品質門禁公證體系。
+九月份是深入解決非同步阻塞、週期排程 (DAG) 解耦、以及徹底落實 SSOT/DRY 治理的關鍵月份。我們消滅了大量隱藏的靜眠區塊 (Silent Fallback)、幽靈日誌，並建立起了嚴格的自動化品質門禁公證體系。
 
 **核心主題歸類**:
-1.  **非同步阻塞與排程器死鎖修復 (Ref: 09-10, 09-13, 09-14)**:
-    *   **事件迴圈解鎖**: 鑑識出 SDK 的同步介面呼叫 (`generate_content`) 是導致 APScheduler 卡死長達 26 分鐘的真正元凶，已全面升級為非同步 (`client.aio`) 釋放執行緒。
+1.  **非同步阻塞與排程器死鎖修復 (Ref: 09-10, 09-13, 09-14, 09-26)**:
+    *   **事件迴圈解鎖**: 鑑識出 SDK 的同步介面呼叫 (`generate_content`) 與 `Oracle Agent` 在 `gather_nexus_data` 時阻塞主執行緒高達 4.8 秒。將 `HealthService.check_db_health`、`StatsService` 與 `LogService` 內部隱藏的同步 `execute_query` 全面替換為 `await execute_query_async`，解鎖 Event Loop。
     *   **DAG 解耦與防偷跑**: 將 `_should_run_weekly` 從 Alice 與週報的共用中解綁，導入精準數學時間斷言 `trigger.get_next_fire_time`，防範伺服器重啟時的排程偷跑與提早觸發。
     *   **解鎖排程停滯**: 修正 `Alice Auto Fetch` 誤用本地專屬排程器，解放雲端 opportunistic 執行能力。
 
-2.  **Telegram 網路防禦與盲區公證 (Ref: 09-03, 09-06, 09-20)**:
-    *   **關機盲區防禦 (持久化佇列)**: 實體測量發現 HF Spaces 排程斷網長達 84 秒。拔除舊版 `asyncio.sleep`，發送失敗時將通知包裝持久化至 `archon_tasks`，由任務分配器在網路健康時自動補發。
+2.  **Telegram 網路防禦、快覽優化與狀態持久化 (Ref: 09-03, 09-06, 09-20, 09-26, 09-30)**:
+    *   **報告快覽 (Snippet) 防禦**: 實裝 `TelegramService.sanitize_markdown_snippet()` 靜態方法，安全剝除網址與所有 Markdown 符號 (`*`, `_`, `[`, `]`, `\``, `#`)，將長度上限收斂至 `settings.py` (`NotificationConfig.telegram_snippet_length`) 控管，防止 400 Bad Request 崩潰。
+    *   **關機盲區防禦與狀態持久化**: 修正 Vercel 5xx 重試迴圈，於 `_queue_failed_message` 內將 `parse_mode` 狀態與訊息文本透過 `json.dumps` 序列化存入 `archon_tasks.description`，防止伺服器重啟造成解析錯誤與訊息遺失。
     *   **HF 防火牆繞道**: 偵測確認 HF 防火牆封鎖 `api.telegram.org`。改為從 SSOT 讀取代理網址，透過部署的 Vercel 前端進行 Serverless 轉發，本地則無縫降級直連。
-    *   **網路自癒與黑洞除錯**: 釐清了 Telegram `ConnectTimeout` 失敗並非 IPv6 黑洞，而是 Event Loop 阻塞，拔除錯誤的 `local_address="0.0.0.0"`，回歸原生路由並抽離 Config 至 SSOT 控管。
     *   **打通日誌盲區**: 將 Telegram 網路阻擋錯誤全面引入資料庫 `_log_to_db`，根除 UI 查無錯誤的幽靈降級現象。針對非同步網路操作建立 3 次重試機制與安全執行緒封裝。
 
-3.  **環境潔癖與 SSOT 徹底落實 (Ref: 09-07, 09-13, 09-14, 09-17)**:
-    *   **零虛假開發與魔術數字拔除**: 將 `ai_operations.py` 中的硬編碼時區、退避時間徹底抽離至 `settings.py`，並消除前端為解決 504 所遺留的 `60000` 魔術數字。
+3.  **環境潔癖與 SSOT 徹底落實 (Ref: 09-07, 09-13, 09-14, 09-17, 09-30)**:
+    *   **零虛假開發與魔術數字拔除**: 將 `ai_operations.py` 中的硬編碼時區、退避時間及 Telegram 摘要長度上限徹底抽離至 `settings.py`，並消除前端為解決 504 所遺留的 `60000` 魔術數字。
     *   **消除靜默降級**: 修復 `agent_registry.py` 與 `leads_patrol.py` 中被 `except Exception: pass` 吞噬的異常漏洞，全面補上明確的日誌記錄與報錯機制。
     *   **環境污染消毒**: 嚴格執行「零一次性腳本」，清理合入分支的臨時腳本，並修復了 `routing.py` 等原生型別引發的 MyPy 報錯。
 
-4.  **自動化品質門禁與全域公證 (Ref: 09-04, 09-14, 09-17, 09-20)**:
+4.  **自動化品質門禁與全域公證 (Ref: 09-04, 09-14, 09-17, 09-20, 09-26, 09-30)**:
     *   **Lean 4 原生架構公證**: 解決 `make audit-qa` 漏看的 `Bad CPU type in executable` 錯誤。強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，確保 18 項 Lean 4 證明子專案編譯成功。
-    *   **物理公證取代肉眼**: 拒絕人工查閱 Docker 驗證。實作 `verify_catchup_log.py` 探針與結構化 Tuple Mock，推動 100% 透過 `make test-be` 與 `make phase-audit` 公證。
+    *   **物理公證取代肉眼**: 拒絕人工查閱 Docker 驗證。實作 `scratch/test_telegram_queue.py` 與 `verify_catchup_log.py` 探針，推動 100% 透過 `make test-be` (724+ 項測試全過) 與 `make phase-audit` 公證。
     *   **504 Gateway Timeout 根除**: 由人類配合在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，解決 Task Dispatcher 全表掃描崩潰問題。
-    *   **全域高併發公證**: 透過 708 項全數通過的單元測試，物理證實高併發檢索 `test_concurrent_rag_queries` 的非同步優化穩健運行。
+    *   **全域高併發公證**: 透過 708+ 項全數通過的單元測試，物理證實高併發檢索 `test_concurrent_rag_queries` 的非同步優化穩健運行。
 
 5.  **Oracle Payload Optimization (Ref: 09-20, Phase 5.11.21)**:
     *   **架構升級 (SSOT/DRY)**: 解決 `NexusOracleAgent` 因懶惰查詢 (`select *`) 撈取萬字文章導致 429 Token 爆表。拔除 Agent 裸寫 SQL，將欄位投影 (`id, title, status`) 嚴格封裝至 `BlogService` 與 `LogService`。
