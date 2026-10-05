@@ -12,6 +12,8 @@ from src.server.schemas.projects import (
     AssignableUser,
     CreateDocumentRequest,
     CreateProjectRequest,
+    CreateProjectResponse,
+    DeleteProjectResponse,
     ProjectListResponse,
     UpdateProjectRequest,
 )
@@ -101,8 +103,10 @@ async def list_projects(
     )
 
 
-@router.post("/projects")
-async def create_project(req: CreateProjectRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE))):
+@router.post("/projects", response_model=CreateProjectResponse)
+async def create_project(
+    req: CreateProjectRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_CREATE))
+) -> CreateProjectResponse:
     """Creates a new project. Requires TASK_CREATE permission."""
     if not req.title or not req.title.strip():
         _err("Title is required", 422)
@@ -114,19 +118,19 @@ async def create_project(req: CreateProjectRequest, current_user: UserProfileDTO
     if s:
         if isinstance(res, ProjectCreationResultDTO):
             proj = res.data[0] if res.data else {}
-            return {
-                "project_id": proj.get("id"),
-                "project": proj,
-                "status": "completed",
-                "message": f"Project '{req.title}' created successfully",
-            }
+            return CreateProjectResponse(
+                project_id=proj.get("id"),
+                project=proj,
+                status="completed",
+                message=f"Project '{req.title}' created successfully",
+            )
         elif isinstance(res, dict):
-            return {
-                "project_id": res.get("project_id"),
-                "project": res.get("project"),
-                "status": "completed",
-                "message": f"Project '{req.title}' created successfully",
-            }
+            return CreateProjectResponse(
+                project_id=res.get("project_id"),
+                project=res.get("project"),
+                status="completed",
+                message=f"Project '{req.title}' created successfully",
+            )
     _err(res)
 
 
@@ -174,12 +178,17 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
     return await SourceLinkingService().format_project_with_sources(cast(dict[str, Any], cast(ProjectResultDTO, res).get("project", {})))
 
 
-@router.delete("/projects/{project_id}")
-async def delete_project(project_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
+@router.delete("/projects/{project_id}", response_model=DeleteProjectResponse)
+async def delete_project(
+    project_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))
+) -> DeleteProjectResponse:
     """Requires Admin level override for project deletion."""
     s, res = await ProjectService().delete_project(project_id)
     res_data = cast(dict[str, Any], handle_service_result(s, cast(Any, res)))
-    return {"message": "Project deleted successfully", "deleted_tasks": res_data.get("deleted_tasks", 0)}
+    return DeleteProjectResponse(
+        message="Project deleted successfully",
+        deleted_tasks=res_data.get("deleted_tasks", 0),
+    )
 
 
 @router.get("/projects/{project_id}/features")
