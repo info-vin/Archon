@@ -11,9 +11,9 @@ from ..repositories.base_repository import BaseRepository
 
 
 class FileChangePayloadDict(TypedDict):
-    file_path: NotRequired[str]
+    file_path: str
     old_content: NotRequired[str]
-    new_content: NotRequired[str]
+    new_content: str
     created_by: NotRequired[str | None]
     created_by_dept: NotRequired[str]
     change_summary: NotRequired[str]
@@ -24,7 +24,7 @@ class ProposedChangeDict(TypedDict):
     created_at: NotRequired[str]
     status: NotRequired[str]
     type: NotRequired[str]
-    request_payload: NotRequired[FileChangePayloadDict | dict[str, Any]]
+    request_payload: FileChangePayloadDict | dict[str, Any]
     approved_by: NotRequired[str | None]
     approved_at: NotRequired[str | None]
     executed_at: NotRequired[str | None]
@@ -155,7 +155,7 @@ class ProposeChangeService(BaseRepository):
     async def create_proposal(
         self,
         change_type: str,
-        payload: dict[str, Any] | FileChangePayloadDict,
+        payload: FileChangePayloadDict | dict[str, Any],
         user_id: str | None = None,
     ) -> ProposedChangeDict:
         """Creates a generic proposal (e.g. git commands, feature management) in proposed_changes."""
