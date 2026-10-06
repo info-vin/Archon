@@ -13,6 +13,9 @@ app.include_router(router)
 def mock_manager_user():
     return UserProfileDTO(id="mgr-123", role="manager", email="mgr@archon.com", department="Engineering")
 
+def mock_admin_user():
+    return UserProfileDTO(id="admin-123", role="admin", email="admin@archon.com", department="Executive")
+
 def test_get_admin_logs_success():
     app.dependency_overrides[get_current_user] = mock_manager_user
     mock_logs = [
@@ -70,4 +73,47 @@ def test_delete_crawler_target_success():
         data = response.json()
         assert data == {"success": True}
         mock_delete.assert_awaited_once_with("target-123")
+    app.dependency_overrides.clear()
+
+
+def test_get_document_versions_success():
+    app.dependency_overrides[get_current_user] = mock_admin_user
+    mock_versions = [
+        {
+            "id": "ver-1",
+            "document_id": "doc-100",
+            "created_by": "admin-123",
+            "change_type": "update",
+            "field_name": "title",
+            "old_value": "Old Title",
+            "new_value": "New Title",
+            "change_summary": "Updated document title",
+            "version_number": 2,
+            "created_at": "2025-01-01T12:00:00Z",
+        }
+    ]
+    with patch("src.server.api_routes.admin_api.admin_service.get_document_versions", new_callable=AsyncMock) as mock_get_versions:
+        mock_get_versions.return_value = mock_versions
+        client = TestClient(app)
+        response = client.get("/api/admin/document-versions?limit=50")
+        assert response.status_code == 200
+        data = response.json()
+        assert "versions" in data
+        assert len(data["versions"]) == 1
+        assert data["versions"][0]["id"] == "ver-1"
+        assert data["versions"][0]["document_id"] == "doc-100"
+        assert data["versions"][0]["version_number"] == 2
+        mock_get_versions.assert_awaited_once_with(limit=50)
+    app.dependency_overrides.clear()
+
+
+def test_get_document_versions_failure():
+    app.dependency_overrides[get_current_user] = mock_admin_user
+    with patch("src.server.api_routes.admin_api.admin_service.get_document_versions", new_callable=AsyncMock) as mock_get_versions:
+        mock_get_versions.side_effect = Exception("Database connection error")
+        client = TestClient(app)
+        response = client.get("/api/admin/document-versions")
+        assert response.status_code == 200
+        data = response.json()
+        assert data == {"versions": []}
     app.dependency_overrides.clear()
