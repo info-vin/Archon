@@ -3,7 +3,7 @@ Projects Core API - Handles Project and Document life cycle.
 """
 
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 
@@ -19,7 +19,6 @@ from src.server.schemas.projects import (
 )
 from src.server.services.projects.project_service import (
     ProjectDTO,
-    ProjectListResultDTO,
     ProjectResultDTO,
     ProjectUpdateDTO,
 )
@@ -38,7 +37,7 @@ from ...utils.etag_utils import check_etag, generate_etag
 router = APIRouter()
 
 
-def _err(res: Any, code: int = 500):
+def _err(res: Any, code: int = 500) -> NoReturn:
     detail = res.get("error", res) if isinstance(res, dict) else res
     raise HTTPException(status_code=code, detail=detail)
 
@@ -84,7 +83,7 @@ async def list_projects(
     if not s or not isinstance(res, dict):
         _err(res)
 
-    res_dto = cast(ProjectListResultDTO, res)
+    res_dto = res
     projs = res_dto.get("projects", [])
     projs = RBACService().scope_projects(projs, current_user)
 
@@ -139,7 +138,7 @@ async def get_project(project_id: str, current_user: UserProfileDTO = Depends(ge
     s, res = await ProjectService().get_project(project_id)
     if not s or not isinstance(res, dict) or not res.get("project"):
         _err(res if s else "Project not found", 404 if "not found" in str(res).lower() or s else 500)
-    res_dto2 = cast(ProjectResultDTO, res)
+    res_dto2 = res
     p = res_dto2.get("project", {})
 
     if not RBACService().validate_project_access(p, current_user):
@@ -175,7 +174,7 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
         await SourceLinkingService().update_project_sources(
             project_id=project_id, technical_sources=req.technical_sources, business_sources=req.business_sources
         )
-    return await SourceLinkingService().format_project_with_sources(cast(dict[str, Any], cast(ProjectResultDTO, res).get("project", {})))
+    return await SourceLinkingService().format_project_with_sources(cast(dict[str, Any], res.get("project", {})))
 
 
 @router.delete("/projects/{project_id}", response_model=DeleteProjectResponse)

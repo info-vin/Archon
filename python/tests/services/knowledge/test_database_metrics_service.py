@@ -1,8 +1,11 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 from src.server.services.knowledge.database_metrics_service import (
     DatabaseMetricsService,
 )
+
 
 @pytest.mark.asyncio
 async def test_get_metrics_success():

@@ -125,6 +125,16 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-06: Projects API 型別完整性修復與全站三向門禁公證 (Phase 5.11.25)
+
+*   **Projects Core API 型別防禦與 NoReturn 標註**:
+    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `src/server/api_routes/projects/core.py:107` 報錯 `Missing return statement`。經查為 `create_project` 新增 `-> CreateProjectResponse` 型別標註後，其錯誤處理輔助函式 `_err()` 未標記回傳型別，導致型別檢查器無法識別其必然拋出 `HTTPException`。
+    *   **修復**: 於 `core.py` 明確為 `_err()` 注入 `-> NoReturn` 型別標註；同步移除因服務層回傳精確 DTO 而轉為多餘的 3 處 `cast`，並清理未使用的 DTO 引用。
+*   **全站品質與 SSOT 物理公證**:
+    *   `make lint`: 前端 (enduser-ui-fe, archon-ui-main) 與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
+    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大核心架構（MCP、Agent 引擎、業務服務、API 門戶）指標達 99.0%，型別覆蓋率 100.0%。
+    *   `make test-be`: 740 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
+
 ### 2026-10-04: Mypy 型別斷層修復、104 測試防禦與全站門禁公證 (Phase 5.11.24)
 
 *   **Mypy 型別與 DTO 斷層修復**:
