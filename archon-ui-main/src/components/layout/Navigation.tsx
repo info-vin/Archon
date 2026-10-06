@@ -95,6 +95,7 @@ export function Navigation({ className }: NavigationProps) {
                 "relative p-2 rounded-lg transition-all duration-300",
                 "flex items-center justify-center",
                 "hover:bg-white/10 dark:hover:bg-white/5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900",
                 isProjectsActive && [
                   "bg-gradient-to-b from-white/20 to-white/5 dark:from-white/10 dark:to-black/20",
                   "shadow-[0_5px_15px_-5px_rgba(59,130,246,0.3)] dark:shadow-[0_5px_15px_-5px_rgba(59,130,246,0.5)]",
@@ -145,6 +146,7 @@ export function Navigation({ className }: NavigationProps) {
                   className={cn(
                     "relative p-3 rounded-lg transition-all duration-300",
                     "flex items-center justify-center",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900",
                     isActive
                       ? [
                           "bg-gradient-to-b from-white/20 to-white/5 dark:from-white/10 dark:to-black/20",
