@@ -137,6 +137,18 @@ class RestoreVersionRequest(BaseModel):
     restored_by: str | None = "system"
 
 
+class CreateProjectResponse(BaseModel):
+    project_id: str | None = Field(default=None, description="The ID of the created project")
+    project: dict[str, Any] | None = Field(default=None, description="The created project details")
+    status: str = Field(default="completed", description="Status of project creation")
+    message: str = Field(description="Response status message")
+
+
+class DeleteProjectResponse(BaseModel):
+    message: str = Field(description="Status message")
+    deleted_tasks: int = Field(default=0, description="Number of tasks deleted with the project")
+
+
 class ProjectListResponse(BaseModel):
     projects: list[dict[str, Any]] = Field(description="List of scoped projects")
     timestamp: str = Field(description="ISO timestamp of response generation")
