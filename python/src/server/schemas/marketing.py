@@ -100,6 +100,10 @@ class DraftFromLeadsResponse(BaseModel):
     status: str = Field(description="Task dispatch status")
 
 
+class ApprovalActionResponse(BaseModel):
+    success: bool = Field(description="Indicates whether the approval processing action succeeded")
+
+
 class JobResponse(BaseModel):
     title: str = Field(description="Title of the job posting")
     company: str = Field(description="Company name offering the position")

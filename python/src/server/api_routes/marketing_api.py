@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.marketing import (
+    ApprovalActionResponse,
     ApprovalRequest,
     DraftBlogRequest,
     DraftFromLeadsRequest,
@@ -219,14 +220,14 @@ async def generate_reject_suggestion(
     return await service.generate_reject_suggestion(req.item_type, req.item_id)
 
 
-@router.post("/approvals/{item_type}/{item_id}/{action}")
+@router.post("/approvals/{item_type}/{item_id}/{action}", response_model=ApprovalActionResponse)
 async def process_approval(
     item_type: str,
     item_id: str,
     action: str,
     req: ApprovalRequest,
     current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
-):
+) -> ApprovalActionResponse:
     service = MarketingService()
     success = await service.process_approval(item_type, item_id, action, req.notes)
-    return {"success": success}
+    return ApprovalActionResponse(success=success)
