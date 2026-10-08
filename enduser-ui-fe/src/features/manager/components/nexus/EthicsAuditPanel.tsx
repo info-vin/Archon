@@ -67,7 +67,7 @@ export const EthicsAuditPanel: React.FC<EthicsAuditPanelProps> = ({
                                     <p className="text-[10px] text-gray-400 font-mono mt-0.5">Attempted Input: {v.raw_input?.slice(0, 50)}...</p>
                                 </div>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => handleDispatch(v.id)}
                                 disabled={processingId === v.id}
                                 aria-disabled={processingId === v.id}
@@ -100,13 +100,13 @@ export const EthicsAuditPanel: React.FC<EthicsAuditPanelProps> = ({
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button
+                                <button type="button"
                                     onClick={() => handleViewDiff(p)}
                                     className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
                                 >
                                     VIEW DIFF
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={() => handleApprovePrompt(p.id)}
                                     disabled={processingId === p.id}
                                     aria-disabled={processingId === p.id}
