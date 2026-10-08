@@ -13,7 +13,7 @@ export const AdminSystemConfig: React.FC = () => {
             .reduce((acc: Record<string, any[]>, curr: any) => {
                 const cat = curr.category || 'general';
                 // Pre-calculate formatted strings to avoid O(N) regex evaluation on every render cycle
-                const formattedCategory = cat.replace('_', ' ');
+                const formattedCategory = cat.replace(/_/g, ' ');
                 const formattedKey = curr.key.replace(/_/g, ' ');
 
                 if (!acc[formattedCategory]) acc[formattedCategory] = [];

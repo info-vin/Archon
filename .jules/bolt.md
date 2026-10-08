@@ -284,3 +284,7 @@
 ## 2026-10-01 - Replace nested Array.find() with Map lookup in useEffect
 **Learning:** Array.find() inside a loop (like .filter or .map) on arrays of objects causes hidden O(N*M) complexity, especially in React useEffects that process lists of operations.
 **Action:** Always precalculate a Map for O(1) lookups before the loop when comparing two lists (e.g., previous state vs current state).
+
+## 2025-05-18 - Avoid O(N) string replace in loop rendering
+**Learning:** Using inline string manipulations like `.replace('_', ' ')` inside a `.map()` during a React component's render loop causes unnecessary O(N) regex evaluation (in JavaScript, `.replace('_', ' ')` translates to a basic string replacement, but `.replace(/_/g, ' ')` translates to a regex evaluation, and doing it repeatedly in a loop is expensive) and string allocation on every render cycle.
+**Action:** Always extract and pre-calculate formatted strings within a `useMemo` block, or hoist a cached Map function, so that the expensive string operations execute only when the underlying data changes or when new unique values are encountered, maintaining O(1) property lookup during renders.
