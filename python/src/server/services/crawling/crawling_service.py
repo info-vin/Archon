@@ -9,7 +9,7 @@ batch crawling, recursive crawling, and overall orchestration with progress trac
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 # Import strategies
 # Import operations
@@ -36,13 +36,37 @@ from .strategies.sitemap import SitemapCrawlStrategy
 logger = get_logger(__name__)
 
 
+class ProgressState(TypedDict, total=False):
+    progressId: str
+
+
+class CrawlRequestDTO(TypedDict, total=False):
+    url: str
+    knowledge_type: NotRequired[str]
+    tags: NotRequired[list[str]]
+    max_depth: NotRequired[int]
+    max_concurrent: NotRequired[int]
+
+
+class OrchestrateCrawlResponseDTO(TypedDict):
+    task_id: str
+    status: str
+    message: str
+    progress_id: str | None
+
+
 class CrawlingService(BaseRepository):
     """
     Service class for web crawling and orchestration operations.
     Combines functionality from both CrawlingService and CrawlOrchestrationService.
     """
 
-    def __init__(self, crawler=None, supabase_client: Any = None, progress_id=None) -> None:
+    def __init__(
+        self,
+        crawler: Any = None,
+        supabase_client: Any = None,
+        progress_id: str | None = None,
+    ) -> None:
         """
         Initialize the crawling service.
 
@@ -53,8 +77,8 @@ class CrawlingService(BaseRepository):
         """
         super().__init__(supabase_client or get_supabase_client())
         self.crawler = crawler
-        self.progress_id = progress_id
-        self.progress_tracker: Any = None
+        self.progress_id: str | None = progress_id
+        self.progress_tracker: ProgressTracker | None = None
 
         # Initialize helpers
         self.url_handler = URLHandler()
@@ -73,7 +97,7 @@ class CrawlingService(BaseRepository):
         self.doc_storage_ops = DocumentStorageFacade(self.supabase_client)
 
         # Track progress state across all stages to prevent UI resets
-        self.progress_state = {"progressId": self.progress_id} if self.progress_id else {}
+        self.progress_state: ProgressState = {"progressId": self.progress_id} if self.progress_id else {}
         # Initialize progress mapper to prevent backwards jumps
         self.progress_mapper = ProgressMapper()
         # Initialize handlers
@@ -82,7 +106,7 @@ class CrawlingService(BaseRepository):
         # Cancellation support
         self._cancelled = False
 
-    def set_progress_id(self, progress_id: str):
+    def set_progress_id(self, progress_id: str) -> None:
         """Set the progress ID for HTTP polling updates."""
         self.progress_id = progress_id
         if self.progress_id:
@@ -222,7 +246,7 @@ class CrawlingService(BaseRepository):
         )
 
     # Orchestration methods
-    async def orchestrate_crawl(self, request: dict[str, Any]) -> dict[str, Any]:
+    async def orchestrate_crawl(self, request: CrawlRequestDTO | dict[str, Any]) -> OrchestrateCrawlResponseDTO:
         """
         Main orchestration method - non-blocking using asyncio.create_task.
 
