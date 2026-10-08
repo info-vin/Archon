@@ -20,7 +20,7 @@ export const DetailSection: React.FC<{
                 <p className={`text-gray-500 font-medium mt-1 uppercase tracking-wide ${isMaximized ? 'text-sm' : 'text-xs'}`}>{subtitle}</p>
             </div>
             {onToggleMaximize && (
-                <button 
+                <button type="button"
                     onClick={onToggleMaximize}
                     className="p-2 hover:bg-gray-200/50 rounded-full transition-colors text-gray-400 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     aria-label={isMaximized ? 'Minimize section' : 'Maximize section'}

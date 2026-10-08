@@ -38,13 +38,13 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
       <div className="flex gap-2 shrink-0">
         {showRejectInput ? (
             <div className="flex gap-2">
-               <button 
+               <button type="button"
                  onClick={() => setShowRejectInput(false)}
                  className="px-4 py-2 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                >
                  Cancel
                </button>
-               <button 
+               <button type="button"
                  onClick={() => handleAction(selectedProposal.id, 'reject')}
                  disabled={!!processingId || !rejectReason.trim()}
                  aria-disabled={!!processingId || !rejectReason.trim()}
@@ -61,7 +61,7 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
             </div>
         ) : (
             <>
-                <button 
+                <button type="button"
                   onClick={() => handleAction(selectedProposal.id, 'reject')}
                   disabled={!!processingId}
                   aria-disabled={!!processingId}
@@ -76,7 +76,7 @@ export const ApprovalActionHeader: React.FC<ApprovalActionHeaderProps> = ({
                   )}
                   {processingId === selectedProposal.id ? 'REJECTING...' : 'REJECT'}
                 </button>
-                <button 
+                <button type="button"
                   onClick={() => handleAction(selectedProposal.id, 'approve')}
                   disabled={!!processingId}
                   aria-disabled={!!processingId}

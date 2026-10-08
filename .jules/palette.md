@@ -129,3 +129,10 @@
 ## 2025-03-08 - Add focus-visible:ring-offset to EmptyState action button
 **Learning:** Generic components like `EmptyState` which provide actionable buttons must maintain consistent and fully visible focus states. The action button in `EmptyState` had `focus-visible:ring-2` but lacked `focus-visible:ring-offset-2`, making the focus ring harder to distinguish against varied background colors.
 **Action:** Always ensure the full `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` styling is applied to action buttons, especially in reusable generic components, to guarantee consistent keyboard navigation visibility.
+## 2025-03-08 - Fix missing button types inside manager components
+**Learning:** Custom tab buttons, rejection, and approval buttons in `OpLoadPanel` and `ContentReviewPanel` missed `type="button"`, causing unintended form submissions if wrapped or nested in forms. Additionally, the same buttons missed standard `focus-visible` ring styling.
+**Action:** When working on panels that switch content dynamically, make sure to set `type="button"` for all tab buttons. Ensure `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` are added to action buttons.
+
+## 2025-03-08 - Add focus-visible:ring-offset to EmptyState action button
+**Learning:** Generic components like `EmptyState` which provide actionable buttons must maintain consistent and fully visible focus states. The action button in `EmptyState` had `focus-visible:ring-2` but lacked `focus-visible:ring-offset-2`, making the focus ring harder to distinguish against varied background colors.
+**Action:** Always ensure the full `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` styling is applied to action buttons, especially in reusable generic components, to guarantee consistent keyboard navigation visibility.

@@ -44,7 +44,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                                     <p className="text-[10px] text-gray-500 italic mt-0.5">{alert.details?.company || alert.details?.title || 'System context attached'}</p>
                                 </div>
                             </div>
-                            <button 
+                            <button type="button"
                                 onClick={() => handleDispatch(alert.id)}
                                 disabled={processingId === alert.id}
                                 className="px-5 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
@@ -92,7 +92,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                     <span className={`text-xs font-bold ${totalRuleWeight === 100 ? 'text-green-500' : 'text-red-500'}`}>
                         Total: {totalRuleWeight}%
                     </span>
-                    <button
+                    <button type="button"
                         onClick={handleSaveRules}
                         disabled={isSavingRules}
                         className="text-xs font-bold text-indigo-600 hover:underline disabled:opacity-50 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1"
