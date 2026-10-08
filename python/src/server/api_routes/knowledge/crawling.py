@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from src.server.api_routes.knowledge.schemas import CrawlActionResponse, CrawlRequest, CrawlStartResponse
 from src.server.config.logfire_config import safe_logfire_error, safe_logfire_info
 from src.server.models.auth_models import UserProfileDTO
+from src.server.models.progress_models import BaseProgressResponse, CrawlProgressResponse, create_progress_response
 from src.server.services.knowledge.knowledge_item_service import KnowledgeItemService
 from src.server.utils import get_supabase_client
 from src.server.utils.progress.progress_tracker import ProgressTracker
@@ -19,15 +20,15 @@ active_crawl_tasks: dict[str, asyncio.Task] = {}
 router: APIRouter = APIRouter()
 
 
-@router.get("/crawl-progress/{progress_id}")
-async def get_crawl_progress(progress_id: str):
+@router.get("/crawl-progress/{progress_id}", response_model=CrawlProgressResponse | BaseProgressResponse)
+async def get_crawl_progress(progress_id: str) -> CrawlProgressResponse | BaseProgressResponse:
     """Get the current progress of a crawl or refresh operation. Public within system."""
     try:
-        tracker = ProgressTracker(progress_id)
-        status = tracker.get_state()
+        status = ProgressTracker.get_progress(progress_id)
         if not status:
             raise HTTPException(status_code=404, detail="Progress ID not found")
-        return status
+        op_type = status.get("type", "crawl")
+        return create_progress_response(op_type, status)
     except HTTPException:
         raise
     except Exception as e:

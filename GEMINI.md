@@ -125,6 +125,31 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-08: 雲端遙測對帳、契約型別與 Event Loop 解鎖公證 (Phase 5.11.26)
+
+*   **API 契約與 PagesService 非同步化 Code Review (無斷層公證)**:
+    *   **審查**: 針對近期 4 筆 Git 提交（`593a8f61`, `22226059`, `87d8c7a2`, `60134745`）進行物理比對與全向追蹤。
+    *   **型別契約閉環**: `crawling.py` 的 `crawl_progress` 端點掛載 `CrawlProgressResponse | BaseProgressResponse`；`marketing_api.py` 的 `process_approval` 掛載 `ApprovalActionResponse`，與前端 `enduser-ui-fe` 的呼叫契約（`success: bool`）100% 物理對齊。
+    *   **Event Loop 解鎖**: 證實 `pages_service.py` 內部將同步 `execute_query` 全面升級為 `await execute_query_async`，消除主執行緒 I/O 阻塞風險；測試層 `test_pages_service.py` 同步替換為 `AsyncMock`，消滅虛假 Mock 斷層。
+*   **HF 雲端實體空間即時探針與資料庫遙測對帳**:
+    *   **空間狀態**: 實體探針確認 Space `chiawei6/myrmidon` 為 `RUNNING`，硬體為 `cpu-basic`，對外網域 `READY`。
+    *   **Health 端點**: `https://chiawei6-myrmidon.hf.space/health` 回傳 HTTP 200，憑證與 Schema 驗證全綠。
+    *   **資料庫日誌審核**: Supabase `archon_logs` 物理驗證今日排程（`clockwork-scheduler`、模型降級檢查、過期線索封存 20 筆、以及 `Daily Executive Summary`）自動執行成功，無系統崩潰。
+*   **全域三向門禁公證**:
+    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
+    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大核心架構（MCP、Agent 引擎、業務服務、API 門戶）健康度 99.0%，型別標註覆蓋率 100.0%。
+    *   `make test-be`: 742 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
+
+### 2026-10-06: Projects API 型別完整性修復與全站三向門禁公證 (Phase 5.11.25)
+
+*   **Projects Core API 型別防禦與 NoReturn 標註**:
+    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `src/server/api_routes/projects/core.py:107` 報錯 `Missing return statement`。經查為 `create_project` 新增 `-> CreateProjectResponse` 型別標註後，其錯誤處理輔助函式 `_err()` 未標記回傳型別，導致型別檢查器無法識別其必然拋出 `HTTPException`。
+    *   **修復**: 於 `core.py` 明確為 `_err()` 注入 `-> NoReturn` 型別標註；同步移除因服務層回傳精確 DTO 而轉為多餘的 3 處 `cast`，並清理未使用的 DTO 引用。
+*   **全站品質與 SSOT 物理公證**:
+    *   `make lint`: 前端 (enduser-ui-fe, archon-ui-main) 與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
+    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大核心架構（MCP、Agent 引擎、業務服務、API 門戶）指標達 99.0%，型別覆蓋率 100.0%。
+    *   `make test-be`: 740 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
+
 ### 2026-10-04: Mypy 型別斷層修復、104 測試防禦與全站門禁公證 (Phase 5.11.24)
 
 *   **Mypy 型別與 DTO 斷層修復**:
