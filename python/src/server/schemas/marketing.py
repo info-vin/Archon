@@ -91,6 +91,13 @@ class DraftBlogRequest(BaseModel):
     keywords: str | None = None
 
 
+class DraftBlogResponse(BaseModel):
+    title: str = Field(default="", description="Title of the generated blog draft")
+    content: str = Field(default="", description="Main content of the generated blog draft")
+    excerpt: str | None = Field(default=None, description="Summary excerpt of the blog draft")
+    status: str | None = Field(default=None, description="Status of the generated blog post, e.g. review")
+
+
 class DraftFromLeadsRequest(BaseModel):
     lead_ids: list[str]
 
