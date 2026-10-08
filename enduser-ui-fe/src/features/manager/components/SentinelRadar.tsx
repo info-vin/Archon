@@ -20,6 +20,20 @@ const safeFormatSentinelDate = (dateVal: any) => {
     return isNaN(d.getTime()) ? 'Invalid Date' : dateFormatter.format(d);
 };
 
+// PERFORMANCE: Pre-calculate formatted alert types to avoid O(N) regex evaluation on every render cycle
+const formatAlertType = (() => {
+    const cache = new Map<string, string>();
+    return (type: string) => {
+        if (!type) return 'RISK';
+        let label = cache.get(type);
+        if (label === undefined) {
+            label = type.replace(/_/g, ' ');
+            cache.set(type, label);
+        }
+        return label;
+    };
+})();
+
 export const SentinelRadar: React.FC<SentinelRadarProps> = ({
     businessRisks, processingId, handleDispatch,
     rules, rulesMeta, isSavingRules, totalRuleWeight, handleRuleChange, handleSaveRules
@@ -37,7 +51,7 @@ export const SentinelRadar: React.FC<SentinelRadarProps> = ({
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black px-2 py-0.5 bg-red-100 text-red-700 rounded uppercase tracking-tighter">{alert.details?.type?.replace('_', ' ') || 'RISK'}</span>
+                                        <span className="text-[10px] font-black px-2 py-0.5 bg-red-100 text-red-700 rounded uppercase tracking-tighter">{formatAlertType(alert.details?.type)}</span>
                                         <span className="text-[10px] text-gray-400 font-mono">{safeFormatSentinelDate(alert.created_at)}</span>
                                     </div>
                                     <h5 className="font-bold text-gray-800 text-sm mt-1">{alert.message}</h5>
