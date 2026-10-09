@@ -267,7 +267,18 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
 
       <div className="mt-6 space-y-4">
         <div>
-          <div className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5" onClick={() => setShowCrawlingSettings(!showCrawlingSettings)}>
+          <div
+            className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+            onClick={() => setShowCrawlingSettings(!showCrawlingSettings)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowCrawlingSettings(!showCrawlingSettings);
+              }
+            }}
+          >
             <div className="flex items-center"><Zap className="mr-2 text-green-500" size={18} /><h3 className="font-semibold text-gray-800 dark:text-white">Crawling Settings</h3></div>
             {showCrawlingSettings ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </div>
@@ -286,7 +297,18 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
         </div>
 
         <div>
-          <div className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5" onClick={() => setShowStorageSettings(!showStorageSettings)}>
+          <div
+            className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+            onClick={() => setShowStorageSettings(!showStorageSettings)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowStorageSettings(!showStorageSettings);
+              }
+            }}
+          >
             <div className="flex items-center"><Database className="mr-2 text-green-500" size={18} /><h3 className="font-semibold text-gray-800 dark:text-white">Storage Settings</h3></div>
             {showStorageSettings ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </div>
@@ -308,7 +330,18 @@ export const RAGSettings = ({ ragSettings, setRagSettings }: RAGSettingsProps) =
         </div>
 
         <div>
-          <div className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5" onClick={() => setShowFallbackSettings(!showFallbackSettings)}>
+          <div
+            className="flex items-center justify-between cursor-pointer p-3 rounded-lg border border-green-500/20 bg-green-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+            onClick={() => setShowFallbackSettings(!showFallbackSettings)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowFallbackSettings(!showFallbackSettings);
+              }
+            }}
+          >
             <div className="flex items-center">
               <ShieldAlert className="mr-2 text-green-500" size={18} />
               <h3 className="font-semibold text-gray-800 dark:text-white">3-Tier Fallback Settings</h3>

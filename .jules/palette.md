@@ -136,3 +136,6 @@
 ## 2025-03-08 - Add focus-visible:ring-offset to EmptyState action button
 **Learning:** Generic components like `EmptyState` which provide actionable buttons must maintain consistent and fully visible focus states. The action button in `EmptyState` had `focus-visible:ring-2` but lacked `focus-visible:ring-offset-2`, making the focus ring harder to distinguish against varied background colors.
 **Action:** Always ensure the full `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2` styling is applied to action buttons, especially in reusable generic components, to guarantee consistent keyboard navigation visibility.
+## 2025-03-08 - Keyboard support for interactive DIVs
+**Learning:** When non-interactive elements like `div` or `span` are used for complex interactive UI patterns (like the expandable settings headers in RAG Settings), they require full keyboard support. Lacking `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler makes these sections completely inaccessible to keyboard users.
+**Action:** Always ensure keyboard accessibility by pairing `onClick` on non-interactive elements with `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler that intercepts 'Enter' and 'Space' keys, along with `focus-visible` styling.
