@@ -125,6 +125,18 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-09: 爬蟲非同步型別相容性修復、死碼掃描與門禁公證 (Phase 5.11.27)
+
+*   **CrawlingService 非同步編排型別相容性修復**:
+    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `crawling_service.py:270` 中 `orchestrator.run(request, task_id)` 引數型別不相容 (`CrawlRequestDTO | dict[str, Any]` vs `dict[str, Any]`)。
+    *   **修復**: 於傳遞至 `self.orchestrator.run` 時注入明確的 `cast(dict[str, Any], request)` 型別轉換，消除 MyPy 報錯，確保強型別契約完整。
+*   **全域殭屍代碼 (Dead / Zombie Code) 物理掃描**:
+    *   **後端掃描**: 透過 `ruff` 掃描 `F401` (Unused Imports)、`F841` (Unused Variables)、`B007` (Unused Loop Vars)，392 個來源檔 0 違規。
+    *   **前端掃描**: `archon-ui-main` 通過 ESLint，`enduser-ui-fe` 通過 TypeScript (`tsc --noEmit`) 編譯，無死碼違規。
+*   **全域三向門禁公證**:
+    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
+    *   `make test-be`: 742 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
+
 ### 2026-10-08: 雲端遙測對帳、契約型別與 Event Loop 解鎖公證 (Phase 5.11.26)
 
 *   **API 契約與 PagesService 非同步化 Code Review (無斷層公證)**:

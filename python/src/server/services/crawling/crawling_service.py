@@ -9,7 +9,7 @@ batch crawling, recursive crawling, and overall orchestration with progress trac
 import asyncio
 import uuid
 from collections.abc import Awaitable, Callable
-from typing import Any, NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict, cast
 
 # Import strategies
 # Import operations
@@ -267,7 +267,7 @@ class CrawlingService(BaseRepository):
             register_orchestration(self.progress_id, self)
 
         # Start the crawl as an async task in the main event loop
-        asyncio.create_task(self.orchestrator.run(request, task_id))
+        asyncio.create_task(self.orchestrator.run(cast(dict[str, Any], request), task_id))
 
         # Return immediately
         return {
