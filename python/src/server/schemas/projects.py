@@ -168,3 +168,21 @@ class CreateVersionResponse(BaseModel):
 class RestoreVersionResponse(BaseModel):
     message: str = Field(description="Status message")
     restored_content: dict[str, Any] | None = Field(default=None, description="Restored content")
+
+
+class ProjectDetailResponse(BaseModel):
+    id: str | None = Field(default=None, description="Project ID")
+    title: str | None = Field(default="", description="Project title")
+    description: str | None = Field(default="", description="Project description")
+    github_repo: str | None = Field(default=None, description="GitHub repository URL")
+    department: str | None = Field(default=None, description="Department owner")
+    status: str | None = Field(default="planning", description="Project status")
+    docs: list[Any] | dict[str, Any] | None = Field(default=None, description="Project documents")
+    features: list[Any] | None = Field(default=None, description="Project features")
+    data: dict[str, Any] | list[Any] | None = Field(default=None, description="Project metadata or data")
+    pinned: bool | None = Field(default=False, description="Whether project is pinned")
+    stats: dict[str, Any] | None = Field(default=None, description="Project stats")
+    technical_sources: list[str] | None = Field(default=None, description="Technical sources")
+    business_sources: list[str] | None = Field(default=None, description="Business sources")
+    created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
+    updated_at: str | datetime | None = Field(default=None, description="Last update timestamp")

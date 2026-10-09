@@ -14,6 +14,7 @@ from src.server.schemas.projects import (
     CreateProjectRequest,
     CreateProjectResponse,
     DeleteProjectResponse,
+    ProjectDetailResponse,
     ProjectListResponse,
     UpdateProjectRequest,
 )
@@ -133,8 +134,10 @@ async def create_project(
     _err(res)
 
 
-@router.get("/projects/{project_id}")
-async def get_project(project_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/projects/{project_id}", response_model=ProjectDetailResponse)
+async def get_project(
+    project_id: str, current_user: UserProfileDTO = Depends(get_current_user)
+) -> ProjectDetailResponse:
     s, res = await ProjectService().get_project(project_id)
     if not s or not isinstance(res, dict) or not res.get("project"):
         _err(res if s else "Project not found", 404 if "not found" in str(res).lower() or s else 500)
@@ -144,7 +147,7 @@ async def get_project(project_id: str, current_user: UserProfileDTO = Depends(ge
     if not RBACService().validate_project_access(p, current_user):
         _err("Access denied to this department's project.", 403)
 
-    return {
+    project_data = {
         **p,
         "description": p.get("description", ""),
         "docs": p.get("docs", []),
@@ -152,10 +155,13 @@ async def get_project(project_id: str, current_user: UserProfileDTO = Depends(ge
         "data": p.get("data", []),
         "pinned": p.get("pinned", False),
     }
+    return ProjectDetailResponse(**project_data)
 
 
-@router.patch("/projects/{project_id}")
-async def update_project(project_id: str, req: UpdateProjectRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.patch("/projects/{project_id}", response_model=ProjectDetailResponse)
+async def update_project(
+    project_id: str, req: UpdateProjectRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> ProjectDetailResponse:
     s, res = await ProjectService().get_project(project_id)
     res_dto3 = cast(ProjectResultDTO, res)
     if not s or not res_dto3.get("project"):
@@ -174,7 +180,10 @@ async def update_project(project_id: str, req: UpdateProjectRequest, current_use
         await SourceLinkingService().update_project_sources(
             project_id=project_id, technical_sources=req.technical_sources, business_sources=req.business_sources
         )
-    return await SourceLinkingService().format_project_with_sources(cast(dict[str, Any], res.get("project", {})))
+    formatted_project = await SourceLinkingService().format_project_with_sources(
+        cast(dict[str, Any], res.get("project", {}))
+    )
+    return ProjectDetailResponse(**formatted_project)
 
 
 @router.delete("/projects/{project_id}", response_model=DeleteProjectResponse)
