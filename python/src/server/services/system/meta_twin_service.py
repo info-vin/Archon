@@ -3,6 +3,9 @@ MetaTwinService - Dynamic internal monitoring and self-healing loop for AI Agent
 """
 
 from datetime import UTC, datetime, timedelta
+from typing import Any, NotRequired, TypedDict, cast
+
+from supabase import Client
 
 from ...config.logfire_config import get_logger
 from ...repositories.base_repository import BaseRepository
@@ -11,16 +14,45 @@ from ...utils import get_supabase_client
 logger = get_logger(__name__)
 
 
+class MetaTwinLogDTO(TypedDict):
+    id: NotRequired[str]
+    source: NotRequired[str]
+    message: NotRequired[str]
+    level: NotRequired[str]
+    details: NotRequired[dict[str, Any] | None]
+    created_at: NotRequired[str]
+
+
+class DiagnosisDTO(TypedDict):
+    agent: str
+    issue: str
+    reason: str
+
+
+class CorrectionDTO(TypedDict):
+    agent: str
+    action: str
+    details: str
+
+
+class TelemetryAuditResultDTO(TypedDict):
+    status: str
+    diagnoses_count: int
+    corrections_count: int
+    diagnoses: list[DiagnosisDTO]
+    corrections: list[CorrectionDTO]
+
+
 class MetaTwinService(BaseRepository):
     """
     Self-healing orchestrator for the Archon Agent ecosystem.
     Audits agent parameters dynamically and executes fallback actions.
     """
 
-    def __init__(self) -> None:
-        super().__init__(get_supabase_client())
+    def __init__(self, supabase_client: Client | None = None) -> None:
+        super().__init__(supabase_client or get_supabase_client())
 
-    async def run_telemetry_audit(self) -> dict:
+    async def run_telemetry_audit(self) -> TelemetryAuditResultDTO:
         """
         Scans agent execution logs and statistics to identify failures (e.g., rate limits, loops).
         Returns a summary of diagnoses and corrective actions taken.
@@ -29,6 +61,7 @@ class MetaTwinService(BaseRepository):
         one_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
 
         # 1. Fetch recent agent errors
+        logs: list[MetaTwinLogDTO] = []
         try:
             query = (
                 self.supabase_client.table("archon_logs") # 合法
@@ -36,25 +69,31 @@ class MetaTwinService(BaseRepository):
                 .gt("created_at", one_hour_ago)
             )
             success, res = self.execute_query(query, "Failed to query archon_logs", require_data=False)
-            logs = res.get("data", []) if success else []
+            if success and isinstance(res, dict) and "data" in res:
+                logs = cast(list[MetaTwinLogDTO], res.get("data") or [])
         except Exception as e:
             logger.error(f"MetaTwin: Failed to query archon_logs: {e}")
             logs = []
 
-        diagnoses = []
-        corrections = []
+        diagnoses: list[DiagnosisDTO] = []
+        corrections: list[CorrectionDTO] = []
 
         # Analyze errors per agent
-        agent_errors: dict[str, list[dict]] = {}
+        agent_errors: dict[str, list[MetaTwinLogDTO]] = {}
         for log in logs:
-            source = log.get("source", "system").lower()
-            if log.get("level") == "ERROR" or "rate limit" in log.get("message", "").lower():
+            source = str(log.get("source") or "system").lower()
+            message = str(log.get("message") or "").lower()
+            level = log.get("level")
+            if level == "ERROR" or "rate limit" in message:
                 agent_errors.setdefault(source, []).append(log)
 
         # 2. Diagnose & Heal
         for agent_name, errors in agent_errors.items():
             error_count = len(errors)
-            rate_limit_hits = sum(1 for e in errors if "429" in e.get("message", "") or "rate limit" in e.get("message", "").lower())
+            rate_limit_hits = sum(
+                1 for e in errors
+                if "429" in str(e.get("message") or "") or "rate limit" in str(e.get("message") or "").lower()
+            )
 
             # Scenario A: Rate Limit Risk (Multiple 429 hits)
             if rate_limit_hits >= 3:
