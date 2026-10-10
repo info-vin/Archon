@@ -100,6 +100,10 @@ class DraftFromLeadsResponse(BaseModel):
     status: str = Field(description="Task dispatch status")
 
 
+class ResetLeadsResponse(BaseModel):
+    success: bool = Field(description="Indicates whether leads reset succeeded")
+
+
 class ApprovalActionResponse(BaseModel):
     success: bool = Field(description="Indicates whether the approval processing action succeeded")
 
