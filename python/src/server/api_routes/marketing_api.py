@@ -26,6 +26,7 @@ from src.server.schemas.marketing import (
     PitchResponse,
     PromoteLeadRequest,
     RejectSuggestionRequest,
+    ResetLeadsResponse,
 )
 from src.server.services.marketing_service import MarketingService
 from src.server.services.shared_constants import RoleEnum
@@ -80,11 +81,13 @@ async def create_lead(req: LeadCreateRequest, current_user: UserProfileDTO = Dep
     return LeadActionResponse(lead=res["lead"])
 
 
-@router.post("/leads/reset")
-async def reset_leads(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
+@router.post("/leads/reset", response_model=ResetLeadsResponse)
+async def reset_leads(
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
+) -> ResetLeadsResponse:
     service = MarketingService()
     success = await service.reset_leads()
-    return {"success": success}
+    return ResetLeadsResponse(success=success)
 
 
 @router.patch("/leads/{lead_id}", response_model=LeadActionResponse)
