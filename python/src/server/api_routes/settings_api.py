@@ -166,7 +166,9 @@ async def get_credential(
 
 
 @router.post("/credentials", response_model=CredentialResponse)
-async def create_credential(req: CredentialCreate, current_user: dict = Depends(requires_permission(USER_MANAGE))):
+async def create_credential(
+    req: CredentialCreate, current_user: dict = Depends(requires_permission(USER_MANAGE))
+) -> CredentialResponse:
     """Creates or updates a credential. Admin only."""
     success = await credential_service.set_credential(
         req.key, req.value, req.is_encrypted, req.category, req.description
@@ -175,14 +177,14 @@ async def create_credential(req: CredentialCreate, current_user: dict = Depends(
     if not success:
         raise HTTPException(status_code=500, detail="Failed to save credential")
 
-    return {
-        "key": req.key,
-        "value": req.value if not req.is_encrypted else "[ENCRYPTED]",
-        "is_encrypted": req.is_encrypted,
-        "category": req.category,
-        "description": req.description,
-        "updated_at": datetime.now().isoformat(),
-    }
+    return CredentialResponse(
+        key=req.key,
+        value=req.value if not req.is_encrypted else "[ENCRYPTED]",
+        is_encrypted=req.is_encrypted,
+        category=req.category,
+        description=req.description,
+        updated_at=datetime.now().isoformat(),
+    )
 
 
 @router.put("/credentials/{key}", response_model=CredentialUpdateResponse)
