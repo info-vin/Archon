@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { Task } from '../../../types';
-import { select, extent, scaleTime, scaleBand, axisTop, timeFormat, timeWeek } from 'd3';
+import { select, scaleTime, scaleBand, axisTop, timeFormat, timeWeek } from 'd3';
 
 interface GanttViewProps {
   tasks: Task[];
@@ -31,8 +31,23 @@ export const GanttView: React.FC<GanttViewProps> = React.memo(({ tasks }) => {
     const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // PERFORMANCE: Calculate date extent in a single pass without creating O(N) intermediate array allocations
+    let minTime = Infinity;
+    let maxTime = -Infinity;
+    for (let i = 0; i < validTasks.length; i++) {
+        const start = validTasks[i].parsedCreatedAt.getTime();
+        const end = validTasks[i].parsedDueDate.getTime();
+        if (start < minTime) minTime = start;
+        if (start > maxTime) maxTime = start;
+        if (end < minTime) minTime = end;
+        if (end > maxTime) maxTime = end;
+    }
+    const domainExtent = minTime !== Infinity
+      ? [new Date(minTime), new Date(maxTime)] as [Date, Date]
+      : [new Date(), new Date()] as [Date, Date];
+
     const x = scaleTime()
-      .domain(extent([...validTasks.map(d => d.parsedCreatedAt), ...validTasks.map(d => d.parsedDueDate)]) as [Date, Date])
+      .domain(domainExtent)
       .range([0, width]);
 
     const y = scaleBand()
