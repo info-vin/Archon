@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from fastapi import UploadFile
 from google import genai
@@ -15,6 +15,9 @@ from src.server.services.credential_service import credential_service
 from src.server.services.prompt_service import prompt_service
 from src.server.utils import get_supabase_client
 
+if TYPE_CHECKING:
+    from src.server.schemas.agent_outputs import VoiceProcessResult
+
 logger = get_logger(__name__)
 
 
@@ -27,6 +30,12 @@ class VisitLogDataDict(TypedDict, total=False):
     longitude: float
     location_address: str
     company_name: str
+
+
+class SchedulingRecommendationDTO(TypedDict, total=False):
+    meeting_topic: str
+    suggested_slots: list[dict[str, Any]]
+    conflict_summary: str
 
 
 class VisitLogReturnDict(TypedDict, total=False):
@@ -45,7 +54,7 @@ class VisitLogReturnDict(TypedDict, total=False):
     created_at: str
     updated_at: str
     visit_type: str
-    scheduling_recommendation: dict[str, Any]
+    scheduling_recommendation: SchedulingRecommendationDTO
 
 
 class AttendanceStatusDict(TypedDict, total=False):
@@ -82,7 +91,9 @@ class VisitLogService(BaseRepository):
 
         return True, cast(list[VisitLogReturnDict], res.get("data", []))
 
-    async def _process_voice_with_ai(self, audio_content: bytes, mime_type: str) -> tuple[str, str, list[str], Any]:
+    async def _process_voice_with_ai(
+        self, audio_content: bytes, mime_type: str
+    ) -> tuple[str, str, list[str], "VoiceProcessResult"]:
         """
         Processes audio using official google-genai SDK (Phase 4.6.39 pattern).
         Returns: (transcript, summary, tasks, parsed_ai_res)
@@ -115,13 +126,13 @@ class VisitLogService(BaseRepository):
                         "總結關鍵對話內容，並提取跟進任務。此外，請分析是否有提及預約下次開會時間或下次預約的意圖。\n"
                         "回傳格式為 JSON:\n"
                         "{\n"
-                        "  \"transcript\": \"逐字稿內容...\",\n"
-                        "  \"summary\": \"AI摘要...\",\n"
-                        "  \"tasks\": [\"任務1\"],\n"
-                        "  \"scheduling_intent\": true/false,\n"
-                        "  \"requested_date\": \"YYYY-MM-DD 或 null\",\n"
-                        "  \"requested_duration_hours\": 1.0,\n"
-                        "  \"meeting_topic\": \"會議主題或 null\"\n"
+                        '  "transcript": "逐字稿內容...",\n'
+                        '  "summary": "AI摘要...",\n'
+                        '  "tasks": ["任務1"],\n'
+                        '  "scheduling_intent": true/false,\n'
+                        '  "requested_date": "YYYY-MM-DD 或 null",\n'
+                        '  "requested_duration_hours": 1.0,\n'
+                        '  "meeting_topic": "會議主題或 null"\n'
                         "}"
                     ),
                 )
@@ -162,7 +173,9 @@ class VisitLogService(BaseRepository):
             from src.server.schemas.agent_outputs import VoiceProcessResult
             return f"[AI Error: {e}]", "System error during transcription.", [], VoiceProcessResult()
 
-    async def create_log(self, data: VisitLogDataDict, audio_file: UploadFile | None = None) -> tuple[bool, VisitLogReturnDict | str]:
+    async def create_log(
+        self, data: VisitLogDataDict, audio_file: UploadFile | None = None
+    ) -> tuple[bool, VisitLogReturnDict | str]:
         """
         Creates a visit log and automatically triggers Task Generation (GAP-009).
         Supports Phase 5.4.6 PydanticAI voice scheduling loop.
@@ -191,7 +204,6 @@ class VisitLogService(BaseRepository):
             "summary": summary,
             "follow_up_tasks": tasks,
         }
-
 
         success, res = self.execute_query(self.supabase_client.table("visit_logs").insert(log_payload), "Failed to create visit log")
         if not success or not res:
@@ -289,11 +301,12 @@ class VisitLogService(BaseRepository):
                         sources=[{"type": "visit_log", "id": str(visit_id)}],
                     )
                     # Expose recommendations in response so frontend can show them immediately
-                    created_log["scheduling_recommendation"] = {
+                    rec_dto: SchedulingRecommendationDTO = {
                         "meeting_topic": topic,
                         "suggested_slots": slots,
                         "conflict_summary": conflict_summary
                     }
+                    created_log["scheduling_recommendation"] = rec_dto
                 else:
                     task_title = f"[Field Ops] 追蹤: {entity_name} - {summary[:30]}..."
                     task_desc = (
@@ -332,7 +345,7 @@ class VisitLogService(BaseRepository):
             return True, {"status": "OFF_WORK", "clock_in_time": None}
 
         data: list[Any] = res if isinstance(res, list) else []
-        return True, data[0] if len(data) > 0 else {"status": "OFF_WORK", "clock_in_time": None}
+        return True, cast(AttendanceStatusDict, data[0] if len(data) > 0 else {"status": "OFF_WORK", "clock_in_time": None})
 
 
 # Singleton export

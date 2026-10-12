@@ -5,6 +5,17 @@ import { ClockIcon } from '@/components/Icons';
 // PERFORMANCE: Hoisted Intl.DateTimeFormat outside the component to prevent expensive re-instantiations during list rendering.
 const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
 
+// PERFORMANCE: Hoisted Map to prevent O(N) string allocations during list rendering
+const typeLabelCache = new Map<string, string>();
+const formatTypeLabel = (type: string) => {
+    let label = typeLabelCache.get(type);
+    if (label === undefined) {
+        label = type.replace(/_/g, ' ');
+        typeLabelCache.set(type, label);
+    }
+    return label;
+};
+
 const PlayIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <polygon points="5 3 19 12 5 21 5 3"/>
@@ -83,7 +94,7 @@ export const ClockworkJobsTable: React.FC<ClockworkJobsTableProps> = ({ jobs, on
                                 </td>
                                 <td className="px-4 py-2">
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded border uppercase tracking-tighter ${getTypeColor(job.type)}`}>
-                                        {job.type.replace('_', ' ')}
+                                        {formatTypeLabel(job.type)}
                                     </span>
                                 </td>
                                 <td className="px-4 py-2 text-xs text-muted-foreground font-mono">

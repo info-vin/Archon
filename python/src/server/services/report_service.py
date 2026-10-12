@@ -4,7 +4,7 @@ Handles business data context gathering, Map-Reduce workflows, and periodic summ
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, NotRequired, TypedDict, cast
 from zoneinfo import ZoneInfo
 
 from supabase import Client
@@ -17,6 +17,39 @@ logger = get_logger(__name__)
 CST = ZoneInfo("Asia/Taipei")
 
 
+class LeadRecordDTO(TypedDict):
+    company_name: str
+    job_title: str
+    status: str
+
+
+class TokenRecordDTO(TypedDict):
+    input_tokens: NotRequired[int | None]
+    output_tokens: NotRequired[int | None]
+    cost_usd: NotRequired[float | str | None]
+
+
+class LogRecordDTO(TypedDict):
+    level: str
+    message: str
+    source: str
+    created_at: str
+
+
+class TaskRecordDTO(TypedDict):
+    title: str
+    status: str
+    assignee: str
+
+
+class SummaryLogDetailsDTO(TypedDict):
+    type: str
+    status: NotRequired[str | None]
+    input_tokens: NotRequired[int | None]
+    output_tokens: NotRequired[int | None]
+    model: NotRequired[str | None]
+
+
 class ReportService(BaseRepository):
     def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client)
@@ -24,15 +57,16 @@ class ReportService(BaseRepository):
     def _get_leads_context(self, cutoff_date: str) -> str:
         query = self.supabase_client.table("leads").select("company_name, job_title, status").gt("created_at", cutoff_date) # 合法
         success, leads_res = self.execute_query(query, "Failed to get leads")
-        leads = leads_res.get("data", []) if success else []
+        leads: list[LeadRecordDTO] = cast(list[LeadRecordDTO], leads_res.get("data", [])) if success and isinstance(leads_res, dict) and leads_res.get("data") else []
         leads_summary = f"Total New Leads: {len(leads)}\n"
         if leads:
             lead_status_counts: dict[str, int] = {}
             for lead in leads:
-                lead_status_counts[lead["status"]] = lead_status_counts.get(lead["status"], 0) + 1
+                status_key = lead.get("status", "unknown")
+                lead_status_counts[status_key] = lead_status_counts.get(status_key, 0) + 1
             leads_summary += "Status Breakdown: " + ", ".join(f"{k}: {v}" for k, v in lead_status_counts.items()) + "\n"
             leads_summary += "Recent Leads Sample:\n" + "\n".join(
-                f"- {lead['company_name']} ({lead['job_title']}) -> {lead['status']}" for lead in leads[:10]
+                f"- {lead.get('company_name', 'N/A')} ({lead.get('job_title', 'N/A')}) -> {lead.get('status', 'N/A')}" for lead in leads[:10]
             )
             if len(leads) > 10:
                 leads_summary += f"\n... and {len(leads) - 10} more leads."
@@ -43,7 +77,7 @@ class ReportService(BaseRepository):
     def _get_token_context(self, cutoff_date: str) -> str:
         query = self.supabase_client.table("token_usage").select("input_tokens, output_tokens, cost_usd").gt("created_at", cutoff_date) # 合法
         success, token_res = self.execute_query(query, "Failed to get token usage")
-        token_data = token_res.get("data", []) if success else []
+        token_data: list[TokenRecordDTO] = cast(list[TokenRecordDTO], token_res.get("data", [])) if success and isinstance(token_res, dict) and token_res.get("data") else []
         total_input = sum(row.get("input_tokens", 0) or 0 for row in token_data)
         total_output = sum(row.get("output_tokens", 0) or 0 for row in token_data)
         total_cost = sum(float(row.get("cost_usd", 0.0) or 0.0) for row in token_data)
@@ -57,11 +91,11 @@ class ReportService(BaseRepository):
     def _get_logs_context(self, cutoff_date: str) -> str:
         query = self.supabase_client.table("archon_logs").select("level, message, source, created_at").gt("created_at", cutoff_date).in_("level", ["ALERT", "ERROR"]) # 合法
         success, logs_res = self.execute_query(query, "Failed to get alerts")
-        logs = logs_res.get("data", []) if success else []
+        logs: list[LogRecordDTO] = cast(list[LogRecordDTO], logs_res.get("data", [])) if success and isinstance(logs_res, dict) and logs_res.get("data") else []
         logs_summary = f"Total Alerts/Errors: {len(logs)}\n"
         if logs:
             logs_summary += "Recent Alerts/Errors:\n" + "\n".join(
-                f"- [{log['level']}] {log['source']}: {log['message']} ({log['created_at']})" for log in logs[:10]
+                f"- [{log.get('level', 'N/A')}] {log.get('source', 'N/A')}: {log.get('message', 'N/A')} ({log.get('created_at', 'N/A')})" for log in logs[:10]
             )
             if len(logs) > 10:
                 logs_summary += f"\n... and {len(logs) - 10} more alerts."
@@ -72,16 +106,17 @@ class ReportService(BaseRepository):
     def _get_tasks_context(self, cutoff_date: str) -> str:
         query = self.supabase_client.table("archon_tasks").select("title, status, assignee").gt("updated_at", cutoff_date) # 合法
         success, tasks_res = self.execute_query(query, "Failed to get tasks updated")
-        tasks = tasks_res.get("data", []) if success else []
+        tasks: list[TaskRecordDTO] = cast(list[TaskRecordDTO], tasks_res.get("data", [])) if success and isinstance(tasks_res, dict) and tasks_res.get("data") else []
         tasks_summary = f"Total Tasks Active/Updated: {len(tasks)}\n"
         if tasks:
             task_status_counts: dict[str, int] = {}
             for t in tasks:
-                task_status_counts[t["status"]] = task_status_counts.get(t["status"], 0) + 1
+                status_key = t.get("status", "unknown")
+                task_status_counts[status_key] = task_status_counts.get(status_key, 0) + 1
             status_desc = ", ".join(f"{k}: {v}" for k, v in task_status_counts.items())
             tasks_summary += f"Status Breakdown: {status_desc}\n"
             tasks_summary += "Tasks List:\n" + "\n".join(
-                f"- {t['title']} ({t['assignee']}) -> status: {t['status']}" for t in tasks[:10]
+                f"- {t.get('title', 'N/A')} ({t.get('assignee', 'N/A')}) -> status: {t.get('status', 'N/A')}" for t in tasks[:10]
             )
             if len(tasks) > 10:
                 tasks_summary += f"\n... and {len(tasks) - 10} more tasks."
@@ -123,7 +158,7 @@ class ReportService(BaseRepository):
         days: int,
         title_prefix: str,
         task_desc: str,
-        log_details: dict[str, Any],
+        log_details: SummaryLogDetailsDTO | dict[str, Any],
         auto_complete: bool = False,
         dispatch_agent: bool = False,
         feature: str | None = None,
@@ -136,7 +171,7 @@ class ReportService(BaseRepository):
 
         query = self.supabase_client.table("archon_projects").select("id").limit(1) # 合法
         success, p_res = self.execute_query(query, "Failed to get projects")
-        if not success or not p_res.get("data"):
+        if not success or not isinstance(p_res, dict) or not p_res.get("data"):
             logger.warning(f"ReportService: No projects found to attach {title_prefix} summary task.")
             return
 
@@ -168,7 +203,7 @@ class ReportService(BaseRepository):
                 {
                     "source": "report-service", "level": "INFO",
                     "message": f"{title_prefix} Executive Summary processed. Task: {task_id}",
-                    "details": log_details,
+                    "details": cast(dict[str, Any], log_details),
                 }
             )
             self.execute_query(insert_query, "Failed to record summary log")
@@ -249,7 +284,7 @@ class ReportService(BaseRepository):
             task_desc = await report_enrichment_service.attach_podcast_audio(task_desc)
 
             log_type = f"{title_prefix.lower().replace(' ', '_')}_executive_summary"
-            log_details = {
+            log_details: SummaryLogDetailsDTO = {
                 "type": log_type,
                 "input_tokens": state.shared.input_tokens,
                 "output_tokens": state.shared.output_tokens,
@@ -272,5 +307,6 @@ class ReportService(BaseRepository):
 
     async def generate_monthly_executive_summary(self) -> None:
         await self._execute_map_reduce_summary(30, "Monthly", "MONTHLY_EXECUTIVE_SUMMARY")
+
 
 report_service = ReportService()

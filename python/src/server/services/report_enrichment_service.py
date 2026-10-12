@@ -7,6 +7,8 @@ from src.server.config.logfire_config import get_logger
 from src.server.schemas.settings import TTSConfig
 
 logger = get_logger(__name__)
+
+
 class ReportEnrichmentService:
 
     @staticmethod
@@ -89,5 +91,6 @@ class ReportEnrichmentService:
         except Exception as e:
             logger.error(f"❌ ReportEnrichmentService: Failed to generate TTS Podcast: {e}")
         return task_desc
+
 
 report_enrichment_service = ReportEnrichmentService()

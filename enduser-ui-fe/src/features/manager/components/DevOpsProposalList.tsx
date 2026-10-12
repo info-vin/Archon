@@ -38,7 +38,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                             </p>
                         </div>
                         <div className="flex gap-3 w-full md:w-auto">
-                            <button 
+                            <button type="button"
                                 onClick={() => handleViewDiff(prop)}
                                 className="p-4 bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-2xl hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border border-gray-100 dark:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                                 title="Inspect Code Difference"
@@ -46,7 +46,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                             >
                                 <SearchIcon className="w-5 h-5" aria-hidden="true" />
                             </button>
-                            <button 
+                            <button type="button"
                                 onClick={() => handleCodeAction(prop.id, 'reject')}
                                 aria-label="Reject proposal"
                                 title="Reject proposal"
@@ -56,7 +56,7 @@ export const DevOpsProposalList: React.FC<DevOpsProposalListProps> = ({
                                 {processingId === prop.id ? <RefreshCwIcon className="w-4 h-4 animate-spin" /> : null}
                                 {processingId === prop.id ? 'REJECTING...' : 'REJECT'}
                             </button>
-                            <button 
+                            <button type="button"
                                 onClick={() => handleCodeAction(prop.id, 'approve')}
                                 aria-label="Approve proposal"
                                 title="Approve proposal"

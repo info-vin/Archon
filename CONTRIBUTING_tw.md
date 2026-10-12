@@ -396,6 +396,33 @@ Phase 4.4.5 引入了 **Clockwork** 進行系統自動檢測。
 - **`cherry-pick` 卡住**: 若 `git cherry-pick --continue` 卡住，請改用 `git cherry-pick --continue --no-edit --no-gpg-sign`。
 
 ### 4.3 部署標準作業流程 (SOP)
+
+#### New Migrations
+- migration/0.2.3/01_schema_core.sql
+- migration/0.2.3/02_schema_features.sql
+- migration/0.2.3/03_logic_functions.sql
+- migration/0.2.3/04_logic_security_rls.sql
+- migration/0.2.3/05_seed_system_configs.sql
+- migration/0.2.3/06_add_missing_indexes.sql
+- migration/0.2.3/06_seed_prompts_core.sql
+- migration/0.2.3/07_seed_prompts_assets.sql
+- migration/0.2.3/08_schema_task_retry_count.sql
+- migration/0.2.3/RESET_DB.sql
+- migration/0.2.3/rescue/fix_missing_agents.sql
+- migration/0.2.3/rescue/leads.sql
+- migration/0.2.3/rescue/prompts.sql
+- migration/0.2.3/rescue/schema_migrations.sql
+- migration/0.2.3/rescue/sources_and_targets.sql
+- migration/0.2.3/seed_blog_posts.sql
+- migration/0.2.3/seed_mock_data.sql
+- migration/0.2.3/seed_rag_defaults.sql
+- migration/20260810_seed_rag_blog.sql
+- migration/20260815_seed_insight_report_blog.sql
+- migration/20260819_add_hybrid_router_settings.sql
+- migration/20260819_update_rag_threshold.sql
+- migration/20260821_update_leads_patrol_prompt.sql
+- migration/20260920_add_telegram_proxy_setting.sql
+
 - `migration/20260810_seed_rag_blog.sql`
 - `migration/20260815_seed_insight_report_blog.sql`
 - `migration/20260819_add_hybrid_router_settings.sql`

@@ -106,7 +106,7 @@ export const ActiveForce: React.FC<ActiveForceProps> = ({
                                 </div>
                             </div>
                         </div>
-                        <button 
+                        <button type="button"
                             onClick={() => setSelectedMember(member)}
                             className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                             aria-label={`View details for ${member.name}`}
