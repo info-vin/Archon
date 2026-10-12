@@ -155,7 +155,7 @@ async def get_project(
         "data": p.get("data", []),
         "pinned": p.get("pinned", False),
     }
-    return ProjectDetailResponse(**project_data)
+    return ProjectDetailResponse(**cast(dict[str, Any], project_data))
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectDetailResponse)

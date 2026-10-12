@@ -125,6 +125,19 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-12: Projects API 型別變異修復、748 項測試突破與 7 日研發數據公證 (Phase 5.11.28)
+
+*   **Projects Core API 型別變異 (Variance) 防禦修復**:
+    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `src/server/api_routes/projects/core.py:158` 中 `ProjectDetailResponse(**project_data)` 報錯 8 項 `incompatible type`（因 Python `dict` 型別不變性 invariant 導致 object 傳遞型別衝突）。
+    *   **修復**: 於傳入前明確注入 `cast(dict[str, Any], project_data)`，消除 MyPy 報錯，確保強型別契約完整。
+*   **全域三向門禁公證與新測試覆蓋**:
+    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
+    *   `make test-be`: **748 passed** (+6 項新增測試，包含 `meta_twin_service` 與 `marketing_api_reset_leads`)，10 skipped, 4 xfailed (0 failures)，全數綠燈通過。
+*   **過去 7 天 (10/05 ~ 10/12) Git 研發數據分析公證**:
+    *   **總提交量**: 36 Commits (包含 17 個 Merge PR 與 19 個實體功能/重構 Commit)。
+    *   **代碼淨流動**: 44 檔案變更，+602 insertions, -135 deletions (淨增 +467 行高品質代碼與測試)。
+    *   **研發分佈**: `refactor(services)` 31.6% (6 筆)、`refactor(api)` 26.3% (5 筆)、前端 UX/A11y/樣式 21.0% (4 筆)、系統修復與文檔 21.1% (4 筆)。
+
 ### 2026-10-09: 爬蟲非同步型別相容性修復、死碼掃描與門禁公證 (Phase 5.11.27)
 
 *   **CrawlingService 非同步編排型別相容性修復**:
