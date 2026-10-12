@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -45,3 +47,26 @@ class CrawlActionResponse(BaseModel):
     success: bool
     message: str
     progressId: str | None = Field(default=None, description="Optional progress ID if an operation was initiated")
+
+
+class DeleteSourceResponse(BaseModel):
+    """Response model for deleting a knowledge source."""
+
+    success: bool = Field(description="Whether the deletion operation succeeded")
+    details: dict[str, Any] = Field(description="Details of deleted records and source information")
+
+
+class AvailableSourceItem(BaseModel):
+    """Item representation for available knowledge sources."""
+
+    id: str = Field(description="Source ID")
+    source_id: str = Field(description="Source ID")
+    title: str = Field(description="Source title")
+    knowledge_type: str = Field(default="technical", description="Knowledge type classification")
+    url: str = Field(description="Source URL or reference")
+
+
+class AvailableSourcesResponse(BaseModel):
+    """Response model for available knowledge sources list."""
+
+    sources: list[AvailableSourceItem] = Field(default_factory=list, description="List of available sources")

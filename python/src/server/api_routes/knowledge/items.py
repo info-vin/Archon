@@ -13,6 +13,7 @@ from src.server.utils import get_supabase_client
 
 from ...auth.dependencies import requires_permission
 from ...auth.permissions import TASK_READ_OWN, TASK_READ_TEAM, TASK_UPDATE_ALL
+from .schemas import AvailableSourcesResponse, DeleteSourceResponse
 
 router = APIRouter()
 
@@ -21,14 +22,18 @@ KnowledgeService = KnowledgeItemService
 KnowledgeSummaryService = KnowledgeSummaryService
 
 
-@router.get("/knowledge-items/sources")
-async def list_sources(current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))):
+@router.get("/knowledge-items/sources", response_model=AvailableSourcesResponse)
+async def list_sources(
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN)),
+) -> AvailableSourcesResponse:
     """Lists all available knowledge sources. Requires TASK_READ_OWN."""
     service = KnowledgeItemService(get_supabase_client())
     success, res = await service.get_available_sources()
     if not success:
-        raise HTTPException(status_code=500, detail=str(res.get("error")))
-    return res
+        raise HTTPException(status_code=500, detail=str(res.get("error") if isinstance(res, dict) else res))
+    if isinstance(res, list):
+        return AvailableSourcesResponse(sources=res)
+    return AvailableSourcesResponse.model_validate(res)
 
 
 @router.get("/knowledge-items")
@@ -57,8 +62,10 @@ async def list_source_chunks(source_id: str, current_user: UserProfileDTO = Depe
     return res
 
 
-@router.delete("/knowledge-items/{source_id}")
-async def delete_knowledge_source(source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
+@router.delete("/knowledge-items/{source_id}", response_model=DeleteSourceResponse)
+async def delete_knowledge_source(
+    source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))
+) -> DeleteSourceResponse:
     """Deletes a knowledge source. Requires Admin level permission."""
     service = SourceManagementService()
     # Physical Correction: delete_source is a SYNCHRONOUS method
@@ -66,16 +73,20 @@ async def delete_knowledge_source(source_id: str, current_user: UserProfileDTO =
     if not success:
         raise HTTPException(status_code=400, detail=str(res.get("error")))
     # Aligned with test expectations
-    return {"success": True, "details": res}
+    return DeleteSourceResponse(success=True, details=res)
 
 
-@router.get("/available-sources")
-async def list_available_sources(current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))):
+@router.get("/available-sources", response_model=AvailableSourcesResponse)
+async def list_available_sources(
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN)),
+) -> AvailableSourcesResponse:
     """Alias for listing sources. Requires TASK_READ_OWN."""
     return await list_sources(current_user=current_user)
 
 
-@router.delete("/sources/{source_id}")
-async def delete_source_alias(source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))):
+@router.delete("/sources/{source_id}", response_model=DeleteSourceResponse)
+async def delete_source_alias(
+    source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_UPDATE_ALL))
+) -> DeleteSourceResponse:
     """Alias for deleting source."""
     return await delete_knowledge_source(source_id, current_user=current_user)
