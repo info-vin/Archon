@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react';
 import { Task } from '../../../types';
-import { select, extent, scaleTime, scaleBand, axisTop, timeFormat, timeWeek } from 'd3';
+import { select, scaleTime, scaleBand, axisTop, timeFormat, timeWeek } from 'd3';
 
 interface GanttViewProps {
   tasks: Task[];
@@ -31,8 +31,22 @@ export const GanttView: React.FC<GanttViewProps> = React.memo(({ tasks }) => {
     const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // PERFORMANCE: Optimize min/max domain calculation using a single-pass accumulator to prevent O(N) array allocations
+    const domainExtent = validTasks.length === 0
+      ? [undefined, undefined]
+      : validTasks.reduce(
+          (acc, d) => {
+            if (d.parsedCreatedAt < acc[0]) acc[0] = d.parsedCreatedAt;
+            if (d.parsedCreatedAt > acc[1]) acc[1] = d.parsedCreatedAt;
+            if (d.parsedDueDate < acc[0]) acc[0] = d.parsedDueDate;
+            if (d.parsedDueDate > acc[1]) acc[1] = d.parsedDueDate;
+            return acc;
+          },
+          [validTasks[0].parsedCreatedAt, validTasks[0].parsedDueDate] as [Date, Date]
+        );
+
     const x = scaleTime()
-      .domain(extent([...validTasks.map(d => d.parsedCreatedAt), ...validTasks.map(d => d.parsedDueDate)]) as [Date, Date])
+      .domain(domainExtent as unknown as [Date, Date])
       .range([0, width]);
 
     const y = scaleBand()

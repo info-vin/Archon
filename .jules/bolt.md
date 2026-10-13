@@ -288,3 +288,6 @@
 ## 2025-05-18 - Avoid O(N) string replace in loop rendering
 **Learning:** Using inline string manipulations like `.replace('_', ' ')` inside a `.map()` during a React component's render loop causes unnecessary O(N) regex evaluation (in JavaScript, `.replace('_', ' ')` translates to a basic string replacement, but `.replace(/_/g, ' ')` translates to a regex evaluation, and doing it repeatedly in a loop is expensive) and string allocation on every render cycle.
 **Action:** Always extract and pre-calculate formatted strings within a `useMemo` block, or hoist a cached Map function, so that the expensive string operations execute only when the underlying data changes or when new unique values are encountered, maintaining O(1) property lookup during renders.
+## 2023-10-27 - Optimize D3 extent array calculation
+**Learning:** When calculating min/max domains for visualization libraries (like d3.extent), chained `.map()` calls and spread array formations (e.g., `[...arr.map(), ...arr.map()]`) cause O(N) array allocations and garbage collection pressure.
+**Action:** Compute the extent using a single-pass accumulator loop (e.g. `reduce`) to prevent allocations.
