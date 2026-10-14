@@ -3,14 +3,14 @@ Capability Tester for Ollama Discovery Service.
 Contains logic for actively testing model capabilities via API requests.
 """
 
-from typing import Any
-
 import httpx
 
 from src.server.services.llm_provider_service import get_llm_client
 
+from .models import OllamaModelDetailsDTO
 
-async def get_model_details_logic(model_name: str, instance_url: str) -> dict[str, Any] | None:
+
+async def get_model_details_logic(model_name: str, instance_url: str) -> OllamaModelDetailsDTO | None:
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(10)) as client:
             base_url = instance_url.rstrip("/").replace("/v1", "")
@@ -40,17 +40,17 @@ async def get_model_details_logic(model_name: str, instance_url: str) -> dict[st
                     elif k.endswith(".embedding_length"):
                         embed_dim = v
                 current_ctx = num_ctx or base_ctx or max_ctx
-                details = {
+                details: OllamaModelDetailsDTO = {
                     "family": details_section.get("family"),
                     "parameter_size": details_section.get("parameter_size"),
                     "quantization": details_section.get("quantization_level"),
                     "format": details_section.get("format"),
                     "parent_model": details_section.get("parent_model"),
                     "parameters": {
-                        "family": details_section.get("family"),
-                        "parameter_size": details_section.get("parameter_size"),
-                        "quantization": details_section.get("quantization_level"),
-                        "format": details_section.get("format"),
+                        "family": details_section.get("family", ""),
+                        "parameter_size": details_section.get("parameter_size", ""),
+                        "quantization": details_section.get("quantization_level", ""),
+                        "format": details_section.get("format", ""),
                     },
                     "context_window": current_ctx,
                     "max_context_length": max_ctx,
@@ -64,7 +64,7 @@ async def get_model_details_logic(model_name: str, instance_url: str) -> dict[st
                         (
                             v
                             for k, v in model_info.items()
-                            if any(x in k for x in ["block_count", "num_layers", ".n_layer"]) # 合法
+                            if any(x in k for x in ["block_count", "num_layers", ".n_layer"])
                         ),
                         None,
                     ),

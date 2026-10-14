@@ -5,7 +5,7 @@ Handles model capability testing (chat, embedding, structured output),
 metadata enrichment via /api/show, and pattern matching.
 """
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from src.server.config.logfire_config import get_logger
 
@@ -21,6 +21,9 @@ from .capability_tester import (
     test_structured_output_capability_logic,
 )
 from .models import ModelCapabilities
+
+if TYPE_CHECKING:
+    from ..model_discovery_service import ModelDiscoveryService
 
 logger = get_logger(__name__)
 
@@ -40,7 +43,10 @@ __all__ = [
 
 
 async def detect_model_capabilities_logic(
-    service_instance, model_name: str, instance_url: str, optimized: bool = False
+    service_instance: "ModelDiscoveryService",
+    model_name: str,
+    instance_url: str,
+    optimized: bool = False,
 ) -> ModelCapabilities:
     """Detect capabilities with CONCURRENCY LOCK."""
     cache_key = f"{model_name}@{instance_url}"
@@ -56,7 +62,7 @@ async def detect_model_capabilities_logic(
         caps = ModelCapabilities()
         try:
             if optimized:
-                if any(p in model_name.lower() for p in ["embed", "embedding"]): # 合法
+                if any(p in model_name.lower() for p in ["embed", "embedding"]):
                     dims = await test_embedding_capability_fast_logic(model_name, instance_url)
                     if dims:
                         caps.supports_embedding = True
@@ -83,7 +89,8 @@ async def detect_model_capabilities_logic(
 
             info = await get_model_details_logic(model_name, instance_url)
             if info:
-                caps.parameter_count = info.get("parameter_count")
+                param_cnt = info.get("parameter_count")
+                caps.parameter_count = str(param_cnt) if param_cnt is not None else None
                 caps.model_family = info.get("family")
                 caps.quantization = info.get("quantization")
 

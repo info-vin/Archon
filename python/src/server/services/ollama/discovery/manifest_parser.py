@@ -1,15 +1,15 @@
 from typing import Any
 
-from .models import OllamaModel
+from .models import DiscoveryResultDTO, HostStatusDTO, ModelDictDTO, OllamaModel
 
 
 class OllamaManifestParser:
     """Parses and aggregates Ollama model discovery results."""
 
     @staticmethod
-    def parse_tags_response(data: dict, instance_url: str) -> list[OllamaModel]:
+    def parse_tags_response(data: dict[str, Any], instance_url: str) -> list[OllamaModel]:
         """Parses the raw JSON response from /api/tags into a list of OllamaModel."""
-        models = []
+        models: list[OllamaModel] = []
         if "models" in data:
             for model_data in data["models"]:
                 model = OllamaModel(
@@ -33,13 +33,13 @@ class OllamaManifestParser:
         return models
 
     @staticmethod
-    def aggregate_discovery_results(instance_urls: list[str], results: list[Any]) -> dict[str, Any]:
+    def aggregate_discovery_results(instance_urls: list[str], results: list[Any]) -> DiscoveryResultDTO:
         """Aggregates results from multiple instances into a single discovery dictionary."""
         all_models: list[OllamaModel] = []
-        chat_models = []
-        embedding_models = []
-        host_status = {}
-        discovery_errors = []
+        chat_models: list[ModelDictDTO] = []
+        embedding_models: list[ModelDictDTO] = []
+        host_status: dict[str, HostStatusDTO] = {}
+        discovery_errors: list[str] = []
 
         for url, result in zip(instance_urls, results, strict=False):
             if isinstance(result, Exception):
@@ -47,7 +47,7 @@ class OllamaManifestParser:
                 discovery_errors.append(error_msg)
                 host_status[url] = {"status": "error", "error": str(result)}
             else:
-                models = result
+                models: list[OllamaModel] = result
                 all_models.extend(models)
                 host_status[url] = {"status": "online", "models_count": str(len(models)), "instance_url": url}
 
@@ -90,7 +90,7 @@ class OllamaManifestParser:
                         )
 
         # Remove duplicates (same model on multiple instances)
-        unique_models = {}
+        unique_models: dict[str, OllamaModel] = {}
         for model in all_models:
             key = f"{model.name}@{model.instance_url}"
             unique_models[key] = model

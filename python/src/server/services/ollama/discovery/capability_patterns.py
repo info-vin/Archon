@@ -1,10 +1,13 @@
 import time
-from typing import Any
+from typing import TYPE_CHECKING
 
 from src.server.config.logfire_config import get_logger
 
 from .capability_tester import get_model_details_logic
-from .models import OllamaModel
+from .models import OllamaModel, OllamaModelDetailsDTO
+
+if TYPE_CHECKING:
+    from ..model_discovery_service import ModelDiscoveryService
 
 logger = get_logger(__name__)
 
@@ -51,15 +54,15 @@ UNKNOWN_EMBEDDING_PATTERNS = ("embed", "embedding", "vector")
 
 
 async def enrich_model_capabilities_logic(
-    service_instance,
+    service_instance: "ModelDiscoveryService",
     models: list[OllamaModel],
     instance_url: str,
     fetch_details: bool = False,
 ) -> list[OllamaModel]:
     """Pattern-match and enrich model capabilities from Ollama API."""
     start_time = time.time()
-    enriched_models = []
-    unknown_models = []
+    enriched_models: list[OllamaModel] = []
+    unknown_models: list[OllamaModel] = []
 
     for model in models:
         model_name_lower = model.name.lower()
@@ -84,7 +87,7 @@ async def enrich_model_capabilities_logic(
             if any(pattern in model_name_lower for pattern in CHAT_PATTERNS):
                 model.capabilities = ["chat"]
                 if any(p in model_name_lower for p in FUNCTION_CALLING_PATTERNS):
-                    model.capabilities.extend(["function_calling", "structured_output"]) # 合法
+                    model.capabilities.extend(["function_calling", "structured_output"])
                 elif any(p in model_name_lower for p in STRUCTURED_OUTPUT_PATTERNS):
                     model.capabilities.append("structured_output")
 
@@ -112,7 +115,7 @@ async def enrich_model_capabilities_logic(
     return enriched_models
 
 
-def _map_details_to_model(model: OllamaModel, info: dict[str, Any]):
+def _map_details_to_model(model: OllamaModel, info: OllamaModelDetailsDTO) -> None:
     """Internal helper to map /api/show dict to OllamaModel object."""
     model.context_window = info.get("context_window")
     model.max_context_length = info.get("max_context_length")
@@ -126,9 +129,25 @@ def _map_details_to_model(model: OllamaModel, info: dict[str, Any]):
     model.family = info.get("family")
     model.parameter_size = info.get("parameter_size")
     model.quantization = info.get("quantization")
-    model.parameter_count = info.get("parameter_count")
-    model.file_type = info.get("file_type")
-    model.quantization_version = info.get("quantization_version")
+
+    param_cnt = info.get("parameter_count")
+    if isinstance(param_cnt, int):
+        model.parameter_count = param_cnt
+    elif isinstance(param_cnt, str) and param_cnt.isdigit():
+        model.parameter_count = int(param_cnt)
+
+    ft_val = info.get("file_type")
+    if isinstance(ft_val, int):
+        model.file_type = ft_val
+    elif isinstance(ft_val, str) and ft_val.isdigit():
+        model.file_type = int(ft_val)
+
+    qv_val = info.get("quantization_version")
+    if isinstance(qv_val, int):
+        model.quantization_version = qv_val
+    elif isinstance(qv_val, str) and qv_val.isdigit():
+        model.quantization_version = int(qv_val)
+
     model.basename = info.get("basename")
     model.size_label = info.get("size_label")
     model.license = info.get("license")
@@ -139,8 +158,9 @@ def _map_details_to_model(model: OllamaModel, info: dict[str, Any]):
     if api_caps:
         model.capabilities = list(set(model.capabilities + api_caps))
 
-    if info.get("parameters"):
+    params = info.get("parameters")
+    if params:
         if model.parameters:
-            model.parameters.update(info["parameters"])
+            model.parameters.update(params)
         else:
-            model.parameters = info["parameters"]
+            model.parameters = dict(params)
