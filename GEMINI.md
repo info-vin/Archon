@@ -125,6 +125,18 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-14: 756 項測試突破、雲端雙生遙測與 429 物理自癒公證 (Phase 5.11.29)
+
+*   **雲端 Hugging Face 空間與 Supabase 物理遙測對帳**:
+    *   **空間狀態**: 實體探針驗證 Space `chiawei6/myrmidon` 為 `RUNNING`，`/health` 回傳 HTTP 200，憑證與 Schema 驗證全綠。
+    *   **日報排程閉環**: 驗證 Supabase `archon_logs` 今日日常排程順利完成，Daily Executive Summary (`54daa4bc...`) 產出成功，全日僅消耗 2,170 tokens。
+*   **10/11 429 速率限制穿透鑑識與 MetaTwin 自癒公證**:
+    *   **病因鑑識**: 深入 `archon_logs` 原始錯誤 body，證實 10/11 429 源於週日高負載任務「Weekly Executive Summary」在 Map-Reduce 多 Worker 併發下，短時間內觸碰 Google Free Tier 之 `250000` TPM 滑動窗口上限，而非單次 Token 爆量。
+    *   **物理自癒證明**: 證實 `RateLimitHandler` 成功完成 4 次指數退避重試，且 `MetaTwinService` 在當天 07:51 物理介入執行 `MODEL_SWAP`（將 `DEFAULT_PRO` 降階為 `gemini-3.1-flash-lite`），使 10/12 ~ 10/14 平日運作徹底免除 429 錯誤。
+*   **全域三向門禁公證**:
+    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
+    *   `make test-be`: **756 passed** (+8 項新增測試，包含 `test_settings_service.py` 完整覆蓋)，10 skipped, 4 xfailed (0 failures)，全數通過。
+
 ### 2026-10-12: Projects API 型別變異修復、748 項測試突破與 7 日研發數據公證 (Phase 5.11.28)
 
 *   **Projects Core API 型別變異 (Variance) 防禦修復**:
