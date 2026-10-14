@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, TypedDict
 from ..config.logfire_config import get_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable  # noqa: F401
 
     from src.agents.mcp_client import MCPClient
 

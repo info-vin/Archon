@@ -84,7 +84,7 @@ class CodeExtractionService(BaseRepository):
         start_progress: int = 0,
         end_progress: int = 100,
         cancellation_check: Callable[[], None] | None = None,
-        cancellation_token: dict[str, Any] | None = None,
+        _cancellation_token: dict[str, Any] | None = None,
         progress_id: str | None = None,
     ) -> int:
         """
