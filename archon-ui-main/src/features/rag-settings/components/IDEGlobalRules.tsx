@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -6,6 +6,93 @@ import { useToast } from '@/features/shared/hooks/useToast';
 import { copyToClipboard } from '@/features/shared/utils/clipboard';
 
 type RuleType = 'claude' | 'universal';
+
+  const renderMarkdown = (text: string) => {
+    const lines = text.split('\n');
+    const elements: JSX.Element[] = [];
+    let inCodeBlock = false;
+    let codeBlockContent: string[] = [];
+
+    lines.forEach((line, index) => {
+      // Code blocks
+      if (line.startsWith('```')) {
+        if (!inCodeBlock) {
+          inCodeBlock = true;
+          codeBlockContent = [];
+        } else {
+          inCodeBlock = false;
+          elements.push(
+            <pre key={index} className="bg-gray-900 dark:bg-gray-800 text-gray-100 p-3 rounded-md overflow-x-auto my-2">
+              <code className="text-sm font-mono">{codeBlockContent.join('\n')}</code>
+            </pre>
+          );
+        }
+        return;
+      }
+
+      if (inCodeBlock) {
+        codeBlockContent.push(line);
+        return;
+      }
+
+      // Headers
+      if (line.startsWith('# ')) {
+        elements.push(<h1 key={index} className="text-2xl font-bold text-gray-800 dark:text-white mt-4 mb-2">{line.slice(2)}</h1>);
+      } else if (line.startsWith('## ')) {
+        elements.push(<h2 key={index} className="text-xl font-semibold text-gray-800 dark:text-white mt-3 mb-2">{line.slice(3)}</h2>);
+      } else if (line.startsWith('### ')) {
+        elements.push(<h3 key={index} className="text-lg font-semibold text-gray-800 dark:text-white mt-2 mb-1">{line.slice(4)}</h3>);
+      }
+      // Bold text
+      else if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
+        elements.push(<p key={index} className="font-semibold text-gray-700 dark:text-gray-300 my-1">{line.slice(2, -2)}</p>);
+      }
+      // Numbered lists
+      else if (/^\d+\.\s/.test(line)) {
+        const content = line.replace(/^\d+\.\s/, '');
+        const processedContent = content
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+        elements.push(
+          <li key={index} className="ml-6 list-decimal text-gray-600 dark:text-gray-400 my-0.5"
+              dangerouslySetInnerHTML={{ __html: processedContent }} />
+        );
+      }
+      // Bullet lists (checking for both - and * markers, accounting for sublists)
+      else if (/^(\s*)[-*]\s/.test(line)) {
+        const indent = line.match(/^(\s*)/)?.[1].length || 0;
+        const content = line.replace(/^(\s*)[-*]\s/, '');
+        const processedContent = content
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+        const marginLeft = 6 + (indent * 2);
+        elements.push(
+          <li key={index} className={`ml-${marginLeft} list-disc text-gray-600 dark:text-gray-400 my-0.5`}
+              style={{ marginLeft: `${marginLeft * 4}px` }}
+              dangerouslySetInnerHTML={{ __html: processedContent }} />
+        );
+      }
+      // Inline code in regular text
+      else if (line.includes('`') && !line.startsWith('`')) {
+        const processedLine = line
+          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
+        elements.push(
+          <p key={index} className="text-gray-600 dark:text-gray-400 my-1"
+             dangerouslySetInnerHTML={{ __html: processedLine }} />
+        );
+      }
+      // Empty lines
+      else if (line.trim() === '') {
+        elements.push(<div key={index} className="h-2" />);
+      }
+      // Regular text
+      else {
+        elements.push(<p key={index} className="text-gray-600 dark:text-gray-400 my-1">{line}</p>);
+      }
+    });
+
+    return elements;
+  };
 
 export const IDEGlobalRules = () => {
   const [copied, setCopied] = useState(false);
@@ -192,93 +279,12 @@ find_tasks(filter_by="project", filter_value="proj-123")
 
   const currentRules = selectedRuleType === 'claude' ? claudeRules : universalRules;
 
-  // Simple markdown parser for display
-  const renderMarkdown = (text: string) => {
-    const lines = text.split('\n');
-    const elements: JSX.Element[] = [];
-    let inCodeBlock = false;
-    let codeBlockContent: string[] = [];
 
-    lines.forEach((line, index) => {
-      // Code blocks
-      if (line.startsWith('```')) {
-        if (!inCodeBlock) {
-          inCodeBlock = true;
-          codeBlockContent = [];
-        } else {
-          inCodeBlock = false;
-          elements.push(
-            <pre key={index} className="bg-gray-900 dark:bg-gray-800 text-gray-100 p-3 rounded-md overflow-x-auto my-2">
-              <code className="text-sm font-mono">{codeBlockContent.join('\n')}</code>
-            </pre>
-          );
-        }
-        return;
-      }
 
-      if (inCodeBlock) {
-        codeBlockContent.push(line);
-        return;
-      }
-
-      // Headers
-      if (line.startsWith('# ')) {
-        elements.push(<h1 key={index} className="text-2xl font-bold text-gray-800 dark:text-white mt-4 mb-2">{line.slice(2)}</h1>);
-      } else if (line.startsWith('## ')) {
-        elements.push(<h2 key={index} className="text-xl font-semibold text-gray-800 dark:text-white mt-3 mb-2">{line.slice(3)}</h2>);
-      } else if (line.startsWith('### ')) {
-        elements.push(<h3 key={index} className="text-lg font-semibold text-gray-800 dark:text-white mt-2 mb-1">{line.slice(4)}</h3>);
-      }
-      // Bold text
-      else if (line.startsWith('**') && line.endsWith('**') && line.length > 4) {
-        elements.push(<p key={index} className="font-semibold text-gray-700 dark:text-gray-300 my-1">{line.slice(2, -2)}</p>);
-      }
-      // Numbered lists
-      else if (/^\d+\.\s/.test(line)) {
-        const content = line.replace(/^\d+\.\s/, '');
-        const processedContent = content
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
-        elements.push(
-          <li key={index} className="ml-6 list-decimal text-gray-600 dark:text-gray-400 my-0.5" 
-              dangerouslySetInnerHTML={{ __html: processedContent }} />
-        );
-      }
-      // Bullet lists (checking for both - and * markers, accounting for sublists)
-      else if (/^(\s*)[-*]\s/.test(line)) {
-        const indent = line.match(/^(\s*)/)?.[1].length || 0;
-        const content = line.replace(/^(\s*)[-*]\s/, '');
-        const processedContent = content
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
-        const marginLeft = 6 + (indent * 2);
-        elements.push(
-          <li key={index} className={`ml-${marginLeft} list-disc text-gray-600 dark:text-gray-400 my-0.5`} 
-              style={{ marginLeft: `${marginLeft * 4}px` }}
-              dangerouslySetInnerHTML={{ __html: processedContent }} />
-        );
-      }
-      // Inline code in regular text
-      else if (line.includes('`') && !line.startsWith('`')) {
-        const processedLine = line
-          .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">$1</code>');
-        elements.push(
-          <p key={index} className="text-gray-600 dark:text-gray-400 my-1" 
-             dangerouslySetInnerHTML={{ __html: processedLine }} />
-        );
-      }
-      // Empty lines
-      else if (line.trim() === '') {
-        elements.push(<div key={index} className="h-2" />);
-      }
-      // Regular text
-      else {
-        elements.push(<p key={index} className="text-gray-600 dark:text-gray-400 my-1">{line}</p>);
-      }
-    });
-
-    return elements;
-  };
+  // PERFORMANCE: Memoize the parsed markdown elements to prevent O(N) string replace
+  // regex operations on every render cycle (like when 'copied' state changes).
+  // Impact: O(1) rendering time instead of O(N) string processing.
+  const renderedMarkdown = useMemo(() => renderMarkdown(currentRules), [currentRules]);
 
   const handleCopyToClipboard = async () => {
     const result = await copyToClipboard(currentRules);
@@ -354,7 +360,7 @@ find_tasks(filter_by="project", filter_value="proj-123")
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <div className="prose prose-sm dark:prose-invert max-w-none">
               {/* eslint-disable react/no-unescaped-entities */}
-              {renderMarkdown(currentRules)}
+              {renderedMarkdown}
               {/* eslint-enable react/no-unescaped-entities */}
             </div>
           </div>

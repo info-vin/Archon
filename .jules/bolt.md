@@ -291,3 +291,30 @@
 ## 2024-10-12 - Avoid spread and map combination in D3 extent calculations
 **Learning:** Using `extent([...arr.map(), ...arr.map()])` inside a React component's `useEffect` or render loop triggers multiple O(N) array allocations (two from `.map()` and one combined array from the spread operator `...`). This creates completely unnecessary garbage collection pressure when the exact same value can be computed with O(1) memory via a simple single-pass for-loop using `.getTime()`.
 **Action:** When calculating min/max domains across multiple object fields for visualization libraries (like d3.extent), replace chained `.map()` and spread array formations with a targeted single-pass accumulator loop, especially for components that re-render frequently.
+## 2025-05-18 - Replacing inline toLocaleDateString() with hoisted Intl.DateTimeFormat
+**Learning:** Calling `new Date().toLocaleDateString()` inside an array `.map()` render loop creates a new `Intl.DateTimeFormat` instance behind the scenes for every mapped item on every render cycle, causing massive garbage collection pressure and rendering bottlenecks for long lists.
+**Action:** Always hoist `Intl.DateTimeFormat` outside of the component or array loop to instantiate it only once upon module load, and use `.format()` inside the render function.
+
+## 2024-05-20 - Replacing inline toLocaleTimeString() with hoisted Intl.DateTimeFormat
+**Learning:** Calling `new Date().toLocaleTimeString()` inside a React component render loop or callback creates a new `Intl.DateTimeFormat` instance behind the scenes on every invocation, causing unnecessary garbage collection pressure and rendering bottlenecks.
+**Action:** Always hoist `Intl.DateTimeFormat` outside of the component to instantiate it only once upon module load, and use `.format()` instead of `.toLocaleTimeString()`. Ensure an explicit invalid date check (`isNaN(date.getTime())`) is added when migrating to `Intl.DateTimeFormat`.
+## 2024-05-24 - Extracting inline string manipulation to O(1) map
+**Learning:** Using chained `.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase())` directly within render loops creates unnecessary O(N) regex evaluation and string allocations on every render cycle for each item in the list.
+**Action:** Pre-calculate the formatted string variations for static enum/type values into a constant module-level Map or object dictionary to enable O(1) constant-time property lookups during render.
+
+## 2025-05-18 - Pre-calculate string formatting in map iterations
+**Learning:** Using inline string manipulations like `.replace(/_/g, ' ')` inside a `.map()` during a React component's render loop causes unnecessary O(N) regex evaluation and string allocation on every render cycle.
+**Action:** Always extract and pre-calculate formatted strings within a `useMemo` block or during initial data transformation so that the expensive string operations execute only when the underlying data changes, maintaining O(1) property lookup during renders.
+## 2026-10-01 - Replace nested Array.find() with Map lookup in useEffect
+**Learning:** Array.find() inside a loop (like .filter or .map) on arrays of objects causes hidden O(N*M) complexity, especially in React useEffects that process lists of operations.
+**Action:** Always precalculate a Map for O(1) lookups before the loop when comparing two lists (e.g., previous state vs current state).
+
+## 2025-05-18 - Avoid O(N) string replace in loop rendering
+**Learning:** Using inline string manipulations like `.replace('_', ' ')` inside a `.map()` during a React component's render loop causes unnecessary O(N) regex evaluation (in JavaScript, `.replace('_', ' ')` translates to a basic string replacement, but `.replace(/_/g, ' ')` translates to a regex evaluation, and doing it repeatedly in a loop is expensive) and string allocation on every render cycle.
+**Action:** Always extract and pre-calculate formatted strings within a `useMemo` block, or hoist a cached Map function, so that the expensive string operations execute only when the underlying data changes or when new unique values are encountered, maintaining O(1) property lookup during renders.
+## 2024-10-12 - Avoid spread and map combination in D3 extent calculations
+**Learning:** Using `extent([...arr.map(), ...arr.map()])` inside a React component's `useEffect` or render loop triggers multiple O(N) array allocations (two from `.map()` and one combined array from the spread operator `...`). This creates completely unnecessary garbage collection pressure when the exact same value can be computed with O(1) memory via a simple single-pass for-loop using `.getTime()`.
+**Action:** When calculating min/max domains across multiple object fields for visualization libraries (like d3.extent), replace chained `.map()` and spread array formations with a targeted single-pass accumulator loop, especially for components that re-render frequently.
+## 2025-05-18 - Memoize expensive markdown parsing with regex replacements
+**Learning:** Parsing large markdown text blocks with multiple `String.prototype.replace()` regex operations directly within a functional component's render body forces O(N) string processing on every render cycle (e.g., when unrelated state like a "copied" flag changes).
+**Action:** Extract the parsing logic into a static module-level function and wrap its invocation within the component using `useMemo` so that the expensive string operations only run when the actual markdown content changes, preserving O(1) render time for UI state updates.
