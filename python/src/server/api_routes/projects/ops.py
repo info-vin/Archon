@@ -12,6 +12,7 @@ from src.server.schemas.projects import (
     AgentOutputUpdateRequest,
     AgentStatusUpdateRequest,
     CreateTaskRequest,
+    CreateTaskResponse,
     GenerateTaskFromAlertRequest,
     RefineTaskRequest,
     RefineTaskResponse,
@@ -91,8 +92,10 @@ async def generate_task_from_alert(
     return handle_service_result(s, res)
 
 
-@router.post("/tasks")
-async def create_task(req: CreateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/tasks", response_model=CreateTaskResponse)
+async def create_task(
+    req: CreateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> CreateTaskResponse:
     """Creates a new task. Includes cross-department assignment blocking."""
     u_role = current_user.role.lower()
     u_dept = current_user.department
@@ -131,7 +134,7 @@ async def create_task(req: CreateTaskRequest, current_user: UserProfileDTO = Dep
     )
     if not s or not isinstance(res, dict):
         _err(res, 400)
-    return {"message": "Task created successfully", "task": res.get("task")}
+    return CreateTaskResponse(message="Task created successfully", task=res.get("task"))
 
 
 @router.get("/tasks")

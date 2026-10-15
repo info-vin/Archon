@@ -109,6 +109,11 @@ class AgentCallbackResponse(BaseModel):
     message: str | None = None
 
 
+class CreateTaskResponse(BaseModel):
+    message: str = Field(description="Status message")
+    task: dict[str, Any] | None = Field(default=None, description="Created task details")
+
+
 class CreateDocumentRequest(BaseModel):
     document_type: str
     title: str
