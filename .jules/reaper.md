@@ -12,3 +12,6 @@
 ## 2025-05-24 - [Python 參數 unused 問題與 FastAPI query/dependency]
 **學習心得：** 在使用 vulture 等工具時，FastAPI 的路徑操作函式中定義的 Query 或 Dependency 參數，即使在函數主體內沒有直接被當作變數使用，它們也提供了 API 文件的 Schema 以及 request 驗證機制。這些不能被直接移除，否則會破壞 API 介面。同時，對於繼承或實現某個介面的方法中，為了維持簽章一致性而未被使用的參數，這類情況也屬於誤報。
 **行動：** 對於 API endpoints（有 FastAPI 裝飾器的函式）以及為了介面一致性保留的參數，如果被標記為 unused，應該將參數名稱加上前綴 `_`，並在需要時使用 `alias` 來維持外部接口，例如：`_include_capabilities: bool = Query(..., alias="include_capabilities")`。這能消除 vulture 警告，同時不改變 API 的實際輸入輸出定義，亦不違反寧可留著不要誤刪的原則。
+## 2025-05-24 - [Reaper Rules vs Vulture false positives]
+**學習心得：** Installing vulture dynamically modifies dependency lock files which violates the core safety rules (`uv.lock` / `pyproject.toml`). In addition, fixing unused variables by prefixing with `_` is sometimes appropriate for interface compliance, but any tool execution must respect strictly the codebase dependencies.
+**行動：** For unused variables identified, prefixing them with `_` is safe. When evaluating the success of Reaper, do not install external tools like Vulture if it mutates the lock files.

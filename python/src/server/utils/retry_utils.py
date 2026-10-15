@@ -43,7 +43,7 @@ def _is_rate_limit_or_overloaded(e: Exception) -> bool:
 def retry_with_backoff(
     max_retries: int = 3,
     initial_delay: float = 1.0,
-    backoff_factor: float = 2.0,  # Not directly used in tenacity's wait_exponential_jitter default kwargs easily without custom classes, but wait_exponential_jitter has its own defaults
+    _backoff_factor: float = 2.0,  # Not directly used in tenacity's wait_exponential_jitter default kwargs easily without custom classes, but wait_exponential_jitter has its own defaults
     jitter: bool = True,
     retryable_exceptions: tuple[type[Exception], ...] = (Exception,),
 ):

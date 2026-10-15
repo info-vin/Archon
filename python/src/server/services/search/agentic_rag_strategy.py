@@ -50,7 +50,7 @@ class AgenticRAGStrategy(BaseRepository):
         match_count: int = 10,
         filter_metadata: dict[str, Any] | None = None,
         source_id: str | None = None,
-        use_enhancement: bool = False,
+        _use_enhancement: bool = False,
     ) -> list[dict[str, Any]]:
         """
         Search for code examples using vector similarity.

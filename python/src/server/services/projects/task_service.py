@@ -167,7 +167,7 @@ class TaskService(BaseRepository):
         return await get_all_project_task_counts_logic(self)
 
     async def generate_task_from_alert(
-        self, alert_id: str, assignee_id: str | None = None, triggered_by: str | None = None
+        self, alert_id: str, assignee_id: str | None = None, _triggered_by: str | None = None
     ) -> tuple[bool, dict[str, Any]]:
         from .tasks.ai_operations import generate_task_from_alert_logic
 
