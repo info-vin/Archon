@@ -1,4 +1,5 @@
 import pytest
+
 from src.server.services.ollama.discovery.capability_patterns import (
     _map_details_to_model,
     enrich_model_capabilities_logic,

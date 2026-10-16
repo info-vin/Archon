@@ -125,6 +125,18 @@
 
 > 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
 
+### 2026-10-16: 767 項測試突破、Ollama 發現 DTO 對齊與 Agentic RAG 參數修復 (Phase 5.11.30)
+
+*   **Ollama Discovery DTO 契約與多餘轉型清理**:
+    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `ollama/schemas.py` 中 `ModelDiscoveryResponse` 欄位型別 (`list[dict[str, Any]]`) 與實際回傳之 `DiscoveryResultDTO` (`list[ModelDictDTO]`, `dict[str, HostStatusDTO]`) 不相容。同時 `capabilities.py` 存在多餘的 `cast(ModelCapabilities, ...)`。
+    *   **修復**: 將 [schemas.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/ollama/schemas.py) 欄位直接使用 `ModelDictDTO` 與 `HostStatusDTO` 強型別契約對齊；清理 `capabilities.py` 中無效轉型與未使用的 `cast` import。
+*   **Agentic RAG 搜尋關鍵字參數修復**:
+    *   **診斷**: 前序批次整理誤將 `search_code_examples` 的 `use_enhancement` 標記為底線私有變數，導致內部與 [rag_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/search/rag_service.py) 傳入時報錯 `Unexpected keyword argument`。
+    *   **修復**: 於 [agentic_rag_strategy.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/search/agentic_rag_strategy.py) 與 [rag_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/search/rag_service.py) 物理還原公開參數命名 `use_enhancement: bool = False`。
+*   **全域三向門禁公證與測試新高**:
+    *   `make lint`: 前端 (enduser-ui-fe, archon-ui-main)、後端 392 來源檔與 Lean 4 18 jobs 100% 綠燈通過。
+    *   `make test-be`: **767 passed** (+11 項新增測試通過，包含 `test_auth_service.py` 與 `test_ollama_discovery.py`)，11 skipped, 4 xfailed (0 failures)，全數通過。
+
 ### 2026-10-14: 756 項測試突破、雲端雙生遙測與 429 物理自癒公證 (Phase 5.11.29)
 
 *   **雲端 Hugging Face 空間與 Supabase 物理遙測對帳**:

@@ -179,7 +179,7 @@ class RAGService(BaseRepository):
             match_count=match_count,
             filter_metadata=filter_metadata,
             source_id=source_id,
-            _use_enhancement=True,
+            use_enhancement=True,
         )
 
     async def perform_web_research(self, query: str) -> tuple[str, str]:

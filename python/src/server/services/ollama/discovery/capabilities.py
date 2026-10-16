@@ -5,7 +5,7 @@ Handles model capability testing (chat, embedding, structured output),
 metadata enrichment via /api/show, and pattern matching.
 """
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from src.server.config.logfire_config import get_logger
 
@@ -53,11 +53,11 @@ async def detect_model_capabilities_logic(
 
     async with service_instance.capability_lock:
         if cache_key in service_instance.capability_cache:
-            return cast(ModelCapabilities, service_instance.capability_cache[cache_key])
+            return service_instance.capability_cache[cache_key]
 
     async with service_instance.capability_lock:
         if cache_key in service_instance.capability_cache:
-            return cast(ModelCapabilities, service_instance.capability_cache[cache_key])
+            return service_instance.capability_cache[cache_key]
 
         caps = ModelCapabilities()
         try:

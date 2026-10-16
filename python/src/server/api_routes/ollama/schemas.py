@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from src.server.services.ollama.discovery.models import HostStatusDTO, ModelDictDTO
+
 
 class InstanceValidationRequest(BaseModel):
     instance_url: str = Field(..., description="URL of the Ollama instance")
@@ -28,9 +30,9 @@ class ModelDiscoveryRequest(BaseModel):
 
 class ModelDiscoveryResponse(BaseModel):
     total_models: int
-    chat_models: list[dict[str, Any]]
-    embedding_models: list[dict[str, Any]]
-    host_status: dict[str, dict[str, Any]]
+    chat_models: list[ModelDictDTO]
+    embedding_models: list[ModelDictDTO]
+    host_status: dict[str, HostStatusDTO]
     discovery_errors: list[str]
     unique_model_names: list[str]
 
