@@ -318,3 +318,7 @@
 ## 2025-05-18 - Memoize expensive markdown parsing with regex replacements
 **Learning:** Parsing large markdown text blocks with multiple `String.prototype.replace()` regex operations directly within a functional component's render body forces O(N) string processing on every render cycle (e.g., when unrelated state like a "copied" flag changes).
 **Action:** Extract the parsing logic into a static module-level function and wrap its invocation within the component using `useMemo` so that the expensive string operations only run when the actual markdown content changes, preserving O(1) render time for UI state updates.
+
+## 2026-03-29 - Pre-calculating URL lookup Map for active operations in KnowledgeList
+**Learning:** Calling Array.prototype.find() across active operations matching item URLs inside a list .map() render loop creates an O(N*M) performance bottleneck on every render cycle.
+**Action:** Pre-calculate an O(1) URL lookup Map alongside the source_id map inside useMemo to eliminate O(N*M) scans during grid rendering.
