@@ -1,5 +1,7 @@
 from typing import Any, NotRequired, TypedDict, cast
 
+from supabase import Client
+
 from src.server.repositories.base_repository import BaseRepository
 
 from ..config.logfire_config import get_logger
@@ -22,8 +24,21 @@ class UserProfileDictDTO(TypedDict):
     tenant_id: NotRequired[str | None]
 
 
+class UserProfileUpdateDTO(TypedDict, total=False):
+    employeeId: str | None
+    name: str
+    email: str
+    department: str | None
+    position: str | None
+    status: str
+    role: str
+    avatar: str | None
+    permission_overrides: dict[str, Any] | None
+    tenant_id: str | None
+
+
 class AuthService(BaseRepository):
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     def get_all_users(self) -> list[UserProfileDictDTO]:
@@ -99,7 +114,9 @@ class AuthService(BaseRepository):
             logger.error(f"Error updating email: {e}", exc_info=True)
             raise e
 
-    def update_user_by_admin(self, user_id: str, updates: dict[str, Any]) -> UserProfileDictDTO:
+    def update_user_by_admin(
+        self, user_id: str, updates: UserProfileUpdateDTO | dict[str, Any]
+    ) -> UserProfileDictDTO:
         """
         Updates a user's role, status, or permissions as an Admin.
         """
