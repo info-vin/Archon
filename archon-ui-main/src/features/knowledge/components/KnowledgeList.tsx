@@ -100,15 +100,24 @@ export const KnowledgeList: React.FC<KnowledgeListProps> = ({
   activeOperations = [],
   onRefreshStarted,
 }) => {
-  // PERFORMANCE: Precalculate lookup map for active operations to prevent O(N*M) Array.find calls during render loop
-  const activeOperationsMap = useMemo(() => {
-    const map = new Map<string, ActiveOperation>();
+  // PERFORMANCE: Precalculate lookup maps for active operations by source_id and URL
+  // to prevent O(N*M) Array.find calls during render loop
+  const { activeOperationsMap, activeOperationsUrlMap } = useMemo(() => {
+    const sourceMap = new Map<string, ActiveOperation>();
+    const urlMap = new Map<string, ActiveOperation>();
+
     activeOperations.forEach((op) => {
-      if (op.source_id && !map.has(op.source_id)) {
-        map.set(op.source_id, op);
+      if (op.source_id && !sourceMap.has(op.source_id)) {
+        sourceMap.set(op.source_id, op);
+      }
+      if (op.url && !urlMap.has(op.url)) {
+        urlMap.set(op.url, op);
+      }
+      if (op.current_url && !urlMap.has(op.current_url)) {
+        urlMap.set(op.current_url, op);
       }
     });
-    return map;
+    return { activeOperationsMap: sourceMap, activeOperationsUrlMap: urlMap };
   }, [activeOperations]);
 
   // Helper to check if an item is being recrawled
@@ -119,15 +128,20 @@ export const KnowledgeList: React.FC<KnowledgeListProps> = ({
       return matchBySourceId;
     }
 
-    // Fallback: Check if any active operation is for this item's URL
+    // Fast path: Try O(1) URL lookup before array search
     const itemUrl = item.metadata?.original_url || item.url;
+    if (itemUrl) {
+      const matchByUrl = activeOperationsUrlMap.get(itemUrl);
+      if (matchByUrl) {
+        return matchByUrl;
+      }
+    }
+
+    // Fallback: Check if any active operation message includes URL or title
     return activeOperations.find((op) => {
-      // Check various URL fields in the operation
       return (
-        op.url === itemUrl ||
-        op.current_url === itemUrl ||
-        op.message?.includes(itemUrl) ||
-        (op.operation_type === "crawl" && op.message?.includes(item.title))
+        (itemUrl && op.message?.includes(itemUrl)) ||
+        (op.operation_type === "crawl" && item.title && op.message?.includes(item.title))
       );
     });
   };
