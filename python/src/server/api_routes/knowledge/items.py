@@ -13,7 +13,13 @@ from src.server.utils import get_supabase_client
 
 from ...auth.dependencies import requires_permission
 from ...auth.permissions import TASK_READ_OWN, TASK_READ_TEAM, TASK_UPDATE_ALL
-from .schemas import AvailableSourcesResponse, DeleteSourceResponse
+from .schemas import (
+    AvailableSourcesResponse,
+    ChunkPagination,
+    DeleteSourceResponse,
+    KnowledgeItemListResponse,
+    SourceChunksResponse,
+)
 
 router = APIRouter()
 
@@ -36,30 +42,47 @@ async def list_sources(
     return AvailableSourcesResponse.model_validate(res)
 
 
-@router.get("/knowledge-items")
+@router.get("/knowledge-items", response_model=KnowledgeItemListResponse)
 async def list_knowledge_items(
     page: int = 1,
     per_page: int = 50,
     knowledge_type: str | None = None,
     search: str | None = None,
     current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN)),
-):
+) -> KnowledgeItemListResponse:
     """Lists knowledge items. Requires TASK_READ_OWN."""
     service = KnowledgeItemService(get_supabase_client())
     success, res = await service.list_items(page=page, per_page=per_page, knowledge_type=knowledge_type, search=search)
     if not success:
-        raise HTTPException(status_code=500, detail=str(res.get("error")))
-    return res
+        raise HTTPException(status_code=500, detail=str(res.get("error") if isinstance(res, dict) else res))
+    if isinstance(res, list):
+        return KnowledgeItemListResponse(items=res, total=len(res), page=page, per_page=per_page)
+    return KnowledgeItemListResponse.model_validate(res)
 
 
-@router.get("/knowledge-items/{source_id}/chunks")
-async def list_source_chunks(source_id: str, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM))):
+@router.get("/knowledge-items/{source_id}/chunks", response_model=SourceChunksResponse)
+async def list_source_chunks(
+    source_id: str,
+    page: int = 1,
+    per_page: int = 50,
+    domain_filter: str | None = None,
+    current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_TEAM)),
+) -> SourceChunksResponse:
     """Lists raw chunks. Requires TASK_READ_TEAM."""
     service = KnowledgeSummaryService(get_supabase_client())
-    success, res = await service.get_item_chunks(source_id=source_id)
+    success, res = await service.get_item_chunks(
+        source_id=source_id, page=page, per_page=per_page, domain_filter=domain_filter
+    )
     if not success:
-        raise HTTPException(status_code=500, detail=str(res.get("error")))
-    return res
+        raise HTTPException(status_code=500, detail=str(res.get("error") if isinstance(res, dict) else res))
+    if isinstance(res, list):
+        return SourceChunksResponse(
+            chunks=res,
+            pagination=ChunkPagination(
+                total=len(res), page=page, per_page=per_page, total_pages=1 if res else 0
+            ),
+        )
+    return SourceChunksResponse.model_validate(res)
 
 
 @router.delete("/knowledge-items/{source_id}", response_model=DeleteSourceResponse)
