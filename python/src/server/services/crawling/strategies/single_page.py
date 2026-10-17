@@ -7,25 +7,51 @@ Handles crawling of individual web pages.
 import asyncio
 import traceback
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
-from crawl4ai import CacheMode, CrawlerRunConfig
+from crawl4ai import AsyncWebCrawler, CacheMode, CrawlerRunConfig
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 from ....config.logfire_config import get_logger
 
 logger = get_logger(__name__)
 
 
+class SinglePageCrawlResultDTO(TypedDict):
+    """DTO for single page crawl results."""
+
+    success: bool
+    error: NotRequired[str]
+    url: NotRequired[str]
+    markdown: NotRequired[str]
+    html: NotRequired[str]
+    title: NotRequired[str]
+    links: NotRequired[dict[str, Any]]
+    content_length: NotRequired[int]
+
+
+class CrawlResultItemDTO(TypedDict):
+    """DTO for crawled document item."""
+
+    url: str
+    markdown: str
+    html: str
+
+
 class SinglePageCrawlStrategy:
     """Strategy for crawling a single web page."""
 
-    def __init__(self, crawler, markdown_generator) -> None:
+    def __init__(
+        self,
+        crawler: AsyncWebCrawler | None = None,
+        markdown_generator: DefaultMarkdownGenerator | None = None,
+    ) -> None:
         """
         Initialize single page crawl strategy.
 
         Args:
-            crawler (AsyncWebCrawler): The Crawl4AI crawler instance for web crawling operations
-            markdown_generator (DefaultMarkdownGenerator): The markdown generator instance for converting HTML to markdown
+            crawler (AsyncWebCrawler | None): The Crawl4AI crawler instance for web crawling operations
+            markdown_generator (DefaultMarkdownGenerator | None): The markdown generator instance for converting HTML to markdown
         """
         self.crawler = crawler
         self.markdown_generator = markdown_generator
@@ -64,7 +90,7 @@ class SinglePageCrawlStrategy:
         transform_url_func: Callable[[str], str],
         is_documentation_site_func: Callable[[str], bool],
         retry_count: int = 3,
-    ) -> dict[str, Any]:
+    ) -> SinglePageCrawlResultDTO:
         """
         Crawl a single web page and return the result with retry logic.
 
@@ -197,7 +223,7 @@ class SinglePageCrawlStrategy:
         progress_callback: Callable[..., Awaitable[None]] | None = None,
         start_progress: int = 10,
         end_progress: int = 20,
-    ) -> list[dict[str, Any]]:
+    ) -> list[CrawlResultItemDTO]:
         """
         Crawl a .txt or markdown file with comprehensive error handling and progress reporting.
 
@@ -218,7 +244,7 @@ class SinglePageCrawlStrategy:
             logger.info(f"Crawling markdown file: {url}")
 
             # Define local report_progress helper like in other methods
-            async def report_progress(progress: int, message: str, **kwargs):
+            async def report_progress(progress: int, message: str, **kwargs: Any) -> None:
                 """Helper to report progress if callback is available"""
                 if progress_callback:
                     await progress_callback("crawling", progress, message, **kwargs)
@@ -228,6 +254,10 @@ class SinglePageCrawlStrategy:
 
             # Use consistent configuration even for text files
             crawl_config = CrawlerRunConfig(cache_mode=CacheMode.ENABLED, stream=False)
+
+            if not self.crawler:
+                logger.error("No crawler instance available for crawl_markdown_file")
+                return []
 
             result = await self.crawler.arun(url=url, config=crawl_config)
             if result.success and result.markdown:

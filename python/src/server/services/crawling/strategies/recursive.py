@@ -8,11 +8,13 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 from urllib.parse import urldefrag
 
-from crawl4ai import CrawlerRunConfig, MemoryAdaptiveDispatcher
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, MemoryAdaptiveDispatcher
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 from ....config.logfire_config import get_logger
 from ...credential_service import credential_service
 from ..helpers.url_handler import URLHandler
+from .single_page import CrawlResultItemDTO
 
 logger = get_logger(__name__)
 
@@ -20,13 +22,17 @@ logger = get_logger(__name__)
 class RecursiveCrawlStrategy:
     """Strategy for recursive crawling of websites."""
 
-    def __init__(self, crawler, markdown_generator) -> None:
+    def __init__(
+        self,
+        crawler: AsyncWebCrawler | None = None,
+        markdown_generator: DefaultMarkdownGenerator | None = None,
+    ) -> None:
         """
         Initialize recursive crawl strategy.
 
         Args:
-            crawler (AsyncWebCrawler): The Crawl4AI crawler instance for web crawling operations
-            markdown_generator (DefaultMarkdownGenerator): The markdown generator instance for converting HTML to markdown
+            crawler (AsyncWebCrawler | None): The Crawl4AI crawler instance for web crawling operations
+            markdown_generator (DefaultMarkdownGenerator | None): The markdown generator instance for converting HTML to markdown
         """
         self.crawler = crawler
         self.markdown_generator = markdown_generator
@@ -43,7 +49,7 @@ class RecursiveCrawlStrategy:
         start_progress: int = 10,
         end_progress: int = 60,
         cancellation_check: Callable[[], None] | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[CrawlResultItemDTO]:
         """
         Recursively crawl internal links from start URLs up to a maximum depth with progress reporting.
 
@@ -56,6 +62,7 @@ class RecursiveCrawlStrategy:
             progress_callback: Optional callback for progress updates
             start_progress: Starting progress percentage
             end_progress: Ending progress percentage
+            cancellation_check: Optional function to check if crawl has been cancelled
 
         Returns:
             List of crawl results
@@ -119,7 +126,7 @@ class RecursiveCrawlStrategy:
             memory_wait_timeout=memory_wait_timeout
         )
 
-        async def report_progress(progress_val: int, message: str, **kwargs):
+        async def report_progress(progress_val: int, message: str, **kwargs: Any) -> None:
             """Helper to report progress if callback is available"""
             if progress_callback:
                 # Pass step information as flattened kwargs for consistency
@@ -127,13 +134,13 @@ class RecursiveCrawlStrategy:
                     "crawling", progress_val, message, current_step=message, step_message=message, **kwargs
                 )
 
-        visited = set()
+        visited: set[str] = set()
 
         def normalize_url(url: str) -> str:
             return urldefrag(url)[0]
 
         current_urls = {normalize_url(u) for u in start_urls}
-        results_all = []
+        results_all: list[CrawlResultItemDTO] = []
         total_processed = 0
         total_discovered = len(start_urls)  # Track total URLs discovered
 
@@ -158,7 +165,7 @@ class RecursiveCrawlStrategy:
             )
 
             # Use configured batch size for recursive crawling
-            next_level_urls = set()
+            next_level_urls: set[str] = set()
             depth_successful = 0
 
             for batch_idx in range(0, len(urls_to_crawl), batch_size):
@@ -170,8 +177,8 @@ class RecursiveCrawlStrategy:
                 batch_end_idx = min(batch_idx + batch_size, len(urls_to_crawl))
 
                 # Transform URLs and create mapping for this batch
-                url_mapping = {}
-                transformed_batch_urls = []
+                url_mapping: dict[str, str] = {}
+                transformed_batch_urls: list[str] = []
                 for url in batch_urls:
                     transformed = transform_url_func(url)
                     transformed_batch_urls.append(transformed)

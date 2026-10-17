@@ -7,10 +7,12 @@ Handles batch crawling of multiple URLs in parallel.
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from crawl4ai import CrawlerRunConfig, MemoryAdaptiveDispatcher
+from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, MemoryAdaptiveDispatcher
+from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 
 from ....config.logfire_config import get_logger
 from ...credential_service import credential_service
+from .single_page import CrawlResultItemDTO
 
 logger = get_logger(__name__)
 
@@ -18,13 +20,17 @@ logger = get_logger(__name__)
 class BatchCrawlStrategy:
     """Strategy for crawling multiple URLs in batch."""
 
-    def __init__(self, crawler, markdown_generator) -> None:
+    def __init__(
+        self,
+        crawler: AsyncWebCrawler | None = None,
+        markdown_generator: DefaultMarkdownGenerator | None = None,
+    ) -> None:
         """
         Initialize batch crawl strategy.
 
         Args:
-            crawler (AsyncWebCrawler): The Crawl4AI crawler instance for web crawling operations
-            markdown_generator (DefaultMarkdownGenerator): The markdown generator instance for converting HTML to markdown
+            crawler (AsyncWebCrawler | None): The Crawl4AI crawler instance for web crawling operations
+            markdown_generator (DefaultMarkdownGenerator | None): The markdown generator instance for converting HTML to markdown
         """
         self.crawler = crawler
         self.markdown_generator = markdown_generator
@@ -39,7 +45,7 @@ class BatchCrawlStrategy:
         start_progress: int = 15,
         end_progress: int = 60,
         cancellation_check: Callable[[], None] | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[CrawlResultItemDTO]:
         """
         Batch crawl multiple URLs in parallel with progress reporting.
 
@@ -51,6 +57,7 @@ class BatchCrawlStrategy:
             progress_callback: Optional callback for progress updates
             start_progress: Starting progress percentage
             end_progress: Ending progress percentage
+            cancellation_check: Optional function to check if crawl has been cancelled
 
         Returns:
             List of crawl results
@@ -114,7 +121,7 @@ class BatchCrawlStrategy:
             memory_wait_timeout=memory_wait_timeout
         )
 
-        async def report_progress(progress_val: int, message: str, **kwargs):
+        async def report_progress(progress_val: int, message: str, **kwargs: Any) -> None:
             """Helper to report progress if callback is available"""
             if progress_callback:
                 # Pass step information as flattened kwargs for consistency
@@ -128,12 +135,12 @@ class BatchCrawlStrategy:
         )
 
         # Use configured batch size
-        successful_results = []
+        successful_results: list[CrawlResultItemDTO] = []
         processed = 0
 
         # Transform all URLs at the beginning
-        url_mapping = {}  # Map transformed URLs back to original
-        transformed_urls = []
+        url_mapping: dict[str, str] = {}  # Map transformed URLs back to original
+        transformed_urls: list[str] = []
         for url in urls:
             transformed = transform_url_func(url)
             transformed_urls.append(transformed)
