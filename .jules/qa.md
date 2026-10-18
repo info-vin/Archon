@@ -1,4 +1,9 @@
-# QA Journal
-## 2024-05-14 - Fix window is not defined Unhandled Rejection
-**Learning:** In Vitest test teardowns, React state updates resolving asynchronously after a test finishes may throw 'window is not defined' Unhandled Rejection errors instead of standard unmounted component warnings.
-**Action:** Implement `typeof window !== 'undefined'` check inside state setters of `useEffect`/`useCallback` that run asynchronously to avoid unhandled rejections during test teardowns.
+# QA & Testing Guidelines (Consolidated)
+
+## 1. Guard Asynchronous State Updates During Vitest Teardown
+**Learning:** In Vitest JSDOM tests, asynchronous React state updates resolving after a test finishes can throw `window is not defined` unhandled rejections.
+**Action:** Guard asynchronous state setters in `useEffect`/`useCallback` with `typeof window !== 'undefined'` or proper abort cleanup.
+
+## 2. Complete MSW Coverage and Recharts JSDOM Fallbacks
+**Learning:** Unmocked endpoints or functions in `vi.mock` ignore lists trigger `NETWORK_ERROR` in headless E2E/unit runs, and Recharts `ResponsiveContainer` with percentage-only dimensions logs `-1` width/height warnings in JSDOM.
+**Action:** Ensure all rendered API calls have MSW handlers or explicit `vi.fn()` mocks, and provide numeric dimension fallbacks for `ResponsiveContainer`.

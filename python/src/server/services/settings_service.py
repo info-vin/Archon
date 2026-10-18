@@ -18,6 +18,10 @@ class DatabaseStatisticsDict(TypedDict):
 class SettingPayloadDTO(TypedDict):
     key: str
     value: str
+    category: NotRequired[str]
+    description: NotRequired[str]
+    is_encrypted: NotRequired[bool]
+    updated_at: NotRequired[str]
 
 
 class SettingDTO(TypedDict):

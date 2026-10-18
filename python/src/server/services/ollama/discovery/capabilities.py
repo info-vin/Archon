@@ -55,14 +55,10 @@ async def detect_model_capabilities_logic(
         if cache_key in service_instance.capability_cache:
             return service_instance.capability_cache[cache_key]
 
-    async with service_instance.capability_lock:
-        if cache_key in service_instance.capability_cache:
-            return service_instance.capability_cache[cache_key]
-
         caps = ModelCapabilities()
         try:
             if optimized:
-                if any(p in model_name.lower() for p in ["embed", "embedding"]):
+                if any(p in model_name.lower() for p in ["embed", "embedding"]):  # 合法
                     dims = await test_embedding_capability_fast_logic(model_name, instance_url)
                     if dims:
                         caps.supports_embedding = True
