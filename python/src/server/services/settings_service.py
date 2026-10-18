@@ -1,4 +1,4 @@
-from typing import Any, NotRequired, TypedDict, cast
+from typing import NotRequired, TypedDict, cast
 
 from supabase import Client
 
@@ -133,7 +133,7 @@ class SettingsService(BaseRepository):
         )
         return success
 
-    async def upsert_setting(self, payload: SettingPayloadDTO | dict[str, Any]) -> bool:
+    async def upsert_setting(self, payload: SettingPayloadDTO) -> bool:
         """Async upsert a setting dictionary payload."""
         query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key") # 合法
         success, _ = await self.execute_query_async(query, "Error upserting setting", require_data=False)
