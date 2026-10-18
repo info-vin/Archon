@@ -124,14 +124,15 @@ async def run_business_sentinel() -> None:
 
         seven_days_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
 
-        # 1. Stale Leads with Proactive Intervention
+        # 1. Stale Leads with Proactive Intervention (Top 3 by score to prevent 429 quota exhaustion)
         suc_leads, res = repo.execute_query(
-            supabase.table("leads") # 合法
-            .select("id, company_name, updated_at")
+            supabase.table("leads")  # 合法
+            .select("id, company_name, updated_at, enrichment_score")
             .lt("updated_at", cutoff_date)
-            .not_.in_("status", ["won", "converted", "dormant"]) # 合法
-            .limit(20),
-            "Fetch stale leads"
+            .not_.in_("status", ["won", "converted", "dormant", "archived"])  # 合法
+            .order("enrichment_score", desc=True)
+            .limit(3),
+            "Fetch top stale leads",
         )
         stale_leads = res.get("data", []) if suc_leads else []
         if not stale_leads:
@@ -141,19 +142,19 @@ async def run_business_sentinel() -> None:
             for lead in stale_leads:
                 # Proactive Action: Mark as dormant to auto-clean Alice's workbench
                 repo.execute_query(
-                    supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]), # 合法
-                    f"Mark lead {lead['id']} dormant"
+                    supabase.table("leads").update({"status": "dormant"}).eq("id", lead["id"]),  # 合法
+                    f"Mark lead {lead['id']} dormant",
                 )
 
                 # Anti-spam: Check if already alerted
                 suc_ext, existing = repo.execute_query(
-                    supabase.table("archon_logs") # 合法
+                    supabase.table("archon_logs")  # 合法
                     .select("id")
                     .eq("source", "sentinel")
                     .eq("level", "ALERT")
                     .gt("created_at", seven_days_ago)
                     .filter("details->>lead_id", "eq", str(lead["id"])),
-                    "Check existing alert"
+                    "Check existing alert",
                 )
                 if suc_ext and existing.get("data"):
                     continue
@@ -162,12 +163,13 @@ async def run_business_sentinel() -> None:
                     {
                         "source": "sentinel",
                         "level": "ALERT",
-                        "message": f"Stale Lead Auto-Dormant: {lead['company_name']}",
+                        "message": f"Stale Lead Auto-Dormant: {lead['company_name']} (Score: {lead.get('enrichment_score', 0)})",
                         "details": {
                             "type": "stale_lead",
                             "category": "business",
                             "lead_id": lead["id"],
                             "company": lead["company_name"],
+                            "score": lead.get("enrichment_score", 0),
                             "action": "status_changed_to_dormant",
                         },
                     }
@@ -175,71 +177,72 @@ async def run_business_sentinel() -> None:
                 logger.info(f"🛡️ Sentinel: Prepared proactive alert for {lead['company_name']}")
 
             if log_payloads:
-                suc_log, log_res = repo.execute_query(
-                    supabase.table("archon_logs").insert(log_payloads), # 合法
-                    "Insert log payloads"
+                repo.execute_query(
+                    supabase.table("archon_logs").insert(log_payloads),  # 合法
+                    "Insert log payloads",
                 )
-                if suc_log and log_res.get("data"):
-                    try:
-                        import asyncio
 
-                        from src.server.services.projects.task_service import task_service
-
-                        sem = asyncio.Semaphore(3)
-
-                        async def bounded_generate(alert_id: str):
-                            async with sem:
-                                await task_service.generate_task_from_alert(alert_id=alert_id, assignee_id=None)
-
-                        await asyncio.gather(*(bounded_generate(str(log_record["id"])) for log_record in log_res["data"]))
-                    except Exception as task_err:
-                        logger.error(f"🛡️ Sentinel: Failed to auto-generate tasks from alerts: {task_err}")
-
-        # 2. Content Bottlenecks (GAP-029)
-        forty_eight_hours_ago = (datetime.now(UTC) - timedelta(hours=48)).isoformat()
+        # 2. Content Bottlenecks: Auto-Publish after 24h if ai_score >= 80, eliminating false bottleneck alerts
+        twenty_four_hours_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
         suc_post, post_res = repo.execute_query(
-            supabase.table("blog_posts") # 合法
-            .select("id, title, updated_at")
+            supabase.table("blog_posts")  # 合法
+            .select("id, title, updated_at, ai_score")
             .eq("status", "review")
-            .lt("updated_at", forty_eight_hours_ago),
-            "Fetch bottleneck posts"
+            .lt("updated_at", twenty_four_hours_ago),
+            "Fetch bottleneck posts",
         )
         posts = post_res.get("data", []) if suc_post else []
-        log_payloads = []
         for post in posts:
-            # Anti-spam
-            suc_ext_p, existing_p = repo.execute_query(
-                supabase.table("archon_logs") # 合法
-                .select("id")
-                .eq("source", "sentinel")
-                .eq("level", "ALERT")
-                .gt("created_at", seven_days_ago)
-                .filter("details->>post_id", "eq", str(post["id"])),
-                "Check existing post alert"
-            )
-            if suc_ext_p and existing_p.get("data"):
-                continue
-
-            log_payloads.append(
-                {
-                    "source": "sentinel",
-                    "level": "ALERT",
-                    "message": f"Content Bottleneck: '{post['title']}' stuck in review",
-                    "details": {
-                        "type": "content_bottleneck",
-                        "category": "business",
-                        "post_id": post["id"],
-                        "title": post["title"],
-                    },
-                }
-            )
-            logger.info(f"🛡️ Sentinel: Prepared bottleneck alert for {post['title']}")
-
-        if log_payloads:
-            repo.execute_query(
-                supabase.table("archon_logs").insert(log_payloads), # 合法
-                "Insert bottleneck logs"
-            )
+            score = post.get("ai_score") or 0
+            if score >= 80:
+                # Auto-publish high-scoring content to unblock delivery
+                now_iso = datetime.now(UTC).isoformat()
+                repo.execute_query(
+                    supabase.table("blog_posts")
+                    .update({"status": "published", "publish_at": now_iso})
+                    .eq("id", post["id"]),  # 合法
+                    f"Auto-publish post {post['id']}",
+                )
+                repo.execute_query(
+                    supabase.table("archon_logs").insert(
+                        {
+                            "source": "sentinel",
+                            "level": "INFO",
+                            "message": f"Content Auto-Published: '{post['title']}' (AI Score: {score})",
+                            "details": {"post_id": post["id"], "ai_score": score},
+                        }
+                    ),
+                    "Log auto-publish",
+                )
+                logger.info(f"🛡️ Sentinel: Auto-published '{post['title']}' (Score: {score})")
+            else:
+                # Keep alert for genuine review issues
+                suc_ext_p, existing_p = repo.execute_query(
+                    supabase.table("archon_logs")  # 合法
+                    .select("id")
+                    .eq("source", "sentinel")
+                    .eq("level", "ALERT")
+                    .gt("created_at", seven_days_ago)
+                    .filter("details->>post_id", "eq", str(post["id"])),
+                    "Check existing post alert",
+                )
+                if not (suc_ext_p and existing_p.get("data")):
+                    repo.execute_query(
+                        supabase.table("archon_logs").insert(
+                            {
+                                "source": "sentinel",
+                                "level": "ALERT",
+                                "message": f"Content Bottleneck: '{post['title']}' stuck in review (Score: {score})",
+                                "details": {
+                                    "type": "content_bottleneck",
+                                    "category": "business",
+                                    "post_id": post["id"],
+                                    "title": post["title"],
+                                },
+                            }
+                        ),
+                        "Insert bottleneck log",
+                    )
     except Exception as e:
         logger.error(f"💥 Clockwork: Business Sentinel Failed: {e}", exc_info=True)
 

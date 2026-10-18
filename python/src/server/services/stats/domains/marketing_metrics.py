@@ -26,7 +26,7 @@ class MarketingMetrics(BaseRepository):
             leads = res.get("data", []) if success else []
 
             # 1. Conversion Funnel (Physical Data)
-            funnel = {"new": 0, "contacted": 0, "shortlisted": 0, "converted": 0, "archived": 0}
+            funnel = {"new": 0, "qualified": 0, "contacted": 0, "shortlisted": 0, "converted": 0, "archived": 0}
             for lead in leads:
                 s = lead.get("status", "new")
                 if s in funnel:

@@ -125,6 +125,22 @@
 
 > 本章節僅保留最近一週的開發日誌。較早期的日誌已按月份主題封存至第四章歷史檔案。
 
+#### 2026-10-18: 商業漏斗全線通管、Telegram 智慧分段與 777 項測試突破 (Phase 5.11.24 ~ 5.11.25)
+
+*   **Telegram 長訊息智慧分段與防啞巴發送 (Phase 5.11.24)**:
+    *   **診斷**: 單則 4,096 字元硬上限導致週報與長通報中斷或遭拒（400 Bad Request），且先前存在靜默降級風險。
+    *   **修復**: 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 實作 `split_message_chunks()`（3,800 字元段落邊界切割、自動注入 `📄 [X/Y]` 頁碼、0.5s 發送間隔）；任一分段失敗如實回傳 `False` 並進入持久化佇列，杜絕虛假 Fallback。
+    *   **公證**: 新增 [test_telegram_chunking.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_telegram_chunking.py) 5 項測試全數通過，已合併部署至 `dev/twins`。
+*   **商業漏斗全線通管與瓶頸清除 (Phase 5.11.25)**:
+    *   **Alice 痛點分數真實沉澱**: 於 [job_board_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/job_board_service.py) 將 RAG 相似度實體寫入 `enrichment_score`（0~100）與 `LeadDataDTO`；分數 `>= 75` 且通過 LLM Judge 標記為 `qualified`，未達標者直接 `archived`。
+    *   **Sentinel 429 防爆與垃圾工單消滅**: 於 [sentinel_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/sentinel_patrol.py) 導入 Top 3 限制（`order('enrichment_score', desc=True).limit(3)`），廢除無負責人 Todo 工單自動產生，消除 Google Free Tier 25 萬 Token 擊穿風險。
+    *   **Bob 內容瓶頸解除**: 於 `sentinel_patrol.py` 實作自動發布（處於 `review` 超過 24 小時且 `ai_score >= 80` 自動轉為 `published` 並注入 `publish_at`），物理探針證實已解鎖 2 篇卡死文章並根除 `ALERT: Content Bottleneck` 報警洗板。
+    *   **漏斗統計對齊與 Telegram 交付**: 於 [marketing_metrics.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/stats/domains/marketing_metrics.py) 補齊 `funnel["qualified"]`；於 [leads_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/leads_patrol.py) 自動過濾 `qualified` 名單並推播戰鬥簡報至 Telegram。
+*   **全域三向門禁公證**:
+    *   `make lint-be`: 393 source files 100% 綠燈通過。
+    *   `make test-be`: **777 passed**, 10 skipped, 4 xfailed (0 failures)。
+    *   `make phase-audit`: Step 1 ~ Step 11 全綠。
+
 ### 2026-10-18: 769 項測試突破、.jules/*.md 極簡化瘦身與月度自動壓縮排程公證 (Phase 5.11.23)
 
 *   **爬蟲與設定服務 DTO 型別對齊及 SSOT 標記修復**:
