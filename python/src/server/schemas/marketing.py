@@ -76,6 +76,23 @@ class PromoteLeadRequest(BaseModel):
     notes: str | None = None
 
 
+class VendorResponse(BaseModel):
+    id: str | UUID = Field(description="Unique identifier for the vendor")
+    name: str = Field(description="Name of the vendor")
+    contact_email: str | None = Field(default=None, description="Contact email of the vendor")
+    description: str | None = Field(default=None, description="Description or notes for the vendor")
+    status: str = Field(description="Vendor status")
+    owner_id: str | UUID | None = Field(default=None, description="Owner ID of the vendor")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class PromoteLeadResponse(BaseModel):
+    vendor: VendorResponse = Field(description="The created vendor object from promoting the lead")
+
+
 class ApprovalRequest(BaseModel):
     notes: str | None = None
 
