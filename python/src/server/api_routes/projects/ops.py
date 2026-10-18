@@ -14,6 +14,7 @@ from src.server.schemas.projects import (
     CreateTaskRequest,
     CreateTaskResponse,
     GenerateTaskFromAlertRequest,
+    GenerateTaskFromAlertResponse,
     RefineTaskRequest,
     RefineTaskResponse,
     UpdateTaskRequest,
@@ -84,12 +85,15 @@ async def refine_task_description(
     return RefineTaskResponse(refined_description=res)
 
 
-@router.post("/tasks/generate-from-alert")
+@router.post("/tasks/generate-from-alert", response_model=GenerateTaskFromAlertResponse)
 async def generate_task_from_alert(
     req: GenerateTaskFromAlertRequest, current_user: dict = Depends(requires_permission(AGENT_TRIGGER_DEV))
-):
+) -> GenerateTaskFromAlertResponse:
     s, res = await TaskService().generate_task_from_alert(alert_id=req.alert_id, assignee_id=req.assignee_id)
-    return handle_service_result(s, res)
+    if not s:
+        _err(res, code=400)
+    data = res if isinstance(res, dict) else {}
+    return GenerateTaskFromAlertResponse.model_validate(data)
 
 
 @router.post("/tasks", response_model=CreateTaskResponse)
