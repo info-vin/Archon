@@ -152,7 +152,7 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                 stats_service.get_business_risks(),
                 # Fetch pending approvals & changes directly from DB/service layers
                 log_service.get_recent_alerts(limit=10),
-                run_query(supabase.table("agent_pending_approvals").select("id, request_type, status, created_at").eq("status", "pending")),
+                run_query(supabase.table("agent_pending_approvals").select("approval_id, status, created_at").eq("status", "PENDING")),
                 blog_service.get_pending_reviews_metadata(),
                 return_exceptions=True
             )
