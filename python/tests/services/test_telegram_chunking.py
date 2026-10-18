@@ -101,3 +101,41 @@ async def test_send_message_chunk_failure_no_silent_mute(mock_settings, mock_sb_
 
     # NO FAKE SUCCESS: Must return False because chunk 2 failed
     assert success is False
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.httpx.AsyncClient.post")
+@patch("src.server.services.system.telegram_service.get_supabase_client")
+@patch("src.server.services.settings_service.SettingsService.get_all_settings")
+async def test_send_message_400_entity_parse_fallback_to_plain_text(mock_settings, mock_sb_client, mock_post):
+    """Verifies that if Telegram returns 400 Bad Request (entity parse error), it retries and succeeds with plain text."""
+    mock_settings.return_value = {
+        "TELEGRAM_TOKEN": "token_123",
+        "TELEGRAM_TO": "chat_456",
+        "TELEGRAM_RETRIES": 1,
+    }
+
+    mock_sb = MagicMock()
+    mock_sb_client.return_value = mock_sb
+
+    # First attempt fails with 400 (Bad Request: can't parse entities)
+    resp_400 = MagicMock(status_code=400, text='{"description": "Bad Request: can\'t parse entities"}')
+    resp_400.request = httpx.Request("POST", "http://fake")
+
+    # Second attempt (plain text fallback) succeeds with 200
+    resp_fallback = MagicMock(status_code=200, raise_for_status=MagicMock())
+
+    mock_post.side_effect = [
+        httpx.HTTPStatusError("400", request=resp_400.request, response=resp_400),
+        resp_fallback,
+    ]
+
+    text = "Report with broken *markdown syntax"
+    success = await telegram_service.send_message(text, parse_mode="Markdown")
+
+    assert success is True
+    assert mock_post.call_count == 2
+    # Verify second call removed parse_mode from payload
+    fallback_payload = mock_post.call_args_list[1].kwargs["json"]
+    assert "parse_mode" not in fallback_payload
+    assert fallback_payload["text"] == text

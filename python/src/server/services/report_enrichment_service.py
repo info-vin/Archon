@@ -3,6 +3,8 @@ Report Enrichment Service
 Handles optional high-value additions to reports like Nexus Oracle insights and TTS Podcast generation.
 """
 
+import asyncio
+
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.settings import TTSConfig
 
@@ -23,9 +25,10 @@ class ReportEnrichmentService:
 
             from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
             oracle = NexusOracleAgent()
-            oracle_res = await oracle.run(
-                system_prompt,
-                deps=NexusDependencies()
+            # Fail fast with 25s timeout to prevent hanging on Google Free Tier 429 rate limit backoffs
+            oracle_res = await asyncio.wait_for(
+                oracle.run(system_prompt, deps=NexusDependencies()),
+                timeout=25.0
             )
             state_data = oracle_res
             oracle_md = (
@@ -41,7 +44,7 @@ class ReportEnrichmentService:
             context_md += f"\n\n{oracle_md}"
             logger.info("✅ ReportEnrichmentService: Nexus Oracle insights injected.")
         except Exception as e:
-            logger.error(f"❌ ReportEnrichmentService: Failed to get Nexus Oracle insights: {e}")
+            logger.warning(f"⚠️ ReportEnrichmentService: Skipped Nexus Oracle insights due to rate-limit/timeout: {e}")
         return context_md
 
     @staticmethod

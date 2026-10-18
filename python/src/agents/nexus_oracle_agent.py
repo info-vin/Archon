@@ -152,7 +152,7 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
                 stats_service.get_business_risks(),
                 # Fetch pending approvals & changes directly from DB/service layers
                 log_service.get_recent_alerts(limit=10),
-                run_query(supabase.table("agent_pending_approvals").select("id, request_type, status, created_at").eq("status", "pending")),
+                run_query(supabase.table("agent_pending_approvals").select("approval_id, status, created_at").eq("status", "PENDING")),
                 blog_service.get_pending_reviews_metadata(),
                 return_exceptions=True
             )
@@ -174,13 +174,16 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             approvals = getattr(approvals_res, "data", []) if not isinstance(approvals_res, Exception) else []
             blogs = blogs_res[1].get("data", []) if not isinstance(blogs_res, Exception) and isinstance(blogs_res, tuple) and blogs_res[0] else []
 
+            # Prevent NxN matrix explosion: Only pass high-level snapshot/summary to LLM
+            synergy_summary = synergy.get("snapshot", {}) if isinstance(synergy, dict) else {}
+
             raw_data = {
                 "system_telemetry": telemetry,
                 "team_readiness": readiness,
                 "ai_token_usage_30d": ai_usage,
                 "knowledge_base_roi": k_roi,
                 "sla_reliability": sla,
-                "collaboration_synergy": synergy,
+                "collaboration_synergy": synergy_summary,
                 "business_risks": biz_risks,
                 "active_alerts": alerts,
                 "pending_approvals": approvals,

@@ -165,7 +165,7 @@ class ReportService(BaseRepository):
     ) -> None:
         import asyncio
 
-        from src.server.schemas.settings import NetworkConfig, NotificationConfig
+        from src.server.schemas.settings import NetworkConfig
         from src.server.services.projects.task_service import task_service
         from src.server.services.system.telegram_service import telegram_service
 
@@ -209,17 +209,12 @@ class ReportService(BaseRepository):
             self.execute_query(insert_query, "Failed to record summary log")
 
             frontend_url = NetworkConfig().frontend_url
-            max_len = NotificationConfig().telegram_snippet_length
-
-            # Sanitize and extract snippet for Telegram (prevent Markdown parsing errors)
-            snippet = telegram_service.sanitize_markdown_snippet(task_desc, max_length=max_len)
 
             telegram_msg = (
                 f"🚨 **[Archon 系統通知] 星環 {title_prefix} 已產出**\n"
                 f"📅 區間: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}\n\n"
-                f"📝 **報告快覽**：\n"
-                f"{snippet}\n\n"
-                f"👉 完整數據與表格請至 Admin UI 查看：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
+                f"{task_desc.strip()}\n\n"
+                f"👉 完整數據與儀表板請至 Admin UI 查看：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
             )
             is_sent = await telegram_service.send_message(telegram_msg)
             if not is_sent:

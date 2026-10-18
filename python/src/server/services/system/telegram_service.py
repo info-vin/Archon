@@ -176,6 +176,19 @@ class TelegramService:
                 err_msg = f"TelegramService: HTTP error sending message: {repr(e)} - Response: {e.response.text}"
                 logger.error(f"❌ {err_msg}")
                 await self._log_to_db("ERROR", err_msg)
+                # Fallback: If Telegram rejects due to markdown entity parsing, retry as plain text (no parse_mode)
+                if e.response.status_code == 400 and payload.get("parse_mode"):
+                    logger.warning("⚠️ TelegramService: 400 parse entity error detected, falling back to plain text payload.")
+                    plain_payload = {k: v for k, v in payload.items() if k != "parse_mode"}
+                    try:
+                        async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
+                            resp_fallback = await client.post(api_url, json=plain_payload)
+                            resp_fallback.raise_for_status()
+                            logger.info("✅ TelegramService: Fallback plain text chunk sent successfully.")
+                            return True
+                    except Exception as fb_err:
+                        logger.error(f"❌ TelegramService: Fallback plain text failed: {fb_err}")
+
                 if e.response.status_code >= 500:
                     if not is_retry:
                         await self._queue_failed_message(original_chunk)
