@@ -139,3 +139,7 @@
 ## 2025-03-08 - Keyboard support for interactive DIVs
 **Learning:** When non-interactive elements like `div` or `span` are used for complex interactive UI patterns (like the expandable settings headers in RAG Settings), they require full keyboard support. Lacking `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler makes these sections completely inaccessible to keyboard users.
 **Action:** Always ensure keyboard accessibility by pairing `onClick` on non-interactive elements with `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler that intercepts 'Enter' and 'Space' keys, along with `focus-visible` styling.
+
+## 2026-03-08 - Focus Rings and Explicit Button Types in IdentityEditUserModal
+**Learning:** Granular capability toggles and action buttons inside user admin modals often miss explicit `type="button"` and `focus-visible` ring styling. Lacking explicit button types can cause accidental form submissions if wrapped in a form, while missing focus ring offsets reduces keyboard visibility against varied background colors.
+**Action:** Always ensure all interactive toggle and modal action buttons declare `type="button"` and feature complete focus visible ring styles (`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`).
