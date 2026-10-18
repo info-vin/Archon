@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import Any, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 from curl_cffi.requests import Session
 from supabase import Client
@@ -22,7 +22,10 @@ class LeadDataDTO(TypedDict):
     description_snippet: str | None
     source_job_url: str | None
     status: str
+    enrichment_status: NotRequired[str | None]
+    enrichment_score: NotRequired[int | None]
     identified_need: str
+
 
 
 
@@ -177,12 +180,18 @@ class JobBoardService(BaseRepository):
                 # Generate the identified need only if it passes both layers
                 identified_need = job.identified_need or await self.evaluator.infer_need(job)
 
+                score = int(round(sim * 100))
+                # Qualified status for high-intent matches (>= 75), else archived
+                lead_status = "qualified" if score >= 75 else "archived"
+
                 return {
                     "company_name": job.company,
                     "job_title": job.title,
                     "description_snippet": job.description[:500] if job.description else None,
                     "source_job_url": job.url,
-                    "status": "new",
+                    "status": lead_status,
+                    "enrichment_status": "completed",
+                    "enrichment_score": score,
                     "identified_need": identified_need,
                 }
             except Exception as e:

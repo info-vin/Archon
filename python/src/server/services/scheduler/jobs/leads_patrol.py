@@ -106,19 +106,32 @@ async def run_market_report() -> None:
 
         from src.server.repositories.base_repository import BaseRepository
         base_repo = BaseRepository(supabase)
+        # Qualified Leads Only: Filter for high-intent qualified leads
         success, res_dict = base_repo.execute_query(
-            supabase.table("leads").select("company_name, job_title, status").gt("created_at", last_run_time),
-            "Failed to fetch leads for market report"
+            supabase.table("leads")
+            .select("company_name, job_title, status, enrichment_score, source_job_url, identified_need")
+            .eq("status", "qualified")
+            .gt("created_at", last_run_time)
+            .order("enrichment_score", desc=True)
+            .limit(5),
+            "Failed to fetch qualified leads for market report",
         )
         leads = res_dict.get("data", []) if success else []
         if not leads:
-            logger.info("✍️ Clockwork: No new leads to report on. (Cycle logged)")
+            logger.info("✍️ Clockwork: No new qualified leads to report on. (Cycle logged)")
             return
 
         cst = ZoneInfo(scheduler_config.system_timezone)
-        lead_summary = "\n".join([f"- {lead['company_name']} looking for {lead['job_title']}" for lead in leads])
+        lead_summary = "\n".join(
+            [
+                f"- **{lead['company_name']}** (Score: {lead.get('enrichment_score', 0)})\n"
+                f"  職缺: {lead['job_title']}\n"
+                f"  痛點需求: {lead.get('identified_need', '無詳細需求')[:150]}...\n"
+                f"  原始連結: {lead.get('source_job_url', '無')}"
+                for lead in leads
+            ]
+        )
         task_title = f"Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
-
 
         from src.server.services.prompt_service import prompt_service
         prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT")
@@ -126,18 +139,37 @@ async def run_market_report() -> None:
 
         success, p_res_dict = base_repo.execute_query(
             supabase.table("archon_projects").select("id").limit(1),
-            "Failed to find project for marketing task"
+            "Failed to find project for marketing task",
         )
         if not success or not p_res_dict.get("data"):
             logger.warning("Clockwork: No projects found to attach marketing task.")
             return
 
         success, tr = await task_service.create_task(
-            project_id=p_res_dict["data"][0]["id"], title=task_title, description=task_desc, assignee_id=AgentUUIDs.MARKET_BOT
+            project_id=p_res_dict["data"][0]["id"],
+            title=task_title,
+            description=task_desc,
+            assignee_id=AgentUUIDs.MARKET_BOT,
         )
         if success:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")
             await agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id=AgentUUIDs.MARKET_BOT)
+
+            # Terminal Delivery: Push Qualified Sales Battlecard to Telegram
+            try:
+                from src.server.services.system.telegram_service import telegram_service
+
+                telegram_report = (
+                    f"🎯 **【商業雷達：高意向合格潛客戰鬥簡報】**\n"
+                    f"📅 日期：{datetime.now(cst).strftime('%Y-%m-%d %H:%M')}\n"
+                    f"📊 本期篩選出 {len(leads)} 家具備高度系統整合痛點之目標企業：\n\n"
+                    f"{lead_summary}\n\n"
+                    f"💡 **建議業務行動**：請直接點選上述職缺連結聯繫刊登窗口，或透過專業社群進行高精準痛點破冰！"
+                )
+                await telegram_service.send_message(telegram_report)
+                logger.info("✅ Clockwork: Dispatched qualified leads battlecard to Telegram.")
+            except Exception as tg_err:
+                logger.warning(f"Clockwork: Telegram delivery failed: {tg_err}")
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
 
