@@ -33,3 +33,14 @@ jobs:
         run: |
           # 執行既有的孤兒分支打包與發佈腳本
           bash scripts/deploy_to_hf.sh
+
+      - name: Restart Hugging Face Space (Unpause if Paused)
+        run: |
+          USERNAME="chiawei6"
+          SPACE_NAME="myrmidon"
+          RESPONSE=$(curl -s -o response.txt -w "%{http_code}" -X POST \
+            "https://huggingface.co/api/spaces/$USERNAME/$SPACE_NAME/restart" \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}")
+          cat response.txt
+          echo ""
+          echo "Restart API HTTP Status: $RESPONSE"
