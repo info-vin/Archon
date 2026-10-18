@@ -43,6 +43,7 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
     assert "Daily Executive Summary processed. Task" in payload["message"]
 
 @pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.repositories.base_repository.get_supabase_client")
 @patch("src.server.utils.get_supabase_client")
@@ -50,11 +51,21 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
 @patch("src.server.services.text_to_speech_service.text_to_speech_service", new_callable=AsyncMock)
 @patch("src.agents.nexus_oracle_agent.NexusOracleAgent.run", new_callable=AsyncMock)
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
-async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run, mock_tts, mock_beta_graph, mock_utils_supabase, mock_get_supabase, mock_task_service):
+async def test_run_weekly_executive_summary_success(
+    mock_gather,
+    mock_oracle_run,
+    mock_tts,
+    mock_beta_graph,
+    mock_utils_supabase,
+    mock_get_supabase,
+    mock_task_service,
+    mock_send_telegram,
+):
     """
     Test that weekly executive summary executes Map-Reduce, Oracle, TTS, creates task,
-    and updates status to done.
+    updates status to done, and dispatches full summary content to Telegram.
     """
+    mock_send_telegram.return_value = True
     mock_gather.return_value = "Mocked Context for Weekly"
 
     class MockOracleData:
@@ -121,6 +132,14 @@ async def test_run_weekly_executive_summary_success(mock_gather, mock_oracle_run
     assert "[Weekly] Executive Summary" in call_kwargs["title"]
     assert "Mocked Weekly Map-Reduce Output" in call_kwargs["description"]
     assert "🎧 **Listen to Podcast**: [Audio Link](https://mock.supabase.co/storage/audio.wav)" in call_kwargs["description"]
+
+    # Verify Telegram notification contains full body, not a truncated snippet
+    mock_send_telegram.assert_awaited_once()
+    tg_msg = mock_send_telegram.call_args[0][0]
+    assert "Mocked Weekly Map-Reduce Output" in tg_msg
+    assert "🎧 **Listen to Podcast**: [Audio Link](https://mock.supabase.co/storage/audio.wav)" in tg_msg
+    assert "星環 Weekly 已產出" in tg_msg
+    assert "👉 完整數據與儀表板請至 Admin UI 查看" in tg_msg
 
 @pytest.mark.asyncio
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
