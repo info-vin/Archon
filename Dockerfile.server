@@ -72,6 +72,7 @@ COPY python/src/ src/
 COPY python/tests/ tests/
 COPY migration/ migration/
 COPY AGENTS.md /app/AGENTS.md
+COPY .jules/ /app/.jules/
 COPY scripts/backend_type_health.py scripts/
 
 # Set environment variables

@@ -65,6 +65,7 @@ services:
       - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Force mount developer guidelines
       - ./AGENTS.md:/app/AGENTS.md # Mount AI developer guidelines
       - ./.git:/app/.git # Mount Git metadata for CodeModifier
+      - ./.jules:/app/.jules # Mount Jules agent guidelines
       - ./.twin:/app/.twin # Mount twin diagnostics directory
     extra_hosts:
       - "host.docker.internal:host-gateway"
