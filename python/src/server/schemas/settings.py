@@ -163,6 +163,10 @@ class SchedulerConfig(BaseModel):
     monthly_summary_day: int = Field(default=1, alias="MONTHLY_SUMMARY_DAY")
     monthly_summary_hour: int = Field(default=9, alias="MONTHLY_SUMMARY_HOUR")
     monthly_summary_minute: int = Field(default=0, alias="MONTHLY_SUMMARY_MINUTE")
+    monthly_jules_compaction_day: int = Field(default=1, alias="MONTHLY_JULES_COMPACTION_DAY")
+    monthly_jules_compaction_hour: int = Field(default=9, alias="MONTHLY_JULES_COMPACTION_HOUR")
+    monthly_jules_compaction_minute: int = Field(default=30, alias="MONTHLY_JULES_COMPACTION_MINUTE")
+    jules_max_entries_per_file: int = Field(default=5, alias="JULES_MAX_ENTRIES_PER_FILE")
 
     # Category 4: Stateful Bi-weekly Maintenance
     maintenance_audit_hour: int = Field(default=14, alias="MAINTENANCE_AUDIT_HOUR")

@@ -25,6 +25,7 @@ from src.server.services.report_service import report_service
 from src.server.services.scheduler.jobs import (
     architecture_patrol,
     cleanup_patrol,
+    jules_compaction,
     leads_patrol,
     patrol,
     patrol_infra,
@@ -273,6 +274,7 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_engineering_retrospective, "weekly_engineering_retro", 41, self._should_run_scheduled_job, CronTrigger(day_of_week=config.weekly_engineering_retro_days, hour=retro_h, minute=retro_m, timezone=DEFAULT_TIMEZONE))
 
         await self._schedule_stateful_job(self._run_monthly_executive_summary, "monthly_executive_summary", 42, self._should_run_scheduled_job, CronTrigger(day=config.monthly_summary_day, hour=config.monthly_summary_hour, minute=config.monthly_summary_minute, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_monthly_jules_compaction, "monthly_jules_compaction", 43, self._should_run_scheduled_job, CronTrigger(day=config.monthly_jules_compaction_day, hour=config.monthly_jules_compaction_hour, minute=config.monthly_jules_compaction_minute, timezone=DEFAULT_TIMEZONE))
 
         # Category 4: Bi-weekly maintenance
         await self._schedule_stateful_job(self._run_infrastructure_audit, "infrastructure_audit", 48, self._should_run_scheduled_job, CronTrigger(day_of_week=config.maintenance_audit_days, hour=config.maintenance_audit_hour, minute=config.maintenance_audit_minute, timezone=DEFAULT_TIMEZONE))
@@ -286,6 +288,7 @@ class SchedulerService:
     async def _cleanup_system_probes(self) -> None: await cleanup_patrol.cleanup_system_probes()
     async def _run_tech_debt_audit(self) -> None: await tech_debt_patrol.run_tech_debt_audit()
     async def _run_ssot_audit(self) -> None: await tech_debt_patrol.run_ssot_audit()
+    async def _run_monthly_jules_compaction(self) -> None: await jules_compaction.run_monthly_jules_compaction()
     async def _run_model_verification(self) -> None: await patrol.run_model_verification()
     async def _run_infrastructure_audit(self) -> None: await patrol_infra.run_infrastructure_audit()
     async def _run_prune_stale_leads(self) -> None: await leads_patrol.run_prune_stale_leads()

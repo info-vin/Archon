@@ -123,93 +123,20 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-> 本章節僅保留最近一週的開發日誌。當前內容已全數封存至第四章歷史檔案，等待新的日誌寫入。
+> 本章節僅保留最近一週的開發日誌。較早期的日誌已按月份主題封存至第四章歷史檔案。
 
-### 2026-10-16: 767 項測試突破、Ollama 發現 DTO 對齊與 Agentic RAG 參數修復 (Phase 5.11.30)
+### 2026-10-18: 769 項測試突破、.jules/*.md 極簡化瘦身與月度自動壓縮排程公證 (Phase 5.11.23)
 
-*   **Ollama Discovery DTO 契約與多餘轉型清理**:
-    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `ollama/schemas.py` 中 `ModelDiscoveryResponse` 欄位型別 (`list[dict[str, Any]]`) 與實際回傳之 `DiscoveryResultDTO` (`list[ModelDictDTO]`, `dict[str, HostStatusDTO]`) 不相容。同時 `capabilities.py` 存在多餘的 `cast(ModelCapabilities, ...)`。
-    *   **修復**: 將 [schemas.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/ollama/schemas.py) 欄位直接使用 `ModelDictDTO` 與 `HostStatusDTO` 強型別契約對齊；清理 `capabilities.py` 中無效轉型與未使用的 `cast` import。
-*   **Agentic RAG 搜尋關鍵字參數修復**:
-    *   **診斷**: 前序批次整理誤將 `search_code_examples` 的 `use_enhancement` 標記為底線私有變數，導致內部與 [rag_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/search/rag_service.py) 傳入時報錯 `Unexpected keyword argument`。
-    *   **修復**: 於 [agentic_rag_strategy.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/search/agentic_rag_strategy.py) 與 [rag_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/search/rag_service.py) 物理還原公開參數命名 `use_enhancement: bool = False`。
-*   **全域三向門禁公證與測試新高**:
-    *   `make lint`: 前端 (enduser-ui-fe, archon-ui-main)、後端 392 來源檔與 Lean 4 18 jobs 100% 綠燈通過。
-    *   `make test-be`: **767 passed** (+11 項新增測試通過，包含 `test_auth_service.py` 與 `test_ollama_discovery.py`)，11 skipped, 4 xfailed (0 failures)，全數通過。
-
-### 2026-10-14: 756 項測試突破、雲端雙生遙測與 429 物理自癒公證 (Phase 5.11.29)
-
-*   **雲端 Hugging Face 空間與 Supabase 物理遙測對帳**:
-    *   **空間狀態**: 實體探針驗證 Space `chiawei6/myrmidon` 為 `RUNNING`，`/health` 回傳 HTTP 200，憑證與 Schema 驗證全綠。
-    *   **日報排程閉環**: 驗證 Supabase `archon_logs` 今日日常排程順利完成，Daily Executive Summary (`54daa4bc...`) 產出成功，全日僅消耗 2,170 tokens。
-*   **10/11 429 速率限制穿透鑑識與 MetaTwin 自癒公證**:
-    *   **病因鑑識**: 深入 `archon_logs` 原始錯誤 body，證實 10/11 429 源於週日高負載任務「Weekly Executive Summary」在 Map-Reduce 多 Worker 併發下，短時間內觸碰 Google Free Tier 之 `250000` TPM 滑動窗口上限，而非單次 Token 爆量。
-    *   **物理自癒證明**: 證實 `RateLimitHandler` 成功完成 4 次指數退避重試，且 `MetaTwinService` 在當天 07:51 物理介入執行 `MODEL_SWAP`（將 `DEFAULT_PRO` 降階為 `gemini-3.1-flash-lite`），使 10/12 ~ 10/14 平日運作徹底免除 429 錯誤。
-*   **全域三向門禁公證**:
-    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
-    *   `make test-be`: **756 passed** (+8 項新增測試，包含 `test_settings_service.py` 完整覆蓋)，10 skipped, 4 xfailed (0 failures)，全數通過。
-
-### 2026-10-12: Projects API 型別變異修復、748 項測試突破與 7 日研發數據公證 (Phase 5.11.28)
-
-*   **Projects Core API 型別變異 (Variance) 防禦修復**:
-    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `src/server/api_routes/projects/core.py:158` 中 `ProjectDetailResponse(**project_data)` 報錯 8 項 `incompatible type`（因 Python `dict` 型別不變性 invariant 導致 object 傳遞型別衝突）。
-    *   **修復**: 於傳入前明確注入 `cast(dict[str, Any], project_data)`，消除 MyPy 報錯，確保強型別契約完整。
-*   **全域三向門禁公證與新測試覆蓋**:
-    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
-    *   `make test-be`: **748 passed** (+6 項新增測試，包含 `meta_twin_service` 與 `marketing_api_reset_leads`)，10 skipped, 4 xfailed (0 failures)，全數綠燈通過。
-*   **過去 7 天 (10/05 ~ 10/12) Git 研發數據分析公證**:
-    *   **總提交量**: 36 Commits (包含 17 個 Merge PR 與 19 個實體功能/重構 Commit)。
-    *   **代碼淨流動**: 44 檔案變更，+602 insertions, -135 deletions (淨增 +467 行高品質代碼與測試)。
-    *   **研發分佈**: `refactor(services)` 31.6% (6 筆)、`refactor(api)` 26.3% (5 筆)、前端 UX/A11y/樣式 21.0% (4 筆)、系統修復與文檔 21.1% (4 筆)。
-
-### 2026-10-09: 爬蟲非同步型別相容性修復、死碼掃描與門禁公證 (Phase 5.11.27)
-
-*   **CrawlingService 非同步編排型別相容性修復**:
-    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `crawling_service.py:270` 中 `orchestrator.run(request, task_id)` 引數型別不相容 (`CrawlRequestDTO | dict[str, Any]` vs `dict[str, Any]`)。
-    *   **修復**: 於傳遞至 `self.orchestrator.run` 時注入明確的 `cast(dict[str, Any], request)` 型別轉換，消除 MyPy 報錯，確保強型別契約完整。
-*   **全域殭屍代碼 (Dead / Zombie Code) 物理掃描**:
-    *   **後端掃描**: 透過 `ruff` 掃描 `F401` (Unused Imports)、`F841` (Unused Variables)、`B007` (Unused Loop Vars)，392 個來源檔 0 違規。
-    *   **前端掃描**: `archon-ui-main` 通過 ESLint，`enduser-ui-fe` 通過 TypeScript (`tsc --noEmit`) 編譯，無死碼違規。
-*   **全域三向門禁公證**:
-    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
-    *   `make test-be`: 742 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
-
-### 2026-10-08: 雲端遙測對帳、契約型別與 Event Loop 解鎖公證 (Phase 5.11.26)
-
-*   **API 契約與 PagesService 非同步化 Code Review (無斷層公證)**:
-    *   **審查**: 針對近期 4 筆 Git 提交（`593a8f61`, `22226059`, `87d8c7a2`, `60134745`）進行物理比對與全向追蹤。
-    *   **型別契約閉環**: `crawling.py` 的 `crawl_progress` 端點掛載 `CrawlProgressResponse | BaseProgressResponse`；`marketing_api.py` 的 `process_approval` 掛載 `ApprovalActionResponse`，與前端 `enduser-ui-fe` 的呼叫契約（`success: bool`）100% 物理對齊。
-    *   **Event Loop 解鎖**: 證實 `pages_service.py` 內部將同步 `execute_query` 全面升級為 `await execute_query_async`，消除主執行緒 I/O 阻塞風險；測試層 `test_pages_service.py` 同步替換為 `AsyncMock`，消滅虛假 Mock 斷層。
-*   **HF 雲端實體空間即時探針與資料庫遙測對帳**:
-    *   **空間狀態**: 實體探針確認 Space `chiawei6/myrmidon` 為 `RUNNING`，硬體為 `cpu-basic`，對外網域 `READY`。
-    *   **Health 端點**: `https://chiawei6-myrmidon.hf.space/health` 回傳 HTTP 200，憑證與 Schema 驗證全綠。
-    *   **資料庫日誌審核**: Supabase `archon_logs` 物理驗證今日排程（`clockwork-scheduler`、模型降級檢查、過期線索封存 20 筆、以及 `Daily Executive Summary`）自動執行成功，無系統崩潰。
-*   **全域三向門禁公證**:
-    *   `make lint`: 前端與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
-    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大核心架構（MCP、Agent 引擎、業務服務、API 門戶）健康度 99.0%，型別標註覆蓋率 100.0%。
-    *   `make test-be`: 742 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
-
-### 2026-10-06: Projects API 型別完整性修復與全站三向門禁公證 (Phase 5.11.25)
-
-*   **Projects Core API 型別防禦與 NoReturn 標註**:
-    *   **診斷**: 執行 `make lint` 時，MyPy 攔截到 `src/server/api_routes/projects/core.py:107` 報錯 `Missing return statement`。經查為 `create_project` 新增 `-> CreateProjectResponse` 型別標註後，其錯誤處理輔助函式 `_err()` 未標記回傳型別，導致型別檢查器無法識別其必然拋出 `HTTPException`。
-    *   **修復**: 於 `core.py` 明確為 `_err()` 注入 `-> NoReturn` 型別標註；同步移除因服務層回傳精確 DTO 而轉為多餘的 3 處 `cast`，並清理未使用的 DTO 引用。
-*   **全站品質與 SSOT 物理公證**:
-    *   `make lint`: 前端 (enduser-ui-fe, archon-ui-main) 與後端 392 原始碼檔案全部通過，Lean 4 18 jobs 通過。
-    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大核心架構（MCP、Agent 引擎、業務服務、API 門戶）指標達 99.0%，型別覆蓋率 100.0%。
-    *   `make test-be`: 740 passed, 10 skipped, 4 xfailed (0 failures)，全數通過。
-
-### 2026-10-04: Mypy 型別斷層修復、104 測試防禦與全站門禁公證 (Phase 5.11.24)
-
-*   **Mypy 型別與 DTO 斷層修復**:
-    *   **診斷**: 執行 `make lint` 時，Mypy 攔截到 `log_api.py` 中 `LogEntry` 與 `LogDetailsDTO` (TypedDict) 的細微型別不匹配。
-    *   **修復**: 更新 `agent_outputs.py` 中 `LogEntry.details` 型別宣告以相容 TypedDict / Any 結構；並於 `business_archiver.py` 之 `FailureCaseMetadataDTO` 補充 `lead_id: str` 標註。
-*   **104 爬蟲外部測試 WAF 容錯 (Graceful Skip)**:
-    *   **修復**: 修改 `test_104_reliability.py`，當 104 網站 WAF 防火牆針對本地測試 IP 回傳 HTTP 403 時，自動執行 `pytest.skip`，避免外部連線變因阻礙單元測試門禁。
-*   **全站品質與 SSOT 物理公證**:
-    *   `make lint`: 0 ESLint/TSC 錯誤，0 Mypy 錯誤。
-    *   `make test-be`: 735 passed, 11 skipped (0 failures)。
-    *   `make phase-audit`: 0 關鍵斷層，0 SSOT 違規，四大架構指標達 99.0%。
+*   **爬蟲與設定服務 DTO 型別對齊及 SSOT 標記修復**:
+    *   **診斷**: 自動化 PR (#627, #630) 後，`CrawlingService` 外層方法回傳型別未與 `SinglePageCrawlResultDTO` / `list[CrawlResultItemDTO]` 同步，且 `SettingPayloadDTO` 缺少選填欄位，同時 `ollama/discovery/` 3 處 `# 合法` 標記被誤刪。
+    *   **修復**: 同步對齊 [crawling_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/crawling/crawling_service.py)、[tools.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/librarian/tools.py) 與 [settings_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/settings_service.py) 之 DTO 契約；還原 `ollama/discovery/` SSOT 豁免標記並移除 `capabilities.py` 重複 Lock。
+*   **代理記憶指南 (`.jules/*.md`) 極簡化瘦身與月度自動壓縮排程**:
+    *   **實體瘦身**: 清理 `.jules/*.md` 共 6 份檔案之 `2023~2025` 幻覺日期與無限追加重複區塊，由 558 行 (95 KB) 精簡至 86 行 (9.8 KB)，每檔僅留 2~5 條核心規則。
+    *   **月度排程與三向連動**: 於 `SchedulerConfig` 新增 SSOT 參數，建立獨立模組 [jules_compaction.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/jules_compaction.py)（含 `log_service.create_log_entry` 稽核紀錄），同步掛載至 `scheduler_service.py`、`internal_api.py`、`admin_api.py` 及 `stats/__init__.py`，並於 `scripts/phase_audit.py` 新增 Step 11 守門員。
+*   **全域三向門禁與紅綠燈真實穿透公證**:
+    *   `make lint`: 前端與後端 393 來源檔、Lean 4 18 jobs 100% 綠燈通過。
+    *   `make test-be`: **769 passed**（拔除 `patch.object(log_service)` 假 Mock，以紅綠燈法則實體驗證 `tmp_path` 磁碟壓縮與 `archon_logs` 資料表寫入），10 skipped, 4 xfailed (0 failures)。
+    *   `make phase-audit`: Step 1 ~ Step 11 全綠通過 (Exit Code 0)。
 
 ---
 
@@ -217,6 +144,20 @@
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+
+### 2026年10月：強型別 DTO 契約閉環、代理記憶治理與 MetaTwin 自癒公證
+
+**核心主題歸類**:
+1.  **強型別 DTO 契約閉環與 MyPy 零容忍防禦 (Ref: 10-04, 10-06, 10-08, 10-09, 10-12, 10-16, 10-18)**:
+    *   **API 與 Service 契約對齊**: 全面補齊 `Projects` (`NoReturn` 標註與字典型別變異 `cast`)、`Crawling` (`SinglePageCrawlResultDTO` / `CrawlResultItemDTO`)、`Settings` (`SettingPayloadDTO` 選填欄位)、`Ollama Discovery` (`ModelDictDTO` / `HostStatusDTO`) 與 `LogEntry` 之強型別契約，實現後端 393 檔 100% 型別覆蓋。
+    *   **參數與死碼清理**: 還原 `Agentic RAG` 之 `use_enhancement` 公開參數命名；全站執行 `ruff` (`F401`, `F841`, `B007`) 與前端 `tsc --noEmit` 掃描，確保零殭屍代碼與多餘轉型。
+2.  **非同步 Event Loop 解鎖與雲端自癒公證 (Ref: 10-04, 10-08, 10-14)**:
+    *   **資料庫查詢非同步化**: 將 `pages_service.py` 內部同步 `execute_query` 全面升級為 `await execute_query_async`，並將 `test_pages_service.py` 同步升級為 `AsyncMock`，消除 Event Loop 阻塞與虛假測試斷層。
+    *   **429 速率限制與 MetaTwin 自癒**: 鑑識週日 `Weekly Executive Summary` Map-Reduce 併發觸碰 Google Free Tier `250000` TPM 限制；物理驗證 `RateLimitHandler` 指數退避與 `MetaTwinService` 自動執行 `MODEL_SWAP` 降階自癒。
+    *   **外部 WAF 容錯**: 於 `test_104_reliability.py` 實作 HTTP 403 WAF 攔截時自動 `pytest.skip`，隔離外部網路變因。
+3.  **代理記憶指南 (`.jules/*.md`) 極簡化與月度壓縮排程 (Ref: 10-18)**:
+    *   **記憶退化清洗**: 根除 `.jules/*.md` 共 6 份檔案中的 `2023~2025` 幻覺日期與無限追加重複紀錄，將總行數由 558 行 (95 KB) 壓縮至 86 行 (9.8 KB)，每檔僅保留 2~5 條核心規則。
+    *   **月度排程與門禁防線**: 建立 `jules_compaction.py` 月度排程並串接 `SchedulerConfig` SSOT、手動觸發 API 與 `archon_logs` 稽核紀錄；於 `scripts/phase_audit.py` 新增 Step 11 強制攔截超額條目與日期幻覺。
 
 ### 2026年9月：SSOT 治理、排程防禦與零虛假公證
 

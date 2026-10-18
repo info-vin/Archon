@@ -140,8 +140,12 @@ class StatsService(BaseRepository):
                         active_job_ids.add(job.id)
                         next_run = job.next_run_time.isoformat() if job.next_run_time else None
 
-                        # Handle stateless initial vs loop jobs
-                        display_id = job.id.replace("_initial", "")
+                        # Handle stateless initial vs loop jobs and stateful catchup vs recurring jobs
+                        display_id = (
+                            job.id.replace("_initial", "")
+                            .replace("_catchup", "")
+                            .replace("_recurring", "")
+                        )
 
                         # Determine Category based on phase 5.1.14 design
                         job_type = "stateful_daily"

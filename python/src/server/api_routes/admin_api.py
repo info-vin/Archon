@@ -85,6 +85,7 @@ async def trigger_scheduler_job(
         "daily_executive_summary": scheduler_service._run_daily_executive_summary,
         "tech_debt_audit": scheduler_service._run_tech_debt_audit,
         "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
+        "monthly_jules_compaction": scheduler_service._run_monthly_jules_compaction,
     }
 
     if job_id not in job_map:

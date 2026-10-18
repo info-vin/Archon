@@ -315,6 +315,44 @@ def repository_bypass_audit():
     else:
         print("✅ Repository architecture audit passed. No .execute() bypasses found.")
 
+def jules_guidelines_audit():
+    import re
+    print_header("Step 11: Jules Guidelines (.jules/*.md) Compaction Audit")
+
+    jules_dir = ".jules"
+    if not os.path.exists(jules_dir):
+        print("✅ .jules directory not found, skipping.")
+        return
+
+    date_pattern = re.compile(r"^##\s+\d{4}-\d{2}-\d{2}")
+    max_entries = 5
+    issues = []
+
+    for entry in sorted(os.listdir(jules_dir)):
+        if not entry.endswith(".md"):
+            continue
+        file_path = os.path.join(jules_dir, entry)
+        if not os.path.isfile(file_path):
+            continue
+
+        section_count = 0
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            for line_num, line in enumerate(f, 1):
+                if line.startswith("## "):
+                    section_count += 1
+                    if date_pattern.search(line):
+                        issues.append(f"{file_path}:{line_num} | Hallucinated date prefix in heading: {line.strip()}")
+        if section_count > max_entries:
+            issues.append(f"{file_path} | Exceeds max {max_entries} rules per file (found {section_count})")
+
+    if issues:
+        print(f"❌ FOUND {len(issues)} JULES GUIDELINE COMPACTION VIOLATIONS!")
+        for issue in issues:
+            print(f"   - {issue}")
+        sys.exit(1)
+    else:
+        print(f"✅ Jules guidelines audit passed (<= {max_entries} core rules per file, 0 date hallucinations).")
+
 if __name__ == "__main__":
     scan_prps()
     git_sync_check()
@@ -325,5 +363,6 @@ if __name__ == "__main__":
     ssot_hardcoding_audit()
     os_getenv_audit()
     repository_bypass_audit()
+    jules_guidelines_audit()
     print_header("Audit Complete")
 
