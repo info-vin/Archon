@@ -131,13 +131,14 @@
     *   **診斷**: 
         1. 使用者反饋 Telegram 收到的星環 Weekly / Daily 報告被截斷為 150 字元快覽 (`...`)。追查確認 `report_service.py` 遺留舊機制 `sanitize_markdown_snippet(task_desc, max_length=150)` 殘留。
         2. 全文直發時，Markdown 特殊符號不對稱引發 Telegram API `400 Bad Request: can't parse entities` 拒收。
-        3. 舊週報快照包含過期問題（內容審核阻塞率 100%、429 建議），且在重新生成週報時，`NexusOracleAgent` 因上下文龐大觸碰 Google Free Tier 25 萬 TPM 限制觸發持續 57s 退避鎖死。
+        3. 舊週報快照包含過期問題（內容審核阻塞率 100%、429 建議），且在重新生成週報時，`NexusOracleAgent` 因 `get_collab_synergy` 回傳 290x290 協同矩陣（高達 675 萬字元 / 6.7 MB Payload）瞬間擊穿 Google Free Tier 25 萬 TPM 限制，觸發 57 秒退避重試死鎖。
     *   **修復**: 
         1. 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 移除 150 字元截斷邏輯，傳送完整報告。
         2. 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 實裝 **400 Entity Parse Auto-Fallback**：當 Markdown 解析失敗時，自動降級以純文字 (Plain Text) 重新發送，杜絕靜默吞噬與發送中斷。
-        3. 於 [pm_prompts.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/prompts/pm_prompts.py) 與資料庫更新 `WEEKLY_EXECUTIVE_SUMMARY` Prompt，強制 LLM 區分已解決歷史日誌與當前活躍問題，並於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py) 導入 25 秒超時 Fail-Fast 防線，隔離 Oracle 429 阻塞。
-    *   **實體重發公證**: 成功重新執行即時 Map-Reduce，產出最新一期反映修復現況之星環週報全文，並成功推播至 Telegram (Message ID: 84)。
-    *   **門禁驗證**: [test_telegram_chunking.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_telegram_chunking.py) 與 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 全數通過，`make lint-be`、全域測試通過。
+        3. 於 [nexus_oracle_agent.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/nexus_oracle_agent.py) 根治 6.7MB 矩陣膨脹：僅傳遞 `snapshot` 摘要數據給 LLM，將上下文自 677 萬字元暴降至 2.5 萬字元；並於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py) 導入 25 秒超時 Fail-Fast 防線。
+        4. 於 [pm_prompts.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/prompts/pm_prompts.py) 與資料庫更新 `WEEKLY_EXECUTIVE_SUMMARY` Prompt，強制 LLM 區分已解決歷史日誌與當前活躍問題。
+    *   **實體重發公證**: 成功完成即時星環週報生成（Task `8b442d90`），內容審核阻塞率 100% 報警徹底消除，並推播至 Telegram。
+    *   **門禁驗證**: [test_telegram_chunking.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_telegram_chunking.py) 與 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 全數通過，`make lint-be` 通過。
 
 #### 2026-10-18: 商業漏斗全線通管、Telegram 智慧分段與 777 項測試突破 (Phase 5.11.24 ~ 5.11.25)
 

@@ -174,13 +174,16 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
             approvals = getattr(approvals_res, "data", []) if not isinstance(approvals_res, Exception) else []
             blogs = blogs_res[1].get("data", []) if not isinstance(blogs_res, Exception) and isinstance(blogs_res, tuple) and blogs_res[0] else []
 
+            # Prevent NxN matrix explosion: Only pass high-level snapshot/summary to LLM
+            synergy_summary = synergy.get("snapshot", {}) if isinstance(synergy, dict) else {}
+
             raw_data = {
                 "system_telemetry": telemetry,
                 "team_readiness": readiness,
                 "ai_token_usage_30d": ai_usage,
                 "knowledge_base_roi": k_roi,
                 "sla_reliability": sla,
-                "collaboration_synergy": synergy,
+                "collaboration_synergy": synergy_summary,
                 "business_risks": biz_risks,
                 "active_alerts": alerts,
                 "pending_approvals": approvals,
