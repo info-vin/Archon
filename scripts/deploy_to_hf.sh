@@ -52,6 +52,7 @@ git checkout "$SOURCE_BRANCH" -- scripts/
 git checkout "$SOURCE_BRANCH" -- Makefile
 git checkout "$SOURCE_BRANCH" -- Dockerfile.server
 git checkout "$SOURCE_BRANCH" -- AGENTS.md
+git checkout "$SOURCE_BRANCH" -- .jules/
 
 echo "3.5 Removing binary artifacts to comply with HF limits..."
 git rm -rf --cached python/.twin/ 2>/dev/null || true
