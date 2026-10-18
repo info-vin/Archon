@@ -125,12 +125,17 @@
 
 > 本章節僅保留最近一週的開發日誌。較早期的日誌已按月份主題封存至第四章歷史檔案。
 
-#### 2026-10-18: 系統摘要報告 Telegram 全文推播解除截斷 (Phase 5.11.26)
+#### 2026-10-18: 系統摘要報告 Telegram 全文推播解除截斷與實體重發 (Phase 5.11.26)
 
-*   **系統摘要報告 Telegram 全文推播解除截斷**:
-    *   **診斷**: 使用者反饋 Telegram 收到的星環 Weekly / Daily 報告被截斷為 150 字元快覽 (`...`)。追查確認 `report_service.py` 遺留舊機制 `sanitize_markdown_snippet(task_desc, max_length=150)` 殘留，未利用已實裝的 `split_message_chunks()` 自動分段。
-    *   **修復**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 移除 `sanitize_markdown_snippet` 截斷邏輯與未使用的 `NotificationConfig` 引用，改為直接將完整的 `task_desc` 報告本文傳入 `telegram_service.send_message()`，由後者安全分段 (`📄 [X/Y]`) 發送。
-    *   **公證**: 更新 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 驗證週報發送時完整本文與 Podcast 音檔連結皆被送入 Telegram；`make lint-be`、`make test-be` (777 passed) 與 `scripts/phase_audit.py` (Step 1 ~ Step 11) 全數 100% 通過。
+*   **系統摘要報告 Telegram 全文推播解除截斷與 400 格式自癒**:
+    *   **診斷**: 
+        1. 使用者反饋 Telegram 收到的星環 Weekly / Daily 報告被截斷為 150 字元快覽 (`...`)。追查確認 `report_service.py` 遺留舊機制 `sanitize_markdown_snippet(task_desc, max_length=150)` 殘留。
+        2. 全文直發時，Markdown 特殊符號不對稱引發 Telegram API `400 Bad Request: can't parse entities` 拒收。
+    *   **修復**: 
+        1. 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 移除 150 字元截斷邏輯，傳送完整報告。
+        2. 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 實裝 **400 Entity Parse Auto-Fallback**：當 Markdown 解析失敗時，自動降級以純文字 (Plain Text) 重新發送，杜絕靜默吞噬與發送中斷。
+    *   **實體重發公證**: 物理調用 `telegram_service.send_message`，已將完整的「週期執行摘要報告 (2026-10-11 至 2026-10-18)」成功推播至 Telegram (Message ID: 83)。
+    *   **門禁驗證**: [test_telegram_chunking.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_telegram_chunking.py) 新增 400 降級測試，`make lint-be`、全域測試與 `phase_audit.py` 全數通過。
 
 #### 2026-10-18: 商業漏斗全線通管、Telegram 智慧分段與 777 項測試突破 (Phase 5.11.24 ~ 5.11.25)
 
