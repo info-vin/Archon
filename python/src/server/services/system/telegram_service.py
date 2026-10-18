@@ -98,9 +98,103 @@ class TelegramService:
 
         await asyncio.to_thread(_insert_task)
 
-    async def send_message(self, text: str, parse_mode: str = "Markdown", is_retry: bool = False) -> bool:
-        """Sends a message via Telegram Bot API."""
+    @staticmethod
+    def split_message_chunks(text: str, max_chunk_size: int = 3800) -> list[str]:
+        """Splits long text into multiple chunks at line/paragraph boundaries safely.
+
+        Ensures each chunk does not exceed max_chunk_size (default 3800, well within
+        Telegram's 4096 limit). Appends pagination markers if split into multiple parts.
+        """
+        if not text:
+            return []
+        if len(text) <= max_chunk_size:
+            return [text]
+
+        chunks: list[str] = []
+        remaining = text
+
+        while remaining:
+            if len(remaining) <= max_chunk_size:
+                chunks.append(remaining)
+                break
+
+            # Find best split point within max_chunk_size:
+            # 1. Double newline (paragraph boundary)
+            # 2. Single newline (line boundary)
+            # 3. Space (word boundary)
+            # 4. Hard cut as last resort
+            split_idx = remaining.rfind("\n\n", 0, max_chunk_size)
+            if split_idx == -1 or split_idx < max_chunk_size // 3:
+                split_idx = remaining.rfind("\n", 0, max_chunk_size)
+            if split_idx == -1 or split_idx < max_chunk_size // 3:
+                split_idx = remaining.rfind(" ", 0, max_chunk_size)
+            if split_idx == -1 or split_idx < max_chunk_size // 3:
+                split_idx = max_chunk_size
+
+            chunk = remaining[:split_idx].strip()
+            if chunk:
+                chunks.append(chunk)
+            remaining = remaining[split_idx:].lstrip()
+
+        # Add pagination header if multiple chunks
+        total = len(chunks)
+        if total > 1:
+            return [f"📄 [{i + 1}/{total}]\n{chunk}" for i, chunk in enumerate(chunks)]
+        return chunks
+
+    async def _send_single_payload(
+        self,
+        api_url: str,
+        payload: dict[str, str],
+        config: NotificationConfig,
+        original_chunk: str,
+        is_retry: bool = False,
+    ) -> bool:
+        """Sends a single chunk payload with retries and failure persistence."""
         import asyncio
+
+        max_retries = config.telegram_retries
+        for attempt in range(max_retries):
+            try:
+                async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
+                    response = await client.post(api_url, json=payload)
+                    response.raise_for_status()
+                    logger.info("✅ TelegramService: Message chunk sent successfully.")
+                    return True
+            except httpx.RequestError as e:
+                err_msg = (
+                    f"TelegramService: Network error sending message (Attempt {attempt + 1}/{max_retries}): {repr(e)}"
+                )
+                logger.error(f"❌ {err_msg}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2)  # 合法
+                else:
+                    await self._log_to_db("ERROR", err_msg)
+                    if not is_retry:
+                        await self._queue_failed_message(original_chunk)
+            except httpx.HTTPStatusError as e:
+                err_msg = f"TelegramService: HTTP error sending message: {repr(e)} - Response: {e.response.text}"
+                logger.error(f"❌ {err_msg}")
+                await self._log_to_db("ERROR", err_msg)
+                if e.response.status_code >= 500:
+                    if not is_retry:
+                        await self._queue_failed_message(original_chunk)
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2)  # 合法
+                        continue
+                return False
+            except Exception as e:
+                err_msg = f"TelegramService: Unexpected error sending message: {repr(e)}"
+                logger.error(f"❌ {err_msg}")
+                await self._log_to_db("ERROR", err_msg)
+                return False
+
+        return False
+
+    async def send_message(self, text: str, parse_mode: str = "Markdown", is_retry: bool = False) -> bool:
+        """Sends a message via Telegram Bot API with safe chunking and rate spacing."""
+        import asyncio
+
         self._current_parse_mode = parse_mode
         config = await self._get_config_async()
         bot_token = config.telegram_token
@@ -115,59 +209,43 @@ class TelegramService:
         proxy_url = config.telegram_proxy_url
         if proxy_url:
             api_url = proxy_url
-            payload = {
+            base_payload = {
                 "bot_token": bot_token,
                 "chat_id": chat_id,
-                "text": text,
-                "parse_mode": parse_mode
+                "parse_mode": parse_mode,
             }
         else:
             api_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-            payload = {
+            base_payload = {
                 "chat_id": chat_id,
-                "text": text,
-                "parse_mode": parse_mode
+                "parse_mode": parse_mode,
             }
 
-        max_retries = config.telegram_retries
-        for attempt in range(max_retries):
-            try:
-                # Use SSOT configured timeout to absorb network spikes
-                async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
-                    response = await client.post(api_url, json=payload)
-                    response.raise_for_status()
-                    logger.info("✅ TelegramService: Message sent successfully.")
-                    return True
-            except httpx.RequestError as e:
-                # Catch connection errors, timeouts, etc. Use repr(e) to avoid empty string logs
-                err_msg = f"TelegramService: Network error sending message (Attempt {attempt + 1}/{max_retries}): {repr(e)}"
-                logger.error(f"❌ {err_msg}")
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(2) # 合法  # 合法
-                else:
-                    await self._log_to_db("ERROR", err_msg)
-                    if not is_retry:
-                        await self._queue_failed_message(text)
-            except httpx.HTTPStatusError as e:
-                # Catch 400, 401, 404, etc.
-                err_msg = f"TelegramService: HTTP error sending message: {repr(e)} - Response: {e.response.text}"
-                logger.error(f"❌ {err_msg}")
-                await self._log_to_db("ERROR", err_msg)
-                # Note: 4xx errors are usually bad requests (e.g. text too long), queuing them will just fail again.
-                # However, 5xx errors (Bad Gateway) might be recoverable.
-                if e.response.status_code >= 500:
-                    if not is_retry:
-                        await self._queue_failed_message(text)
-                    if attempt < max_retries - 1:
-                        await asyncio.sleep(2) # 合法
-                        continue
-                return False
-            except Exception as e:
-                err_msg = f"TelegramService: Unexpected error sending message: {repr(e)}"
-                logger.error(f"❌ {err_msg}")
-                await self._log_to_db("ERROR", err_msg)
-                return False
+        chunks = self.split_message_chunks(text)
+        if not chunks:
+            return True
 
-        return False
+        overall_success = True
+        for i, chunk in enumerate(chunks):
+            payload = {**base_payload, "text": chunk}
+            chunk_success = await self._send_single_payload(
+                api_url=api_url,
+                payload=payload,
+                config=config,
+                original_chunk=chunk,
+                is_retry=is_retry,
+            )
+            if not chunk_success:
+                overall_success = False
+                logger.error(f"❌ TelegramService: Failed sending chunk {i + 1}/{len(chunks)}. Aborting further chunks.")
+                break
+
+            # Rate-limiting defense: 0.5s pause between chunks to stay within Telegram limits
+            if i < len(chunks) - 1:
+                await asyncio.sleep(0.5)  # 合法
+
+        return overall_success
+
 
 telegram_service = TelegramService()
+
