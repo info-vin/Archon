@@ -119,8 +119,9 @@ export const IdentityEditUserModal: React.FC<{ user: Employee; onClose: () => vo
                                 return (
                                     <button 
                                         key={perm}
+                                        type="button"
                                         onClick={() => togglePermission(perm)}
-                                        className={`flex flex-col p-2 rounded-xl border transition-all text-left group ${bgClass} hover:ring-2 ring-primary/20`}
+                                        className={`flex flex-col p-2 rounded-xl border transition-all text-left group ${bgClass} hover:ring-2 ring-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
                                     >
                                         <div className="flex justify-between items-center">
                                             <span className="text-[10px] font-mono truncate">{perm}</span>
@@ -137,7 +138,7 @@ export const IdentityEditUserModal: React.FC<{ user: Employee; onClose: () => vo
 
                     <div className="flex justify-end space-x-3 pt-4 border-t border-border mt-4 shrink-0">
                         <button type="button" onClick={onClose} className="px-6 py-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 transition-colors">Cancel</button>
-                        <button onClick={handleSave} disabled={isSaving} className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-all font-black shadow-lg shadow-indigo-200 disabled:opacity-50">
+                        <button type="button" onClick={handleSave} disabled={isSaving} className="px-6 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-all font-black shadow-lg shadow-indigo-200 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
                             {isSaving ? 'Syncing...' : 'APPLY ACCESS OVERRIDE'}
                         </button>
                     </div>

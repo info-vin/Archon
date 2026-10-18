@@ -7,12 +7,17 @@ Supports multi-instance configurations with automatic dimension detection and he
 
 import asyncio
 import time
-from typing import Any
 
 from src.server.config.logfire_config import get_logger
 
 from .discovery.manifest_parser import OllamaManifestParser
-from .discovery.models import InstanceHealthStatus, ModelCapabilities, OllamaModel
+from .discovery.models import (
+    DiscoveryResultDTO,
+    InstanceHealthStatus,
+    ModelCapabilities,
+    OllamaModel,
+    OllamaModelDetailsDTO,
+)
 from .discovery.network_scanner import OllamaNetworkScanner
 
 logger = get_logger(__name__)
@@ -119,7 +124,7 @@ class ModelDiscoveryService:
         return await detect_model_capabilities_logic(self, model_name, instance_url, optimized=False)
 
     # --- Private Facades for backward compatibility and testing ---
-    async def _get_model_details(self, model_name: str, instance_url: str) -> dict[str, Any] | None:
+    async def _get_model_details(self, model_name: str, instance_url: str) -> OllamaModelDetailsDTO | None:
         from .discovery.capabilities import get_model_details_logic
 
         return await get_model_details_logic(model_name, instance_url)
@@ -255,7 +260,7 @@ class ModelDiscoveryService:
 
     async def discover_models_from_multiple_instances(
         self, instance_urls: list[str], fetch_details: bool = False
-    ) -> dict[str, Any]:
+    ) -> DiscoveryResultDTO:
         """
         Discover models from multiple Ollama instances concurrently.
 
@@ -273,6 +278,7 @@ class ModelDiscoveryService:
                 "embedding_models": [],
                 "host_status": {},
                 "discovery_errors": [],
+                "unique_model_names": [],
             }
 
         logger.info(f"Discovering models from {len(instance_urls)} Ollama instances with fetch_details={fetch_details}")

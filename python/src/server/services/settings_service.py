@@ -1,4 +1,6 @@
-from typing import Any, TypedDict, cast
+from typing import NotRequired, TypedDict, cast
+
+from supabase import Client
 
 from src.server.repositories.base_repository import BaseRepository
 
@@ -12,13 +14,36 @@ class DatabaseStatisticsDict(TypedDict):
     crawled_pages: int
     settings: int
 
+
+class SettingPayloadDTO(TypedDict):
+    key: str
+    value: str
+    category: NotRequired[str]
+    description: NotRequired[str]
+    is_encrypted: NotRequired[bool]
+    updated_at: NotRequired[str]
+
+
+class SettingDTO(TypedDict):
+    id: NotRequired[str]
+    key: str
+    value: str
+    created_at: NotRequired[str]
+    updated_at: NotRequired[str]
+
+
+class NotebookLMUsageDTO(TypedDict):
+    date: str
+    count: int
+
+
 logger = get_logger(__name__)
 
 
 class SettingsService(BaseRepository):
     """Service for handling business logic related to application settings and statistics."""
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         """Initialize with optional supabase client."""
         client = supabase_client or get_supabase_client()
         super().__init__(client)
@@ -34,7 +59,7 @@ class SettingsService(BaseRepository):
             "projects": 0,
             "tasks": 0,
             "crawled_pages": 0,
-            "settings": 0
+            "settings": 0,
         }
 
         # Get projects count
@@ -43,7 +68,7 @@ class SettingsService(BaseRepository):
             query_func=query_projects, error_context="Error getting projects count", require_data=False
         )
         if not success:
-            return False, result["error"]
+            return False, str(result.get("error", "Error getting projects count"))
         tables_info["projects"] = result.get("count", 0) or 0
 
         # Get tasks count
@@ -52,7 +77,7 @@ class SettingsService(BaseRepository):
             query_func=query_tasks, error_context="Error getting tasks count", require_data=False
         )
         if not success:
-            return False, result["error"]
+            return False, str(result.get("error", "Error getting tasks count"))
         tables_info["tasks"] = result.get("count", 0) or 0
 
         # Get crawled pages count
@@ -61,7 +86,7 @@ class SettingsService(BaseRepository):
             query_func=query_pages, error_context="Error getting pages count", require_data=False
         )
         if not success:
-            return False, result["error"]
+            return False, str(result.get("error", "Error getting pages count"))
         tables_info["crawled_pages"] = result.get("count", 0) or 0
 
         # Get settings count
@@ -70,7 +95,7 @@ class SettingsService(BaseRepository):
             query_func=query_settings, error_context="Error getting settings count", require_data=False
         )
         if not success:
-            return False, result["error"]
+            return False, str(result.get("error", "Error getting settings count"))
         tables_info["settings"] = result.get("count", 0) or 0
 
         return True, tables_info
@@ -97,8 +122,8 @@ class SettingsService(BaseRepository):
         success, result = self.execute_query(
             query_func=query, error_context="Error fetching all settings", require_data=False
         )
-        if success and result["data"]:
-            return {item["key"]: item["value"] for item in cast(list[dict[str, Any]], result["data"])}
+        if success and result.get("data"):
+            return {item["key"]: item["value"] for item in cast(list[dict[str, str]], result["data"])}
         return {}
 
     def set_setting(self, key: str, value: str) -> bool:
@@ -107,14 +132,15 @@ class SettingsService(BaseRepository):
         query = self.supabase_client.table("archon_settings").upsert( # 合法
             {"key": key, "value": value}, on_conflict="key"
         )
-        success, result = self.execute_query(
+        success, _ = self.execute_query(
             query_func=query, error_context=f"Error setting {key}", require_data=False
         )
         return success
 
-    async def upsert_setting(self, payload: dict[str, Any]) -> bool:
+    async def upsert_setting(self, payload: SettingPayloadDTO) -> bool:
+        """Async upsert a setting dictionary payload."""
         query = self.supabase_client.table("archon_settings").upsert(payload, on_conflict="key") # 合法
-        success, res = self.execute_query(query, "Error upserting setting", require_data=False)
+        success, _ = await self.execute_query_async(query, "Error upserting setting", require_data=False)
         return success
 
     def check_and_increment_notebooklm_quota(self) -> bool:
@@ -129,21 +155,26 @@ class SettingsService(BaseRepository):
         current_date = datetime.now().strftime("%Y-%m-%d")
         setting_val = self.get_setting("notebooklm_daily_usage", default=None)
 
+        usage_data: NotebookLMUsageDTO
         if setting_val:
             try:
-                usage_data = json.loads(setting_val)
-            except json.JSONDecodeError:
+                parsed = json.loads(setting_val)
+                usage_data = {
+                    "date": str(parsed.get("date", current_date)),
+                    "count": int(parsed.get("count", 0)),
+                }
+            except (json.JSONDecodeError, ValueError, TypeError):
                 usage_data = {"date": current_date, "count": 0}
         else:
             usage_data = {"date": current_date, "count": 0}
 
-        if usage_data.get("date") != current_date:
+        if usage_data["date"] != current_date:
             # Reset for new day
             usage_data = {"date": current_date, "count": 0}
 
-        if usage_data.get("count", 0) >= 9:
+        if usage_data["count"] >= 9:
             return False
 
-        usage_data["count"] = usage_data.get("count", 0) + 1
+        usage_data["count"] += 1
         self.set_setting("notebooklm_daily_usage", json.dumps(usage_data))
         return True

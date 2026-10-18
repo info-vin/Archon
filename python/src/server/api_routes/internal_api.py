@@ -231,6 +231,7 @@ async def trigger_cron_jobs(
             "tech_debt_audit": scheduler_service._run_tech_debt_audit,
             "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
             "meta_twin_audit": scheduler_service._run_meta_twin_audit,
+            "monthly_jules_compaction": scheduler_service._run_monthly_jules_compaction,
         }
 
         if job_id:

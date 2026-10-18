@@ -1,59 +1,17 @@
-## 2026-08-07 - Python Type Refactoring without breaking dependent unit tests
-**Learning:** When tests in `python/tests` fail due to missing dependencies during verification steps, verify if all declared dependencies have been synchronized to the testing environment. Missing packages like `httpx` and `fastapi` caused test execution to fail initially.
-**Action:** Use `uv sync --all-groups` explicitly before running `pytest` to ensure all required testing dependencies exist before considering a test suite broken by a refactoring change.
-## 2026-08-09 - Scoping Test Execution to Bypass Unrelated Failures
-**Learning:** When running Python tests in a large codebase, if executing the entire suite (e.g., `pytest tests/`) fails due to unrelated environment constraints or external mock requirements (like missing `GOOGLE_API_KEY` for agents), it can block verification.
-**Action:** Scope the test execution directly to the relevant directories (e.g., `uv run pytest tests/unit/ tests/server/services/`) to verify business logic changes and isolate them from integration-heavy or external-dependent failures.
-## 2025-03-09 - Optional Dependencies in Service Layers
-**Learning:** External dependencies like `curl_cffi` may need to be imported at the module level when used for typing (e.g., `Session`) instead of using untyped `Any`, provided they are part of the core environment (which we verify via standard tests).
-**Action:** When replacing `Any` types with objects from external clients, import the concrete class from the client module.
-## 2024-08-14 - Use TypedDict for backward compatibility
-**Learning:** When refactoring existing services to return structured DTOs instead of `dict[str, Any]`, using `@dataclass` or `BaseModel` can break downstream callers and tests that use dictionary subscripting (e.g., `result["key"]`), resulting in `TypeError`.
-**Action:** Use `TypedDict` for DTOs in incremental refactors where you cannot guarantee all call sites are simultaneously updated, as it provides static type safety while remaining 100% backward compatible at runtime.
-## 2025-03-01 - ParamSpec kwargs restriction
-**Learning:** `ParamSpec.kwargs` can only be used in conjunction with `ParamSpec.args` and must be bound to a generic context (such as taking a `Callable[P, ...]`). Using it standalone on a standard method will cause static type checkers to fail. The correct annotation for untyped, variable keyword arguments in standard methods is `**kwargs: Any` or to replace them with explicit keyword arguments.
-**Action:** Always replace `**kwargs` with explicit arguments when possible to favor explicit over implicit. Do not use `ParamSpec.kwargs` outside of its intended generic context.
-## 2025-03-09 - Type Hinting Optional Return Types with TypeVar
-**Learning:** When a method's return type depends on an unbound generic TypeVar `T` (e.g., `default: T = None`), strict type checkers might flag `None` as incompatible if `T` itself does not encompass `None`.
-**Action:** When using `TypeVar` for default arguments that can be `None`, explicitly type the return signature to include the `TypeVar` along with the other possible return types (e.g., `T | str | dict[str, Any] | None`).
-## 2026-08-23 - Type Hinting Missing Return annotations and kwargs
-**Learning:** Found multiple methods in service files (`threading_service.py`, `background_task_manager.py`, `source_management_service.py`) that were missing either explicit return types (like `-> None:` or `-> AsyncGenerator[None, None]:`) or argument type annotations specifically for `*args` and `**kwargs` (like `*args: Any` or `**kwargs: Any`).
-**Action:** Always ensure explicitly specifying `*args: Any` and `**kwargs: Any` if their types are not strictly defined, rather than leaving them untyped. Ensure all methods, especially setup or cleanup methods, have explicit return types even if it is just `-> None:`.
-## 2024-05-18 - Type Hinting supabase_client
-**Learning:** When type hinting `supabase_client` initialization parameters in the Python backend (e.g., in `server/services/` or `server/repositories/`), import `Client` from the `supabase` package and explicitly annotate it as `Client | None = None` instead of leaving it untyped or using `typing.Any`.
-**Action:** Use `from supabase import Client` and `Client | None = None` for `supabase_client` arguments in `__init__` methods.
-## 2024-05-18 - Safe Refactoring of Legacy Tuple Types
-**Learning:** When refactoring legacy APIs that returned `tuple[bool, dict[str, Any]]` to use stricter Types/DTOs, adding `dict[str, Any]` to the return type union (e.g. `tuple[bool, ProjectResultDTO | dict[str, Any]]`) undermines static analysis entirely, because MyPy will still allow arbitrary key access under the assumption it might be a dict. `cast()` handles the boundary, but the signature must be strict to protect callers.
-**Action:** When migrating legacy dict returns to DTOs using `TypedDict`, do not union the DTO with `dict[str, Any]` in the function signature. Instead, union it with the error type (like `str` for error messages) and rely on `cast(DTO, result)` to enforce the contract at the repository boundary, ensuring all upstream consumers benefit from the strict type.
-## 2024-05-24 - LLM Proxy Wrappers and Any Typing
-**Learning:** Adding type annotations to dynamically proxied wrapper methods in Python (like decorators and external SDK proxies like `original_client: Any` or `_execute_on_hf() -> Any`) without using `Any` or `# type: ignore` is extremely complex due to unknown kwargs structures from underlying SDKs, which would require massive architectural refactoring. However, per TypeGuardian guidelines, we should strive to avoid `Any` wherever possible.
-**Action:** Avoid blindly annotating proxy/wrapper `args` and `kwargs` as `Any` or using `type: ignore` if possible, and document instances where it is temporarily acceptable but not ideal for `TypeGuardian` rules.
-## 2026-08-27 - Supabase Client explicitly injected in service `__init__` methods
-**Learning:** Found several basic service files (e.g., `system_service.py`, `ethics_service.py`, `pages_service.py`, `game_service.py`) inheriting from `BaseRepository` with `__init__(self) -> None:` without accepting a `supabase_client`. To adhere to the `supabase_client: Client | None = None` pattern identified on 2024-05-18, these need to explicitly accept the injected client rather than relying on `BaseRepository`'s implicit `get_supabase_client()` fallback, supporting dependency injection for testing.
-**Action:** When auditing `server/services/`, look for empty `__init__(self) -> None:` methods on `BaseRepository` subclasses and explicitly add `supabase_client: Client | None = None` as the argument, and explicitly pass it up via `super().__init__(supabase_client)`.
-## 2024-09-06 - Replacing Any with TYPE_CHECKING
-**Learning:** Using `Any` to cheat type coverage is strictly prohibited in TypeGuardian operations. When a parameter needs a class type from another module, but importing it would cause circular dependency issues, `TYPE_CHECKING` from `typing` should be used with forward string references like `'TaskService'` and `'Client'` to provide proper type safety while avoiding import errors.
-**Action:** Next time when patching methods, strictly analyze if there is an alternative type available and use `TYPE_CHECKING` for cross-module service dependencies instead of relying on `Any`.
-## 2024-05-18 - Replacing dict[str, Any] in HTTP integrations
-**Learning:** Returning `dict[str, Any]` for generic microservice HTTP responses causes blind spots in the service layer where keys could be missing. `httpx` json responses are easily cast and strongly structured via lightweight TypedDicts (`NotRequired[str]`) mapping exactly to HTTP JSON responses.
-**Action:** When auditing HTTP clients interacting with external or microservices, define specific TypedDicts for each endpoint's response (e.g., `CrawlResponseDTO`) instead of relying on `response.json()` returning an untyped dictionary.
-## 2025-05-18 - TypeGuardian: Add explicit type hints and DTOs to tasks update_logic
-**Learning:** Adding TypedDict DTOs (`NotRequired`) provides much better type safety than generic dictionaries for Supabase updates while allowing incremental fields updating in task update logic.
-**Action:** When updating database tables that expect partial data dictionary, define `TypedDict` DTO classes with `NotRequired` instead of using `dict[str, Any]` parameters and return types.
-## 2026-09-17 - Stringified Forward References with UP045
+# TypeGuardian Guidelines (Consolidated)
 
-**Learning:** Ruff's `UP045` rule enforces `X | None` over `Optional[X]`, even when the type annotation is inside a stringified forward reference (e.g., `"Client | None"` instead of `"Optional[Client]"`).
-**Action:** Use `X | None` explicitly in all type hints, even within string quotes when avoiding runtime evaluation.
+## 1. Prefer TypedDict DTOs Over dict[str, Any]
+**Learning:** Replacing untyped `dict` with `dict[str, Any]` cheats static type checking, while converting legacy dict returns to `@dataclass` or `BaseModel` can break downstream callers using `result["key"]` subscripting.
+**Action:** Define structured `TypedDict` DTOs (using `NotRequired` for optional/partial fields) to enforce strict static contracts while maintaining 100% runtime dictionary compatibility, and keep wrapper/delegation method signatures in sync with strategy DTOs.
 
-## 2025-03-05 - Safe Circular Dependencies in Type Hints
-**Learning:** Adding accurate type hints across modular service implementations (like `query_logic.py` accessing `TaskService` which relies on `query_logic.py`) can cause `ImportError` runtime crashes. Using stringified forward references (e.g. `"TaskService"`) combined with `from typing import TYPE_CHECKING` and `if TYPE_CHECKING:` provides robust static typing benefits without introducing circular import issues at runtime.
-**Action:** When hinting dependent classes injected into a submodule, always place the import inside a `TYPE_CHECKING` block and use string literals for the type hint instead of direct object references.
-## 2026-09-21 - Stringified Forward References
-**Learning:** In Python type hinting, wrapping available runtime imports in string quotes (e.g., `'KnowledgeRepository | None'`) is an anti-pattern when the class is already imported and available at runtime.
-**Action:** Only use stringified forward references when the type is not available in the runtime namespace (e.g., guarded behind `if TYPE_CHECKING:` to avoid circular dependencies).
-## 2026-09-24 - Handling Union DTO Returns in API Routes
-**Learning:** When refactoring a Python service method to return a Union of a DTO or a raw dict (e.g., `tuple[bool, ProjectCreationResultDTO | dict[str, Any]]`), directly unpacking attributes using unreadable inline ternary operators (`res.data[0] if hasattr(res, 'data') else res.get(...)`) in the API route is dangerous. It can inadvertently break boolean operator precedence in other endpoints if not careful.
-**Action:** When updating API routes to consume a new DTO from a refactored service, always explicitly import the DTO into the route module and use clean `isinstance(res, MyNewDTO):` conditional blocks to safely unpack the data, keeping the error-handling fallback logic explicitly separated.
-## 2026-09-26 - Enforcing TypedDict and ProjectDTO usage over Any in RBACService
-**Learning:** When acting as TypeGuardian, replacing untyped `dict` with `dict[str, Any]` violates the rule against using `Any` to cheat type coverage. Always explicitly define structured DTOs (e.g. `CrawlerConstraintsDTO`) or reuse existing domain DTOs (e.g. `ProjectDTO`). Be careful to ensure existing logic is compatible with the newly applied DTO type.
-**Action:** Take time to identify existing DTOs like `ProjectDTO` or create custom `TypedDict`s before simply throwing `dict[str, Any]` to solve type warnings.
+## 2. Strict Return Signatures Without dict[str, Any] Unions
+**Learning:** Unioning a `TypedDict` DTO with `dict[str, Any]` in a return signature (e.g., `tuple[bool, ResultDTO | dict[str, Any]]`) undermines MyPy checks for all callers.
+**Action:** Union the DTO only with explicit error types (e.g., `tuple[bool, ResultDTO | str]`) and use `cast(ResultDTO, result)` at the repository boundary.
+
+## 3. Dependency Injection and Circular Import Prevention
+**Learning:** Subclasses of `BaseRepository` should support explicit client injection for testing, and importing cross-module services at runtime for type hints can trigger circular `ImportError` crashes.
+**Action:** Annotate repository/service constructors with `supabase_client: Client | None = None`, and guard cross-module type imports behind `if TYPE_CHECKING:` using modern `X | None` union syntax (Ruff `UP045`).
+
+## 4. Preserve SSOT Audit Markers (# 合法) and Verify with Full Sync
+**Learning:** Removing `# 合法` comments on exempted literals causes `make phase-audit` (Step 8 SSOT check) to fail, and running `pytest` without syncing all dependency groups causes false import errors.
+**Action:** Never strip existing `# 合法` SSOT markers during type refactors, and always run `uv sync --all-groups` followed by `mypy src --ignore-missing-imports` to verify zero regressions across all source files.

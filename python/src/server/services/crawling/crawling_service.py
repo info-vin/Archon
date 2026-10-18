@@ -30,7 +30,11 @@ from .helpers.url_handler import URLHandler
 from .progress_mapper import ProgressMapper
 from .strategies.batch import BatchCrawlStrategy
 from .strategies.recursive import RecursiveCrawlStrategy
-from .strategies.single_page import SinglePageCrawlStrategy
+from .strategies.single_page import (
+    CrawlResultItemDTO,
+    SinglePageCrawlResultDTO,
+    SinglePageCrawlStrategy,
+)
 from .strategies.sitemap import SitemapCrawlStrategy
 
 logger = get_logger(__name__)
@@ -174,7 +178,7 @@ class CrawlingService(BaseRepository):
             )
 
     # Simple delegation methods for backward compatibility
-    async def crawl_single_page(self, url: str, retry_count: int = 3) -> dict[str, Any]:
+    async def crawl_single_page(self, url: str, retry_count: int = 3) -> SinglePageCrawlResultDTO:
         """Crawl a single web page."""
         return await self.single_page_strategy.crawl_single_page(
             url,
@@ -189,7 +193,7 @@ class CrawlingService(BaseRepository):
         progress_callback: Callable[[str, int, str], Awaitable[None]] | None = None,
         start_progress: int = 10,
         end_progress: int = 20,
-    ) -> list[dict[str, Any]]:
+    ) -> list[CrawlResultItemDTO]:
         """Crawl a .txt or markdown file."""
         return await self.single_page_strategy.crawl_markdown_file(
             url,
@@ -210,7 +214,7 @@ class CrawlingService(BaseRepository):
         progress_callback: Callable[[str, int, str], Awaitable[None]] | None = None,
         start_progress: int = 15,
         end_progress: int = 60,
-    ) -> list[dict[str, Any]]:
+    ) -> list[CrawlResultItemDTO]:
         """Batch crawl multiple URLs in parallel."""
         return await self.batch_strategy.crawl_batch_with_progress(
             urls,
@@ -231,7 +235,7 @@ class CrawlingService(BaseRepository):
         progress_callback: Callable[[str, int, str], Awaitable[None]] | None = None,
         start_progress: int = 10,
         end_progress: int = 60,
-    ) -> list[dict[str, Any]]:
+    ) -> list[CrawlResultItemDTO]:
         """Recursively crawl internal links from start URLs."""
         return await self.recursive_strategy.crawl_recursive_with_progress(
             start_urls,

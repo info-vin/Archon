@@ -98,7 +98,7 @@ class RAGService(BaseRepository):
         match_count: int = 5,
         filter_metadata: dict | None = None,
         use_hybrid_search: bool = False,
-        cached_api_key: str | None = None,
+        _cached_api_key: str | None = None,
         min_score: float | None = None,
     ) -> list[dict[str, Any]]:
         """

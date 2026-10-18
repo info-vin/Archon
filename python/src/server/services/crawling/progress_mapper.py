@@ -123,7 +123,7 @@ class ProgressMapper:
 
         return self.map_progress(stage, stage_progress)
 
-    def map_with_substage(self, stage: str, substage: str, stage_progress: float) -> int:
+    def map_with_substage(self, stage: str, _substage: str, stage_progress: float) -> int:
         """
         Map progress with substage information for finer control.
 

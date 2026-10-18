@@ -32,9 +32,8 @@ async def web_crawl_tool(ctx: RunContext[RagDependencies], url: str) -> str:
         if not result.get("success", False):
             return f"Crawl failed for {url}: {result.get('error', 'Unknown error')}"
 
-        content = result.get("markdown", "") or result.get("content", "")
-        metadata = result.get("metadata", {})
-        title = metadata.get("title", "Unknown Title")
+        content = result.get("markdown", "")
+        title = result.get("title", "Unknown Title")
 
         # Truncate for LLM context safety
         if len(content) > 10000:

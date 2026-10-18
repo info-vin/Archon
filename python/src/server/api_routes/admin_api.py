@@ -1,7 +1,7 @@
 from typing import Any
 
 import aiofiles
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 
 from src.server.models.auth_models import UserProfileDTO
@@ -85,6 +85,7 @@ async def trigger_scheduler_job(
         "daily_executive_summary": scheduler_service._run_daily_executive_summary,
         "tech_debt_audit": scheduler_service._run_tech_debt_audit,
         "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
+        "monthly_jules_compaction": scheduler_service._run_monthly_jules_compaction,
     }
 
     if job_id not in job_map:
@@ -116,19 +117,34 @@ class UpdateRoleRequest(BaseModel):
 
 
 class DiagnoseRequest(BaseModel):
-    file_path: str
+    file_path: str = Field(..., description="Path to the file to diagnose")
 
 
-@router.post("/diagnose", dependencies=[Depends(verify_admin_role)])
-async def diagnose_file(request: DiagnoseRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+class DiagnoseResponse(BaseModel):
+    file_path: str | None = Field(None, description="Path to the diagnosed file")
+    line_count: int | None = Field(None, description="Number of lines in the file")
+    has_direct_sql: bool | None = Field(None, description="Whether direct SQL calls were detected")
+    severity_level: int | None = Field(None, description="Severity grade (1=Green, 2=Yellow, 3=Red)")
+    advice: str | None = Field(None, description="Diagnostic advice or refactoring recommendation")
+    timestamp: str | None = Field(None, description="Diagnostic trace ID or timestamp")
+    error: str | None = Field(None, description="Error message if diagnosis failed")
+
+
+@router.post("/diagnose", dependencies=[Depends(verify_admin_role)], response_model=DiagnoseResponse)
+async def diagnose_file(
+    request: DiagnoseRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> DiagnoseResponse:
     """
     Triggers a technical debt diagnostic for a specific file (Admin only).
     """
-    return await agent_service.dev_ops.diagnose_file_health(request.file_path)
+    report = await agent_service.dev_ops.diagnose_file_health(request.file_path)
+    return DiagnoseResponse(**report)
 
 
-@router.get("/david/read", dependencies=[Depends(verify_admin_role)])
-async def david_read_file(path: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/david/read", dependencies=[Depends(verify_admin_role)], response_class=Response)
+async def david_read_file(
+    path: str, current_user: UserProfileDTO = Depends(get_current_user)
+) -> Response:
     """
     Allows David Agent to read codebase files for self-evolution (Admin only).
     """
@@ -139,7 +155,8 @@ async def david_read_file(path: str, current_user: UserProfileDTO = Depends(get_
 
     try:
         async with aiofiles.open(path, encoding="utf-8") as f:
-            return await f.read()
+            content = await f.read()
+            return Response(content=content, media_type="text/plain")
     except Exception as e:
         logger.error(f"David Read: Failed to read {path}: {e}")
         raise HTTPException(status_code=404, detail=f"File not found or unreadable: {str(e)}") from e

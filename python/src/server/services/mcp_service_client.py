@@ -163,7 +163,7 @@ class MCPServiceClient:
             }
 
     async def store_documents(
-        self, documents: list[dict[str, Any]], generate_embeddings: bool = True
+        self, documents: list[dict[str, Any]], _generate_embeddings: bool = True
     ) -> StoreDocumentResponseDTO:
         """
         Store documents by transforming them into the format expected by the API.
