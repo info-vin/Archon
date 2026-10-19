@@ -6,14 +6,15 @@ from src.server.services.report_service import report_service
 
 
 @pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.services.agent_service.agent_service", new_callable=AsyncMock)
 @patch("src.server.repositories.base_repository.get_supabase_client")
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
-async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabase, mock_agent_service, mock_task_service):
+async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabase, mock_agent_service, mock_task_service, mock_send_telegram):
     """
     Test that daily executive summary creates a task with gathered context
-    and dispatches a star-topology group chat task.
+    and dispatches a star-topology group chat task without premature Telegram dispatch.
     """
     mock_gather.return_value = "Mocked Context for Daily"
 
@@ -35,6 +36,9 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
     assert call_kwargs["project_id"] == "test-project-123"
     assert "[Daily] Executive Summary" in call_kwargs["title"]
     assert "Mocked Context for Daily" in call_kwargs["description"]
+
+    # Verify Telegram notification is NOT prematurely sent before Agent completes
+    mock_send_telegram.assert_not_awaited()
 
     mock_supabase.table.assert_any_call("archon_logs")
     insert_call = [call for call in mock_supabase.table().insert.mock_calls if "report-service" in str(call)]
@@ -226,5 +230,42 @@ async def test_gather_report_context_queries(mock_get_supabase):
     assert "Input Tokens: 100" in result
     assert "Output Tokens: 200" in result
     assert "Total Cost: $0.0050 USD" in result
-    assert "[ERROR] test-src: Test error message" in result
+    assert "[ERROR] test-src: `Test error message`" in result
     assert "Task A (Alice) -> status: doing" in result
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
+async def test_send_summary_telegram_direct(mock_send_telegram):
+    mock_send_telegram.return_value = True
+    success = await report_service.send_summary_telegram(
+        title_prefix="Daily",
+        content="Charlie's summarized insights",
+        task_id="test-task-123",
+    )
+    assert success is True
+    mock_send_telegram.assert_awaited_once()
+    msg = mock_send_telegram.call_args[0][0]
+    assert "星環 Daily 已產出" in msg
+    assert "Charlie's summarized insights" in msg
+    assert "taskId=test-task-123" in msg
+
+
+def test_get_logs_context_aggregation_and_sanitization():
+    mock_supabase = MagicMock()
+    mock_res = MagicMock()
+    mock_res.data = [
+        {"level": "ALERT", "source": "RateLimitHandler", "message": "Rate limit hit: 429\nStacktrace line 2", "created_at": "2026-10-18T10:00:00Z"},
+        {"level": "ALERT", "source": "RateLimitHandler", "message": "Rate limit hit: 429\nStacktrace line 2", "created_at": "2026-10-18T10:01:00Z"},
+        {"level": "ERROR", "source": "system-telegram", "message": "HTTP 400 Bad Request: can't parse", "created_at": "2026-10-18T10:02:00Z"},
+    ]
+    mock_supabase.table().select().gt().in_().execute.return_value = mock_res
+    report_service.supabase_client = mock_supabase
+
+    ctx = report_service._get_logs_context("2026-10-18T00:00:00Z")
+    assert "Total Alerts/Errors: 3" in ctx
+    assert "(x2)" in ctx
+    assert "`Rate limit hit: 429`" in ctx
+    assert "`HTTP 400 Bad Request: can't parse`" in ctx
+    assert "\nStacktrace" not in ctx  # Multi-line trace was stripped
+

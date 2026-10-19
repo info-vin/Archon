@@ -89,19 +89,37 @@ class ReportService(BaseRepository):
         )
 
     def _get_logs_context(self, cutoff_date: str) -> str:
+        from collections import Counter
+
         query = self.supabase_client.table("archon_logs").select("level, message, source, created_at").gt("created_at", cutoff_date).in_("level", ["ALERT", "ERROR"]) # 合法
         success, logs_res = self.execute_query(query, "Failed to get alerts")
         logs: list[LogRecordDTO] = cast(list[LogRecordDTO], logs_res.get("data", [])) if success and isinstance(logs_res, dict) and logs_res.get("data") else []
         logs_summary = f"Total Alerts/Errors: {len(logs)}\n"
         if logs:
-            logs_summary += "Recent Alerts/Errors:\n" + "\n".join(
-                f"- [{log.get('level', 'N/A')}] {log.get('source', 'N/A')}: {log.get('message', 'N/A')} ({log.get('created_at', 'N/A')})" for log in logs[:10]
-            )
-            if len(logs) > 10:
-                logs_summary += f"\n... and {len(logs) - 10} more alerts."
+            counts: Counter[tuple[str, str, str]] = Counter()
+            latest_time: dict[tuple[str, str, str], str] = {}
+            for log in logs:
+                level = str(log.get("level", "N/A"))
+                source = str(log.get("source", "N/A"))
+                msg = str(log.get("message", "N/A"))
+                first_line = msg.split("\n")[0].strip()
+                if len(first_line) > 120:
+                    first_line = first_line[:117] + "..."
+                sig = (level, source, first_line)
+                counts[sig] += 1
+                if sig not in latest_time:
+                    latest_time[sig] = str(log.get("created_at", "N/A"))
+
+            logs_summary += "Recent Alerts/Errors (Aggregated):\n"
+            for (level, source, first_line), count in counts.most_common(8):
+                clean_msg = first_line.replace("`", "'")
+                repeat_suffix = f" (x{count})" if count > 1 else ""
+                logs_summary += f"- [{level}] {source}: `{clean_msg}`{repeat_suffix} ({latest_time[(level, source, first_line)]})\n"
+            if len(counts) > 8:
+                logs_summary += f"... and {len(counts) - 8} more alert signatures.\n"
         else:
             logs_summary += "No critical alerts/errors."
-        return logs_summary
+        return logs_summary.strip()
 
     def _get_tasks_context(self, cutoff_date: str) -> str:
         query = self.supabase_client.table("archon_tasks").select("title, status, assignee").gt("updated_at", cutoff_date) # 合法
@@ -165,9 +183,7 @@ class ReportService(BaseRepository):
     ) -> None:
         import asyncio
 
-        from src.server.schemas.settings import NetworkConfig
         from src.server.services.projects.task_service import task_service
-        from src.server.services.system.telegram_service import telegram_service
 
         query = self.supabase_client.table("archon_projects").select("id").limit(1) # 合法
         success, p_res = self.execute_query(query, "Failed to get projects")
@@ -208,21 +224,54 @@ class ReportService(BaseRepository):
             )
             self.execute_query(insert_query, "Failed to record summary log")
 
-            frontend_url = NetworkConfig().frontend_url
-
-            telegram_msg = (
-                f"🚨 **[Archon 系統通知] 星環 {title_prefix} 已產出**\n"
-                f"📅 區間: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}\n\n"
-                f"{task_desc.strip()}\n\n"
-                f"👉 完整數據與儀表板請至 Admin UI 查看：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
-            )
-            is_sent = await telegram_service.send_message(telegram_msg)
-            if not is_sent:
-                logger.warning(f"⚠️ ReportService: Failed to send Telegram notification (Task {task_id} was still created). Network timeout or invalid token.")
+            if not dispatch_agent:
+                # Pre-generated summaries (Map-Reduce Weekly/Monthly): send notification immediately
+                await self.send_summary_telegram(
+                    title_prefix=title_prefix,
+                    content=task_desc,
+                    task_id=task_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            else:
+                logger.info(
+                    f"ReportService: {title_prefix} Executive Summary dispatched to Agent ({assignee_id}). "
+                    f"Completion notification will be delivered after Agent finishes work."
+                )
         else:
             error_msg = f"ReportService: Failed to create {title_prefix} summary task."
             logger.error(f"❌ {error_msg} Task service returned success=False.")
             raise Exception(error_msg)
+
+    async def send_summary_telegram(
+        self,
+        title_prefix: str,
+        content: str,
+        task_id: str,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> bool:
+        """Dispatches finished executive summary content to Telegram with Admin UI deep link."""
+        from src.server.schemas.settings import NetworkConfig
+        from src.server.services.system.telegram_service import telegram_service
+
+        frontend_url = NetworkConfig().frontend_url
+        date_str = ""
+        if start_date and end_date:
+            date_str = f"📅 區間: {start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}\n\n"
+
+        telegram_msg = (
+            f"🚨 **[Archon 系統通知] 星環 {title_prefix} 已產出**\n"
+            f"{date_str}"
+            f"{content.strip()}\n\n"
+            f"👉 完整數據與儀表板請至 Admin UI 查看：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
+        )
+        is_sent = await telegram_service.send_message(telegram_msg)
+        if not is_sent:
+            logger.warning(
+                f"⚠️ ReportService: Failed to send Telegram notification (Task {task_id} was still created). Network timeout or invalid token."
+            )
+        return is_sent
 
     async def generate_daily_executive_summary(self) -> None:
         """Triggers Star-topology Group Chat for Daily Executive Summary."""

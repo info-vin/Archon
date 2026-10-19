@@ -123,7 +123,18 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-> 本章節僅保留最近一週的開發日誌。較早期的日誌已按月份主題封存至第四章歷史檔案。
+#### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
+
+*   **日報流水線解耦與 Telegram 成果推播治理**:
+    *   **診斷**: 
+        1. **考卷題目誤當成果偷跑**: `report_service.py` 過去在 Daily Summary 任務建立時，未等待 Agent 完成（非同步競態），直接將包含 8 則歷史異常日誌（昨天測試產生的舊 429/400 紀錄）的原始 Prompt 題目（`task_desc`）直發 Telegram。
+        2. **作答產物石沉大海**: Charlie (Supervisor) 在 19 秒後即精準歸納產出結構化摘要，但系統在第 0 秒已提早交卷，Agent 實際作答從未推播給使用者。
+        3. **日誌循環污染死鎖**: 原始堆疊中的特殊字元造成 Telegram 400 錯誤，寫入 `archon_logs` 後被 Clockwork 巡檢員誤判為系統故障，開出 `Auto-Repair` 假警報工單。
+    *   **修復**: 
+        1. **推播點後移與解耦**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 新增 `send_summary_telegram()`，在 `_create_summary_task_and_log` 中嚴格限制 `dispatch_agent=True` 時禁止提早發送通知；改由 [agent_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/agent_service.py) 在 `WorkflowEngine` 執行完成且取得 `final_result` 後，才精準調用 `send_summary_telegram()` 推播 Charlie 的真實作答。
+        2. **日誌上下文聚類與防爆**: 於 `_get_logs_context()` 導入特徵聚類（`Counter`），將重複性錯誤收斂為單一條目並標註頻率（如 `Rate limit hit: 429 (x5)`），訊息一律行內代碼化（`` ` ``）並截除 Raw Stacktrace 多行內容，阻斷遞迴日誌污染。
+        3. **Telegram 400 降級降噪**: 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 調整 400 回退純文字重發時的日誌級別為 `WARNING`，防止觸發 `error_patrol` 誤開 Auto-Repair 工單。
+    *   **門禁公證**: 更新 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 與 [test_agent_service_routing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_agent_service_routing.py)；`make lint` 通過，`make test-be` **783 passed** (0 failures)，`make phase-audit` 全綠通過。
 
 #### 2026-10-18: 系統摘要報告 Telegram 全文推播解除截斷與實體重發 (Phase 5.11.26)
 
