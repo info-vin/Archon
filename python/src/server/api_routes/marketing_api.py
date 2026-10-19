@@ -25,8 +25,10 @@ from src.server.schemas.marketing import (
     PitchRequest,
     PitchResponse,
     PromoteLeadRequest,
+    PromoteLeadResponse,
     RejectSuggestionRequest,
     ResetLeadsResponse,
+    VendorResponse,
 )
 from src.server.services.marketing_service import MarketingService
 from src.server.services.shared_constants import RoleEnum
@@ -99,13 +101,15 @@ async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: UserPr
     return LeadActionResponse(lead=res["lead"])
 
 
-@router.post("/leads/{lead_id}/promote")
-async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/leads/{lead_id}/promote", response_model=PromoteLeadResponse)
+async def promote_lead(
+    lead_id: str, req: PromoteLeadRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> PromoteLeadResponse:
     service = MarketingService()
     success, res = await service.promote_to_vendor(lead_id, **req.model_dump(), owner_id=str(current_user.id))
     if not success:
         _err(str(res), 400)
-    return res
+    return PromoteLeadResponse(vendor=VendorResponse.model_validate(res["vendor"]))
 
 
 @router.post("/generate-pitch", response_model=PitchResponse)
