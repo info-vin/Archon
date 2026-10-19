@@ -1,5 +1,5 @@
 import asyncio
-from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict, cast
 
 if TYPE_CHECKING:
     from supabase import Client
@@ -50,6 +50,8 @@ class PitchResultDict(TypedDict):
     job_title: NotRequired[str]
     status: NotRequired[str]
     error: NotRequired[str]
+    message: NotRequired[str]
+    error_code: NotRequired[int]
 
 
 class VisualAssetDict(TypedDict):
@@ -107,7 +109,9 @@ class KnowledgeSeedResultDict(TypedDict):
 
 
 class ErrorDict(TypedDict):
-    error: str
+    error: NotRequired[str]
+    message: NotRequired[str]
+    error_code: NotRequired[int]
 
 
 class MarketingService(BaseRepository):
@@ -132,7 +136,7 @@ class MarketingService(BaseRepository):
     async def list_leads(self, user_id: str | None = None, role: str | None = None) -> list[LeadDataDict | dict[str, Any]]:
         from .marketing.lead_handler import LeadHandler
 
-        return await LeadHandler(self.supabase_client).list_leads(user_id, role)
+        return cast(list[LeadDataDict | dict[str, Any]], await LeadHandler(self.supabase_client).list_leads(user_id, role))
 
     async def create_lead(
         self, lead_data: LeadDataDict | dict[str, Any], creator_id: str | None = None
@@ -231,7 +235,7 @@ class MarketingService(BaseRepository):
     async def get_combined_sources(self, user_id: str) -> list[CombinedSourceDict | dict[str, Any]]:
         from .marketing.analytics_handler import AnalyticsHandler
 
-        return await AnalyticsHandler(self.supabase_client).get_combined_sources(user_id)
+        return cast(list[CombinedSourceDict | dict[str, Any]], await AnalyticsHandler(self.supabase_client).get_combined_sources(user_id))
 
     async def run_sentinel(self) -> SentinelResultDict | dict[str, Any]:
         from .marketing.analytics_handler import AnalyticsHandler
