@@ -53,15 +53,26 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
             supabase = get_supabase_client()
             repo = BaseRepository(supabase)
-            query = supabase.table("archon_workflow_flows").select("*").eq("workflow_type", task_type)
+            query = supabase.table("archon_workflow_flows").select("*")
             success, res = repo.execute_query(query, "Failed to load workflow config")
 
             if success and res.get("data"):
-                flow_data = res["data"][0]
-                prompt_key = flow_data["supervisor_prompt_name"]
-                node_routing = flow_data["node_routing"]
-        except Exception:
-            pass
+                # Normalized matching ignoring case, spaces, and underscores
+                target_key = (task_type or "").lower().replace(" ", "").replace("_", "")
+                matched_flow = None
+                for flow in res["data"]:
+                    wf_type = str(flow.get("workflow_type", "")).lower().replace(" ", "").replace("_", "")
+                    if wf_type == target_key:
+                        matched_flow = flow
+                        break
+
+                if matched_flow:
+                    prompt_key = matched_flow.get("supervisor_prompt_name", prompt_key)
+                    db_routing = matched_flow.get("node_routing")
+                    if isinstance(db_routing, dict):
+                        node_routing.update(db_routing)
+        except Exception as e:
+            logger.warning(f"Failed to load dynamic workflow config from DB: {e}")
 
         default_supervisor_prompt = "You are Charlie, the Supervisor. Please answer." # Kept minimal as SSOT is the source
 
@@ -208,8 +219,8 @@ class SummaryNode(BaseNode[SharedState, None, str]):
             ctx,
             "Summary",
             PromptNameEnum.WORKFLOW_WORKER_SUMMARY,
-            "You summarize text into bullet points.",
-            "Summarize the conversation:",
+            "You summarize the team discussion into a professional Executive Summary with structured Markdown tables and metric definitions.",
+            "Summarize the conversation and metrics into the requested structured report format:",
         )
 
 

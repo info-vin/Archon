@@ -218,6 +218,18 @@ class AgentService:
                     }
                     await task_service.save_agent_output(task_id, save_payload, agent_id)
                     await self._award_agent_xp(agent_id, task_data, str(final_result))
+
+                    if task_type == TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value:
+                        from .report_service import report_service
+
+                        logger.info(
+                            f"ReportService: Dispatching finished Daily Executive Summary to Telegram for task {task_id}"
+                        )
+                        await report_service.send_summary_telegram(
+                            title_prefix="Daily",
+                            content=str(final_result),
+                            task_id=task_id,
+                        )
                 else:
                     logger.error(f"WorkflowEngine failed: {data.get('error')}")
                     await task_service.update_task(task_id, {"status": "failed"})

@@ -64,6 +64,8 @@ class PruningConfig(BaseModel):
     l3_crawled_days: int = Field(default=30, alias="PRUNING_L3_CRAWLED_DAYS")
     l3_tokens_days: int = Field(default=30, alias="PRUNING_L3_TOKENS_DAYS")
 
+    storage_podcast_ttl_days: int = Field(default=14, alias="STORAGE_PODCAST_TTL_DAYS")
+
 
 class NetworkConfig(BaseModel):
     agents_service_url: str = Field(default="http://archon-agents:8052", alias="AGENTS_SERVICE_URL")
@@ -136,6 +138,7 @@ class SchedulerConfig(BaseModel):
 
     scheduler_misfire_grace_time: int = Field(default=600, alias="SCHEDULER_MISFIRE_GRACE_TIME")
     system_timezone: str = Field(default="Asia/Taipei", alias="SYSTEM_TIMEZONE")
+    management_steering_focus: str | None = Field(default=None, alias="MANAGEMENT_STEERING_FOCUS")
     market_report_fallback_hours: int = Field(default=24, alias="MARKET_REPORT_FALLBACK_HOURS")
 
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")

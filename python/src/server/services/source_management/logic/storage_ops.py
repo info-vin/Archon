@@ -4,6 +4,7 @@ Physically isolated to handle core persistence logic.
 """
 
 import logging
+from typing import NotRequired, TypedDict, cast
 
 from supabase import Client
 
@@ -12,6 +13,28 @@ from src.server.repositories.base_repository import BaseRepository
 from src.server.services.source_management.logic.ai_metadata import generate_source_title_and_metadata
 
 logger = logging.getLogger(__name__)
+
+
+class SourceMetadataDict(TypedDict):
+    knowledge_type: str
+    tags: list[str]
+    source_type: str
+    auto_generated: NotRequired[bool]
+    update_frequency: NotRequired[int]
+    original_url: NotRequired[str]
+    file_name: NotRequired[str]
+    status: NotRequired[str]
+
+
+class SourceRecordDict(TypedDict):
+    source_id: str
+    title: NotRequired[str]
+    summary: str
+    total_word_count: int
+    metadata: SourceMetadataDict
+    updated_at: NotRequired[str]
+    source_url: NotRequired[str]
+    source_display_name: NotRequired[str]
 
 
 async def update_source_info(
@@ -26,7 +49,7 @@ async def update_source_info(
     original_url: str | None = None,
     source_url: str | None = None,
     source_display_name: str | None = None,
-):
+) -> None:
     """Update or insert source information in the archon_sources table."""
     search_logger.info(f"Updating source {source_id} with knowledge_type={knowledge_type}")
     try:
@@ -45,7 +68,7 @@ async def update_source_info(
             else:
                 source_type = "url"
 
-            metadata = {
+            metadata: SourceMetadataDict = {
                 "knowledge_type": knowledge_type,
                 "tags": tags or [],
                 "source_type": source_type,
@@ -55,7 +78,7 @@ async def update_source_info(
             if original_url:
                 metadata["original_url"] = original_url
 
-            update_data = {
+            update_data: SourceRecordDict = {
                 "source_id": source_id,
                 "summary": summary,
                 "total_word_count": word_count,
@@ -85,7 +108,7 @@ async def update_source_info(
                     "auto_generated": False,
                 }
             else:
-                title, metadata = await generate_source_title_and_metadata(
+                gen_title, gen_meta = await generate_source_title_and_metadata(
                     source_id=source_id,
                     content=content,
                     knowledge_type=knowledge_type,
@@ -93,6 +116,8 @@ async def update_source_info(
                     original_url=original_url,
                     source_display_name=source_display_name,
                 )
+                title = gen_title
+                metadata = cast(SourceMetadataDict, gen_meta)
                 if source_url and source_url.startswith("file://"):
                     metadata["source_type"] = "file"
                 elif original_url and original_url.startswith("file://"):
@@ -105,7 +130,7 @@ async def update_source_info(
                 metadata["original_url"] = original_url
 
             search_logger.info(f"Creating new source {source_id} with knowledge_type={knowledge_type}")
-            upsert_data = {
+            upsert_data: SourceRecordDict = {
                 "source_id": source_id,
                 "title": title,
                 "summary": summary,
@@ -135,14 +160,14 @@ def create_source_from_upload_logic(
 ) -> None:
     """Logic for creating source record from file upload."""
     search_logger.info(f"Creating source entry for uploaded file: {source_id}")
-    metadata = {
+    metadata: SourceMetadataDict = {
         "knowledge_type": knowledge_type,
         "tags": tags or [],
         "source_type": "file",
         "file_name": filename,
         "status": "completed",
     }
-    source_data = {
+    source_data: SourceRecordDict = {
         "source_id": source_id,
         "title": filename,
         "source_display_name": filename,

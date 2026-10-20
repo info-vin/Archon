@@ -31,3 +31,44 @@ async def test_supervisor_routes_to_workflow_engine(mock_workflow_engine, mock_t
 
     # Assert
     mock_workflow_engine.assert_awaited_once_with(task_id, mock_task_data, agent_id)
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.report_service.report_service.send_summary_telegram", new_callable=AsyncMock)
+@patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
+@patch("src.server.services.agent_service.AgentService._award_agent_xp", new_callable=AsyncMock)
+@patch("httpx.AsyncClient.post", new_callable=AsyncMock)
+async def test_workflow_engine_dispatches_telegram_on_daily_summary_completion(
+    mock_post, mock_award_xp, mock_task_service, mock_send_telegram
+):
+    from unittest.mock import MagicMock
+
+    from src.server.services.shared_constants import TaskFeatureEnum
+
+    task_id = "test-task-daily"
+    agent_id = AgentUUIDs.SUPERVISOR
+    mock_task_data = {
+        "id": task_id,
+        "title": "[Daily] Executive Summary",
+        "description": "Daily details",
+        "feature": TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY,
+    }
+
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {
+        "success": True,
+        "result": "Charlie's complete summary",
+        "metadata": {"messages": [], "step_count": 2},
+    }
+    resp.raise_for_status = MagicMock()
+    mock_post.return_value = resp
+
+    agent_service = AgentService()
+    await agent_service._run_workflow_engine_task(task_id, mock_task_data, agent_id)
+
+    mock_send_telegram.assert_awaited_once_with(
+        title_prefix="Daily",
+        content="Charlie's complete summary",
+        task_id=task_id,
+    )

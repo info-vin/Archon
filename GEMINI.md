@@ -123,7 +123,52 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-> 本章節僅保留最近一週的開發日誌。較早期的日誌已按月份主題封存至第四章歷史檔案。
+#### 2026-10-20: Phase 5.12.1 規劃公證、Storage 音檔清理與每日群聊路由契約對齊 (Phase 5.12.1 - Stage 1 & Stage 2)
+
+*   **星環討論體系全鏈路深度優化與商業閉環硬化 (Phase 5.12.1 規劃公證)**:
+    *   **診斷與四大斷層鑑識**: 
+        1. **Storage 音檔無 TTL 清理**: 簽名 URL 雖設 7 天過期，但未壓縮的 `.wav` 檔案在 Supabase Storage 中從未刪除，自 7 月至今殘留 14 份歷史音檔累積佔用超過 105MB。
+        2. **Daily Summary 路由字串大小寫不匹配與單節點退化**: `agent_service.py` 傳入 `"daily_executive_summary"`，而資料庫存為 `"Daily Executive Summary"`，導致 Flow 查詢落空走入 `General` 流程，Charlie 僅單點調用 `SummaryNode` 並結束（`step_count` 固定為 2），且 `SummaryNode` 的條列重點 Prompt 覆蓋了上游強制 Markdown 表格與計算指標公式的要求。
+        3. **合格潛客最後一哩未閉環**: Telegram 僅提示業務「點選職缺連結破冰」，缺乏系統自動生成的客製化「1-on-1 痛點破冰信 (Cold Outreach Draft)」。
+        4. **戰略討論缺乏管理者焦點輸入**: 週報與月報為純後端靜默 Cron 觸發，無人類在週會前注入「本週重點驗證假設」的管道。
+    *   **四階段推進架構公證**: 建立正式規格文件 [Phase_5.12.1_Star_Topology_Optimization_and_Pipeline_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.12.1_Star_Topology_Optimization_and_Pipeline_Hardening.md)。
+*   **階段 1 實裝：Storage 音檔過期清理機制 (TTL Cleanup)**:
+    *   **設定 SSOT 擴充**: 於 [settings.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/settings.py) 之 `PruningConfig` 新增 `storage_podcast_ttl_days = 14`。
+    *   **音檔修剪核心**: 於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py) 實作 `prune_expired_podcast_audio(ttl_days=14)`，嚴格限定前綴 `podcast_` 與副檔名 `.wav`，比對 `created_at` 超過 14 天者執行 `storage.from_("archon_documents").remove()`，並寫入 `archon_logs` 稽核日誌。
+    *   **排程整合**: 於 [patrol_infra.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/patrol_infra.py) 之 `run_tiered_pruning()` 整合呼叫，使音檔修剪納入例行基礎設施修剪戰線。
+    *   **物理公證與 105MB 配額釋放**: 探針實體穿透 Supabase Storage，成功刪除 13 筆 7~10 月累積的過期 `.wav` 檔案，釋放超過 105MB 雲端儲存空間。
+*   **階段 2 實裝：每日星環群聊路由正規化對齊與 Markdown 表格契約落地**:
+    *   **大小寫正規化匹配**: 於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 移除硬編碼 `.eq("workflow_type", task_type)`，改採全量流轉正規化比對（`lower().replace(" ", "").replace("_", "")`），確保 `"daily_executive_summary"` 100% 精準命中 DB Flow `"Daily Executive Summary"`。
+    *   **全節點路由保全**: 確保 `node_routing` 具備全部 5 大節點（含 `devbot` 與 `david`），並將雲端 `archon_workflow_flows` 的 `Daily Executive Summary` 路由實體補齊 `devbot` 與 `bob`。
+    *   **表格契約與 Prompt 對齊**: 更新 [pm_prompts.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/prompts/pm_prompts.py) 與雲端 `archon_prompts`，廢除 `WORKFLOW_WORKER_SUMMARY` 強制條列點之舊限制，改為強制產出結構化 Markdown 數據表格與定義公式；同步新增 `WORKFLOW_SUPERVISOR_DAILY`。
+    *   **門禁驗證**: 新增 [test_workflow_routing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/agents/workflow/test_workflow_routing.py)；`make lint-be` 393 source files 100% 綠燈，`make test-be` **788 passed** (0 failures)，`make phase-audit` 全綠通過。
+*   **階段 3 實裝：合格潛客客製化 1-on-1 痛點破冰信自動草擬與工單閉環 (Phase 5.12.1 Stage 3)**:
+    *   **破冰信模板核心**: 於 [leads_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/leads_patrol.py) 實作 `generate_lead_outreach_draft()`，針對合格潛客之招募職缺與系統整合痛點生成高精準 1-on-1 破冰信。
+    *   **Telegram 戰報增強與 429 防護**: 於市場戰報注入 `✉️ 【客製化痛點破冰信草稿 (一鍵複製)】` 區塊，嚴格限制單次僅針對 Top 1~2 筆最高分合格名單生成，防範 TPM 配額超出。
+    *   **跟進工單自動閉環**: 成功推播後自動於 `archon_tasks` 建立 `[Sales Follow-up]` 工單，要求業務團隊 48 小時內依草稿聯繫並跟進，終結「僅通報未跟進」的商業漏斗斷層。
+    *   **單元測試**: 新增 [test_leads_outreach.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_leads_outreach.py) 3 項測試全數通過。
+*   **階段 4 實裝：每週/每月高階戰略討論之「管理者目標對齊」輸入介面 (Phase 5.12.1 Stage 4)**:
+    *   **設定 SSOT 擴充**: 於 [settings.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/settings.py) 之 `SchedulerConfig` 新增 `management_steering_focus: str | None = Field(default=None, alias="MANAGEMENT_STEERING_FOCUS")`。
+    *   **戰略焦點動態注入**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 之 `_execute_map_reduce_summary()` 整合載入此配置，若設定則注入 `### 🎯 管理者戰略關注焦點 (Management Steering Focus)` 至 Map-Reduce 上下文，未設定則安全 Fallback。
+    *   **單元測試與門禁公證**: 於 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 新增有/無 Steering Focus 注入的斷言驗證；`make lint-be` 393 source files 100% 綠燈，`make test-be` **793 passed** (0 failures)，`make phase-audit` 全綠通過。
+*   **深度悲觀審查與斷層清剿 (Anti-Optimistic Hardening & Fault-Line Elimination)**:
+    *   **DB 物理斷層修補**: 探針實體揭露 `MANAGEMENT_STEERING_FOCUS` 與 `STORAGE_PODCAST_TTL_DAYS` 於 `archon_settings` 表無實體資料行，導致 Admin UI `/api/system/settings` 查無此項且更新觸發 500。立即建立 `migration/20261020_add_steering_focus_and_storage_ttl.sql` 並透過實體探針成功注入 Supabase。
+    *   **靜默失敗與指派角色修正**: 修正 `leads_patrol.py` 過去對 `task_service.create_task` 回傳 tuple 忽略檢查之樂觀假設，精確解構 `(f_success, f_res)` 並阻斷假成功日誌；將指派對象自 Clockwork 守護程序校正為 Sales 核心 `AgentUUIDs.MARKET_BOT`。
+    *   **工作流路由與型別安全硬化**: 於 [state.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/state.py) 擴充 `SupervisorDecision.next_node` 納入 `"bob"` 容錯，防止 LLM 作答與 DB 路由不一致引發 Pydantic ValidationError；於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 導入 `(task_type or "")` 空值保護；[report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 補齊 `steering_focus: str | None` 顯式型別標註。
+    *   **門禁再公證**: `make lint-be` 393 source files 100% 通過，`make test-be` **794 passed** (0 failures)，`make phase-audit` 全綠。
+
+#### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
+
+*   **日報流水線解耦與 Telegram 成果推播治理**:
+    *   **診斷**: 
+        1. **考卷題目誤當成果偷跑**: `report_service.py` 過去在 Daily Summary 任務建立時，未等待 Agent 完成（非同步競態），直接將包含 8 則歷史異常日誌（昨天測試產生的舊 429/400 紀錄）的原始 Prompt 題目（`task_desc`）直發 Telegram。
+        2. **作答產物石沉大海**: Charlie (Supervisor) 在 19 秒後即精準歸納產出結構化摘要，但系統在第 0 秒已提早交卷，Agent 實際作答從未推播給使用者。
+        3. **日誌循環污染死鎖**: 原始堆疊中的特殊字元造成 Telegram 400 錯誤，寫入 `archon_logs` 後被 Clockwork 巡檢員誤判為系統故障，開出 `Auto-Repair` 假警報工單。
+    *   **修復**: 
+        1. **推播點後移與解耦**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 新增 `send_summary_telegram()`，在 `_create_summary_task_and_log` 中嚴格限制 `dispatch_agent=True` 時禁止提早發送通知；改由 [agent_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/agent_service.py) 在 `WorkflowEngine` 執行完成且取得 `final_result` 後，才精準調用 `send_summary_telegram()` 推播 Charlie 的真實作答。
+        2. **日誌上下文聚類與防爆**: 於 `_get_logs_context()` 導入特徵聚類（`Counter`），將重複性錯誤收斂為單一條目並標註頻率（如 `Rate limit hit: 429 (x5)`），訊息一律行內代碼化（`` ` ``）並截除 Raw Stacktrace 多行內容，阻斷遞迴日誌污染。
+        3. **Telegram 400 降級降噪**: 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 調整 400 回退純文字重發時的日誌級別為 `WARNING`，防止觸發 `error_patrol` 誤開 Auto-Repair 工單。
+    *   **門禁公證**: 更新 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 與 [test_agent_service_routing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_agent_service_routing.py)；`make lint` 通過，`make test-be` **783 passed** (0 failures)，`make phase-audit` 全綠通過。
 
 #### 2026-10-18: 系統摘要報告 Telegram 全文推播解除截斷與實體重發 (Phase 5.11.26)
 

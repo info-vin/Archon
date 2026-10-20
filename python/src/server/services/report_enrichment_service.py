@@ -95,5 +95,75 @@ class ReportEnrichmentService:
             logger.error(f"❌ ReportEnrichmentService: Failed to generate TTS Podcast: {e}")
         return task_desc
 
+    @staticmethod
+    def prune_expired_podcast_audio(ttl_days: int = 14) -> int:
+        """Deletes podcast audio files older than ttl_days from archon_documents storage bucket."""
+        logger.info(f"🎙️ ReportEnrichmentService: Pruning expired podcast audio (older than {ttl_days} days)...")
+        pruned_count = 0
+        try:
+            from datetime import UTC, datetime, timedelta
+
+            from src.server.utils import get_supabase_client
+
+            supabase = get_supabase_client()
+
+            # List files in archon_documents
+            files = supabase.storage.from_("archon_documents").list()
+            if not files or not isinstance(files, list):
+                logger.info("🎙️ ReportEnrichmentService: No files found in archon_documents storage.")
+                return 0
+
+            cutoff_date = datetime.now(UTC) - timedelta(days=ttl_days)
+            files_to_remove: list[str] = []
+
+            for f in files:
+                if not isinstance(f, dict):
+                    continue
+                name = f.get("name", "")
+                if not name.startswith("podcast_") or not name.endswith(".wav"):
+                    continue
+                created_at_str = f.get("created_at")
+                if not created_at_str:
+                    continue
+                try:
+                    file_time = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                    if file_time < cutoff_date:
+                        files_to_remove.append(name)
+                except Exception as parse_err:
+                    logger.warning(
+                        f"ReportEnrichmentService: Failed to parse timestamp for {name}: {parse_err}"
+                    )
+
+            if files_to_remove:
+                supabase.storage.from_("archon_documents").remove(files_to_remove)
+                pruned_count = len(files_to_remove)
+                logger.info(
+                    f"✅ ReportEnrichmentService: Successfully pruned {pruned_count} expired podcast files."
+                )
+
+                # Record audit log
+                from src.server.repositories.base_repository import BaseRepository
+
+                repo = BaseRepository(supabase)
+                repo.execute_query(
+                    supabase.table("archon_logs").insert(  # 合法
+                        {
+                            "source": "storage-pruning",
+                            "level": "INFO",
+                            "message": f"Pruned {pruned_count} expired podcast audio files (TTL: {ttl_days}d).",
+                            "details": {"pruned_count": pruned_count, "files": files_to_remove},
+                        }
+                    ),
+                    "Failed to record storage pruning log",
+                    require_data=False,
+                )
+            else:
+                logger.info("🎙️ ReportEnrichmentService: No expired podcast files met the TTL threshold.")
+
+        except Exception as e:
+            logger.error(f"❌ ReportEnrichmentService: Failed to prune expired podcast audio: {e}")
+
+        return pruned_count
+
 
 report_enrichment_service = ReportEnrichmentService()

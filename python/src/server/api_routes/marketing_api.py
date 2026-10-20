@@ -5,7 +5,7 @@ Standardized RBAC Sealing with Full Test Compatibility.
 """
 
 import logging
-from typing import Any
+from typing import Any, NoReturn, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -25,8 +25,10 @@ from src.server.schemas.marketing import (
     PitchRequest,
     PitchResponse,
     PromoteLeadRequest,
+    PromoteLeadResponse,
     RejectSuggestionRequest,
     ResetLeadsResponse,
+    VendorResponse,
 )
 from src.server.services.marketing_service import MarketingService
 from src.server.services.shared_constants import RoleEnum
@@ -49,7 +51,7 @@ def get_marketing_service() -> Any:
     return MarketingService()
 
 
-def _err(msg: str, code: int = 403):
+def _err(msg: str, code: int = 403) -> NoReturn:
     raise HTTPException(status_code=code, detail=msg)
 
 
@@ -76,9 +78,10 @@ async def list_leads(current_user: UserProfileDTO = Depends(get_current_user)) -
 async def create_lead(req: LeadCreateRequest, current_user: UserProfileDTO = Depends(get_current_user)) -> LeadActionResponse:
     service = MarketingService()
     success, res = await service.create_lead(req.model_dump(), creator_id=str(current_user.id))
-    if not success:
+    if not success or "lead" not in res:
         _err(str(res), 400)
-    return LeadActionResponse(lead=res["lead"])
+    lead_dict = cast(dict[str, Any], res)["lead"]
+    return LeadActionResponse(lead=LeadResponse.model_validate(lead_dict))
 
 
 @router.post("/leads/reset", response_model=ResetLeadsResponse)
@@ -94,18 +97,22 @@ async def reset_leads(
 async def update_lead(lead_id: str, req: LeadUpdateRequest, current_user: UserProfileDTO = Depends(get_current_user)) -> LeadActionResponse:
     service = MarketingService()
     success, res = await service.update_lead(lead_id, req.model_dump(exclude_unset=True))
-    if not success:
+    if not success or "lead" not in res:
         _err(str(res), 400)
-    return LeadActionResponse(lead=res["lead"])
+    lead_dict = cast(dict[str, Any], res)["lead"]
+    return LeadActionResponse(lead=LeadResponse.model_validate(lead_dict))
 
 
-@router.post("/leads/{lead_id}/promote")
-async def promote_lead(lead_id: str, req: PromoteLeadRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/leads/{lead_id}/promote", response_model=PromoteLeadResponse)
+async def promote_lead(
+    lead_id: str, req: PromoteLeadRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> PromoteLeadResponse:
     service = MarketingService()
     success, res = await service.promote_to_vendor(lead_id, **req.model_dump(), owner_id=str(current_user.id))
-    if not success:
+    if not success or "vendor" not in res:
         _err(str(res), 400)
-    return res
+    vendor_dict = cast(dict[str, Any], res)["vendor"]
+    return PromoteLeadResponse(vendor=VendorResponse.model_validate(vendor_dict))
 
 
 @router.post("/generate-pitch", response_model=PitchResponse)
@@ -117,7 +124,8 @@ async def generate_pitch(req: PitchRequest, current_user: UserProfileDTO = Depen
     service = MarketingService()
     res = await service.generate_pitch(req.company, req.job_title)
     if isinstance(res, dict) and "error_code" in res:
-        raise HTTPException(status_code=res["error_code"], detail=res["message"])
+        res_dict = cast(dict[str, Any], res)
+        raise HTTPException(status_code=int(res_dict.get("error_code", 500)), detail=str(res_dict.get("message", "Pitch generation failed")))
     return res
 
 
@@ -126,7 +134,9 @@ async def draft_blog_post(req: DraftBlogRequest, current_user: dict = Depends(re
     service = MarketingService()
     success, res = await service.draft_blog(req.topic, req.industry, req.keywords)
     if not success:
-        _err(res.get("message", "AI Draft failed"), res.get("error_code", 500))
+        res_dict = cast(dict[str, Any], res)
+        err_code = res_dict.get("error_code", 500)
+        _err(str(res_dict.get("message", "AI Draft failed")), int(err_code) if isinstance(err_code, (int, str)) else 500)
     return res
 
 
@@ -137,7 +147,9 @@ async def draft_from_leads(
     service = MarketingService()
     success, res = await service.draft_from_leads(req.lead_ids)
     if not success:
-        _err(res.get("message", "AI Draft from leads failed"), res.get("error_code", 500))
+        res_dict = cast(dict[str, Any], res)
+        err_code = res_dict.get("error_code", 500)
+        _err(str(res_dict.get("message", "AI Draft from leads failed")), int(err_code) if isinstance(err_code, (int, str)) else 500)
     return DraftFromLeadsResponse(**res)
 
 
@@ -146,7 +158,7 @@ async def submit_blog(post_id: str, current_user: UserProfileDTO = Depends(get_c
     service = MarketingService()
     success, res = await service.submit_blog(post_id)
     if not success:
-        _err(res.get("error", "Submission failed"), 400)
+        _err(str(res.get("error", "Submission failed")), 400)
     return res
 
 

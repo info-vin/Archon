@@ -11,13 +11,18 @@ from src.server.schemas.projects import (
     AgentCallbackResponse,
     AgentOutputUpdateRequest,
     AgentStatusUpdateRequest,
+    ArchiveTaskResponse,
     CreateTaskRequest,
     CreateTaskResponse,
     GenerateTaskFromAlertRequest,
     GenerateTaskFromAlertResponse,
     RefineTaskRequest,
     RefineTaskResponse,
+    TaskDetails,
+    TaskListPagination,
+    TaskListResponse,
     UpdateTaskRequest,
+    UpdateTaskResponse,
 )
 
 from ...auth.dependencies import get_current_user, requires_permission
@@ -51,7 +56,7 @@ async def get_all_task_counts(
     return res
 
 
-@router.get("/projects/{project_id}/tasks")
+@router.get("/projects/{project_id}/tasks", response_model=list[TaskDetails])
 async def list_project_tasks(
     project_id: str,
     req: Request,
@@ -59,7 +64,7 @@ async def list_project_tasks(
     include_archived: bool = False,
     exclude_large_fields: bool = False,
     current_user: UserProfileDTO = Depends(get_current_user),
-):
+) -> Response | list[TaskDetails]:
     s, res = await TaskService().list_tasks(
         project_id=project_id,
         include_closed=True,
@@ -72,9 +77,8 @@ async def list_project_tasks(
     etag = generate_etag({"tasks": tasks, "project_id": project_id})
     response.headers["ETag"] = etag
     if check_etag(req.headers.get("If-None-Match"), etag):
-        response.status_code = 304
-        return None
-    return tasks
+        return Response(status_code=304, headers=response.headers)
+    return [TaskDetails.model_validate(t) if isinstance(t, dict) else t for t in tasks]
 
 
 @router.post("/tasks/refine-description", response_model=RefineTaskResponse)
@@ -141,7 +145,7 @@ async def create_task(
     return CreateTaskResponse(message="Task created successfully", task=res.get("task"))
 
 
-@router.get("/tasks")
+@router.get("/tasks", response_model=TaskListResponse)
 async def list_tasks(
     status: str | None = None,
     project_id: str | None = None,
@@ -152,7 +156,7 @@ async def list_tasks(
     per_page: int = 50,
     exclude_large_fields: bool = False,
     current_user: UserProfileDTO = Depends(get_current_user),
-):
+) -> TaskListResponse:
     u_role = current_user.role.lower()
     u_id = current_user.id
 
@@ -171,28 +175,34 @@ async def list_tasks(
     )
 
     data = cast(dict[str, Any], handle_service_result(s, res))
-    tasks = data.get("tasks", [])
+    raw_tasks = data.get("tasks", [])
+    task_models = [TaskDetails.model_validate(t) if isinstance(t, dict) else t for t in raw_tasks]
 
-    return {
-        "tasks": tasks if per_page <= 0 else tasks[(page - 1) * per_page : page * per_page],
-        "pagination": {
-            "total": len(tasks),
-            "page": page,
-            "per_page": per_page,
-            "pages": 1 if per_page <= 0 else (len(tasks) + per_page - 1) // per_page,
-        },
-    }
+    return TaskListResponse(
+        tasks=task_models if per_page <= 0 else task_models[(page - 1) * per_page : page * per_page],
+        pagination=TaskListPagination(
+            total=len(task_models),
+            page=page,
+            per_page=per_page,
+            pages=1 if per_page <= 0 else (len(task_models) + per_page - 1) // per_page,
+        ),
+    )
 
 
-@router.get("/tasks/{task_id}")
-async def get_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/tasks/{task_id}", response_model=TaskDetails | None)
+async def get_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)) -> TaskDetails | None:
     s, res = await TaskService().get_task(task_id)
-    return cast(dict[str, Any], handle_service_result(s, res)).get("task")
+    raw_task = cast(dict[str, Any], handle_service_result(s, res)).get("task")
+    if raw_task is None:
+        return None
+    return TaskDetails.model_validate(raw_task) if isinstance(raw_task, dict) else raw_task
 
 
-@router.put("/tasks/{task_id}")
-@router.patch("/tasks/{task_id}")
-async def update_task(task_id: str, req: UpdateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.put("/tasks/{task_id}", response_model=UpdateTaskResponse)
+@router.patch("/tasks/{task_id}", response_model=UpdateTaskResponse)
+async def update_task(
+    task_id: str, req: UpdateTaskRequest, current_user: UserProfileDTO = Depends(get_current_user)
+) -> UpdateTaskResponse:
     u_role = current_user.role.lower()
     fields = {k: v for k, v in req.model_dump().items() if v is not None}
 
@@ -204,20 +214,22 @@ async def update_task(task_id: str, req: UpdateTaskRequest, current_user: UserPr
                 _err("Forbidden: Cannot reassign to this role", 403)
 
     s, res = await TaskService().update_task(task_id, fields)
-    return {
-        "message": "Task updated successfully",
-        "task": cast(dict[str, Any], handle_service_result(s, res)).get("task"),
-    }
+    raw_task = cast(dict[str, Any], handle_service_result(s, res)).get("task")
+    task_obj = TaskDetails.model_validate(raw_task) if isinstance(raw_task, dict) else raw_task
+    return UpdateTaskResponse(
+        message="Task updated successfully",
+        task=task_obj,
+    )
 
 
-@router.delete("/tasks/{task_id}")
-async def delete_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.delete("/tasks/{task_id}", response_model=ArchiveTaskResponse)
+async def delete_task(task_id: str, current_user: UserProfileDTO = Depends(get_current_user)) -> ArchiveTaskResponse:
     if current_user.role.lower() not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MANAGER]:
         _err("Forbidden: Only managers can archive tasks", 403)
     s, res = await TaskService().archive_task(task_id, archived_by=str(current_user.id))
     if not s:
         _err(res, 400)
-    return {"message": "Task archived successfully"}
+    return ArchiveTaskResponse(message="Task archived successfully")
 
 
 @router.post("/tasks/{task_id}/agent-status", response_model=AgentCallbackResponse, tags=["Agent Callback"])

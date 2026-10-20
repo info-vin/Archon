@@ -20,7 +20,7 @@ class SharedState(BaseModel):
 
 
 class SupervisorDecision(BaseModel):
-    next_node: Literal["marketbot", "librarian", "summary", "devbot", "david", "end", "human"] = Field(
+    next_node: Literal["marketbot", "librarian", "summary", "devbot", "david", "end", "human", "bob"] = Field(
         description="The next agent to route to, or 'end' if task is completed, or 'human' if stuck."
     )
     reasoning: str = Field(description="Why this node was selected")

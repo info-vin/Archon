@@ -67,6 +67,25 @@ async def run_prune_stale_leads() -> None:
         logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}")
 
 
+def generate_lead_outreach_draft(lead: dict) -> str:
+    """Generates a personalized, concise 1-on-1 cold outreach message tailored to the lead's pain points."""
+    company = lead.get("company_name", "目標企業")
+    title = lead.get("job_title", "招募職缺")
+    need = (lead.get("identified_need") or "").strip()
+    if need and len(need) > 120:
+        need = need[:120] + "..."
+    elif not need:
+        need = "內部系統與業務自動化整合"
+
+    draft = (
+        f"🏢 **【{company} - 破冰信模板】**\n"
+        f"您好，關注到貴公司正在擴編招募「{title}」，提及「{need}」等關鍵目標。"
+        f"我們在 AI 智能代理人工作流與企業跨系統資料串接有成熟的落地案例，能協助縮短 50% 以上的重構與維運負擔。"
+        f"若方便，希望能向您或技術主管請益 10 分鐘，交流相關架構實踐經驗。"
+    )
+    return draft
+
+
 async def run_market_report() -> None:
     """Triggering Bob (MarketingBot) to summarize recent leads."""
     logger.info("✍️ Clockwork: Triggering Bob's Market Report...")
@@ -155,6 +174,13 @@ async def run_market_report() -> None:
             logger.info(f"✍️ Clockwork: Created Market Report task {tr['task']['id']}. Dispatching Bob...")
             await agent_service.run_agent_task(task_id=tr["task"]["id"], agent_id=AgentUUIDs.MARKET_BOT)
 
+            # Generate personalized outreach drafts for Top 1~2 qualified leads
+            outreach_drafts = []
+            for lead in leads[:2]:
+                draft = generate_lead_outreach_draft(lead)
+                outreach_drafts.append(draft)
+            outreach_section = "\n\n".join(outreach_drafts)
+
             # Terminal Delivery: Push Qualified Sales Battlecard to Telegram
             try:
                 from src.server.services.system.telegram_service import telegram_service
@@ -164,14 +190,37 @@ async def run_market_report() -> None:
                     f"📅 日期：{datetime.now(cst).strftime('%Y-%m-%d %H:%M')}\n"
                     f"📊 本期篩選出 {len(leads)} 家具備高度系統整合痛點之目標企業：\n\n"
                     f"{lead_summary}\n\n"
-                    f"💡 **建議業務行動**：請直接點選上述職缺連結聯繫刊登窗口，或透過專業社群進行高精準痛點破冰！"
+                    f"✉️ **【客製化痛點破冰信草稿 (一鍵複製)】**\n"
+                    f"{outreach_section}\n\n"
+                    f"💡 **建議業務行動**：請直接複製上述破冰信草稿聯繫刊登窗口，或透過專業社群進行高精準痛點破冰！"
                 )
                 await telegram_service.send_message(telegram_report)
                 logger.info("✅ Clockwork: Dispatched qualified leads battlecard to Telegram.")
             except Exception as tg_err:
                 logger.warning(f"Clockwork: Telegram delivery failed: {tg_err}")
+
+            # Auto-create Sales Follow-up Task in archon_tasks
+            try:
+                followup_title = f"[Sales Follow-up] Qualified Leads ({datetime.now(cst).strftime('%Y-%m-%d')})"
+                followup_desc = (
+                    f"## 本期高意向合格潛客名單\n\n{lead_summary}\n\n"
+                    f"## 客製化破冰信草稿\n\n{outreach_section}\n\n"
+                    f"**行動要求**：請業務團隊於 48 小時內依據上述草稿啟動聯繫並回填進展。"
+                )
+                f_success, f_res = await task_service.create_task(
+                    project_id=p_res_dict["data"][0]["id"],
+                    title=followup_title,
+                    description=followup_desc,
+                    assignee_id=AgentUUIDs.MARKET_BOT,
+                )
+                if f_success:
+                    logger.info("✅ Clockwork: Created Sales Follow-up task in archon_tasks.")
+                else:
+                    logger.warning(f"Clockwork: Failed to create sales follow-up task: {f_res.get('error')}")
+            except Exception as task_err:
+                logger.warning(f"Clockwork: Failed to create sales follow-up task: {task_err}")
     except Exception as e:
-        logger.error(f"💥 Clockwork: Bob market report generation failed: {e}")
+        logger.error(f"💥 Clockwork: Bob market report generation failed: {e}", exc_info=True)
 
 
 async def check_and_resume_dag(scheduler) -> None:

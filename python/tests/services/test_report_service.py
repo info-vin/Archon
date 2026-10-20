@@ -6,14 +6,15 @@ from src.server.services.report_service import report_service
 
 
 @pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.services.agent_service.agent_service", new_callable=AsyncMock)
 @patch("src.server.repositories.base_repository.get_supabase_client")
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
-async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabase, mock_agent_service, mock_task_service):
+async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabase, mock_agent_service, mock_task_service, mock_send_telegram):
     """
     Test that daily executive summary creates a task with gathered context
-    and dispatches a star-topology group chat task.
+    and dispatches a star-topology group chat task without premature Telegram dispatch.
     """
     mock_gather.return_value = "Mocked Context for Daily"
 
@@ -35,6 +36,9 @@ async def test_run_daily_executive_summary_success(mock_gather, mock_get_supabas
     assert call_kwargs["project_id"] == "test-project-123"
     assert "[Daily] Executive Summary" in call_kwargs["title"]
     assert "Mocked Context for Daily" in call_kwargs["description"]
+
+    # Verify Telegram notification is NOT prematurely sent before Agent completes
+    mock_send_telegram.assert_not_awaited()
 
     mock_supabase.table.assert_any_call("archon_logs")
     insert_call = [call for call in mock_supabase.table().insert.mock_calls if "report-service" in str(call)]
@@ -226,5 +230,126 @@ async def test_gather_report_context_queries(mock_get_supabase):
     assert "Input Tokens: 100" in result
     assert "Output Tokens: 200" in result
     assert "Total Cost: $0.0050 USD" in result
-    assert "[ERROR] test-src: Test error message" in result
+    assert "[ERROR] test-src: `Test error message`" in result
     assert "Task A (Alice) -> status: doing" in result
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
+async def test_send_summary_telegram_direct(mock_send_telegram):
+    mock_send_telegram.return_value = True
+    success = await report_service.send_summary_telegram(
+        title_prefix="Daily",
+        content="Charlie's summarized insights",
+        task_id="test-task-123",
+    )
+    assert success is True
+    mock_send_telegram.assert_awaited_once()
+    msg = mock_send_telegram.call_args[0][0]
+    assert "星環 Daily 已產出" in msg
+    assert "Charlie's summarized insights" in msg
+    assert "taskId=test-task-123" in msg
+
+
+def test_get_logs_context_aggregation_and_sanitization():
+    mock_supabase = MagicMock()
+    mock_res = MagicMock()
+    mock_res.data = [
+        {"level": "ALERT", "source": "RateLimitHandler", "message": "Rate limit hit: 429\nStacktrace line 2", "created_at": "2026-10-18T10:00:00Z"},
+        {"level": "ALERT", "source": "RateLimitHandler", "message": "Rate limit hit: 429\nStacktrace line 2", "created_at": "2026-10-18T10:01:00Z"},
+        {"level": "ERROR", "source": "system-telegram", "message": "HTTP 400 Bad Request: can't parse", "created_at": "2026-10-18T10:02:00Z"},
+    ]
+    mock_supabase.table().select().gt().in_().execute.return_value = mock_res
+    report_service.supabase_client = mock_supabase
+
+    ctx = report_service._get_logs_context("2026-10-18T00:00:00Z")
+    assert "Total Alerts/Errors: 3" in ctx
+    assert "(x2)" in ctx
+    assert "`Rate limit hit: 429`" in ctx
+    assert "`HTTP 400 Bad Request: can't parse`" in ctx
+    assert "\nStacktrace" not in ctx  # Multi-line trace was stripped
+
+
+@pytest.mark.asyncio
+@patch.object(report_service, "_create_summary_task_and_log", new_callable=AsyncMock)
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.attach_podcast_audio", new_callable=AsyncMock)
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.inject_nexus_oracle_insights", new_callable=AsyncMock)
+@patch("src.server.services.prompt_service.prompt_service.get_prompt")
+@patch("src.server.services.settings_service.SettingsService.get_all_settings")
+@patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
+@patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
+async def test_execute_map_reduce_summary_with_management_steering_focus(
+    mock_gather,
+    mock_beta_graph,
+    mock_get_settings,
+    mock_get_prompt,
+    mock_inject_oracle,
+    mock_attach_audio,
+    mock_create_task_log,
+):
+    """
+    Test that management_steering_focus from SchedulerConfig is injected into
+    the Map-Reduce context when present.
+    """
+    mock_gather.return_value = "Base Report Context"
+    mock_inject_oracle.side_effect = lambda c: c
+    mock_attach_audio.side_effect = lambda t: t
+    mock_get_prompt.return_value = "Prompt Template: {context_md}"
+    mock_get_settings.return_value = {
+        "MANAGEMENT_STEERING_FOCUS": "本週重點驗證金融業潛客轉化率與 429 降噪成效"
+    }
+
+    class MockResult:
+        def __init__(self, output):
+            self.output = output
+    mock_beta_graph.run.return_value = MockResult("Summary Output")
+
+    await report_service._execute_map_reduce_summary(7, "Weekly", "WEEKLY_EXECUTIVE_SUMMARY")
+
+    state_arg = mock_beta_graph.run.call_args.kwargs["state"]
+    prompt_content = state_arg.shared.messages[0]["content"]
+    assert "Base Report Context" in prompt_content
+    assert "### 🎯 管理者戰略關注焦點 (Management Steering Focus)" in prompt_content
+    assert "本週重點驗證金融業潛客轉化率與 429 降噪成效" in prompt_content
+
+
+@pytest.mark.asyncio
+@patch.object(report_service, "_create_summary_task_and_log", new_callable=AsyncMock)
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.attach_podcast_audio", new_callable=AsyncMock)
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.inject_nexus_oracle_insights", new_callable=AsyncMock)
+@patch("src.server.services.prompt_service.prompt_service.get_prompt")
+@patch("src.server.services.settings_service.SettingsService.get_all_settings")
+@patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
+@patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
+async def test_execute_map_reduce_summary_without_management_steering_focus(
+    mock_gather,
+    mock_beta_graph,
+    mock_get_settings,
+    mock_get_prompt,
+    mock_inject_oracle,
+    mock_attach_audio,
+    mock_create_task_log,
+):
+    """
+    Test that when management_steering_focus is not set, no steering header is injected.
+    """
+    mock_gather.return_value = "Base Report Context"
+    mock_inject_oracle.side_effect = lambda c: c
+    mock_attach_audio.side_effect = lambda t: t
+    mock_get_prompt.return_value = "Prompt Template: {context_md}"
+    mock_get_settings.return_value = {}
+
+    class MockResult:
+        def __init__(self, output):
+            self.output = output
+    mock_beta_graph.run.return_value = MockResult("Summary Output")
+
+    await report_service._execute_map_reduce_summary(7, "Weekly", "WEEKLY_EXECUTIVE_SUMMARY")
+
+    state_arg = mock_beta_graph.run.call_args.kwargs["state"]
+    prompt_content = state_arg.shared.messages[0]["content"]
+    assert "Base Report Context" in prompt_content
+    assert "### 🎯 管理者戰略關注焦點" not in prompt_content
+
+
+

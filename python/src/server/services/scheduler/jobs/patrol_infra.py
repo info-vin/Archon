@@ -162,6 +162,18 @@ async def run_infrastructure_audit() -> None:
                 freed_mb = db_size_mb - float(new_size_res.data)
                 if freed_mb > 0.01:
                     logger.info(f"Tiered Pruning completed. Freed {freed_mb:.2f}MB.")
+
+            # Prune expired podcast audio in storage (Storage TTL)
+            try:
+                from src.server.services.report_enrichment_service import report_enrichment_service
+
+                pruned_audio = report_enrichment_service.prune_expired_podcast_audio(
+                    ttl_days=config.storage_podcast_ttl_days
+                )
+                if pruned_audio > 0:
+                    logger.info(f"🎙️ Tiered Pruning: Removed {pruned_audio} expired podcast audio files.")
+            except Exception as audio_err:
+                logger.warning(f"Failed to prune expired podcast audio files: {audio_err}")
     except Exception as e:
         logger.error(f"Tiered Database Pruning failed: {e}")
 
