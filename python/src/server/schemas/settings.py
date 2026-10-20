@@ -64,6 +64,8 @@ class PruningConfig(BaseModel):
     l3_crawled_days: int = Field(default=30, alias="PRUNING_L3_CRAWLED_DAYS")
     l3_tokens_days: int = Field(default=30, alias="PRUNING_L3_TOKENS_DAYS")
 
+    storage_podcast_ttl_days: int = Field(default=14, alias="STORAGE_PODCAST_TTL_DAYS")
+
 
 class NetworkConfig(BaseModel):
     agents_service_url: str = Field(default="http://archon-agents:8052", alias="AGENTS_SERVICE_URL")

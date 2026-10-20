@@ -123,6 +123,22 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+#### 2026-10-20: Phase 5.12.1 規劃公證與 Storage 音檔過期清理機制 (TTL Cleanup) 實裝完成 (Phase 5.12.1 - Stage 1)
+
+*   **星環討論體系全鏈路深度優化與商業閉環硬化 (Phase 5.12.1 規劃公證)**:
+    *   **診斷與四大斷層鑑識**: 
+        1. **Storage 音檔無 TTL 清理**: 簽名 URL 雖設 7 天過期，但未壓縮的 `.wav` 檔案在 Supabase Storage 中從未刪除，自 7 月至今殘留 14 份歷史音檔累積佔用超過 105MB。
+        2. **Daily Summary 路由字串大小寫不匹配與單節點退化**: `agent_service.py` 傳入 `"daily_executive_summary"`，而資料庫存為 `"Daily Executive Summary"`，導致 Flow 查詢落空走入 `General` 流程，Charlie 僅單點調用 `SummaryNode` 並結束（`step_count` 固定為 2），且 `SummaryNode` 的條列重點 Prompt 覆蓋了上游強制 Markdown 表格與計算指標公式的要求。
+        3. **合格潛客最後一哩未閉環**: Telegram 僅提示業務「點選職缺連結破冰」，缺乏系統自動生成的客製化「1-on-1 痛點破冰信 (Cold Outreach Draft)」。
+        4. **戰略討論缺乏管理者焦點輸入**: 週報與月報為純後端靜默 Cron 觸發，無人類在週會前注入「本週重點驗證假設」的管道。
+    *   **四階段推進架構公證**: 建立正式規格文件 [Phase_5.12.1_Star_Topology_Optimization_and_Pipeline_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.12.1_Star_Topology_Optimization_and_Pipeline_Hardening.md)。
+*   **階段 1 實裝：Storage 音檔過期清理機制 (TTL Cleanup)**:
+    *   **設定 SSOT 擴充**: 於 [settings.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/settings.py) 之 `PruningConfig` 新增 `storage_podcast_ttl_days = 14`。
+    *   **音檔修剪核心**: 於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py) 實作 `prune_expired_podcast_audio(ttl_days=14)`，嚴格限定前綴 `podcast_` 與副檔名 `.wav`，比對 `created_at` 超過 14 天者執行 `storage.from_("archon_documents").remove()`，並寫入 `archon_logs` 稽核日誌。
+    *   **排程整合**: 於 [patrol_infra.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/patrol_infra.py) 之 `run_tiered_pruning()` 整合呼叫，使音檔修剪納入例行基礎設施修剪戰線。
+    *   **物理公證與 105MB 配額釋放**: 探針實體穿透 Supabase Storage，成功刪除 13 筆 7~10 月累積的過期 `.wav` 檔案，釋放超過 105MB 雲端儲存空間。
+    *   **門禁驗證**: 新增 [test_report_enrichment.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_enrichment.py)；`make lint-be` 393 source files 100% 綠燈，`make test-be` **786 passed** (0 failures)，`make phase-audit` 全綠通過。
+
 #### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
 
 *   **日報流水線解耦與 Telegram 成果推播治理**:
