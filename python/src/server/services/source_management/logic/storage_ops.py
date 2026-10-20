@@ -4,7 +4,7 @@ Physically isolated to handle core persistence logic.
 """
 
 import logging
-from typing import NotRequired, TypedDict
+from typing import NotRequired, TypedDict, cast
 
 from supabase import Client
 
@@ -108,7 +108,7 @@ async def update_source_info(
                     "auto_generated": False,
                 }
             else:
-                title, metadata = await generate_source_title_and_metadata(
+                gen_title, gen_meta = await generate_source_title_and_metadata(
                     source_id=source_id,
                     content=content,
                     knowledge_type=knowledge_type,
@@ -116,6 +116,8 @@ async def update_source_info(
                     original_url=original_url,
                     source_display_name=source_display_name,
                 )
+                title = gen_title
+                metadata = cast(SourceMetadataDict, gen_meta)
                 if source_url and source_url.startswith("file://"):
                     metadata["source_type"] = "file"
                 elif original_url and original_url.startswith("file://"):
