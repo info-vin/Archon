@@ -88,3 +88,54 @@ async def test_run_market_report_creates_outreach_and_followup_task(
     followup_call = mock_create_task.call_args_list[1]
     assert "[Sales Follow-up]" in followup_call[1]["title"]
     assert "聯發創想股份有限公司" in followup_call[1]["description"]
+    assert followup_call[1]["assignee_id"] == "a11ce000-0000-0000-0000-000000000000"
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.settings_service.SettingsService.get_all_settings", return_value={})
+@patch("src.server.services.settings_service.SettingsService.get_setting", return_value="2026-10-01T00:00:00Z")
+@patch("src.server.utils.get_supabase_client")
+@patch("src.server.repositories.base_repository.BaseRepository.execute_query")
+@patch("src.server.services.projects.task_service.task_service.create_task", new_callable=AsyncMock)
+@patch("src.server.services.agent_service.agent_service.run_agent_task", new_callable=AsyncMock)
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
+async def test_run_market_report_handles_followup_creation_failure(
+    mock_tg_send, mock_run_agent, mock_create_task, mock_exec_query, mock_get_supabase, mock_get_setting, mock_get_all_settings
+):
+    """Verify that failure to create followup task is safely logged without breaking execution."""
+    mock_supabase = MagicMock()
+    mock_get_supabase.return_value = mock_supabase
+
+    mock_leads = [
+        {
+            "id": "lead-1",
+            "company_name": "測試科技",
+            "job_title": "AI 工程師",
+            "identified_need": "整合測試",
+            "source_job_url": "https://example.com",
+            "enrichment_score": 85,
+        }
+    ]
+
+    mock_project = [{"id": "proj-123"}]
+
+    def mock_query_fn(query, message="", *args, **kwargs):
+        msg = str(message).lower()
+        if "project" in msg:
+            return True, {"data": mock_project}
+        if "leads" in msg:
+            return True, {"data": mock_leads}
+        return True, {"data": []}
+
+    mock_exec_query.side_effect = mock_query_fn
+
+    # First task succeeds, followup task returns False
+    mock_create_task.side_effect = [
+        (True, {"task": {"id": "market-task-1"}}),
+        (False, {"error": "Simulated task creation failure"}),
+    ]
+
+    # Must complete without unhandled exception
+    await run_market_report()
+    assert mock_create_task.call_count == 2
+

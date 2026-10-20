@@ -58,7 +58,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
             if success and res.get("data"):
                 # Normalized matching ignoring case, spaces, and underscores
-                target_key = task_type.lower().replace(" ", "").replace("_", "")
+                target_key = (task_type or "").lower().replace(" ", "").replace("_", "")
                 matched_flow = None
                 for flow in res["data"]:
                     wf_type = str(flow.get("workflow_type", "")).lower().replace(" ", "").replace("_", "")

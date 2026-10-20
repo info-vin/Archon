@@ -207,13 +207,16 @@ async def run_market_report() -> None:
                     f"## 客製化破冰信草稿\n\n{outreach_section}\n\n"
                     f"**行動要求**：請業務團隊於 48 小時內依據上述草稿啟動聯繫並回填進展。"
                 )
-                await task_service.create_task(
+                f_success, f_res = await task_service.create_task(
                     project_id=p_res_dict["data"][0]["id"],
                     title=followup_title,
                     description=followup_desc,
-                    assignee_id=AgentUUIDs.CLOCKWORK,
+                    assignee_id=AgentUUIDs.MARKET_BOT,
                 )
-                logger.info("✅ Clockwork: Created Sales Follow-up task in archon_tasks.")
+                if f_success:
+                    logger.info("✅ Clockwork: Created Sales Follow-up task in archon_tasks.")
+                else:
+                    logger.warning(f"Clockwork: Failed to create sales follow-up task: {f_res.get('error')}")
             except Exception as task_err:
                 logger.warning(f"Clockwork: Failed to create sales follow-up task: {task_err}")
     except Exception as e:

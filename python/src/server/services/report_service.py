@@ -311,10 +311,16 @@ class ReportService(BaseRepository):
             from src.server.schemas.settings import SchedulerConfig
             from src.server.services.settings_service import SettingsService
 
+            steering_focus: str | None = None
             try:
                 settings = SettingsService(self.supabase_client)
-                sched_config = SchedulerConfig.model_validate(settings.get_all_settings())
-                steering_focus = sched_config.management_steering_focus
+                all_settings = settings.get_all_settings()
+                raw_focus = all_settings.get("MANAGEMENT_STEERING_FOCUS")
+                if raw_focus and isinstance(raw_focus, str) and raw_focus.strip():
+                    steering_focus = raw_focus.strip()
+                else:
+                    sched_config = SchedulerConfig.model_validate(all_settings)
+                    steering_focus = sched_config.management_steering_focus
             except Exception as conf_err:
                 logger.warning(f"ReportService: Failed to parse SchedulerConfig for steering focus: {conf_err}")
                 steering_focus = None

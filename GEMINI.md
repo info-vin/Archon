@@ -151,6 +151,11 @@
     *   **設定 SSOT 擴充**: 於 [settings.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/settings.py) 之 `SchedulerConfig` 新增 `management_steering_focus: str | None = Field(default=None, alias="MANAGEMENT_STEERING_FOCUS")`。
     *   **戰略焦點動態注入**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 之 `_execute_map_reduce_summary()` 整合載入此配置，若設定則注入 `### 🎯 管理者戰略關注焦點 (Management Steering Focus)` 至 Map-Reduce 上下文，未設定則安全 Fallback。
     *   **單元測試與門禁公證**: 於 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 新增有/無 Steering Focus 注入的斷言驗證；`make lint-be` 393 source files 100% 綠燈，`make test-be` **793 passed** (0 failures)，`make phase-audit` 全綠通過。
+*   **深度悲觀審查與斷層清剿 (Anti-Optimistic Hardening & Fault-Line Elimination)**:
+    *   **DB 物理斷層修補**: 探針實體揭露 `MANAGEMENT_STEERING_FOCUS` 與 `STORAGE_PODCAST_TTL_DAYS` 於 `archon_settings` 表無實體資料行，導致 Admin UI `/api/system/settings` 查無此項且更新觸發 500。立即建立 `migration/20261020_add_steering_focus_and_storage_ttl.sql` 並透過實體探針成功注入 Supabase。
+    *   **靜默失敗與指派角色修正**: 修正 `leads_patrol.py` 過去對 `task_service.create_task` 回傳 tuple 忽略檢查之樂觀假設，精確解構 `(f_success, f_res)` 並阻斷假成功日誌；將指派對象自 Clockwork 守護程序校正為 Sales 核心 `AgentUUIDs.MARKET_BOT`。
+    *   **工作流路由與型別安全硬化**: 於 [state.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/state.py) 擴充 `SupervisorDecision.next_node` 納入 `"bob"` 容錯，防止 LLM 作答與 DB 路由不一致引發 Pydantic ValidationError；於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 導入 `(task_type or "")` 空值保護；[report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 補齊 `steering_focus: str | None` 顯式型別標註。
+    *   **門禁再公證**: `make lint-be` 393 source files 100% 通過，`make test-be` **794 passed** (0 failures)，`make phase-audit` 全綠。
 
 #### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
 
