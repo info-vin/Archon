@@ -123,7 +123,7 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-#### 2026-10-20: Phase 5.12.1 規劃公證與 Storage 音檔過期清理機制 (TTL Cleanup) 實裝完成 (Phase 5.12.1 - Stage 1)
+#### 2026-10-20: Phase 5.12.1 規劃公證、Storage 音檔清理與每日群聊路由契約對齊 (Phase 5.12.1 - Stage 1 & Stage 2)
 
 *   **星環討論體系全鏈路深度優化與商業閉環硬化 (Phase 5.12.1 規劃公證)**:
     *   **診斷與四大斷層鑑識**: 
@@ -137,7 +137,11 @@
     *   **音檔修剪核心**: 於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py) 實作 `prune_expired_podcast_audio(ttl_days=14)`，嚴格限定前綴 `podcast_` 與副檔名 `.wav`，比對 `created_at` 超過 14 天者執行 `storage.from_("archon_documents").remove()`，並寫入 `archon_logs` 稽核日誌。
     *   **排程整合**: 於 [patrol_infra.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/patrol_infra.py) 之 `run_tiered_pruning()` 整合呼叫，使音檔修剪納入例行基礎設施修剪戰線。
     *   **物理公證與 105MB 配額釋放**: 探針實體穿透 Supabase Storage，成功刪除 13 筆 7~10 月累積的過期 `.wav` 檔案，釋放超過 105MB 雲端儲存空間。
-    *   **門禁驗證**: 新增 [test_report_enrichment.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_enrichment.py)；`make lint-be` 393 source files 100% 綠燈，`make test-be` **786 passed** (0 failures)，`make phase-audit` 全綠通過。
+*   **階段 2 實裝：每日星環群聊路由正規化對齊與 Markdown 表格契約落地**:
+    *   **大小寫正規化匹配**: 於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 移除硬編碼 `.eq("workflow_type", task_type)`，改採全量流轉正規化比對（`lower().replace(" ", "").replace("_", "")`），確保 `"daily_executive_summary"` 100% 精準命中 DB Flow `"Daily Executive Summary"`。
+    *   **全節點路由保全**: 確保 `node_routing` 具備全部 5 大節點（含 `devbot` 與 `david`），並將雲端 `archon_workflow_flows` 的 `Daily Executive Summary` 路由實體補齊 `devbot` 與 `bob`。
+    *   **表格契約與 Prompt 對齊**: 更新 [pm_prompts.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/prompts/pm_prompts.py) 與雲端 `archon_prompts`，廢除 `WORKFLOW_WORKER_SUMMARY` 強制條列點之舊限制，改為強制產出結構化 Markdown 數據表格與定義公式；同步新增 `WORKFLOW_SUPERVISOR_DAILY`。
+    *   **門禁驗證**: 新增 [test_workflow_routing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/agents/workflow/test_workflow_routing.py)；`make lint-be` 393 source files 100% 綠燈，`make test-be` **788 passed** (0 failures)，`make phase-audit` 全綠通過。
 
 #### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
 
