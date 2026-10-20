@@ -101,22 +101,24 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
             next_step = decision.next_node
 
-            # Anti-recursion safeguard: prevent routing back-to-back to the exact same worker
-            if (
-                ctx.state.messages
-                and next_step in ["marketbot", "devbot", "summary", "librarian", "david", "bob"]
-                and ctx.state.messages[-1].get("role") in [next_step, "MarketBot", "DevBot", "Summary"]
-            ):
-                logger.warning(
-                    f"⚠️ [Supervisor] Detected consecutive routing to '{next_step}'. Auto-advancing workflow..."
-                )
-                if next_step in ["marketbot", "bob"]:
-                    next_step = "devbot"
-                elif next_step == "devbot":
-                    next_step = "summary"
-                elif next_step == "summary":
-                    ctx.state.final_result = "Workflow completed successfully."
-                    return End(ctx.state.final_result)
+            # Anti-recursion safeguard: prevent routing back-to-back to the exact same worker in Daily Summary
+            is_daily = (ctx.state.task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
+            if is_daily:
+                if (
+                    ctx.state.messages
+                    and next_step in ["marketbot", "devbot", "summary", "librarian", "david", "bob"]
+                    and ctx.state.messages[-1].get("role") in [next_step, "MarketBot", "DevBot", "Summary", "Bob"]
+                ):
+                    logger.warning(
+                        f"⚠️ [Supervisor] Detected consecutive routing to '{next_step}' in Daily Summary. Auto-advancing workflow..."
+                    )
+                    if next_step in ["marketbot", "bob"]:
+                        next_step = "devbot"
+                    elif next_step == "devbot":
+                        next_step = "summary"
+                    elif next_step == "summary":
+                        ctx.state.final_result = "Workflow completed successfully."
+                        return End(ctx.state.final_result)
 
             if next_step == "end":
                 ctx.state.final_result = "Workflow completed successfully."
@@ -124,6 +126,18 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
             elif next_step == "human":
                 ctx.state.final_result = "Escalated to human review."
                 return End(ctx.state.final_result)
+
+            # Node alias normalization (e.g. "bob" or "MarketBot" -> "marketbot")
+            if next_step in ["bob", "MarketBot"]:
+                next_step = "marketbot"
+            elif next_step in ["DevBot"]:
+                next_step = "devbot"
+            elif next_step in ["Summary"]:
+                next_step = "summary"
+            elif next_step in ["Librarian"]:
+                next_step = "librarian"
+            elif next_step in ["David"]:
+                next_step = "david"
 
             # Map the next node routing name from database to static Class Node return signatures
             target_node_name = node_routing.get(next_step)

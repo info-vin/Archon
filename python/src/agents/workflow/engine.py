@@ -71,7 +71,11 @@ class WorkflowEngine:
             if not final_res_str:
                 final_res_str = str(final_state.final_result or _get_output(run_result))
 
-            is_success = "Supervisor Error:" not in final_res_str and "Circuit Breaker Tripped:" not in final_res_str
+            is_success = (
+                "Supervisor Error:" not in final_res_str
+                and "Circuit Breaker Tripped:" not in final_res_str
+                and not final_res_str.startswith("Error:")
+            )
             error_msg = None
             if not is_success:
                 error_msg = final_res_str

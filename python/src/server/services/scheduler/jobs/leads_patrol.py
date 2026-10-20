@@ -219,6 +219,8 @@ async def run_market_report() -> None:
                     logger.warning(f"Clockwork: Failed to create sales follow-up task: {f_res.get('error')}")
             except Exception as task_err:
                 logger.warning(f"Clockwork: Failed to create sales follow-up task: {task_err}")
+        else:
+            logger.warning(f"Clockwork: Failed to create market report task: {tr.get('error') if isinstance(tr, dict) else tr}")
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}", exc_info=True)
 

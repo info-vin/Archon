@@ -231,15 +231,65 @@ class AgentService:
                             task_id=task_id,
                         )
                 else:
-                    logger.error(f"WorkflowEngine failed: {data.get('error')}")
+                    err_msg = data.get("error", "Unknown workflow error")
+                    logger.error(f"WorkflowEngine failed: {err_msg}")
                     await task_service.update_task(task_id, {"status": "failed"})
+
+                    if task_type == TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value:
+                        from .report_service import report_service
+
+                        logger.warning(
+                            f"WorkflowEngine failed for Daily Summary. Dispatching fallback summary to Telegram for task {task_id}"
+                        )
+                        fallback_content = (
+                            f"⚠️ **【注意】多 Agent 協同討論未能在時限內收斂 (Fallback 降級報告)**\n\n"
+                            f"以下為今日系統收集之原始指標與運營摘要：\n\n"
+                            f"{task_data.get('description', '無可用描述')}"
+                        )
+                        await report_service.send_summary_telegram(
+                            title_prefix="Daily (Fallback)",
+                            content=fallback_content,
+                            task_id=task_id,
+                        )
 
         except httpx.RequestError as e:
             logger.error(f"Network error calling WorkflowEngine: {e}")
             await task_service.update_task(task_id, {"status": "failed"})
+            if task_type == TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value:
+                from .report_service import report_service
+
+                logger.warning(
+                    f"WorkflowEngine network error. Dispatching fallback summary to Telegram for task {task_id}"
+                )
+                fallback_content = (
+                    f"⚠️ **【注意】多 Agent 服務連線逾時或網路異常 (Fallback 降級報告)**\n\n"
+                    f"以下為今日系統收集之原始指標與運營摘要：\n\n"
+                    f"{task_data.get('description', '無可用描述')}"
+                )
+                await report_service.send_summary_telegram(
+                    title_prefix="Daily (Fallback)",
+                    content=fallback_content,
+                    task_id=task_id,
+                )
         except Exception as e:
             logger.error(f"Unexpected error in WorkflowEngine execution: {e}")
             await task_service.update_task(task_id, {"status": "failed"})
+            if task_type == TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY.value:
+                from .report_service import report_service
+
+                logger.warning(
+                    f"WorkflowEngine unexpected error. Dispatching fallback summary to Telegram for task {task_id}"
+                )
+                fallback_content = (
+                    f"⚠️ **【注意】系統執行異常 (Fallback 降級報告)**\n\n"
+                    f"以下為今日系統收集之原始指標與運營摘要：\n\n"
+                    f"{task_data.get('description', '無可用描述')}"
+                )
+                await report_service.send_summary_telegram(
+                    title_prefix="Daily (Fallback)",
+                    content=fallback_content,
+                    task_id=task_id,
+                )
 
     async def _run_general_agent_task(self, task_id: str, agent_id: str) -> None:
         from ..services.projects.task_service import task_service
