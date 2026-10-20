@@ -157,6 +157,17 @@
     *   **工作流路由與型別安全硬化**: 於 [state.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/state.py) 擴充 `SupervisorDecision.next_node` 納入 `"bob"` 容錯，防止 LLM 作答與 DB 路由不一致引發 Pydantic ValidationError；於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 導入 `(task_type or "")` 空值保護；[report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 補齊 `steering_focus: str | None` 顯式型別標註。
     *   **門禁再公證**: `make lint-be` 393 source files 100% 通過，`make test-be` **794 passed** (0 failures)，`make phase-audit` 全綠。
 
+*   **今日 Telegram 未發送之原因鑑識、Charlie 重複路由死鎖根除與實體重發公證**:
+    *   **診斷**: 
+        1. 排程確實在 16:18 CST (08:18 UTC) 準時建立每日執行摘要任務 `521b3855-83c5-4943-ba7e-45ba95b07c77`，但工單長達數小時卡死於 `status: doing`。
+        2. 探針穿透實體日誌揭露：Charlie 在多 Agent 群聊時，因 Prompt 缺乏嚴格推進條件且 `MarketBotNode` 接收到靜態文案指令，導致 Charlie 在第 1~10 步**陷入重複指派 marketbot 的死循環**，最終觸發 `Circuit Breaker Tripped: Needs Human Review`（超量遞迴斷路器），執行失敗導致下游 Telegram 推播從未被觸發。
+        3. 此外，`nodes.py` 過往硬編碼要求 `SUPERVISOR_AGENT_MODEL` 與 `WORKER_AGENT_MODEL` 環境變數，缺失時直接拋錯崩潰，缺乏 Model SSOT 回退。
+    *   **修復**: 
+        1. **循序推進契約**: 更新 `WORKFLOW_SUPERVISOR_DAILY` Prompt（代碼與 DB `archon_prompts` 同步），規範嚴格 4 步依序推進（每個成員僅發言一次，marketbot -> devbot -> summary -> end）。
+        2. **節點指令語意特化**: 於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 針對 `daily_executive_summary` 給予 MarketBot（Leads 評估）、DevBot（技術/成本分析）與 Summary（表格彙整）專屬數據指令。
+        3. **雙重防死鎖自癒**: 在 `SupervisorNode` 導入 Anti-recursion 防衛，檢測到連續同角色指派即自動推進；在環境變數缺失時自動回退至 `SYSTEM_MODELS`。
+    *   **物理重發公證**: 實體探針重新執行 Task `521b3855`，順利於 4 步內收斂產出專業 Markdown 表格摘要，工單更新為 `done`，Telegram 訊息順利送達使用者（Delivery Result: `True`）。
+
 #### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
 
 *   **日報流水線解耦與 Telegram 成果推播治理**:

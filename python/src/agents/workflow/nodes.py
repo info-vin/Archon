@@ -31,7 +31,9 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
         model_name = os.getenv("SUPERVISOR_AGENT_MODEL")
         if not model_name:
-            raise ValueError("❌ [SSOT Violation] SUPERVISOR_AGENT_MODEL missing.")
+            from src.server.config.model_ssot import SYSTEM_MODELS
+
+            model_name = SYSTEM_MODELS["DEFAULT_PRO"].replace("models/", "")
 
         from src.server.services.prompt_service import prompt_service
         from src.server.utils import get_supabase_client
@@ -99,6 +101,23 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
             next_step = decision.next_node
 
+            # Anti-recursion safeguard: prevent routing back-to-back to the exact same worker
+            if (
+                ctx.state.messages
+                and next_step in ["marketbot", "devbot", "summary", "librarian", "david", "bob"]
+                and ctx.state.messages[-1].get("role") in [next_step, "MarketBot", "DevBot", "Summary"]
+            ):
+                logger.warning(
+                    f"⚠️ [Supervisor] Detected consecutive routing to '{next_step}'. Auto-advancing workflow..."
+                )
+                if next_step in ["marketbot", "bob"]:
+                    next_step = "devbot"
+                elif next_step == "devbot":
+                    next_step = "summary"
+                elif next_step == "summary":
+                    ctx.state.final_result = "Workflow completed successfully."
+                    return End(ctx.state.final_result)
+
             if next_step == "end":
                 ctx.state.final_result = "Workflow completed successfully."
                 return End(ctx.state.final_result)
@@ -139,7 +158,9 @@ async def _run_generic_worker(
     logger.info(f"🛠️ [{role_name}] Executing task...")
     model_name = os.getenv("WORKER_AGENT_MODEL")
     if not model_name:
-        raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
+        from src.server.config.model_ssot import SYSTEM_MODELS
+
+        model_name = SYSTEM_MODELS["DEFAULT_TEXT"].replace("models/", "")
 
     from src.server.services.prompt_service import prompt_service
 
@@ -164,12 +185,18 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
         prompt_key = (
             PromptNameEnum.WORKFLOW_STRATEGIST_BOB if task_type == TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE else PromptNameEnum.WORKFLOW_WORKER_MARKETBOT
         )
+        is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
+        task_instruction = (
+            "請針對對話歷史中提供的昨日 sales 與 leads 轉換指標進行商業評估與簡短分析。"
+            if is_daily
+            else "Based on history, provide the marketing copy."
+        )
         return await _run_generic_worker(
             ctx,
             "MarketBot",
             prompt_key,
             "You are a marketing copywriter. Be concise.",
-            "Based on history, provide the marketing copy.",
+            task_instruction,
         )
 
 
@@ -178,7 +205,9 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
         logger.info("🛠️ [Librarian] Executing task...")
         model_name = os.getenv("WORKER_AGENT_MODEL")
         if not model_name:
-            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL not found for LibrarianNode.")
+            from src.server.config.model_ssot import SYSTEM_MODELS
+
+            model_name = SYSTEM_MODELS["DEFAULT_TEXT"].replace("models/", "")
 
         from src.agents.rag_agent import RagAgent, RagDependencies
 
@@ -215,19 +244,33 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
 
 class SummaryNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+        task_type = ctx.state.task_type
+        is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
+        task_instruction = (
+            "請將團隊討論與指標數據，彙整為具備 Markdown 表格與比率公式定義的專業每日執行摘要："
+            if is_daily
+            else "Summarize the conversation and metrics into the requested structured report format:"
+        )
         return await _run_generic_worker(
             ctx,
             "Summary",
             PromptNameEnum.WORKFLOW_WORKER_SUMMARY,
             "You summarize the team discussion into a professional Executive Summary with structured Markdown tables and metric definitions.",
-            "Summarize the conversation and metrics into the requested structured report format:",
+            task_instruction,
         )
 
 
 class DevBotNode(BaseNode[SharedState, None, str]):
     async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+        task_type = ctx.state.task_type
+        is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
+        task_instruction = (
+            "請針對對話歷史中昨日的系統健康狀態、API 警告、token 消耗及估計成本進行技術分析。"
+            if is_daily
+            else "Task from Supervisor:"
+        )
         await _run_generic_worker(
-            ctx, "DevBot", PromptNameEnum.WORKFLOW_SCIENTIST_DEVBOT, "You are DevBot, a data scientist.", "Task from Supervisor:"
+            ctx, "DevBot", PromptNameEnum.WORKFLOW_SCIENTIST_DEVBOT, "You are DevBot, a data scientist.", task_instruction
         )
         return SupervisorNode()
 
@@ -237,7 +280,9 @@ class DavidNode(BaseNode[SharedState, None, str]):
         logger.info("🛠️ [David] Thinking about code changes...")
         model_name = os.getenv("WORKER_AGENT_MODEL")
         if not model_name:
-            raise ValueError("❌ [SSOT Violation] WORKER_AGENT_MODEL missing.")
+            from src.server.config.model_ssot import SYSTEM_MODELS
+
+            model_name = SYSTEM_MODELS["DEFAULT_TEXT"].replace("models/", "")
 
         from src.server.services.prompt_service import prompt_service
 
