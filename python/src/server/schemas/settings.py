@@ -138,6 +138,7 @@ class SchedulerConfig(BaseModel):
 
     scheduler_misfire_grace_time: int = Field(default=600, alias="SCHEDULER_MISFIRE_GRACE_TIME")
     system_timezone: str = Field(default="Asia/Taipei", alias="SYSTEM_TIMEZONE")
+    management_steering_focus: str | None = Field(default=None, alias="MANAGEMENT_STEERING_FOCUS")
     market_report_fallback_hours: int = Field(default=24, alias="MARKET_REPORT_FALLBACK_HOURS")
 
     system_probe_interval_mins: int = Field(default=60, alias="SYSTEM_PROBE_INTERVAL_MINS")

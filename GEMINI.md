@@ -142,6 +142,15 @@
     *   **全節點路由保全**: 確保 `node_routing` 具備全部 5 大節點（含 `devbot` 與 `david`），並將雲端 `archon_workflow_flows` 的 `Daily Executive Summary` 路由實體補齊 `devbot` 與 `bob`。
     *   **表格契約與 Prompt 對齊**: 更新 [pm_prompts.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/prompts/pm_prompts.py) 與雲端 `archon_prompts`，廢除 `WORKFLOW_WORKER_SUMMARY` 強制條列點之舊限制，改為強制產出結構化 Markdown 數據表格與定義公式；同步新增 `WORKFLOW_SUPERVISOR_DAILY`。
     *   **門禁驗證**: 新增 [test_workflow_routing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/agents/workflow/test_workflow_routing.py)；`make lint-be` 393 source files 100% 綠燈，`make test-be` **788 passed** (0 failures)，`make phase-audit` 全綠通過。
+*   **階段 3 實裝：合格潛客客製化 1-on-1 痛點破冰信自動草擬與工單閉環 (Phase 5.12.1 Stage 3)**:
+    *   **破冰信模板核心**: 於 [leads_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/leads_patrol.py) 實作 `generate_lead_outreach_draft()`，針對合格潛客之招募職缺與系統整合痛點生成高精準 1-on-1 破冰信。
+    *   **Telegram 戰報增強與 429 防護**: 於市場戰報注入 `✉️ 【客製化痛點破冰信草稿 (一鍵複製)】` 區塊，嚴格限制單次僅針對 Top 1~2 筆最高分合格名單生成，防範 TPM 配額超出。
+    *   **跟進工單自動閉環**: 成功推播後自動於 `archon_tasks` 建立 `[Sales Follow-up]` 工單，要求業務團隊 48 小時內依草稿聯繫並跟進，終結「僅通報未跟進」的商業漏斗斷層。
+    *   **單元測試**: 新增 [test_leads_outreach.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_leads_outreach.py) 3 項測試全數通過。
+*   **階段 4 實裝：每週/每月高階戰略討論之「管理者目標對齊」輸入介面 (Phase 5.12.1 Stage 4)**:
+    *   **設定 SSOT 擴充**: 於 [settings.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/settings.py) 之 `SchedulerConfig` 新增 `management_steering_focus: str | None = Field(default=None, alias="MANAGEMENT_STEERING_FOCUS")`。
+    *   **戰略焦點動態注入**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 之 `_execute_map_reduce_summary()` 整合載入此配置，若設定則注入 `### 🎯 管理者戰略關注焦點 (Management Steering Focus)` 至 Map-Reduce 上下文，未設定則安全 Fallback。
+    *   **單元測試與門禁公證**: 於 [test_report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/services/test_report_service.py) 新增有/無 Steering Focus 注入的斷言驗證；`make lint-be` 393 source files 100% 綠燈，`make test-be` **793 passed** (0 failures)，`make phase-audit` 全綠通過。
 
 #### 2026-10-19: 系統日報流水線解耦、日誌聚合與 Telegram 作答推播治理 (Phase 5.11.26)
 

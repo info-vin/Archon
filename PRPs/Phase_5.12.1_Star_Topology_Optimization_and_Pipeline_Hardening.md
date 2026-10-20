@@ -109,5 +109,33 @@ graph LR
    - 階段 4：測試 `report_service.py` 在有/無 `management_steering_focus` 時的 Prompt 注入行為。
 2. **三向品質門禁**：
    - `make lint-be`: 393 source files 100% 通過（Ruff + MyPy 零錯誤）。
-   - `make test-be`: 783+ passed 單元測試全數綠燈。
+   - `make test-be`: 793 passed 單元測試全數綠燈 (0 failures)。
    - `make phase-audit`: Step 1 ~ Step 11 全綠。
+
+---
+
+## 🏁 四階段執行公證與落地結果 (Execution & Delivery Status)
+
+* [x] **階段 1：Storage 音檔過期清理機制 (TTL Cleanup)** 🟢
+  - 於 `PruningConfig` 實裝 `storage_podcast_ttl_days = 14`。
+  - 於 `report_enrichment_service.py` 實作 `prune_expired_podcast_audio()` 並整合進 `patrol_infra.py` 分層修剪。
+  - **物理公證**：實體探針穿透 Supabase Storage，刪除 13 筆 7~10 月累積之歷史 `.wav` 檔案，釋放超過 **105 MB** 空間。
+  - Git Commit: `84d1ac59`
+
+* [x] **階段 2：每日星環群聊路由正規化對齊與表格契約落地** 🟢
+  - 於 `nodes.py` 實裝不區分大小寫與底線的正規化匹配（`.lower().replace(" ", "").replace("_", "")`），解決 `"daily_executive_summary"` 對接 DB `"Daily Executive Summary"` 落空問題。
+  - 雲端 Flow 補齊 `devbot` 與 `bob`，確保 5 大節點無遺漏。
+  - 廢除舊 `WORKFLOW_WORKER_SUMMARY` 強制條列點限制，改為強制產出結構化 Markdown 表格與計算指標公式。
+  - Git Commit: `b5daad00`
+
+* [x] **階段 3：合格潛客客製化 1-on-1 痛點破冰信自動草擬與工單閉環** 🟢
+  - 於 `leads_patrol.py` 實作 `generate_lead_outreach_draft()`，針對合格潛客之招募職缺與系統痛點生成客製化 1-on-1 破冰信模板。
+  - Telegram 戰報自動注入 `✉️ 【客製化痛點破冰信草稿 (一鍵複製)】` 區塊（Top 2 潛客限額，阻斷 429）。
+  - 自動在 `archon_tasks` 建立 `[Sales Follow-up]` 工單，要求業務 48 小時內依草稿聯繫並跟進，達成商業漏斗自動閉環。
+  - 單元測試：新增 `test_leads_outreach.py` 3 項測試全數通過。
+
+* [x] **階段 4：每週/每月高階戰略討論之「管理者目標對齊」輸入介面** 🟢
+  - 於 `SchedulerConfig` 新增 `management_steering_focus: str | None = Field(default=None, alias="MANAGEMENT_STEERING_FOCUS")`。
+  - 於 `report_service.py` 之 `_execute_map_reduce_summary()` 整合載入此配置，若設定則注入 `### 🎯 管理者戰略關注焦點 (Management Steering Focus)` 至 Map-Reduce 上下文，未設定則安全 Fallback。
+  - 單元測試：更新 `test_report_service.py` 補齊有/無 Steering Focus 注入的斷言驗證，8 項測試全綠通過。
+
