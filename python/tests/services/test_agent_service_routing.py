@@ -112,3 +112,53 @@ async def test_workflow_engine_fallback_telegram_on_failure(
     assert mock_send_telegram.call_args.kwargs["title_prefix"] == "Daily (Fallback)"
     assert "Raw daily metrics" in mock_send_telegram.call_args.kwargs["content"]
     assert mock_send_telegram.call_args.kwargs["task_id"] == task_id
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.report_service.report_service.send_summary_telegram", new_callable=AsyncMock)
+@patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
+@patch("src.server.services.agent_service.AgentService._award_agent_xp", new_callable=AsyncMock)
+@patch("src.agents.workflow.engine.WorkflowEngine.run_workflow", new_callable=AsyncMock)
+@patch("httpx.AsyncClient.post", new_callable=AsyncMock)
+async def test_workflow_engine_in_process_fallback_on_network_error(
+    mock_post, mock_inproc_run, mock_award_xp, mock_task_service, mock_send_telegram
+):
+    import httpx
+
+    from src.server.services.shared_constants import TaskFeatureEnum
+
+    task_id = "test-task-daily-net-fallback"
+    agent_id = AgentUUIDs.SUPERVISOR
+    mock_task_data = {
+        "id": task_id,
+        "title": "[Daily] Executive Summary",
+        "description": "Daily metrics for fallback",
+        "feature": TaskFeatureEnum.DAILY_EXECUTIVE_SUMMARY,
+    }
+
+    # Simulate HTTP network error to 8052
+    mock_post.side_effect = httpx.ConnectError("Connection refused to archon-agents:8052")
+
+    # In-process engine succeeds
+    mock_inproc_run.return_value = {
+        "success": True,
+        "final_result": "Markdown table executive summary via in-process fallback",
+        "step_count": 4,
+        "messages": [{"role": "Summary", "content": "Markdown table executive summary via in-process fallback"}],
+    }
+
+    agent_service = AgentService()
+    await agent_service._run_workflow_engine_task(task_id, mock_task_data, agent_id)
+
+    # In-process engine must be called
+    mock_inproc_run.assert_awaited_once()
+
+    # Task must be marked done
+    mock_task_service.update_task.assert_awaited_with(task_id, {"status": "done"})
+
+    # Telegram must be sent with success output
+    mock_send_telegram.assert_awaited_once_with(
+        title_prefix="Daily",
+        content="Markdown table executive summary via in-process fallback",
+        task_id=task_id,
+    )

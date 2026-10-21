@@ -139,6 +139,13 @@
     *   **雲端微創落地**: 指揮官直接於 Supabase SQL Editor 執行 `ALTER TABLE public.schema_migrations ENABLE ROW LEVEL SECURITY;`，零資料變更、完全解耦本地端，成功消除資安紅燈。
 *   **終極品質公證網關通關 (`make audit-qa`)**:
     *   9 大關卡全數 100% 亮綠燈：前端雙專案單元測試全數通過、DNS Leak 與 Scroll Lockup 防禦靜態探針通過、後端 Fast 單元與整合測試 **793 passed** (0 failed)、五大角色（David, Alice, Bob, Charlie 與 DevBot/MarketBot/Librarian/POBot/Clockwork）實體冒煙全數 200 OK 通過、Lean 4 定理構建 18 jobs 成功。
+*   **每日星環日報斷層鑑識、In-Process Fallback 自癒實裝與真實物理推播復原 (Fix-Forward)**:
+    *   **深度罪證與斷層定位**: 10/21 16:18 排程觸發日報任務 `17baea70`，但因容器環境與 8052 微服務網路中斷，導致任務卡死在 `status: doing`，且 `task_dispatcher` 過去僅回收 `processing` 狀態，使工單淪為永凍殭屍任務，下游 Telegram 推播靜默失蹤。此外，過去探針腳本在本地進程內直接載入引擎，繞過生產鏈路產生「虛假公證」。
+    *   **Fix-Forward 兩大防線實裝**:
+        1. **In-Process Fallback**: 在 `agent_service._run_workflow_engine_task` 中，當跨容器 HTTP 橋接 `archon-agents:8052` 發生網路異常時，自動回退在同進程內調用 `WorkflowEngine` 完成星環 4 步討論與 Markdown 表格產出，徹底解耦跨容器單點依賴。
+        2. **殭屍任務回收擴展**: 於 `task_dispatcher.py` 將逾時回收判定擴展為 `.in_("status", ["processing", "doing"])`，消除狀態死鎖黑洞。
+        3. **真實生產門禁升級**: 重構 `scripts/probe_daily_pipeline.py`，直接呼叫 `agent_service` 生產鏈路，杜絕旁路作弊。
+    *   **物理驗證與真實交付**: 實體探針成功接管並修復 Task `17baea70`，星環討論順利收斂，任務更新為 `done`，Telegram 每日執行摘要完整推播至指揮官終端。
 
 #### 2026-10-20: Phase 5.12.1 規劃公證、Storage 音檔清理與每日群聊路由契約對齊 (Phase 5.12.1 - Stage 1 & Stage 2)
 
