@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -20,8 +20,8 @@ async def test_save_game_success(game_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.upsert.return_value = mock_query
 
-    mock_execute_query = MagicMock(return_value=(True, {"data": [{"id": "save-1", "user_id": "u1", "save_data": {"funds": 100}, "updated_at": "now"}]}))
-    game_service.execute_query = mock_execute_query
+    mock_execute_query_async = AsyncMock(return_value=(True, {"data": [{"id": "save-1", "user_id": "u1", "save_data": {"funds": 100}, "updated_at": "now"}]}))
+    game_service.execute_query_async = mock_execute_query_async
 
     result = await game_service.save_game("u1", {"funds": 100})
     assert result["id"] == "save-1"
@@ -33,8 +33,8 @@ async def test_save_game_failure(game_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.upsert.return_value = mock_query
 
-    mock_execute_query = MagicMock(return_value=(False, {}))
-    game_service.execute_query = mock_execute_query
+    mock_execute_query_async = AsyncMock(return_value=(False, {}))
+    game_service.execute_query_async = mock_execute_query_async
 
     with pytest.raises(ValueError, match="Failed to save game state"):
         await game_service.save_game("u1", {"funds": 100})
@@ -45,8 +45,8 @@ async def test_load_game_success(game_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
 
-    mock_execute_query = MagicMock(return_value=(True, {"data": [{"save_data": {"funds": 500, "reputation": 10}}]}))
-    game_service.execute_query = mock_execute_query
+    mock_execute_query_async = AsyncMock(return_value=(True, {"data": [{"save_data": {"funds": 500, "reputation": 10}}]}))
+    game_service.execute_query_async = mock_execute_query_async
 
     result = await game_service.load_game("u1")
     assert result is not None
@@ -59,8 +59,8 @@ async def test_load_game_not_found(game_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
 
-    mock_execute_query = MagicMock(return_value=(True, {"data": []}))
-    game_service.execute_query = mock_execute_query
+    mock_execute_query_async = AsyncMock(return_value=(True, {"data": []}))
+    game_service.execute_query_async = mock_execute_query_async
 
     result = await game_service.load_game("u1")
     assert result is None

@@ -108,6 +108,17 @@ class DraftBlogRequest(BaseModel):
     keywords: str | None = None
 
 
+class DraftBlogResponse(BaseModel):
+    title: str = Field(description="Title of the drafted blog post")
+    content: str = Field(description="Full text content of the blog post")
+    excerpt: str | None = Field(default="", description="Short excerpt or summary of the post")
+    status: str | None = Field(default="review", description="Publication or workflow status of the post")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
 class DraftFromLeadsRequest(BaseModel):
     lead_ids: list[str]
 

@@ -35,6 +35,7 @@ help:
 	@echo "  make audit-qa         - Run unified E2E, semantic & static Quality Gateway suite"
 	@echo "  make audit-qa-e2e     - Run destructive E2E suite (Resets Database)"
 	@echo "  make persona-audit    - Performing Global Persona Physical Audit"
+	@echo "  make probe-daily      - 執行每日日報星環流水線物理全鏈路公證探針"
 	@echo "  make twin-scout       - 執行自動偵察 (容器化對帳模式)"
 	@echo "  make twin-scout-action - 執行自動偵察 (本機原生模式)"
 	@echo "  make sync-grounding   - FULL SYSTEM SYNC & REBUILD"
@@ -123,9 +124,16 @@ audit-qa-e2e:
 	@cd enduser-ui-fe && npx playwright test tests/playwright/BudgetWarning.mbt.spec.ts
 	@echo "🎉 [AuditQA-E2E] E2E GATEWAY PASSED."
 
+.PHONY: probe probe-daily
 probe:
 	@echo "Running Librarian Probe inside archon-server..."
 	@docker exec -i archon-server /venv/bin/python -c "from src.server.services.health_service import HealthService; import asyncio; hs = HealthService(); print(asyncio.run(hs.check_rag_integrity()))"
+
+# Run physical probe gate for Daily Executive Summary & Star Topology Pipeline
+probe-daily:
+	@echo "🔍 Running Daily Summary physical probe gate..."
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	cd python && $(UV) run --env-file ../.env python ../scripts/probe_daily_pipeline.py $(ARGS)
 
 # NOTE: The following check target uses syntax that is not compatible with Windows cmd/PowerShell.
 # It will cause an error on Windows systems.

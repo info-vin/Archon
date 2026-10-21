@@ -8,7 +8,6 @@ from ..repositories.base_repository import BaseRepository
 class GameSaveDataDTO(TypedDict, total=False):
     funds: int
     reputation: int
-    # Add other flexible game state fields as needed...
 
 
 class GameSaveResultDTO(TypedDict):
@@ -28,14 +27,14 @@ class GameService(BaseRepository):
             "save_data": save_data,
             "updated_at": "now()",
         })
-        success, res = self.execute_query(query, "Failed to save game state", require_data=True)
-        if not success:
+        success, res = await self.execute_query_async(query, "Failed to save game state", require_data=True)
+        if not success or not res.get("data"):
             raise ValueError("Failed to save game state.")
-        return cast(GameSaveResultDTO, res.get("data", [{}])[0])
+        return cast(GameSaveResultDTO, res["data"][0])
 
     async def load_game(self, user_id: str) -> GameSaveDataDTO | None:
         query = self.supabase_client.table("user_game_saves").select("save_data").eq("user_id", user_id)
-        success, res = self.execute_query(query, "Failed to load game state")
+        success, res = await self.execute_query_async(query, "Failed to load game state")
         if not success:
             raise ValueError("Failed to load game state.")
 
