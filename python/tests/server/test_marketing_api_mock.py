@@ -63,4 +63,4 @@ async def test_generate_logo_tier_fallback():
         }
 
         result = await generate_logo(req=req_obj, current_user=UserProfileDTO(**user) if isinstance(user, dict) else user)
-        assert result["tier"] == "fallback_pollinations"
+        assert result.tier == "fallback_pollinations"
