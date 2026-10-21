@@ -1,6 +1,13 @@
+from typing import NamedTuple
+
 from ..config.logfire_config import get_logger
 
 logger = get_logger(__name__)
+
+
+class GuardrailResultDTO(NamedTuple):
+    is_valid: bool
+    error_message: str | None = None
 
 
 class GuardrailService:
@@ -10,7 +17,7 @@ class GuardrailService:
     """
 
     # Basic keyword blocklist (In a real app, this might come from DB or external service)
-    FORBIDDEN_KEYWORDS = {
+    FORBIDDEN_KEYWORDS: set[str] = {
         "competitor_x",
         "illegal",
         "confidential",
@@ -22,13 +29,13 @@ class GuardrailService:
     }
 
     @classmethod
-    def validate_input(cls, text: str) -> tuple[bool, str | None]:
+    def validate_input(cls, text: str) -> GuardrailResultDTO:
         """
         Check if the input text contains any forbidden keywords.
-        Returns: (is_valid, error_message)
+        Returns: GuardrailResultDTO(is_valid, error_message)
         """
         if not text:
-            return True, None
+            return GuardrailResultDTO(True, None)
 
         text_lower = text.lower()
         for word in cls.FORBIDDEN_KEYWORDS:
@@ -57,12 +64,12 @@ class GuardrailService:
                 except Exception as e:
                     logger.error(f"Failed to log ethics event: {e}")
 
-                return False, f"Input contains forbidden keyword: {word}"
+                return GuardrailResultDTO(False, f"Input contains forbidden keyword: {word}")
 
-        return True, None
+        return GuardrailResultDTO(True, None)
 
     @classmethod
-    def audit_output(cls, generated_text: str, context_text: str = "") -> tuple[bool, str | None]:
+    def audit_output(cls, generated_text: str, context_text: str = "") -> GuardrailResultDTO:
         """
         Audit the generated text for quality issues (e.g., hallucinations).
         For Phase 4.5, we implement a basic heuristic check.
@@ -70,7 +77,7 @@ class GuardrailService:
         Future: Use a lighter LLM (e.g., gpt-3.5-turbo) to verify facts against context.
         """
         if not generated_text:
-            return False, "Generated text is empty."
+            return GuardrailResultDTO(False, "Generated text is empty.")
 
         # Basic Check: If context is provided, ensure at least some overlap?
         # This is tricky for creative writing.
@@ -101,6 +108,6 @@ class GuardrailService:
             except Exception as e:
                 logger.error(f"Failed to log ethics event: {e}")
 
-            return False, "Output contains generic AI disclosure."
+            return GuardrailResultDTO(False, "Output contains generic AI disclosure.")
 
-        return True, None
+        return GuardrailResultDTO(True, None)
