@@ -123,6 +123,23 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+#### 2026-10-22: 104 潛客爬蟲排程斷層鑑識、方案 A（12 小時冷卻制）架構治理與實體公證
+
+*   **104 名單未產出之深度斷層鑑識 (Fault-Line Forensics)**:
+    *   **資料庫對帳**: 實體查詢 Supabase，`leads` 表最新資料停留在 2026-10-18，`archon_settings` 之 `LAST_RUN_ALICE_AUTO_FETCH` 同樣為 10/18 13:06（週日）。
+    *   **致命時間平移 Bug 根因**: `scheduler_service.py` 過去在 `_should_run_opportunistic_weekly` 中採用了 `+ timedelta(days=1)`，將週日（10/18）強行跨週推進為下週一（10/19，ISO 第 43 週）。導致昨天（10/21）開機時被誤判為「第 43 週已跑過」，整整一週被靜默略過 (Skipped)。
+    *   **架構語意衝突**: 觸發器為 `IntervalTrigger(hours=12)`，但守衛門禁卻是每週一次的 `_should_run_opportunistic_weekly`。
+*   **拒絕虛假驗證，方案 A（12 小時冷卻制）架構治理落地**:
+    *   **排程門禁正規化**: 廢除帶有 Bug 的 `_should_run_opportunistic_weekly` 與死代碼 `_should_run_opportunistic_weekly_local_only`。將 `alice_auto_fetch` 的守衛改由 APScheduler 原生 `_should_run_scheduled_job` 接管，並加入雲端環境安全略過保護（`config.space_id is not None`）。
+    *   **適應本地 Docker 開關習慣**: 
+        - 當超過 12 小時未跑（如數天沒開 Docker），開機 5 分鐘後自動觸發抓取；
+        - 當剛跑過不久（在 12 小時冷卻期內）重開 Docker，精準略過避免重複敲擊 104 WAF 與浪費 Token；
+        - 連續開機時每 12 小時自動巡檢。
+*   **真實物理公證 (Zero Fake Verification)**:
+    *   **實體探針驗證**: 執行真實探針直接檢驗更新後的 `_should_run_scheduled_job("alice_auto_fetch")`，回傳結果由原先的 `should_run: False` 100% 轉為 `should_run: True`（理由為空字串，門禁解鎖）。
+    *   **冷卻邊界測試**: 驗證 4 天前（True）、2 小時前（False）、13 小時前（True）三種極端時間邊界皆精準符合預期。
+    *   **測試與代碼品質**: 新增 `test_dag_disconnect.py::test_alice_cooldown_and_catchup_behavior`；`make lint-be` 393 source files 100% 綠燈；`make test-be-fast` 後端 **795 passed** (0 failed)。
+
 #### 2026-10-21: 遠端同步、Docker/HF/排程全景巡檢、Supabase RLS 鑑識與終極品質公證 (make audit-qa)
 
 *   **遠端同步與多端健康物理巡檢 (Multi-Environment Telemetry & Health Probe)**:
