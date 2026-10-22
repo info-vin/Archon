@@ -23,12 +23,15 @@ from src.server.schemas.marketing import (
     LeadResponse,
     LeadUpdateRequest,
     LogoRequest,
+    LogoResponse,
     PitchRequest,
     PitchResponse,
     PromoteLeadRequest,
     PromoteLeadResponse,
     RejectSuggestionRequest,
+    RejectSuggestionResponse,
     ResetLeadsResponse,
+    SubmitBlogResponse,
     VendorResponse,
 )
 from src.server.services.marketing_service import MarketingService
@@ -156,19 +159,22 @@ async def draft_from_leads(
     return DraftFromLeadsResponse(**res)
 
 
-@router.post("/blog/{post_id}/submit")
-async def submit_blog(post_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.post("/blog/{post_id}/submit", response_model=SubmitBlogResponse)
+async def submit_blog(post_id: str, current_user: UserProfileDTO = Depends(get_current_user)) -> SubmitBlogResponse:
     service = MarketingService()
     success, res = await service.submit_blog(post_id)
     if not success:
         _err(str(res.get("error", "Submission failed")), 400)
-    return res
+    return SubmitBlogResponse.model_validate(res)
 
 
-@router.post("/generate-logo")
-async def generate_logo(req: LogoRequest, current_user: dict = Depends(requires_permission(BRAND_ASSET_MANAGE))):
+@router.post("/generate-logo", response_model=LogoResponse)
+async def generate_logo(
+    req: LogoRequest, current_user: dict = Depends(requires_permission(BRAND_ASSET_MANAGE))
+) -> LogoResponse:
     service = MarketingService()
-    return await service.generate_visual_asset(req.style)
+    res = await service.generate_visual_asset(req.style)
+    return LogoResponse.model_validate(res)
 
 
 @router.get("/sources")
@@ -229,13 +235,14 @@ async def get_pending_approvals(current_user: dict = Depends(requires_permission
     return await service.get_pending_approvals()
 
 
-@router.post("/approvals/reject-suggestion")
+@router.post("/approvals/reject-suggestion", response_model=RejectSuggestionResponse)
 async def generate_reject_suggestion(
     req: RejectSuggestionRequest,
     current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
-):
+) -> RejectSuggestionResponse:
     service = MarketingService()
-    return await service.generate_reject_suggestion(req.item_type, req.item_id)
+    res = await service.generate_reject_suggestion(req.item_type, req.item_id)
+    return RejectSuggestionResponse.model_validate(res)
 
 
 @router.post("/approvals/{item_type}/{item_id}/{action}", response_model=ApprovalActionResponse)

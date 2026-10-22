@@ -136,6 +136,35 @@ class ApprovalActionResponse(BaseModel):
     success: bool = Field(description="Indicates whether the approval processing action succeeded")
 
 
+class SubmitBlogResponse(BaseModel):
+    status: str | None = Field(default=None, description="Status of submission")
+    post_id: str | None = Field(default=None, description="Post ID submitted")
+    error: str | None = Field(default=None, description="Error message if submission failed")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class LogoResponse(BaseModel):
+    status: str = Field(description="Status of visual asset generation")
+    image_url: str = Field(description="URL or data string of generated image/logo")
+    tier: str = Field(description="Generation tier used (native, physical_svg, emergency)")
+    svg_content: str | None = Field(default=None, description="Raw SVG content if generated")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class RejectSuggestionResponse(BaseModel):
+    notes: str = Field(description="Suggested feedback or rejection notes")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
 class JobResponse(BaseModel):
     title: str = Field(description="Title of the job posting")
     company: str = Field(description="Company name offering the position")
