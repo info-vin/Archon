@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-21 完成遠端最新 Commit (`97797d17`) 同步；完成 Docker、Hugging Face (RUNNING) 與 Clockwork 週期排程實體全景巡檢；完成 Supabase Security Advisor 之 `public.schema_migrations` RLS 漏洞鑑識並由指揮官在雲端安全啟用；恪守絕對雲原生意識，嚴禁誤觸 `init_db.py` 毀滅性重置；`make audit-qa` 9 大關卡與 793 項後端測試、5 角色冒煙巡檢 100% 成功公證。
+*   **當前狀態 (Current Context)**: 2026-10-22 完成 104 潛客爬蟲排程斷層鑑識，全面落地方案 A（12 小時冷卻制與開機智慧補跑機制，廢除舊週跨度缺陷）；完成 `task_dispatcher.py` 殭屍任務檢索之 SSOT 標註；通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（796 項後端測試全綠通過）與 `make phase-audit`（11 大品質與架構門禁 100% 通過）；完成遠端同步推送 (`80917e6a`)，工作區 clean。
 *   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交推送。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
