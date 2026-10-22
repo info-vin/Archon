@@ -107,20 +107,6 @@ class SchedulerService:
             pass
         return None
 
-    async def _should_run_local_only(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
-        from src.server.config.config import get_config
-        config = get_config()
-        if config.space_id is not None:
-            return False, "Skipped in remote cloud environment"
-        return await self._should_run_daily(job_id, trigger=trigger)
-
-    async def _should_run_opportunistic_weekly_local_only(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
-        from src.server.config.config import get_config
-        config = get_config()
-        if config.space_id is not None:
-            return False, "Skipped in remote cloud environment"
-        return await self._should_run_opportunistic_weekly(job_id, trigger=trigger)
-
     async def _should_run_daily(self, job_id: str, trigger: CronTrigger | None = None) -> tuple[bool, str]:
         now_local = datetime.now(DEFAULT_TIMEZONE)
         if trigger:
@@ -145,20 +131,12 @@ class SchedulerService:
             return False, f"Already run today at {last_run.astimezone(DEFAULT_TIMEZONE).strftime('%H:%M:%S')}"
         return True, ""
 
-    async def _should_run_opportunistic_weekly(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
-        last_run = await self._get_last_run(job_id)
-        if not last_run:
-            return True, ""
-
-        # 修正: ISO 週以週一為起點，若 Catchup 發生在週一，會與下週日同屬一週而導致跳過。
-        # 透過 +1 天將切割線移至週日，確保下週日能正常執行。
-        last_run_shifted = last_run.astimezone(DEFAULT_TIMEZONE) + timedelta(days=1)
-        now_shifted = datetime.now(DEFAULT_TIMEZONE) + timedelta(days=1)
-        if last_run_shifted.isocalendar()[:2] >= now_shifted.isocalendar()[:2]:
-            return False, f"Already run this week at {last_run.astimezone(DEFAULT_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S')}"
-        return True, ""
-
     async def _should_run_scheduled_job(self, job_id: str, trigger: BaseTrigger | None = None) -> tuple[bool, str]:
+        from src.server.config.config import get_config
+        config = get_config()
+        if job_id == "alice_auto_fetch" and config.space_id is not None:
+            return False, "Skipped in remote cloud environment"
+
         last_run = await self._get_last_run(job_id)
         if not last_run:
             return True, ""
@@ -263,7 +241,7 @@ class SchedulerService:
 
         # Category 3: Stateful Weekly / Monthly Jobs
         weekly_h, weekly_m = self._parse_dynamic_hf_time(config, offset_hours=2)
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_opportunistic_weekly, IntervalTrigger(hours=12))
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_scheduled_job, IntervalTrigger(hours=12))
 
         await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_scheduled_job, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE))
 

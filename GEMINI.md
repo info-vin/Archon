@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-21 完成遠端最新 Commit (`97797d17`) 同步；完成 Docker、Hugging Face (RUNNING) 與 Clockwork 週期排程實體全景巡檢；完成 Supabase Security Advisor 之 `public.schema_migrations` RLS 漏洞鑑識並由指揮官在雲端安全啟用；恪守絕對雲原生意識，嚴禁誤觸 `init_db.py` 毀滅性重置；`make audit-qa` 9 大關卡與 793 項後端測試、5 角色冒煙巡檢 100% 成功公證。
+*   **當前狀態 (Current Context)**: 2026-10-22 完成 104 潛客爬蟲排程斷層鑑識，全面落地方案 A（12 小時冷卻制與開機智慧補跑機制，廢除舊週跨度缺陷）；完成 `task_dispatcher.py` 殭屍任務檢索之 SSOT 標註；通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（796 項後端測試全綠通過）與 `make phase-audit`（11 大品質與架構門禁 100% 通過）；完成遠端同步推送 (`80917e6a`)，工作區 clean。
 *   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交推送。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -122,6 +122,23 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-22: 104 潛客爬蟲排程斷層鑑識、方案 A（12 小時冷卻制）架構治理與實體公證
+
+*   **104 名單未產出之深度斷層鑑識 (Fault-Line Forensics)**:
+    *   **資料庫對帳**: 實體查詢 Supabase，`leads` 表最新資料停留在 2026-10-18，`archon_settings` 之 `LAST_RUN_ALICE_AUTO_FETCH` 同樣為 10/18 13:06（週日）。
+    *   **致命時間平移 Bug 根因**: `scheduler_service.py` 過去在 `_should_run_opportunistic_weekly` 中採用了 `+ timedelta(days=1)`，將週日（10/18）強行跨週推進為下週一（10/19，ISO 第 43 週）。導致昨天（10/21）開機時被誤判為「第 43 週已跑過」，整整一週被靜默略過 (Skipped)。
+    *   **架構語意衝突**: 觸發器為 `IntervalTrigger(hours=12)`，但守衛門禁卻是每週一次的 `_should_run_opportunistic_weekly`。
+*   **拒絕虛假驗證，方案 A（12 小時冷卻制）架構治理落地**:
+    *   **排程門禁正規化**: 廢除帶有 Bug 的 `_should_run_opportunistic_weekly` 與死代碼 `_should_run_opportunistic_weekly_local_only`。將 `alice_auto_fetch` 的守衛改由 APScheduler 原生 `_should_run_scheduled_job` 接管，並加入雲端環境安全略過保護（`config.space_id is not None`）。
+    *   **適應本地 Docker 開關習慣**: 
+        - 當超過 12 小時未跑（如數天沒開 Docker），開機 5 分鐘後自動觸發抓取；
+        - 當剛跑過不久（在 12 小時冷卻期內）重開 Docker，精準略過避免重複敲擊 104 WAF 與浪費 Token；
+        - 連續開機時每 12 小時自動巡檢。
+*   **真實物理公證 (Zero Fake Verification)**:
+    *   **實體探針驗證**: 執行真實探針直接檢驗更新後的 `_should_run_scheduled_job("alice_auto_fetch")`，回傳結果由原先的 `should_run: False` 100% 轉為 `should_run: True`（理由為空字串，門禁解鎖）。
+    *   **冷卻邊界測試**: 驗證 4 天前（True）、2 小時前（False）、13 小時前（True）三種極端時間邊界皆精準符合預期。
+    *   **測試與代碼品質**: 新增 `test_dag_disconnect.py::test_alice_cooldown_and_catchup_behavior`；`make lint-be` 393 source files 100% 綠燈；`make test-be-fast` 後端 **795 passed** (0 failed)。
 
 #### 2026-10-21: 遠端同步、Docker/HF/排程全景巡檢、Supabase RLS 鑑識與終極品質公證 (make audit-qa)
 
