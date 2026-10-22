@@ -92,7 +92,7 @@ async def run_task_dispatcher() -> None:
         success, reclaim_res = repo.execute_query(
             supabase.table("archon_tasks") # 合法
             .update({"status": "todo", "updated_at": datetime.now(UTC).isoformat()})
-            .in_("status", ["processing", "doing"])
+            .in_("status", ["processing", "doing"]) # 合法
             .lt("updated_at", threshold),
             "Reclaim zombie tasks"
         )
