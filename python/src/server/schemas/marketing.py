@@ -38,6 +38,28 @@ class LeadResponse(BaseModel):
     }
 
 
+class MarketingStatsResponse(BaseModel):
+    total_leads: int = Field(default=0, description="Total number of leads")
+    total_blog_posts: int = Field(default=0, description="Total number of blog posts")
+    conversion_rate: float = Field(default=0.0, description="Lead conversion rate percentage")
+    active_campaigns: int = Field(default=0, description="Number of active campaigns")
+    last_updated: str | None = Field(default=None, description="ISO timestamp of last update")
+    error: str | None = Field(default=None, description="Error message if stat calculation failed")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class SentinelRunResponse(BaseModel):
+    status: str = Field(description="Status of sentinel scan trigger")
+    message: str = Field(description="Information message regarding sentinel scan execution")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
 class LeadActionResponse(BaseModel):
     lead: LeadResponse = Field(description="The created or updated lead object")
 
