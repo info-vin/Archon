@@ -24,6 +24,7 @@ from src.server.schemas.marketing import (
     LeadUpdateRequest,
     LogoRequest,
     LogoResponse,
+    MarketingStatsResponse,
     PitchRequest,
     PitchResponse,
     PromoteLeadRequest,
@@ -31,6 +32,7 @@ from src.server.schemas.marketing import (
     RejectSuggestionRequest,
     RejectSuggestionResponse,
     ResetLeadsResponse,
+    SentinelRunResponse,
     SubmitBlogResponse,
     VendorResponse,
 )
@@ -197,16 +199,20 @@ async def get_manager_alerts(current_user: dict = Depends(requires_permission(TA
     return await service.get_manager_alerts()
 
 
-@router.post("/manager/sentinel/run")
-async def run_sentinel_manual(current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
+@router.post("/manager/sentinel/run", response_model=SentinelRunResponse)
+async def run_sentinel_manual(
+    current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT)),
+) -> SentinelRunResponse:
     service = MarketingService()
-    return await service.run_sentinel()
+    res = await service.run_sentinel()
+    return SentinelRunResponse.model_validate(res)
 
 
-@router.get("/stats")
-async def get_marketing_stats(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/stats", response_model=MarketingStatsResponse)
+async def get_marketing_stats(current_user: UserProfileDTO = Depends(get_current_user)) -> MarketingStatsResponse:
     service = MarketingService()
-    return await service.get_marketing_stats()
+    res = await service.get_marketing_stats()
+    return MarketingStatsResponse.model_validate(res)
 
 
 @router.get("/trends")
