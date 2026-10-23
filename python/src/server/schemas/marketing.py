@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -32,6 +33,82 @@ class LeadResponse(BaseModel):
     lost_reason: str | None = Field(default=None, description="Reason for losing the lead")
     lost_competitor: str | None = Field(default=None, description="Competitor who won the lost lead")
     tenant_id: UUID | None = Field(default=None, description="Tenant ID")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class CombinedSourceResponse(BaseModel):
+    id: str | None = Field(default=None, description="Source ID")
+    name: str | None = Field(default=None, description="Source name")
+    source_type: str | None = Field(default=None, description="Type of source (e.g., lead, blog)")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class ContentContextResponse(BaseModel):
+    source_id: str = Field(description="ID of the source")
+    source_type: str = Field(description="Type of the source")
+    rag_refs: list[dict[str, Any]] = Field(default_factory=list, description="RAG references retrieved for context")
+    context_summary: str = Field(default="", description="Summary text of the context")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class ManagerAlertResponse(BaseModel):
+    id: str | None = Field(default=None, description="Unique alert ID")
+    level: str | None = Field(default=None, description="Alert level (e.g., ALERT, INFO)")
+    source: str | None = Field(default=None, description="System source of the alert")
+    message: str | None = Field(default=None, description="Alert message body")
+    created_at: str | None = Field(default=None, description="Timestamp when alert was raised")
+    details: dict[str, Any] | None = Field(default=None, description="Additional context metadata")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class MarketingTrendsResponse(BaseModel):
+    weekly_leads: list[int] = Field(default_factory=list, description="Weekly lead acquisition counts")
+    top_industries: list[str] = Field(default_factory=list, description="Top active industries")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class MarketingIntelligenceResponse(BaseModel):
+    total_leads: int = Field(default=0, description="Total number of leads analysed")
+    funnel: dict[str, int] = Field(default_factory=dict, description="Funnel stage counts")
+    distribution: dict[str, int] = Field(default_factory=dict, description="Industry/Role category distribution")
+    metrics: dict[str, Any] = Field(default_factory=dict, description="Key performance metrics")
+    timestamp: str | None = Field(default=None, description="Timestamp of calculation")
+    error: str | None = Field(default=None, description="Error message if calculation failed")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class KnowledgeSeedResponse(BaseModel):
+    status: str | None = Field(default=None, description="Seeding status")
+    items_seeded: int | None = Field(default=None, description="Number of items seeded into knowledge base")
+    message: str | None = Field(default=None, description="Descriptive result message")
+    error: str | None = Field(default=None, description="Error details if seeding failed")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class PendingApprovalsResponse(BaseModel):
+    blogs: list[dict[str, Any]] = Field(default_factory=list, description="Pending blog posts awaiting review")
+    leads: list[dict[str, Any]] = Field(default_factory=list, description="Pending leads awaiting review")
 
     model_config = {
         "from_attributes": True
