@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-22 完成 104 潛客爬蟲排程斷層鑑識，全面落地方案 A（12 小時冷卻制與開機智慧補跑機制，廢除舊週跨度缺陷）；完成 `task_dispatcher.py` 殭屍任務檢索之 SSOT 標註；通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（796 項後端測試全綠通過）與 `make phase-audit`（11 大品質與架構門禁 100% 通過）；完成遠端同步推送 (`80917e6a`)，工作區 clean。
+*   **當前狀態 (Current Context)**: 2026-10-23 完成遠端拉取同步 (`a169b300`，PR #640, #641)；通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（802 項後端測試全綠通過）；完成 Phase 5.11.21 ~ 5.12.1 歷史 Git Log 與排程全景交叉比對；穿透雲端資料庫完成 Clockwork 21 項預期週期作業遙測審計；通過 `make phase-audit` 11 大門禁；工作區 clean。
 *   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交推送。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -122,6 +122,23 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-23: 遠端同步、品質雙門禁公證、歷史斷層深度交叉比對與全系統 21 項週期作業全景遙測
+
+*   **遠端同步與品質門禁雙綠燈 (`make lint` & `make test-be`)**:
+    *   **Git Fast-Forward 同步**: 順利同步拉取遠端最新提交至 `a169b300`（包含 PR #640 `crawler_service` 型別守衛重構與 PR #641 `marketing_stats` API 規範）。
+    *   **靜態與型別校驗**: `make lint` 100% 綠燈，包含前端雙專案 ESLint + TypeScript、後端 `check-no-single`、`ruff`、`mypy`（393 檔案 0 錯誤）以及 Lean 4（18 項定理與規範 100% 構建成功）。
+    *   **後端測試套件**: `make test-be` 後端測試全綠通過，總計 **802 passed**、11 skipped、4 xfailed（0 failed）。
+*   **Phase 5.11.21 ~ Phase 5.12.1 歷史 Git Log 與排程全景交叉比對**:
+    *   **戒除主觀盲猜，恪守歷史脈絡**: 深入查閱 `git log` 與歷史重大事件（如 09/20 429 配額危機、10/21 日報容器斷線），理解代碼在第一線維運中的防禦性設計權衡（如 In-Process Fallback 分層安全網、確定性破冰信模板杜絕 429 死亡循環、Admin UI 動態 Settings 渲染機制）。
+*   **Clockwork 週期排程實體全景遙測與 21 項作業深度穿透對帳**:
+    *   **雲端 Space 狀態**: 實體驗證 Hugging Face Space (`chiawei6/myrmidon`) 處於 `RUNNING` (Stage: `READY`)，`/api/health` 順利回傳 200 OK。
+    *   **全系統 4 大類別 21 項作業實體對帳**:
+        - 高頻無狀態巡檢（`system_probe`、`model_verification`、`log_patrol`、`task_dispatcher`、`meta_twin_audit`）每小時穩定回傳，夜間自動切換 `[Sleep Mode]`。
+        - 每日有狀態作業（`business_sentinel` 今日 08:40 已準時執行完畢，`system_probe_cleanup`、`prune_stale_leads`、`daily_executive_summary`、`token_analysis` 排程目標正常待執行）。
+        - 週期性作業（10/22 Alice 首跑入庫 5 筆潛客並完成 RAG 相似度計分，Bob 市場情報事件聯動成功觸發；週日維護作業歷史工單與錨點打卡完整閉環）。
+*   **階段目標完整性稽核通關 (`make phase-audit`)**:
+    *   清理 stale `git fsmonitor--daemon` 幽靈快取，工作區 100% Clean；11 大架構、SSOT、Repository 隔離與 Jules 壓縮門禁全數 100% 綠燈通過。
 
 #### 2026-10-22: 104 潛客爬蟲排程斷層鑑識、方案 A（12 小時冷卻制）架構治理與實體公證
 
