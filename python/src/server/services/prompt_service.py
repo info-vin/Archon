@@ -1,8 +1,10 @@
 # python/src/server/services/prompt_service.py
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, NotRequired, TypedDict, cast
 from unittest.mock import MagicMock
+
+from supabase import Client
 
 from src.server.prompts import ALL_PROMPTS
 from src.server.repositories.base_repository import BaseRepository
@@ -11,14 +13,26 @@ from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
+
+
+class PromptItemDTO(TypedDict):
+    prompt_name: str
+    prompt: str
+    description: NotRequired[str | None]
+    category: NotRequired[str | None]
+    metadata: NotRequired[dict[str, Any] | None]
+    created_at: NotRequired[str]
+    updated_at: NotRequired[str]
+
+
 class PromptListDTO(TypedDict):
-    data: NotRequired[list[dict[str, Any]]]
-    prompts: NotRequired[list[dict[str, Any]]]
+    data: NotRequired[list[PromptItemDTO]]
+    prompts: NotRequired[list[PromptItemDTO]]
     error: NotRequired[str]
 
 
 class PromptUpdateDTO(TypedDict):
-    data: NotRequired[list[dict[str, Any]]]
+    data: NotRequired[list[PromptItemDTO]]
     count: NotRequired[int]
     error: NotRequired[str]
 
@@ -30,7 +44,7 @@ class PromptService(BaseRepository):
     _prompts: dict[str, str] = {}
     _last_loaded: datetime | None = None
 
-    def __init__(self, supabase_client: Any = None) -> None:
+    def __init__(self, supabase_client: Client | None = None) -> None:
         super().__init__(supabase_client or get_supabase_client())
 
     @classmethod
@@ -43,17 +57,18 @@ class PromptService(BaseRepository):
     async def load_prompts(self) -> None:
         """Mock-compatible method for tests to simulate loading and sync."""
         success, res = await self.list_prompts()
-        db_prompts = {}
+        db_prompts: dict[str, str] = {}
         if success:
             for p in res.get("prompts", []):
                 # DB schema: prompt_name, prompt
                 text = p.get("prompt")
                 if text:
-                    db_prompts[p.get("prompt_name", "")] = text
-                    self._prompts[p.get("prompt_name", "")] = text
+                    prompt_name = p.get("prompt_name", "")
+                    db_prompts[prompt_name] = text
+                    self._prompts[prompt_name] = text
 
         # Auto-upsert missing Baseline Prompts to Supabase
-        upsert_batch = []
+        upsert_batch: list[dict[str, str]] = []
         for name, content in ALL_PROMPTS.items():
             if name not in db_prompts:
                 upsert_batch.append({"prompt_name": name, "prompt": content})
@@ -63,18 +78,20 @@ class PromptService(BaseRepository):
             success, _ = self.execute_query(
                 self.supabase_client.table("archon_prompts").upsert(upsert_batch, on_conflict="prompt_name"),
                 "Auto-upsert baseline prompts",
-                max_retries=3
+                max_retries=3,
             )
             if success:
                 logger.info(f"✅ Auto-upserted {len(upsert_batch)} baseline prompts to Supabase.")
             else:
-                logger.warning("⚠️ Failed to auto-upsert prompts (DB Connection Error). Application will continue with Baseline cache.")
+                logger.warning(
+                    "⚠️ Failed to auto-upsert prompts (DB Connection Error). Application will continue with Baseline cache."
+                )
 
-        self._last_loaded = datetime.utcnow()
+        self._last_loaded = datetime.now(UTC)
 
     async def list_prompts(self) -> tuple[bool, PromptListDTO]:
         """List all system prompts from the database."""
-        query = self.supabase_client.table("archon_prompts").select("*") # 合法
+        query = self.supabase_client.table("archon_prompts").select("*")  # 合法
         success, result = self.execute_query(query, "Failed to list prompts")
         if success:
             return True, cast(PromptListDTO, {"prompts": result.get("data", [])})
@@ -90,23 +107,25 @@ class PromptService(BaseRepository):
             # Fallback to direct DB call in case it was added after startup
             success, res = self.execute_query(
                 self.supabase_client.table("archon_prompts").select("prompt").eq("prompt_name", name),
-                "Fetch prompt fallback"
+                "Fetch prompt fallback",
             )
 
             # DEFENSIVE: Check if res.get("data") is a real dict/list and not a MagicMock
-            data = res.get("data")
-            if success and data and not isinstance(data, MagicMock) and len(data) > 0:
-                text = data[0].get("prompt")
-                if text:
-                    self._prompts[name] = str(text)  # Cache it to prevent future misses
-                    return str(text)
+            data = res.get("data") if isinstance(res, dict) else None
+            if success and data and not isinstance(data, MagicMock) and isinstance(data, list) and len(data) > 0:
+                item = data[0]
+                if isinstance(item, dict):
+                    text = item.get("prompt")
+                    if text:
+                        self._prompts[name] = str(text)  # Cache it to prevent future misses
+                        return str(text)
         except Exception:
             pass
 
         # SSOT Fallback (Prevent cache defeat)
         if name in ALL_PROMPTS:
             fallback = ALL_PROMPTS[name]
-            self._prompts[name] = fallback # Prevent future misses
+            self._prompts[name] = fallback  # Prevent future misses
             return fallback
 
         # Silent Degradation Defense: Log if missing completely
@@ -114,7 +133,12 @@ class PromptService(BaseRepository):
         return default or "You are a helpful AI assistant."
 
     async def update_prompt(
-        self, prompt_name: str, content: str, description: str | None = None, category: str | None = None, metadata: dict[str, Any] | None = None
+        self,
+        prompt_name: str,
+        content: str,
+        description: str | None = None,
+        category: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> tuple[bool, PromptUpdateDTO]:
         """Update a system prompt."""
         update_data: dict[str, Any] = {"prompt": content}
@@ -125,7 +149,7 @@ class PromptService(BaseRepository):
         if metadata is not None:
             update_data["metadata"] = metadata
 
-        query = self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name) # 合法
+        query = self.supabase_client.table("archon_prompts").update(update_data).eq("prompt_name", prompt_name)  # 合法
         success, result = self.execute_query(query, f"Failed to update prompt {prompt_name}")
 
         if success:
