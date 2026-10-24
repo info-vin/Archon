@@ -11,3 +11,7 @@
 ## 3. Align Route Schemas with Service DTOs
 **Learning:** Defining loose `list[dict[str, Any]]` fields in Pydantic route schemas when the service returns strict `TypedDict` DTOs causes MyPy invariance errors (`Incompatible types in assignment`).
 **Action:** Import and reference the exact `TypedDict` DTOs from the service layer inside Pydantic response models, or cast at the boundary when needed.
+
+## 2025-05-18 - Preserving Sparse Dict Response Structures with response_model_exclude_none
+**Learning:** When hardening FastAPI routes returning partial dict items or sparse ORM records with explicit Pydantic response models, FastAPI includes all unpopulated model fields as `null` in the JSON response by default, which can break frontend expectation or strict test assertions on sparse JSON shapes.
+**Action:** Add `response_model_exclude_none=True` on the FastAPI route decorator when returning Pydantic models with optional fields where missing attributes should be omitted rather than serialized as `null`.

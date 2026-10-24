@@ -211,14 +211,27 @@ class ProjectListResponse(BaseModel):
     count: int = Field(description="Total count of projects returned")
 
 
+class DocumentVersionItem(BaseModel):
+    id: str | None = Field(default=None, description="Version ID")
+    project_id: str | None = Field(default=None, description="Project ID")
+    document_id: str | None = Field(default=None, description="Document ID")
+    field_name: str | None = Field(default=None, description="Field name modified")
+    content: dict[str, Any] | None = Field(default=None, description="Version content payload")
+    version_number: int | None = Field(default=None, description="Version number")
+    change_summary: str | None = Field(default=None, description="Summary of changes")
+    change_type: str | None = Field(default=None, description="Type of change (update, restore, etc.)")
+    created_by: str | None = Field(default=None, description="User or system that created the version")
+    created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
+
+
 class VersionListResponse(BaseModel):
-    versions: list[dict[str, Any]] = Field(description="List of document versions")
+    versions: list[DocumentVersionItem] = Field(default_factory=list, description="List of document versions")
     total_count: int = Field(description="Total number of versions")
 
 
 class CreateVersionResponse(BaseModel):
     message: str = Field(description="Status message")
-    version: dict[str, Any] | None = Field(default=None, description="Created version object")
+    version: DocumentVersionItem | None = Field(default=None, description="Created version object")
 
 
 class RestoreVersionResponse(BaseModel):
