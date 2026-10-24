@@ -32,7 +32,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
             title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
             aria-pressed={isDarkMode}
         >
-            {isDarkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+            {isDarkMode ? <SunIcon className="w-5 h-5" aria-hidden="true" /> : <MoonIcon className="w-5 h-5" aria-hidden="true" />}
         </button>
     );
 };
