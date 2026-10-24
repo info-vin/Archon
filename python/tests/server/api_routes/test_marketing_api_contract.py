@@ -31,8 +31,23 @@ def mock_rbac_service():
 
 def test_get_combined_sources_contract(client):
     mock_sources = [
-        {"id": "src-1", "name": "Source One", "source_type": "lead"},
-        {"id": "src-2", "name": "Source Two", "source_type": "blog"},
+        {
+            "id": "src-1",
+            "type": "lead",
+            "title": "樸真國際股份有限公司",
+            "score": 74,
+            "summary": "工廠流程自動化 × 中台系統整合",
+            "date": "2026-10-22T05:06:16Z",
+        },
+        {
+            "id": "src-2",
+            "type": "blog",
+            "title": "AI 轉型爆發期",
+            "score": 85,
+            "summary": "企業 AI 導入案例",
+            "date": "2026-10-20T03:00:00Z",
+            "status": "draft",
+        },
     ]
 
     with patch("src.server.api_routes.marketing_api.MarketingService") as mock_service_cls:
@@ -46,8 +61,11 @@ def test_get_combined_sources_contract(client):
         assert isinstance(data, list)
         assert len(data) == 2
         assert data[0]["id"] == "src-1"
-        assert data[0]["name"] == "Source One"
-        assert data[0]["source_type"] == "lead"
+        assert data[0]["type"] == "lead"
+        assert data[0]["title"] == "樸真國際股份有限公司"
+        assert data[0]["score"] == 74
+        assert data[0]["summary"] == "工廠流程自動化 × 中台系統整合"
+        assert data[1]["status"] == "draft"
 
 
 def test_get_manager_alerts_contract(client):
@@ -71,8 +89,11 @@ def test_get_manager_alerts_contract(client):
 
 def test_get_marketing_trends_contract(client):
     mock_trends = {
-        "weekly_leads": [5, 10, 15],
-        "top_industries": ["AI/ML", "Healthcare"],
+        "keyword_growth": [{"month": "2026-10", "AI Agent": 42, "RAG": 35}],
+        "sankey_flow": {
+            "nodes": [{"name": "104 爬蟲"}, {"name": "合格潛客"}],
+            "links": [{"source": 0, "target": 1, "value": 12}],
+        },
     }
 
     with patch("src.server.api_routes.marketing_api.MarketingService") as mock_service_cls:
@@ -83,8 +104,8 @@ def test_get_marketing_trends_contract(client):
 
         assert response.status_code == 200
         data = response.json()
-        assert data["weekly_leads"] == [5, 10, 15]
-        assert data["top_industries"] == ["AI/ML", "Healthcare"]
+        assert data["keyword_growth"] == [{"month": "2026-10", "AI Agent": 42, "RAG": 35}]
+        assert data["sankey_flow"]["nodes"][0]["name"] == "104 爬蟲"
 
 
 def test_get_marketing_intelligence_contract(client):
@@ -111,9 +132,11 @@ def test_get_marketing_intelligence_contract(client):
 
 def test_seed_knowledge_base_contract(client):
     mock_res = {
-        "status": "success",
-        "items_seeded": 10,
-        "message": "Knowledge base seeded successfully",
+        "status": "completed",
+        "scanned_dir": "/app/frontend_public/aus/156_resource",
+        "total_files": 12,
+        "indexed_count": 10,
+        "errors": [],
     }
 
     with patch("src.server.api_routes.marketing_api.MarketingService") as mock_service_cls:
@@ -124,8 +147,11 @@ def test_seed_knowledge_base_contract(client):
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "success"
-        assert data["items_seeded"] == 10
+        assert data["status"] == "completed"
+        assert data["scanned_dir"] == "/app/frontend_public/aus/156_resource"
+        assert data["total_files"] == 12
+        assert data["indexed_count"] == 10
+        assert data["errors"] == []
 
 
 def test_get_pending_approvals_contract(client):

@@ -352,4 +352,67 @@ async def test_execute_map_reduce_summary_without_management_steering_focus(
     assert "### 🎯 管理者戰略關注焦點" not in prompt_content
 
 
+def test_get_leads_context_enrichment_with_qualified_pool_and_blogs():
+    """
+    Verify _get_leads_context includes lead scores, pain points, active qualified leads pool,
+    and Bob's marketing blog pipeline so the daily summary has concrete business substance.
+    """
+    mock_supabase = MagicMock()
+    report_service.supabase_client = mock_supabase
+
+    new_leads_res = MagicMock(
+        data=[
+            {
+                "company_name": "樸真國際股份有限公司",
+                "job_title": "AI 應用工程師",
+                "status": "qualified",
+                "enrichment_score": 74,
+                "identified_need": "工廠流程自動化 × 中台系統整合",
+            }
+        ]
+    )
+    qualified_pool_res = MagicMock(
+        data=[
+            {
+                "company_name": "潤御開發有限公司",
+                "job_title": "兼職 AI 應用開發工程師",
+                "status": "qualified",
+                "enrichment_score": 74,
+                "identified_need": "OpenAI API / LLM / RAG 知識庫建置",
+            }
+        ]
+    )
+    blogs_res = MagicMock(
+        data=[
+            {
+                "title": "🚀 AI狂潮席捲傳統產業！",
+                "status": "draft",
+                "ai_score": 85,
+            }
+        ]
+    )
+
+    def mock_table(name: str):
+        t = MagicMock()
+        if name == "leads":
+            t.select.return_value.gt.return_value.execute.return_value = new_leads_res
+            t.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = (
+                qualified_pool_res
+            )
+        elif name == "blog_posts":
+            t.select.return_value.order.return_value.limit.return_value.execute.return_value = blogs_res
+        return t
+
+    mock_supabase.table.side_effect = mock_table
+
+    summary = report_service._get_leads_context("2026-10-23T00:00:00Z")
+    assert "樸真國際股份有限公司 (AI 應用工程師) -> qualified [Score: 74]" in summary
+    assert "痛點: 工廠流程自動化 × 中台系統整合" in summary
+    assert "Active Qualified Leads Pool" in summary
+    assert "潤御開發有限公司" in summary
+    assert "Marketing Content Pipeline" in summary
+    assert "🚀 AI狂潮席捲傳統產業！ -> status: draft [AI Score: 85]" in summary
+
+
+
 

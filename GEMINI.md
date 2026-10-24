@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-23 完成遠端拉取同步 (`a169b300`，PR #640, #641)；通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（802 項後端測試全綠通過）；完成 Phase 5.11.21 ~ 5.12.1 歷史 Git Log 與排程全景交叉比對；穿透雲端資料庫完成 Clockwork 21 項預期週期作業遙測審計；通過 `make phase-audit` 11 大門禁；工作區 clean。
+*   **當前狀態 (Current Context)**: 2026-10-24 完成過去一個月虛假開發與虛假驗證四大斷層清剿：修復 PR #632/#639/#644 幻覺 Pydantic Schema（`CombinedSourceResponse`、`MarketingTrendsResponse`、`KnowledgeSeedResponse`、`SubmitBlogResponse`）；校準 `job_board_service.py` 潛客合格門檻為 `score >= 72` 並復原雲端 4 筆高分潛客為 `qualified`；擴充 `report_service.py`（精簡至 355 行）納入潛客分數、痛點、Active Qualified Pool、Bob `blog_posts` 與 `MANAGEMENT_STEERING_FOCUS`；同步全量 `ALL_PROMPTS` 至雲端 `archon_prompts` 並加固 `SummaryNode` 客觀數據基準，重新執行今日日報並實體推播至 Telegram；通過 `make lint`、`make test-be-fast`（808 passed）與 `make phase-audit` 11 大門禁。
 *   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交推送。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -122,6 +122,21 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-24: 過去一個月虛假開發四大斷層深度清剿、PR #644 幻覺 Schema 修復與星環商業日報全鏈路校正
+
+*   **過去一個月 `git log` 虛假開發與虛假驗證四大罪狀鑑識 (Fault-Line Forensics)**:
+    *   **罪狀一：修改代碼 Prompt 卻從未更新雲端 DB (`archon_prompts`)**: `PromptService.load_prompts()` 僅在 DB 缺漏 key 時新增，不會覆蓋既有紀錄。過去一個月多次修改 `pm_prompts.py` 卻未同步雲端，導致雲端與本地多達 19 個 Prompt 嚴重脫節。
+    *   **罪狀二：硬編碼 `score >= 75` 造成 100% 潛客靜默封存死鎖 (`70fccdbd`)**: `gemini-embedding-001` 針對 104 頂尖 AI/自動化職缺的真實餘弦相似度最高落在 `72~74` 分（樸真國際 74、潤御開發 74、得億國際 73、秋雨創新 72），硬編碼 `>= 75` 導致所有潛客入庫即被打入 `archived`，下游 `bob_market_report` 永遠查無合格名單。
+    *   **罪狀三：`ReportService` 數據餵養殘缺與職責混淆**: `gather_report_context` 漏傳潛客評分 (`enrichment_score`)、痛點 (`identified_need`)、合格潛客池 (`Active Qualified Leads Pool`) 與 Bob 的 `blog_posts` 內容管線，且日報漏接 `MANAGEMENT_STEERING_FOCUS`，導致星環討論退化為泛泛空談並把 Alice/Bob 職責混為一談。
+    *   **罪狀四：幻覺 `response_model` 與假 Mock 測試 (`55f28352` PR #632, `4add34f9` PR #639, `9afda75b` PR #644)**: 在未對照 `analytics_handler.py`、`blog_generator.py` 與前端元件的情況下，憑空捏造 `CombinedSourceResponse`、`MarketingTrendsResponse`、`KnowledgeSeedResponse` 與 `SubmitBlogResponse`，導致真實 API 回傳欄位被 FastAPI 靜默剝除或拋出 HTTP 500。
+*   **四向物理修復與雲端資料庫同步 (Fix-Forward & Cloud DB Sync)**:
+    *   **行銷 API Schema 物理對齊**: 於 [marketing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/marketing.py) 與 [marketing_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/marketing_service.py) 完整對齊前端 `VictoryFeedList.tsx`、`BrandDashboardView.tsx` 與後端 Handler 欄位，並更新 [test_marketing_api_contract.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/server/api_routes/test_marketing_api_contract.py) 以真實輸出結構進行嚴格斷言。
+    *   **潛客門檻校準與雲端數據復原**: 於 [job_board_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/job_board_service.py) 將合格門檻調為 `score >= 72`，並將雲端 Supabase `leads` 表中 `>= 72` 分的 4 家高潛力企業復原為 `qualified`。
+    *   **日報上下文擴充與巨型檔案精簡**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py)（精簡至 **355 行**，低於 360 行預警線）補齊潛客分數、痛點、合格潛客池、Bob 部落格文章管線與 `MANAGEMENT_STEERING_FOCUS`；於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 之 `SummaryNode` 注入原始客觀數據基準；將 `ALL_PROMPTS` 100% 同步 Upsert 至雲端 `archon_prompts`（驗證 0 drift）。
+*   **真實端到端重跑與 11 大品質門禁公證**:
+    *   **實體重跑與 Telegram 推播**: 重新執行今日日報工單 `1970fc36-ad11-4d45-b2d0-1175c1e2e60c` 並實體推播至 Telegram，完整呈現 4 家合格潛客痛點表格、Bob 部落格草稿進度與明確角色分工。
+    *   **全門禁綠燈**: 通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be-fast`（**808 passed**, 0 failed）與 `make phase-audit` 11 大門禁全綠。
 
 #### 2026-10-23: 遠端同步、品質雙門禁公證、歷史斷層深度交叉比對與全系統 21 項週期作業全景遙測
 

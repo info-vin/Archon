@@ -40,9 +40,15 @@ class LeadResponse(BaseModel):
 
 
 class CombinedSourceResponse(BaseModel):
-    id: str | None = Field(default=None, description="Source ID")
-    name: str | None = Field(default=None, description="Source name")
-    source_type: str | None = Field(default=None, description="Type of source (e.g., lead, blog)")
+    id: str | UUID | None = Field(default=None, description="Source ID")
+    type: str | None = Field(default=None, description="Type of source (lead, task, blog)")
+    title: str | None = Field(default=None, description="Display title or company name")
+    score: int | float = Field(default=0, description="Relevance or AI score")
+    summary: str = Field(default="", description="Short summary or excerpt")
+    date: datetime | str | None = Field(default=None, description="Creation timestamp")
+    status: str | None = Field(default=None, description="Workflow status (for blogs)")
+    name: str | None = Field(default=None, description="Optional legacy alias for source name")
+    source_type: str | None = Field(default=None, description="Optional legacy alias for source type")
 
     model_config = {
         "from_attributes": True
@@ -74,8 +80,10 @@ class ManagerAlertResponse(BaseModel):
 
 
 class MarketingTrendsResponse(BaseModel):
-    weekly_leads: list[int] = Field(default_factory=list, description="Weekly lead acquisition counts")
-    top_industries: list[str] = Field(default_factory=list, description="Top active industries")
+    keyword_growth: list[dict[str, Any]] = Field(default_factory=list, description="Keyword growth trend series")
+    sankey_flow: dict[str, Any] = Field(default_factory=dict, description="Sankey conversion flow graph data")
+    weekly_leads: list[int] = Field(default_factory=list, description="Optional weekly lead acquisition counts")
+    top_industries: list[str] = Field(default_factory=list, description="Optional top active industries")
 
     model_config = {
         "from_attributes": True
@@ -97,7 +105,11 @@ class MarketingIntelligenceResponse(BaseModel):
 
 class KnowledgeSeedResponse(BaseModel):
     status: str | None = Field(default=None, description="Seeding status")
-    items_seeded: int | None = Field(default=None, description="Number of items seeded into knowledge base")
+    scanned_dir: str | None = Field(default=None, description="Directory scanned for knowledge files")
+    total_files: int | None = Field(default=None, description="Total markdown/text files discovered")
+    indexed_count: int | None = Field(default=None, description="Number of files successfully indexed")
+    errors: list[str] = Field(default_factory=list, description="List of per-file indexing errors")
+    items_seeded: int | None = Field(default=None, description="Optional alias for number of items seeded")
     message: str | None = Field(default=None, description="Descriptive result message")
     error: str | None = Field(default=None, description="Error details if seeding failed")
 
@@ -237,6 +249,7 @@ class ApprovalActionResponse(BaseModel):
 
 class SubmitBlogResponse(BaseModel):
     status: str | None = Field(default=None, description="Status of submission")
+    ai_score: int | None = Field(default=None, description="Calculated AI quality score")
     post_id: str | None = Field(default=None, description="Post ID submitted")
     error: str | None = Field(default=None, description="Error message if submission failed")
 

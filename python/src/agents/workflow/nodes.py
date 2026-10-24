@@ -201,7 +201,7 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
         )
         is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
         task_instruction = (
-            "請針對對話歷史中提供的昨日 sales 與 leads 轉換指標進行商業評估與簡短分析。"
+            "請針對對話歷史中的商業開發線索（含當日新增與待跟進 Qualified 潛客庫存之具體企業名稱與轉型痛點）以及行銷部落格文章管線進行商務分析（注意：Alice 為業務開發、Bob 為內容行銷，請勿顛倒角色，亦勿代替其他成員發言）："
             if is_daily
             else "Based on history, provide the marketing copy."
         )
@@ -279,7 +279,7 @@ class DevBotNode(BaseNode[SharedState, None, str]):
         task_type = ctx.state.task_type
         is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
         task_instruction = (
-            "請針對對話歷史中昨日的系統健康狀態、API 警告、token 消耗及估計成本進行技術分析。"
+            "請針對對話歷史中昨日的系統健康狀態、API 警告、token 消耗及估計成本進行技術分析（請直接輸出 Markdown 表格與分析結論，禁止輸出 Python 程式碼區塊）："
             if is_daily
             else "Task from Supervisor:"
         )
