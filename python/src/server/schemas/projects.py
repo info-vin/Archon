@@ -165,6 +165,33 @@ class CreateTaskResponse(BaseModel):
     task: TaskDetails | None = Field(default=None, description="Created task details")
 
 
+class DocumentStats(BaseModel):
+    version_count: int | None = Field(default=None, description="Document version count")
+    content_size: int | None = Field(default=None, description="Document content size in bytes")
+
+
+class DocumentItemResponse(BaseModel):
+    id: str | None = Field(default=None, description="Document ID")
+    type: str | None = Field(default=None, description="Document type")
+    title: str | None = Field(default=None, description="Document title")
+    content: dict[str, Any] | None = Field(default=None, description="Document content dictionary")
+    author: str | None = Field(default=None, description="Document author")
+    tags: list[str] | None = Field(default_factory=list, description="Document tags")
+    created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
+    updated_at: str | datetime | None = Field(default=None, description="Last update timestamp")
+    version: int | None = Field(default=1, description="Document version number")
+    stats: DocumentStats | None = Field(default=None, description="Document statistics")
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentItemResponse] = Field(default_factory=list, description="List of project documents")
+
+
+class CreateDocumentResponse(BaseModel):
+    message: str = Field(description="Status message")
+    document: DocumentItemResponse | None = Field(default=None, description="Created document details")
+
+
 class CreateDocumentRequest(BaseModel):
     document_type: str
     title: str
