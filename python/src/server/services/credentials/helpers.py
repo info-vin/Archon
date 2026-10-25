@@ -1,11 +1,15 @@
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+
+from .models import CredentialStatusDict
 
 if TYPE_CHECKING:
     from .manager import CredentialManager
 
 
-async def check_credentials_exist(manager: "CredentialManager", keys: list[str]) -> dict[str, dict[str, Any]]:
+async def check_credentials_exist(
+    manager: "CredentialManager", keys: list[str]
+) -> dict[str, CredentialStatusDict]:
     """
     Check if a list of credentials exist and have a value.
     Returns a dictionary with the status for each key.
@@ -13,7 +17,7 @@ async def check_credentials_exist(manager: "CredentialManager", keys: list[str])
     if not manager._cache_initialized:
         await manager.load_all_credentials()
 
-    statuses = {}
+    statuses: dict[str, CredentialStatusDict] = {}
     for key in keys:
         value = manager._cache.get(key)
         has_value = False

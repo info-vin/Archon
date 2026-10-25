@@ -15,3 +15,7 @@
 ## 4. Preserve SSOT Audit Markers (# 合法) and Verify with Full Sync
 **Learning:** Removing `# 合法` comments on exempted literals causes `make phase-audit` (Step 8 SSOT check) to fail, and running `pytest` without syncing all dependency groups causes false import errors.
 **Action:** Never strip existing `# 合法` SSOT markers during type refactors, and always run `uv sync --all-groups` followed by `mypy src --ignore-missing-imports` to verify zero regressions across all source files.
+
+## 2026-05-18 - TypedDict DTOs for Multi-Category Credential Caching
+**Learning:** In credential management services, raw dictionary caches store both plain string settings and encrypted credential metadata objects. Using a union of `TypedDict` DTOs (e.g. `dict[str, Any | EncryptedCredentialDict]`) prevents type check errors while maintaining 100% runtime compatibility with subscripting callers.
+**Action:** Define distinct `TypedDict` structures for internal encrypted values versus masked public responses rather than returning generic `dict[str, Any]`.
