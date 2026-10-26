@@ -11,9 +11,12 @@ from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.projects import (
     AssignableUser,
     CreateDocumentRequest,
+    CreateDocumentResponse,
     CreateProjectRequest,
     CreateProjectResponse,
     DeleteProjectResponse,
+    DocumentItemResponse,
+    DocumentListResponse,
     ProjectDetailResponse,
     ProjectListResponse,
     UpdateProjectRequest,
@@ -205,28 +208,36 @@ async def get_project_features(project_id: str, current_user: UserProfileDTO = D
     return handle_service_result(s, cast(Any, res))
 
 
-@router.get("/projects/{project_id}/docs")
+@router.get("/projects/{project_id}/docs", response_model=DocumentListResponse)
 async def list_project_documents(
     project_id: str, include_content: bool = False, current_user: UserProfileDTO = Depends(get_current_user)
-):
+) -> DocumentListResponse:
     s, res = DocumentService().list_documents(project_id, include_content)
-    return handle_service_result(s, cast(Any, res))
+    result_dict = cast(dict[str, Any], handle_service_result(s, cast(Any, res)))
+    return DocumentListResponse(**result_dict)
 
 
-@router.post("/projects/{project_id}/docs")
+@router.post("/projects/{project_id}/docs", response_model=CreateDocumentResponse)
 async def create_project_document(
     project_id: str, req: CreateDocumentRequest, current_user: UserProfileDTO = Depends(get_current_user)
-):
+) -> CreateDocumentResponse:
     s, res = DocumentService().add_document(project_id=project_id, **req.model_dump())
-    return {
-        "message": "Document created successfully",
-        "document": cast(dict[str, Any], handle_service_result(s, cast(Any, res))).get("document"),
-    }
+    created_doc = cast(dict[str, Any], handle_service_result(s, cast(Any, res))).get("document")
+    doc_model = DocumentItemResponse(**created_doc) if isinstance(created_doc, dict) else None
+    return CreateDocumentResponse(
+        message="Document created successfully",
+        document=doc_model,
+    )
 
 
-@router.get("/projects/{project_id}/docs/{doc_id}")
-async def get_project_document(project_id: str, doc_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/projects/{project_id}/docs/{doc_id}", response_model=DocumentItemResponse)
+async def get_project_document(
+    project_id: str, doc_id: str, current_user: UserProfileDTO = Depends(get_current_user)
+) -> DocumentItemResponse:
     s, res = DocumentService().get_document(project_id, doc_id)
     if not s or not isinstance(res, dict):
         _err(res, 404 if "not found" in str(res).lower() else 500)
-    return res.get("document")
+    doc = res.get("document")
+    if not doc or not isinstance(doc, dict):
+        _err("Document not found", 404)
+    return DocumentItemResponse(**doc)
