@@ -22,7 +22,7 @@ def test_workflow_constants_and_prompts():
 @patch("src.agents.workflow.nodes._run_agent_with_retry")
 def test_supervisor_node_normalized_flow_matching(mock_run_agent, mock_agent_class, mock_getenv, mock_get_supabase):
     """Test that SupervisorNode matches 'Daily Executive Summary' regardless of case or underscores."""
-    mock_getenv.return_value = "gemini-3.5-flash-lite"
+    mock_getenv.return_value = None
 
     mock_supabase = MagicMock()
     mock_get_supabase.return_value = mock_supabase
@@ -67,9 +67,10 @@ def test_supervisor_node_normalized_flow_matching(mock_run_agent, mock_agent_cla
             end_result = asyncio.run(node.run(ctx))
             assert end_result is not None
 
-            # Verify that agent was initialized with WORKFLOW_SUPERVISOR_DAILY
+            # Verify that agent was initialized with WORKFLOW_SUPERVISOR_DAILY and SUPERVISOR_MODEL (gemini-3.6-flash)
             mock_agent_class.assert_called_once()
             call_kwargs = mock_agent_class.call_args[1]
+            assert call_kwargs["model"] == "gemini-3.6-flash"
             assert "Charlie" in call_kwargs["system_prompt"]
             assert "每日執行摘要" in call_kwargs["system_prompt"]
             assert state.final_result == "Workflow completed successfully."

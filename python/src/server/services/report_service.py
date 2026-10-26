@@ -207,13 +207,10 @@ class ReportService(BaseRepository):
         if not success or not isinstance(p_res, dict) or not p_res.get("data"):
             logger.warning(f"ReportService: No projects found to attach {title_prefix} summary task.")
             return
-
-        p_id = p_res["data"][0]["id"]
-        assignee_id = AgentUUIDs.SUPERVISOR
+        p_id, assignee_id = p_res["data"][0]["id"], AgentUUIDs.SUPERVISOR
         end_date = datetime.now(CST)
         start_date = end_date - timedelta(days=days)
         task_title = f"[{title_prefix}] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
-
         success, tr = await task_service.create_task(
             project_id=p_id, title=task_title, description=task_desc, assignee_id=assignee_id, feature=feature
         )
@@ -221,15 +218,10 @@ class ReportService(BaseRepository):
             task_id = tr["task"]["id"]
             if auto_complete:
                 await task_service.update_task(task_id, {"status": "done"})
-                logger.info(f"✅ ReportService: Created and completed {title_prefix} Executive Summary task {task_id}.")
-            else:
-                logger.info(f"✅ ReportService: Created {title_prefix} Executive Summary task {task_id}.")
-
+            logger.info(f"✅ ReportService: Created {title_prefix} Executive Summary task {task_id}.")
             if dispatch_agent:
                 from src.server.services.agent_service import agent_service
-                logger.info(f"Dispatching Group Chat for {task_id}...")
                 asyncio.create_task(agent_service.run_agent_task(task_id=task_id, agent_id=assignee_id))
-
             insert_query = self.supabase_client.table("archon_logs").insert( # 合法
                 {
                     "source": "report-service", "level": "INFO",
@@ -238,13 +230,10 @@ class ReportService(BaseRepository):
                 }
             )
             self.execute_query(insert_query, "Failed to record summary log")
-
             if not dispatch_agent:
                 await self.send_summary_telegram(
                     title_prefix=title_prefix, content=task_desc, task_id=task_id, start_date=start_date, end_date=end_date
                 )
-            else:
-                logger.info(f"ReportService: {title_prefix} Executive Summary dispatched to Agent ({assignee_id}).")
         else:
             error_msg = f"ReportService: Failed to create {title_prefix} summary task."
             logger.error(f"❌ {error_msg} Task service returned success=False.")
@@ -254,8 +243,9 @@ class ReportService(BaseRepository):
         self, title_prefix: str, content: str, task_id: str,
         start_date: datetime | None = None, end_date: datetime | None = None,
     ) -> bool:
-        """Dispatches finished executive summary content to Telegram with Admin UI deep link."""
+        """Dispatches finished executive summary content to Telegram with Admin UI deep link and Dual-Voice Briefings."""
         from src.server.schemas.settings import NetworkConfig
+        from src.server.services.report_enrichment_service import report_enrichment_service
         from src.server.services.system.telegram_service import telegram_service
 
         frontend_url = NetworkConfig().frontend_url
@@ -265,8 +255,10 @@ class ReportService(BaseRepository):
             f"👉 完整數據與儀表板請至 Admin UI 查看：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
         )
         is_sent = await telegram_service.send_message(telegram_msg)
-        if not is_sent:
-            logger.warning(f"⚠️ ReportService: Failed to send Telegram notification (Task {task_id} was still created).")
+        if title_prefix == "Daily":
+            await report_enrichment_service.dispatch_dual_voice_briefings(content)
+        elif "Fallback" in title_prefix:
+            await report_enrichment_service.trigger_emergency_voice_alert(content)
         return is_sent
 
     def _inject_steering_focus(self, context_md: str) -> str:

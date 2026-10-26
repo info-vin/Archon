@@ -33,7 +33,7 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
         if not model_name:
             from src.server.config.model_ssot import SYSTEM_MODELS
 
-            model_name = SYSTEM_MODELS["DEFAULT_PRO"].replace("models/", "")
+            model_name = SYSTEM_MODELS.get("SUPERVISOR_MODEL", SYSTEM_MODELS["DEFAULT_PRO"]).replace("models/", "")
 
         from src.server.services.prompt_service import prompt_service
         from src.server.utils import get_supabase_client

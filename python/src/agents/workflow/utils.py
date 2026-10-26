@@ -24,9 +24,10 @@ async def _run_agent_with_retry(
     """
 
     @retry_with_backoff(max_retries=5, initial_delay=2.0)
-    async def _execute(override_key: str | None = None):
-        if override_key:
-            # Re-initialize the model with the backup key if we hit a hard quota.
+    async def _execute(override_key: str | None = None, override_model: str | None = None):
+        target_model = override_model or model_name
+        if override_key or override_model:
+            # Re-initialize the model with the backup key/model if we hit a hard quota.
             # Phase 5.1.5: Version-aware Provider Selection
             if PAI_V1:
                 from pydantic_ai.models.google import GoogleModel as ModelClass
@@ -35,8 +36,8 @@ async def _run_agent_with_retry(
                 from pydantic_ai.models.gemini import GeminiModel as ModelClass  # type: ignore[assignment]
                 from pydantic_ai.providers.google_gla import GoogleGLAProvider as ProviderClass  # type: ignore
 
-            provider = ProviderClass(api_key=override_key)
-            backup_model: Any = ModelClass(model_name, provider=provider)
+            provider = ProviderClass(api_key=override_key) if override_key else ProviderClass()
+            backup_model: Any = ModelClass(target_model, provider=provider)
             return await agent.run(prompt, model=backup_model, deps=deps)
         return await agent.run(prompt, deps=deps)
 
@@ -45,19 +46,32 @@ async def _run_agent_with_retry(
     except Exception as e:
         err_msg = str(e)
         if "429" in err_msg and ("Quota exceeded" in err_msg or "RESOURCE_EXHAUSTED" in err_msg):
-            primary_key = os.getenv("GEMINI_API_KEY")
-            google_key_backup = os.getenv("GOOGLE_API_KEY")
+            gemini_key = os.getenv("GEMINI_API_KEY")
+            google_key = os.getenv("GOOGLE_API_KEY")
+            if gemini_key and google_key and gemini_key != google_key:
+                for backup_key in (gemini_key, google_key):
+                    logger.warning("⚠️ Primary API key exhausted. Rotating to backup API key...")
+                    try:
+                        return await _execute(override_key=backup_key)
+                    except Exception as key_err:
+                        logger.warning(f"⚠️ Backup API key attempt hit limit: {key_err}")
 
-            if google_key_backup and google_key_backup != primary_key:
-                logger.warning("⚠️ Primary GEMINI_API_KEY exhausted. Rotating to backup GOOGLE_API_KEY...")
+            # If Supervisor model (e.g. gemini-3.6-flash, 20 RPD / 5 RPM) is exhausted, degrade to DEFAULT_PRO (3.5-flash-lite)
+            from src.server.config.model_ssot import SYSTEM_MODELS
+
+            fallback_pro = SYSTEM_MODELS.get("DEFAULT_PRO", "models/gemini-3.5-flash-lite").replace("models/", "")
+            if model_name != fallback_pro:
+                logger.warning(
+                    f"⚠️ Model '{model_name}' quota exhausted (429). Degrading Supervisor to '{fallback_pro}'..."
+                )
                 try:
-                    return await _execute(override_key=google_key_backup)
-                except Exception as fallback_e:
-                    logger.error(f"❌ Backup GOOGLE_API_KEY also failed: {fallback_e}")
-                    raise fallback_e
-            else:
-                logger.error(f"❌ [Hard Limit] Google API Quota exceeded and no backup rotation possible: {err_msg}")
-                raise RuntimeError(f"API Daily Limit Exceeded. Details: {err_msg}") from e
+                    return await _execute(override_model=fallback_pro)
+                except Exception as model_fb_err:
+                    logger.error(f"❌ Fallback model '{fallback_pro}' also failed: {model_fb_err}")
+                    raise RuntimeError(f"API Daily Limit Exceeded. Details: {model_fb_err}") from model_fb_err
+
+            logger.error(f"❌ [Hard Limit] Google API Quota exceeded and no backup rotation possible: {err_msg}")
+            raise RuntimeError(f"API Daily Limit Exceeded. Details: {err_msg}") from e
         raise
 
 

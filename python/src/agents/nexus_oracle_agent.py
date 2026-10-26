@@ -75,8 +75,8 @@ class NexusOracleAgent(BaseAgent[NexusDependencies, ConsolidatedNexusState]):
 
     def __init__(self, model: str | None = None, **kwargs):
         if model is None:
-            # Fallback to model_ssot default or environment variable
-            model = os.getenv("SUPERVISOR_AGENT_MODEL")
+            # Keep NexusOracleAgent on DEFAULT_PRO (gemini-3.5-flash-lite) to preserve 3.6-flash quota for Supervisor
+            model = os.getenv("ORACLE_AGENT_MODEL")
             if not model:
                 from src.server.config.model_ssot import SYSTEM_MODELS
                 model = SYSTEM_MODELS["DEFAULT_PRO"]

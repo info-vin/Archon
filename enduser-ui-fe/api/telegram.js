@@ -1,3 +1,11 @@
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4.5mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   // Add CORS headers just in case
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -14,9 +22,35 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { bot_token, chat_id, text, parse_mode } = req.body || {};
-    
-    if (!bot_token || !chat_id || !text) {
+    const { bot_token, chat_id, text, parse_mode, voice_base64, caption, filename } = req.body || {};
+
+    if (!bot_token || !chat_id) {
+      return res.status(400).json({ error: 'Missing parameters' });
+    }
+
+    if (voice_base64) {
+      const url = `https://api.telegram.org/bot${bot_token}/sendVoice`;
+      const audioBuffer = Buffer.from(voice_base64, 'base64');
+      const formData = new FormData();
+      formData.append('chat_id', String(chat_id));
+      if (caption) {
+        formData.append('caption', String(caption));
+      }
+      if (parse_mode) {
+        formData.append('parse_mode', String(parse_mode));
+      }
+      const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+      formData.append('voice', blob, filename || 'briefing.wav');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      return res.status(response.status).json(data);
+    }
+
+    if (!text) {
       return res.status(400).json({ error: 'Missing parameters' });
     }
 

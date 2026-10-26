@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-26 完成近期 Jules PR (#635, #645~#649) 深度鑑識與「結構固化 (Structure Ossification)」清剿：全面升級 `.jules/contractor.md` 與 `.jules/type_guardian.md` 四大鐵律（強制 Producer↔Schema↔Consumer 三向物理對齊、保護動態 JSONB、禁止全 Optional 空殼與假 Mock 測試、禁止 `cast()` 掩耳盜鈴）；修復 PR #648 (`b297c430`) 在 `credentials` 模組引入的 26 個 MyPy 型別錯誤與 1 個 SSOT 違規；修復 PR #635 `TaskDetails` 對 `AgentOutputSchema` 附件的 HTTP 500 崩潰與欄位剝除；修復 PR #649 `DocumentItemResponse`、`DocumentStats` 對 JSONB 欄位與字串版本號 `"1.0"` 的破壞，以及 `DocumentService.add_document` 回傳缺漏；同步校正 `marketing_service.py` TypedDict；新增 3 項真實合約測試，全數通過 `make lint`、`make test-be-fast`（811 passed）與 `make phase-audit` 11 大門禁。
-*   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交。
+*   **當前狀態 (Current Context)**: 2026-10-26 完成 Phase 5.12.2 決策大腦 `Gemini 3.6 Flash` 升級與 Telegram 雙軌語音泡泡 (`sendVoice`) 速報及緊急告警實裝：於 `model_ssot.py` 納入 `SUPERVISOR_MODEL` (`models/gemini-3.6-flash`) 並賦能 `SupervisorNode`，支援 429 配額耗盡時自動降階至 `DEFAULT_PRO` (`gemini-3.5-flash-lite`)；於 `telegram_service.py` 與 `enduser-ui-fe/api/telegram.js` 實裝原生語音泡泡雙模發送（Proxy 優先 + 遇 HTTP/網路錯誤自動 fallback 直連 `sendVoice`）；於 `report_enrichment_service.py` 實作中文晨會重點速報（`Puck`）+ 英文 CNN 主播風格速報（`Fenrir`）雙語音泡泡管線（含 5 秒防限流緩衝）以及每日上限 3 次的緊急事件語音告警（`Kore`），並將 3 組語音 Prompt 同步至雲端 `archon_prompts`；修復 `test_meta_twin_service.py` 測試殘留之 `SYSTEM_MODELS` 全域污染；全數通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**817 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
+*   **今日目標 (Today's Goal)**: 完成 Phase 5.12.2 全量回歸公證與安全提交。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -123,8 +123,33 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-#### 2026-10-26: Jules 自動化 PR (#635, #645~#649) 深度鑑識、「結構固化」四大斷層修復與 `.jules` 雙守則重構
+#### 2026-10-26: Phase 5.12.2 決策大腦 Gemini 3.6 Flash 升級、Telegram 雙語音泡泡速報與緊急語音告警實裝、Jules PR 深度鑑識及 Reaper 停用
 
+*   **Phase 5.12.2 決策大腦 `Gemini 3.6 Flash` 升級與 Telegram 雙語音泡泡速報 (`sendVoice`) 實裝**:
+    *   **探針先行實證 (Probe-First)**: 實測驗證 `models/gemini-3.6-flash` 正常回應 `READY_FOR_SUPERVISOR`，並實測驗證 Telegram Bot API `sendVoice` 可直接將 24kHz Mono WAV 轉換為原生語音泡泡 (`mime_type: audio/ogg`, `AwACAgUAAxk...`)，無需安裝巨型 `ffmpeg` 依賴。
+    *   **決策大腦升級 (`SUPERVISOR_MODEL`)**: 於 [model_ssot.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/config/model_ssot.py)、[config.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/config/config.py)、[nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 與 [internal_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/internal_api.py) 將 `SupervisorNode` 升級為 `models/gemini-3.6-flash`，同時將 [nexus_oracle_agent.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/nexus_oracle_agent.py) 解耦為讀取 `ORACLE_AGENT_MODEL` / `DEFAULT_PRO` (`gemini-3.5-flash-lite`)，確保 3.6 Flash 每日 20 次配額 100% 聚焦於由上而下的工作流統籌與日報播報腳本。
+    *   **Telegram 原生語音泡泡雙模發送**: 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 實作 `send_voice`（Proxy 優先 + 遇 HTTP/網路錯誤自動 fallback 直連 `multipart/form-data`），於 [telegram.js](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/api/telegram.js) 設置 `sizeLimit: '4.5mb'` 支援長度達 60 秒之 WAV Base64 轉發。
+    *   **日報雙語音泡泡 + 重大緊急告警閉環 (每日上限 5 次 TTS)**: 於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py)、[report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 與 [sentinel_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/sentinel_patrol.py) 實作 `dispatch_dual_voice_briefings`（中文晨會重點速報 `Puck` + 5 秒間隔 + 英文 CNN 商業主播風格速報 `Fenrir`）與 `trigger_emergency_voice_alert`（當日報熔斷降級或預算超標時發送 `Kore` 緊急語音泡泡，受每日 3 次上限保護），並將 `DAILY_VOICE_BRIEF_ZH`、`DAILY_VOICE_BRIEF_EN`、`EMERGENCY_VOICE_ALERT` 同步 Upsert 至雲端 `archon_prompts`。
+    *   **斷層深度清剿與韌性自癒**:
+        - 修復 `telegram_service.py` 漏捕獲 `httpx.HTTPStatusError` 導致 Proxy 回傳 400/500 時無法自動切換直連之重大斷層。
+        - 修復 `utils.py` `_run_agent_with_retry`，支援 `gemini-3.6-flash` 遇 429 觸頂時自動降階至 `DEFAULT_PRO` (`gemini-3.5-flash-lite`)，杜絕日報死亡中斷。
+        - 修復 `test_meta_twin_service.py` 測試殘留之 `SYSTEM_MODELS` 全域污染，隔絕跨測試狀態干擾。
+        - 修復 `test_telegram_proxy.py` 同步方法 `raise_for_status` 誤用 `AsyncMock` 產生之 `RuntimeWarning`。
+    *   **全門禁公證通過**: 通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**817 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
+*   **Jules 代理人職責審查與 Reaper 停用決策**:
+    *   **停用 Reaper 代理人**: 經查歷史 `git log`（PR #533 等），Reaper 曾將 FastAPI Query 參數誤判為未使用的死代碼，險些破壞 API 合約；且現代前端（ESLint/Biome）與後端（Ruff `F401`/`F841`）已有成熟靜態檢查，專案亦有每週例行維護，Reaper 不僅重複做功，且「因害怕誤刪而無法主動發現結構性技術債」。決策：**正式停用 Reaper 代理人**。
+*   **Google AI Studio 過去 28 天真實配額用量與專案代碼物理映射 (Zero Guesswork Audit)**:
+    *   **真實 Console 遙測數據**:
+        - `Gemini 3.1 Flash Lite`: RPM 12/15 (80%), TPM 46.63K/250K, RPD 114/500。
+        - `Gemini 3.1 Flash TTS`: RPM 2/3 (66.7%), TPM 874/10K, RPD 7/10 (70% 警告線)。
+        - `Gemini 3.5 Flash Lite`: RPM 8/15 (53.3%), TPM 5.01K/250K, RPD 29/500。
+        - `Gemini Embedding 1`: RPM 14/100, TPM 7.02K/30K, RPD 379/1K (37.9%)。
+        - 其餘模型（Antigravity, Gemini 2.x, Gemini 2.5 Flash/Pro 等）：用量皆為 0。
+    *   **Codebase 物理調用鏈路 100% 對齊**:
+        - `DEFAULT_TEXT` 映射至 `gemini-3.1-flash-lite`（支撐 Agent Workflow、Blog/Pitch Generator、Librarian 等 15+ 服務，故 RPM 達 12/15 尖峰）。
+        - `DEFAULT_PRO` 映射至 `gemini-3.5-flash-lite`（支撐 Supervisor Agent、Nexus Oracle、Presentation、Self-Healing 等推論任務）。
+        - `TTS_MODEL` 映射至 `gemini-3.1-flash-tts-preview`（由 `TextToSpeechService` 產出語音，RPD 7/10 已接近免費上限）。
+        - `EMBEDDING` 映射至 `gemini-embedding-001`（支撐 RAG、Contextual Embedding、104 潛客相似度計分，RPD 379 穩定消耗）。
 *   **過去一個月 `git log --author="jules"` 深度鑑識 (Structure Ossification Forensics)**:
     *   **斷層一（PR #648 `b297c430`）：`CredentialManager` 回傳型別污染與未跑 `make lint-be` 門禁**: `TypeGuardian` 將 `load_all_credentials` 與 `get_credentials_by_category` 回傳型別標註為 `dict[str, str | MaskedEncryptedCredentialDict]`，導致下游 9 個呼叫端在 `int()` / `float()` / API Key 讀取時爆發 **26 個 MyPy 錯誤**，並在 `provider_configs.py` 留下一處未加 `# 合法` 註記的 `localhost:11434` SSOT 違規。
     *   **斷層二（PR #635 `b23804a5`）：`TaskDetails` 對動態 JSONB 附件崩潰與擴充欄位剝除**: `archon_tasks.attachments` 在 Agent 執行後存入的是 `AgentOutputSchema`（含 `summary`, `artifacts`, `status`），但 `TaskDetails.attachments` 卻強制限定為 `list[Attachment]`（必填 `url`），導致開啟 AI 完成之任務時直接拋出 HTTP 500 `ValidationError`；同時漏列 `query_logic.py` 產出的 `agent_output`、`ai_metrics`、`stats`、`sources`、`code_examples` 等欄位。
