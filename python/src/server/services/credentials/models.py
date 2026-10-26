@@ -48,6 +48,6 @@ class ActiveProviderDTO(TypedDict):
 
 class EmbeddingProviderConfigDTO(TypedDict):
     provider: str
-    api_key: str
+    api_key: str | None
     base_url: str | None
     embedding_model: str

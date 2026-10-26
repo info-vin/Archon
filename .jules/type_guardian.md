@@ -1,21 +1,19 @@
 # TypeGuardian Guidelines (Consolidated)
 
-## 1. Prefer TypedDict DTOs Over dict[str, Any]
-**Learning:** Replacing untyped `dict` with `dict[str, Any]` cheats static type checking, while converting legacy dict returns to `@dataclass` or `BaseModel` can break downstream callers using `result["key"]` subscripting.
-**Action:** Define structured `TypedDict` DTOs (using `NotRequired` for optional/partial fields) to enforce strict static contracts while maintaining 100% runtime dictionary compatibility, and keep wrapper/delegation method signatures in sync with strategy DTOs.
+## 1. Ban Cosmetic `cast()` Lying — Match True Runtime Shapes (IRON LAW)
+**Learning:** `TypedDict` performs zero runtime validation. Defining a strict `TypedDict` (e.g., `api_key: str` or invented keys in `PitchResultDict`) when the function can actually return `None` or different keys at runtime, or wrapping an unverified `execute_query` dict with `cast(SomeDTO, result)`, creates false type safety that hides real runtime bugs from MyPy.
+**Action:**
+- Never use `cast(DTO, ...)` to paper over a mismatch between what `BaseRepository.execute_query()` or a handler actually returns and what callers expect.
+- If a variable can be `None`, `dict`, or `str` at runtime, the `TypedDict` field MUST reflect the true union (`str | None`) and runtime type-narrowing (`isinstance(...)`) MUST be used instead of `cast()`.
 
-## 2. Strict Return Signatures Without dict[str, Any] Unions
-**Learning:** Unioning a `TypedDict` DTO with `dict[str, Any]` in a return signature (e.g., `tuple[bool, ResultDTO | dict[str, Any]]`) undermines MyPy checks for all callers.
-**Action:** Union the DTO only with explicit error types (e.g., `tuple[bool, ResultDTO | str]`) and use `cast(ResultDTO, result)` at the repository boundary.
+## 2. Substance Over Pure Annotation Churn & Zero JSONB Ossification
+**Learning:** PRs that only add `TypedDict` definitions and `cast()` calls without improving runtime safety create structural rigidity without business value, and forcing dynamic JSONB dicts (`docs`, `metadata`, `content`) into rigid DTOs breaks flexibility.
+**Action:** Pair static `TypedDict` DTOs with genuine runtime boundary guards (e.g., distinguishing encrypted metadata dicts `EncryptedCredentialDict` from plaintext `str` values in credential caches, or validating list/dict structures before indexing), and leave free-form JSONB payloads as `dict[str, Any]`.
 
-## 3. Dependency Injection and Circular Import Prevention
-**Learning:** Subclasses of `BaseRepository` should support explicit client injection for testing, and importing cross-module services at runtime for type hints can trigger circular `ImportError` crashes.
-**Action:** Annotate repository/service constructors with `supabase_client: Client | None = None`, and guard cross-module type imports behind `if TYPE_CHECKING:` using modern `X | None` union syntax (Ruff `UP045`).
+## 3. Full-Chain Signature & Caller Alignment (Rule 13)
+**Learning:** Narrowing a service return signature or changing dict keys without checking both the deep handler/repository producer and all callers/test mocks breaks downstream unpacking or leaves DTOs out of sync with reality.
+**Action:** Before defining or changing any DTO or return signature, inspect the deepest handler implementation and `grep` all callers across `src/` and `tests/` to verify 100% key and type alignment.
 
-## 4. Preserve SSOT Audit Markers (# 合法) and Verify with Full Sync
-**Learning:** Removing `# 合法` comments on exempted literals causes `make phase-audit` (Step 8 SSOT check) to fail, and running `pytest` without syncing all dependency groups causes false import errors.
-**Action:** Never strip existing `# 合法` SSOT markers during type refactors, and always run `uv sync --all-groups` followed by `mypy src --ignore-missing-imports` to verify zero regressions across all source files.
-
-## 2026-05-18 - TypedDict DTOs for Multi-Category Credential Caching
-**Learning:** In credential management services, raw dictionary caches store both plain string settings and encrypted credential metadata objects. Using a union of `TypedDict` DTOs (e.g. `dict[str, Any | EncryptedCredentialDict]`) prevents type check errors while maintaining 100% runtime compatibility with subscripting callers.
-**Action:** Define distinct `TypedDict` structures for internal encrypted values versus masked public responses rather than returning generic `dict[str, Any]`.
+## 4. Dependency Injection, Circular Imports & SSOT Markers (# 合法)
+**Learning:** Importing cross-module services at runtime for type hints causes circular `ImportError`, and stripping `# 合法` comments breaks `make phase-audit` Step 8.
+**Action:** Annotate repository/service constructors with `supabase_client: Client | None = None`, guard cross-module type imports behind `if TYPE_CHECKING:`, use `X | None` syntax, preserve all `# 合法` markers, and verify with `mypy src` and `pytest`.

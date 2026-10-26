@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-24 完成過去一個月虛假開發與虛假驗證四大斷層清剿：修復 PR #632/#639/#644 幻覺 Pydantic Schema（`CombinedSourceResponse`、`MarketingTrendsResponse`、`KnowledgeSeedResponse`、`SubmitBlogResponse`）；校準 `job_board_service.py` 潛客合格門檻為 `score >= 72` 並復原雲端 4 筆高分潛客為 `qualified`；擴充 `report_service.py`（精簡至 355 行）納入潛客分數、痛點、Active Qualified Pool、Bob `blog_posts` 與 `MANAGEMENT_STEERING_FOCUS`；同步全量 `ALL_PROMPTS` 至雲端 `archon_prompts` 並加固 `SummaryNode` 客觀數據基準，重新執行今日日報並實體推播至 Telegram；通過 `make lint`、`make test-be-fast`（808 passed）與 `make phase-audit` 11 大門禁。
-*   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交推送。
+*   **當前狀態 (Current Context)**: 2026-10-26 完成近期 Jules PR (#635, #645~#649) 深度鑑識與「結構固化 (Structure Ossification)」清剿：全面升級 `.jules/contractor.md` 與 `.jules/type_guardian.md` 四大鐵律（強制 Producer↔Schema↔Consumer 三向物理對齊、保護動態 JSONB、禁止全 Optional 空殼與假 Mock 測試、禁止 `cast()` 掩耳盜鈴）；修復 PR #648 (`b297c430`) 在 `credentials` 模組引入的 26 個 MyPy 型別錯誤與 1 個 SSOT 違規；修復 PR #635 `TaskDetails` 對 `AgentOutputSchema` 附件的 HTTP 500 崩潰與欄位剝除；修復 PR #649 `DocumentItemResponse`、`DocumentStats` 對 JSONB 欄位與字串版本號 `"1.0"` 的破壞，以及 `DocumentService.add_document` 回傳缺漏；同步校正 `marketing_service.py` TypedDict；新增 3 項真實合約測試，全數通過 `make lint`、`make test-be-fast`（811 passed）與 `make phase-audit` 11 大門禁。
+*   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,19 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-26: Jules 自動化 PR (#635, #645~#649) 深度鑑識、「結構固化」四大斷層修復與 `.jules` 雙守則重構
+
+*   **過去一個月 `git log --author="jules"` 深度鑑識 (Structure Ossification Forensics)**:
+    *   **斷層一（PR #648 `b297c430`）：`CredentialManager` 回傳型別污染與未跑 `make lint-be` 門禁**: `TypeGuardian` 將 `load_all_credentials` 與 `get_credentials_by_category` 回傳型別標註為 `dict[str, str | MaskedEncryptedCredentialDict]`，導致下游 9 個呼叫端在 `int()` / `float()` / API Key 讀取時爆發 **26 個 MyPy 錯誤**，並在 `provider_configs.py` 留下一處未加 `# 合法` 註記的 `localhost:11434` SSOT 違規。
+    *   **斷層二（PR #635 `b23804a5`）：`TaskDetails` 對動態 JSONB 附件崩潰與擴充欄位剝除**: `archon_tasks.attachments` 在 Agent 執行後存入的是 `AgentOutputSchema`（含 `summary`, `artifacts`, `status`），但 `TaskDetails.attachments` 卻強制限定為 `list[Attachment]`（必填 `url`），導致開啟 AI 完成之任務時直接拋出 HTTP 500 `ValidationError`；同時漏列 `query_logic.py` 產出的 `agent_output`、`ai_metrics`、`stats`、`sources`、`code_examples` 等欄位。
+    *   **斷層三（PR #649 `1898985e`）：`DocumentItemResponse` 固化假結構與 `add_document` 回傳斷鏈**: 預設將 `version` 限定為 `int`（實務上 `document_service.py` 存入 `"1.0"` 字串），且未開啟 `extra="allow"` 導致 JSONB 文件自訂欄位被靜默剝除；此外 `DocumentService.add_document` 回傳字典缺少 `"document"` 鍵，導致 `POST /api/projects/{project_id}/docs` 永遠回傳 `document=None`。
+    *   **斷層四（Commit `55f28352`）：`marketing_service.py` 幻覺 `TypedDict`**: `PitchResultDict` 與 `BlogDraftResultDict` 的鍵名與 `SalesPitchGenerator`、`BlogGenerator` 實際回傳結構脫節。
+*   **四向物理修復與 `.jules` 守則硬化 (Fix-Forward & Agent Guardrails)**:
+    *   **升級 `.jules` 雙守則**: 重構 [contractor.md](file:///Users/vincenta/GoogleKwok022/Archon/.jules/contractor.md) 與 [type_guardian.md](file:///Users/vincenta/GoogleKwok022/Archon/.jules/type_guardian.md)（各精煉為 4 條核心鐵律，符合 Step 11 `<= 5` 節限制），強制三向物理對帳（Producer ↔ Schema ↔ Frontend/MCP）、動態 JSONB 保護、禁止全 Optional 空殼與假 Mock、禁止 `cast()` 欺騙編譯器。
+    *   **修復 `credentials` 型別與 SSOT**: 於 [manager.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/credentials/manager.py)、[models.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/credentials/models.py)、[provider_configs.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/credentials/provider_configs.py)、[batch_processor.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/embeddings/batch_processor.py) 與 [contextual_embedding_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/embeddings/contextual_embedding_service.py) 消除全部 26 個 MyPy 錯誤與 SSOT 違規。
+    *   **修復專案與行銷 Schema / Service**: 於 [projects.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/projects.py)、[document_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/projects/document_service.py) 與 [marketing_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/marketing_service.py) 補齊真實欄位與 `ConfigDict(extra="allow")`，並於 [test_project_versioning_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/server/api_routes/test_project_versioning_api.py) 新增 3 項真實端到端結構合約測試。
+    *   **全門禁綠燈**: 通過 `make lint`（393 檔案 0 錯誤）、`make test-be-fast`（**811 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
 
 #### 2026-10-24: 過去一個月虛假開發四大斷層深度清剿、PR #644 幻覺 Schema 修復與星環商業日報全鏈路校正
 

@@ -84,3 +84,102 @@ def test_restore_project_version_success(mock_admin_user, mock_versioning_servic
         "message": "Successfully restored title to version 1",
         "restored_content": {"text": "restored"},
     }
+
+
+def test_project_documents_preserves_jsonb_fields_and_string_version(mock_admin_user):
+    with patch("src.server.api_routes.projects.core.DocumentService") as mock_doc_cls:
+        doc_svc = MagicMock()
+        mock_doc_cls.return_value = doc_svc
+        doc_svc.list_documents.return_value = (
+            True,
+            {
+                "documents": [
+                    {
+                        "id": "doc-1",
+                        "title": "Architecture Spec",
+                        "type": "spec",
+                        "document_type": "spec",
+                        "status": "draft",
+                        "version": "1.0",
+                        "stats": {"version_count": "1.0", "content_size": 512},
+                        "custom_meta": "preserved",
+                    }
+                ]
+            },
+        )
+
+        res = client.get("/api/projects/p1/docs")
+        assert res.status_code == 200
+        doc = res.json()["documents"][0]
+        assert doc["document_type"] == "spec"
+        assert doc["status"] == "draft"
+        assert doc["version"] == "1.0"
+        assert doc["stats"]["version_count"] == "1.0"
+        assert doc["custom_meta"] == "preserved"
+
+
+def test_create_project_document_returns_created_doc(mock_admin_user):
+    mock_supabase = MagicMock()
+    select_resp = MagicMock()
+    select_resp.data = [{"docs": {}}]
+    update_resp = MagicMock()
+    update_resp.data = [{"id": "p1"}]
+    mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = select_resp
+    mock_supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = update_resp
+
+    from src.server.services.projects.document_service import DocumentService
+
+    real_svc = DocumentService(supabase_client=mock_supabase)
+    with patch("src.server.api_routes.projects.core.DocumentService", return_value=real_svc):
+        res = client.post(
+            "/api/projects/p1/docs",
+            json={"document_type": "spec", "title": "API Spec", "content": {"markdown": "# Spec"}},
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["document"] is not None
+        assert body["document"]["id"]
+        assert body["document"]["document_type"] == "spec"
+        assert body["document"]["type"] == "spec"
+
+
+def test_get_task_preserves_agent_output_attachments_and_ai_metrics(mock_admin_user):
+    from unittest.mock import AsyncMock
+
+    with patch("src.server.api_routes.projects.ops.TaskService") as mock_task_cls:
+        task_svc = MagicMock()
+        mock_task_cls.return_value = task_svc
+        task_svc.get_task = AsyncMock(
+            return_value=(
+                True,
+                {
+                    "task": {
+                        "id": "task-1",
+                        "project_id": "p1",
+                        "title": "Daily Summary",
+                        "status": "done",
+                        "archived": False,
+                        "attachments": [
+                            {
+                                "agent_id": "00000000-0000-0000-0000-000000000001",
+                                "agent_name": "DevBot",
+                                "status": "completed",
+                                "output": {"summary": "All green"},
+                                "timestamp": "2026-10-26T00:00:00Z",
+                            }
+                        ],
+                        "agent_output": {"summary": "All green"},
+                        "ai_metrics": {"total_tokens": 1200, "total_cost_usd": 0.0012, "is_ai_powered": True},
+                        "stats": {"sources_count": 2, "code_examples_count": 1},
+                    }
+                },
+            )
+        )
+
+        res = client.get("/api/tasks/task-1")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["agent_output"] == {"summary": "All green"}
+        assert data["ai_metrics"]["total_tokens"] == 1200
+        assert data["stats"]["sources_count"] == 2
+        assert data["attachments"][0]["agent_name"] == "DevBot"

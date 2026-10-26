@@ -170,8 +170,9 @@ async def _get_provider_api_key(manager: "CredentialManager", provider: str) -> 
 def _get_provider_base_url(provider: str, rag_settings: dict[str, Any]) -> str | None:
     """Get base URL for provider."""
     if provider == "ollama":
-        url_val = rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1") # 合法
-        return str(url_val) if isinstance(url_val, str) else "http://localhost:11434/v1"
+        default_url = "http://localhost:11434/v1"  # 合法
+        url_val = rag_settings.get("LLM_BASE_URL", default_url)
+        return str(url_val) if isinstance(url_val, str) else default_url
     elif provider == "google":
         # The correct base URL for Google models endpoint (used in providers_api.py) is:
         # https://generativelanguage.googleapis.com/v1beta

@@ -45,6 +45,8 @@ class VendorResultDict(TypedDict):
 
 
 class PitchResultDict(TypedDict):
+    content: NotRequired[str]
+    references: NotRequired[list[str]]
     pitch: NotRequired[str]
     company: NotRequired[str]
     job_title: NotRequired[str]
@@ -58,13 +60,22 @@ class VisualAssetDict(TypedDict):
     status: NotRequired[str]
     image_url: NotRequired[str | None]
     tier: NotRequired[str | None]
+    svg_content: NotRequired[str | None]
     error: NotRequired[str]
 
 
 class BlogDraftResultDict(TypedDict):
+    title: NotRequired[str]
+    content: NotRequired[str]
+    excerpt: NotRequired[str]
+    ai_score: NotRequired[int]
+    task_id: NotRequired[str]
+    post_id: NotRequired[str]
     blog: NotRequired[dict[str, Any]]
     status: NotRequired[str]
     error: NotRequired[str]
+    error_code: NotRequired[int]
+    message: NotRequired[str]
 
 
 class ManagerAlertDict(TypedDict):

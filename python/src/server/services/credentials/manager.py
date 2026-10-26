@@ -34,9 +34,9 @@ class CredentialManager:
     def __init__(self) -> None:
         self._supabase: Client | None = None
         self._repository: Any | None = None
-        self._cache: dict[str, str | EncryptedCredentialDict] = {}
+        self._cache: dict[str, Any] = {}
         self._cache_initialized = False
-        self._rag_settings_cache: dict[str, str | MaskedEncryptedCredentialDict] | None = None
+        self._rag_settings_cache: dict[str, Any] | None = None
         self._rag_cache_timestamp: float | None = None
         self._rag_cache_ttl = 300  # 5 minutes TTL for RAG settings cache
         self._active_tier = 1
@@ -92,7 +92,7 @@ class CredentialManager:
 
         return self._supabase
 
-    async def load_all_credentials(self) -> dict[str, str | EncryptedCredentialDict]:
+    async def load_all_credentials(self) -> dict[str, Any]:
         """
         Load all credentials from database and cache them.
         This is typically called at system startup via initialize_credentials.
@@ -277,7 +277,7 @@ class CredentialManager:
             logger.error(f"Error deleting credential {key}: {e}")
             return False
 
-    async def get_credentials_by_category(self, category: str) -> dict[str, str | MaskedEncryptedCredentialDict]:
+    async def get_credentials_by_category(self, category: str) -> dict[str, Any]:
         """
         Get all credentials for a specific category.
 
