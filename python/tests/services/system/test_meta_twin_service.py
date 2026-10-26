@@ -63,12 +63,19 @@ async def test_run_telemetry_audit_rate_limit_risk(service, mock_supabase):
 
 @pytest.mark.asyncio
 async def test_switch_model_to_fallback(service, mock_supabase):
-    mock_upsert = MagicMock()
-    mock_supabase.table.return_value.upsert.return_value = mock_upsert
-    service.execute_query = MagicMock(return_value=(True, {}))
+    from src.server.config.model_ssot import SYSTEM_MODELS
 
-    success = await service.switch_model_to_fallback("test_agent", "models/gemini-3.1-flash-lite")
-    assert success is True
+    orig_pro = SYSTEM_MODELS.get("DEFAULT_PRO")
+    try:
+        mock_upsert = MagicMock()
+        mock_supabase.table.return_value.upsert.return_value = mock_upsert
+        service.execute_query = MagicMock(return_value=(True, {}))
+
+        success = await service.switch_model_to_fallback("test_agent", "models/gemini-3.1-flash-lite")
+        assert success is True
+    finally:
+        if orig_pro:
+            SYSTEM_MODELS["DEFAULT_PRO"] = orig_pro
 
 
 @pytest.mark.asyncio

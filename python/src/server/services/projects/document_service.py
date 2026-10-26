@@ -56,6 +56,7 @@ class DocumentService(BaseRepository):
         new_doc = {
             "id": doc_id,
             "type": document_type,
+            "document_type": document_type,
             "title": title,
             "content": content,
             "author": author,
@@ -77,7 +78,10 @@ class DocumentService(BaseRepository):
         docs[doc_id] = new_doc
 
         update_query = self.supabase_client.table("archon_projects").update({"docs": docs}).eq("id", project_id) # 合法
-        return self.execute_query(update_query, "DB operation logged error")
+        upd_success, upd_res = self.execute_query(update_query, "DB operation logged error")
+        if upd_success:
+            return True, {"document": new_doc, "data": upd_res.get("data", [])}
+        return False, upd_res
 
     def get_document(self, project_id: str, doc_id: str) -> tuple[bool, dict[str, Any]]:
 

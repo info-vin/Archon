@@ -196,7 +196,7 @@ class VersionService(BaseRepository):
 
     async def get_document_versions(self, limit: int = 50) -> list[DocumentVersionDTO]:
         query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit) # 合法
-        success, res = self.execute_query(query, "Failed to get document versions", require_data=False)
+        success, res = await self.execute_query_async(query, "Failed to get document versions", require_data=False)
         return cast(list[DocumentVersionDTO], res.get("data", []) if success else [])
 
 

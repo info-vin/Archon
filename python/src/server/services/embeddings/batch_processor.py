@@ -108,7 +108,7 @@ async def create_embeddings_batch(
 
                 try:
                     search_logger.info(f"Attempting embedding creation with provider: {provider_name}")
-                    client = await create_embedding_client(config)
+                    client = await create_embedding_client(cast(dict[str, Any], config))
 
                     rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
                     batch_size = int(rag_settings.get("EMBEDDING_BATCH_SIZE", "100"))
@@ -187,13 +187,13 @@ async def create_embeddings_batch(
                                             # Standard OpenAI-compatible call
                                             if provider_name != "google":
                                                 response = await client.embeddings.create(
-                                                    model=cast(str, embedding_model),
+                                                    model=embedding_model,
                                                     input=batch,
                                                     dimensions=embedding_dimensions,
                                                 )
                                             else:
                                                 response = await client.embeddings.create(
-                                                    model=cast(str, embedding_model), input=batch
+                                                    model=embedding_model, input=batch
                                                 )
 
                                             for item, text_item in zip(response.data, batch, strict=False):

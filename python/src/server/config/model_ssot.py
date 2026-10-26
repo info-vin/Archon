@@ -8,8 +8,10 @@ Models optimized for Free Tier compatibility.
 SYSTEM_MODELS = {
     # Gemini 3.1 Flash-Lite: Best Free Tier model (15 RPM / 1000 RPD)
     "DEFAULT_TEXT": "models/gemini-3.1-flash-lite",
-    # Gemini 3 Flash: Best Free Tier model for reasoning
+    # Gemini 3.5 Flash-Lite: Reasoning & Pro Tasks (15 RPM / 500 RPD)
     "DEFAULT_PRO": "models/gemini-3.5-flash-lite",
+    # Gemini 3.6 Flash: Executive Supervisor Decision Brain (5 RPM / 20 RPD)
+    "SUPERVISOR_MODEL": "models/gemini-3.6-flash",
     # Image Models (Requires Billing for API, MarketingService uses internal fallback)
     "IMAGE_GEN": "models/gemini-3.1-flash-image-preview",
     # TTS Model
@@ -23,6 +25,7 @@ DEFAULT_NETWORK_CHECK_IP = "8.8.8.8"
 
 export_TARGET_MODELS = [
     {"key": "DEFAULT_TEXT", "agent": "General Text", "provider": "google"},
+    {"key": "SUPERVISOR_MODEL", "agent": "Supervisor (Decision)", "provider": "google"},
     {"key": "IMAGE_GEN", "agent": "Marketing (Imagen)", "provider": "google"},
     {"key": "DEFAULT_PRO", "agent": "Reasoning & Coding", "provider": "google"},
     {"key": "EMBEDDING", "agent": "Knowledge (Embedding)", "provider": "google"},

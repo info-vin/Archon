@@ -62,6 +62,9 @@ async def analyze_token_usage() -> None:
             msg = f"[CRITICAL] Weekly Budget Exceeded: ${weekly_cost:.4f} USD (Threshold: ${cost_threshold:.2f} USD)"
             logger.error(f"💰 Sentinel: {msg}")
             await telegram_service.send_message(msg)
+            from src.server.services.report_enrichment_service import report_enrichment_service
+
+            await report_enrichment_service.trigger_emergency_voice_alert(msg)
 
             repo.execute_query(
                 supabase.table("archon_logs").insert( # 合法

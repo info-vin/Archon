@@ -13,17 +13,25 @@ from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.marketing import (
     ApprovalActionResponse,
     ApprovalRequest,
+    CombinedSourceResponse,
+    ContentContextResponse,
     DraftBlogRequest,
     DraftBlogResponse,
     DraftFromLeadsRequest,
     DraftFromLeadsResponse,
     JobResponse,
+    KnowledgeSeedResponse,
     LeadActionResponse,
     LeadCreateRequest,
     LeadResponse,
     LeadUpdateRequest,
     LogoRequest,
     LogoResponse,
+    ManagerAlertResponse,
+    MarketingIntelligenceResponse,
+    MarketingStatsResponse,
+    MarketingTrendsResponse,
+    PendingApprovalsResponse,
     PitchRequest,
     PitchResponse,
     PromoteLeadRequest,
@@ -31,6 +39,7 @@ from src.server.schemas.marketing import (
     RejectSuggestionRequest,
     RejectSuggestionResponse,
     ResetLeadsResponse,
+    SentinelRunResponse,
     SubmitBlogResponse,
     VendorResponse,
 )
@@ -120,7 +129,7 @@ async def promote_lead(
 
 
 @router.post("/generate-pitch", response_model=PitchResponse)
-async def generate_pitch(req: PitchRequest, current_user: UserProfileDTO = Depends(get_current_user)):
+async def generate_pitch(req: PitchRequest, current_user: UserProfileDTO = Depends(get_current_user)) -> PitchResponse:
     role = current_user.role.lower()
     if role not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MARKETING, RoleEnum.SALES]:
         raise HTTPException(status_code=403, detail=f"Role '{role}' is unauthorized to generate pitches")
@@ -130,7 +139,7 @@ async def generate_pitch(req: PitchRequest, current_user: UserProfileDTO = Depen
     if isinstance(res, dict) and "error_code" in res:
         res_dict = cast(dict[str, Any], res)
         raise HTTPException(status_code=int(res_dict.get("error_code", 500)), detail=str(res_dict.get("message", "Pitch generation failed")))
-    return res
+    return PitchResponse.model_validate(res)
 
 
 @router.post("/draft-blog", response_model=DraftBlogResponse)
@@ -177,62 +186,85 @@ async def generate_logo(
     return LogoResponse.model_validate(res)
 
 
-@router.get("/sources")
-async def get_combined_sources(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/sources", response_model=list[CombinedSourceResponse])
+async def get_combined_sources(
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> list[CombinedSourceResponse]:
     service = MarketingService()
-    return await service.get_combined_sources(user_id=str(current_user.id))
+    sources = await service.get_combined_sources(user_id=str(current_user.id))
+    return [CombinedSourceResponse.model_validate(s) for s in sources]
 
 
-@router.get("/context/{source_id}")
+@router.get("/context/{source_id}", response_model=ContentContextResponse)
 async def get_content_context(
     source_id: str, source_type: str = Query("lead"), current_user: UserProfileDTO = Depends(get_current_user)
-):
+) -> ContentContextResponse:
     service = MarketingService()
-    return await service.get_content_context(source_id, source_type)
+    res = await service.get_content_context(source_id, source_type)
+    return ContentContextResponse.model_validate(res)
 
 
-@router.get("/manager/alerts")
-async def get_manager_alerts(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
+@router.get("/manager/alerts", response_model=list[ManagerAlertResponse])
+async def get_manager_alerts(
+    current_user: dict = Depends(requires_permission(TASK_READ_TEAM)),
+) -> list[ManagerAlertResponse]:
     service = MarketingService()
-    return await service.get_manager_alerts()
+    alerts = await service.get_manager_alerts()
+    return [ManagerAlertResponse.model_validate(a) for a in alerts]
 
 
-@router.post("/manager/sentinel/run")
-async def run_sentinel_manual(current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT))):
+@router.post("/manager/sentinel/run", response_model=SentinelRunResponse)
+async def run_sentinel_manual(
+    current_user: dict = Depends(requires_permission(AGENT_TRIGGER_MKT)),
+) -> SentinelRunResponse:
     service = MarketingService()
-    return await service.run_sentinel()
+    res = await service.run_sentinel()
+    return SentinelRunResponse.model_validate(res)
 
 
-@router.get("/stats")
-async def get_marketing_stats(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/stats", response_model=MarketingStatsResponse)
+async def get_marketing_stats(current_user: UserProfileDTO = Depends(get_current_user)) -> MarketingStatsResponse:
     service = MarketingService()
-    return await service.get_marketing_stats()
+    res = await service.get_marketing_stats()
+    return MarketingStatsResponse.model_validate(res)
 
 
-@router.get("/trends")
-async def get_marketing_trends(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/trends", response_model=MarketingTrendsResponse)
+async def get_marketing_trends(
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> MarketingTrendsResponse:
     service = MarketingService()
-    return await service.get_marketing_trends()
+    res = await service.get_marketing_trends()
+    return MarketingTrendsResponse.model_validate(res)
 
 
-@router.get("/intelligence")
-async def get_marketing_intelligence(current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/intelligence", response_model=MarketingIntelligenceResponse)
+async def get_marketing_intelligence(
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> MarketingIntelligenceResponse:
     from ..services.stats.metrics import MetricsManager
 
     metrics = MetricsManager()
-    return await metrics.get_marketing_intelligence(user_id=str(current_user.id))
+    res = await metrics.get_marketing_intelligence(user_id=str(current_user.id))
+    return MarketingIntelligenceResponse.model_validate(res)
 
 
-@router.post("/knowledge/seed")
-async def seed_knowledge_base(current_user: dict = Depends(requires_permission(CONTENT_PUBLISH))):
+@router.post("/knowledge/seed", response_model=KnowledgeSeedResponse)
+async def seed_knowledge_base(
+    current_user: dict = Depends(requires_permission(CONTENT_PUBLISH)),
+) -> KnowledgeSeedResponse:
     service = MarketingService()
-    return await service.seed_knowledge()
+    res = await service.seed_knowledge()
+    return KnowledgeSeedResponse.model_validate(res)
 
 
-@router.get("/approvals")
-async def get_pending_approvals(current_user: dict = Depends(requires_permission(TASK_READ_TEAM))):
+@router.get("/approvals", response_model=PendingApprovalsResponse)
+async def get_pending_approvals(
+    current_user: dict = Depends(requires_permission(TASK_READ_TEAM)),
+) -> PendingApprovalsResponse:
     service = MarketingService()
-    return await service.get_pending_approvals()
+    res = await service.get_pending_approvals()
+    return PendingApprovalsResponse.model_validate(res)
 
 
 @router.post("/approvals/reject-suggestion", response_model=RejectSuggestionResponse)

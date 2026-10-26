@@ -146,11 +146,14 @@ async def test_run_weekly_executive_summary_success(
     assert "👉 完整數據與儀表板請至 Admin UI 查看" in tg_msg
 
 @pytest.mark.asyncio
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
 @patch("src.server.services.projects.task_service.task_service", new_callable=AsyncMock)
 @patch("src.server.repositories.base_repository.get_supabase_client")
 @patch("src.agents.workflow.engine_beta_graph.beta_graph", new_callable=AsyncMock)
 @patch.object(report_service, "gather_report_context", new_callable=AsyncMock)
-async def test_run_monthly_executive_summary_success(mock_gather, mock_beta_graph, mock_get_supabase, mock_task_service):
+async def test_run_monthly_executive_summary_success(
+    mock_gather, mock_beta_graph, mock_get_supabase, mock_task_service, mock_send_telegram
+):
     """
     Test that monthly executive summary executes Map-Reduce, creates task,
     and updates status to done.
@@ -235,9 +238,11 @@ async def test_gather_report_context_queries(mock_get_supabase):
 
 
 @pytest.mark.asyncio
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.dispatch_dual_voice_briefings", new_callable=AsyncMock)
 @patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
-async def test_send_summary_telegram_direct(mock_send_telegram):
+async def test_send_summary_telegram_direct(mock_send_telegram, mock_dispatch_voice):
     mock_send_telegram.return_value = True
+    mock_dispatch_voice.return_value = []
     success = await report_service.send_summary_telegram(
         title_prefix="Daily",
         content="Charlie's summarized insights",
@@ -245,6 +250,7 @@ async def test_send_summary_telegram_direct(mock_send_telegram):
     )
     assert success is True
     mock_send_telegram.assert_awaited_once()
+    mock_dispatch_voice.assert_awaited_once_with("Charlie's summarized insights")
     msg = mock_send_telegram.call_args[0][0]
     assert "星環 Daily 已產出" in msg
     assert "Charlie's summarized insights" in msg
@@ -350,6 +356,224 @@ async def test_execute_map_reduce_summary_without_management_steering_focus(
     prompt_content = state_arg.shared.messages[0]["content"]
     assert "Base Report Context" in prompt_content
     assert "### 🎯 管理者戰略關注焦點" not in prompt_content
+
+
+def test_get_leads_context_enrichment_with_qualified_pool_and_blogs():
+    """
+    Verify _get_leads_context includes lead scores, pain points, active qualified leads pool,
+    and Bob's marketing blog pipeline so the daily summary has concrete business substance.
+    """
+    mock_supabase = MagicMock()
+    report_service.supabase_client = mock_supabase
+
+    new_leads_res = MagicMock(
+        data=[
+            {
+                "company_name": "樸真國際股份有限公司",
+                "job_title": "AI 應用工程師",
+                "status": "qualified",
+                "enrichment_score": 74,
+                "identified_need": "工廠流程自動化 × 中台系統整合",
+            }
+        ]
+    )
+    qualified_pool_res = MagicMock(
+        data=[
+            {
+                "company_name": "潤御開發有限公司",
+                "job_title": "兼職 AI 應用開發工程師",
+                "status": "qualified",
+                "enrichment_score": 74,
+                "identified_need": "OpenAI API / LLM / RAG 知識庫建置",
+            }
+        ]
+    )
+    blogs_res = MagicMock(
+        data=[
+            {
+                "title": "🚀 AI狂潮席捲傳統產業！",
+                "status": "draft",
+                "ai_score": 85,
+            }
+        ]
+    )
+
+    def mock_table(name: str):
+        t = MagicMock()
+        if name == "leads":
+            t.select.return_value.gt.return_value.execute.return_value = new_leads_res
+            t.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = (
+                qualified_pool_res
+            )
+        elif name == "blog_posts":
+            t.select.return_value.order.return_value.limit.return_value.execute.return_value = blogs_res
+        return t
+
+    mock_supabase.table.side_effect = mock_table
+
+    summary = report_service._get_leads_context("2026-10-23T00:00:00Z")
+    assert "樸真國際股份有限公司 (AI 應用工程師) -> qualified [Score: 74]" in summary
+    assert "痛點: 工廠流程自動化 × 中台系統整合" in summary
+    assert "Active Qualified Leads Pool" in summary
+    assert "潤御開發有限公司" in summary
+    assert "Marketing Content Pipeline" in summary
+    assert "🚀 AI狂潮席捲傳統產業！ -> status: draft [AI Score: 85]" in summary
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.report_enrichment_service.asyncio.sleep", new_callable=AsyncMock)
+@patch("src.server.services.report_enrichment_service.ReportEnrichmentService._generate_script_with_llm", new_callable=AsyncMock)
+@patch("src.server.services.text_to_speech_service.text_to_speech_service.generate_audio", new_callable=AsyncMock)
+@patch("src.server.services.system.telegram_service.telegram_service.send_voice", new_callable=AsyncMock)
+@patch("src.server.utils.get_supabase_client")
+async def test_dispatch_dual_voice_briefings_zh_and_en(
+    mock_get_supabase,
+    mock_send_voice,
+    mock_generate_audio,
+    mock_gen_script,
+    mock_sleep,
+):
+    """
+    Verify dispatch_dual_voice_briefings produces 2 distinct Telegram voice bubbles:
+    1. Mandarin Executive Brief (Puck voice)
+    2. English CNN Business Flash Briefing (Fenrir voice)
+    with a 5-second rate-limit pause in between.
+    """
+    from src.server.services.report_enrichment_service import report_enrichment_service
+
+    mock_gen_script.side_effect = [
+        "各位早安，今日業務線新增潤御開發等合格潛客，請優先跟進。",
+        "Good morning. This is your Archon Executive Intelligence Briefing. Stay sharp.",
+    ]
+    mock_generate_audio.side_effect = [
+        (True, b"WAV_ZH_BYTES"),
+        (True, b"WAV_EN_BYTES"),
+    ]
+    mock_send_voice.return_value = True
+
+    mock_sb = MagicMock()
+    mock_sb.storage.from_.return_value.create_signed_url.return_value = {
+        "signedURL": "https://supabase.test/podcast.wav"
+    }
+    mock_get_supabase.return_value = mock_sb
+
+    urls = await report_enrichment_service.dispatch_dual_voice_briefings("Full Executive Summary Markdown")
+
+    assert len(urls) == 2
+    assert mock_generate_audio.await_count == 2
+    assert mock_generate_audio.call_args_list[0].kwargs["voice_name"] == "Puck"
+    assert mock_generate_audio.call_args_list[1].kwargs["voice_name"] == "Fenrir"
+
+    assert mock_send_voice.await_count == 2
+    assert "執行長重點語音速報" in mock_send_voice.call_args_list[0].kwargs["caption"]
+    assert "CNN Business Flash" in mock_send_voice.call_args_list[1].kwargs["caption"]
+    mock_sleep.assert_awaited_once_with(5.0)
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.report_enrichment_service.ReportEnrichmentService._generate_script_with_llm", new_callable=AsyncMock)
+@patch("src.server.services.text_to_speech_service.text_to_speech_service.generate_audio", new_callable=AsyncMock)
+@patch("src.server.services.system.telegram_service.telegram_service.send_voice", new_callable=AsyncMock)
+@patch("src.server.utils.get_supabase_client")
+async def test_trigger_emergency_voice_alert_respects_daily_cap(
+    mock_get_supabase,
+    mock_send_voice,
+    mock_generate_audio,
+    mock_gen_script,
+):
+    """Verify emergency voice alert sends voice bubble when under cap and blocks when >= 3 today."""
+    from src.server.services.report_enrichment_service import report_enrichment_service
+
+    mock_sb = MagicMock()
+    mock_sb.table.return_value.select.return_value.eq.return_value.gte.return_value.execute.return_value = MagicMock(
+        data=[{"id": 1}]
+    )
+    mock_get_supabase.return_value = mock_sb
+    mock_gen_script.return_value = "Archon 系統緊急告警，請立即查閱。"
+    mock_generate_audio.return_value = (True, b"WAV_EMERGENCY_BYTES")
+    mock_send_voice.return_value = True
+
+    res = await report_enrichment_service.trigger_emergency_voice_alert("Circuit Breaker Tripped")
+    assert res is True
+    mock_send_voice.assert_awaited_once()
+
+    # Now simulate cap reached (3 alerts already logged today)
+    mock_send_voice.reset_mock()
+    mock_sb.table.return_value.select.return_value.eq.return_value.gte.return_value.execute.return_value = MagicMock(
+        data=[{"id": 1}, {"id": 2}, {"id": 3}]
+    )
+    res_capped = await report_enrichment_service.trigger_emergency_voice_alert("Another failure")
+    assert res_capped is False
+    mock_send_voice.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.trigger_emergency_voice_alert", new_callable=AsyncMock)
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
+async def test_send_summary_telegram_fallback_triggers_emergency_voice(mock_send_telegram, mock_trigger_emergency):
+    """Verify send_summary_telegram triggers emergency voice alert when title_prefix contains 'Fallback'."""
+    mock_send_telegram.return_value = True
+    mock_trigger_emergency.return_value = True
+    success = await report_service.send_summary_telegram(
+        title_prefix="Daily (Fallback)",
+        content="⚠️ 多 Agent 協同討論未能在時限內收斂",
+        task_id="test-fallback-999",
+    )
+    assert success is True
+    mock_send_telegram.assert_awaited_once()
+    mock_trigger_emergency.assert_awaited_once_with("⚠️ 多 Agent 協同討論未能在時限內收斂")
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.token_usage_service.TokenUsageService.log_usage", new_callable=AsyncMock)
+@patch("src.server.services.credential_service.credential_service.get_credential", new_callable=AsyncMock)
+@patch("google.genai.Client")
+async def test_generate_script_with_llm_model_fallback_and_token_logging(
+    mock_genai_client, mock_get_cred, mock_log_usage
+):
+    """
+    Verify _generate_script_with_llm:
+    1. Tries SUPERVISOR_MODEL (gemini-3.6-flash) first; if it raises 429, degrades to DEFAULT_PRO (gemini-3.5-flash-lite).
+    2. Strips markdown symbols (*_`#[]) and logs token usage via TokenUsageService.log_usage.
+    3. Provides clean English anchor fallback if all models fail on DAILY_VOICE_BRIEF_EN.
+    """
+    from src.server.services.report_enrichment_service import ReportEnrichmentService
+
+    mock_get_cred.side_effect = ["key-primary", "key-primary"]
+
+    mock_ok_resp = MagicMock()
+    mock_ok_resp.text = "**Good morning!** [CNN] `#Flash` _Update_"
+    mock_ok_resp.usage_metadata = MagicMock(prompt_token_count=120, candidates_token_count=45)
+
+    mock_instance = mock_genai_client.return_value
+    # 1st model (gemini-3.6-flash) raises 429, 2nd model (gemini-3.5-flash-lite) succeeds
+    mock_instance.aio.models.generate_content = AsyncMock(
+        side_effect=[Exception("429 Quota exceeded"), mock_ok_resp]
+    )
+
+    script = await ReportEnrichmentService._generate_script_with_llm(
+        "DAILY_VOICE_BRIEF_EN", "Prompt instruction", "Raw summary markdown"
+    )
+    assert script == "Good morning! CNN Flash Update"
+    assert mock_instance.aio.models.generate_content.await_count == 2
+    assert mock_instance.aio.models.generate_content.call_args_list[0].kwargs["model"] == "gemini-3.6-flash"
+    assert mock_instance.aio.models.generate_content.call_args_list[1].kwargs["model"] == "gemini-3.5-flash-lite"
+    mock_log_usage.assert_awaited_once()
+    assert mock_log_usage.call_args.kwargs["model"] == "gemini-3.5-flash-lite"
+    assert mock_log_usage.call_args.kwargs["input_tokens"] == 120
+    assert mock_log_usage.call_args.kwargs["output_tokens"] == 45
+
+    # Now test complete LLM outage fallback on EN track
+    mock_get_cred.side_effect = ["key-primary", "key-primary"]
+    mock_instance.aio.models.generate_content = AsyncMock(side_effect=Exception("All models down"))
+    en_fallback = await ReportEnrichmentService._generate_script_with_llm(
+        "DAILY_VOICE_BRIEF_EN", "Prompt instruction", "中文原始內容不應出現在英文主播保底"
+    )
+    assert "Good morning. This is your Archon Executive Intelligence Briefing." in en_fallback
+    assert "中文" not in en_fallback
+
+
+
 
 
 

@@ -10,6 +10,7 @@ from src.server.models.auth_models import UserProfileDTO
 from src.server.schemas.projects import (
     CreateVersionRequest,
     CreateVersionResponse,
+    DocumentVersionItem,
     RestoreVersionRequest,
     RestoreVersionResponse,
     VersionListResponse,
@@ -28,39 +29,42 @@ def _err(res: Any, code: int = 500):
     raise HTTPException(status_code=code, detail=detail)
 
 
-@router.get("/versions", response_model=list[dict[str, Any]])
-async def list_all_versions(current_user: UserProfileDTO = Depends(get_current_user)) -> list[dict[str, Any]]:
+@router.get("/versions", response_model=list[DocumentVersionItem], response_model_exclude_none=True)
+async def list_all_versions(current_user: UserProfileDTO = Depends(get_current_user)) -> list[DocumentVersionItem]:
     u_role = current_user.role.lower()
     if u_role not in [RoleEnum.SYSTEM_ADMIN, RoleEnum.ADMIN, RoleEnum.MANAGER]:
         _err("Forbidden", 403)
     s, res = VersioningService().list_all_versions()
     if not s or not isinstance(res, dict):
         _err(res)
-    return cast(list[dict[str, Any]], res.get("versions", []))
+    versions_raw = cast(list[dict[str, Any]], res.get("versions", []))
+    return [DocumentVersionItem.model_validate(v) for v in versions_raw]
 
 
-@router.get("/projects/{project_id}/versions", response_model=VersionListResponse)
+@router.get("/projects/{project_id}/versions", response_model=VersionListResponse, response_model_exclude_none=True)
 async def list_project_versions(
     project_id: str, field_name: str | None = None, current_user: UserProfileDTO = Depends(get_current_user)
 ) -> VersionListResponse:
     s, res = VersioningService().list_versions(project_id, field_name)
     if not s or not isinstance(res, dict):
         _err(res, 404 if "not found" in str(res).lower() else 500)
+    versions_raw = cast(list[dict[str, Any]], res.get("versions", []))
     return VersionListResponse(
-        versions=res.get("versions", []),
+        versions=[DocumentVersionItem.model_validate(v) for v in versions_raw],
         total_count=res.get("total_count", 0),
     )
 
 
-@router.post("/projects/{project_id}/versions", response_model=CreateVersionResponse)
+@router.post("/projects/{project_id}/versions", response_model=CreateVersionResponse, response_model_exclude_none=True)
 async def create_project_version(
     project_id: str, req: CreateVersionRequest, current_user: UserProfileDTO = Depends(get_current_user)
 ) -> CreateVersionResponse:
     s, res = VersioningService().create_version(project_id=project_id, **req.model_dump())
     version_data = cast(dict[str, Any], handle_service_result(s, res)).get("version")
+    version_obj = DocumentVersionItem.model_validate(version_data) if version_data else None
     return CreateVersionResponse(
         message="Version created successfully",
-        version=version_data,
+        version=version_obj,
     )
 
 

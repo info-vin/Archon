@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-22 完成 104 潛客爬蟲排程斷層鑑識，全面落地方案 A（12 小時冷卻制與開機智慧補跑機制，廢除舊週跨度缺陷）；完成 `task_dispatcher.py` 殭屍任務檢索之 SSOT 標註；通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（796 項後端測試全綠通過）與 `make phase-audit`（11 大品質與架構門禁 100% 通過）；完成遠端同步推送 (`80917e6a`)，工作區 clean。
-*   **今日目標 (Today's Goal)**: 完成門禁檢驗與文件日誌同步提交推送。
+*   **當前狀態 (Current Context)**: 2026-10-26 完成 Phase 5.12.2 決策大腦 `Gemini 3.6 Flash` 升級與 Telegram 雙軌語音泡泡 (`sendVoice`) 速報及緊急告警實裝：於 `model_ssot.py` 納入 `SUPERVISOR_MODEL` (`models/gemini-3.6-flash`) 並賦能 `SupervisorNode`，支援 429 配額耗盡時自動降階至 `DEFAULT_PRO` (`gemini-3.5-flash-lite`)；於 `telegram_service.py` 與 `enduser-ui-fe/api/telegram.js` 實裝原生語音泡泡雙模發送（Proxy 優先 + 遇 HTTP/網路錯誤自動 fallback 直連 `sendVoice`）；於 `report_enrichment_service.py` 實作中文晨會重點速報（`Puck`）+ 英文 CNN 主播風格速報（`Fenrir`）雙語音泡泡管線（含 5 秒防限流緩衝）以及每日上限 3 次的緊急事件語音告警（`Kore`），並將 3 組語音 Prompt 同步至雲端 `archon_prompts`；修復 `test_meta_twin_service.py` 測試殘留之 `SYSTEM_MODELS` 全域污染；全數通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**817 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
+*   **今日目標 (Today's Goal)**: 完成 Phase 5.12.2 全量回歸公證與安全提交。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,76 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-26: Phase 5.12.2 決策大腦 Gemini 3.6 Flash 升級、Telegram 雙語音泡泡速報與緊急語音告警實裝、Jules PR 深度鑑識及 Reaper 停用
+
+*   **Phase 5.12.2 決策大腦 `Gemini 3.6 Flash` 升級與 Telegram 雙語音泡泡速報 (`sendVoice`) 實裝**:
+    *   **探針先行實證 (Probe-First)**: 實測驗證 `models/gemini-3.6-flash` 正常回應 `READY_FOR_SUPERVISOR`，並實測驗證 Telegram Bot API `sendVoice` 可直接將 24kHz Mono WAV 轉換為原生語音泡泡 (`mime_type: audio/ogg`, `AwACAgUAAxk...`)，無需安裝巨型 `ffmpeg` 依賴。
+    *   **決策大腦升級 (`SUPERVISOR_MODEL`)**: 於 [model_ssot.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/config/model_ssot.py)、[config.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/config/config.py)、[nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 與 [internal_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/api_routes/internal_api.py) 將 `SupervisorNode` 升級為 `models/gemini-3.6-flash`，同時將 [nexus_oracle_agent.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/nexus_oracle_agent.py) 解耦為讀取 `ORACLE_AGENT_MODEL` / `DEFAULT_PRO` (`gemini-3.5-flash-lite`)，確保 3.6 Flash 每日 20 次配額 100% 聚焦於由上而下的工作流統籌與日報播報腳本。
+    *   **Telegram 原生語音泡泡雙模發送**: 於 [telegram_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/system/telegram_service.py) 實作 `send_voice`（Proxy 優先 + 遇 HTTP/網路錯誤自動 fallback 直連 `multipart/form-data`），於 [telegram.js](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/api/telegram.js) 設置 `sizeLimit: '4.5mb'` 支援長度達 60 秒之 WAV Base64 轉發。
+    *   **日報雙語音泡泡 + 重大緊急告警閉環 (每日上限 5 次 TTS)**: 於 [report_enrichment_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_enrichment_service.py)、[report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py) 與 [sentinel_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/sentinel_patrol.py) 實作 `dispatch_dual_voice_briefings`（中文晨會重點速報 `Puck` + 5 秒間隔 + 英文 CNN 商業主播風格速報 `Fenrir`）與 `trigger_emergency_voice_alert`（當日報熔斷降級或預算超標時發送 `Kore` 緊急語音泡泡，受每日 3 次上限保護），並將 `DAILY_VOICE_BRIEF_ZH`、`DAILY_VOICE_BRIEF_EN`、`EMERGENCY_VOICE_ALERT` 同步 Upsert 至雲端 `archon_prompts`。
+    *   **斷層深度清剿與韌性自癒**:
+        - 修復 `telegram_service.py` 漏捕獲 `httpx.HTTPStatusError` 導致 Proxy 回傳 400/500 時無法自動切換直連之重大斷層。
+        - 修復 `utils.py` `_run_agent_with_retry`，支援 `gemini-3.6-flash` 遇 429 觸頂時自動降階至 `DEFAULT_PRO` (`gemini-3.5-flash-lite`)，杜絕日報死亡中斷。
+        - 修復 `test_meta_twin_service.py` 測試殘留之 `SYSTEM_MODELS` 全域污染，隔絕跨測試狀態干擾。
+        - 修復 `test_telegram_proxy.py` 同步方法 `raise_for_status` 誤用 `AsyncMock` 產生之 `RuntimeWarning`。
+    *   **全門禁公證通過**: 通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**817 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
+*   **Jules 代理人職責審查與 Reaper 停用決策**:
+    *   **停用 Reaper 代理人**: 經查歷史 `git log`（PR #533 等），Reaper 曾將 FastAPI Query 參數誤判為未使用的死代碼，險些破壞 API 合約；且現代前端（ESLint/Biome）與後端（Ruff `F401`/`F841`）已有成熟靜態檢查，專案亦有每週例行維護，Reaper 不僅重複做功，且「因害怕誤刪而無法主動發現結構性技術債」。決策：**正式停用 Reaper 代理人**。
+*   **Google AI Studio 過去 28 天真實配額用量與專案代碼物理映射 (Zero Guesswork Audit)**:
+    *   **真實 Console 遙測數據**:
+        - `Gemini 3.1 Flash Lite`: RPM 12/15 (80%), TPM 46.63K/250K, RPD 114/500。
+        - `Gemini 3.1 Flash TTS`: RPM 2/3 (66.7%), TPM 874/10K, RPD 7/10 (70% 警告線)。
+        - `Gemini 3.5 Flash Lite`: RPM 8/15 (53.3%), TPM 5.01K/250K, RPD 29/500。
+        - `Gemini Embedding 1`: RPM 14/100, TPM 7.02K/30K, RPD 379/1K (37.9%)。
+        - 其餘模型（Antigravity, Gemini 2.x, Gemini 2.5 Flash/Pro 等）：用量皆為 0。
+    *   **Codebase 物理調用鏈路 100% 對齊**:
+        - `DEFAULT_TEXT` 映射至 `gemini-3.1-flash-lite`（支撐 Agent Workflow、Blog/Pitch Generator、Librarian 等 15+ 服務，故 RPM 達 12/15 尖峰）。
+        - `DEFAULT_PRO` 映射至 `gemini-3.5-flash-lite`（支撐 Supervisor Agent、Nexus Oracle、Presentation、Self-Healing 等推論任務）。
+        - `TTS_MODEL` 映射至 `gemini-3.1-flash-tts-preview`（由 `TextToSpeechService` 產出語音，RPD 7/10 已接近免費上限）。
+        - `EMBEDDING` 映射至 `gemini-embedding-001`（支撐 RAG、Contextual Embedding、104 潛客相似度計分，RPD 379 穩定消耗）。
+*   **過去一個月 `git log --author="jules"` 深度鑑識 (Structure Ossification Forensics)**:
+    *   **斷層一（PR #648 `b297c430`）：`CredentialManager` 回傳型別污染與未跑 `make lint-be` 門禁**: `TypeGuardian` 將 `load_all_credentials` 與 `get_credentials_by_category` 回傳型別標註為 `dict[str, str | MaskedEncryptedCredentialDict]`，導致下游 9 個呼叫端在 `int()` / `float()` / API Key 讀取時爆發 **26 個 MyPy 錯誤**，並在 `provider_configs.py` 留下一處未加 `# 合法` 註記的 `localhost:11434` SSOT 違規。
+    *   **斷層二（PR #635 `b23804a5`）：`TaskDetails` 對動態 JSONB 附件崩潰與擴充欄位剝除**: `archon_tasks.attachments` 在 Agent 執行後存入的是 `AgentOutputSchema`（含 `summary`, `artifacts`, `status`），但 `TaskDetails.attachments` 卻強制限定為 `list[Attachment]`（必填 `url`），導致開啟 AI 完成之任務時直接拋出 HTTP 500 `ValidationError`；同時漏列 `query_logic.py` 產出的 `agent_output`、`ai_metrics`、`stats`、`sources`、`code_examples` 等欄位。
+    *   **斷層三（PR #649 `1898985e`）：`DocumentItemResponse` 固化假結構與 `add_document` 回傳斷鏈**: 預設將 `version` 限定為 `int`（實務上 `document_service.py` 存入 `"1.0"` 字串），且未開啟 `extra="allow"` 導致 JSONB 文件自訂欄位被靜默剝除；此外 `DocumentService.add_document` 回傳字典缺少 `"document"` 鍵，導致 `POST /api/projects/{project_id}/docs` 永遠回傳 `document=None`。
+    *   **斷層四（Commit `55f28352`）：`marketing_service.py` 幻覺 `TypedDict`**: `PitchResultDict` 與 `BlogDraftResultDict` 的鍵名與 `SalesPitchGenerator`、`BlogGenerator` 實際回傳結構脫節。
+*   **四向物理修復與 `.jules` 守則硬化 (Fix-Forward & Agent Guardrails)**:
+    *   **升級 `.jules` 雙守則**: 重構 [contractor.md](file:///Users/vincenta/GoogleKwok022/Archon/.jules/contractor.md) 與 [type_guardian.md](file:///Users/vincenta/GoogleKwok022/Archon/.jules/type_guardian.md)（各精煉為 4 條核心鐵律，符合 Step 11 `<= 5` 節限制），強制三向物理對帳（Producer ↔ Schema ↔ Frontend/MCP）、動態 JSONB 保護、禁止全 Optional 空殼與假 Mock、禁止 `cast()` 欺騙編譯器。
+    *   **修復 `credentials` 型別與 SSOT**: 於 [manager.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/credentials/manager.py)、[models.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/credentials/models.py)、[provider_configs.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/credentials/provider_configs.py)、[batch_processor.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/embeddings/batch_processor.py) 與 [contextual_embedding_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/embeddings/contextual_embedding_service.py) 消除全部 26 個 MyPy 錯誤與 SSOT 違規。
+    *   **修復專案與行銷 Schema / Service**: 於 [projects.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/projects.py)、[document_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/projects/document_service.py) 與 [marketing_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/marketing_service.py) 補齊真實欄位與 `ConfigDict(extra="allow")`，並於 [test_project_versioning_api.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/server/api_routes/test_project_versioning_api.py) 新增 3 項真實端到端結構合約測試。
+    *   **全門禁綠燈**: 通過 `make lint`（393 檔案 0 錯誤）、`make test-be-fast`（**811 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
+
+#### 2026-10-24: 過去一個月虛假開發四大斷層深度清剿、PR #644 幻覺 Schema 修復與星環商業日報全鏈路校正
+
+*   **過去一個月 `git log` 虛假開發與虛假驗證四大罪狀鑑識 (Fault-Line Forensics)**:
+    *   **罪狀一：修改代碼 Prompt 卻從未更新雲端 DB (`archon_prompts`)**: `PromptService.load_prompts()` 僅在 DB 缺漏 key 時新增，不會覆蓋既有紀錄。過去一個月多次修改 `pm_prompts.py` 卻未同步雲端，導致雲端與本地多達 19 個 Prompt 嚴重脫節。
+    *   **罪狀二：硬編碼 `score >= 75` 造成 100% 潛客靜默封存死鎖 (`70fccdbd`)**: `gemini-embedding-001` 針對 104 頂尖 AI/自動化職缺的真實餘弦相似度最高落在 `72~74` 分（樸真國際 74、潤御開發 74、得億國際 73、秋雨創新 72），硬編碼 `>= 75` 導致所有潛客入庫即被打入 `archived`，下游 `bob_market_report` 永遠查無合格名單。
+    *   **罪狀三：`ReportService` 數據餵養殘缺與職責混淆**: `gather_report_context` 漏傳潛客評分 (`enrichment_score`)、痛點 (`identified_need`)、合格潛客池 (`Active Qualified Leads Pool`) 與 Bob 的 `blog_posts` 內容管線，且日報漏接 `MANAGEMENT_STEERING_FOCUS`，導致星環討論退化為泛泛空談並把 Alice/Bob 職責混為一談。
+    *   **罪狀四：幻覺 `response_model` 與假 Mock 測試 (`55f28352` PR #632, `4add34f9` PR #639, `9afda75b` PR #644)**: 在未對照 `analytics_handler.py`、`blog_generator.py` 與前端元件的情況下，憑空捏造 `CombinedSourceResponse`、`MarketingTrendsResponse`、`KnowledgeSeedResponse` 與 `SubmitBlogResponse`，導致真實 API 回傳欄位被 FastAPI 靜默剝除或拋出 HTTP 500。
+*   **四向物理修復與雲端資料庫同步 (Fix-Forward & Cloud DB Sync)**:
+    *   **行銷 API Schema 物理對齊**: 於 [marketing.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/schemas/marketing.py) 與 [marketing_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/marketing_service.py) 完整對齊前端 `VictoryFeedList.tsx`、`BrandDashboardView.tsx` 與後端 Handler 欄位，並更新 [test_marketing_api_contract.py](file:///Users/vincenta/GoogleKwok022/Archon/python/tests/server/api_routes/test_marketing_api_contract.py) 以真實輸出結構進行嚴格斷言。
+    *   **潛客門檻校準與雲端數據復原**: 於 [job_board_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/job_board_service.py) 將合格門檻調為 `score >= 72`，並將雲端 Supabase `leads` 表中 `>= 72` 分的 4 家高潛力企業復原為 `qualified`。
+    *   **日報上下文擴充與巨型檔案精簡**: 於 [report_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/report_service.py)（精簡至 **355 行**，低於 360 行預警線）補齊潛客分數、痛點、合格潛客池、Bob 部落格文章管線與 `MANAGEMENT_STEERING_FOCUS`；於 [nodes.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/agents/workflow/nodes.py) 之 `SummaryNode` 注入原始客觀數據基準；將 `ALL_PROMPTS` 100% 同步 Upsert 至雲端 `archon_prompts`（驗證 0 drift）。
+*   **真實端到端重跑與 11 大品質門禁公證**:
+    *   **實體重跑與 Telegram 推播**: 重新執行今日日報工單 `1970fc36-ad11-4d45-b2d0-1175c1e2e60c` 並實體推播至 Telegram，完整呈現 4 家合格潛客痛點表格、Bob 部落格草稿進度與明確角色分工。
+    *   **全門禁綠燈**: 通過 `make lint`（393 檔案 0 錯誤、Lean 4 18 jobs 通過）、`make test-be-fast`（**808 passed**, 0 failed）與 `make phase-audit` 11 大門禁全綠。
+
+#### 2026-10-23: 遠端同步、品質雙門禁公證、歷史斷層深度交叉比對與全系統 21 項週期作業全景遙測
+
+*   **遠端同步與品質門禁雙綠燈 (`make lint` & `make test-be`)**:
+    *   **Git Fast-Forward 同步**: 順利同步拉取遠端最新提交至 `a169b300`（包含 PR #640 `crawler_service` 型別守衛重構與 PR #641 `marketing_stats` API 規範）。
+    *   **靜態與型別校驗**: `make lint` 100% 綠燈，包含前端雙專案 ESLint + TypeScript、後端 `check-no-single`、`ruff`、`mypy`（393 檔案 0 錯誤）以及 Lean 4（18 項定理與規範 100% 構建成功）。
+    *   **後端測試套件**: `make test-be` 後端測試全綠通過，總計 **802 passed**、11 skipped、4 xfailed（0 failed）。
+*   **Phase 5.11.21 ~ Phase 5.12.1 歷史 Git Log 與排程全景交叉比對**:
+    *   **戒除主觀盲猜，恪守歷史脈絡**: 深入查閱 `git log` 與歷史重大事件（如 09/20 429 配額危機、10/21 日報容器斷線），理解代碼在第一線維運中的防禦性設計權衡（如 In-Process Fallback 分層安全網、確定性破冰信模板杜絕 429 死亡循環、Admin UI 動態 Settings 渲染機制）。
+*   **Clockwork 週期排程實體全景遙測與 21 項作業深度穿透對帳**:
+    *   **雲端 Space 狀態**: 實體驗證 Hugging Face Space (`chiawei6/myrmidon`) 處於 `RUNNING` (Stage: `READY`)，`/api/health` 順利回傳 200 OK。
+    *   **全系統 4 大類別 21 項作業實體對帳**:
+        - 高頻無狀態巡檢（`system_probe`、`model_verification`、`log_patrol`、`task_dispatcher`、`meta_twin_audit`）每小時穩定回傳，夜間自動切換 `[Sleep Mode]`。
+        - 每日有狀態作業（`business_sentinel` 今日 08:40 已準時執行完畢，`system_probe_cleanup`、`prune_stale_leads`、`daily_executive_summary`、`token_analysis` 排程目標正常待執行）。
+        - 週期性作業（10/22 Alice 首跑入庫 5 筆潛客並完成 RAG 相似度計分，Bob 市場情報事件聯動成功觸發；週日維護作業歷史工單與錨點打卡完整閉環）。
+*   **階段目標完整性稽核通關 (`make phase-audit`)**:
+    *   清理 stale `git fsmonitor--daemon` 幽靈快取，工作區 100% Clean；11 大架構、SSOT、Repository 隔離與 Jules 壓縮門禁全數 100% 綠燈通過。
 
 #### 2026-10-22: 104 潛客爬蟲排程斷層鑑識、方案 A（12 小時冷卻制）架構治理與實體公證
 

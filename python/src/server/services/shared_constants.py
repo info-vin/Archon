@@ -64,6 +64,9 @@ class PromptNameEnum(StrEnum):
     SUMMARY_AGENT_PROMPT = "summary_agent_prompt"
     RAG_AGENT_PROMPT = "rag_agent_prompt"
     PRESENTATION_AGENT_PROMPT = "presentation_agent_prompt"
+    DAILY_VOICE_BRIEF_ZH = "DAILY_VOICE_BRIEF_ZH"
+    DAILY_VOICE_BRIEF_EN = "DAILY_VOICE_BRIEF_EN"
+    EMERGENCY_VOICE_ALERT = "EMERGENCY_VOICE_ALERT"
 
 
 @dataclass(frozen=True)

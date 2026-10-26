@@ -146,7 +146,7 @@ async def get_agent_credentials(request: Request) -> AgentCredentialsResponse:
             ),
             "LOG_LEVEL": await credential_service.get_credential("LOG_LEVEL", default="INFO"),
             # Phase 5.4.5: Global Model SSOT Hardening
-            "SUPERVISOR_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
+            "SUPERVISOR_AGENT_MODEL": SYSTEM_MODELS.get("SUPERVISOR_MODEL", SYSTEM_MODELS["DEFAULT_PRO"]).split("/")[-1],
             "WORKER_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
             "DOCUMENT_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
             "RAG_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],

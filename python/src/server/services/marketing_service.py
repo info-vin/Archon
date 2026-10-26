@@ -45,6 +45,8 @@ class VendorResultDict(TypedDict):
 
 
 class PitchResultDict(TypedDict):
+    content: NotRequired[str]
+    references: NotRequired[list[str]]
     pitch: NotRequired[str]
     company: NotRequired[str]
     job_title: NotRequired[str]
@@ -58,13 +60,22 @@ class VisualAssetDict(TypedDict):
     status: NotRequired[str]
     image_url: NotRequired[str | None]
     tier: NotRequired[str | None]
+    svg_content: NotRequired[str | None]
     error: NotRequired[str]
 
 
 class BlogDraftResultDict(TypedDict):
+    title: NotRequired[str]
+    content: NotRequired[str]
+    excerpt: NotRequired[str]
+    ai_score: NotRequired[int]
+    task_id: NotRequired[str]
+    post_id: NotRequired[str]
     blog: NotRequired[dict[str, Any]]
     status: NotRequired[str]
     error: NotRequired[str]
+    error_code: NotRequired[int]
+    message: NotRequired[str]
 
 
 class ManagerAlertDict(TypedDict):
@@ -77,35 +88,46 @@ class ManagerAlertDict(TypedDict):
 
 
 class PendingApprovalsDict(TypedDict):
-    pending_posts: NotRequired[list[dict[str, Any]]]
-    pending_leads: NotRequired[list[dict[str, Any]]]
+    blogs: NotRequired[list[dict[str, Any]]]
+    leads: NotRequired[list[dict[str, Any]]]
 
 
 class MarketingStatsDict(TypedDict):
     total_leads: NotRequired[int]
+    total_blog_posts: NotRequired[int]
     active_campaigns: NotRequired[int]
     conversion_rate: NotRequired[float]
+    last_updated: NotRequired[str]
+    error: NotRequired[str]
 
 
 class MarketingTrendsDict(TypedDict):
-    weekly_leads: NotRequired[list[int]]
-    top_industries: NotRequired[list[str]]
+    keyword_growth: NotRequired[list[dict[str, Any]]]
+    sankey_flow: NotRequired[dict[str, Any]]
 
 
 class CombinedSourceDict(TypedDict):
     id: NotRequired[str]
-    name: NotRequired[str]
-    source_type: NotRequired[str]
+    type: NotRequired[str]
+    title: NotRequired[str]
+    score: NotRequired[int | float]
+    summary: NotRequired[str]
+    date: NotRequired[str]
+    status: NotRequired[str]
 
 
 class SentinelResultDict(TypedDict):
     status: NotRequired[str]
-    alerts_processed: NotRequired[int]
+    message: NotRequired[str]
 
 
 class KnowledgeSeedResultDict(TypedDict):
     status: NotRequired[str]
-    items_seeded: NotRequired[int]
+    scanned_dir: NotRequired[str]
+    total_files: NotRequired[int]
+    indexed_count: NotRequired[int]
+    errors: NotRequired[list[str]]
+    error: NotRequired[str]
 
 
 class ErrorDict(TypedDict):

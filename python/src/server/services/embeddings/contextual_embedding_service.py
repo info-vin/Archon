@@ -6,7 +6,6 @@ Includes proper rate limiting for OpenAI API calls.
 """
 
 import asyncio
-from typing import cast
 
 import openai
 
@@ -123,7 +122,6 @@ async def _get_model_choice(provider: str | None = None) -> str:
     model = provider_config.get("chat_model")
     if not model:
         raise ValueError("chat_model is not configured in provider_config")
-    model = cast(str, model)
 
     search_logger.debug(f"Using model from credential service: {model}")
 

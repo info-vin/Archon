@@ -181,8 +181,8 @@ class JobBoardService(BaseRepository):
                 identified_need = job.identified_need or await self.evaluator.infer_need(job)
 
                 score = int(round(sim * 100))
-                # Qualified status for high-intent matches (>= 75), else archived
-                lead_status = "qualified" if score >= 75 else "archived"
+                # Qualified status for high-intent matches (>= 72), else archived
+                lead_status = "qualified" if score >= 72 else "archived"
 
                 return {
                     "company_name": job.company,

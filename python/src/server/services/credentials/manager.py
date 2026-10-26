@@ -7,7 +7,12 @@ from supabase import Client, create_client
 
 from ...config.logfire_config import get_logger
 from .crypto_utils import CryptoUtils
-from .models import CredentialItem
+from .models import (
+    CredentialItem,
+    CredentialStatusDict,
+    EncryptedCredentialDict,
+    MaskedEncryptedCredentialDict,
+)
 
 if TYPE_CHECKING:
     from .repository import CredentialRepository
@@ -99,7 +104,7 @@ class CredentialManager:
             repository = self._get_repository()
             data = repository.fetch_all()
 
-            credentials = {}
+            credentials: dict[str, str | EncryptedCredentialDict] = {}
             for item in data:
                 key = item["key"]
                 if item["is_encrypted"] and item["encrypted_value"]:
@@ -297,7 +302,7 @@ class CredentialManager:
             repository = self._get_repository()
             data = repository.fetch_by_category(category)
 
-            credentials = {}
+            credentials: dict[str, str | MaskedEncryptedCredentialDict] = {}
             for item in data:
                 key = item["key"]
                 if item["is_encrypted"]:
@@ -359,8 +364,6 @@ class CredentialManager:
     # --- Backward Compatibility / Proxy Wrappers ---
     # To satisfy tests and existing mocks without breaking physical mock integrity (Rule 13).
 
-    async def check_credentials_exist(self, keys: list[str]) -> dict[str, dict[str, Any]]:
+    async def check_credentials_exist(self, keys: list[str]) -> dict[str, CredentialStatusDict]:
         from .helpers import check_credentials_exist
         return await check_credentials_exist(self, keys)
-
-

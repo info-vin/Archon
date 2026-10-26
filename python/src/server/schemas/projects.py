@@ -5,7 +5,7 @@ Project Schemas for API Requests and Responses
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.server.services.shared_constants import DEFAULT_ASSIGNEE
 
@@ -74,6 +74,7 @@ class Attachment(BaseModel):
 class TaskDetails(BaseModel):
     id: str | None = Field(default=None, description="Task ID")
     project_id: str | None = Field(default=None, description="Project ID")
+    parent_task_id: str | None = Field(default=None, description="Parent task ID")
     title: str | None = Field(default=None, description="Task title")
     description: str | None = Field(default=None, description="Task description")
     status: str | None = Field(default=None, description="Task status")
@@ -86,13 +87,23 @@ class TaskDetails(BaseModel):
     created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
     updated_at: str | datetime | None = Field(default=None, description="Update timestamp")
     due_date: str | datetime | None = Field(default=None, description="Due date")
+    archived: bool | None = Field(default=False, description="Whether the task is archived")
+    archived_at: str | datetime | None = Field(default=None, description="Archive timestamp")
+    archived_by: str | None = Field(default=None, description="User or agent that archived the task")
     is_recurring: bool | None = Field(default=False, description="Is recurring task")
     crawler_target_id: str | None = Field(default=None, description="Crawler target ID")
     schedule_config: dict[str, Any] | None = Field(default=None, description="Schedule configuration")
     knowledge_source_ids: list[str] | None = Field(default_factory=list, description="Knowledge source IDs")
-    attachments: list[Attachment] | None = Field(default_factory=list, description="Attachments")
+    sources: list[dict[str, Any]] | None = Field(default_factory=list, description="Linked knowledge sources")
+    code_examples: list[dict[str, Any]] | None = Field(default_factory=list, description="Linked code examples")
+    attachments: list[dict[str, Any] | Attachment] | None = Field(default_factory=list, description="Attachments")
+    agent_output: Any | None = Field(default=None, description="Latest normalized agent execution output")
     output: dict[str, Any] | str | None = Field(default=None, description="Agent execution output")
+    ai_metrics: dict[str, Any] | None = Field(default=None, description="Aggregated AI token usage and cost metrics")
+    stats: dict[str, Any] | None = Field(default=None, description="Task statistics when large fields are excluded")
     retry_count: int | None = Field(default=0, description="Retry count")
+
+    model_config = ConfigDict(extra="allow")
 
 
 class GenerateTaskFromAlertRequest(BaseModel):
@@ -116,7 +127,7 @@ class UpdateTaskRequest(BaseModel):
     collaborator_agent_ids: list[str] | None = None
     task_order: int | None = None
     feature: str | None = None
-    attachments: list[Attachment] | None = None
+    attachments: list[dict[str, Any] | Attachment] | None = None
     retry_count: int | None = None
     due_date: datetime | None = None
     is_recurring: bool | None = None
@@ -165,6 +176,39 @@ class CreateTaskResponse(BaseModel):
     task: TaskDetails | None = Field(default=None, description="Created task details")
 
 
+class DocumentStats(BaseModel):
+    version_count: int | str | None = Field(default=None, description="Document version count or label")
+    content_size: int | None = Field(default=None, description="Document content size in bytes")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class DocumentItemResponse(BaseModel):
+    id: str | None = Field(default=None, description="Document ID")
+    type: str | None = Field(default=None, description="Document type")
+    document_type: str | None = Field(default=None, description="Document type classification")
+    status: str | None = Field(default=None, description="Document workflow status")
+    title: str | None = Field(default=None, description="Document title")
+    content: dict[str, Any] | str | None = Field(default=None, description="Document content")
+    author: str | None = Field(default=None, description="Document author")
+    tags: list[str] | None = Field(default_factory=list, description="Document tags")
+    created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
+    updated_at: str | datetime | None = Field(default=None, description="Last update timestamp")
+    version: int | str | None = Field(default=1, description="Document version number or string")
+    stats: DocumentStats | dict[str, Any] | None = Field(default=None, description="Document statistics")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentItemResponse] = Field(default_factory=list, description="List of project documents")
+
+
+class CreateDocumentResponse(BaseModel):
+    message: str = Field(description="Status message")
+    document: DocumentItemResponse | None = Field(default=None, description="Created document details")
+
+
 class CreateDocumentRequest(BaseModel):
     document_type: str
     title: str
@@ -211,14 +255,29 @@ class ProjectListResponse(BaseModel):
     count: int = Field(description="Total count of projects returned")
 
 
+class DocumentVersionItem(BaseModel):
+    id: str | None = Field(default=None, description="Version ID")
+    project_id: str | None = Field(default=None, description="Project ID")
+    document_id: str | None = Field(default=None, description="Document ID")
+    field_name: str | None = Field(default=None, description="Field name modified")
+    content: dict[str, Any] | list[Any] | str | None = Field(default=None, description="Version content payload")
+    version_number: int | None = Field(default=None, description="Version number")
+    change_summary: str | None = Field(default=None, description="Summary of changes")
+    change_type: str | None = Field(default=None, description="Type of change (update, restore, etc.)")
+    created_by: str | None = Field(default=None, description="User or system that created the version")
+    created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
+
+    model_config = ConfigDict(extra="allow")
+
+
 class VersionListResponse(BaseModel):
-    versions: list[dict[str, Any]] = Field(description="List of document versions")
+    versions: list[DocumentVersionItem] = Field(default_factory=list, description="List of document versions")
     total_count: int = Field(description="Total number of versions")
 
 
 class CreateVersionResponse(BaseModel):
     message: str = Field(description="Status message")
-    version: dict[str, Any] | None = Field(default=None, description="Created version object")
+    version: DocumentVersionItem | None = Field(default=None, description="Created version object")
 
 
 class RestoreVersionResponse(BaseModel):

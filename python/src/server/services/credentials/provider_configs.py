@@ -1,16 +1,17 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .manager import CredentialManager
 
 from ...config.logfire_config import get_logger
+from .models import ActiveProviderDTO, EmbeddingProviderConfigDTO
 
 logger = get_logger(__name__)
 
 SUPPORTED_PROVIDERS = {"openai", "google", "anthropic", "openrouter", "grok"} # 合法
 
 
-async def get_active_provider(manager: "CredentialManager", service_type: str = "llm") -> dict[str, Any]:
+async def get_active_provider(manager: "CredentialManager", service_type: str = "llm") -> ActiveProviderDTO:
     """
     Get the currently active provider configuration.
     Searches across critical categories with deep fallback to OS environment.
@@ -23,17 +24,22 @@ async def get_active_provider(manager: "CredentialManager", service_type: str = 
         all_settings = {**ai_settings, **marketing_settings, **rag_settings}
 
         provider_key = "LLM_PROVIDER" if service_type == "llm" else "EMBEDDING_PROVIDER"
-        provider = all_settings.get(provider_key)
+        provider_val = all_settings.get(provider_key)
 
-        if not provider:
-            provider_val = await manager.get_credential(provider_key, "google")
-            provider = str(provider_val).lower() if provider_val else "google"
+        if not provider_val:
+            provider_raw = await manager.get_credential(provider_key, "google")
+            provider = str(provider_raw).lower() if provider_raw else "google"
+        else:
+            provider = str(provider_val).lower()
 
         api_key = await _get_provider_api_key(manager, provider)
         base_url = _get_provider_base_url(provider, all_settings)
 
-        chat_model = all_settings.get("MODEL_CHOICE") or all_settings.get("MARKETING_MODEL") or ""
-        embedding_model = all_settings.get("EMBEDDING_MODEL", "")
+        chat_model_raw = all_settings.get("MODEL_CHOICE") or all_settings.get("MARKETING_MODEL") or ""
+        chat_model = str(chat_model_raw) if not isinstance(chat_model_raw, dict) else ""
+
+        embedding_model_raw = all_settings.get("EMBEDDING_MODEL", "")
+        embedding_model = str(embedding_model_raw) if not isinstance(embedding_model_raw, dict) else ""
 
         return {
             "provider": provider,
@@ -45,22 +51,24 @@ async def get_active_provider(manager: "CredentialManager", service_type: str = 
 
     except Exception as e:
         logger.error(f"Error getting active provider for {service_type}: {e}")
-        provider = await manager.get_credential("LLM_PROVIDER", "google")
+        provider_raw = await manager.get_credential("LLM_PROVIDER", "google")
+        provider = str(provider_raw) if provider_raw else "google"
+        openai_key = await manager.get_credential("OPENAI_API_KEY")
         return {
             "provider": provider,
-            "api_key": await manager.get_credential("OPENAI_API_KEY"),
+            "api_key": str(openai_key) if openai_key else None,
             "base_url": None,
             "chat_model": "",
             "embedding_model": "",
         }
 
 
-async def get_embedding_provider_configs(manager: "CredentialManager") -> list[dict[str, Any]]:
+async def get_embedding_provider_configs(manager: "CredentialManager") -> list[EmbeddingProviderConfigDTO]:
     """
     Get the currently active primary and fallback embedding provider configurations.
     Designed for failover and separate from the main LLM provider logic.
     """
-    configs = []
+    configs: list[EmbeddingProviderConfigDTO] = []
     try:
         ai_settings = await manager.get_credentials_by_category("ai")
         marketing_settings = await manager.get_credentials_by_category("marketing")
@@ -78,17 +86,22 @@ async def get_embedding_provider_configs(manager: "CredentialManager") -> list[d
             model_key = f"EMBEDDING_MODEL{pt['suffix']}"
             api_key_override_key = f"EMBEDDING_API_KEY{pt['suffix']}"
 
-            provider = all_settings.get(provider_key)
-            if not provider:
+            provider_val = all_settings.get(provider_key)
+            if not provider_val:
                 if pt["type"] == "primary":
-                    provider_val = all_settings.get("LLM_PROVIDER") or await manager.get_credential("LLM_PROVIDER", "google")
-                    provider = str(provider_val).lower() if provider_val else "google"
+                    provider_raw = all_settings.get("LLM_PROVIDER") or await manager.get_credential("LLM_PROVIDER", "google")
+                    provider = str(provider_raw).lower() if provider_raw else "google"
                 else:
                     continue
+            else:
+                provider = str(provider_val).lower()
 
-            embedding_model = all_settings.get(model_key)
+            embedding_model_val = all_settings.get(model_key)
+            embedding_model = str(embedding_model_val) if isinstance(embedding_model_val, str) else ""
+
             if not embedding_model and pt["type"] == "primary":
-                embedding_model = all_settings.get("EMBEDDING_MODEL") or await manager.get_credential("EMBEDDING_MODEL", "")
+                fallback_val = all_settings.get("EMBEDDING_MODEL") or await manager.get_credential("EMBEDDING_MODEL", "")
+                embedding_model = str(fallback_val) if fallback_val else ""
 
             if not embedding_model:
                 if provider == "google":
@@ -98,7 +111,9 @@ async def get_embedding_provider_configs(manager: "CredentialManager") -> list[d
                 else:
                     embedding_model = "default-embedding"
 
-            api_key = await manager.get_credential(api_key_override_key)
+            api_key_raw = await manager.get_credential(api_key_override_key)
+            api_key = str(api_key_raw) if api_key_raw else None
+
             if not api_key:
                 api_key = await _get_provider_api_key(manager, provider)
 
@@ -137,24 +152,27 @@ async def _get_provider_api_key(manager: "CredentialManager", provider: str) -> 
         key = await manager.get_credential("GEMINI_API_KEY")
         if not key:
             key = await manager.get_credential("GOOGLE_API_KEY")
-        return cast(str | None, key)
+        return str(key) if key else None
 
     if provider == "grok":
         key = await manager.get_credential("GROK_API_KEY")
         if not key:
             key = await manager.get_credential("XAI_API_KEY")
-        return cast(str | None, key)
+        return str(key) if key else None
 
     key_name = key_mapping.get(provider)
     if key_name:
-        return cast(str | None, await manager.get_credential(key_name))
+        key = await manager.get_credential(key_name)
+        return str(key) if key else None
     return "ollama" if provider == "ollama" else None
 
 
-def _get_provider_base_url(provider: str, rag_settings: dict) -> str | None:
+def _get_provider_base_url(provider: str, rag_settings: dict[str, Any]) -> str | None:
     """Get base URL for provider."""
     if provider == "ollama":
-        return cast(str | None, rag_settings.get("LLM_BASE_URL", "http://localhost:11434/v1")) # 合法
+        default_url = "http://localhost:11434/v1"  # 合法
+        url_val = rag_settings.get("LLM_BASE_URL", default_url)
+        return str(url_val) if isinstance(url_val, str) else default_url
     elif provider == "google":
         # The correct base URL for Google models endpoint (used in providers_api.py) is:
         # https://generativelanguage.googleapis.com/v1beta

@@ -83,8 +83,9 @@ async def run_physical_probe(send_telegram: bool = True, task_id: str | None = N
         print("\n[Step 2/4] 物理檢索系統指標與運營上下文 (Context Gathering)...")
         try:
             context_md = await report_service.gather_report_context(days=1)
+            context_md = report_service._inject_steering_focus(context_md)
             print(f"  - 成功收集資料，上下文長度: {len(context_md)} 字元")
-            print(f"  - 內容預覽 (前 150 字): {context_md[:150].strip()}...")
+            print(f"  - 內容預覽 (前 200 字): {context_md[:200].strip()}...")
             if len(context_md) < 50:
                 print("❌ [FAIL] 收集到的上下文異常過短。")
                 return False
@@ -116,14 +117,15 @@ async def run_physical_probe(send_telegram: bool = True, task_id: str | None = N
             agent_id=AgentUUIDs.SUPERVISOR,
         )
 
-        # Inspect resulting output
-        out_ok, out_res = await task_service.get_task(exec_task_id)
-        if out_ok and out_res and "task" in out_res:
-            task_updated = out_res["task"]
-            print(f"  - 任務執行後狀態: {task_updated.get('status')}")
-            attachments = task_updated.get("attachments")
-            if attachments:
-                print("  - 產出附件已成功寫入工單。")
+        # Inspect resulting output if real task_id
+        if active_task_id:
+            out_ok, out_res = await task_service.get_task(active_task_id)
+            if out_ok and out_res and "task" in out_res:
+                task_updated = out_res["task"]
+                print(f"  - 任務執行後狀態: {task_updated.get('status')}")
+                attachments = task_updated.get("attachments")
+                if attachments:
+                    print("  - 產出附件已成功寫入工單。")
 
         print("  -> Step 3 通過 ✅")
     except Exception as e:
