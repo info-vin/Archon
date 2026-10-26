@@ -301,3 +301,21 @@ class ProjectDetailResponse(BaseModel):
     business_sources: list[str] | None = Field(default=None, description="Business sources")
     created_at: str | datetime | None = Field(default=None, description="Creation timestamp")
     updated_at: str | datetime | None = Field(default=None, description="Last update timestamp")
+
+
+class ProjectFeatureItem(BaseModel):
+    id: str | None = Field(default=None, description="Feature ID or name")
+    label: str | None = Field(default=None, description="Feature label")
+    name: str | None = Field(default=None, description="Feature name")
+    type: str | None = Field(default=None, description="Feature type")
+    color: str | None = Field(default=None, description="Feature tag color")
+    status: str | None = Field(default=None, description="Feature status")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class ProjectFeaturesResponse(BaseModel):
+    features: list[ProjectFeatureItem | dict[str, Any]] = Field(default_factory=list, description="List of project features")
+    count: int = Field(default=0, description="Total number of features")
+
+    model_config = ConfigDict(extra="allow")
