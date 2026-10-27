@@ -18,6 +18,7 @@ from src.server.schemas.projects import (
     DocumentItemResponse,
     DocumentListResponse,
     ProjectDetailResponse,
+    ProjectFeaturesResponse,
     ProjectListResponse,
     UpdateProjectRequest,
 )
@@ -202,10 +203,17 @@ async def delete_project(
     )
 
 
-@router.get("/projects/{project_id}/features")
-async def get_project_features(project_id: str, current_user: UserProfileDTO = Depends(get_current_user)):
+@router.get("/projects/{project_id}/features", response_model=ProjectFeaturesResponse)
+async def get_project_features(
+    project_id: str, current_user: UserProfileDTO = Depends(get_current_user)
+) -> ProjectFeaturesResponse:
     s, res = await ProjectService().get_project_features(project_id)
-    return handle_service_result(s, cast(Any, res))
+    if not s or not isinstance(res, dict):
+        _err(res if s else "Project features not found", 404 if "not found" in str(res).lower() or s else 500)
+    features_raw = res.get("features", [])
+    features_list = features_raw if isinstance(features_raw, list) else []
+    count = res.get("count", len(features_list))
+    return ProjectFeaturesResponse(features=features_list, count=count)
 
 
 @router.get("/projects/{project_id}/docs", response_model=DocumentListResponse)
