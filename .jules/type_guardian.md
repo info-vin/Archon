@@ -17,3 +17,7 @@
 ## 4. Dependency Injection, Circular Imports & SSOT Markers (# 合法)
 **Learning:** Importing cross-module services at runtime for type hints causes circular `ImportError`, and stripping `# 合法` comments breaks `make phase-audit` Step 8.
 **Action:** Annotate repository/service constructors with `supabase_client: Client | None = None`, guard cross-module type imports behind `if TYPE_CHECKING:`, use `X | None` syntax, preserve all `# 合法` markers, and verify with `mypy src` and `pytest`.
+
+## 2025-05-18 - Async Service Methods Blocking Event Loop via Synchronous DB Execution
+**Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods causes database queries to run synchronously on the main thread, blocking the event loop. Furthermore, blind `res["data"][0]` access after `execute_query` risks `TypeError` or `IndexError` when `res.get("data")` is not a non-empty list.
+**Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, and inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing list elements.
