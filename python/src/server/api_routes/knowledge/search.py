@@ -5,7 +5,7 @@ Enforces authentication for all knowledge retrieval operations.
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.server.api_routes.knowledge.schemas import RagQueryRequest
+from src.server.api_routes.knowledge.schemas import KnowledgeSearchItemResponse, RagQueryRequest
 from src.server.config.logfire_config import safe_logfire_error
 from src.server.models.auth_models import UserProfileDTO
 from src.server.services.search.rag_service import RAGService
@@ -17,17 +17,18 @@ from ...auth.permissions import TASK_READ_OWN
 router = APIRouter()
 
 
-@router.post("/knowledge-items/search")
+@router.post("/knowledge-items/search", response_model=list[KnowledgeSearchItemResponse])
 async def search_knowledge_items(
     request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
-):
+) -> list[KnowledgeSearchItemResponse]:
     """Search for relevant knowledge items using vector similarity. Requires TASK_READ_OWN."""
     try:
         service = RAGService(get_supabase_client())
         metadata_filter = {"source_id": request.source_ids[0]} if request.source_ids else None
-        return await service.search_documents(
+        results = await service.search_documents(
             query=request.query, match_count=request.limit, filter_metadata=metadata_filter
         )
+        return [KnowledgeSearchItemResponse.model_validate(item) for item in results]
     except Exception as e:
         safe_logfire_error(f"Failed to search knowledge items | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
