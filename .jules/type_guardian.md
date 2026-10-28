@@ -21,7 +21,3 @@
 ## 5. Async Database Execution & Safe Array Access (execute_query_async)
 **Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods causes database queries to run synchronously on the main thread, blocking the event loop. Furthermore, blind `res["data"][0]` access after `execute_query` risks `TypeError` or `IndexError` when `res.get("data")` is not a non-empty list.
 **Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, and inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing list elements.
-
-## 2025-05-18 - Runtime Type Guarding in LogService
-**Learning:** Returning unverified `execute_query_async` dictionary shapes wrapped in `cast()` can promise keys that aren't present or misrepresent return types when query results fail or return empty datasets. Furthermore, direct array indexing `result["data"][0]` without checking `isinstance(data, list)` risks runtime `TypeError` or `IndexError`.
-**Action:** Replace `cast()` with explicit `isinstance(raw_data, list)` checks and dictionary key validation before mapping database rows into structured TypedDict DTOs.

@@ -21,6 +21,6 @@ Every field produced by the backend or read by the frontend/MCP MUST be preserve
 **Learning:** Returning raw dicts from routes typed as `-> ResponseModel` fails MyPy, and returning `None` on HTTP 304 cache hits raises `ResponseValidationError`.
 **Action:** Explicitly return `ResponseModel.model_validate(data)` (after verifying the service actually returns the expected key, e.g. `data` vs `document`), and return `Response(status_code=304, headers=response.headers)` for 304 cache hits. Never change existing HTTP status codes (e.g. 200 to 201) when MCP tools check `status_code == 200`.
 
-## 2025-05-18 - Align Knowledge Search API Response Schema
+## 5. Align Knowledge Search API Response Schema (extra="allow")
 **Learning:** `/api/knowledge-items/search` returned uncontracted raw dict lists from `RAGService.search_documents`, leaving client consumers without schema validation or type guarantees.
 **Action:** Defined `KnowledgeSearchItemResponse` with `ConfigDict(extra="allow")` to guarantee response structure while ensuring dynamic metadata and extra search attributes survive serialization.
