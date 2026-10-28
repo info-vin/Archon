@@ -21,7 +21,7 @@ async def test_list_connectivity_logs(system_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value = mock_query
 
-    mock_execute_query = AsyncMock(return_value=(True, {"data": [{"id": "1", "message": "test"}]}))
+    mock_execute_query = AsyncMock(return_value=(True, {"data": [{"id": "1", "message": "test"}, None, "invalid"]}))
     system_service.execute_query_async = mock_execute_query
 
     result = await system_service.list_connectivity_logs()
@@ -33,7 +33,7 @@ async def test_list_system_settings_success(system_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.order.return_value = mock_query
 
-    mock_execute_query = AsyncMock(return_value=(True, {"data": [{"key": "test", "value": "1"}]}))
+    mock_execute_query = AsyncMock(return_value=(True, {"data": [{"key": "test", "value": "1"}, None]}))
     system_service.execute_query_async = mock_execute_query
 
     result = await system_service.list_system_settings()
@@ -70,4 +70,15 @@ async def test_update_system_setting_not_found(system_service, mock_supabase):
     system_service.execute_query_async = mock_execute_query
 
     with pytest.raises(ValueError):
+        await system_service.update_system_setting("test", "new_value", "desc", "user")
+
+@pytest.mark.asyncio
+async def test_update_system_setting_malformed_data(system_service, mock_supabase):
+    mock_query_old = MagicMock()
+    mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query_old
+
+    mock_execute_query = AsyncMock(return_value=(True, {"data": [None]}))
+    system_service.execute_query_async = mock_execute_query
+
+    with pytest.raises(ValueError, match="Setting 'test' not found"):
         await system_service.update_system_setting("test", "new_value", "desc", "user")
