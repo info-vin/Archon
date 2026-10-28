@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class KnowledgeItemRequest(BaseModel):
@@ -123,3 +123,17 @@ class SourceChunksResponse(BaseModel):
     pagination: ChunkPagination = Field(
         default_factory=ChunkPagination, description="Pagination details for document chunks"
     )
+
+
+class KnowledgeSearchItemResponse(BaseModel):
+    """Response model for knowledge search results."""
+
+    id: int | str | None = Field(default=None, description="Chunk or record ID")
+    url: str | None = Field(default=None, description="Page or source URL")
+    chunk_number: int | None = Field(default=None, description="Chunk index within source document")
+    content: str | None = Field(default="", description="Text content chunk")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata key-value pairs")
+    source_id: str | None = Field(default=None, description="Unique source identifier")
+    similarity: float | None = Field(default=0.0, description="Vector similarity score")
+
+    model_config = ConfigDict(extra="allow")
