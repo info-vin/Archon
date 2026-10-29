@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any, Literal, cast
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ProgressDetails(BaseModel):
@@ -22,8 +22,7 @@ class ProgressDetails(BaseModel):
     embeddings_created: int | None = Field(None, alias="embeddingsCreated")
     code_blocks_found: int | None = Field(None, alias="codeBlocksFound")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 class ActiveOperation(BaseModel):
@@ -36,6 +35,8 @@ class ActiveOperation(BaseModel):
     message: str = Field(default="Processing...", description="The latest log message or status description")
     started_at: datetime | str | None = Field(default=None, description="The timestamp when the operation started")
 
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
 
 class ActiveOperationsResponse(BaseModel):
     """Response containing a list of all active operations."""
@@ -43,6 +44,8 @@ class ActiveOperationsResponse(BaseModel):
     operations: list[ActiveOperation] = Field(description="List of currently active operations")
     count: int = Field(description="The total number of active operations")
     timestamp: datetime | str = Field(description="The current server timestamp")
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 class BaseProgressResponse(BaseModel):
@@ -83,12 +86,13 @@ class BaseProgressResponse(BaseModel):
             return result
         return []
 
-    class Config:
-        populate_by_name = True  # Accept both snake_case and camelCase
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 class CrawlProgressResponse(BaseProgressResponse):
     """Progress response for crawl operations."""
+
+    type: Literal["crawl"] = Field("crawl", description="Type of operation")
 
     status: Literal[
         "starting",
@@ -147,12 +151,13 @@ class CrawlProgressResponse(BaseProgressResponse):
             return str(v)
         return v
 
-    class Config:
-        populate_by_name = True  # Accept both snake_case and camelCase
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 class UploadProgressResponse(BaseProgressResponse):
     """Progress response for document upload operations."""
+
+    type: Literal["upload"] = Field("upload", description="Type of operation")
 
     status: Literal[
         "starting",
@@ -178,12 +183,13 @@ class UploadProgressResponse(BaseProgressResponse):
     word_count: int | None = Field(None, alias="wordCount")
     source_id: str | None = Field(None, alias="sourceId")
 
-    class Config:
-        populate_by_name = True  # Accept both snake_case and camelCase
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 class ProjectCreationProgressResponse(BaseProgressResponse):
     """Progress response for project creation operations."""
+
+    type: Literal["project_creation"] = Field("project_creation", description="Type of operation")
 
     status: Literal[
         "starting", "analyzing", "generating_prp", "creating_tasks", "organizing", "completed", "failed", "error"
@@ -194,8 +200,7 @@ class ProjectCreationProgressResponse(BaseProgressResponse):
     tasks_created: int = Field(0, alias="tasksCreated")
     total_tasks_planned: int | None = Field(None, alias="totalTasksPlanned")
 
-    class Config:
-        populate_by_name = True  # Accept both snake_case and camelCase
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 def create_progress_response(operation_type: str, progress_data: dict[str, Any]) -> BaseProgressResponse:
