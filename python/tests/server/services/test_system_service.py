@@ -61,6 +61,17 @@ async def test_update_system_setting_success(system_service, mock_supabase):
     assert result["key"] == "test"
     assert result["value"] == "new_value"
 
+    # Verify physical schema alignment of the audit insert payload
+    insert_call = mock_supabase.table.return_value.insert.call_args
+    assert insert_call is not None
+    audit_data = insert_call[0][0]
+    assert audit_data["document_id"] == "setting:test"
+    assert audit_data["field_name"] == "system_setting"
+    assert "old_value" not in audit_data  # must NOT be top-level column in archon_document_versions
+    assert "new_value" not in audit_data  # must NOT be top-level column in archon_document_versions
+    assert audit_data["content"]["old_value"] == "old_value"
+    assert audit_data["content"]["new_value"] == "new_value"
+
 @pytest.mark.asyncio
 async def test_update_system_setting_not_found(system_service, mock_supabase):
     mock_query_old = MagicMock()

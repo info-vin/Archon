@@ -35,11 +35,9 @@ class DocumentVersionDTO(TypedDict):
     created_by: str
     change_type: str
     field_name: str
-    old_value: str
-    new_value: str
-    change_summary: str
     version_number: int
-    content: NotRequired[dict[str, Any]]
+    change_summary: str
+    content: dict[str, Any]
 
 
 class SystemService(BaseRepository):
@@ -90,12 +88,11 @@ class SystemService(BaseRepository):
                 "document_id": f"setting:{key}",
                 "created_by": user_name,
                 "change_type": "UPDATE",
-                "field_name": key,
-                "old_value": str(old_value) if old_value is not None else "",
-                "new_value": str(new_value),
-                "change_summary": f"System setting '{key}' updated by {user_name}",
+                "field_name": "system_setting",
                 "version_number": 1,
+                "change_summary": f"System setting '{key}' updated by {user_name}",
                 "content": {
+                    "setting_key": key,
                     "old_value": old_value,
                     "new_value": str(new_value),
                 },

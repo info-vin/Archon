@@ -106,3 +106,36 @@ def test_perform_rag_query_contract(mock_user):
         assert result_item["similarity_score"] == 0.95
         assert result_item["extra_item_attribute"] == "preserved"
         assert data["custom_pipeline_metadata"]["version"] == "2.1"
+
+
+def test_perform_rag_query_mcp_caller_contract(mock_user):
+    """Verify that perform_rag_query correctly translates MCP tool parameter shapes (source, match_count)."""
+    mock_rag_query_result = {
+        "results": [],
+        "query": "mcp tool query",
+        "source": "src_mcp_domain",
+        "match_count": 8,
+        "total_found": 0,
+        "execution_path": "rag_service_pipeline",
+        "search_mode": "vector",
+        "reranking_applied": False,
+    }
+
+    with patch("src.server.api_routes.knowledge.search.RAGService") as mock_rag_class:
+        mock_instance = AsyncMock()
+        mock_instance.perform_rag_query = AsyncMock(return_value=(True, mock_rag_query_result))
+        mock_rag_class.return_value = mock_instance
+
+        # Payload structure passed by rag_tools.py: {"query": ..., "source": ..., "match_count": ...}
+        payload = {"query": "mcp tool query", "source": "src_mcp_domain", "match_count": 8}
+        response = client.post("/api/rag/query", json=payload)
+
+        assert response.status_code == 200
+        # Verify RAGService received effective_source and effective_limit mapped from MCP params
+        mock_instance.perform_rag_query.assert_called_once_with(
+            query="mcp tool query", source="src_mcp_domain", match_count=8
+        )
+        data = response.json()
+        assert data["success"] is True
+        assert data["source"] == "src_mcp_domain"
+        assert data["match_count"] == 8

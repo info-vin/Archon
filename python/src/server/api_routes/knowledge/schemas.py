@@ -28,8 +28,13 @@ class RagQueryRequest(BaseModel):
 
     query: str
     source_ids: list[str] | None = None
+    source: str | None = None
     limit: int = 5
+    match_count: int | None = None
     include_raw: bool = False
+    return_mode: str | None = None
+
+    model_config = ConfigDict(extra="allow")
 
 
 class CrawlStartResponse(BaseModel):

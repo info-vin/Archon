@@ -41,8 +41,10 @@ async def perform_rag_query(
     """Perform a full RAG query combining retrieval and generation. Requires TASK_READ_OWN."""
     try:
         service = RAGService(get_supabase_client())
+        effective_source = (request.source_ids[0] if request.source_ids else None) or request.source
+        effective_limit = request.match_count if request.match_count is not None else request.limit
         success, result = await service.perform_rag_query(
-            query=request.query, source=request.source_ids[0] if request.source_ids else None, match_count=request.limit
+            query=request.query, source=effective_source, match_count=effective_limit
         )
         if success:
             return RagQueryResponse.model_validate({**result, "success": True})
