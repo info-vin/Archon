@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-26 完成 Phase 5.12.2 決策大腦 `Gemini 3.6 Flash` 升級與 Telegram 雙軌語音泡泡 (`sendVoice`) 速報及緊急告警實裝：於 `model_ssot.py` 納入 `SUPERVISOR_MODEL` (`models/gemini-3.6-flash`) 並賦能 `SupervisorNode`，支援 429 配額耗盡時自動降階至 `DEFAULT_PRO` (`gemini-3.5-flash-lite`)；於 `telegram_service.py` 與 `enduser-ui-fe/api/telegram.js` 實裝原生語音泡泡雙模發送（Proxy 優先 + 遇 HTTP/網路錯誤自動 fallback 直連 `sendVoice`）；於 `report_enrichment_service.py` 實作中文晨會重點速報（`Puck`）+ 英文 CNN 主播風格速報（`Fenrir`）雙語音泡泡管線（含 5 秒防限流緩衝）以及每日上限 3 次的緊急事件語音告警（`Kore`），並將 3 組語音 Prompt 同步至雲端 `archon_prompts`；修復 `test_meta_twin_service.py` 測試殘留之 `SYSTEM_MODELS` 全域污染；全數通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**817 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
-*   **今日目標 (Today's Goal)**: 完成 Phase 5.12.2 全量回歸公證與安全提交。
+*   **當前狀態 (Current Context)**: 2026-10-29 完成 PR #650 ~ #655 深度代碼審查、物理資料庫 Schema 斷層清剿與 MCP 參數橋接：物理揭露並修復 `archon_document_versions` 幻覺頂層欄位（`old_value`/`new_value`）引發之 PostgREST PGRST204 靜默報錯，將版本歷史規範化存入 `content` jsonb；修復 `RagQueryRequest` 與 `perform_rag_query` 漏接 MCP `source`/`match_count` 參數之契約斷層；將 `.jules/contractor.md` 與 `.jules/type_guardian.md` 壓縮至每檔 $\le 5$ 條核心條款並徹底肅清日期幻覺；全量通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**825 passed**, 0 failed）與 `make phase-audit` 11 大門禁（HF Space 狀態 `RUNNING`）。
+*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並持續審查 Jules 提交。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,21 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-29: PR #650 ~ #655 深度審查、物理資料庫 Schema 斷層清剿、MCP 參數橋接與 Jules 規則門禁自癒
+
+*   **PR #650 ~ #655 深度代碼審查與斷層清剿**:
+    *   **斷層一：`archon_document_versions` 幻覺欄位導致審計寫入 PGRST204 靜默死鎖修復**:
+        *   **探針實證**: PR #654 聲明 `DocumentVersionDTO` 並在 `SystemService.update_system_setting` 寫入 `archon_document_versions` 時傳入頂層 `old_value` 與 `new_value`。實體探針連線 Supabase 揭露該表僅具備 `id, project_id, task_id, field_name, version_number, content, change_summary, change_type, document_id, created_by, created_at, status`，傳入頂層幻覺欄位會 100% 觸發 `PGRST204: Could not find the 'old_value' column` 並被 `except Exception: pass` 靜默吞噬。
+        *   **物理修復**: 重構 `DocumentVersionDTO`，移除頂層 `old_value`/`new_value`，強制要求 `content: dict[str, Any]`，將設定歷史正規化存入 `"content": {"setting_key": key, "old_value": old_value, "new_value": str(new_value)}`，並將 `field_name` 設為 `"system_setting"`。於實體 Supabase 驗證插入成功入庫與清理，並於 `test_system_service.py` 增補底層欄位斷言。
+    *   **斷層二：MCP Tool 參數與 FastAPI `RagQueryRequest` 結構脫節修復**:
+        *   **問題揭露**: PR #655 導入 `RagQueryResponse`，但請求模型 `RagQueryRequest` 僅接納 `source_ids` 與 `limit`；然而 `rag_tools.py` 傳遞的是 `source` 與 `match_count`，導致指定來源搜尋被降級為全域盲搜、筆數被重設為預設值 5。
+        *   **物理修復**: 在 `schemas.py` 擴充 `RagQueryRequest` 同時容納 `source`, `match_count`, `return_mode` 並啟用 `extra="allow"`；在 `search.py` 實作自動雙向提取；在 `test_knowledge_search_api_contract.py` 新增 `test_perform_rag_query_mcp_caller_contract` 合約測試。
+    *   **Jules 規則門禁自癒 (`make phase-audit` Step 11)**:
+        *   Jules 於 PR #654/#655 再次引入日期幻覺標題（`## 2026-03-31`）且規則數超限（6 條）。已於 `.jules/contractor.md` 與 `.jules/type_guardian.md` 壓縮為各 5 條核心規則並徹底清除日期前綴，使 Step 11 門禁恢復 100% 綠燈。
+    *   **雲端遙測與全門禁公證**:
+        *   Hugging Face Space `chiawei6/myrmidon` 穩定服役於 `RUNNING` 階段（Port 8051 MCP 66 工具、Port 8181 Archon Server、Port 8052 Agents Service 運作正常）。
+        *   全量通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**825 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
 
 #### 2026-10-26: Phase 5.12.2 決策大腦 Gemini 3.6 Flash 升級、Telegram 雙語音泡泡速報與緊急語音告警實裝、Jules PR 深度鑑識及 Reaper 停用
 
