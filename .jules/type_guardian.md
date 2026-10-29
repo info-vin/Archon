@@ -21,3 +21,7 @@
 ## 5. Async Database Execution & Safe Array Access (execute_query_async)
 **Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods causes database queries to run synchronously on the main thread, blocking the event loop. Furthermore, blind `res["data"][0]` access after `execute_query` risks `TypeError` or `IndexError` when `res.get("data")` is not a non-empty list.
 **Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, and inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing list elements.
+
+## 2026-03-31 - Archon Document Versions & System Settings Boundary Hardening
+**Learning:** `archon_document_versions` table requires non-null `content jsonb`, but `SystemService.update_system_setting` omitted the field in audit inserts. Furthermore, database query array responses without element-level `isinstance(x, dict)` checks can cause downstream `AttributeError` or `TypeError` if malformed data is returned.
+**Action:** Always include required `content` field in audit payloads and filter returned DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`.
