@@ -24,3 +24,7 @@ Every field produced by the backend or read by the frontend/MCP MUST be preserve
 ## 5. Align Knowledge Search API Response Schema (extra="allow")
 **Learning:** `/api/knowledge-items/search` returned uncontracted raw dict lists from `RAGService.search_documents`, leaving client consumers without schema validation or type guarantees.
 **Action:** Defined `KnowledgeSearchItemResponse` with `ConfigDict(extra="allow")` to guarantee response structure while ensuring dynamic metadata and extra search attributes survive serialization.
+
+## 6. Align RAG Query API Response Schema (extra="allow")
+**Learning:** `/api/rag/query` returned uncontracted raw dictionary structures constructed by `execute_rag_pipeline`, leaving MCP consumers (`rag_tools.py`) without formal OpenAPI schemas or validation guarantees while exposing the endpoint to potential 500 validation failures.
+**Action:** Defined `RagQueryResponse` and `RagQueryResultItem` with `ConfigDict(extra="allow")` and updated `/api/rag/query` to use `response_model=RagQueryResponse`, ensuring dynamic pipeline result attributes and custom pipeline metadata are preserved without field stripping.

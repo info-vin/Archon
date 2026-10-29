@@ -137,3 +137,30 @@ class KnowledgeSearchItemResponse(BaseModel):
     similarity: float | None = Field(default=0.0, description="Vector similarity score")
 
     model_config = ConfigDict(extra="allow")
+
+
+class RagQueryResultItem(BaseModel):
+    """Individual search result item within a RAG query response."""
+
+    id: str | int = Field(description="Result item ID")
+    content: str = Field(description="Result content or excerpt")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
+    similarity_score: float = Field(default=0.0, description="Similarity or boosted relevance score")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class RagQueryResponse(BaseModel):
+    """Response model for full RAG query endpoint (/api/rag/query)."""
+
+    success: bool = Field(default=True, description="Query execution status")
+    results: list[RagQueryResultItem] = Field(default_factory=list, description="List of search result items")
+    query: str = Field(description="Original search query")
+    source: str | None = Field(default=None, description="Filtered source domain if specified")
+    match_count: int = Field(default=5, description="Requested max match count")
+    total_found: int = Field(default=0, description="Total results returned")
+    execution_path: str = Field(default="rag_service_pipeline", description="Pipeline execution identifier")
+    search_mode: str = Field(default="vector", description="Search strategy used (e.g. vector, hybrid)")
+    reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
+
+    model_config = ConfigDict(extra="allow")

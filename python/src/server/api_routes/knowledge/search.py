@@ -5,7 +5,7 @@ Enforces authentication for all knowledge retrieval operations.
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.server.api_routes.knowledge.schemas import KnowledgeSearchItemResponse, RagQueryRequest
+from src.server.api_routes.knowledge.schemas import KnowledgeSearchItemResponse, RagQueryRequest, RagQueryResponse
 from src.server.config.logfire_config import safe_logfire_error
 from src.server.models.auth_models import UserProfileDTO
 from src.server.services.search.rag_service import RAGService
@@ -34,8 +34,10 @@ async def search_knowledge_items(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/rag/query")
-async def perform_rag_query(request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))):
+@router.post("/rag/query", response_model=RagQueryResponse)
+async def perform_rag_query(
+    request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
+) -> RagQueryResponse:
     """Perform a full RAG query combining retrieval and generation. Requires TASK_READ_OWN."""
     try:
         service = RAGService(get_supabase_client())
@@ -43,7 +45,7 @@ async def perform_rag_query(request: RagQueryRequest, current_user: UserProfileD
             query=request.query, source=request.source_ids[0] if request.source_ids else None, match_count=request.limit
         )
         if success:
-            return {**result, "success": True}
+            return RagQueryResponse.model_validate({**result, "success": True})
         raise HTTPException(status_code=500, detail=str(result.get("error")))
     except Exception as e:
         safe_logfire_error(f"Failed to perform RAG query | error={str(e)}")

@@ -61,3 +61,48 @@ def test_search_knowledge_items_contract(mock_user):
         assert item["similarity"] == 0.892
         # Extra JSONB/unmapped field preserved due to ConfigDict(extra="allow")
         assert item["extra_jsonb_field"] == "unmapped_producer_data"
+
+
+def test_perform_rag_query_contract(mock_user):
+    """Verify that perform_rag_query preserves producer dict fields and metadata without stripping."""
+    mock_rag_query_result = {
+        "results": [
+            {
+                "id": "result_0",
+                "content": "RAG pipeline search result excerpt.",
+                "metadata": {"source": "https://archon.com/docs", "tags": ["policy"]},
+                "similarity_score": 0.95,
+                "extra_item_attribute": "preserved",
+            }
+        ],
+        "query": "archon rag query",
+        "source": "https://archon.com/docs",
+        "match_count": 5,
+        "total_found": 1,
+        "execution_path": "rag_service_pipeline",
+        "search_mode": "hybrid",
+        "reranking_applied": True,
+        "custom_pipeline_metadata": {"version": "2.1"},
+    }
+
+    with patch("src.server.api_routes.knowledge.search.RAGService") as mock_rag_class:
+        mock_instance = AsyncMock()
+        mock_instance.perform_rag_query = AsyncMock(return_value=(True, mock_rag_query_result))
+        mock_rag_class.return_value = mock_instance
+
+        payload = {"query": "archon rag query", "limit": 5}
+        response = client.post("/api/rag/query", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["query"] == "archon rag query"
+        assert data["search_mode"] == "hybrid"
+        assert data["reranking_applied"] is True
+        assert data["total_found"] == 1
+        assert len(data["results"]) == 1
+        result_item = data["results"][0]
+        assert result_item["id"] == "result_0"
+        assert result_item["similarity_score"] == 0.95
+        assert result_item["extra_item_attribute"] == "preserved"
+        assert data["custom_pipeline_metadata"]["version"] == "2.1"
