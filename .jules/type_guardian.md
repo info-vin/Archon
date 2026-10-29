@@ -18,10 +18,6 @@
 **Learning:** Importing cross-module services at runtime for type hints causes circular `ImportError`, and stripping `# 合法` comments breaks `make phase-audit` Step 8.
 **Action:** Annotate repository/service constructors with `supabase_client: Client | None = None`, guard cross-module type imports behind `if TYPE_CHECKING:`, use `X | None` syntax, preserve all `# 合法` markers, and verify with `mypy src` and `pytest`.
 
-## 5. Async Database Execution & Safe Array Access (execute_query_async)
-**Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods causes database queries to run synchronously on the main thread, blocking the event loop. Furthermore, blind `res["data"][0]` access after `execute_query` risks `TypeError` or `IndexError` when `res.get("data")` is not a non-empty list.
-**Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, and inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing list elements.
-
-## 2026-03-31 - Archon Document Versions & System Settings Boundary Hardening
-**Learning:** `archon_document_versions` table requires non-null `content jsonb`, but `SystemService.update_system_setting` omitted the field in audit inserts. Furthermore, database query array responses without element-level `isinstance(x, dict)` checks can cause downstream `AttributeError` or `TypeError` if malformed data is returned.
-**Action:** Always include required `content` field in audit payloads and filter returned DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`.
+## 5. Async Database Execution, Schema Integrity & Safe Array Access
+**Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods blocks the event loop. Furthermore, blind `res["data"][0]` access or processing database query array responses without element-level `isinstance(x, dict)` checks causes runtime `TypeError` or `IndexError`. Additionally, audit table inserts (e.g. `archon_document_versions`) require non-null schema fields like `content jsonb`.
+**Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing, filter raw DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`, and satisfy all non-null DB schema constraints in audit payloads.

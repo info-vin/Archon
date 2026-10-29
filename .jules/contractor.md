@@ -21,10 +21,6 @@ Every field produced by the backend or read by the frontend/MCP MUST be preserve
 **Learning:** Returning raw dicts from routes typed as `-> ResponseModel` fails MyPy, and returning `None` on HTTP 304 cache hits raises `ResponseValidationError`.
 **Action:** Explicitly return `ResponseModel.model_validate(data)` (after verifying the service actually returns the expected key, e.g. `data` vs `document`), and return `Response(status_code=304, headers=response.headers)` for 304 cache hits. Never change existing HTTP status codes (e.g. 200 to 201) when MCP tools check `status_code == 200`.
 
-## 5. Align Knowledge Search API Response Schema (extra="allow")
-**Learning:** `/api/knowledge-items/search` returned uncontracted raw dict lists from `RAGService.search_documents`, leaving client consumers without schema validation or type guarantees.
-**Action:** Defined `KnowledgeSearchItemResponse` with `ConfigDict(extra="allow")` to guarantee response structure while ensuring dynamic metadata and extra search attributes survive serialization.
-
-## 6. Align RAG Query API Response Schema (extra="allow")
-**Learning:** `/api/rag/query` returned uncontracted raw dictionary structures constructed by `execute_rag_pipeline`, leaving MCP consumers (`rag_tools.py`) without formal OpenAPI schemas or validation guarantees while exposing the endpoint to potential 500 validation failures.
-**Action:** Defined `RagQueryResponse` and `RagQueryResultItem` with `ConfigDict(extra="allow")` and updated `/api/rag/query` to use `response_model=RagQueryResponse`, ensuring dynamic pipeline result attributes and custom pipeline metadata are preserved without field stripping.
+## 5. Align Knowledge & RAG Response Schemas (extra="allow")
+**Learning:** Knowledge search and RAG query endpoints (`/api/knowledge-items/search`, `/api/rag/query`) returned uncontracted raw dict structures from `RAGService`/`execute_rag_pipeline`, leaving client and MCP consumers without schema validation while risking serialization stripping.
+**Action:** Define response models (`KnowledgeSearchItemResponse`, `RagQueryResponse`, `RagQueryResultItem`) with `ConfigDict(extra="allow")` and apply `response_model=...` with explicit `.model_validate()`, guaranteeing response structure while ensuring dynamic metadata, vector scores, and pipeline attributes survive serialization.
