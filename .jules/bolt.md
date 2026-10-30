@@ -19,3 +19,7 @@
 ## 5. Single-Pass Accumulators and Concurrent Async Requests
 **Learning:** Chaining `[...arr.map(), ...arr.map()]` for min/max domain calculations (`d3.extent`) causes redundant array allocations, and sequential `await` calls for independent data fetches block rendering.
 **Action:** Use a single-pass `for` loop for numeric domain extents and parallelize independent async operations with `Promise.all` (frontend) or `asyncio.gather` (backend).
+
+## 6. Memoize Filtered List Projections in Render Loops
+**Learning:** Calling `.filter()` multiple times directly inside JSX render branches (e.g., `users.filter(u => u.role === 'ai_agent')`) causes redundant linear scans and creates throwaway array allocations on every render cycle.
+**Action:** Compute filtered sub-collections once using `useMemo` when source collections change, ensuring stable array references for downstream rendering and conditional length checks.
