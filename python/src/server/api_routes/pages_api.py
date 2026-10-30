@@ -8,7 +8,7 @@ This module handles page retrieval operations for RAG:
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..config.logfire_config import get_logger, safe_logfire_error
 
@@ -29,9 +29,9 @@ class PageSummary(BaseModel):
     url: str
     section_title: str | None = None
     section_order: int = 0
-    word_count: int
-    char_count: int
-    chunk_count: int
+    word_count: int = 0
+    char_count: int = 0
+    chunk_count: int = 1
 
 
 class PageResponse(BaseModel):
@@ -43,12 +43,12 @@ class PageResponse(BaseModel):
     full_content: str
     section_title: str | None = None
     section_order: int = 0
-    word_count: int
-    char_count: int
-    chunk_count: int
-    metadata: dict
+    word_count: int = 0
+    char_count: int = 0
+    chunk_count: int = 1
+    metadata: dict = Field(default_factory=dict)
     created_at: str
-    updated_at: str
+    updated_at: str | None = None
 
 
 class PageListResponse(BaseModel):

@@ -34,14 +34,25 @@ async def test_list_pages_success(pages_service, mock_supabase):
 async def test_list_pages_with_section(pages_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
-    mock_query.eq.return_value = mock_query
     mock_query.order.return_value.order.return_value = mock_query
 
-    mock_execute_query_async = AsyncMock(return_value=(True, {"data": []}))
+    mock_execute_query_async = AsyncMock(
+        return_value=(
+            True,
+            {
+                "data": [
+                    {"id": "1", "url": "http://example.com/1", "title": "test_section"},
+                    {"id": "2", "url": "http://example.com/2", "title": "other_section"},
+                ]
+            },
+        )
+    )
     pages_service.execute_query_async = mock_execute_query_async
 
-    await pages_service.list_pages(source_id="test_source", section="test_section")
-    mock_query.eq.assert_called_with("section_title", "test_section")
+    result = await pages_service.list_pages(source_id="test_source", section="test_section")
+    assert len(result) == 1
+    assert result[0]["id"] == "1"
+    assert result[0]["section_title"] == "test_section"
 
 @pytest.mark.asyncio
 async def test_get_page_by_url_success(pages_service, mock_supabase):
