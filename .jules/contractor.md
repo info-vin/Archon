@@ -24,3 +24,7 @@ Every field produced by the backend or read by the frontend/MCP MUST be preserve
 ## 5. Align Knowledge & RAG Response Schemas (extra="allow")
 **Learning:** Knowledge search and RAG query endpoints (`/api/knowledge-items/search`, `/api/rag/query`) returned uncontracted raw dict structures from `RAGService`/`execute_rag_pipeline`, leaving client and MCP consumers without schema validation while risking serialization stripping.
 **Action:** Define response models (`KnowledgeSearchItemResponse`, `RagQueryResponse`, `RagQueryResultItem`) with `ConfigDict(extra="allow")` and apply `response_model=...` with explicit `.model_validate()`, guaranteeing response structure while ensuring dynamic metadata, vector scores, and pipeline attributes survive serialization.
+
+## 2026-04-10 - Align Progress API Models and Discriminators
+**Learning:** Progress API response models (`CrawlProgressResponse`, `UploadProgressResponse`, `ProjectCreationProgressResponse`) were missing explicit discriminator `type` fields in python models, causing serialized JSON outputs to omit `type` expected by Frontend consumers (`ProgressResponse`). Furthermore, legacy `class Config:` configurations were not permitting extensible detail payloads.
+**Action:** Upgraded progress models to Pydantic v2 `model_config = ConfigDict(extra="allow", populate_by_name=True)` and added explicit `type: Literal[...]` fields with defaults to guarantee contract alignment.
