@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-29 完成 PR #650 ~ #655 深度代碼審查、物理資料庫 Schema 斷層清剿與 MCP 參數橋接：物理揭露並修復 `archon_document_versions` 幻覺頂層欄位（`old_value`/`new_value`）引發之 PostgREST PGRST204 靜默報錯，將版本歷史規範化存入 `content` jsonb；修復 `RagQueryRequest` 與 `perform_rag_query` 漏接 MCP `source`/`match_count` 參數之契約斷層；將 `.jules/contractor.md` 與 `.jules/type_guardian.md` 壓縮至每檔 $\le 5$ 條核心條款並徹底肅清日期幻覺；全量通過 `make lint-fe`、`make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**825 passed**, 0 failed）與 `make phase-audit` 11 大門禁（HF Space 狀態 `RUNNING`）。
+*   **當前狀態 (Current Context)**: 2026-10-30 完成 PR #656 ~ #657 深度代碼審查與 Jules 規則門禁自癒：審查 PR #656（`pages_service.py` 增強執行階段型別守衛 `isinstance(data, list)` 與 DTO 對齊）、PR #657（`progress_models.py` 升級 Pydantic v2 `ConfigDict(extra="allow", populate_by_name=True)` 並補正 `type: Literal[...]` 判別式）；壓縮 `.jules/contractor.md` 肅清日期幻覺至 $\le 5$ 條守則；全量通過 `make lint-be`（393 檔 0 錯誤）、`test_pages_service.py` 與 `test_progress_api.py`（20 passed）、`make test-be-fast`（**827 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
 *   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並持續審查 Jules 提交。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -122,6 +122,23 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-30: PR #656 ~ #657 深度審查、Pages 服務型別守衛與 Progress 判別式合約對齊、Jules 門禁自癒
+
+*   **PR #656 ~ #657 深度代碼審查與斷層驗證**:
+    *   **PR #656 (`pages_service.py` 執行階段型別守衛與 DTO 對齊)**:
+        - 審查 `pages_service.py` 與 `pages_api.py`：PR #656 將 `PageSummary.id` 與 `PageResponse.id` 放寬為 `str | int` 容納多種 ID 表現形式；在 `list_pages`、`get_page_by_url` 與 `get_page_by_id` 導入顯式 `isinstance(data, list)` 與元素級 `isinstance(item, dict)` 執行階段型別守衛，防範 Supabase 回傳畸形結構時觸發解包崩潰。
+        - 增補之單元測試（包含畸形 payload `test_list_pages_malformed_response` 等）於本機全數通過。
+    *   **PR #657 (`progress_models.py` Pydantic v2 升級與判別式補正)**:
+        - 審查 `progress_models.py` 與 `progress_api.py`：將 Progress API 模型升級至 Pydantic v2 `ConfigDict(extra="allow", populate_by_name=True)`，並為 `CrawlProgressResponse`、`UploadProgressResponse`、`ProjectCreationProgressResponse` 顯式標註 `type: Literal[...]` 判別式與預設值。
+        - 前端 TypeScript `ProgressResponse` 仰賴 `type` 判別式處理多型進度狀態，PR #657 保證序列化 JSON 100% 輸出 `type` 屬性，且容納動態 detail 欄位。合約測試驗證通過。
+*   **Jules 規則門禁自癒 (`make phase-audit` Step 11)**:
+    - Jules 於 PR #657 再次引入日期前綴（`## 2026-04-10`）且規則數超限（6 條）。已於 `.jules/contractor.md` 合併規則 5 與 6 為「`## 5. Align Response Schemas, Discriminators & Dynamic Payloads (extra="allow")`」，清除日期前綴並將規則數降回 5 條，全量恢復 Step 11 門禁綠燈。
+*   **品質門禁公證**:
+    - 通過 `make lint-be`（393 檔 0 錯誤）。
+    - 通過 `test_pages_service.py` 與 `test_progress_api.py`（20 passed）。
+    - 通過 `make test-be-fast`（**827 passed**, 0 failed）。
+    - 通過 `make phase-audit` 11 大門禁（HF Space 狀態 `PAUSED`）。
 
 #### 2026-10-29: PR #650 ~ #655 深度審查、物理資料庫 Schema 斷層清剿、MCP 參數橋接與 Jules 規則門禁自癒
 

@@ -21,10 +21,6 @@ Every field produced by the backend or read by the frontend/MCP MUST be preserve
 **Learning:** Returning raw dicts from routes typed as `-> ResponseModel` fails MyPy, and returning `None` on HTTP 304 cache hits raises `ResponseValidationError`.
 **Action:** Explicitly return `ResponseModel.model_validate(data)` (after verifying the service actually returns the expected key, e.g. `data` vs `document`), and return `Response(status_code=304, headers=response.headers)` for 304 cache hits. Never change existing HTTP status codes (e.g. 200 to 201) when MCP tools check `status_code == 200`.
 
-## 5. Align Knowledge & RAG Response Schemas (extra="allow")
-**Learning:** Knowledge search and RAG query endpoints (`/api/knowledge-items/search`, `/api/rag/query`) returned uncontracted raw dict structures from `RAGService`/`execute_rag_pipeline`, leaving client and MCP consumers without schema validation while risking serialization stripping.
-**Action:** Define response models (`KnowledgeSearchItemResponse`, `RagQueryResponse`, `RagQueryResultItem`) with `ConfigDict(extra="allow")` and apply `response_model=...` with explicit `.model_validate()`, guaranteeing response structure while ensuring dynamic metadata, vector scores, and pipeline attributes survive serialization.
-
-## 2026-04-10 - Align Progress API Models and Discriminators
-**Learning:** Progress API response models (`CrawlProgressResponse`, `UploadProgressResponse`, `ProjectCreationProgressResponse`) were missing explicit discriminator `type` fields in python models, causing serialized JSON outputs to omit `type` expected by Frontend consumers (`ProgressResponse`). Furthermore, legacy `class Config:` configurations were not permitting extensible detail payloads.
-**Action:** Upgraded progress models to Pydantic v2 `model_config = ConfigDict(extra="allow", populate_by_name=True)` and added explicit `type: Literal[...]` fields with defaults to guarantee contract alignment.
+## 5. Align Response Schemas, Discriminators & Dynamic Payloads (extra="allow")
+**Learning:** Knowledge, RAG, and Progress APIs returned uncontracted raw dict structures or models missing discriminator `type` literals, causing client consumers to drop fields or fail discriminator checks. Furthermore, legacy `class Config:` configurations were not permitting extensible detail payloads.
+**Action:** Define response models (`KnowledgeSearchItemResponse`, `RagQueryResponse`, `CrawlProgressResponse`, etc.) with `ConfigDict(extra="allow", populate_by_name=True)`, explicit discriminator `type: Literal[...]` fields with defaults, and apply `response_model=...` with `.model_validate()`, guaranteeing response structure, discriminator alignment, and dynamic payload survival.
