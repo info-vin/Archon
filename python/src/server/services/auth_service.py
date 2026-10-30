@@ -22,6 +22,8 @@ class UserProfileDictDTO(TypedDict):
     avatar: NotRequired[str | None]
     permission_overrides: NotRequired[dict[str, Any] | None]
     tenant_id: NotRequired[str | None]
+    created_at: NotRequired[str | None]
+    updated_at: NotRequired[str | None]
 
 
 class UserProfileUpdateDTO(TypedDict, total=False):
@@ -44,11 +46,14 @@ class AuthService(BaseRepository):
     def get_all_users(self) -> list[UserProfileDictDTO]:
         """
         Lists all users from the profiles table.
-        Returns a list of profile dicts.
+        Returns a list of profile dicts with runtime type guards.
         """
-        query = self.supabase_client.table("profiles").select("*") # 合法
+        query = self.supabase_client.table("profiles").select("*")  # 合法
         success, res = self.execute_query(query, "Error fetching users", require_data=False)
-        return cast(list[UserProfileDictDTO], res.get("data", []) if success else [])
+        if success and isinstance(res, dict) and isinstance(res.get("data"), list):
+            raw_data = res["data"]
+            return [cast(UserProfileDictDTO, item) for item in raw_data if isinstance(item, dict)]
+        return []
 
     def register_user(self, email: str, password: str, name: str, role: str = "employee") -> UserProfileDictDTO:
         """
@@ -80,7 +85,7 @@ class AuthService(BaseRepository):
             user_id = user_response.user.id
 
             # 2. Create Profile
-            profile_data = {
+            profile_data: UserProfileDictDTO = {
                 "id": user_id,
                 "email": email,
                 "name": name,
@@ -89,9 +94,9 @@ class AuthService(BaseRepository):
                 "avatar": f"https://i.pravatar.cc/150?u={user_id}",
             }
 
-            query = self.supabase_client.table("profiles").upsert(profile_data) # 合法
+            query = self.supabase_client.table("profiles").upsert(profile_data)  # 合法
             self.execute_query(query, f"Error creating profile for {user_id}", require_data=False)
-            return cast(UserProfileDictDTO, profile_data)
+            return profile_data
         except Exception as e:
             logger.error(f"Admin user creation error: {e}")
             raise e
@@ -107,7 +112,7 @@ class AuthService(BaseRepository):
             self.supabase_client.auth.admin.update_user_by_id(user_id, {"email": new_email})
 
             # 2. Update Profile
-            query = self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id) # 合法
+            query = self.supabase_client.table("profiles").update({"email": new_email}).eq("id", user_id)  # 合法
             self.execute_query(query, f"Error updating email in profile for {user_id}", require_data=False)
 
         except Exception as e:
@@ -124,15 +129,18 @@ class AuthService(BaseRepository):
             logger.info(f"Admin updating user {user_id}: {updates.keys()}")
 
             # 1. Sync Role to Auth User Metadata if it changed
-            if "role" in updates:
+            if "role" in updates and updates["role"] is not None:
                 self.supabase_client.auth.admin.update_user_by_id(user_id, {"user_metadata": {"role": updates["role"]}})
 
             # 2. Update Profile table
-            query = self.supabase_client.table("profiles").update(updates).eq("id", user_id) # 合法
+            query = self.supabase_client.table("profiles").update(updates).eq("id", user_id)  # 合法
             success, res = self.execute_query(query, f"Failed to update profile for {user_id}", require_data=False)
 
-            if success and res.get("data"):
-                return cast(UserProfileDictDTO, res["data"][0])
+            if success and isinstance(res, dict):
+                data = res.get("data")
+                if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+                    return cast(UserProfileDictDTO, data[0])
+
             raise ValueError(f"Failed to update profile for {user_id}")
 
         except Exception as e:
