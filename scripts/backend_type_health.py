@@ -192,6 +192,13 @@ def generate_health_report_markdown():
         classifier = mod["classifier"]
         sub_descs = mod.get("sub_descs", {})
 
+        # Multi-path resilience (Host vs Docker container)
+        if not os.path.exists(path):
+            if path.startswith("python/") and os.path.exists(path[len("python/"):]):
+                path = path[len("python/"):]
+            elif os.path.exists(os.path.join("python", path)):
+                path = os.path.join("python", path)
+
         total_files = 0
         total_lines = 0
         monolith_files = 0

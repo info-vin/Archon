@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-30 依「探針先行與零虛假驗證」鐵律實施實體穿透證明：實體探針 `scratch/prove_zero_fake_reality.py` 連線真實 Supabase 揭露 `archon_crawled_pages` 物理表不存在 `section_title, section_order, word_count, char_count, chunk_count` 幻覺欄位（原導致 PostgREST 42703 靜默失敗回傳 0 筆），物理重構 `pages_service.py` 與 `pages_api.py` 映射真實欄位與預設值；端到端驗證 Progress API `type: Literal[...]` 判別式；全量通過 `make lint-be`（393 檔 0 錯誤）、目標測試（23 passed）、`make test-be-fast`（**828 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
+*   **當前狀態 (Current Context)**: 2026-10-30 完成 Clockwork 週期作業實體產出物深度鑑識（包括週五 14:18 `architecture_health_audit` 架構健康度報告工單、`daily_executive_summary` 每日營運總結、`token_analysis` 額度追蹤、`alice_auto_fetch` 潛客資料庫對帳與 `cleanup_patrol` 清理紀錄）；修復 `scripts/backend_type_health.py` 容器內部路徑韌性（Host 與 Docker `/app` 雙向自適應，由 0 檔 0 行恢復為 332 檔 44,030 行實體掃描）；通過 `make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**828 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
 *   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並持續審查 Jules 提交。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -122,6 +122,34 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-10-30 (下午): Clockwork 週期作業實體內容穿透鑑識、架構健康度 Docker 路徑韌性修復與全門禁公證
+
+*   **Clockwork 週期作業實體產出物與日誌全景穿透鑑識 (Substantive Content Telemetry)**:
+    *   **排程 1: `architecture_health_audit`（週五 14:18 CST 架構健康度稽核）**:
+        - 於 14:18:00 準時由 APScheduler 觸發，在 `archon_tasks` 生成正式架構工單 `0020c2f9-d387-4dbe-892c-e6f85dd007ff`（指派給 `Archon DevBot`，狀態為 `done`）。
+        - 經由實體探針穿透檢視工單 `attachments` 與描述，確認 DevBot 成功掛載四維健康度形式化不變量分析，包含型別覆蓋率、模組行數、無巨型檔案率之綜合評估。
+    *   **排程 2: `daily_executive_summary`（每日營運星環摘要）**:
+        - 查閱最新星環執行摘要工單內容，包含完整的中文跨維度報告：
+          1. **Marketing**: 104 潛客對帳（包含樸真國際、潤御開發、得億國際、秋雨創新等 4 家合格高分企業，痛點聚焦 AI 數位轉型與自動化流程）；
+          2. **SEO/Content**: 審查 Bob 部落格文章草稿進度與社群矩陣佈局；
+          3. **Engineering**: Token 消耗對帳（當日累計花費 $0.0797 USD，遠低於單日預算閾值 $1.00 USD）。
+    *   **排程 3: `token_analysis`（Token 消耗分析巡檢）**:
+        - 實體查詢 Supabase `archon_logs` 與 `archon_settings`，24 小時內共消耗 29,285 tokens（$0.0177 USD），週累計花費 $0.0975 USD，安全閾值巡檢正常。
+    *   **排程 4: `alice_auto_fetch` & 潛客庫 (`leads` 實體對帳)**:
+        - 依真實 Schema（`id, company_name, source_job_url, status, identified_need, job_title, enrichment_score, auto_archived_reason, ...`）實體對帳，確認 4 筆合格 Leads（評分 75~85）與歷史過期自動封存名單皆物理入庫。
+    *   **排程 5: `cleanup_patrol` & `prune_stale_leads`**:
+        - 實體查詢清理紀錄，確認前次清理已順利將 7 筆過期潛客歸檔至 `archived`，`system_probe` 孤立記錄清理乾淨，零資料殘留。
+*   **Docker 內部路徑斷層揭露與 Multi-Path 自適應韌性修復 (`scripts/backend_type_health.py`)**:
+    *   **斷層定位**: 容器內部 `/app` 為專案後端根目錄（即宿主機的 `python/`），其模組實際位於 `/app/src/...`；而 `scripts/backend_type_health.py` 原先寫死 `python/src/mcp_server` 等路徑，導致在 Docker 容器內執行時 `os.path.exists` 判定全數為 `False`，報表實體檔案數與代碼行數靜默呈現 0 檔 0 行！
+    *   **自適應路徑修復 (Rule 9)**: 於 `backend_type_health.py` 加入路徑雙向自適應（`not os.path.exists(path)` 時自動剝除/補齊 `python/` 前綴）。
+    *   **物理雙向公證**:
+        - 宿主機執行 `python3 scripts/backend_type_health.py`：精準掃描 MCP (32檔/3,487行)、Agents (38檔/3,925行)、Services (213檔/30,361行)、API (49檔/6,256行)，型別覆蓋率 100.0%，健康度 99.0%。
+        - 容器內部執行 `docker exec archon-server python -c "..."`：掃描數據與宿主機 100% 物理對齊，徹底消除 Docker 掃描盲區！
+*   **全門禁公證**:
+    - `make lint-be`：393 source files 0 錯誤。
+    - `make test-be-fast`：**828 passed**, 11 skipped, 2 deselected, 4 xfailed (0 failed)。
+    - `make phase-audit`：11 大門禁全數綠燈通過。
 
 #### 2026-10-30: PR #656 ~ #657 深度審查、物理資料庫 Schema 幻覺揭露與穿透修復、Progress 判別式合約證明、Jules 門禁自癒
 
