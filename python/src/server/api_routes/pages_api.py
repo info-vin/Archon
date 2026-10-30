@@ -25,7 +25,7 @@ MAX_PAGE_CHARS = 20_000
 class PageSummary(BaseModel):
     """Summary model for page listings (no content)"""
 
-    id: str
+    id: str | int
     url: str
     section_title: str | None = None
     section_order: int = 0
@@ -37,7 +37,7 @@ class PageSummary(BaseModel):
 class PageResponse(BaseModel):
     """Response model for a single page (with content)"""
 
-    id: str
+    id: str | int
     source_id: str
     url: str
     full_content: str

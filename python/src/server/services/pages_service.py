@@ -6,7 +6,7 @@ from ..repositories.base_repository import BaseRepository
 
 
 class PageSummaryDTO(TypedDict):
-    id: NotRequired[str]
+    id: NotRequired[str | int]
     url: NotRequired[str]
     section_title: NotRequired[str | None]
     section_order: NotRequired[int]
@@ -16,7 +16,7 @@ class PageSummaryDTO(TypedDict):
 
 
 class PageDTO(TypedDict):
-    id: NotRequired[str]
+    id: NotRequired[str | int]
     url: NotRequired[str]
     chunk_number: NotRequired[int]
     content: NotRequired[str]
@@ -45,23 +45,38 @@ class PagesService(BaseRepository):
         query = query.order("section_order").order("created_at")
 
         success, res = await self.execute_query_async(query, f"Failed to list pages for source_id={source_id}", require_data=False)
-        return cast(list[PageSummaryDTO], res.get("data", []) if success else [])
+        if not success or not isinstance(res, dict):
+            return []
+        data = res.get("data")
+        if not isinstance(data, list):
+            return []
+        return [cast(PageSummaryDTO, item) for item in data if isinstance(item, dict)]
 
     async def get_page_by_url(self, url: str) -> PageDTO | None:
         query = self.supabase_client.table("archon_crawled_pages").select("*").eq("url", url)
         success, res = await self.execute_query_async(query, f"Failed to get page by URL {url}")
-        if not success:
+        if not success or not isinstance(res, dict):
             return None
-        data = res.get("data", [])
-        return cast(PageDTO, data[0] if data else None)
+        data = res.get("data")
+        if not isinstance(data, list) or not data:
+            return None
+        first_item = data[0]
+        if not isinstance(first_item, dict):
+            return None
+        return cast(PageDTO, first_item)
 
     async def get_page_by_id(self, page_id: str) -> PageDTO | None:
         query = self.supabase_client.table("archon_crawled_pages").select("*").eq("id", page_id)
         success, res = await self.execute_query_async(query, f"Failed to get page by ID {page_id}")
-        if not success:
+        if not success or not isinstance(res, dict):
             return None
-        data = res.get("data", [])
-        return cast(PageDTO, data[0] if data else None)
+        data = res.get("data")
+        if not isinstance(data, list) or not data:
+            return None
+        first_item = data[0]
+        if not isinstance(first_item, dict):
+            return None
+        return cast(PageDTO, first_item)
 
 
 pages_service = PagesService()
