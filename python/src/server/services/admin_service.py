@@ -24,11 +24,15 @@ class RBACRoleDTO(TypedDict):
 class DocumentVersionDTO(TypedDict):
     id: NotRequired[str]
     document_id: NotRequired[str | None]
+    project_id: NotRequired[str | None]
+    task_id: NotRequired[str | None]
     created_by: NotRequired[str | None]
     change_type: NotRequired[str | None]
     field_name: NotRequired[str | None]
     old_value: NotRequired[str | None]
     new_value: NotRequired[str | None]
+    content: NotRequired[dict[str, Any] | None]
+    status: NotRequired[str | None]
     change_summary: NotRequired[str | None]
     version_number: NotRequired[int | None]
     created_at: NotRequired[str | None]
@@ -36,10 +40,16 @@ class DocumentVersionDTO(TypedDict):
 
 class CrawlerTargetDTO(TypedDict):
     id: NotRequired[str]
-    url: str
+    target_url: str
     department: NotRequired[str | None]
     status: NotRequired[str | None]
+    is_active: NotRequired[bool | None]
+    max_depth: NotRequired[int | None]
+    description: NotRequired[str | None]
+    whitelist: NotRequired[list[str] | None]
+    update_frequency: NotRequired[str | None]
     created_at: NotRequired[str | None]
+    updated_at: NotRequired[str | None]
 
 
 class AdminLogDTO(TypedDict):
@@ -52,10 +62,10 @@ class AdminLogDTO(TypedDict):
     type: NotRequired[str]
 
 
-
 class AdminService(BaseRepository):
     def __init__(self) -> None:
         super().__init__()
+
     async def get_all_users(self, limit: int = 100, role_filter: str | None = None) -> list[UserProfileDTO]:
         """
         Fetch all users from public.profiles.
@@ -63,13 +73,18 @@ class AdminService(BaseRepository):
         """
         try:
             supabase = self.supabase_client
-            query = supabase.table("profiles").select("*").order("name") # 合法
+            query = supabase.table("profiles").select("*").order("name")  # 合法
 
             if role_filter and role_filter != "all":
                 query = query.eq("role", role_filter)
 
-            success, res = self.execute_query(query.limit(limit), "Failed to fetch users")
-            return cast(list[UserProfileDTO], res.get("data", []) if success else [])
+            success, res = await self.execute_query_async(query.limit(limit), "Failed to fetch users")
+            if not success or not isinstance(res, dict):
+                return []
+            raw_data = res.get("data")
+            if not isinstance(raw_data, list):
+                return []
+            return [cast(UserProfileDTO, item) for item in raw_data if isinstance(item, dict) and "id" in item]
         except Exception as e:
             logger.error(f"AdminService: Failed to fetch users: {e}")
             raise
@@ -88,12 +103,16 @@ class AdminService(BaseRepository):
             # 1. Update public.profiles (Source of truth for profile data)
             payload = {
                 "role": new_role,
-                # "updated_at": "now()" # profiles might not have updated_at
             }
-            query = supabase.table("profiles").update(payload).eq("id", user_id) # 合法
-            success, res = self.execute_query(query, "Failed to update user role", require_data=True)
-            if not success:
+            query = supabase.table("profiles").update(payload).eq("id", user_id)  # 合法
+            success, res = await self.execute_query_async(query, "Failed to update user role", require_data=True)
+            if not success or not isinstance(res, dict):
                 raise ValueError("User not found in profiles or update failed")
+
+            raw_data = res.get("data")
+            if not isinstance(raw_data, list) or not raw_data or not isinstance(raw_data[0], dict):
+                raise ValueError("User update succeeded but returned invalid record shape")
+            data = raw_data[0]
 
             # 2. Update auth.users metadata (Source of truth for JWT/Permissions)
             # Since get_supabase_client uses SERVICE_KEY, we have admin privileges.
@@ -105,8 +124,6 @@ class AdminService(BaseRepository):
                 # Log but don't fail the whole request if only metadata sync fails
                 # (though it's critical for RBAC)
                 logger.error(f"AdminService: Auth metadata sync failed for {user_id}: {auth_err}")
-
-            data = res.get("data", [{}])[0]
 
             # 3. Log the audit event physically in archon_logs (Phase 5.8)
             try:
@@ -122,7 +139,7 @@ class AdminService(BaseRepository):
                         "version": "v4.6.31",
                     },
                 }
-                self.execute_query(supabase.table("archon_logs").insert(audit_log), "Audit logging failed") # 合法
+                await self.execute_query_async(supabase.table("archon_logs").insert(audit_log), "Audit logging failed")  # 合法
             except Exception as log_err:
                 logger.error(f"AdminService: Audit logging failed: {log_err}")
 
@@ -136,9 +153,14 @@ class AdminService(BaseRepository):
         """Fetch the full role-permission matrix from the database."""
         try:
             supabase = self.supabase_client
-            query = supabase.table("archon_roles_permissions").select("*").order("role") # 合法
-            success, res = self.execute_query(query, "Failed to fetch RBAC matrix")
-            return cast(list[RBACRoleDTO], res.get("data", []) if success else [])
+            query = supabase.table("archon_roles_permissions").select("*").order("role")  # 合法
+            success, res = await self.execute_query_async(query, "Failed to fetch RBAC matrix")
+            if not success or not isinstance(res, dict):
+                return []
+            raw_data = res.get("data")
+            if not isinstance(raw_data, list):
+                return []
+            return [cast(RBACRoleDTO, item) for item in raw_data if isinstance(item, dict) and "role" in item and "permissions" in item]
         except Exception as e:
             logger.error(f"AdminService: Failed to fetch RBAC matrix: {e}")
             raise
@@ -154,10 +176,15 @@ class AdminService(BaseRepository):
             if description is not None:
                 payload["description"] = description
 
-            query = supabase.table("archon_roles_permissions").upsert(payload) # 合法
-            success, res = self.execute_query(query, f"Failed to update role {role}", require_data=True)
-            if not success:
+            query = supabase.table("archon_roles_permissions").upsert(payload)  # 合法
+            success, res = await self.execute_query_async(query, f"Failed to update role {role}", require_data=True)
+            if not success or not isinstance(res, dict):
                 raise ValueError(f"Failed to update role {role}")
+
+            raw_data = res.get("data")
+            if not isinstance(raw_data, list) or not raw_data or not isinstance(raw_data[0], dict):
+                raise ValueError(f"Role update succeeded but returned invalid record shape for {role}")
+            role_record = raw_data[0]
 
             # Clear RBACService cache to ensure changes take effect immediately
             from .rbac_service import RBACService
@@ -173,42 +200,56 @@ class AdminService(BaseRepository):
                     "type": "audit",
                     "details": {"role": role, "permissions": permissions, "version": "v4.6.31"},
                 }
-                self.execute_query(supabase.table("archon_logs").insert(audit_log), "Audit logging failed") # 合法
+                await self.execute_query_async(supabase.table("archon_logs").insert(audit_log), "Audit logging failed")  # 合法
             except Exception as log_err:
                 logger.error(f"AdminService: RBAC audit logging failed: {log_err}")
 
-            return cast(RBACRoleDTO, res.get("data", [{}])[0])
+            return cast(RBACRoleDTO, role_record)
         except Exception as e:
             logger.error(f"AdminService: Failed to update RBAC role {role}: {e}")
             raise
 
     async def get_document_versions(self, limit: int = 100) -> list[DocumentVersionDTO]:
-        query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit) # 合法
-        success, res = self.execute_query(query, "Failed to fetch document versions")
-        return cast(list[DocumentVersionDTO], res.get("data", []) if success else [])
+        query = self.supabase_client.table("archon_document_versions").select("*").order("created_at", desc=True).limit(limit)  # 合法
+        success, res = await self.execute_query_async(query, "Failed to fetch document versions")
+        if not success or not isinstance(res, dict):
+            return []
+        raw_data = res.get("data")
+        if not isinstance(raw_data, list):
+            return []
+        return [cast(DocumentVersionDTO, item) for item in raw_data if isinstance(item, dict)]
 
     async def list_crawler_targets(self, department: str | None = None) -> list[CrawlerTargetDTO]:
-        query = self.supabase_client.table("archon_crawler_targets").select("*") # 合法
+        query = self.supabase_client.table("archon_crawler_targets").select("*")  # 合法
         if department:
             query = query.eq("department", department)
         query = query.order("created_at")
-        success, res = self.execute_query(query, "Failed to list crawler targets")
-        return cast(list[CrawlerTargetDTO], res.get("data", []) if success else [])
+        success, res = await self.execute_query_async(query, "Failed to list crawler targets")
+        if not success or not isinstance(res, dict):
+            return []
+        raw_data = res.get("data")
+        if not isinstance(raw_data, list):
+            return []
+        return [cast(CrawlerTargetDTO, item) for item in raw_data if isinstance(item, dict) and "target_url" in item]
 
     async def create_crawler_target(self, data: CrawlerTargetDTO | dict[str, Any]) -> CrawlerTargetDTO:
-        query = self.supabase_client.table("archon_crawler_targets").insert(data) # 合法
-        success, res = self.execute_query(query, "Failed to create target", require_data=True)
-        if not success:
+        query = self.supabase_client.table("archon_crawler_targets").insert(data)  # 合法
+        success, res = await self.execute_query_async(query, "Failed to create target", require_data=True)
+        if not success or not isinstance(res, dict):
             raise ValueError("Failed to create target")
-        return cast(CrawlerTargetDTO, res.get("data", [{}])[0])
+        raw_data = res.get("data")
+        if not isinstance(raw_data, list) or not raw_data or not isinstance(raw_data[0], dict):
+            raise ValueError("Created crawler target but returned invalid record shape")
+        return cast(CrawlerTargetDTO, raw_data[0])
 
     async def delete_crawler_target(self, target_id: str) -> None:
-        query = self.supabase_client.table("archon_crawler_targets").delete().eq("id", target_id) # 合法
-        self.execute_query(query, f"Failed to delete target {target_id}")
+        query = self.supabase_client.table("archon_crawler_targets").delete().eq("id", target_id)  # 合法
+        await self.execute_query_async(query, f"Failed to delete target {target_id}")
 
     async def get_admin_logs(self, type: str | None = None, time_range: str | None = "7d") -> list[AdminLogDTO]:
         from datetime import datetime, timedelta
-        query = self.supabase_client.table("archon_logs").select("*") # 合法
+
+        query = self.supabase_client.table("archon_logs").select("*")  # 合法
         if type:
             query = query.eq("type", type)
         if time_range:
@@ -216,7 +257,13 @@ class AdminService(BaseRepository):
             cutoff_time = (datetime.now() - timedelta(days=days)).isoformat()
             query = query.gte("created_at", cutoff_time)
         query = query.order("created_at", desc=True)
-        success, res = self.execute_query(query, "Failed to fetch admin logs")
-        return cast(list[AdminLogDTO], res.get("data", []) if success else [])
+        success, res = await self.execute_query_async(query, "Failed to fetch admin logs")
+        if not success or not isinstance(res, dict):
+            return []
+        raw_data = res.get("data")
+        if not isinstance(raw_data, list):
+            return []
+        return [cast(AdminLogDTO, item) for item in raw_data if isinstance(item, dict)]
+
 
 admin_service = AdminService()

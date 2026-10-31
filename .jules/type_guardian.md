@@ -21,3 +21,7 @@
 ## 5. Async Database Execution, Schema Integrity & Safe Array Access
 **Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods blocks the event loop. Furthermore, blind `res["data"][0]` access or processing database query array responses without element-level `isinstance(x, dict)` checks causes runtime `TypeError` or `IndexError`. Additionally, audit table inserts (e.g. `archon_document_versions`) require non-null schema fields like `content jsonb`.
 **Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing, filter raw DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`, and satisfy all non-null DB schema constraints in audit payloads.
+
+## 2026-05-18 - Align CrawlerTargetDTO Schema and AdminService Async Boundaries
+**Learning:** `CrawlerTargetDTO` declared `url: str` despite `archon_crawler_targets` using `target_url` in both DB schema and API models, causing false type safety and runtime KeyError risk. Additionally, `AdminService` invoked sync `execute_query` in `async def` methods and cast unverified `res.get("data", [{}])[0]` to DTOs.
+**Action:** Always verify DTO column names directly against migration SQL schemas (`archon_crawler_targets.target_url`), use `await self.execute_query_async(...)` in async methods, and perform `isinstance(raw_data[0], dict)` boundary checks before accessing records.
