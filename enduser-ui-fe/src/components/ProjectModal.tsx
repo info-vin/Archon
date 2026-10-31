@@ -37,10 +37,22 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ onClose, onProjectCr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose}>
-      <div className="bg-card rounded-lg shadow-xl p-6 w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+    >
+      <div
+        className="bg-card rounded-lg shadow-xl p-6 w-full max-w-md relative"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-2xl font-bold">New Project</h2>
+          <h2 id="project-modal-title" className="text-2xl font-bold">New Project</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-secondary focus-visible:ring-2 focus-visible:outline-none" aria-label="Close" title="Close">
             <XIcon className="w-6 h-6" />
           </button>
@@ -71,7 +83,11 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({ onClose, onProjectCr
               className="w-full bg-input border border-border rounded-md px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {error && (
+            <p role="alert" aria-live="polite" className="text-red-500 text-sm mb-4">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end gap-4">
             <button
               type="button"
