@@ -24,3 +24,7 @@ Every field produced by the backend or read by the frontend/MCP MUST be preserve
 ## 5. Align Response Schemas, Discriminators & Dynamic Payloads (extra="allow")
 **Learning:** Knowledge, RAG, and Progress APIs returned uncontracted raw dict structures or models missing discriminator `type` literals, causing client consumers to drop fields or fail discriminator checks. Furthermore, legacy `class Config:` configurations were not permitting extensible detail payloads.
 **Action:** Define response models (`KnowledgeSearchItemResponse`, `RagQueryResponse`, `CrawlProgressResponse`, etc.) with `ConfigDict(extra="allow", populate_by_name=True)`, explicit discriminator `type: Literal[...]` fields with defaults, and apply `response_model=...` with `.model_validate()`, guaranteeing response structure, discriminator alignment, and dynamic payload survival.
+
+## 2025-05-18 - RAG Code Example Search Response Contract Alignment
+**Learning:** Endpoints `/api/rag/code-examples` and `/api/code-examples` returned uncontracted raw dictionary structures from `execute_code_search_pipeline`, omitting `response_model` and enabling potential field drift across MCP callers (`rag_tools.py`) and UI consumers.
+**Action:** Define `CodeExamplesResponse` and `CodeExampleItemResponse` with `ConfigDict(extra="allow")` and enforce `response_model=CodeExamplesResponse` via `CodeExamplesResponse.model_validate(result)`.
