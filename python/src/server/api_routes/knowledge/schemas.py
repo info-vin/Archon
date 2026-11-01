@@ -169,3 +169,33 @@ class RagQueryResponse(BaseModel):
     reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
 
     model_config = ConfigDict(extra="allow")
+
+
+class CodeExampleItemResponse(BaseModel):
+    """Individual code example result item within a code example search response."""
+
+    url: str | None = Field(default=None, description="Page or source URL")
+    code: str | None = Field(default=None, description="Code snippet content")
+    summary: str | None = Field(default=None, description="Summary or explanation of the code snippet")
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Metadata dictionary")
+    source_id: str | None = Field(default=None, description="Unique source identifier")
+    similarity: float | None = Field(default=None, description="Vector similarity score")
+    rerank_score: float | None = Field(default=None, description="Rerank score if reranking applied")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class CodeExamplesSearchResponse(BaseModel):
+    """Response model for code examples search endpoints (/api/rag/code-examples, /api/code-examples)."""
+
+    success: bool = Field(default=True, description="Search execution status")
+    query: str = Field(description="Original search query")
+    source_filter: str | None = Field(default=None, description="Filtered source identifier if specified")
+    search_mode: str = Field(default="vector", description="Search mode used (e.g. vector, hybrid)")
+    reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
+    results: list[CodeExampleItemResponse] = Field(
+        default_factory=list, description="List of code example search results"
+    )
+    count: int = Field(default=0, description="Total number of code examples returned")
+
+    model_config = ConfigDict(extra="allow")

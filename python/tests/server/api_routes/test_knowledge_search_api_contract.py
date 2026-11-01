@@ -139,3 +139,83 @@ def test_perform_rag_query_mcp_caller_contract(mock_user):
         assert data["success"] is True
         assert data["source"] == "src_mcp_domain"
         assert data["match_count"] == 8
+
+
+def test_search_code_examples_contract(mock_user):
+    """Verify that search_code_examples preserves realistic producer fields and MCP compatibility."""
+    mock_code_search_result = {
+        "query": "react button component",
+        "source_filter": "src_react_docs",
+        "search_mode": "hybrid",
+        "reranking_applied": True,
+        "results": [
+            {
+                "url": "https://react.dev/components/button",
+                "code": "export function Button() { return <button>Click</button>; }",
+                "summary": "Standard accessible React button component",
+                "metadata": {"language": "tsx", "framework": "react"},
+                "source_id": "src_react_docs",
+                "similarity": 0.94,
+                "rerank_score": 0.98,
+                "custom_producer_key": "preserved_value",
+            }
+        ],
+        "count": 1,
+        "custom_top_level_key": "preserved_top_level",
+    }
+
+    with patch("src.server.api_routes.knowledge.search.RAGService") as mock_rag_class:
+        mock_instance = AsyncMock()
+        mock_instance.search_code_examples_service = AsyncMock(return_value=(True, mock_code_search_result))
+        mock_rag_class.return_value = mock_instance
+
+        payload = {"query": "react button component", "source": "src_react_docs", "match_count": 5}
+        response = client.post("/api/rag/code-examples", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["query"] == "react button component"
+        assert data["source_filter"] == "src_react_docs"
+        assert data["search_mode"] == "hybrid"
+        assert data["reranking_applied"] is True
+        assert data["count"] == 1
+        assert data["custom_top_level_key"] == "preserved_top_level"
+        assert len(data["results"]) == 1
+
+        result_item = data["results"][0]
+        assert result_item["url"] == "https://react.dev/components/button"
+        assert result_item["code"] == "export function Button() { return <button>Click</button>; }"
+        assert result_item["summary"] == "Standard accessible React button component"
+        assert result_item["metadata"]["language"] == "tsx"
+        assert result_item["source_id"] == "src_react_docs"
+        assert result_item["similarity"] == 0.94
+        assert result_item["rerank_score"] == 0.98
+        assert result_item["custom_producer_key"] == "preserved_value"
+
+
+def test_search_code_examples_simple_alias_contract(mock_user):
+    """Verify that backward compatible /code-examples endpoint adheres to the same schema."""
+    mock_code_search_result = {
+        "query": "python fastapi endpoint",
+        "source_filter": None,
+        "search_mode": "vector",
+        "reranking_applied": False,
+        "results": [],
+        "count": 0,
+    }
+
+    with patch("src.server.api_routes.knowledge.search.RAGService") as mock_rag_class:
+        mock_instance = AsyncMock()
+        mock_instance.search_code_examples_service = AsyncMock(return_value=(True, mock_code_search_result))
+        mock_rag_class.return_value = mock_instance
+
+        payload = {"query": "python fastapi endpoint", "limit": 3}
+        response = client.post("/api/code-examples", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["query"] == "python fastapi endpoint"
+        assert data["results"] == []
+        assert data["count"] == 0
