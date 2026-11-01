@@ -21,3 +21,7 @@
 ## 5. Async Database Execution, Schema Integrity & Safe Array Access
 **Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods blocks the event loop. Furthermore, blind `res["data"][0]` access or processing database query array responses without element-level `isinstance(x, dict)` checks causes runtime `TypeError` or `IndexError`. Additionally, audit table inserts (e.g. `archon_document_versions`) require non-null schema fields like `content jsonb`.
 **Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing, filter raw DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`, and satisfy all non-null DB schema constraints in audit payloads.
+
+## 2025-05-18 - Runtime Narrowing and Physical Alignment in EthicsService
+**Learning:** Blind `cast(EthicsEventDTO, res["data"][0])` or `cast(list[EthicsEventDTO], res.get("data", []))` masks missing dict guards and potential `IndexError`/`TypeError` when DB returns unexpected payload shapes.
+**Action:** Validate `isinstance(res.get("data"), list)` and check `isinstance(item, dict)` on all returned records rather than using blind casting.
