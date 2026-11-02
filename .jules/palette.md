@@ -15,3 +15,7 @@
 ## 4. Loading States, Hover-Revealed Controls, and Decorative Icons
 **Learning:** Asynchronous buttons using only `disabled` fail to announce loading progress to screen readers, `opacity-0 group-hover:opacity-100` hides actions from keyboard users, and decorative SVGs clutter the accessibility tree.
 **Action:** Add `aria-busy` and `aria-disabled` during loading states, pair `group-hover:opacity-100` with `focus-within:opacity-100`, and mark purely decorative icons with `aria-hidden="true"`.
+
+## 2026-10-31 - Escape Key Dismissal and WAI-ARIA Dialog Semantics on Custom Modals
+**Learning:** Custom overlay modals without `role="dialog"`, `aria-modal="true"`, and `aria-labelledby` fail to inform screen readers of their modal nature, and lacking an `Escape` key listener traps keyboard users into tabbing through all inputs to reach a close button. Furthermore, error messages without `role="alert"` and `aria-live="polite"` go unnoticed by non-visual users.
+**Action:** Always wrap modal panels with `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`, attach an `Escape` key listener on the modal overlay or window, and mark dynamic validation errors with `role="alert"` and `aria-live="polite"`.
