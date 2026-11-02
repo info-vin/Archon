@@ -139,3 +139,109 @@ def test_perform_rag_query_mcp_caller_contract(mock_user):
         assert data["success"] is True
         assert data["source"] == "src_mcp_domain"
         assert data["match_count"] == 8
+
+
+def test_search_code_examples_contract(mock_user):
+    """Verify that search_code_examples (/api/rag/code-examples) preserves realistic producer fields and extra JSONB."""
+    mock_code_search_result = {
+        "query": "def calculate_tax",
+        "source_filter": "src_tax_repo",
+        "search_mode": "hybrid",
+        "reranking_applied": True,
+        "results": [
+            {
+                "url": "https://github.com/repo/tax.py",
+                "code": "def calculate_tax(amount: float) -> float:\n    return amount * 0.2",
+                "summary": "Tax calculation helper",
+                "metadata": {
+                    "language": "python",
+                    "framework": "fastapi",
+                    "custom_flags": {"reviewed": True},
+                },
+                "source_id": "src_tax_repo",
+                "similarity": 0.945,
+                "rerank_score": 0.982,
+                "extra_code_attribute": "preserved_unmapped_field",
+            }
+        ],
+        "count": 1,
+        "custom_pipeline_diagnostics": {"latency_ms": 42},
+    }
+
+    with patch("src.server.api_routes.knowledge.search.RAGService") as mock_rag_class:
+        mock_instance = AsyncMock()
+        mock_instance.search_code_examples_service = AsyncMock(return_value=(True, mock_code_search_result))
+        mock_rag_class.return_value = mock_instance
+
+        # MCP tool calls with source and match_count: {"query": "...", "source": "src_tax_repo", "match_count": 5}
+        payload = {"query": "def calculate_tax", "source": "src_tax_repo", "match_count": 5}
+        response = client.post("/api/rag/code-examples", json=payload)
+
+        assert response.status_code == 200
+        mock_instance.search_code_examples_service.assert_called_once_with(
+            query="def calculate_tax", source_id="src_tax_repo", match_count=5
+        )
+
+        data = response.json()
+        assert data["query"] == "def calculate_tax"
+        assert data["source_filter"] == "src_tax_repo"
+        assert data["search_mode"] == "hybrid"
+        assert data["reranking_applied"] is True
+        assert data["count"] == 1
+        assert len(data["results"]) == 1
+
+        item = data["results"][0]
+        assert item["url"] == "https://github.com/repo/tax.py"
+        assert "def calculate_tax" in item["code"]
+        assert item["summary"] == "Tax calculation helper"
+        assert item["metadata"]["language"] == "python"
+        assert item["metadata"]["custom_flags"]["reviewed"] is True
+        assert item["source_id"] == "src_tax_repo"
+        assert item["similarity"] == 0.945
+        assert item["rerank_score"] == 0.982
+        assert item["extra_code_attribute"] == "preserved_unmapped_field"
+        # Root-level extensible JSONB field survival
+        assert data["custom_pipeline_diagnostics"]["latency_ms"] == 42
+
+
+def test_search_code_examples_simple_contract(mock_user):
+    """Verify that backward compatible /api/code-examples alias returns aligned CodeExamplesResponse."""
+    mock_code_search_result = {
+        "query": "async def fetch",
+        "source_filter": "src_alias_repo",
+        "search_mode": "vector",
+        "reranking_applied": False,
+        "results": [
+            {
+                "url": "https://github.com/repo/fetch.py",
+                "code": "async def fetch(): pass",
+                "summary": "Async fetcher",
+                "metadata": {"tags": ["async"]},
+                "source_id": "src_alias_repo",
+                "similarity": 0.88,
+            }
+        ],
+        "count": 1,
+    }
+
+    with patch("src.server.api_routes.knowledge.search.RAGService") as mock_rag_class:
+        mock_instance = AsyncMock()
+        mock_instance.search_code_examples_service = AsyncMock(return_value=(True, mock_code_search_result))
+        mock_rag_class.return_value = mock_instance
+
+        payload = {"query": "async def fetch", "source_ids": ["src_alias_repo"], "limit": 3}
+        response = client.post("/api/code-examples", json=payload)
+
+        assert response.status_code == 200
+        mock_instance.search_code_examples_service.assert_called_once_with(
+            query="async def fetch", source_id="src_alias_repo", match_count=3
+        )
+
+        data = response.json()
+        assert data["query"] == "async def fetch"
+        assert data["source_filter"] == "src_alias_repo"
+        assert data["search_mode"] == "vector"
+        assert data["reranking_applied"] is False
+        assert data["count"] == 1
+        assert len(data["results"]) == 1
+        assert data["results"][0]["code"] == "async def fetch(): pass"

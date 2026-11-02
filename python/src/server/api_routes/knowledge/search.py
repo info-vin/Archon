@@ -5,7 +5,12 @@ Enforces authentication for all knowledge retrieval operations.
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.server.api_routes.knowledge.schemas import KnowledgeSearchItemResponse, RagQueryRequest, RagQueryResponse
+from src.server.api_routes.knowledge.schemas import (
+    CodeExamplesResponse,
+    KnowledgeSearchItemResponse,
+    RagQueryRequest,
+    RagQueryResponse,
+)
 from src.server.config.logfire_config import safe_logfire_error
 from src.server.models.auth_models import UserProfileDTO
 from src.server.services.search.rag_service import RAGService
@@ -54,35 +59,41 @@ async def perform_rag_query(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/rag/code-examples")
+@router.post("/rag/code-examples", response_model=CodeExamplesResponse)
 async def search_code_examples(
     request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
-):
+) -> CodeExamplesResponse:
     """Search specifically for code examples within the knowledge base. Requires TASK_READ_OWN."""
     try:
         service = RAGService(get_supabase_client())
+        effective_source = (request.source_ids[0] if request.source_ids else None) or request.source
+        effective_limit = request.match_count if request.match_count is not None else request.limit
         success, result = await service.search_code_examples_service(
             query=request.query,
-            source_id=request.source_ids[0] if request.source_ids else None,
-            match_count=request.limit,
+            source_id=effective_source,
+            match_count=effective_limit,
         )
         if success:
-            return result
+            return CodeExamplesResponse.model_validate(result)
         raise HTTPException(status_code=500, detail=str(result.get("error")))
     except Exception as e:
         safe_logfire_error(f"Failed to search code examples | error={str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.post("/code-examples")
+@router.post("/code-examples", response_model=CodeExamplesResponse)
 async def search_code_examples_simple(
     request: RagQueryRequest, current_user: UserProfileDTO = Depends(requires_permission(TASK_READ_OWN))
-):
+) -> CodeExamplesResponse:
     """Backward compatible alias for searching code examples. Requires TASK_READ_OWN."""
     service = RAGService(get_supabase_client())
+    effective_source = (request.source_ids[0] if request.source_ids else None) or request.source
+    effective_limit = request.match_count if request.match_count is not None else request.limit
     success, result = await service.search_code_examples_service(
-        query=request.query, source_id=request.source_ids[0] if request.source_ids else None, match_count=request.limit
+        query=request.query,
+        source_id=effective_source,
+        match_count=effective_limit,
     )
     if success:
-        return result
+        return CodeExamplesResponse.model_validate(result)
     raise HTTPException(status_code=500, detail=str(result.get("error")))

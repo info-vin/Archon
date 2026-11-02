@@ -169,3 +169,30 @@ class RagQueryResponse(BaseModel):
     reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
 
     model_config = ConfigDict(extra="allow")
+
+
+class CodeExampleItemResponse(BaseModel):
+    """Response model for an individual code example item."""
+
+    url: str | None = Field(default=None, description="Source URL or reference")
+    code: str | None = Field(default=None, description="Extracted code snippet or content")
+    summary: str | None = Field(default=None, description="Summary or explanation of the code snippet")
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Metadata dictionary")
+    source_id: str | None = Field(default=None, description="Source identifier")
+    similarity: float | None = Field(default=None, description="Vector similarity score")
+    rerank_score: float | None = Field(default=None, description="Rerank score if reranking applied")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class CodeExamplesResponse(BaseModel):
+    """Response model for code example search endpoints."""
+
+    query: str = Field(description="Original search query")
+    source_filter: str | None = Field(default=None, description="Source ID filter applied")
+    search_mode: str = Field(default="vector", description="Search mode used (vector or hybrid)")
+    reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
+    results: list[CodeExampleItemResponse] = Field(default_factory=list, description="Matching code example items")
+    count: int = Field(default=0, description="Total number of results returned")
+
+    model_config = ConfigDict(extra="allow")
