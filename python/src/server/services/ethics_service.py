@@ -36,7 +36,7 @@ class EthicsService(BaseRepository):
     async def get_ethics_events(
         self, limit: int = 20, severity: str | None = None, resolved: bool | None = None
     ) -> list[EthicsEventDTO]:
-        query = self.supabase_client.table("archon_ethics_events").select("*")
+        query = self.supabase_client.table("archon_ethics_events").select("*")  # 合法
         if severity is not None:
             query = query.eq("severity", severity)
         if resolved is not None:
@@ -44,32 +44,46 @@ class EthicsService(BaseRepository):
 
         query = query.order("created_at", desc=True).limit(limit)
         success, res = await self.execute_query_async(query, "Failed to fetch ethics events")
-        return cast(list[EthicsEventDTO], res.get("data", []) if success else [])
+        if not success or not isinstance(res, dict):
+            return []
+        data = res.get("data")
+        if not isinstance(data, list):
+            return []
+        return [cast(EthicsEventDTO, item) for item in data if isinstance(item, dict)]
 
     async def get_ethics_event_by_id(self, event_id: str) -> EthicsEventDTO | None:
-        query = self.supabase_client.table("archon_ethics_events").select("*").eq("id", event_id)
+        query = self.supabase_client.table("archon_ethics_events").select("*").eq("id", event_id)  # 合法
         success, res = await self.execute_query_async(query, f"Failed to fetch ethics event {event_id}")
-        if not success or not res.get("data"):
+        if not success or not isinstance(res, dict):
             return None
-        return cast(EthicsEventDTO, res["data"][0])
+        data = res.get("data")
+        if not isinstance(data, list) or not data or not isinstance(data[0], dict):
+            return None
+        return cast(EthicsEventDTO, data[0])
 
     async def create_ethics_event(self, event_data: CreateEthicsEventDTO) -> EthicsEventDTO | None:
-        query = self.supabase_client.table("archon_ethics_events").insert(event_data)
+        query = self.supabase_client.table("archon_ethics_events").insert(event_data)  # 合法
         success, res = await self.execute_query_async(query, "Failed to create ethics event", require_data=True)
-        if not success or not res.get("data"):
+        if not success or not isinstance(res, dict):
             return None
-        return cast(EthicsEventDTO, res["data"][0])
+        data = res.get("data")
+        if not isinstance(data, list) or not data or not isinstance(data[0], dict):
+            return None
+        return cast(EthicsEventDTO, data[0])
 
     async def resolve_ethics_event(self, event_id: str, resolution_notes: str | None = None) -> EthicsEventDTO | None:
         payload: ResolveEthicsEventDTO = {
             "resolved": True,
             "resolution_notes": resolution_notes,
         }
-        query = self.supabase_client.table("archon_ethics_events").update(payload).eq("id", event_id)
+        query = self.supabase_client.table("archon_ethics_events").update(payload).eq("id", event_id)  # 合法
         success, res = await self.execute_query_async(query, f"Failed to resolve ethics event {event_id}", require_data=True)
-        if not success or not res.get("data"):
+        if not success or not isinstance(res, dict):
             return None
-        return cast(EthicsEventDTO, res["data"][0])
+        data = res.get("data")
+        if not isinstance(data, list) or not data or not isinstance(data[0], dict):
+            return None
+        return cast(EthicsEventDTO, data[0])
 
 
 ethics_service = EthicsService()

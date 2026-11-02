@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-10-30 完成 Clockwork 週期作業實體產出物深度鑑識（包括週五 14:18 `architecture_health_audit` 架構健康度報告工單、`daily_executive_summary` 每日營運總結、`token_analysis` 額度追蹤、`alice_auto_fetch` 潛客資料庫對帳與 `cleanup_patrol` 清理紀錄）；修復 `scripts/backend_type_health.py` 容器內部路徑韌性（Host 與 Docker `/app` 雙向自適應，由 0 檔 0 行恢復為 332 檔 44,030 行實體掃描）；通過 `make lint-be`（393 檔 0 錯誤）、`make test-be-fast`（**828 passed**, 0 failed）與 `make phase-audit` 11 大門禁。
-*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並持續審查 Jules 提交。
+*   **當前狀態 (Current Context)**: 2026-11-02 同步遠端 PR #658, #659, #661, #663 並完成遠端 5 個待審分支三向衝突鑑識：識別並拒絕 4 檔嚴重衝突之重複分支 `contractor-api-code-examples-7403...` 與空提交分支 `1278...`，確認 `log-service-1124...` 已合入歷史；針對 `admin_service` (`a2b93b41`) 與 `ethics_service` (`ad800815`) 實施外科手術式無衝突提取，完成 `archon_crawler_targets.target_url` 物理 Schema 對帳、Jules 4 大規則壓縮自癒，通過 39 項目標單元與合約測試、`make lint-be`（393 檔 0 錯誤）與 `make phase-audit` 11 大門禁。
+*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並嚴格把關 Jules 分支品質與衝突防禦。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,24 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+#### 2026-11-02: PR #658 ~ #663 驗收、遠端 5 大待審分支衝突深度鑑識、外科手術式代碼移植與全門禁公證
+
+*   **已合入 PR (#658, #659, #661, #663) 物理驗收與測試公證**:
+    *   **PR #658 (`a1931d18`)**: `TaskAssignmentTab` 以 `useMemo` 緩存 AI Agent 篩選陣列。
+    *   **PR #659 (`8028da75`)**: `auth_service` 強化 `UserProfileDictDTO` 與 `isinstance(data, list)` 陣列邊界防禦。
+    *   **PR #661 (`6f9d651d`)**: `ProjectModal` 強化 WAI-ARIA `role="dialog"`、`Escape` 鍵盤事件與 `role="alert"`，執行 `ProjectModal.test.tsx` 5 項測試全數通過。
+    *   **PR #663 (`8aa79c0d`)**: 知識庫與代碼範例搜尋端點補齊 `CodeExamplesResponse` / `CodeExampleItemResponse` 合約與 MCP 相容性，執行 10 項合約與分頁測試全數通過。
+*   **遠端 5 大待審分支三向衝突鑑識 (`git merge-tree` & 祖先回溯)**:
+    *   **拒絕重複且嚴重衝突分支 (`contractor-api-code-examples-740369083145455878`)**: 經 `git merge-tree` 鑑識，該分支與已合入之 PR #663 職責完全重疊，在 `schemas.py`、`search.py`、`test_knowledge_search_api_contract.py` 及 `.jules/contractor.md` 共 4 個檔案發生雙向衝突（`CodeExamplesSearchResponse` vs `CodeExamplesResponse`），堅決拒絕合併以防破壞既有 API 合約。
+    *   **拒絕空提交殭屍分支 (`contractor-api-code-examples-12786530983014075861`)**: Commit `765cc72c` 經查為 0 檔 0 行變更之空提交，直接排除。
+    *   **確認已合入歷史分支 (`type-guardian-log-service-11247607491487386244`)**: Commit `c4872219` 經 `git merge-base --is-ancestor` 驗證早已存在於 `HEAD` 歷史中。
+    *   **外科手術式無衝突提取 (`admin_service` & `ethics_service`)**:
+        - 分支 `type-guardian-admin-service-17850631504715623730` (`a2b93b41`) 與 `type-guardian-ethics-service-13506313764490181996` (`ad800815`) 僅在 `.jules/type_guardian.md` 與主幹衝突。
+        - 執行物理 Schema 對帳（核對 `migration/0.2.3/01_schema_core.sql` 確認 `archon_crawler_targets` 實體欄位為 `target_url`），精準提取 `admin_service.py`（全面升級 `await self.execute_query_async` 與 DTO 邊界防禦）、`test_admin_service.py`（擴充至 7 項非同步測試）與 `ethics_service.py`，排除 `.jules` 衝突污染。
+*   **Jules 規則門禁自癒與品質公證**:
+    *   壓縮 `.jules/bolt.md`、`.jules/contractor.md`、`.jules/palette.md` 與 `.jules/type_guardian.md`，消除日期標題並維持各檔 $\le 5$ 條核心規則。
+    *   通過 24 項 Admin / RBAC / Ethics 單元與路由測試、`make lint-be`（393 檔 0 錯誤）與 `make phase-audit` 11 大門禁。
 
 #### 2026-10-30 (下午): Clockwork 週期作業實體內容穿透鑑識、架構健康度 Docker 路徑韌性修復與全門禁公證
 
