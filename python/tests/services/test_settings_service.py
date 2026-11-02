@@ -60,6 +60,14 @@ def test_get_setting_fallback(mock_supabase):
     assert val == "default_val"
 
 
+def test_get_setting_null_value_returns_default(mock_supabase):
+    service = SettingsService(supabase_client=mock_supabase)
+    service.execute_query = MagicMock(return_value=(True, {"data": [{"value": None}]}))
+
+    val = service.get_setting("nullable_key", default="fallback")
+    assert val == "fallback"
+
+
 def test_get_all_settings(mock_supabase):
     service = SettingsService(supabase_client=mock_supabase)
     service.execute_query = MagicMock(
@@ -68,6 +76,27 @@ def test_get_all_settings(mock_supabase):
 
     settings = service.get_all_settings()
     assert settings == {"k1": "v1", "k2": "v2"}
+
+
+def test_get_all_settings_defensive_filtering(mock_supabase):
+    service = SettingsService(supabase_client=mock_supabase)
+    service.execute_query = MagicMock(
+        return_value=(
+            True,
+            {
+                "data": [
+                    {"key": "k1", "value": "v1"},
+                    {"key": "k2", "value": None},
+                    "invalid_element",
+                    None,
+                    {"invalid_key": 123},
+                ]
+            },
+        )
+    )
+
+    settings = service.get_all_settings()
+    assert settings == {"k1": "v1"}
 
 
 def test_set_setting(mock_supabase):

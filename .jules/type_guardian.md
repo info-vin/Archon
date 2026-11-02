@@ -21,3 +21,7 @@
 ## 5. Async Database Execution, Schema Integrity & Safe Array Access
 **Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods blocks the event loop. Furthermore, blind `res["data"][0]` access or processing database query array responses without element-level `isinstance(x, dict)` checks causes runtime `TypeError` or `IndexError` (e.g. querying `profiles` in `AuthService`). Additionally, audit table inserts (e.g. `archon_document_versions`) require non-null schema fields like `content jsonb`.
 **Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing, filter raw DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`, and satisfy all non-null DB schema constraints in audit payloads.
+
+## 2026-04-16 - SettingsService Nullable Column and Cast Lying
+**Learning:** In Supabase `archon_settings`, the `value` column is physically nullable `text`. Using `cast(list[dict[str, str]], result["data"])` lied to MyPy and led to unvalidated indexing, while `str(result["data"].get("value", default))` converted SQL `NULL` values into the string `"None"` instead of returning the default fallback.
+**Action:** Guard database record access with element-level `isinstance(item, dict)` checks, allow `str | None` in setting DTOs, and safely inspect whether `val is None` before string conversion.
