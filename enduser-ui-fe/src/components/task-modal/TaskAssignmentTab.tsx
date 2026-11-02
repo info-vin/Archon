@@ -40,6 +40,12 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
     return map;
   }, [assignableUsers]);
 
+  // PERFORMANCE: Memoize filtered AI agents list to prevent redundant linear scans
+  // and garbage collection pressure from duplicate .filter() calls in render loop
+  const aiAgents = useMemo(() => {
+    return assignableUsers.filter(u => u.role === 'ai_agent');
+  }, [assignableUsers]);
+
   const initialAssignee = assigneeId ? userMap.get(assigneeId) : undefined;
 
   const [state, send] = useMachine(taskAssignmentMachine, {
@@ -120,7 +126,7 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
       <div className="mt-4">
         <label className="block text-sm font-medium mb-1">AI Collaborators (Assistants)</label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-          {assignableUsers.filter(u => u.role === 'ai_agent').map(agent => (
+          {aiAgents.map(agent => (
             <label key={agent.id} className="flex items-center space-x-2 p-2 border border-border rounded-md hover:bg-secondary cursor-pointer transition-colors">
               <input 
                 type="checkbox" 
@@ -131,7 +137,7 @@ export const TaskAssignmentTab: React.FC<TaskAssignmentTabProps> = ({
               <span className="text-sm font-medium">{agent.name}</span>
             </label>
           ))}
-          {assignableUsers.filter(u => u.role === 'ai_agent').length === 0 && (
+          {aiAgents.length === 0 && (
             <div className="text-sm text-muted-foreground italic col-span-2">No AI agents available.</div>
           )}
         </div>
