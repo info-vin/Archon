@@ -196,3 +196,59 @@ async def test_run_monthly_jules_compaction_physical(tmp_path, mock_supabase_db)
     assert len(mock_supabase_db.table("archon_logs").select("*").execute().data) == 2
 
 
+@pytest.mark.asyncio
+async def test_trigger_stateful_daily_event_tuple_unpacking_and_false_return():
+    """
+    Verifies _trigger_stateful_daily_event properly unpacks (should_run, reason)
+    and does not update last_run when job_func returns False.
+    """
+    from unittest.mock import AsyncMock, MagicMock
+
+    mock_sched = MagicMock()
+    scheduler_service._scheduler = mock_sched
+
+    # Case 1: _should_run_daily returns (False, "Already run today") -> job_func must NOT run
+    job_func = AsyncMock(return_value=True)
+    with (
+        patch.object(scheduler_service, "_should_run_daily", new_callable=AsyncMock, return_value=(False, "Already run today")),
+        patch.object(scheduler_service, "_update_last_run", new_callable=AsyncMock) as mock_update,
+    ):
+        scheduler_service._trigger_stateful_daily_event(job_func, "bob_market_report")
+        wrapper = mock_sched.add_job.call_args[0][0]
+        await wrapper()
+        job_func.assert_not_awaited()
+        mock_update.assert_not_awaited()
+
+    # Case 2: _should_run_daily returns (True, ""), but job_func returns False (0 leads) -> last_run must NOT update
+    job_func_noop = AsyncMock(return_value=False)
+    with (
+        patch.object(scheduler_service, "_should_run_daily", new_callable=AsyncMock, return_value=(True, "")),
+        patch.object(scheduler_service, "_update_last_run", new_callable=AsyncMock) as mock_update,
+    ):
+        scheduler_service._trigger_stateful_daily_event(job_func_noop, "bob_market_report")
+        wrapper = mock_sched.add_job.call_args[0][0]
+        await wrapper()
+        job_func_noop.assert_awaited_once()
+        mock_update.assert_not_awaited()
+
+
+def test_agent_dispatcher_normalizes_display_name_and_market_intelligence_titles():
+    """
+    Verifies MarketBot display name and both 'Market Intelligence' and 'Daily Market Intelligence'
+    titles route to DailyMarketReportStrategy instead of falling through to DefaultLLMStrategy.
+    """
+    from src.server.services.agents.dispatcher import DailyMarketReportStrategy, agent_dispatcher
+    from src.server.services.scheduler.utils import normalize_agent_identity
+    from src.server.services.shared_constants import AgentUUIDs
+
+    canon_id, disp_name = normalize_agent_identity("MarketBot (Sales)")
+    assert canon_id == AgentUUIDs.MARKET_BOT
+    assert disp_name == "MarketBot (Sales)"
+
+    s1 = agent_dispatcher.get_strategy("MarketBot (Sales)", {"title": "Market Intelligence (2026-11-02)"})
+    s2 = agent_dispatcher.get_strategy(AgentUUIDs.MARKET_BOT, {"title": "Daily Market Intelligence (2026-11-02)"})
+    assert isinstance(s1, DailyMarketReportStrategy)
+    assert isinstance(s2, DailyMarketReportStrategy)
+
+
+

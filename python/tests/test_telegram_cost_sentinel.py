@@ -26,7 +26,7 @@ async def test_telegram_service_send_message():
 @patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
 @patch("src.server.services.scheduler.jobs.sentinel_patrol.get_supabase_client")
 async def test_analyze_token_usage_triggers_alert_when_exceeded(mock_get_supabase, mock_send_message):
-    # Mock supabase client and response for 7-day cost > 0.05
+    # Mock supabase client and response for 7-day cost > 0.25
     mock_supabase = MagicMock()
     mock_get_supabase.return_value = mock_supabase
 
@@ -36,8 +36,8 @@ async def test_analyze_token_usage_triggers_alert_when_exceeded(mock_get_supabas
     mock_execute_daily.data = [{"input_tokens": 100, "output_tokens": 100, "cost_usd": 0.01}]
 
     mock_execute_weekly = MagicMock()
-    # Total cost = 0.06 (> 0.05 threshold)
-    mock_execute_weekly.data = [{"cost_usd": 0.06}]
+    # Total cost = 0.30 (> 0.25 threshold)
+    mock_execute_weekly.data = [{"cost_usd": 0.30}]
 
     # We need to chain the supabase query builder mock
     mock_select = mock_supabase.table.return_value.select.return_value
@@ -48,13 +48,13 @@ async def test_analyze_token_usage_triggers_alert_when_exceeded(mock_get_supabas
     mock_send_message.assert_called_once()
     args, _ = mock_send_message.call_args
     assert "Weekly Budget Exceeded" in args[0]
-    assert "$0.0600 USD" in args[0]
+    assert "$0.3000 USD" in args[0]
 
 @pytest.mark.asyncio
 @patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
 @patch("src.server.services.scheduler.jobs.sentinel_patrol.get_supabase_client")
 async def test_analyze_token_usage_no_alert_when_safe(mock_get_supabase, mock_send_message):
-    # Mock supabase client and response for 7-day cost <= 0.05
+    # Mock supabase client and response for 7-day cost <= 0.25
     mock_supabase = MagicMock()
     mock_get_supabase.return_value = mock_supabase
 
@@ -62,8 +62,8 @@ async def test_analyze_token_usage_no_alert_when_safe(mock_get_supabase, mock_se
     mock_execute_daily.data = [{"input_tokens": 100, "output_tokens": 100, "cost_usd": 0.01}]
 
     mock_execute_weekly = MagicMock()
-    # Total cost = 0.04 (<= 0.05 threshold)
-    mock_execute_weekly.data = [{"cost_usd": 0.04}]
+    # Total cost = 0.15 (<= 0.25 threshold)
+    mock_execute_weekly.data = [{"cost_usd": 0.15}]
 
     mock_select = mock_supabase.table.return_value.select.return_value
     mock_select.gt.return_value.execute.side_effect = [mock_execute_daily, mock_execute_weekly]

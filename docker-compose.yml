@@ -64,6 +64,7 @@ services:
       - ./docs:/app/docs # Mount documentation for Knowledge Seeding
       - ./CONTRIBUTING_tw.md:/app/CONTRIBUTING_tw.md # Force mount developer guidelines
       - ./AGENTS.md:/app/AGENTS.md # Mount AI developer guidelines
+      - ./GEMINI.md:/app/GEMINI.md # Mount Chef's Journal for Engineering Retrospective
       - ./.git:/app/.git # Mount Git metadata for CodeModifier
       - ./.jules:/app/.jules # Mount Jules agent guidelines
       - ./.twin:/app/.twin # Mount twin diagnostics directory

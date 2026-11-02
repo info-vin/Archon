@@ -94,7 +94,7 @@ class NotificationConfig(BaseModel):
     telegram_snippet_length: int = Field(default=150, alias="TELEGRAM_SNIPPET_LENGTH")
 
 class BudgetConfig(BaseModel):
-    weekly_budget_threshold: float = Field(default=0.05, alias="WEEKLY_BUDGET_THRESHOLD")
+    weekly_budget_threshold: float = Field(default=0.25, alias="WEEKLY_BUDGET_THRESHOLD")
 
 
 class TTSConfig(BaseModel):

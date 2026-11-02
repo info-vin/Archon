@@ -86,14 +86,15 @@ def generate_lead_outreach_draft(lead: dict) -> str:
     return draft
 
 
-async def run_market_report() -> None:
+async def run_market_report() -> bool:
     """Triggering Bob (MarketingBot) to summarize recent leads."""
     logger.info("✍️ Clockwork: Triggering Bob's Market Report...")
     try:
-        from src.server.config.config import get_config
         from src.server.schemas.settings import SchedulerConfig
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.scheduler.utils import get_default_project_id
+        from src.server.services.scheduler_service import scheduler_service
         from src.server.services.settings_service import SettingsService
 
         supabase = get_supabase_client()
@@ -106,20 +107,11 @@ async def run_market_report() -> None:
             logger.warning(f"LeadsPatrol: Failed to load SchedulerConfig, falling back to defaults. Error: {repr(e)}")
             scheduler_config = SchedulerConfig()
 
-        config = get_config()
-        env_prefix = config.archon_env or ""
-        if env_prefix and not env_prefix.endswith("_"):
-            env_prefix += "_"
-        db_key = f"{env_prefix}LAST_RUN_BOB_MARKET_REPORT"
-        val = settings.get_setting(db_key)
-
         fallback_td = timedelta(hours=scheduler_config.market_report_fallback_hours)
-        if val:
-            try:
-                last_run_time = datetime.fromisoformat(val.replace("Z", "+00:00")).isoformat()
-            except Exception as e:
-                logger.warning(f"LeadsPatrol: Failed to parse LAST_RUN_BOB_MARKET_REPORT ({val}), falling back. Error: {repr(e)}")
-                last_run_time = (datetime.now(UTC) - fallback_td).isoformat()
+        # Resolve LAST_RUN_BOB_MARKET_REPORT dynamically via centralized scheduler_service helper
+        last_run_dt = await scheduler_service._get_last_run("bob_market_report", supabase=supabase)
+        if last_run_dt:
+            last_run_time = last_run_dt.isoformat()
         else:
             last_run_time = (datetime.now(UTC) - fallback_td).isoformat()
 
@@ -138,7 +130,7 @@ async def run_market_report() -> None:
         leads = res_dict.get("data", []) if success else []
         if not leads:
             logger.info("✍️ Clockwork: No new qualified leads to report on. (Cycle logged)")
-            return
+            return False
 
         cst = ZoneInfo(scheduler_config.system_timezone)
         lead_summary = "\n".join(
@@ -150,22 +142,19 @@ async def run_market_report() -> None:
                 for lead in leads
             ]
         )
-        task_title = f"Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
+        task_title = f"Daily Market Intelligence ({datetime.now(cst).strftime('%Y-%m-%d')})"
 
         from src.server.services.prompt_service import prompt_service
         prompt_template = prompt_service.get_prompt("LEADS_PATROL_PROMPT")
         task_desc = prompt_template.format(lead_count=len(leads), lead_summary=lead_summary)
 
-        success, p_res_dict = base_repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1),
-            "Failed to find project for marketing task",
-        )
-        if not success or not p_res_dict.get("data"):
+        project_id = get_default_project_id(supabase, "Failed to find project for marketing task")
+        if not project_id:
             logger.warning("Clockwork: No projects found to attach marketing task.")
-            return
+            return False
 
         success, tr = await task_service.create_task(
-            project_id=p_res_dict["data"][0]["id"],
+            project_id=project_id,
             title=task_title,
             description=task_desc,
             assignee_id=AgentUUIDs.MARKET_BOT,
@@ -208,7 +197,7 @@ async def run_market_report() -> None:
                     f"**行動要求**：請業務團隊於 48 小時內依據上述草稿啟動聯繫並回填進展。"
                 )
                 f_success, f_res = await task_service.create_task(
-                    project_id=p_res_dict["data"][0]["id"],
+                    project_id=project_id,
                     title=followup_title,
                     description=followup_desc,
                     assignee_id=AgentUUIDs.MARKET_BOT,
@@ -219,43 +208,21 @@ async def run_market_report() -> None:
                     logger.warning(f"Clockwork: Failed to create sales follow-up task: {f_res.get('error')}")
             except Exception as task_err:
                 logger.warning(f"Clockwork: Failed to create sales follow-up task: {task_err}")
+            return True
         else:
             logger.warning(f"Clockwork: Failed to create market report task: {tr.get('error') if isinstance(tr, dict) else tr}")
+            return False
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}", exc_info=True)
+        return False
 
 
 async def check_and_resume_dag(scheduler) -> None:
     """L2 模組化：檢查今日 leads 相關 DAG 的執行狀態，若遇當機則接力執行未完成的後游任務。"""
-    from src.server.config.config import get_config
+    from src.server.schemas.settings import SchedulerConfig
     from src.server.services.settings_service import SettingsService
 
     settings = SettingsService()
-    config = get_config()
-    env_prefix = config.archon_env or ""
-    if env_prefix and not env_prefix.endswith("_"):
-        env_prefix += "_"
-
-    def get_last_run_date(job_id: str):
-        db_key = f"{env_prefix}LAST_RUN_{job_id.upper()}"
-        val = settings.get_setting(db_key)
-
-        from src.server.schemas.settings import SchedulerConfig
-        try:
-            raw_settings = settings.get_all_settings()
-            scheduler_config = SchedulerConfig.model_validate(raw_settings)
-            tz_str = scheduler_config.system_timezone
-        except Exception:
-            tz_str = "Asia/Taipei"
-
-        if val:
-            try:
-                return datetime.fromisoformat(val.replace("Z", "+00:00")).astimezone(ZoneInfo(tz_str)).date()
-            except Exception as e:
-                logger.warning(f"LeadsPatrol: Failed to parse {db_key} ({val}), returning None. Error: {repr(e)}")
-        return None
-
-    from src.server.schemas.settings import SchedulerConfig
     try:
         raw_settings = settings.get_all_settings()
         scheduler_config = SchedulerConfig.model_validate(raw_settings)
@@ -263,10 +230,14 @@ async def check_and_resume_dag(scheduler) -> None:
     except Exception:
         tz_str = "Asia/Taipei"
 
-    now_date = datetime.now(ZoneInfo(tz_str)).date()
+    tz = ZoneInfo(tz_str)
+    now_date = datetime.now(tz).date()
 
-    alice_date = get_last_run_date("alice_auto_fetch")
-    bob_date = get_last_run_date("bob_market_report")
+    alice_dt = await scheduler._get_last_run("alice_auto_fetch")
+    bob_dt = await scheduler._get_last_run("bob_market_report")
+
+    alice_date = alice_dt.astimezone(tz).date() if alice_dt else None
+    bob_date = bob_dt.astimezone(tz).date() if bob_dt else None
 
     if alice_date == now_date and bob_date != now_date:
         logger.info("🔗 L2 DAG Catchup: Resuming 'bob_market_report'")

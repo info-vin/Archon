@@ -102,15 +102,12 @@ async def run_log_patrol() -> None:
         prompt_template = prompt_service.get_prompt("SYS_ERROR_PATROL_PROMPT")
         task_desc = prompt_template.format(error_summary=error_summary)
 
-        success, p_res = repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1), # 合法
-            "Get project ID"
-        )
-        p_data = p_res.get("data", []) if success else []
-        if not p_data:
+        from src.server.services.scheduler.utils import get_default_project_id
+
+        project_id = get_default_project_id(supabase, "Get project ID")
+        if not project_id:
             logger.warning("Clockwork: No projects found to attach repair task.")
             return
-        project_id = p_data[0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,
