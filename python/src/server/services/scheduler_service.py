@@ -71,13 +71,13 @@ class SchedulerService:
             logger.info("🛑 Clockwork: Shutting down Scheduler...")
             self._scheduler.shutdown()
 
-    async def _update_last_run(self, job_id: str) -> None:
+    async def _update_last_run(self, job_id: str, supabase: Any = None) -> None:
         """Persists the last run timestamp to the database."""
         try:
             from src.server.config.config import get_config
             from src.server.services.settings_service import SettingsService
 
-            settings = SettingsService()
+            settings = SettingsService(supabase)
             config = get_config()
             env_prefix = config.archon_env
             if env_prefix and not env_prefix.endswith("_"):
@@ -88,13 +88,13 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"Scheduler: Failed to update last run for {job_id}: {e}")
 
-    async def _get_last_run(self, job_id: str) -> datetime | None:
+    async def _get_last_run(self, job_id: str, supabase: Any = None) -> datetime | None:
         """Retrieves the last run timestamp from the database."""
         try:
             from src.server.config.config import get_config
             from src.server.services.settings_service import SettingsService
 
-            settings = SettingsService()
+            settings = SettingsService(supabase)
             config = get_config()
             env_prefix = config.archon_env
             if env_prefix and not env_prefix.endswith("_"):
@@ -188,16 +188,18 @@ class SchedulerService:
         if not self._scheduler:
             return
         async def wrapper() -> None:
-            if await self._should_run_daily(job_id):
+            should_run, reason = await self._should_run_daily(job_id)
+            if should_run:
                 logger.info(f"🔗 Event-Driven: Executing daily job '{job_id}'")
                 try:
-                    await job_func()
-                    await self._update_last_run(job_id)
+                    result = await job_func()
+                    if result is not False:
+                        await self._update_last_run(job_id)
                 except Exception as e:
                     logger.error(f"Job {job_id} failed: {e}")
                     raise
             else:
-                logger.info(f"⏭️ Event-Driven: Skipped '{job_id}' (Already run today)")
+                logger.info(f"⏭️ Event-Driven: Skipped '{job_id}' ({reason})")
         self._scheduler.add_job(wrapper, id=f"{job_id}_event", replace_existing=True)
 
     def _parse_dynamic_hf_time(self, config: Any, offset_hours: int) -> tuple[int, int]:
@@ -297,8 +299,8 @@ class SchedulerService:
         self._trigger_stateful_daily_event(self._run_market_report, "bob_market_report")
 
     @API_RETRY_POLICY
-    async def _run_market_report(self) -> None:
-        await leads_patrol.run_market_report()
+    async def _run_market_report(self) -> bool:
+        return await leads_patrol.run_market_report()
 
     async def _run_meta_twin_audit(self) -> None:
         from .system.meta_twin_service import meta_twin_service

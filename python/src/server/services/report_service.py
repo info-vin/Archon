@@ -201,13 +201,13 @@ class ReportService(BaseRepository):
         import asyncio
 
         from src.server.services.projects.task_service import task_service
+        from src.server.services.scheduler.utils import get_default_project_id
 
-        query = self.supabase_client.table("archon_projects").select("id").limit(1) # 合法
-        success, p_res = self.execute_query(query, "Failed to get projects")
-        if not success or not isinstance(p_res, dict) or not p_res.get("data"):
+        p_id = get_default_project_id(self.supabase_client, "Failed to get projects")
+        if not p_id:
             logger.warning(f"ReportService: No projects found to attach {title_prefix} summary task.")
             return
-        p_id, assignee_id = p_res["data"][0]["id"], AgentUUIDs.SUPERVISOR
+        assignee_id = AgentUUIDs.SUPERVISOR
         end_date = datetime.now(CST)
         start_date = end_date - timedelta(days=days)
         task_title = f"[{title_prefix}] Executive Summary ({start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')})"
@@ -217,6 +217,7 @@ class ReportService(BaseRepository):
         if success:
             task_id = tr["task"]["id"]
             if auto_complete:
+                await asyncio.sleep(0)
                 await task_service.update_task(task_id, {"status": "done"})
             logger.info(f"✅ ReportService: Created {title_prefix} Executive Summary task {task_id}.")
             if dispatch_agent:

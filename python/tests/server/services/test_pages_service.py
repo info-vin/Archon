@@ -34,14 +34,25 @@ async def test_list_pages_success(pages_service, mock_supabase):
 async def test_list_pages_with_section(pages_service, mock_supabase):
     mock_query = MagicMock()
     mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
-    mock_query.eq.return_value = mock_query
     mock_query.order.return_value.order.return_value = mock_query
 
-    mock_execute_query_async = AsyncMock(return_value=(True, {"data": []}))
+    mock_execute_query_async = AsyncMock(
+        return_value=(
+            True,
+            {
+                "data": [
+                    {"id": "1", "url": "http://example.com/1", "title": "test_section"},
+                    {"id": "2", "url": "http://example.com/2", "title": "other_section"},
+                ]
+            },
+        )
+    )
     pages_service.execute_query_async = mock_execute_query_async
 
-    await pages_service.list_pages(source_id="test_source", section="test_section")
-    mock_query.eq.assert_called_with("section_title", "test_section")
+    result = await pages_service.list_pages(source_id="test_source", section="test_section")
+    assert len(result) == 1
+    assert result[0]["id"] == "1"
+    assert result[0]["section_title"] == "test_section"
 
 @pytest.mark.asyncio
 async def test_get_page_by_url_success(pages_service, mock_supabase):
@@ -84,6 +95,52 @@ async def test_get_page_by_id_not_found(pages_service, mock_supabase):
     mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
 
     mock_execute_query_async = AsyncMock(return_value=(False, {}))
+    pages_service.execute_query_async = mock_execute_query_async
+
+    result = await pages_service.get_page_by_id(page_id="1")
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_list_pages_malformed_response(pages_service, mock_supabase):
+    mock_query = MagicMock()
+    mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
+    mock_query.order.return_value.order.return_value = mock_query
+
+    # Non-dict items in data list should be filtered out safely
+    mock_execute_query_async = AsyncMock(return_value=(True, {"data": ["invalid", None, {"id": "1", "url": "http://example.com"}]}))
+    pages_service.execute_query_async = mock_execute_query_async
+
+    result = await pages_service.list_pages(source_id="test_source")
+    assert len(result) == 1
+    assert result[0]["id"] == "1"
+
+    # Non-list data payload returns empty list without raising exception
+    pages_service.execute_query_async = AsyncMock(return_value=(True, {"data": "not_a_list"}))
+    result = await pages_service.list_pages(source_id="test_source")
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_get_page_by_url_malformed_response(pages_service, mock_supabase):
+    mock_query = MagicMock()
+    mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
+
+    # Non-dict item in data list returns None safely
+    mock_execute_query_async = AsyncMock(return_value=(True, {"data": ["not_a_dict"]}))
+    pages_service.execute_query_async = mock_execute_query_async
+
+    result = await pages_service.get_page_by_url(url="http://example.com")
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_page_by_id_malformed_response(pages_service, mock_supabase):
+    mock_query = MagicMock()
+    mock_supabase.table.return_value.select.return_value.eq.return_value = mock_query
+
+    # Non-dict result payload returns None safely
+    mock_execute_query_async = AsyncMock(return_value=(True, "not_a_dict_result"))
     pages_service.execute_query_async = mock_execute_query_async
 
     result = await pages_service.get_page_by_id(page_id="1")

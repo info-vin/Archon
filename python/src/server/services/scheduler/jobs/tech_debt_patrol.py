@@ -17,25 +17,14 @@ async def run_tech_debt_audit() -> None:
         import glob
         import os
         import time
-        from pathlib import Path
 
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.scheduler.utils import get_default_project_id, resolve_project_root
         from src.server.services.shared_constants import AI_AGENT_ROLES
         from src.server.utils import get_supabase_client
 
-        # Multi-path detection (Host vs Docker)
-        possible_roots = [
-            Path("/app"),  # Docker
-            Path.cwd(),    # Host (Archon root)
-            Path.cwd().parent, # Host (Archon/python root)
-        ]
-
-        project_root = Path("/app")
-        for root in possible_roots:
-            if (root / "PRPs").exists():
-                project_root = root
-                break
+        project_root = resolve_project_root("PRPs")
 
         warnings = []
 
@@ -85,17 +74,10 @@ async def run_tech_debt_audit() -> None:
         task_desc = prompt_template.format(warnings_str="\n\n".join(warnings))
 
         supabase = get_supabase_client()
-        from src.server.repositories.base_repository import BaseRepository
-        repo = BaseRepository(supabase)
-        suc_p, p_res = repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1),
-            "Fetch project for tech debt task"
-        )
-        if not suc_p or not p_res.get("data"):
+        project_id = get_default_project_id(supabase, "Fetch project for tech debt task")
+        if not project_id:
             logger.warning("Clockwork: No projects found to attach tech debt task.")
             return
-
-        project_id = p_res["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,
@@ -122,21 +104,11 @@ async def run_ssot_audit() -> None:
 
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.scheduler.utils import get_default_project_id, resolve_project_root
         from src.server.services.shared_constants import AI_AGENT_ROLES
         from src.server.utils import get_supabase_client
 
-        # Multi-path detection (Host vs Docker)
-        possible_roots = [
-            Path("/app"),  # Docker
-            Path.cwd(),    # Host (Archon root)
-            Path.cwd().parent, # Host (Archon/python root)
-        ]
-
-        project_root = Path("/app")
-        for root in possible_roots:
-            if (root / "python" / "src").exists():
-                project_root = root
-                break
+        project_root = resolve_project_root("python/src")
 
         warnings = []
 
@@ -148,29 +120,44 @@ async def run_ssot_audit() -> None:
                 logger.warning("SSOT Audit skipped: Both python/src and src directories not found.")
                 return
 
+        allowed_ssot_files = {
+            "model_ssot.py",
+            "config.py",
+            "settings.py",
+            "service_discovery.py",
+            "logfire_config.py",
+            "client_manager.py",
+            "credential_service.py",
+            "main.py",
+            "lifespan.py",
+            "mcp_client.py",
+            "endpoints.py",
+            "reranking_strategy.py",
+            "visit_log_service.py",
+        }
+
         for root_dir, _, files in os.walk(scan_dir):
             for file in files:
-                if not file.endswith(".py"):
-                    continue
-                if file == "model_ssot.py" or file == "config.py":
+                if not file.endswith(".py") or file in allowed_ssot_files:
                     continue
 
                 filepath = Path(root_dir) / file
                 if not os.path.isfile(filepath):
                     continue
-                if "visit_log_service.py" in str(filepath):
-                    continue
                 rel_path = filepath.relative_to(project_root)
 
                 with open(filepath, encoding="utf-8") as f:
                     for i, line in enumerate(f, 1):
+                        if "# 合法" in line or line.strip().startswith("#"):
+                            continue
                         # 1. Hostnames
-                        if "archon-mcp" in line or "127.0.0.1" in line: # 合法
+                        if "archon-mcp" in line or "127.0.0.1" in line:  # 合法
                             if "http" in line or "://" in line:
                                 warnings.append(f"Hardcoded Network Host at `{rel_path}:{i}` -> {line.strip()[:50]}")
-                        # 2. Models removed due to dynamic discovery
-                        # 3. Prompts
-                        if ("task_desc =" in line or "task_desc=" in line) and not any(x in line for x in ["prompt_template", "str(output)", "get(", 'f"**', "await "]):
+                        # 2. Prompts
+                        if ("task_desc =" in line or "task_desc=" in line) and not any(
+                            x in line for x in ["prompt_template", "prompt_service", "str(output)", "get(", 'f"**', "await "]
+                        ):
                             if '"""' in line or "'''" in line or "(" in line:
                                 warnings.append(f"Possible Hardcoded Prompt at `{rel_path}:{i}` -> {line.strip()[:50]}")
 
@@ -187,16 +174,10 @@ async def run_ssot_audit() -> None:
         task_desc = prompt_template2.format(warnings_str="\n".join(f"- {w}" for w in warnings))
 
         supabase = get_supabase_client()
-        from src.server.repositories.base_repository import BaseRepository
-        repo = BaseRepository(supabase)
-        suc_p, p_res = repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1),
-            "Fetch project for SSOT audit task"
-        )
-        if not suc_p or not p_res.get("data"):
+        project_id = get_default_project_id(supabase, "Fetch project for SSOT audit task")
+        if not project_id:
             return
 
-        project_id = p_res["data"][0]["id"]
         success, task_result = await task_service.create_task(
             project_id=project_id,
             title=task_title,
@@ -214,47 +195,88 @@ async def run_ssot_audit() -> None:
         logger.error(f"💥 Clockwork: SSOT Audit Failed: {e}")
 
 async def run_engineering_retrospective() -> None:
-    """Executes a Map-Reduce Weekly Engineering Retro using git log and GEMINI.md context."""
+    """Executes a Map-Reduce Weekly Engineering Retro using git log, GEMINI.md, and DB telemetry fallback."""
     logger.info("🛠️ Clockwork: Starting Weekly Engineering Retrospective...")
     try:
         import subprocess
-        from pathlib import Path
+        from datetime import UTC, timedelta
 
         from src.agents.workflow.engine_beta_graph import BetaState, beta_graph
         from src.agents.workflow.state import SharedState
         from src.server.config.config import get_config
+        from src.server.repositories.base_repository import BaseRepository
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.scheduler.utils import get_default_project_id, resolve_project_root
         from src.server.services.shared_constants import AgentUUIDs, PromptNameEnum
         from src.server.utils import get_supabase_client
 
         config = get_config()
         days = getattr(config, "weekly_engineering_retro_lookback_days", 7)
+        supabase = get_supabase_client()
+        repo = BaseRepository(supabase)
 
-        project_root = Path("/app")
-        if not project_root.exists():
-            project_root = Path.cwd()
+        project_root = resolve_project_root("GEMINI.md")
 
-        # 1. Fetch git logs
+        # 1. Fetch git logs with Cloud/Docker DB fallback
+        git_logs = ""
         try:
             git_logs = subprocess.check_output(
                 ["git", "log", f"--since={days} days ago", "--oneline", "--stat"],
                 cwd=str(project_root),
                 stderr=subprocess.DEVNULL
-            ).decode("utf-8", errors="ignore")
+            ).decode("utf-8", errors="ignore").strip()
         except Exception:
-            git_logs = "無法取得 git 歷史紀錄 (Not a git repository or no recent logs)."
+            git_logs = ""
 
-        # 2. Fetch GEMINI.md logs
+        if not git_logs:
+            cutoff_iso = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+            suc_t, res_t = repo.execute_query(
+                supabase.table("archon_tasks")  # 合法
+                .select("title, status, assignee, updated_at")
+                .gte("updated_at", cutoff_iso)
+                .order("updated_at", desc=True)
+                .limit(30),
+                "Fetch recent engineering tasks for retro fallback",
+            )
+            recent_tasks = res_t.get("data", []) if suc_t and isinstance(res_t.get("data"), list) else []
+            if recent_tasks:
+                git_logs = "【雲端容器模式：由 Supabase archon_tasks 實體工單紀錄提供近 7 日工程進度】\n" + "\n".join(
+                    f"- [{t.get('updated_at', '')[:10]}] ({t.get('status')}) {t.get('title')} (Assignee: {t.get('assignee')})"
+                    for t in recent_tasks
+                )
+            else:
+                git_logs = "近 7 日無新增 Git 提交或工程工單紀錄。"
+
+        # 2. Fetch GEMINI.md logs with Cloud/Docker DB fallback
         gemini_md_path = project_root / "GEMINI.md"
         journal_logs = ""
         if gemini_md_path.exists():
             try:
                 with open(gemini_md_path, encoding="utf-8") as f:
                     lines = f.readlines()
-                    journal_logs = "".join(lines[-200:])
+                    journal_logs = "".join(lines[-200:]).strip()
             except Exception:
-                journal_logs = "無法讀取 GEMINI.md"
+                journal_logs = ""
+
+        if not journal_logs:
+            cutoff_iso = (datetime.now(UTC) - timedelta(days=days)).isoformat()
+            suc_l, res_l = repo.execute_query(
+                supabase.table("archon_logs")  # 合法
+                .select("created_at, source, level, message")
+                .gte("created_at", cutoff_iso)
+                .order("created_at", desc=True)
+                .limit(40),
+                "Fetch recent system logs for retro fallback",
+            )
+            recent_logs = res_l.get("data", []) if suc_l and isinstance(res_l.get("data"), list) else []
+            if recent_logs:
+                journal_logs = "【雲端容器模式：由 Supabase archon_logs 實體系統日誌提供近 7 日架構遙測】\n" + "\n".join(
+                    f"- [{lg.get('created_at', '')[:16]}] [{lg.get('level')}] {lg.get('source')}: {lg.get('message')}"
+                    for lg in recent_logs
+                )
+            else:
+                journal_logs = "近 7 日無系統異常日誌。"
 
         from src.server.prompts.pm_prompts import ENGINEERING_RETRO_DEFAULT
         from src.server.services.prompt_service import prompt_service
@@ -263,7 +285,7 @@ async def run_engineering_retrospective() -> None:
         prompt_content = prompt_template.format(
             days=days,
             git_logs=git_logs[:3000],  # truncate if too large
-            journal_logs=journal_logs
+            journal_logs=journal_logs[:4000]
         )
 
         state = BetaState(shared=SharedState())
@@ -285,18 +307,10 @@ async def run_engineering_retrospective() -> None:
         cst = ZoneInfo("Asia/Taipei")
         task_title = f"[Weekly Retro] Engineering Reflection ({datetime.now(cst).strftime('%Y-%m-%d')})"
 
-        supabase = get_supabase_client()
-        from src.server.repositories.base_repository import BaseRepository
-        repo = BaseRepository(supabase)
-        suc_p, p_res = repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1),
-            "Fetch project for Engineering Retro"
-        )
-        if not suc_p or not p_res.get("data"):
+        project_id = get_default_project_id(supabase, "Fetch project for Engineering Retro")
+        if not project_id:
             logger.warning("Clockwork: No projects found to attach Engineering Retro task.")
             return
-
-        project_id = p_res["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,

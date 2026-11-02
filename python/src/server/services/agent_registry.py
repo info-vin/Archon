@@ -165,7 +165,10 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
     Retrieves the configuration for a specific agent dynamically from database.
     Fallback to FALLBACK_AGENT_CONFIG if database is unavailable.
     """
+    from .scheduler.utils import normalize_agent_identity
     from .shared_constants import AgentUUIDs
+
+    canonical_id, _ = normalize_agent_identity(agent_id)
 
     mapping = {
         AgentUUIDs.SUPERVISOR: "supervisor",
@@ -176,7 +179,7 @@ def get_agent_config(agent_id: str) -> DynamicAgentConfig | None:
         AgentUUIDs.CLOCKWORK: "clockwork",
     }
 
-    key = mapping.get(agent_id, agent_id)
+    key = mapping.get(canonical_id, canonical_id)
 
     try:
         supabase = get_supabase_client()

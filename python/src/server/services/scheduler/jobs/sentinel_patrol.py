@@ -267,16 +267,13 @@ async def run_api_deprecation_scan() -> None:
         task_desc = prompt_service.get_prompt("API_DEPRECATION_SCAN_PROMPT")
 
         from src.server.repositories.base_repository import BaseRepository
+        from src.server.services.scheduler.utils import get_default_project_id
+
         repo = BaseRepository(supabase)
-        suc_p, p_res = repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1), # 合法
-            "Fetch project for API scan"
-        )
-        if not suc_p or not p_res.get("data"):
+        project_id = get_default_project_id(supabase, "Fetch project for API scan")
+        if not project_id:
             logger.warning("Clockwork: No projects found to attach API scan task.")
             return
-
-        project_id = p_res["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,

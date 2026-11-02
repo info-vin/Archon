@@ -65,7 +65,19 @@ def test_code_examples_rag_endpoint():
     # Use search path - Path the Service Logic in the search module
     with patch("src.server.api_routes.knowledge.search.RAGService") as mock_class:
         mock_inst = MagicMock()
-        mock_inst.search_code_examples_service = AsyncMock(return_value=(True, []))
+        mock_inst.search_code_examples_service = AsyncMock(
+            return_value=(
+                True,
+                {
+                    "query": "test",
+                    "source_filter": None,
+                    "search_mode": "vector",
+                    "reranking_applied": False,
+                    "results": [],
+                    "count": 0,
+                },
+            )
+        )
         mock_class.return_value = mock_inst
 
         # Aligned with physical search path

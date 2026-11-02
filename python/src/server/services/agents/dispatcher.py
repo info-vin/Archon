@@ -133,21 +133,55 @@ class DefaultLLMStrategy(BaseAgentStrategy):
                     timeout=300
                 )
                 res_msg = response.choices[0].message
-                if getattr(res_msg, "tool_calls", None) and agent_service.mcp_client:
+                max_tool_iterations = 3
+                iteration = 0
+                executed_tool_summaries: list[str] = []
+
+                while (
+                    getattr(res_msg, "tool_calls", None)
+                    and agent_service.mcp_client
+                    and iteration < max_tool_iterations
+                ):
+                    iteration += 1
                     messages.append(res_msg)
                     tool_results = await agent_service.tool_executor.handle_tool_calls(
                         res_msg.tool_calls, agent_id=agent_id
                     )
+                    for tr in tool_results:
+                        if isinstance(tr, dict) and tr.get("content"):
+                            executed_tool_summaries.append(str(tr["content"])[:500])
                     messages.extend(tool_results)
+                    next_tools = tools_param if iteration < max_tool_iterations else None
                     final_response = await asyncio.wait_for(
                         client.chat.completions.create(
-                            model=active_model, messages=messages, tools=tools_param
+                            model=active_model, messages=messages, tools=next_tools
                         ),
                         timeout=300
                     )
-                    final_output = final_response.choices[0].message.content
-                else:
-                    final_output = res_msg.content
+                    res_msg = final_response.choices[0].message
+
+                final_output = res_msg.content
+                if not final_output and executed_tool_summaries:
+                    synthesis_messages = [
+                        *messages,
+                        {
+                            "role": "user",
+                            "content": "請根據上述工具執行結果，提供完整、結構化的繁體中文總結報告（不可留空）。",
+                        },
+                    ]
+                    synth_response = await asyncio.wait_for(
+                        client.chat.completions.create(
+                            model=active_model, messages=synthesis_messages
+                        ),
+                        timeout=300,
+                    )
+                    final_output = synth_response.choices[0].message.content
+
+                if not final_output:
+                    if executed_tool_summaries:
+                        final_output = "工具執行完成，結果摘要：\n" + "\n".join(executed_tool_summaries)
+                    else:
+                        final_output = f"已完成任務：{task_data.get('title', task_id)}"
 
                 # Save output & update status
                 await task_service.update_task(task_id, {"status": "done"})
@@ -176,9 +210,14 @@ class DailyMarketReportStrategy(BaseAgentStrategy):
             handler = ContentHandler(get_supabase_client())
             output_msg = await handler.blog_generator.draft_daily_market_report_physical(task_id, task_data)
 
-            # Update task
             from src.server.services.projects.task_service import task_service
+            if output_msg.startswith("Failed"):
+                await task_service.update_task(task_id, {"status": "failed"})
+                await task_service.save_agent_output(task_id, {"content": output_msg}, agent_id)
+                return
+
             await task_service.update_task(task_id, {"status": "done"})
+            await task_service.save_agent_output(task_id, {"content": output_msg}, agent_id)
             await agent_service._award_agent_xp(agent_id, task_data, output_msg)
 
         except Exception as e:
@@ -301,7 +340,10 @@ class AgentDispatcher:
         self.register_strategy(
             lambda a_id, t_data: (
                 a_id == AgentUUIDs.MARKET_BOT
-                and "Daily Market Intelligence" in t_data.get("title", "")
+                and (
+                    "Daily Market Intelligence" in t_data.get("title", "")
+                    or "Market Intelligence" in t_data.get("title", "")
+                )
             ),
             DailyMarketReportStrategy(),
         )
@@ -341,8 +383,11 @@ class AgentDispatcher:
         self._strategies.append((condition_func, strategy))
 
     def get_strategy(self, agent_id: str, task_data: dict[str, Any]) -> BaseAgentStrategy:
+        from src.server.services.scheduler.utils import normalize_agent_identity
+
+        canonical_id, _ = normalize_agent_identity(agent_id)
         for condition_func, strategy in self._strategies:
-            if condition_func(agent_id, task_data):
+            if condition_func(canonical_id, task_data) or condition_func(agent_id, task_data):
                 return strategy
         return self._default_strategy
 

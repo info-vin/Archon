@@ -35,10 +35,9 @@ class DocumentVersionDTO(TypedDict):
     created_by: str
     change_type: str
     field_name: str
-    old_value: str
-    new_value: str
-    change_summary: str
     version_number: int
+    change_summary: str
+    content: dict[str, Any]
 
 
 class SystemService(BaseRepository):
@@ -48,7 +47,8 @@ class SystemService(BaseRepository):
     async def list_connectivity_logs(self, limit: int = 20) -> list[ConnectivityLogDTO]:
         query = self.supabase_client.table("archon_logs").select("*").eq("level", "ALERT").eq("type", "system").order("created_at", desc=True).limit(limit) # 合法
         success, res = await self.execute_query_async(query, "Failed to list connectivity logs", require_data=False)
-        return cast(list[ConnectivityLogDTO], res.get("data", []) if success and isinstance(res.get("data"), list) else [])
+        raw_data = res.get("data", []) if success and isinstance(res.get("data"), list) else []
+        return [cast(ConnectivityLogDTO, item) for item in raw_data if isinstance(item, dict)]
 
     async def list_system_settings(self, category: str | None = None) -> list[SystemSettingDTO]:
         query = self.supabase_client.table("archon_settings").select("*") # 合法
@@ -56,17 +56,18 @@ class SystemService(BaseRepository):
             query = query.eq("category", category)
         query = query.order("key")
         success, res = await self.execute_query_async(query, "Failed to list system settings", require_data=False)
-        return cast(list[SystemSettingDTO], res.get("data", []) if success and isinstance(res.get("data"), list) else [])
+        raw_data = res.get("data", []) if success and isinstance(res.get("data"), list) else []
+        return [cast(SystemSettingDTO, item) for item in raw_data if isinstance(item, dict)]
 
     async def update_system_setting(self, key: str, new_value: str, description: str | None, user_name: str) -> SystemSettingDTO:
         # 1. Fetch old value
         query_old = self.supabase_client.table("archon_settings").select("value, is_system_protected").eq("key", key) # 合法
         success_old, res_old = await self.execute_query_async(query_old, f"Setting '{key}' not found", require_data=True)
         old_list = res_old.get("data") if success_old and isinstance(res_old.get("data"), list) else []
-        if not old_list:
+        old_data = old_list[0] if old_list and isinstance(old_list[0], dict) else None
+        if old_data is None:
             raise ValueError(f"Setting '{key}' not found")
 
-        old_data = old_list[0]
         old_value = old_data.get("value")
 
         # 2. Update
@@ -77,7 +78,8 @@ class SystemService(BaseRepository):
         query_upd = self.supabase_client.table("archon_settings").update(update_data).eq("key", key) # 合法
         success_upd, res_upd = await self.execute_query_async(query_upd, f"Failed to update setting '{key}'", require_data=True)
         upd_list = res_upd.get("data") if success_upd and isinstance(res_upd.get("data"), list) else []
-        if not upd_list:
+        upd_item = upd_list[0] if upd_list and isinstance(upd_list[0], dict) else None
+        if upd_item is None:
             raise ValueError(f"Setting '{key}' not found")
 
         # 3. Audit
@@ -86,16 +88,19 @@ class SystemService(BaseRepository):
                 "document_id": f"setting:{key}",
                 "created_by": user_name,
                 "change_type": "UPDATE",
-                "field_name": key,
-                "old_value": str(old_value) if old_value is not None else "",
-                "new_value": str(new_value),
-                "change_summary": f"System setting '{key}' updated by {user_name}",
+                "field_name": "system_setting",
                 "version_number": 1,
+                "change_summary": f"System setting '{key}' updated by {user_name}",
+                "content": {
+                    "setting_key": key,
+                    "old_value": old_value,
+                    "new_value": str(new_value),
+                },
             }
             await self.execute_query_async(self.supabase_client.table("archon_document_versions").insert(audit_payload), "Audit log failed", require_data=False) # 合法
         except Exception:
             pass
 
-        return cast(SystemSettingDTO, upd_list[0])
+        return cast(SystemSettingDTO, upd_item)
 
 system_service = SystemService()

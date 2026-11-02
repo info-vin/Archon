@@ -42,7 +42,9 @@ def test_dag_catchup_is_decoupled():
 def test_market_report_dynamic_fetch():
     """Verify run_market_report fetches dynamically based on LAST_RUN_BOB_MARKET_REPORT"""
     source = inspect.getsource(leads_patrol.run_market_report)
-    assert "LAST_RUN_BOB_MARKET_REPORT" in source, "Bob must fetch dynamically based on his last run date"
+    assert (
+        "LAST_RUN_BOB_MARKET_REPORT" in source or '_get_last_run("bob_market_report"' in source
+    ), "Bob must fetch dynamically based on his last run date"
     assert "one_day_ago" not in source, "Hardcoded one_day_ago must be removed"
 
 

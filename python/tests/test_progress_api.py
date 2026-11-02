@@ -51,6 +51,7 @@ class TestProgressAPI:
         data = response.json()
 
         assert data["progressId"] == progress_id
+        assert data["type"] == "crawl"
         assert data["status"] == "crawling"
         assert data["progress"] == 50
         assert data["message"] == "Processing pages"
@@ -189,6 +190,7 @@ class TestProgressAPI:
         data = response.json()
 
         # Check upload-specific fields
+        assert data["type"] == "upload"
         assert data["status"] == "storing"
         assert data["progress"] == 75
         assert data["message"] == "Storing chunks"

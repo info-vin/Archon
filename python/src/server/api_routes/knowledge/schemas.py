@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class KnowledgeItemRequest(BaseModel):
@@ -28,8 +28,13 @@ class RagQueryRequest(BaseModel):
 
     query: str
     source_ids: list[str] | None = None
+    source: str | None = None
     limit: int = 5
+    match_count: int | None = None
     include_raw: bool = False
+    return_mode: str | None = None
+
+    model_config = ConfigDict(extra="allow")
 
 
 class CrawlStartResponse(BaseModel):
@@ -123,3 +128,71 @@ class SourceChunksResponse(BaseModel):
     pagination: ChunkPagination = Field(
         default_factory=ChunkPagination, description="Pagination details for document chunks"
     )
+
+
+class KnowledgeSearchItemResponse(BaseModel):
+    """Response model for knowledge search results."""
+
+    id: int | str | None = Field(default=None, description="Chunk or record ID")
+    url: str | None = Field(default=None, description="Page or source URL")
+    chunk_number: int | None = Field(default=None, description="Chunk index within source document")
+    content: str | None = Field(default="", description="Text content chunk")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata key-value pairs")
+    source_id: str | None = Field(default=None, description="Unique source identifier")
+    similarity: float | None = Field(default=0.0, description="Vector similarity score")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class RagQueryResultItem(BaseModel):
+    """Individual search result item within a RAG query response."""
+
+    id: str | int = Field(description="Result item ID")
+    content: str = Field(description="Result content or excerpt")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Metadata dictionary")
+    similarity_score: float = Field(default=0.0, description="Similarity or boosted relevance score")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class RagQueryResponse(BaseModel):
+    """Response model for full RAG query endpoint (/api/rag/query)."""
+
+    success: bool = Field(default=True, description="Query execution status")
+    results: list[RagQueryResultItem] = Field(default_factory=list, description="List of search result items")
+    query: str = Field(description="Original search query")
+    source: str | None = Field(default=None, description="Filtered source domain if specified")
+    match_count: int = Field(default=5, description="Requested max match count")
+    total_found: int = Field(default=0, description="Total results returned")
+    execution_path: str = Field(default="rag_service_pipeline", description="Pipeline execution identifier")
+    search_mode: str = Field(default="vector", description="Search strategy used (e.g. vector, hybrid)")
+    reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class CodeExampleItemResponse(BaseModel):
+    """Response model for an individual code example item."""
+
+    url: str | None = Field(default=None, description="Source URL or reference")
+    code: str | None = Field(default=None, description="Extracted code snippet or content")
+    summary: str | None = Field(default=None, description="Summary or explanation of the code snippet")
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Metadata dictionary")
+    source_id: str | None = Field(default=None, description="Source identifier")
+    similarity: float | None = Field(default=None, description="Vector similarity score")
+    rerank_score: float | None = Field(default=None, description="Rerank score if reranking applied")
+
+    model_config = ConfigDict(extra="allow")
+
+
+class CodeExamplesResponse(BaseModel):
+    """Response model for code example search endpoints."""
+
+    query: str = Field(description="Original search query")
+    source_filter: str | None = Field(default=None, description="Source ID filter applied")
+    search_mode: str = Field(default="vector", description="Search mode used (vector or hybrid)")
+    reranking_applied: bool = Field(default=False, description="Whether reranking was executed")
+    results: list[CodeExampleItemResponse] = Field(default_factory=list, description="Matching code example items")
+    count: int = Field(default=0, description="Total number of results returned")
+
+    model_config = ConfigDict(extra="allow")

@@ -138,8 +138,14 @@ async def update_task_logic(
         if success_update:
             task = update_result["data"][0]
 
-            # If the assignee was updated to an AI agent, notify the MCP
-            if "assignee" in update_fields:
+            # If the assignee was updated to an AI agent (and not already part of execution lifecycle transition), notify the MCP
+            if "assignee" in update_fields and update_fields.get("status") not in (
+                "dispatched",
+                "processing",
+                "doing",
+                "done",
+                "failed",
+            ):
                 new_assignee = update_fields["assignee"]
                 agent_id = None
                 for name, aid in AI_AGENT_ROLES.items():

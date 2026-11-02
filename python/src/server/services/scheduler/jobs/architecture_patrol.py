@@ -5,7 +5,6 @@ Handles weekly scans of backend architecture health and type coverage.
 
 import sys
 from datetime import datetime
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
@@ -18,20 +17,11 @@ async def run_architecture_health_audit() -> None:
     try:
         from src.server.services.agent_service import agent_service
         from src.server.services.projects.task_service import task_service
+        from src.server.services.scheduler.utils import get_default_project_id, resolve_project_root
         from src.server.services.shared_constants import AI_AGENT_ROLES
+        from src.server.utils import get_supabase_client
 
-        # Multi-path detection (Host vs Docker)
-        possible_roots = [
-            Path("/app"),  # Docker
-            Path.cwd(),    # Host (Archon root)
-            Path.cwd().parent, # Host (Archon/python root)
-        ]
-
-        project_root = Path("/app")
-        for root in possible_roots:
-            if (root / "scripts" / "backend_type_health.py").exists():
-                project_root = root
-                break
+        project_root = resolve_project_root("scripts/backend_type_health.py")
 
         scripts_dir = str(project_root / "scripts")
         if scripts_dir not in sys.path:
@@ -51,19 +41,11 @@ async def run_architecture_health_audit() -> None:
             f"{markdown_content}"
         )
 
-        from src.server.repositories.base_repository import BaseRepository
-        from src.server.utils import get_supabase_client
         supabase = get_supabase_client()
-        base_repo = BaseRepository(supabase)
-        success, p_res_dict = base_repo.execute_query(
-            supabase.table("archon_projects").select("id").limit(1),
-            "Failed to find project for architecture health task"
-        )
-        if not success or not p_res_dict.get("data"):
+        project_id = get_default_project_id(supabase, "Failed to find project for architecture health task")
+        if not project_id:
             logger.warning("Clockwork: No projects found to attach architecture health task.")
             return
-
-        project_id = p_res_dict["data"][0]["id"]
 
         success, task_result = await task_service.create_task(
             project_id=project_id,

@@ -140,13 +140,17 @@ class WorkerService:
                     logger.error(f"Worker failed to execute task {task_id}: {e}")
                     await task_service.update_task(task_id, {"status": "failed"})
 
+        from src.server.services.scheduler.utils import normalize_agent_identity
+
         for task in tasks:
             task_id = task["id"]
-            agent_id = task.get("assignee")
+            raw_agent = task.get("assignee_id") or task.get("assignee")
 
-            if not agent_id:
+            if not raw_agent:
                 logger.warning(f"Task {task_id} is dispatched but has no assignee. Skipping.")
                 continue
+
+            agent_id, _ = normalize_agent_identity(str(raw_agent))
 
             # 2. Mark as processing synchronously to prevent other workers from picking it up
             await task_service.update_task(task_id, {"status": TaskStatusEnum.PROCESSING})
