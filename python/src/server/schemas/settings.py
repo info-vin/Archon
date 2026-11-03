@@ -76,13 +76,26 @@ class NetworkConfig(BaseModel):
     google_base_url: str = Field(default="https://generativelanguage.googleapis.com/v1beta/openai/", alias="GOOGLE_BASE_URL")
     hf_base_url: str = Field(default="https://api-inference.huggingface.co/v1/", alias="HF_BASE_URL")
     frontend_url: str = Field(default="https://archon-enduser.vercel.app", alias="FRONTEND_URL")
+    huggingface_endpoint: str | None = Field(default=None, alias="HUGGINGFACE_ENDPOINT")
 
     @model_validator(mode="before")
     @classmethod
     def load_from_env(cls, data: dict) -> dict:
-        for k, v in os.environ.items():
-            if k in ["AGENTS_SERVICE_URL", "MCP_SERVICE_URL", "LLM_BASE_URL", "ANTHROPIC_BASE_URL", "OPENROUTER_BASE_URL", "GOOGLE_BASE_URL", "HF_BASE_URL", "FRONTEND_URL"]:
-                data[k] = v
+        keys = [
+            "AGENTS_SERVICE_URL",
+            "MCP_SERVICE_URL",
+            "LLM_BASE_URL",
+            "ANTHROPIC_BASE_URL",
+            "OPENROUTER_BASE_URL",
+            "GOOGLE_BASE_URL",
+            "HF_BASE_URL",
+            "FRONTEND_URL",
+            "HUGGINGFACE_ENDPOINT",
+        ]
+        for k in keys:
+            val = os.getenv(k)
+            if val is not None and k not in data:
+                data[k] = val
         return data
 
 class NotificationConfig(BaseModel):
@@ -166,10 +179,32 @@ class SchedulerConfig(BaseModel):
     monthly_summary_day: int = Field(default=1, alias="MONTHLY_SUMMARY_DAY")
     monthly_summary_hour: int = Field(default=9, alias="MONTHLY_SUMMARY_HOUR")
     monthly_summary_minute: int = Field(default=0, alias="MONTHLY_SUMMARY_MINUTE")
+    monthly_agent_rules_compaction_day: int = Field(default=1, alias="MONTHLY_AGENT_RULES_COMPACTION_DAY")
+    monthly_agent_rules_compaction_hour: int = Field(default=9, alias="MONTHLY_AGENT_RULES_COMPACTION_HOUR")
+    monthly_agent_rules_compaction_minute: int = Field(default=30, alias="MONTHLY_AGENT_RULES_COMPACTION_MINUTE")
+    agent_rules_max_entries_per_file: int = Field(default=5, alias="AGENT_RULES_MAX_ENTRIES_PER_FILE")
+
+    # Backward compatibility aliases
     monthly_jules_compaction_day: int = Field(default=1, alias="MONTHLY_JULES_COMPACTION_DAY")
     monthly_jules_compaction_hour: int = Field(default=9, alias="MONTHLY_JULES_COMPACTION_HOUR")
     monthly_jules_compaction_minute: int = Field(default=30, alias="MONTHLY_JULES_COMPACTION_MINUTE")
     jules_max_entries_per_file: int = Field(default=5, alias="JULES_MAX_ENTRIES_PER_FILE")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_compaction_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            for old_key, new_key in (
+                ("MONTHLY_JULES_COMPACTION_DAY", "MONTHLY_AGENT_RULES_COMPACTION_DAY"),
+                ("MONTHLY_JULES_COMPACTION_HOUR", "MONTHLY_AGENT_RULES_COMPACTION_HOUR"),
+                ("MONTHLY_JULES_COMPACTION_MINUTE", "MONTHLY_AGENT_RULES_COMPACTION_MINUTE"),
+                ("JULES_MAX_ENTRIES_PER_FILE", "AGENT_RULES_MAX_ENTRIES_PER_FILE"),
+            ):
+                if old_key in data and new_key not in data:
+                    data[new_key] = data[old_key]
+                elif new_key in data and old_key not in data:
+                    data[old_key] = data[new_key]
+        return data
 
     # Category 4: Stateful Bi-weekly Maintenance
     maintenance_audit_hour: int = Field(default=14, alias="MAINTENANCE_AUDIT_HOUR")

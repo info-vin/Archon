@@ -315,23 +315,23 @@ def repository_bypass_audit():
     else:
         print("✅ Repository architecture audit passed. No .execute() bypasses found.")
 
-def jules_guidelines_audit():
+def agent_rules_audit():
     import re
-    print_header("Step 11: Jules Guidelines (.jules/*.md) Compaction Audit")
+    print_header("Step 11: Agent Rules (.agents/rules/*.md) Compaction Audit")
 
-    jules_dir = ".jules"
-    if not os.path.exists(jules_dir):
-        print("✅ .jules directory not found, skipping.")
+    rules_dir = ".agents/rules" if os.path.exists(".agents/rules") else ".jules"
+    if not os.path.exists(rules_dir):
+        print("✅ Rules directory (.agents/rules or .jules) not found, skipping.")
         return
 
     date_pattern = re.compile(r"^##\s+\d{4}-\d{2}-\d{2}")
     max_entries = 5
     issues = []
 
-    for entry in sorted(os.listdir(jules_dir)):
+    for entry in sorted(os.listdir(rules_dir)):
         if not entry.endswith(".md"):
             continue
-        file_path = os.path.join(jules_dir, entry)
+        file_path = os.path.join(rules_dir, entry)
         if not os.path.isfile(file_path):
             continue
 
@@ -346,12 +346,14 @@ def jules_guidelines_audit():
             issues.append(f"{file_path} | Exceeds max {max_entries} rules per file (found {section_count})")
 
     if issues:
-        print(f"❌ FOUND {len(issues)} JULES GUIDELINE COMPACTION VIOLATIONS!")
+        print(f"❌ FOUND {len(issues)} AGENT RULE COMPACTION VIOLATIONS!")
         for issue in issues:
             print(f"   - {issue}")
         sys.exit(1)
     else:
-        print(f"✅ Jules guidelines audit passed (<= {max_entries} core rules per file, 0 date hallucinations).")
+        print(f"✅ Agent rules audit passed (<= {max_entries} core rules per file, 0 date hallucinations).")
+
+jules_guidelines_audit = agent_rules_audit
 
 if __name__ == "__main__":
     scan_prps()
@@ -363,6 +365,6 @@ if __name__ == "__main__":
     ssot_hardcoding_audit()
     os_getenv_audit()
     repository_bypass_audit()
-    jules_guidelines_audit()
+    agent_rules_audit()
     print_header("Audit Complete")
 

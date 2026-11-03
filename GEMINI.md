@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-02 完成遠端 PR #658~#663 驗收、5 條待審分支三向衝突鑑識與遠端清理；針對 Alice、Bob、Charlie、David 四大角色之週期排程與下游工單執行進行雲端資料庫與代碼實體穿透鑑識，修復 7 大斷層（提取 `scheduler/utils.py` 共用 DRY 工具、正規化 `WorkerService`/`AgentDispatcher`/`agent_registry` 雙模身份標識、為 `DefaultLLMStrategy` 補齊 3 輪 Tool 迴圈與強制收斂回合以根除 `{"content": null}` 空報告、修復 `DailyMarketReportStrategy` 標題路由與失敗處理、修復 `_trigger_stateful_daily_event` Tuple 解構與時間水位鎖、補齊 `GEMINI.md` 容器掛載與 DB Fallback、對齊 `run_ssot_audit` `# 合法` 豁免規則與 `report_service` 非同步鎖）；並基於雲端 `token_usage` 7 日真實用量（238,807 tokens / `$0.1332 USD`）將 `WEEKLY_BUDGET_THRESHOLD` 由 `$0.05` 調升至 `$0.25 USD`（SSOT 與雲端 `archon_settings` 雙向同步），全數通過 `make lint`（394 檔 0 錯誤）、`make test-be`（839 passed）與 `make phase-audit` 11 大門禁。
-*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並嚴格把關週期排程與 Jules 分支品質。
+*   **當前狀態 (Current Context)**: 2026-11-03 因應 Google Jules 官方服務終止，完成 Jules 規則庫全量平移至 `.agents/rules/`，將排程作業由 `jules_compaction` 正規化重構為通用 `agent_rules_compaction`（保留舊別名與向後相容墊片），同步更新 `docker-compose.yml`、`Dockerfile.server`、`deploy_to_hf.sh`、`SchedulerConfig`、`admin_api` 與 `internal_api`；修復遠端 PR #666 引入之 `type_guardian.md` 規則超額與幻覺日期前綴；修復 `patrol_infra.py` 之 `NetworkConfig.huggingface_endpoint` SSOT 回退機制，全數通過 `make lint`（前後端雙專案 0 錯誤、395 檔 MyPy 通過）、`make test-be-fast`（839 passed）與 `make phase-audit` 11 大門禁（Step 11 驗證通過）。
+*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並嚴格把關通用 Agent 規則與排程品質。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,22 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-11-03：Jules 規則平移至 .agents/rules、agent_rules_compaction 重構與全門禁公證
+因應 Google 官方宣布關閉 Jules 獨立服務，全量平移 `.jules/` 規則指南至通用 `.agents/rules/`，重構排程為 `agent_rules_compaction`，自癒 PR #666 遺留之規則超額與幻覺日期，並修復 `patrol_infra.py` 之 `NetworkConfig.huggingface_endpoint` SSOT 回退機制。
+
+**核心主題歸類**:
+1.  **規則庫通用平移與基礎設施拓樸對齊 (`.agents/rules/`)**:
+    *   **規則檔案遷移**: 建立 `.agents/rules/` 並完整遷移 6 份規則指南（`bolt.md`, `contractor.md`, `palette.md`, `qa.md`, `reaper.md`, `type_guardian.md`），安全移除 legacy `.jules/`。
+    *   **容器與建置拓樸同步**: 同步更新 `docker-compose.yml`（掛載 `./.agents/rules:/app/.agents/rules`）、`Dockerfile.server`（`COPY .agents/rules/ /app/.agents/rules/`）與 `scripts/deploy_to_hf.sh`（`git checkout -- .agents/rules/`）。
+2.  **月度排程重構與向後相容墊片 (`agent_rules_compaction.py`)**:
+    *   **排程服務重構**: 建立 `python/src/server/services/scheduler/jobs/agent_rules_compaction.py`，實作 `run_monthly_agent_rules_compaction`，支援自適應路徑解析（優先尋訪 `.agents/rules` 並相容 `.jules` 備援），在 `jules_compaction.py` 保留向後相容墊片（Shim）。
+    *   **SSOT 設定與 API 路由對齊**: 於 `SchedulerConfig` 擴充 `monthly_agent_rules_compaction_*` 與 `agent_rules_max_entries_per_file`，透過 `model_validator` 雙向同步舊鍵名；同步於 `scheduler_service.py`、`admin_api.py` 與 `internal_api.py` 雙向註冊觸發端點。
+3.  **PR #666 規則超限自癒與測試斷層修復 (Rule 1 & Rule 13)**:
+    *   **`type_guardian.md` 規則壓縮自癒**: 識別遠端合入之 PR #666 引入幻覺日期前綴（`## 2026-04-16`）及規則數超限（6 條），外科手術式將學習要點融合至 Rule 1 與 Rule 5，降回 5 條核心規則。
+    *   **`patrol_infra.py` SSOT 回退防禦**: 鑑識 PR #666 強化 `SettingsService` 型別防禦後，使得 `HUGGINGFACE_ENDPOINT` 在 DB 空值時回傳 `None` 觸發測試斷層；於 `NetworkConfig` 擴充 `huggingface_endpoint`（支援 `load_from_env`），在 `patrol_infra.py` 加入 SSOT 回退並提前導入 `SettingsService` 消除 BaseRepository 測試 Mock 碰撞。
+4.  **全門禁公證通過**:
+    *   通過 `make lint-fe`、`make lint-be`（395 檔 0 錯誤）、`make test-be-fast`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁（Step 11 驗證通過）。
 
 ### 2026-11-02：遠端分支三向衝突鑑識、四大角色週期作業 7 大斷層根除與 Token 預算閾值校準
 針對遠端待審分支執行三向衝突鑑識與廢棄分支清理，並以實體探針直連雲端 Supabase 對 Alice、Bob、Charlie、David 四大角色之週期排程與工單產出物進行端到端穿透稽核，一舉根除 7 大潛伏斷層與虛假完成狀態，同時完成週預算閾值之真實數據校準。
