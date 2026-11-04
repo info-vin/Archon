@@ -114,13 +114,53 @@ def cloud_audit():
         
         runtime = data.get("runtime", {})
         stage = runtime.get("stage", "UNKNOWN")
-        print(f"✅ Space {username}/{space_name} is currently: {stage}")
+        error_msg = runtime.get("errorMessage")
         
-        if stage != "RUNNING":
-            print(f"⚠️  Space is not RUNNING! Current status: {stage}")
+        if stage == "RUNNING":
+            print(f"✅ Space {username}/{space_name} is currently: RUNNING")
+        elif stage in ["SLEEPING", "PAUSED"]:
+            print(f"ℹ️  Space {username}/{space_name} is currently: {stage} (Scheduled sleep/pause)")
+        else:
+            print(f"❌ Space {username}/{space_name} is in failure state: {stage}!")
+            if error_msg:
+                print(f"   Error details: {error_msg.strip()[:300]}")
             
     except Exception as e:
         print(f"❌ Cloud audit failed: {e}")
+
+def docker_deploy_sync_audit():
+    import re
+    print_header("Step 5.5: Dockerfile & Deploy Script Sync Audit")
+    dockerfile_path = "Dockerfile.server"
+    deploy_script_path = "scripts/deploy_to_hf.sh"
+    
+    if not os.path.exists(dockerfile_path) or not os.path.exists(deploy_script_path):
+        return
+        
+    with open(dockerfile_path, "r", encoding="utf-8") as f:
+        df_content = f.read()
+    with open(deploy_script_path, "r", encoding="utf-8") as f:
+        deploy_content = f.read()
+        
+    copy_lines = re.findall(r"^COPY\s+(?:--[^\s]+\s+)?([^\s]+)", df_content, re.MULTILINE)
+    
+    issues = []
+    for src in copy_lines:
+        if src.startswith("--from"):
+            continue
+        top_level = src.split("/")[0] if "/" in src else src
+        if f"-- {top_level}" not in deploy_content and f"-- .{top_level}" not in deploy_content:
+            issues.append(f"Source '{src}' (top-level '{top_level}') copied in {dockerfile_path} is NOT checked out in {deploy_script_path}")
+        if top_level not in deploy_content:
+            issues.append(f"Top-level '{top_level}' is NOT staged (git add) in {deploy_script_path}")
+            
+    if issues:
+        print(f"❌ FOUND {len(issues)} DEPLOYMENT SYNC VIOLATIONS!")
+        for issue in issues:
+            print(f"   - {issue}")
+        sys.exit(1)
+    else:
+        print(f"✅ Dockerfile.server and deploy_to_hf.sh are 100% in sync.")
 
 def architecture_health_audit():
     print_header("Step 6: Four Major Backend Architectures Health Check")
@@ -360,6 +400,7 @@ if __name__ == "__main__":
     git_sync_check()
     monolith_check()
     cloud_audit()
+    docker_deploy_sync_audit()
     architecture_health_audit()
     schema_sync_audit()
     ssot_hardcoding_audit()
