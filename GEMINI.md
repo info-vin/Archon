@@ -44,7 +44,7 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-03 因應 Google Jules 官方服務終止，完成 Jules 規則庫全量平移至 `.agents/rules/`，將排程作業由 `jules_compaction` 正規化重構為通用 `agent_rules_compaction`（保留舊別名與向後相容墊片），同步更新 `docker-compose.yml`、`Dockerfile.server`、`deploy_to_hf.sh`、`SchedulerConfig`、`admin_api` 與 `internal_api`；修復遠端 PR #666 引入之 `type_guardian.md` 規則超額與幻覺日期前綴；修復 `patrol_infra.py` 之 `NetworkConfig.huggingface_endpoint` SSOT 回退機制，全數通過 `make lint`（前後端雙專案 0 錯誤、395 檔 MyPy 通過）、`make test-be-fast`（839 passed）與 `make phase-audit` 11 大門禁（Step 11 驗證通過）。
+*   **當前狀態 (Current Context)**: 2026-11-04 鑑識並修復 Telegram 失聯事故：物理查明 11/02 提交 `402ff3f9` 新增 `COPY GEMINI.md` 但部署腳本漏打包，致 Hugging Face 構建失敗停擺 3 天；在 `scripts/deploy_to_hf.sh` 補齊 `GEMINI.md` 與 `.agents/rules`；於 `scripts/phase_audit.py` 新增 Step 5.5 `docker_deploy_sync_audit` 門禁（自動比對 Dockerfile.server COPY 與 deploy_to_hf.sh，防範改 A 壞 B）並硬化 Step 5 雲端故障紅燈阻斷；釐清發佈管線（透過 `make merge-twins` 觸發 GitHub Actions 使用 `secrets.HF_TOKEN` 自動發佈）；全線通過 `make merge-twins` 部署，Space 構建成功恢復 `RUNNING`（`/health` 回傳 200 Healthy），全門禁（395 檔 MyPy 0 錯誤、839 passed、phase-audit 11 大門禁）100% 通過。
 *   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並嚴格把關通用 Agent 規則與排程品質。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
@@ -122,6 +122,25 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-11-04：Telegram 失聯深度鑑識、HF 部署同步門禁硬化 (Step 5.5) 與 CI/CD 自動發佈復原
+深度鑑識 11/04 Telegram 失聯事故，穿透實體日誌揭露 Hugging Face 因 `Dockerfile.server` 與 `deploy_to_hf.sh` 缺少 `GEMINI.md` 構建死鎖 3 天；實作 `scripts/phase_audit.py` Step 5.5 部署同步自動校驗門禁，釐清 GitHub Actions CI/CD 發佈鏈路，全線恢復雲端健康運作。
+
+**核心主題歸類**:
+1.  **Telegram 失聯穿透鑑識與根因破案 (Evidence First & Log Truth)**:
+    *   **排程中斷真相**: 實體探針查詢 Supabase，`archon_tasks` 最後執行停在 `2026-11-01T08:18:05Z`，`archon_logs` 停在 `2026-11-02T03:55:05Z`，排程器已停擺整整 3 天。
+    *   **Telegram 通路驗證**: 直接調用 `TelegramService` 直連發送測試訊息，回傳 `Result: True` 且使用者實體驗收，證明 Token、Vercel Proxy 與 Chat ID 完全正常無損。
+    *   **HF 構建死鎖破案**: 鑑識 11/02 提交 `402ff3f9` 新增 `COPY GEMINI.md /app/GEMINI.md`，然而 `deploy_to_hf.sh` 漏掉了 `GEMINI.md` 的 checkout 與 `git add`，導致 HF 於 `2026-11-02T07:53:02Z` 構建失敗（`ERROR: "/GEMINI.md": not found`），Space 陷入 `BUILD_ERROR` 503 停機。
+2.  **架構級雙向同步門禁硬化 (Step 5.5 & Pre-flight)**:
+    *   **Step 5.5 自動化同步稽核**: 於 `scripts/phase_audit.py` 新增 `docker_deploy_sync_audit`，以正則動態解析 `Dockerfile.server` 所有 `COPY` 指令，強制比對 `scripts/deploy_to_hf.sh` 之 checkout 與 `git add` 清單；一旦有漏帶直接 `❌ VIOLATION` 並 Exit 1 阻斷。
+    *   **Step 5 雲端故障紅燈阻斷**: 修正過去 `phase_audit.py` 遇 `BUILD_ERROR` 仍印出綠勾 `✅` 之假性通過漏洞，強制對非 RUNNING 狀態亮紅燈 `❌` 並穿透打印容器錯誤日誌。
+    *   **部署 Pre-flight 物理斷言**: 於 `scripts/deploy_to_hf.sh` 構建提交前加入檔案存在迴圈校驗，未齊全前嚴禁推送。
+3.  **CI/CD 發佈管線對帳與全鏈路復原**:
+    *   **發佈權限對帳**: 鑑識本機環境與 Keychain 之 `HF_TOKEN` 僅為唯讀角色（`HF_RAG_API`, `role: read`），而具備 Write 權限之 `deploy-key` 實體存放於 GitHub Actions `secrets.HF_TOKEN`。
+    *   **正規管線自動發佈**: 執行 `make merge-twins` 將修復合入 `dev/twins`，觸發 `.github/workflows/deploy-hf.yml`，成功上傳包含 `GEMINI.md` 與 `.agents/rules` 之完整上下文至 Hugging Face。
+    *   **容器啟動公證**: HF Space 重新構建耗時約 3 分鐘成功轉為 `RUNNING`，實體穿透 `/health` 端點回傳 `200 Healthy`。
+4.  **全門禁公證通過**:
+    *   通過 `make lint-be`（395 檔 MyPy 100% 綠燈，0 錯誤）、`make test-be-fast`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁（Step 5.5 同步通過）。
 
 ### 2026-11-03：Jules 規則平移至 .agents/rules、agent_rules_compaction 重構與全門禁公證
 因應 Google 官方宣布關閉 Jules 獨立服務，全量平移 `.jules/` 規則指南至通用 `.agents/rules/`，重構排程為 `agent_rules_compaction`，自癒 PR #666 遺留之規則超額與幻覺日期，並修復 `patrol_infra.py` 之 `NetworkConfig.huggingface_endpoint` SSOT 回退機制。
