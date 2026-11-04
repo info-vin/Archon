@@ -68,16 +68,16 @@ async def test_scheduler_jobs_configuration():
     assert str(token_hour_field) == str(config.dynamic_token_analysis_hour)
     assert str(token_minute_field) == str(config.dynamic_token_analysis_minute)
 
-    # Verify monthly_jules_compaction monthly cron schedule (day=1, hour=9, minute=30)
-    jules_trigger = job_triggers.get("monthly_jules_compaction_recurring")
-    assert isinstance(jules_trigger, CronTrigger)
-    assert str(jules_trigger.timezone) == "Asia/Taipei"
-    jules_day_field = next(f for f in jules_trigger.fields if f.name == "day")
-    jules_hour_field = next(f for f in jules_trigger.fields if f.name == "hour")
-    jules_minute_field = next(f for f in jules_trigger.fields if f.name == "minute")
-    assert str(jules_day_field) == str(config.monthly_jules_compaction_day)
-    assert str(jules_hour_field) == str(config.monthly_jules_compaction_hour)
-    assert str(jules_minute_field) == str(config.monthly_jules_compaction_minute)
+    # Verify monthly_agent_rules_compaction monthly cron schedule (day=1, hour=9, minute=30)
+    agent_rules_trigger = job_triggers.get("monthly_agent_rules_compaction_recurring")
+    assert isinstance(agent_rules_trigger, CronTrigger)
+    assert str(agent_rules_trigger.timezone) == "Asia/Taipei"
+    rules_day_field = next(f for f in agent_rules_trigger.fields if f.name == "day")
+    rules_hour_field = next(f for f in agent_rules_trigger.fields if f.name == "hour")
+    rules_minute_field = next(f for f in agent_rules_trigger.fields if f.name == "minute")
+    assert str(rules_day_field) == str(config.monthly_agent_rules_compaction_day)
+    assert str(rules_hour_field) == str(config.monthly_agent_rules_compaction_hour)
+    assert str(rules_minute_field) == str(config.monthly_agent_rules_compaction_minute)
 
 @pytest.mark.asyncio
 async def test_should_run_daily_dynamic_reasons():
@@ -126,21 +126,21 @@ async def test_should_run_daily_dynamic_reasons():
 
 
 @pytest.mark.asyncio
-async def test_run_monthly_jules_compaction_physical(tmp_path, mock_supabase_db):
+async def test_run_monthly_agent_rules_compaction_physical(tmp_path, mock_supabase_db):
     """
-    Physical disk and stateful DB test for run_monthly_jules_compaction:
+    Physical disk and stateful DB test for run_monthly_agent_rules_compaction:
     Verifies hallucinated dates are stripped, duplicate blocks are deduplicated,
     entries are capped at 5 core rules per file, and a real row is inserted into archon_logs
     without mocking LogService.create_log_entry.
     """
     from src.server.services.log_service import LogService
-    from src.server.services.scheduler.jobs import jules_compaction
-    from src.server.services.scheduler.jobs.jules_compaction import (
-        run_monthly_jules_compaction,
+    from src.server.services.scheduler.jobs import agent_rules_compaction, jules_compaction
+    from src.server.services.scheduler.jobs.agent_rules_compaction import (
+        run_monthly_agent_rules_compaction,
     )
 
     # Bind log_service to the stateful in-memory database (no method mocking!)
-    jules_compaction.log_service = LogService(supabase_client=mock_supabase_db)
+    agent_rules_compaction.log_service = LogService(supabase_client=mock_supabase_db)
 
     sample_md = tmp_path / "type_guardian.md"
     sample_md.write_text(
@@ -164,7 +164,7 @@ async def test_run_monthly_jules_compaction_physical(tmp_path, mock_supabase_db)
         encoding="utf-8",
     )
 
-    stats = await run_monthly_jules_compaction(jules_dir=tmp_path)
+    stats = await run_monthly_agent_rules_compaction(rules_dir=tmp_path)
     assert stats["files_scanned"] == 1
     assert stats["files_modified"] == 1
     assert stats["entries_before"] == 8
@@ -176,7 +176,7 @@ async def test_run_monthly_jules_compaction_physical(tmp_path, mock_supabase_db)
     log_row = logs_rows[0]
     assert log_row["source"] == "clockwork-scheduler"
     assert log_row["level"] == "INFO"
-    assert log_row["details"]["user_input"] == "monthly_jules_compaction"
+    assert log_row["details"]["user_input"] == "monthly_agent_rules_compaction"
     assert "entries 8 -> 5" in log_row["message"]
 
     compacted = sample_md.read_text(encoding="utf-8")
@@ -190,8 +190,8 @@ async def test_run_monthly_jules_compaction_physical(tmp_path, mock_supabase_db)
     assert "## 5. Rule Zeta" in compacted
     assert "Rule Eta" not in compacted
 
-    # Running a second time on already-compacted files should be idempotent (0 modified)
-    stats_second = await run_monthly_jules_compaction(jules_dir=tmp_path)
+    # Running a second time via legacy alias should also work idempotently (0 modified)
+    stats_second = await jules_compaction.run_monthly_jules_compaction(jules_dir=tmp_path)
     assert stats_second["files_modified"] == 0
     assert len(mock_supabase_db.table("archon_logs").select("*").execute().data) == 2
 

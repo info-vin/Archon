@@ -114,13 +114,53 @@ def cloud_audit():
         
         runtime = data.get("runtime", {})
         stage = runtime.get("stage", "UNKNOWN")
-        print(f"✅ Space {username}/{space_name} is currently: {stage}")
+        error_msg = runtime.get("errorMessage")
         
-        if stage != "RUNNING":
-            print(f"⚠️  Space is not RUNNING! Current status: {stage}")
+        if stage == "RUNNING":
+            print(f"✅ Space {username}/{space_name} is currently: RUNNING")
+        elif stage in ["SLEEPING", "PAUSED"]:
+            print(f"ℹ️  Space {username}/{space_name} is currently: {stage} (Scheduled sleep/pause)")
+        else:
+            print(f"❌ Space {username}/{space_name} is in failure state: {stage}!")
+            if error_msg:
+                print(f"   Error details: {error_msg.strip()[:300]}")
             
     except Exception as e:
         print(f"❌ Cloud audit failed: {e}")
+
+def docker_deploy_sync_audit():
+    import re
+    print_header("Step 5.5: Dockerfile & Deploy Script Sync Audit")
+    dockerfile_path = "Dockerfile.server"
+    deploy_script_path = "scripts/deploy_to_hf.sh"
+    
+    if not os.path.exists(dockerfile_path) or not os.path.exists(deploy_script_path):
+        return
+        
+    with open(dockerfile_path, "r", encoding="utf-8") as f:
+        df_content = f.read()
+    with open(deploy_script_path, "r", encoding="utf-8") as f:
+        deploy_content = f.read()
+        
+    copy_lines = re.findall(r"^COPY\s+(?:--[^\s]+\s+)?([^\s]+)", df_content, re.MULTILINE)
+    
+    issues = []
+    for src in copy_lines:
+        if src.startswith("--from"):
+            continue
+        top_level = src.split("/")[0] if "/" in src else src
+        if f"-- {top_level}" not in deploy_content and f"-- .{top_level}" not in deploy_content:
+            issues.append(f"Source '{src}' (top-level '{top_level}') copied in {dockerfile_path} is NOT checked out in {deploy_script_path}")
+        if top_level not in deploy_content:
+            issues.append(f"Top-level '{top_level}' is NOT staged (git add) in {deploy_script_path}")
+            
+    if issues:
+        print(f"❌ FOUND {len(issues)} DEPLOYMENT SYNC VIOLATIONS!")
+        for issue in issues:
+            print(f"   - {issue}")
+        sys.exit(1)
+    else:
+        print(f"✅ Dockerfile.server and deploy_to_hf.sh are 100% in sync.")
 
 def architecture_health_audit():
     print_header("Step 6: Four Major Backend Architectures Health Check")
@@ -315,23 +355,23 @@ def repository_bypass_audit():
     else:
         print("✅ Repository architecture audit passed. No .execute() bypasses found.")
 
-def jules_guidelines_audit():
+def agent_rules_audit():
     import re
-    print_header("Step 11: Jules Guidelines (.jules/*.md) Compaction Audit")
+    print_header("Step 11: Agent Rules (.agents/rules/*.md) Compaction Audit")
 
-    jules_dir = ".jules"
-    if not os.path.exists(jules_dir):
-        print("✅ .jules directory not found, skipping.")
+    rules_dir = ".agents/rules" if os.path.exists(".agents/rules") else ".jules"
+    if not os.path.exists(rules_dir):
+        print("✅ Rules directory (.agents/rules or .jules) not found, skipping.")
         return
 
     date_pattern = re.compile(r"^##\s+\d{4}-\d{2}-\d{2}")
     max_entries = 5
     issues = []
 
-    for entry in sorted(os.listdir(jules_dir)):
+    for entry in sorted(os.listdir(rules_dir)):
         if not entry.endswith(".md"):
             continue
-        file_path = os.path.join(jules_dir, entry)
+        file_path = os.path.join(rules_dir, entry)
         if not os.path.isfile(file_path):
             continue
 
@@ -346,23 +386,26 @@ def jules_guidelines_audit():
             issues.append(f"{file_path} | Exceeds max {max_entries} rules per file (found {section_count})")
 
     if issues:
-        print(f"❌ FOUND {len(issues)} JULES GUIDELINE COMPACTION VIOLATIONS!")
+        print(f"❌ FOUND {len(issues)} AGENT RULE COMPACTION VIOLATIONS!")
         for issue in issues:
             print(f"   - {issue}")
         sys.exit(1)
     else:
-        print(f"✅ Jules guidelines audit passed (<= {max_entries} core rules per file, 0 date hallucinations).")
+        print(f"✅ Agent rules audit passed (<= {max_entries} core rules per file, 0 date hallucinations).")
+
+jules_guidelines_audit = agent_rules_audit
 
 if __name__ == "__main__":
     scan_prps()
     git_sync_check()
     monolith_check()
     cloud_audit()
+    docker_deploy_sync_audit()
     architecture_health_audit()
     schema_sync_audit()
     ssot_hardcoding_audit()
     os_getenv_audit()
     repository_bypass_audit()
-    jules_guidelines_audit()
+    agent_rules_audit()
     print_header("Audit Complete")
 

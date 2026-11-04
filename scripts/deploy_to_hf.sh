@@ -52,7 +52,8 @@ git checkout "$SOURCE_BRANCH" -- scripts/
 git checkout "$SOURCE_BRANCH" -- Makefile
 git checkout "$SOURCE_BRANCH" -- Dockerfile.server
 git checkout "$SOURCE_BRANCH" -- AGENTS.md
-git checkout "$SOURCE_BRANCH" -- .jules/
+git checkout "$SOURCE_BRANCH" -- GEMINI.md
+git checkout "$SOURCE_BRANCH" -- .agents/rules/
 
 echo "3.5 Removing binary artifacts to comply with HF limits..."
 git rm -rf --cached python/.twin/ 2>/dev/null || true
@@ -82,8 +83,17 @@ pinned: false
 # Myrmidon Backend
 EOF
 
+echo "5.5 Pre-flight verifying build context for Dockerfile..."
+for required_path in python migration scripts Makefile Dockerfile AGENTS.md GEMINI.md .agents/rules; do
+  if [ ! -e "$required_path" ]; then
+    echo "❌ Pre-flight Error: Required build context '$required_path' is missing from deployment branch!"
+    exit 1
+  fi
+done
+echo "✅ Pre-flight verification passed."
+
 echo "6. Adding files to index and committing..."
-git add python/ migration/ scripts/ Makefile Dockerfile README.md AGENTS.md
+git add python/ migration/ scripts/ Makefile Dockerfile README.md AGENTS.md GEMINI.md .agents/rules/
 git commit -m "chore(deploy): build monolithic server for Hugging Face"
 
 echo "7. Pushing to Hugging Face Spaces (main branch)..."

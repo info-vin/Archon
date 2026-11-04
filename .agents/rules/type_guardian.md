@@ -1,10 +1,10 @@
 # TypeGuardian Guidelines (Consolidated)
 
 ## 1. Ban Cosmetic `cast()` Lying — Match True Runtime Shapes (IRON LAW)
-**Learning:** `TypedDict` performs zero runtime validation. Defining a strict `TypedDict` (e.g., `api_key: str` or invented keys in `PitchResultDict`) when the function can actually return `None` or different keys at runtime, or wrapping an unverified `execute_query` dict with `cast(SomeDTO, result)`, creates false type safety that hides real runtime bugs from MyPy.
+**Learning:** `TypedDict` performs zero runtime validation. Defining a strict `TypedDict` (e.g., `api_key: str` or invented keys in `PitchResultDict`) when the function can actually return `None` or different keys at runtime, or wrapping an unverified `execute_query` dict with `cast(SomeDTO, result)`, creates false type safety that hides real runtime bugs from MyPy. Furthermore, in Supabase `archon_settings`, columns like `value` can be physically nullable `text`; using `cast(list[dict[str, str]], ...)` lies to MyPy and causes `str(val)` to turn SQL `NULL` into the string `"None"` instead of returning default fallbacks.
 **Action:**
 - Never use `cast(DTO, ...)` to paper over a mismatch between what `BaseRepository.execute_query()` or a handler actually returns and what callers expect.
-- If a variable can be `None`, `dict`, or `str` at runtime, the `TypedDict` field MUST reflect the true union (`str | None`) and runtime type-narrowing (`isinstance(...)`) MUST be used instead of `cast()`.
+- If a variable or DB column can be `None`, `dict`, or `str` at runtime, the DTO field MUST reflect the true union (`str | None`), guard with `isinstance(...)` before indexing, and explicitly check `if val is None` before string conversion.
 
 ## 2. Substance Over Pure Annotation Churn & Zero JSONB Ossification
 **Learning:** PRs that only add `TypedDict` definitions and `cast()` calls without improving runtime safety create structural rigidity without business value, and forcing dynamic JSONB dicts (`docs`, `metadata`, `content`) into rigid DTOs breaks flexibility.
@@ -21,3 +21,5 @@
 ## 5. Async Database Execution, Schema Integrity & Safe Array Access
 **Learning:** In service classes inheriting from `BaseRepository`, invoking synchronous `self.execute_query(...)` inside `async def` methods blocks the event loop. Furthermore, blind `res["data"][0]` access or processing database query array responses without element-level `isinstance(x, dict)` checks causes runtime `TypeError` or `IndexError` (e.g. querying `profiles` in `AuthService`). Additionally, audit table inserts (e.g. `archon_document_versions`) require non-null schema fields like `content jsonb`.
 **Action:** Always use `await self.execute_query_async(...)` inside `async def` service methods, inspect `isinstance(res.get("data"), list)` and non-emptiness before indexing, filter raw DB records with `[cast(DTO, item) for item in raw_data if isinstance(item, dict)]`, and satisfy all non-null DB schema constraints in audit payloads.
+
+

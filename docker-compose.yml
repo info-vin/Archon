@@ -66,7 +66,7 @@ services:
       - ./AGENTS.md:/app/AGENTS.md # Mount AI developer guidelines
       - ./GEMINI.md:/app/GEMINI.md # Mount Chef's Journal for Engineering Retrospective
       - ./.git:/app/.git # Mount Git metadata for CodeModifier
-      - ./.jules:/app/.jules # Mount Jules agent guidelines
+      - ./.agents/rules:/app/.agents/rules # Mount agent rules
       - ./.twin:/app/.twin # Mount twin diagnostics directory
     extra_hosts:
       - "host.docker.internal:host-gateway"

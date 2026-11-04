@@ -85,6 +85,7 @@ async def trigger_scheduler_job(
         "daily_executive_summary": scheduler_service._run_daily_executive_summary,
         "tech_debt_audit": scheduler_service._run_tech_debt_audit,
         "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
+        "monthly_agent_rules_compaction": scheduler_service._run_monthly_agent_rules_compaction,
         "monthly_jules_compaction": scheduler_service._run_monthly_jules_compaction,
     }
 

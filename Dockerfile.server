@@ -73,7 +73,7 @@ COPY python/tests/ tests/
 COPY migration/ migration/
 COPY AGENTS.md /app/AGENTS.md
 COPY GEMINI.md /app/GEMINI.md
-COPY .jules/ /app/.jules/
+COPY .agents/rules/ /app/.agents/rules/
 COPY scripts/backend_type_health.py scripts/
 
 # Set environment variables

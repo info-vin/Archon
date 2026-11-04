@@ -5,6 +5,7 @@ Handles monitoring of Vercel, Supabase, and Hugging Face infrastructure.
 
 from src.server.config.logfire_config import get_logger
 from src.server.schemas.settings import NetworkConfig, PruningConfig
+from src.server.services.settings_service import SettingsService
 
 logger = get_logger(__name__)
 
@@ -48,8 +49,7 @@ async def run_infrastructure_audit() -> None:
         errors.append(f"Supabase: pg_stat_activity check failed ({e})")
 
     # 3. HF Endpoint
-    from src.server.services.settings_service import SettingsService
-    hf_endpoint = SettingsService(supabase).get_setting("HUGGINGFACE_ENDPOINT")
+    hf_endpoint = SettingsService(supabase).get_setting("HUGGINGFACE_ENDPOINT") or NetworkConfig().huggingface_endpoint
     if hf_endpoint:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -64,7 +64,6 @@ async def run_infrastructure_audit() -> None:
     try:
         from datetime import UTC, datetime, timedelta
 
-        from src.server.services.settings_service import SettingsService
         settings = SettingsService(supabase)
 
         db_size_res = repo.execute_query(

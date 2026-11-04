@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict, cast
+from typing import NotRequired, TypedDict
 
 from supabase import Client
 
@@ -17,19 +17,26 @@ class DatabaseStatisticsDict(TypedDict):
 
 class SettingPayloadDTO(TypedDict):
     key: str
-    value: str
-    category: NotRequired[str]
-    description: NotRequired[str]
+    value: NotRequired[str | None]
+    encrypted_value: NotRequired[str | None]
     is_encrypted: NotRequired[bool]
+    category: NotRequired[str | None]
+    description: NotRequired[str | None]
+    is_system_protected: NotRequired[bool]
     updated_at: NotRequired[str]
 
 
 class SettingDTO(TypedDict):
     id: NotRequired[str]
     key: str
-    value: str
+    value: NotRequired[str | None]
+    encrypted_value: NotRequired[str | None]
+    is_encrypted: NotRequired[bool]
+    category: NotRequired[str | None]
+    description: NotRequired[str | None]
     created_at: NotRequired[str]
     updated_at: NotRequired[str]
+    is_system_protected: NotRequired[bool]
 
 
 class NotebookLMUsageDTO(TypedDict):
@@ -109,10 +116,10 @@ class SettingsService(BaseRepository):
         )
         if success:
             data = result.get("data", [])
-            setting_data = data[0] if isinstance(data, list) and data else (data if data else {})
-            result["data"] = setting_data
-        if success and result.get("data"):
-            return str(result["data"].get("value", default))
+            setting_data = data[0] if isinstance(data, list) and data and isinstance(data[0], dict) else (data if isinstance(data, dict) else {})
+            raw_val = setting_data.get("value")
+            if raw_val is not None:
+                return str(raw_val)
         return default
 
     def get_all_settings(self) -> dict[str, str]:
@@ -122,8 +129,16 @@ class SettingsService(BaseRepository):
         success, result = self.execute_query(
             query_func=query, error_context="Error fetching all settings", require_data=False
         )
-        if success and result.get("data"):
-            return {item["key"]: item["value"] for item in cast(list[dict[str, str]], result["data"])}
+        raw_items = result.get("data") if success and isinstance(result, dict) else None
+        if isinstance(raw_items, list):
+            settings_dict: dict[str, str] = {}
+            for item in raw_items:
+                if isinstance(item, dict):
+                    k = item.get("key")
+                    v = item.get("value")
+                    if isinstance(k, str) and v is not None:
+                        settings_dict[k] = str(v)
+            return settings_dict
         return {}
 
     def set_setting(self, key: str, value: str) -> bool:
