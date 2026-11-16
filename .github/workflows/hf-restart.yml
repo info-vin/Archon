@@ -2,8 +2,8 @@ name: Hugging Face Space Scheduler (Restart)
 
 on:
   schedule:
-    # 每天台灣時間 07:20 啟動 (UTC 23:20)
-    - cron: '20 23 * * *'
+    # 每天台灣時間 07:21 啟動 (UTC 23:21)
+    - cron: '21 23 * * *'
   workflow_dispatch:
 
 jobs:

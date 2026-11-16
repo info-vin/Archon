@@ -4,8 +4,8 @@ on:
   push:
     branches: [ feat/twins ]
   schedule:
-    # 每個整點執行一次 (台灣時間 +8 也是整點)
-    - cron: '0 * * * *'
+    # 每小時第 17 分執行一次 (UTC 與台灣時間皆為 xx:17，避開整點負載)
+    - cron: '17 * * * *'
   workflow_dispatch: # 允許手動觸發
 
 jobs:
