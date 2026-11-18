@@ -68,21 +68,13 @@ def validate_supabase_key(supabase_key: str) -> tuple[bool, str]:
 
     Returns:
         tuple[bool, str]: (is_valid, message)
-        - (False, "ANON_KEY_DETECTED") if a legacy anon JWT is detected
-        - (False, "PUBLISHABLE_KEY_DETECTED") if a publishable key is detected
-        - (True, "VALID_SERVICE_KEY") if a secret key or legacy service_role JWT is detected
-        - (False, "UNKNOWN_KEY_TYPE:{role}") for unknown JWT roles
-        - (True, "UNABLE_TO_VALIDATE") if the value is neither a known key prefix nor a JWT
+        - (False, "ANON_KEY_DETECTED") if anon key detected
+        - (True, "VALID_SERVICE_KEY") if service key detected
+        - (False, "UNKNOWN_KEY_TYPE:{role}") for unknown roles
+        - (True, "UNABLE_TO_VALIDATE") if JWT cannot be decoded
     """
     if not supabase_key:
         return False, "EMPTY_KEY"
-
-    # Opaque Supabase keys are not JWTs. Check them before decoding so a
-    # publishable key is rejected instead of being treated as undecodable.
-    if supabase_key.startswith("sb_secret_"):
-        return True, "VALID_SERVICE_KEY"
-    if supabase_key.startswith("sb_publishable_"):
-        return False, "PUBLISHABLE_KEY_DETECTED"
 
     try:
         # Decode JWT without verification to check the 'role' claim
@@ -195,21 +187,12 @@ def load_environment_config() -> EnvironmentConfig:
                 "To fix this:\n"
                 "1. Go to your Supabase project dashboard\n"
                 "2. Navigate to Settings > API keys\n"
-                "3. Find the secret key (NOT the anon or publishable key)\n"
+                "3. Find the 'service_role' key (NOT the 'anon' key)\n"
                 "4. Update your SUPABASE_SERVICE_KEY environment variable\n\n"
                 "Key characteristics:\n"
-                "- ANON key: Legacy JWT with role='anon' (public, read-only)\n"
-                "- PUBLISHABLE key: Starts with 'sb_publishable_' (public client key)\n"
-                "- SERVICE key: Legacy JWT with role='service_role', or a secret key starting with 'sb_secret_'\n\n"
+                "- ANON key: Starts with 'eyJ...' and has role='anon' (public, read-only)\n"
+                "- SERVICE key: Starts with 'eyJ...' and has role='service_role' (private, full access)\n\n"
                 "Current key role detected: anon"
-            )
-        elif key_message == "PUBLISHABLE_KEY_DETECTED":
-            raise ConfigurationError(
-                "CRITICAL: You are using a Supabase publishable key instead of a secret key.\n\n"
-                "Publishable keys are public client keys and cannot replace the backend service key.\n"
-                "This will cause database writes to fail with permission errors.\n\n"
-                "Set SUPABASE_SERVICE_KEY to a secret key (sb_secret_...) or a legacy service_role JWT.\n"
-                "Do not use a publishable key (sb_publishable_...) or an anon JWT."
             )
         elif key_message.startswith("UNKNOWN_KEY_TYPE:"):
             role = key_message.split(":", 1)[1]

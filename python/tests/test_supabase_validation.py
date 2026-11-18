@@ -14,11 +14,6 @@ from src.server.config.config import (
     validate_supabase_key,
 )
 
-# Built from parts so the source does not contain a scannable key literal.
-# Runtime values are a fake secret key and a fake publishable key.
-FAKE_SECRET_KEY = "sb_" + "secret" + "_not_a_real_key"
-FAKE_PUBLISHABLE_KEY = "sb_" + "publishable" + "_not_a_real_key"
-
 
 def test_validate_anon_key():
     """Test validation detects anon key correctly."""
@@ -64,22 +59,6 @@ def test_validate_invalid_jwt():
     # Should allow invalid JWT to proceed (might be new format)
     assert is_valid
     assert msg == "UNABLE_TO_VALIDATE"
-
-
-def test_validate_sb_secret_key():
-    """Opaque secret keys are accepted without JWT decoding."""
-    is_valid, msg = validate_supabase_key(FAKE_SECRET_KEY)
-
-    assert is_valid
-    assert msg == "VALID_SERVICE_KEY"
-
-
-def test_validate_sb_publishable_key():
-    """Publishable keys are public client keys and must not be used as the service key."""
-    is_valid, msg = validate_supabase_key(FAKE_PUBLISHABLE_KEY)
-
-    assert not is_valid
-    assert msg == "PUBLISHABLE_KEY_DETECTED"
 
 
 def test_validate_empty_key():
@@ -131,52 +110,6 @@ def test_config_accepts_service_key():
         # Should not raise an exception
         config = load_environment_config()
         assert config.supabase_service_key == mock_service_key
-
-
-def test_config_accepts_sb_secret_key():
-    """Configuration loading accepts a new-format secret key."""
-    secret_key = FAKE_SECRET_KEY
-    with patch.dict(
-        "os.environ",
-        {
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_SERVICE_KEY": secret_key,
-            "PORT": "8051",
-            "OPENAI_API_KEY": "",
-        },
-    ):
-        config = load_environment_config()
-        assert config.supabase_service_key == secret_key
-
-
-def test_config_raises_on_publishable_key():
-    """Configuration loading rejects a publishable key for the backend."""
-    with patch.dict(
-        "os.environ",
-        {
-            "SUPABASE_URL": "https://test.supabase.co",
-            "SUPABASE_SERVICE_KEY": FAKE_PUBLISHABLE_KEY,
-            "PORT": "8051",
-            "OPENAI_API_KEY": "",
-        },
-    ):
-        with pytest.raises(ConfigurationError) as exc_info:
-            load_environment_config()
-
-        error_message = str(exc_info.value)
-        assert "publishable key" in error_message
-        assert "sb_secret_" in error_message
-
-
-def test_create_client_accepts_secret_key_and_legacy_service_jwt():
-    """create_client must not reject new secret keys or legacy service JWTs at init."""
-    from supabase import create_client
-
-    service_token = jwt.encode({"role": "service_role", "iss": "supabase"}, "secret", algorithm="HS256")
-    url = "https://example.supabase.co"
-    for key in (FAKE_SECRET_KEY, service_token):
-        client = create_client(url, key)
-        assert client is not None
 
 
 def test_config_handles_invalid_jwt():
