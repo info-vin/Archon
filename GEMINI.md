@@ -123,6 +123,29 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-11-18：service_role 外洩鑑識、JWT 輪替回滾、ICP 60:40 配額與第二層 LLM 分類
+記錄 2026-11-18 的決策：前端 `service_role` 外洩的根因與尚未合併的修復、Supabase Migrate JWT secret 後 Hugging Face 換用 `sb_secret` 啟動失敗並回滾、人工標記與後續 PR 的閘門、ICP 排除規則與 A:B 配額、資料來源取捨，以及第二層評分改走 LLM 結構化分類。
+
+**核心主題歸類**:
+1.  **安全：前端 service_role 外洩與 JWT 輪替回滾**:
+    *   **外洩事件**: `service_role` 金鑰曾出現在 `archon-enduser.vercel.app` 的前端 JS。修正在 PR #668（https://github.com/info-vin/Archon/pull/668），尚未合併。**原因**: `docker-compose.yml:256` 的 fallback 把 `service_role` 當成 `VITE_SUPABASE_ANON_KEY` 注入，瀏覽器可下載的前端 JS 因此帶出 `service_role`。**歷史**: 外洩已經出現在該 Vercel 站點的前端 JS；修復集中在尚未合併的 PR #668。
+    *   **JWT 輪替與回滾**: 11/18 Supabase 已執行 Migrate JWT secret，建立新的 publishable / secret key。HF Space 改用 `sb_secret` 後啟動失敗，已回滾成舊金鑰，Space 恢復運作。**原因**: 舊版 `supabase-py` 的 `create_client` 回報 `Invalid API key`（`client_manager.py:62`），現行程式尚不接受新的 `sb_secret`，所以先回滾讓 Space 恢復。**歷史**: 當日先完成 JWT secret 遷移並換上新鑰，HF 啟動失敗後回到舊金鑰。後續順序固定為：#668 一併升級 `supabase` 套件 → Vincent 核准合併 → HF 換新金鑰 → Vercel 設定 publishable key 並重新部署 → 停用舊金鑰。
+2.  **流程與紀錄：人工標記過渡、報告路由與後續 PR 閘門**:
+    *   **人工標記先用試算表**: 人工標記先用試算表過渡兩週，不在 leads 加 `discarded` 狀態。**原因**: 其一，已有 sentinel→dormant→delete 與 prune 的刪除路徑；其二，另有 13 條查詢沒有過濾 status，此刻加狀態會讓這些查詢的語意分叉。**歷史**: 刪除路徑已是 sentinel→dormant→delete 加上 prune，且已有 13 條查詢沒有過濾 status；2026-11-18 決定這兩週用試算表承接人工標記。
+    *   **每日 leads 報告路由**: 每日 leads 報告送到 Vincent 與幕僚長（Charlie）的聊天。**原因**: 每日 leads 要讓 Vincent 與幕僚長 Charlie 同時讀到，所以送到兩人的聊天。**歷史**: 收件人與管道在 2026-11-18 指定，Charlie 的角色是幕僚長。
+    *   **G1 / G3 / G4 合成一個 PR**: G1（被刷掉的職缺結構化寫入）、G3（排程的開始與例外寫 log）、G4（judge 回傳拒絕理由）在 #668 合併後合成一個 PR，合併前問 Vincent。**原因**: 三項都排在 #668 合併之後才動工，並合成單一 PR；該 PR 合併前先問 Vincent。**歷史**: G1、G3、G4 在 2026-11-18 被綁成同一後續工作，閘門是 PR #668 先合併，且 Vincent 先核准。
+3.  **市場與 ICP：排除邊界、配額、客單價與公司規模**:
+    *   **C 類排除與 A/C 邊界**: C 類排除同業、SI、派遣、獵頭。自動化設備商算 C；研究機構與醫院算 A。**原因**: C 類用來排除同業、SI、派遣與獵頭；自動化設備商歸 C，研究機構與醫院歸 A，邊界個案用同一口徑。**歷史**: 排除清單與這兩類邊界個案在 2026-11-18 一次定案，作為後續標記與評分的共同分類。
+    *   **A:B 配額**: A:B = 60:40。採配額制，不直接乘權重。**原因**: Vincent 定 60:40，比例用配額達成，不把 60 與 40 直接乘進評分權重。**歷史**: Bob 原建議 70:30，Alice 建議 65:35，Vincent 在 2026-11-18 定為 60:40。
+    *   **客單價與成交週期假設**: A 類 30–150 萬，B 類 10–50 萬。B 類先用轉介收費。成交週期 6 個月以上。**原因**: 客單價以區間作為規劃假設；B 類收費先走轉介；成交週期看 6 個月以上。**歷史**: A 類 30–150 萬、B 類 10–50 萬、B 類轉介收費，以及 6 個月以上成交週期，在 2026-11-18 一併定為假設。
+    *   **公司規模**: 公司規模 30–300 人，不設資本額上限。**原因**: 規模條件只看員工人數 30–300 人，資本額不另設上限。**歷史**: 人數區間與「不設資本額上限」在 2026-11-18 同時定案。
+4.  **資料來源：開放資料替代、保留 104，以及指紋與 proxy 的事實修正**:
+    *   **不申請商工登記 API 白名單**: 不申請商工登記 API 的 IP 白名單，改用免費的政府開放資料 API。**原因**: 申請 IP 白名單要發信給外部單位，太耗時。**歷史**: 原路徑是向商工登記 API 申請 IP 白名單；2026-11-18 改走免費的政府開放資料 API。
+    *   **保留 104 爬取**: 保留 104 爬取。已知風險：`robots.txt` 不允許 `/*keyword=*`；HF 的 IP 被擋，近 30 天只成功 3 次。**原因**: 資料來源策略繼續保留 104 爬取，並把這兩項已知風險一起入帳。**歷史**: 目標站 `robots.txt` 不允許 `/*keyword=*`；Hugging Face 的 IP 被擋，近 30 天只成功 3 次。2026-11-18 在這兩項風險已明的情況下仍決定保留。
+    *   **指紋偽裝與 proxy 的事實修正**: 程式有瀏覽器指紋偽裝（`curl_cffi` impersonate，每個 session 選一次），沒有輪替 proxy，只有 `archon_settings` 裡一個可選的 `CRAWLER_PROXY_URL`。**原因**: 更正爬蟲隱匿能力的描述，把「有瀏覽器指紋偽裝」與「沒有輪替 proxy」分開記。**歷史**: 指紋由 `curl_cffi` impersonate 在每個 session 選一次；proxy 只有 `archon_settings` 裡一個可選的 `CRAWLER_PROXY_URL`，沒有輪替。此修正記於 2026-11-18。
+5.  **評分：第二層改用 LLM 結構化分類**:
+    *   **第二層分類與驗證門檻**: 第二層改用 LLM 結構化分類 A/B/C/X（附信心與理由），先用 ≥30 筆人工標記驗證。ICP 維持單一來源。**原因**: 現行 HyDE 相似度方法的 AUC 為 0.51（pooled），區分力不足；LLM 分類在 46 筆樣本全對，因此第二層改走 LLM。該 46 筆沒有預測過 B 類，成本約為現行的 4 倍，所以先用 ≥30 筆人工標記驗證。**歷史**: 對照基線是 HyDE 相似度（AUC 0.51，pooled）與 ICP 相似度 0.83–0.91；LLM 在 46 筆樣本全對、未曾預測 B 類、成本約為現行 4 倍。2026-11-18 決定第二層改 LLM 結構化分類，ICP 維持單一來源。
+
 ### 2026-11-04：Telegram 失聯深度鑑識、HF 部署同步門禁硬化 (Step 5.5) 與 CI/CD 自動發佈復原
 深度鑑識 11/04 Telegram 失聯事故，穿透實體日誌揭露 Hugging Face 因 `Dockerfile.server` 與 `deploy_to_hf.sh` 缺少 `GEMINI.md` 構建死鎖 3 天；實作 `scripts/phase_audit.py` Step 5.5 部署同步自動校驗門禁，釐清 GitHub Actions CI/CD 發佈鏈路，全線恢復雲端健康運作。
 
