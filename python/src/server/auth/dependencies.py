@@ -29,15 +29,15 @@ async def get_token(
     """Extracts the Bearer token from the Authorization header.
 
     A present internal header is allowed through without a bearer so MCP can
-    authenticate with X-Archon-Internal-Token alone. Missing both still fails
-    the same way HTTPBearer did.
+    authenticate with X-Archon-Internal-Token alone. When neither credential is
+    present, the response is 401 with WWW-Authenticate: Bearer.
     """
     if credentials is not None:
         return str(credentials.credentials)
     if request.headers.get(INTERNAL_HEADER) is not None:
         return ""
     raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated",
         headers={"WWW-Authenticate": "Bearer"},
     )
