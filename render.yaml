@@ -33,6 +33,8 @@ services:
         fromSecret: SUPABASE_URL
       - key: SUPABASE_SERVICE_KEY
         fromSecret: SUPABASE_SERVICE_KEY
+      - key: ARCHON_INTERNAL_TOKEN
+        sync: false
       # ⚠️ 請確保在 Render 儀表板上手動設定以下環境變數，並替換為您的實際前端服務公開 URL
       # 這是為了 CORS 跨域請求，archon-server 需要知道哪些前端網址可以發送請求給它
       - key: CORS_ORIGINS
@@ -112,6 +114,8 @@ services:
         fromSecret: SUPABASE_SERVICE_KEY
       - key: SUPABASE_URL
         fromSecret: SUPABASE_URL
+      - key: ARCHON_INTERNAL_TOKEN
+        sync: false
 
   # 5. AI Agents (archon-agents)
   - name: archon-agents

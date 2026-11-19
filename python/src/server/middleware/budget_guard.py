@@ -8,10 +8,11 @@ when a tenant's cumulative LLM token consumption costs exceed their allocated bu
 from collections.abc import Callable
 from typing import cast
 
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from ..auth.internal_auth import INTERNAL_HEADER, internal_header_decision
 from ..auth.utils import get_user_from_token
 from ..config.logfire_config import get_logger
 from ..utils import get_supabase_client
@@ -28,6 +29,21 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
     BYPASS_PATHS = {"/health", "/api/health", "/api/auth", "/docs", "/redoc", "/openapi.json"}
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # A verified MCP internal credential has no tenant profile. Looking one up
+        # fail-closes to HTTP 402, which would block every MCP write. Skipping the
+        # tenant budget here does not grant admin: the route allowlist still applies.
+        # A present but unacceptable header is rejected with a response, not an exception,
+        # because BaseHTTPMiddleware would otherwise surface it as HTTP 500.
+        internal_decision = internal_header_decision(request.headers.get(INTERNAL_HEADER))
+        if internal_decision == "rejected":
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Invalid authentication credentials"},
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if internal_decision == "accepted":
+            return cast(Response, await call_next(request))
+
         # 1. Skip checks for GET requests, health, or auth routes
         if request.method == "GET" or request.url.path in self.BYPASS_PATHS or not request.url.path.startswith("/api/"):
             return cast(Response, await call_next(request))
@@ -42,8 +58,14 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
             # Let normal authentication middleware handle missing credentials
             return cast(Response, await call_next(request))
 
-        # 3. Retrieve user profile
-        user = await get_user_from_token(token)
+        # 3. Retrieve user profile. HTTPException must not leave this middleware:
+        # BaseHTTPMiddleware does not deliver it to FastAPI's HTTPException handler,
+        # and the process-wide handler turns it into HTTP 500. The route dependency
+        # still authenticates the request.
+        try:
+            user = await get_user_from_token(token)
+        except HTTPException:
+            return cast(Response, await call_next(request))
         if not user:
             return cast(Response, await call_next(request))
 
@@ -87,8 +109,8 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
                     status_code=402,
                     content={
                         "error": "Payment Required",
-                        "detail": f"Tenant budget limit exceeded. Total Cost: ${total_cost:.4f} >= Limit: ${budget_limit:.4f}"
-                    }
+                        "detail": f"Tenant budget limit exceeded. Total Cost: ${total_cost:.4f} >= Limit: ${budget_limit:.4f}",
+                    },
                 )
 
         except Exception as e:
@@ -98,8 +120,8 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
                 status_code=402,
                 content={
                     "error": "Payment Required",
-                    "detail": f"Database verification failure during budget checks: {e}. Operation blocked for safety."
-                }
+                    "detail": f"Database verification failure during budget checks: {e}. Operation blocked for safety.",
+                },
             )
 
         return cast(Response, await call_next(request))
