@@ -149,7 +149,7 @@
     *   **人工標記先用試算表**: 人工標記先用試算表過渡兩週，不在 leads 加 `discarded` 狀態。**原因**: 已有 sentinel→dormant→delete 與 prune 兩條刪除路徑，而且至少有 7 處查詢沒有過濾 status，此時加新狀態會讓這些查詢的語意分叉。
     *   **每日 leads 報告路由**: 每日 leads 報告送到 Vincent 與幕僚長（Charlie）的聊天。Vincent 決定，未記錄理由。
     *   **G1 / G3 / G4 合成一個 PR**: G1（被刷掉的職缺結構化寫入）、G3（排程的開始與例外寫 log）、G4（judge 回傳拒絕理由）在 #668 合併後合成一個 PR，合併前問 Vincent。未記錄理由。
-3.  **市場與 ICP：排除邊界、配額、客單價與公司規模**（定義以 ICP 檔為準：`icp_draft.json`，目前不在 repo 內，由 Bob 維護，v0.2.1 草稿、未核准）:
+3.  **市場與 ICP：排除邊界、配額、客單價與公司規模**（ICP 尚未進 repo，進 repo 前以線上程式碼為準：現行線上評分用 `python/src/server/prompts/sales_prompts.py` 的 `ALICE_HYDE_BASELINE_DEFAULT` 與 `ALICE_LEAD_JUDGE_DEFAULT`。以下決議尚未實作進程式碼）:
     *   **C 類排除與 A/C 邊界**: C 類排除同業、SI、派遣、獵頭。自動化設備商算 C；研究機構與醫院算 A。Vincent 決定，未記錄理由。
     *   **A:B 配額**: A:B = 60:40，採配額制，不直接乘進評分權重。Bob 原建議 70:30，Alice 建議 65:35，Vincent 定為 60:40，未記錄理由。
     *   **客單價與成交週期假設**: A 類 30–150 萬，B 類 10–50 萬。B 類先用轉介收費。成交週期 6 個月以上。以上皆為規劃假設，未記錄理由。
