@@ -8,7 +8,7 @@ when a tenant's cumulative LLM token consumption costs exceed their allocated bu
 from collections.abc import Callable
 from typing import cast
 
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -42,8 +42,14 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
             # Let normal authentication middleware handle missing credentials
             return cast(Response, await call_next(request))
 
-        # 3. Retrieve user profile
-        user = await get_user_from_token(token)
+        # 3. Retrieve user profile. HTTPException must not leave this middleware:
+        # BaseHTTPMiddleware does not deliver it to FastAPI's HTTPException handler,
+        # and the process-wide handler turns it into HTTP 500. The route dependency
+        # still authenticates the request.
+        try:
+            user = await get_user_from_token(token)
+        except HTTPException:
+            return cast(Response, await call_next(request))
         if not user:
             return cast(Response, await call_next(request))
 
@@ -87,8 +93,8 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
                     status_code=402,
                     content={
                         "error": "Payment Required",
-                        "detail": f"Tenant budget limit exceeded. Total Cost: ${total_cost:.4f} >= Limit: ${budget_limit:.4f}"
-                    }
+                        "detail": f"Tenant budget limit exceeded. Total Cost: ${total_cost:.4f} >= Limit: ${budget_limit:.4f}",
+                    },
                 )
 
         except Exception as e:
@@ -98,8 +104,8 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
                 status_code=402,
                 content={
                     "error": "Payment Required",
-                    "detail": f"Database verification failure during budget checks: {e}. Operation blocked for safety."
-                }
+                    "detail": f"Database verification failure during budget checks: {e}. Operation blocked for safety.",
+                },
             )
 
         return cast(Response, await call_next(request))
