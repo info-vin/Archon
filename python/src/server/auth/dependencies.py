@@ -2,11 +2,19 @@
 
 from typing import Annotated, Any
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from ..models.auth_models import UserProfileDTO
 from ..services.profile_service import ProfileService
+from .internal_auth import (
+    INTERNAL_ACTOR_ID,
+    INTERNAL_EXTRA_PERMISSIONS,
+    INTERNAL_HEADER,
+    internal_actor,
+    internal_header_decision,
+    internal_route_allowed,
+)
 from .utils import get_user_from_token
 
 # Security scheme for OpenAPI docs
@@ -14,9 +22,25 @@ security = HTTPBearer()
 security_optional = HTTPBearer(auto_error=False)
 
 
-async def get_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
-    """Extracts the Bearer token from the Authorization header."""
-    return str(credentials.credentials)
+async def get_token(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_optional)],
+) -> str:
+    """Extracts the Bearer token from the Authorization header.
+
+    A present internal header is allowed through without a bearer so MCP can
+    authenticate with X-Archon-Internal-Token alone. Missing both still fails
+    the same way HTTPBearer did.
+    """
+    if credentials is not None:
+        return str(credentials.credentials)
+    if request.headers.get(INTERNAL_HEADER) is not None:
+        return ""
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def get_token_optional(
@@ -28,11 +52,27 @@ async def get_token_optional(
     return str(credentials.credentials)
 
 
-async def get_current_user(token: Annotated[str, Depends(get_token)]) -> UserProfileDTO:
+async def get_current_user(request: Request, token: Annotated[str, Depends(get_token)]) -> UserProfileDTO:
     """
     Validates the token and retrieves the full user profile (including Role) from the database.
     This is the SSOT for "Who is this user?".
     """
+    # MCP service calls present X-Archon-Internal-Token and no user session.
+    decision = internal_header_decision(request.headers.get(INTERNAL_HEADER))
+    if decision == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if decision == "accepted":
+        if not internal_route_allowed(request.method, request.url.path):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Internal credential is not permitted for this route",
+            )
+        return internal_actor()
+
     # 1. Verify Identity (Authentication)
     auth_user = await get_user_from_token(token)
     if not auth_user:
@@ -68,21 +108,26 @@ async def get_current_user(token: Annotated[str, Depends(get_token)]) -> UserPro
         if metadata_role:
             fallback_role = metadata_role
 
-    return UserProfileDTO(id=user_id, email=getattr(auth_user, "email", "system@archon.com") or "system@archon.com", role=fallback_role)
+    return UserProfileDTO(
+        id=user_id, email=getattr(auth_user, "email", "system@archon.com") or "system@archon.com", role=fallback_role
+    )
 
 
-async def get_current_user_optional(token: Annotated[str | None, Depends(get_token_optional)]) -> UserProfileDTO | None:
+async def get_current_user_optional(
+    request: Request,
+    token: Annotated[str | None, Depends(get_token_optional)],
+) -> UserProfileDTO | None:
     """
     Validates the token and retrieves the profile if a token is provided.
     If no token is provided, or the token is invalid, returns None instead of raising 401.
     Useful for endpoints that have public fallback behavior (e.g. public settings).
     """
-    if not token:
+    if not token and request.headers.get(INTERNAL_HEADER) is None:
         return None
 
     try:
         # We reuse get_current_user logic but catch the 401 to return None
-        return await get_current_user(token)
+        return await get_current_user(request, token or "")
     except HTTPException as e:
         if e.status_code == status.HTTP_401_UNAUTHORIZED:
             return None
@@ -92,6 +137,7 @@ async def get_current_user_optional(token: Annotated[str | None, Depends(get_tok
 async def get_current_admin(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> UserProfileDTO:
     """Dependency that enforces Admin role and returns the user object."""
     from ..services.shared_constants import RoleEnum
+
     role = current_user.role.lower()
     if role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
@@ -101,6 +147,7 @@ async def get_current_admin(current_user: Annotated[UserProfileDTO, Depends(get_
 async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> bool:
     """Secure boolean-style dependency for Admin enforcement via JWT."""
     from ..services.shared_constants import RoleEnum
+
     role = current_user.role.lower()
     if role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
@@ -110,6 +157,7 @@ async def verify_admin_role(current_user: Annotated[UserProfileDTO, Depends(get_
 async def verify_manager_role(current_user: Annotated[UserProfileDTO, Depends(get_current_user)]) -> bool:
     """Secure dependency ensuring the user is at least a Manager or Admin."""
     from ..services.shared_constants import RoleEnum
+
     role = current_user.role.lower()
     if role not in [RoleEnum.ADMIN, RoleEnum.SYSTEM_ADMIN, RoleEnum.MANAGER]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manager privileges or higher required")
@@ -138,6 +186,8 @@ def requires_permission(permission: str) -> Any:
         from ..services.rbac_service import RBACService
 
         role = current_user.role.lower()
+        if current_user.id == INTERNAL_ACTOR_ID and permission in INTERNAL_EXTRA_PERMISSIONS:
+            return current_user
         # Phase 4.6.31: Switch to Dynamic RBAC Matrix via RBACService
         user_permissions = await RBACService().get_role_permissions(role)
 
