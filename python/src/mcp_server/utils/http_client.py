@@ -57,12 +57,14 @@ async def call_api(
         api_url = get_api_url()
         url = urljoin(api_url, path)
 
-        # Inject service key for internal auth
+        # MCP authenticates to the server with a dedicated internal credential.
+        # The Supabase service key is a database credential and is not sent as a bearer.
         import os
-        service_key = os.getenv("SUPABASE_SERVICE_KEY")
-        headers = kwargs.pop("headers", {})
-        if service_key:
-            headers["Authorization"] = f"Bearer {service_key}"
+
+        headers = dict(kwargs.pop("headers", {}) or {})
+        internal_token = os.getenv("ARCHON_INTERNAL_TOKEN")
+        if internal_token is not None and internal_token.strip() != "":
+            headers["X-Archon-Internal-Token"] = internal_token
 
         async with get_http_client(timeout=timeout, for_polling=for_polling) as client:
             response = await client.request(method, url, headers=headers, **kwargs)

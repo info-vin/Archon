@@ -41,6 +41,8 @@ ENV PYTHONUNBUFFERED=1
 # Expose MCP port
 ARG ARCHON_MCP_PORT=8051
 ENV ARCHON_MCP_PORT=${ARCHON_MCP_PORT}
+# Runtime credential shared with the server process. No default is baked in.
+ENV ARCHON_INTERNAL_TOKEN=""
 EXPOSE 8051
 
 # Add and use entrypoint script
