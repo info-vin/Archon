@@ -233,7 +233,11 @@ async def delete_task(task_id: str, current_user: UserProfileDTO = Depends(get_c
 
 
 @router.post("/tasks/{task_id}/agent-status", response_model=AgentCallbackResponse, tags=["Agent Callback"])
-async def report_task_status_from_agent(task_id: str, req: AgentStatusUpdateRequest) -> AgentCallbackResponse:
+async def report_task_status_from_agent(
+    task_id: str,
+    req: AgentStatusUpdateRequest,
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> AgentCallbackResponse:
     s, res = await TaskService().update_task_status_from_agent(
         task_id=task_id, new_status=req.status, agent_id=req.agent_id
     )
@@ -243,7 +247,11 @@ async def report_task_status_from_agent(task_id: str, req: AgentStatusUpdateRequ
 
 
 @router.post("/tasks/{task_id}/agent-output", response_model=AgentCallbackResponse, tags=["Agent Callback"])
-async def report_task_output_from_agent(task_id: str, req: AgentOutputUpdateRequest) -> AgentCallbackResponse:
+async def report_task_output_from_agent(
+    task_id: str,
+    req: AgentOutputUpdateRequest,
+    current_user: UserProfileDTO = Depends(get_current_user),
+) -> AgentCallbackResponse:
     s, res = await TaskService().save_agent_output(task_id=task_id, output=req.output, agent_id=req.agent_id)
     if not s:
         _err(res, 400)
