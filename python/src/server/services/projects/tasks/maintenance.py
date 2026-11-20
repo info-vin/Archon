@@ -139,9 +139,15 @@ async def update_task_status_from_agent_logic(
         current_task = result["task"]
 
         if current_task.get("assignee") != agent_id:
-            error_msg = f"Agent '{agent_id}' is not authorized to update task '{task_id}'. Assigned to '{current_task.get('assignee')}'."
-            logger.warning(error_msg)
-            return False, {"error": error_msg}
+            # The client-facing error must not name the assignee. The assigned
+            # identity stays in the server log for debugging.
+            logger.warning(
+                "Agent %s is not authorized to update task %s. Assigned to %s.",
+                agent_id,
+                task_id,
+                current_task.get("assignee"),
+            )
+            return False, {"error": "Agent is not authorized to update this task."}
 
         return await task_service_instance.update_task(task_id, {"status": new_status, "assignee": agent_id})
     except Exception as e:

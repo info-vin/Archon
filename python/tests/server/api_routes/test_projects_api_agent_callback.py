@@ -14,18 +14,31 @@ def setup_module(module):
     task_service_patch.start()
 
 
-def teardown_module(module):
-    task_service_patch.stop()
-
-
+from src.server.auth.dependencies import get_current_user  # noqa: E402
 from src.server.main import app  # noqa: E402
+from src.server.models.auth_models import UserProfileDTO  # noqa: E402
 
 # 5. Create a single, shared TestClient
 client = TestClient(app)
 
 
+def _authenticate() -> None:
+    """These cases cover the callback contract. Auth itself is tested without this override."""
+    app.dependency_overrides[get_current_user] = lambda: UserProfileDTO(
+        id="test-admin",
+        role="admin",
+        email="admin@test.com",
+    )
+
+
+def teardown_module(module):
+    task_service_patch.stop()
+    app.dependency_overrides.pop(get_current_user, None)
+
+
 def test_report_task_status_from_agent_success():
     """Test successful reporting of task status from an agent."""
+    _authenticate()
     # Reset and configure mock for this test
     mock_task_service.reset_mock()
     task_id = "test-task-uuid"
@@ -50,6 +63,7 @@ def test_report_task_status_from_agent_success():
 
 def test_report_task_status_from_agent_failure():
     """Test failure when reporting task status from an agent."""
+    _authenticate()
     # Reset and configure mock for this test
     mock_task_service.reset_mock()
     task_id = "test-task-uuid"
@@ -74,6 +88,7 @@ def test_report_task_status_from_agent_failure():
 
 def test_report_task_output_from_agent_success():
     """Test successful reporting of task output from an agent."""
+    _authenticate()
     # Reset and configure mock for this test
     mock_task_service.reset_mock()
     task_id = "test-task-uuid"
@@ -96,6 +111,7 @@ def test_report_task_output_from_agent_success():
 
 def test_report_task_output_from_agent_failure():
     """Test failure when reporting task output from an agent."""
+    _authenticate()
     # Reset and configure mock for this test
     mock_task_service.reset_mock()
     task_id = "test-task-uuid"

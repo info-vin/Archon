@@ -31,6 +31,9 @@ _MCP_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("DELETE", re.compile(r"^/api/tasks/[^/]+$")),
     ("POST", re.compile(r"^/api/rag/query$")),
     ("POST", re.compile(r"^/api/rag/code-examples$")),
+    # MCP report_task_status / report_task_output. Not an admin route.
+    ("POST", re.compile(r"^/api/tasks/[^/]+/agent-status$")),
+    ("POST", re.compile(r"^/api/tasks/[^/]+/agent-output$")),
 )
 
 

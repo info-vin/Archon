@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -49,7 +50,7 @@ async def test_update_task_status_from_agent_success(test_task_service, mock_sup
 
 
 @pytest.mark.asyncio
-async def test_update_task_status_from_agent_unauthorized(test_task_service, mock_supabase_client):
+async def test_update_task_status_from_agent_unauthorized(test_task_service, mock_supabase_client, caplog):
     """Test status update failure from an unauthorized agent."""
     test_task_id = "test-task-uuid"
     assigned_agent_id = "ai-researcher-1"
@@ -60,12 +61,16 @@ async def test_update_task_status_from_agent_unauthorized(test_task_service, moc
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
     test_task_service.update_task = AsyncMock()  # Should not be called
 
-    success, result = await test_task_service.update_task_status_from_agent(
-        task_id=test_task_id, new_status=new_status, agent_id=unauthorized_agent_id
-    )
+    with caplog.at_level(logging.WARNING):
+        success, result = await test_task_service.update_task_status_from_agent(
+            task_id=test_task_id, new_status=new_status, agent_id=unauthorized_agent_id
+        )
 
     assert success is False
-    assert "not authorized" in result["error"]
+    assert result["error"] == "Agent is not authorized to update this task."
+    assert assigned_agent_id not in result["error"]
+    assert "Assigned to" not in result["error"]
+    assert assigned_agent_id in caplog.text
     test_task_service.get_task.assert_called_once_with(test_task_id)
     test_task_service.update_task.assert_not_called()
 

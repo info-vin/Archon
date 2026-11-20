@@ -56,7 +56,7 @@ class UvicornBotFilter(logging.Filter):
 
 logging.getLogger("uvicorn.access").addFilter(UvicornBotFilter())
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.server.core import (
@@ -64,6 +64,7 @@ from src.server.core import (
     global_exception_handler,
     lifespan,
 )
+from src.server.models.auth_models import UserProfileDTO
 
 from .api_routes.admin_api import router as admin_router  # NEW IMPORT
 from .api_routes.agent_chat_api import router as agent_chat_router
@@ -96,6 +97,7 @@ from .api_routes.system_api import router as system_router  # NEW IMPORT
 from .api_routes.test_api import router as test_api_router  # NEW IMPORT
 from .api_routes.version_api import router as version_router
 from .api_routes.visit_log_api import router as visit_log_router  # NEW IMPORT
+from .auth.dependencies import get_current_user
 from .middleware.budget_guard import BudgetGuardMiddleware
 
 # Import Logfire configuration
@@ -189,7 +191,7 @@ app.include_router(internal_router)  # Already defines /internal
 app.include_router(test_api_router)
 
 @app.get("/api/mcp-logs")
-async def get_mcp_logs():
+async def get_mcp_logs(current_user: UserProfileDTO = Depends(get_current_user)):
     import os
 
     from fastapi.responses import FileResponse

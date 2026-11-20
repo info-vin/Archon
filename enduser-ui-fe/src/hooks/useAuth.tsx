@@ -62,13 +62,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (supabase) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session?.access_token) {
-                if (typeof localStorage !== 'undefined') localStorage.setItem('archon_token', session.access_token);
-                syncIdentity();
-            } else if (event === 'SIGNED_OUT') {
+            // apiClient reads archon_token from localStorage. Supabase rotates that
+            // access token (TOKEN_REFRESHED, and any other event that carries a session)
+            // about once an hour; leaving the stored value stale makes later requests 401.
+            if (event === 'SIGNED_OUT') {
                 if (typeof localStorage !== 'undefined') localStorage.removeItem('archon_token');
                 if (typeof localStorage !== 'undefined') localStorage.removeItem('user_role');
                 setUser(null);
+                return;
+            }
+            if (session?.access_token && typeof localStorage !== 'undefined') {
+                localStorage.setItem('archon_token', session.access_token);
+            }
+            if (event === 'SIGNED_IN') {
+                syncIdentity();
             }
         });
         return () => subscription.unsubscribe();
