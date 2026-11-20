@@ -123,6 +123,44 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-11-19：#670 升級驗證、金鑰輪替前置風險與 HyDE 重新評估
+記錄 2026-11-19 的驗證結果與待決事項（均未部署、未在雲端執行任何變更）。
+
+**核心主題歸類**:
+1.  **#670 升級驗證**: 在本機把 PR #670（https://github.com/info-vin/Archon/pull/670）合進 `dev/twins`（`1f07df07`），沒有衝突。server、mcp、agents 與全部排程 job 都實際啟動過，Supabase 指向關閉的連接埠，沒有 mock `create_client`。升級前後行為一致，沒有出現 `TypeError` 或 `Invalid API key`。測試結果是 8 失敗、781 通過，失敗的 8 個與基準相同。**注意**: push 到 `dev/twins` 會觸發 `deploy-hf.yml` 自動部署，所以合併 #670 就等於部署，需 Vincent 核准。
+2.  **金鑰輪替前置風險（換 `sb_secret` 前必須處理）**:
+    *   **MCP 認證**: `auth/utils.py` 只接受 `role=service_role` 的 JWT，HF 換成 `sb_secret_` 後 MCP 預期會回 401。
+    *   **設定加密**: `crypto_utils.py` 用 service key 衍生 Fernet 金鑰，換 key 後 `archon_settings` 的加密值會解不開，換鑰前要先重新加密，或改用獨立的加密金鑰。
+    *   **`Dockerfile.twin`**: 沒有 pin `supabase` 版本，重建時會安裝最新版，不會跟著 #670。是否 pin 待 Vincent 決定。
+    *   **`auth/utils.py` 不驗簽的 fallback**: 影響範圍分析中，修正待 Vincent 決定。
+3.  **HyDE 重新評估（DevBot 實驗，數字待人工標記校準，不對外引用）**: 現行 HyDE 基準與亂猜無法區分：合併 46 筆樣本 AUC 0.50（置換檢定 p≈0.98）。改用 ICP 文字當基準、再扣掉負向錨點，方向成立。λ 暫定 0.5（範圍 0.5–1.0）。B 類錨點不用於第一層。這批樣本與 ICP 文字高度重疊，不是獨立驗證。下一輪校準改用人工標記樣本，不再擴增 104 的爬取樣本。
+
+### 2026-11-18：service_role 外洩鑑識、JWT 輪替回滾、ICP 60:40 配額與第二層 LLM 分類
+記錄 2026-11-18 的決策：前端 `service_role` 外洩的根因與修復（PR #668，已合併）、Supabase Migrate JWT secret 後 Hugging Face 換用 `sb_secret` 啟動失敗並回滾、套件升級拆成 PR #670、人工標記與後續 PR 的閘門、ICP 排除規則與 A:B 配額、資料來源取捨，以及第二層評分改走 LLM 結構化分類。
+
+**核心主題歸類**:
+1.  **安全：前端 service_role 外洩、JWT 輪替回滾與 PR 拆分**:
+    *   **外洩事件**: `service_role` 金鑰曾出現在 `archon-enduser.vercel.app` 的前端 JS。**原因**: `docker-compose.yml:256` 的 fallback 在 `SUPABASE_ANON_KEY` 未設定時，把 `service_role` 當成 `VITE_SUPABASE_ANON_KEY` 注入前端建置。**修復**: PR #668（https://github.com/info-vin/Archon/pull/668）已於 2026-11-18 16:57（台北）squash 合併進 `dev/twins`，commit 是 `1f07df07`。
+    *   **提醒**: `docker-compose.yml:256` 現在強制要求 `SUPABASE_ANON_KEY`，未設定時 compose 會失敗。`migration/20261118_revoke_truncate_and_test_rpcs.sql` 尚未在雲端執行，要等 Vincent 核准；執行前，`authenticated` 角色對 `leads`、`archon_tasks`、`archon_settings` 仍有 TRUNCATE 權限，`reset_test_database`／`seed_test_database` 仍開放給 PUBLIC 執行。
+    *   **JWT 輪替與回滾**: Supabase 執行了 Migrate JWT secret，建立新的 publishable／secret key。HF Space 改用 `sb_secret` 後啟動失敗，已回滾成舊金鑰。**原因**: `supabase-py` 2.15.1 的 `create_client` 只接受 JWT 格式的金鑰，遇到 `sb_secret_` 回報 `Invalid API key`（`client_manager.py:62`）。
+    *   **PR 拆分事件**: 只把 `supabase` 升到 2.16.0 時，它會把 `http_client` 傳進 `postgrest` 1.0.2、`storage3` 0.11.3、`supafunc` 0.9.4，第一次呼叫 `.table()`、`.storage`、`.functions` 就會拋出 `TypeError`。單元測試抓不到，因為 `python/tests/conftest.py`（第 148、357、390 行 patch 了 `supabase.create_client`，第 386 行 patch 了 `credential_service.create_client`）。11/18 下午 Vincent 選了方案 A：#668 只做安全修正，升級拆成 PR #670（`supabase` 2.15.1 → 2.18.0，並補上不 mock 的 smoke test）。
+    *   **後續順序**: #668（已合併）→ #670 → 用舊金鑰部署並確認健康 → HF 換成 `sb_secret` → Vercel 設定 publishable key 並重新部署 → 停用舊金鑰。（換 `sb_secret` 前的前置風險見 2026-11-19。）
+2.  **流程與紀錄：人工標記過渡、報告路由與後續 PR 閘門**:
+    *   **人工標記先用試算表**: 人工標記先用試算表過渡兩週，不在 leads 加 `discarded` 狀態。**原因**: 已有 sentinel→dormant→delete 與 prune 兩條刪除路徑，而且至少有 7 處查詢沒有過濾 status，此時加新狀態會讓這些查詢的語意分叉。
+    *   **每日 leads 報告路由**: 每日 leads 報告送到 Vincent 與幕僚長（Charlie）的聊天。Vincent 決定，未記錄理由。
+    *   **G1 / G3 / G4 合成一個 PR**: G1（被刷掉的職缺結構化寫入）、G3（排程的開始與例外寫 log）、G4（judge 回傳拒絕理由）在 #668 合併後合成一個 PR，合併前問 Vincent。未記錄理由。
+3.  **市場與 ICP：排除邊界、配額、客單價與公司規模**（ICP 尚未進 repo，進 repo 前以線上程式碼為準：現行線上評分用 `python/src/server/prompts/sales_prompts.py` 的 `ALICE_HYDE_BASELINE_DEFAULT` 與 `ALICE_LEAD_JUDGE_DEFAULT`。以下決議尚未實作進程式碼）:
+    *   **C 類排除與 A/C 邊界**: C 類排除同業、SI、派遣、獵頭。自動化設備商算 C；研究機構與醫院算 A。Vincent 決定，未記錄理由。
+    *   **A:B 配額**: A:B = 60:40，採配額制，不直接乘進評分權重。Bob 原建議 70:30，Alice 建議 65:35，Vincent 定為 60:40，未記錄理由。
+    *   **客單價與成交週期假設**: A 類 30–150 萬，B 類 10–50 萬。B 類先用轉介收費。成交週期 6 個月以上。以上皆為規劃假設，未記錄理由。
+    *   **公司規模**: 30–300 人，不設資本額上限。Vincent 決定，未記錄理由。B 類規模待 Vincent 決定；Alice 提案約 30 人以下。
+4.  **資料來源：開放資料替代、保留 104，以及指紋與 proxy 的事實修正**:
+    *   **不申請商工登記 API 白名單**: 改用免費的政府開放資料 API。**原因**: 申請 IP 白名單要發信給外部單位，太耗時。
+    *   **保留 104 爬取**: 保留 104 爬取。已知風險：`robots.txt` 不允許 `/*keyword=*`；HF 的 IP 被擋，近 30 天只成功 3 次。
+    *   **指紋偽裝與 proxy 的事實修正**: 程式有瀏覽器指紋偽裝（`curl_cffi` impersonate，每個 session 隨機選一次），沒有輪替 proxy，只有 `archon_settings` 裡一個可選的 `CRAWLER_PROXY_URL`。
+5.  **評分：第二層改用 LLM 結構化分類**:
+    *   **第二層分類與驗證門檻**: 第二層改用 LLM 結構化分類 A/B/C/X（附信心與理由），先用 ≥30 筆人工標記驗證。**原因**: 現行 HyDE 相似度區分力不足（數字見 2026-11-19）。LLM 分類在同一批 46 筆全對，但從未預測 B 類；樣本偏容易，100% 是上限。全部交給 LLM 的呼叫次數推估約為現行的 4 倍（推估，非實測）。所以要先用人工標記驗證。
+
 ### 2026-11-04：Telegram 失聯深度鑑識、HF 部署同步門禁硬化 (Step 5.5) 與 CI/CD 自動發佈復原
 深度鑑識 11/04 Telegram 失聯事故，穿透實體日誌揭露 Hugging Face 因 `Dockerfile.server` 與 `deploy_to_hf.sh` 缺少 `GEMINI.md` 構建死鎖 3 天；實作 `scripts/phase_audit.py` Step 5.5 部署同步自動校驗門禁，釐清 GitHub Actions CI/CD 發佈鏈路，全線恢復雲端健康運作。
 
