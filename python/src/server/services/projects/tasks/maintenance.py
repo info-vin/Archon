@@ -168,9 +168,14 @@ async def save_agent_output_logic(
         current_task = result["task"]
 
         if current_task.get("assignee") != agent_id:
-            error_msg = f"Agent '{agent_id}' is not authorized to save output for task '{task_id}'."
-            logger.warning(error_msg)
-            return False, {"error": error_msg}
+            # Same client-facing rule as status updates: the assignee stays in the log.
+            logger.warning(
+                "Agent %s is not authorized to save output for task %s. Assigned to %s.",
+                agent_id,
+                task_id,
+                current_task.get("assignee"),
+            )
+            return False, {"error": "Agent is not authorized to save output for this task."}
 
         # Phase 5.1.0: Pydantic Boundary Validation
         try:

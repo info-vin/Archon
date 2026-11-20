@@ -170,7 +170,7 @@ async def test_save_agent_output_success_existing_attachments(test_task_service,
 
 
 @pytest.mark.asyncio
-async def test_save_agent_output_unauthorized(test_task_service, mock_supabase_client):
+async def test_save_agent_output_unauthorized(test_task_service, mock_supabase_client, caplog):
     """Test saving agent output failure from an unauthorized agent."""
     test_task_id = "test-task-uuid"
     assigned_agent_id = "ai-researcher-1"
@@ -181,11 +181,15 @@ async def test_save_agent_output_unauthorized(test_task_service, mock_supabase_c
     test_task_service.get_task = AsyncMock(return_value=(True, {"task": test_task}))
     test_task_service.update_task = AsyncMock()  # Should not be called
 
-    success, result = await test_task_service.save_agent_output(
-        task_id=test_task_id, output=test_output, agent_id=unauthorized_agent_id
-    )
+    with caplog.at_level(logging.WARNING):
+        success, result = await test_task_service.save_agent_output(
+            task_id=test_task_id, output=test_output, agent_id=unauthorized_agent_id
+        )
 
     assert success is False
-    assert "not authorized" in result["error"]
+    assert result["error"] == "Agent is not authorized to save output for this task."
+    assert assigned_agent_id not in result["error"]
+    assert "Assigned to" not in result["error"]
+    assert assigned_agent_id in caplog.text
     test_task_service.get_task.assert_called_once_with(test_task_id)
     test_task_service.update_task.assert_not_called()

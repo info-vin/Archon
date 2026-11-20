@@ -73,15 +73,23 @@ def _rejected_auth(mock_supabase_client):
     return patch("server.auth.utils.get_supabase_client", return_value=mock_supabase_client)
 
 
-def _accepted_user(mock_supabase_client):
+def _accepted_user(mock_supabase_client, role: str = "system_admin"):
     user = SimpleNamespace(
         id="user-1",
         email="user@example.com",
-        user_metadata={"role": "system_admin"},
+        user_metadata={"role": role},
     )
     mock_supabase_client.auth.get_user.side_effect = None
     mock_supabase_client.auth.get_user.return_value = SimpleNamespace(user=user)
     return patch("server.auth.utils.get_supabase_client", return_value=mock_supabase_client)
+
+
+def _without_profile():
+    """Force the metadata role through. A stored profile would hide the case under test."""
+    return patch(
+        "server.auth.dependencies.ProfileService.get_profile",
+        return_value=(False, "Profile not found"),
+    )
 
 
 def _callback_service(method_name: str):
@@ -142,11 +150,32 @@ def test_valid_user_can_report_agent_output(raw_app, mock_supabase_client):
     assert response.json()["task"]["id"] == "task-1"
 
 
-def test_valid_user_can_read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path):
+def _read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path, role: str):
     missing = tmp_path / "missing-mcp.log"
     monkeypatch.setenv("ARCHON_MCP_LOG_PATH", str(missing))
-    with _accepted_user(mock_supabase_client):
-        response = _client(raw_app).get(LOGS_URL, headers={"Authorization": "Bearer session-token"})
+    with _accepted_user(mock_supabase_client, role=role), _without_profile():
+        return _client(raw_app).get(LOGS_URL, headers={"Authorization": "Bearer session-token"})
+
+
+def test_mcp_logs_missing_credentials_is_401(raw_app):
+    response = _client(raw_app).get(LOGS_URL)
+    _assert_401(response)
+
+
+def test_employee_cannot_read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path):
+    response = _read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path, "employee")
+    assert response.status_code == 403, response.text
+    assert response.status_code != 500
+
+
+def test_manager_cannot_read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path):
+    response = _read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path, "manager")
+    assert response.status_code == 403, response.text
+    assert response.status_code != 500
+
+
+def test_admin_can_read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path):
+    response = _read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path, "admin")
     assert response.status_code == 200, response.text
     assert response.json()["error"] == "Log file not found"
 

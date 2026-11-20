@@ -30,11 +30,14 @@ vi.mock('../services/api', () => ({
   },
 }));
 
+import { userState } from '../services/api/base';
+import { EmployeeRole } from '../types';
 import { AuthProvider } from './useAuth';
 
 describe('useAuth session token', () => {
   beforeEach(() => {
     localStorage.clear();
+    userState.cache = null;
     authState.callback = null;
     getSession.mockResolvedValue({ data: { session: null } });
   });
@@ -65,5 +68,34 @@ describe('useAuth session token', () => {
     });
     expect(localStorage.getItem('archon_token')).toBeNull();
     expect(localStorage.getItem('user_role')).toBeNull();
+  });
+
+  it('clears userState.cache on SIGNED_OUT from another tab', async () => {
+    userState.cache = {
+      id: '1',
+      employeeId: 'E-1',
+      name: 'Ada',
+      email: 'ada@example.com',
+      department: 'Ops',
+      position: 'Admin',
+      status: 'active',
+      role: EmployeeRole.ADMIN,
+      avatar: '',
+    };
+
+    render(
+      <AuthProvider>
+        <div>ready</div>
+      </AuthProvider>,
+    );
+    expect(await screen.findByText('ready')).toBeInTheDocument();
+    expect(userState.cache).not.toBeNull();
+
+    act(() => {
+      authState.callback?.('SIGNED_OUT', null);
+    });
+
+    expect(userState.cache).toBeNull();
+    expect(localStorage.getItem('archon_token')).toBeNull();
   });
 });

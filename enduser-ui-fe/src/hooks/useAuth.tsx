@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { Employee, EmployeeRole } from '../types';
 import { api } from '../services/api';
 import { supabase } from '../services/api';
+import { userState } from '../services/api/base';
 
 interface AuthContextType {
   user: Employee | null;
@@ -68,6 +69,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (event === 'SIGNED_OUT') {
                 if (typeof localStorage !== 'undefined') localStorage.removeItem('archon_token');
                 if (typeof localStorage !== 'undefined') localStorage.removeItem('user_role');
+                // Another tab's sign-out does not run authApi.logout, which is the
+                // only other place that drops the cached profile.
+                userState.cache = null;
                 setUser(null);
                 return;
             }
