@@ -80,7 +80,7 @@ async def test_identify_leads_and_save(mock_supabase):
         if prompt_name == "ALICE_HYDE_BASELINE":
             return "HyDE Baseline Content"
         elif prompt_name == "ALICE_LEAD_JUDGE":
-            return "YES"
+            return '{"category": "A", "confidence": 0.9, "reason": "Traditional enterprise needing AI"}'
         elif prompt_name == "ALICE_INFER_NEED":
             return "Need AI"
         return ""
@@ -97,7 +97,8 @@ async def test_identify_leads_and_save(mock_supabase):
     mock_table.insert.assert_called_once()
     inserted_data = mock_table.insert.call_args[0][0]
     assert inserted_data[0]["company_name"] == "Test Corp"
-    assert inserted_data[0]["identified_need"] == "Need AI"
+    assert "[A類 | 信心 90%]" in inserted_data[0]["identified_need"]
+    assert "Need AI" in inserted_data[0]["identified_need"]
 
 
 @pytest.mark.asyncio
@@ -169,7 +170,7 @@ async def test_hybrid_funnel_fail_llm_judge():
         if prompt_name == "ALICE_HYDE_BASELINE":
             return "HyDE Baseline Content"
         elif prompt_name == "ALICE_LEAD_JUDGE":
-            return "NO" # Fail the judge
+            return '{"category": "C", "confidence": 0.92, "reason": "Competitor AI company"}' # Fail the judge
         return "FAIL"
 
     with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \

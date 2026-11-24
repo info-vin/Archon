@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.server.services.crawling.clients.job104_client import JobData
+from src.server.services.crawling.lead_evaluator import LeadJudgeResult
 from src.server.services.job_board_service import JobBoardService
 from src.server.services.scheduler.jobs import leads_patrol, sentinel_patrol
 
@@ -16,7 +17,9 @@ async def test_job_board_service_persists_qualified_score():
     # Mock Evaluator & Embeddings
     service.evaluator.get_hyde_baseline_embedding = AsyncMock(return_value=[1.0, 0.0])
     service.evaluator.cosine_similarity = MagicMock(return_value=0.88)
-    service.evaluator.llm_judge = AsyncMock(return_value=True)
+    service.evaluator.evaluate_lead_structured = AsyncMock(
+        return_value=LeadJudgeResult(category="A", confidence=0.88, reason="Target enterprise")
+    )
     service.evaluator.infer_need = AsyncMock(return_value="Need AI system integration")
 
     with patch("src.server.services.embeddings.embedding_service.create_embedding", new_callable=AsyncMock) as mock_emb:

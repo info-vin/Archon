@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-04 鑑識並修復 Telegram 失聯事故：物理查明 11/02 提交 `402ff3f9` 新增 `COPY GEMINI.md` 但部署腳本漏打包，致 Hugging Face 構建失敗停擺 3 天；在 `scripts/deploy_to_hf.sh` 補齊 `GEMINI.md` 與 `.agents/rules`；於 `scripts/phase_audit.py` 新增 Step 5.5 `docker_deploy_sync_audit` 門禁（自動比對 Dockerfile.server COPY 與 deploy_to_hf.sh，防範改 A 壞 B）並硬化 Step 5 雲端故障紅燈阻斷；釐清發佈管線（透過 `make merge-twins` 觸發 GitHub Actions 使用 `secrets.HF_TOKEN` 自動發佈）；全線通過 `make merge-twins` 部署，Space 構建成功恢復 `RUNNING`（`/health` 回傳 200 Healthy），全門禁（395 檔 MyPy 0 錯誤、839 passed、phase-audit 11 大門禁）100% 通過。
-*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並嚴格把關通用 Agent 規則與排程品質。
+*   **當前狀態 (Current Context)**: 2026-11-24 完成 Phase 5.13 資安權限加固、金鑰零中斷輪換與白名單排程上線（提交 `ffb257ce` 至 `dev/twins`）：移除 `dependencies.py` 與 `budget_guard.py` 信任 `user_metadata["role"]` 之假冒管理員漏洞並清理 `enduser-ui-fe` 註冊死碼；引入獨立 `CREDENTIAL_ENCRYPTION_KEY` 與雙金鑰解密 fallback，完成資料庫 4 把加密金鑰重加密後將 `SUPABASE_SERVICE_KEY` 升級為 `sb_secret_`、前端 `archon-enduser` 切換為 `sb_publishable_`，並於 Supabase 停用舊版 JWT API Keys 及關閉開放註冊；新增 `crawler_patrol.py` 每日檢查並僅定期抓取 `archon_crawler_targets` 非 `manual` 目標（Google Gemini 2 頁）；清空 Supabase `leads` 207 筆舊資料重抓；並透過 Vercel CLI 清理 160 筆歷史舊部署（`archon-enduser` 刪 78 筆、`archon` 刪 82 筆，各保留最新 1 筆 Production）。HF Space `/health` 200 Healthy，全門禁驗證通過。
+*   **今日目標 (Today's Goal)**: 觀察新版週期作業（104 `leads` 重抓與白名單 Google 2 頁定期抓取）運作狀態；待外部人員補查或決策後，視需求推進 `leads` 規模評分欄位（Track D）與選擇性輪換 Telegram / 4 把 AI 金鑰。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,57 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-11-24：Phase 5.13 資安防提權、金鑰零中斷輪換、白名單排程與 Vercel 舊部署清理
+完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。
+
+**核心主題歸類**:
+1.  **資安防提權與關閉開放註冊 (Track B)**:
+    *   **後端修補**: 移除 `python/src/server/auth/dependencies.py`（`get_current_user`）與 `python/src/server/middleware/budget_guard.py` 對用戶可控 `user_metadata.role` 的信任；查無 `profiles` 時一律降級為 `"employee"`，並於 `test_x3_no_unverified_jwt_fallback.py` 新增 `test_user_metadata_role_cannot_escalate_to_admin` 回歸測試。
+    *   **前端清理與後台關閉**: 移除 `enduser-ui-fe`（`AuthPage.tsx`、`useAuth.tsx`、`auth.ts`、`index.ts`、`AuthPage.test.tsx`）已失效的註冊切換 UI 與死端點呼叫，並於 Supabase Dashboard 關閉 Allow new users to sign up。
+2.  **金鑰解耦與零中斷輪換 (Track A)**:
+    *   **雙金鑰架構**: 於 `config.py`、`crypto_utils.py`、`manager.py` 引入獨立 `CREDENTIAL_ENCRYPTION_KEY` 與 `PREVIOUS_SUPABASE_SERVICE_KEY` 雙金鑰解密 fallback，且解密失敗時正確退回環境變數。
+    *   **資料庫換鎖與升級**: 新增 `scripts/reencrypt_credentials.py` 將 `archon_settings` 內 4 把加密金鑰（`HF_TOKEN`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`）重加密至獨立金鑰；同步升級本機 `.venv` 至 `supabase==2.18.0`；將後端換為 `sb_secret_...`、Vercel `archon-enduser` 切換為 `sb_publishable_...`，並於 Supabase 停用舊版 JWT-based API keys 與舊 `default` secret key。HF Space `/health` 維持 200 Healthy（`ready: true`, `credentials_loaded: true`）。
+3.  **白名單定期爬蟲排程與資料清理 (Track C & Ops)**:
+    *   **白名單排程**: 新增 `python/src/server/services/scheduler/jobs/crawler_patrol.py` 並掛載至 `scheduler_service.py` 與 `SchedulerConfig`（`whitelist_crawler_patrol_hour=10`, `minute=15`），依 `is_active=True` 與 `update_frequency != 'manual'` 條件自動略過農民曆，僅定期抓取到期之 Google Gemini 2 頁官方文件。
+    *   **資料與舊部署清理**: 清空雲端 Supabase `leads` 207 筆舊資料（`Remaining leads: 0`）待排程重抓；透過 Vercel CLI 批次刪除 160 筆歷史舊部署（`archon-enduser` 刪 78/78、`archon` 刪 82/82），各僅保留最新 1 筆線上 Production。
+4.  **全門禁與測試公證**:
+    *   `ruff check` 通過、`mypy src/` 397 檔 0 錯誤、`scripts/phase_audit.py` Step 5.5/7/8/9/10/11 全數通過、`enduser-ui-fe` `tsc --noEmit` 與 `AuthPage.test.tsx`（3/3）通過、`test_supabase_client_construction.py`（2/2）與後端單元測試（807 passed）通過，並完成提交推送 `ffb257ce` 至 `dev/twins`。
+
+### 2026-11-19：#670 升級驗證、金鑰輪替前置風險與 HyDE 重新評估（自 `pr669` 整併）
+記錄 2026-11-19 的驗證結果與待決事項（均未部署、未在雲端執行任何變更）。
+
+**核心主題歸類**:
+1.  **#670 升級驗證**: 在本機把 PR #670（https://github.com/info-vin/Archon/pull/670）合進 `dev/twins`（`1f07df07`），沒有衝突。server、mcp、agents 與全部排程 job 都實際啟動過，Supabase 指向關閉的連接埠，沒有 mock `create_client`。升級前後行為一致，沒有出現 `TypeError` 或 `Invalid API key`。測試結果是 8 失敗、781 通過，失敗的 8 個與基準相同。
+2.  **金鑰輪替前置風險（2026-11-24 已全數解除）**:
+    *   **MCP 認證 / `auth/utils.py` 不驗簽 fallback**：已於 PR #671 修復並合入 `dev/twins`。
+    *   **設定加密 (`crypto_utils.py`)**：已於 2026-11-24 Phase 5.13 引入獨立 `CREDENTIAL_ENCRYPTION_KEY` 並完成重加密與 `sb_secret_` 輪替。
+    *   **`Dockerfile.twin`**：已於 `5f7d4b36` pin `supabase==2.18.0`。
+3.  **HyDE 重新評估（DevBot 實驗，數字待人工標記校準，不對外引用）**: 現行 HyDE 基準與亂猜無法區分：合併 46 筆樣本 AUC 0.50（置換檢定 p≈0.98）。改用 ICP 文字當基準、再扣掉負向錨點，方向成立。λ 暫定 0.5（範圍 0.5–1.0）。B 類錨點不用於第一層。這批樣本與 ICP 文字高度重疊，不是獨立驗證。下一輪校準改用人工標記樣本，不再擴增 104 的爬取樣本。
+
+### 2026-11-18：service_role 外洩鑑識、JWT 輪替回滾、ICP 60:40 配額與第二層 LLM 分類（自 `pr669` 整併）
+記錄 2026-11-18 的決策：前端 `service_role` 外洩的根因與修復（PR #668，已合併）、Supabase Migrate JWT secret 後 Hugging Face 換用 `sb_secret` 啟動失敗並回滾、套件升級拆成 PR #670、人工標記與後續 PR 的閘門、ICP 排除規則與 A:B 配額、資料來源取捨，以及第二層評分改走 LLM 結構化分類。
+
+**核心主題歸類**:
+1.  **安全：前端 service_role 外洩、JWT 輪替回滾與 PR 拆分**:
+    *   **外洩事件**: `service_role` 金鑰曾出現在 `archon-enduser.vercel.app` 的前端 JS。**原因**: `docker-compose.yml:256` 的 fallback 在 `SUPABASE_ANON_KEY` 未設定時，把 `service_role` 當成 `VITE_SUPABASE_ANON_KEY` 注入前端建置。**修復**: PR #668 已於 2026-11-18 squash 合併進 `dev/twins`（`1f07df07`）。
+    *   **提醒**: `docker-compose.yml:256` 現在強制要求 `SUPABASE_ANON_KEY`，未設定時 compose 會失敗。`migration/20261118_revoke_truncate_and_test_rpcs.sql` 尚未在雲端執行，要等 Vincent 核准；執行前，`authenticated` 角色對 `leads`、`archon_tasks`、`archon_settings` 仍有 TRUNCATE 權限，`reset_test_database`／`seed_test_database` 仍開放給 PUBLIC 執行。
+    *   **JWT 輪替與 PR 拆分**: #668 只做安全修正，套件升級拆成 PR #670（`supabase` 2.15.1 → 2.18.0，並補上不 mock 的 smoke test）。後續輪替已於 2026-11-24 全數完成。
+2.  **流程與紀錄：人工標記過渡、報告路由與後續 PR 閘門**:
+    *   **人工標記先用試算表**: 人工標記先用試算表過渡兩週，不在 `leads` 加 `discarded` 狀態（避免與既有刪除路徑及至少 7 處未過濾 status 的查詢語意分叉）。
+    *   **每日 leads 報告路由**: 每日 leads 報告送到 Vincent 與幕僚長（Charlie）的聊天。
+    *   **G1 / G3 / G4 合成一個 PR**: G1（被刷掉的職缺結構化寫入）、G3（排程的開始與例外寫 log）、G4（judge 回傳拒絕理由）在 #668 合併後合成一個 PR，合併前問 Vincent。
+3.  **市場與 ICP：排除邊界、配額、客單價與公司規模（待 Phase 5.14 實作）**:
+    *   **C 類排除與 A/C 邊界**: C 類排除同業、SI、派遣、獵頭；自動化設備商算 C；研究機構與醫院算 A。
+    *   **A:B 配額**: A:B = 60:40，採配額制，不直接乘進評分權重。
+    *   **客單價與成交週期假設**: A 類 30–150 萬，B 類 10–50 萬（B 類先用轉介收費），成交週期 6 個月以上。
+    *   **公司規模**: A 類 30–300 人，不設資本額上限；B 類規模待定（Alice 提案約 30 人以下）。
+4.  **資料來源：開放資料替代、保留 104，以及指紋與 proxy 的事實修正**:
+    *   **不申請商工登記 API 白名單**: 改用免費的政府開放資料 API。
+    *   **保留 104 爬取**: 已知風險為 `robots.txt` 不允許 `/*keyword=*` 且 HF IP 被擋（近 30 天只成功 3 次）。
+    *   **指紋偽裝與 proxy 事實修正**: 程式有 `curl_cffi` impersonate 指紋偽裝（每 session 隨機選一次），無輪替 proxy，僅有 `archon_settings` 可選之 `CRAWLER_PROXY_URL`。
+5.  **評分：第二層改用 LLM 結構化分類**:
+    *   **第二層分類與驗證門檻**: 第二層改用 LLM 結構化分類 A/B/C/X（附信心與理由），先用 ≥30 筆人工標記驗證（現行 HyDE 相似度區分力不足，AUC ≈ 0.50；LLM 呼叫次數推估約為現行 4 倍，待實測校準）。
 
 ### 2026-11-04：Telegram 失聯深度鑑識、HF 部署同步門禁硬化 (Step 5.5) 與 CI/CD 自動發佈復原
 深度鑑識 11/04 Telegram 失聯事故，穿透實體日誌揭露 Hugging Face 因 `Dockerfile.server` 與 `deploy_to_hf.sh` 缺少 `GEMINI.md` 構建死鎖 3 天；實作 `scripts/phase_audit.py` Step 5.5 部署同步自動校驗門禁，釐清 GitHub Actions CI/CD 發佈鏈路，全線恢復雲端健康運作。
