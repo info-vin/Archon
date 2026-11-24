@@ -6,6 +6,7 @@ with a local HMAC key and are not credentials.
 
 import uuid
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import jwt
 import pytest
@@ -65,16 +66,38 @@ def test_verified_admin_user_can_read_admin_file(raw_client, mock_supabase_clien
     user = SimpleNamespace(
         id="admin-user",
         email="admin@example.com",
+        user_metadata={},
+    )
+    mock_supabase_client.auth.get_user.side_effect = None
+    mock_supabase_client.auth.get_user.return_value = SimpleNamespace(user=user)
+    token = _mint_hs256({"role": "authenticated", "sub": user.id, "email": user.email})
+
+    with patch("server.auth.dependencies.ProfileService") as mock_profile_svc:
+        mock_profile_svc.return_value.get_profile.return_value = (
+            True,
+            {"id": "admin-user", "email": "admin@example.com", "role": "system_admin"},
+        )
+        response = _read(raw_client, mock_supabase_client, token)
+
+    assert response.status_code == 200
+    assert "[pytest]" in response.text
+
+
+def test_user_metadata_role_cannot_escalate_to_admin(raw_client, mock_supabase_client):
+    user = SimpleNamespace(
+        id="attacker-user",
+        email="attacker@example.com",
         user_metadata={"role": "system_admin"},
     )
     mock_supabase_client.auth.get_user.side_effect = None
     mock_supabase_client.auth.get_user.return_value = SimpleNamespace(user=user)
     token = _mint_hs256({"role": "authenticated", "sub": user.id, "email": user.email})
 
-    response = _read(raw_client, mock_supabase_client, token)
+    with patch("server.auth.dependencies.ProfileService") as mock_profile_svc:
+        mock_profile_svc.return_value.get_profile.return_value = (False, None)
+        response = _read(raw_client, mock_supabase_client, token)
 
-    assert response.status_code == 200
-    assert "[pytest]" in response.text
+    assert response.status_code == 403
 
 
 def test_get_user_exception_is_unauthorized(raw_client, mock_supabase_client):

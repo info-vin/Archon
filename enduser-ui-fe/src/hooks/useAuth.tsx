@@ -8,7 +8,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (credentials: any) => Promise<void>;
-  register: (credentials: any) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -85,16 +84,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (credentials: any) => {
-    setLoading(true);
-    try {
-      const newUser = await api.register(credentials);
-      setUser(newUser);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const logout = async () => {
     try {
         await api.logout();
@@ -107,7 +96,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isAdmin = role === 'admin' || role === 'system_admin' || role === EmployeeRole.ADMIN || role === EmployeeRole.SYSTEM_ADMIN;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isAdmin, login, logout, loading }}>
       {loading ? (
         <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white font-sans">
              <div className="flex flex-col items-center gap-4">

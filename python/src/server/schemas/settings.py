@@ -170,6 +170,8 @@ class SchedulerConfig(BaseModel):
     alice_auto_fetch_days: str = Field(default="tue,wed,fri", alias="ALICE_AUTO_FETCH_DAYS")
     business_sentinel_hour: int = Field(default=8, alias="BUSINESS_SENTINEL_HOUR")
     business_sentinel_minute: int = Field(default=40, alias="BUSINESS_SENTINEL_MINUTE")
+    whitelist_crawler_patrol_hour: int = Field(default=10, alias="WHITELIST_CRAWLER_PATROL_HOUR")
+    whitelist_crawler_patrol_minute: int = Field(default=15, alias="WHITELIST_CRAWLER_PATROL_MINUTE")
 
     # Category 3: Stateful Weekly / Monthly Jobs
     weekly_executive_summary_days: str = Field(default="sun", alias="WEEKLY_EXECUTIVE_SUMMARY_DAYS")

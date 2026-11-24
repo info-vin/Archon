@@ -157,7 +157,10 @@ class CredentialManager:
                 try:
                     return CryptoUtils.decrypt_value(encrypted_value)
                 except Exception as e:
-                    logger.error(f"Failed to decrypt credential {key}: {e}")
+                    logger.error(f"Failed to decrypt credential {key}, falling back to env: {e}")
+                    env_value = os.getenv(key) or os.getenv(key.upper())
+                    if env_value:
+                        return env_value
                     return default
 
         if isinstance(value, str):

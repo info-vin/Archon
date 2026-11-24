@@ -29,6 +29,8 @@ class EnvironmentConfig:
     gemini_api_key: str | None = None
     google_api_key: str | None = None
     supabase_db_url: str | None = None
+    credential_encryption_key: str | None = None
+    previous_supabase_service_key: str | None = None
     offline_mode: bool = False
     archon_env: str = ""
     space_id: str | None = None
@@ -286,6 +288,8 @@ def load_environment_config() -> EnvironmentConfig:
         supabase_url=supabase_url,
         supabase_service_key=supabase_service_key,
         supabase_db_url=supabase_db_url,
+        credential_encryption_key=os.getenv("CREDENTIAL_ENCRYPTION_KEY"),
+        previous_supabase_service_key=os.getenv("PREVIOUS_SUPABASE_SERVICE_KEY"),
         offline_mode=offline_mode,
         archon_env=archon_env,
         space_id=space_id,

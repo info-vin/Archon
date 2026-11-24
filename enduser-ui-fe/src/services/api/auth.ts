@@ -1,7 +1,7 @@
 import { supabase } from './client';
 import { userState } from './base';
 import { Employee, EmployeeRole, AssignableUser } from '../../types.ts';
-import { LoginCredentials, RegistrationData, AdminNewUserData } from './types';
+import { LoginCredentials, AdminNewUserData } from './types';
 import { callAPI } from './apiClient';
 
 export const authApi = {
@@ -18,16 +18,6 @@ export const authApi = {
       return this.getCurrentUser();
     }
     throw new Error("Login failed. Please check your credentials.");
-  },
-
-  async register(credentials: RegistrationData): Promise<Employee | null> {
-    userState.cache = null; 
-    await callAPI('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(credentials)
-    });
-
-    return this.login({ email: credentials.email, password: credentials.password });
   },
 
   async adminCreateUser(userData: AdminNewUserData): Promise<Employee> {
