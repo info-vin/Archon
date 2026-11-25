@@ -104,9 +104,15 @@ class TestWhitelistCrawlerPatrol:
         mock_crawler = MagicMock()
         mock_crawler.orchestrate_crawl = AsyncMock(return_value={"success": True})
 
+        logged_events: list[tuple[str, str, str]] = []
+
+        def _capture(job_name: str, phase: str, message: str, details=None, level: str = "INFO", supabase=None) -> None:
+            logged_events.append((job_name, phase, level))
+
         with (
             patch("src.server.services.scheduler.jobs.crawler_patrol.get_supabase_client", return_value=mock_supabase),
             patch("src.server.services.scheduler.jobs.crawler_patrol.BaseRepository") as mock_repo_cls,
+            patch("src.server.services.scheduler.jobs.crawler_patrol.log_patrol_event", side_effect=_capture),
             patch("src.server.services.crawling.crawling_service.CrawlingService", return_value=mock_crawler),
         ):
             mock_repo = mock_repo_cls.return_value
@@ -119,8 +125,17 @@ class TestWhitelistCrawlerPatrol:
             count = await run_whitelist_crawler_patrol()
 
         assert count == 2
+        assert ("whitelist_crawler_patrol", "start", "INFO") in logged_events
+        assert ("whitelist_crawler_patrol", "completed", "INFO") in logged_events
         crawled_urls = [call.args[0]["url"] for call in mock_crawler.orchestrate_crawl.call_args_list]
         assert crawled_urls == [
             "https://ai.google.dev/gemini-api/docs/deprecations?hl=zh-tw",
             "https://ai.google.dev/gemini-api/docs/troubleshooting?hl=zh-tw",
         ]
+
+    def test_scheduler_config_alice_auto_fetch_interval_ssot(self):
+        from src.server.schemas.settings import SchedulerConfig
+
+        cfg = SchedulerConfig.model_validate({"ALICE_AUTO_FETCH_INTERVAL_HOURS": 6})
+        assert cfg.alice_auto_fetch_interval_hours == 6
+        assert not hasattr(cfg, "alice_auto_fetch_days")

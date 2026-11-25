@@ -92,10 +92,23 @@ class TestPhase514QuotaAndG1G3G4:
             logged_events.append((job_name, phase, level))
 
         with (
-            patch.object(leads_patrol, "_log_patrol_event", side_effect=_capture),
+            patch.object(leads_patrol, "log_patrol_event", side_effect=_capture),
             patch("src.server.services.job_board_service.JobBoardService", side_effect=RuntimeError("104 WAF down")),
         ):
             await leads_patrol.run_auto_fetch_leads()
 
         assert ("alice_auto_fetch", "start", "INFO") in logged_events
         assert ("alice_auto_fetch", "error", "ERROR") in logged_events
+
+    @pytest.mark.parametrize("status_code", [429, 503])
+    def test_job104_search_api_raises_blocked_on_429_and_503(self, status_code: int):
+        from src.server.services.crawling.clients.job104_client import CrawlerBlockedException, Job104Crawler
+
+        crawler = Job104Crawler()
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.status_code = status_code
+        mock_client.get.return_value = mock_response
+
+        with pytest.raises(CrawlerBlockedException, match=str(status_code)):
+            crawler._fetch_from_104_sync(mock_client, "AI", limit=5, page=1)

@@ -8,6 +8,7 @@ from typing import Any
 
 from src.server.config.logfire_config import get_logger
 from src.server.repositories.base_repository import BaseRepository
+from src.server.services.scheduler.utils import log_patrol_event
 from src.server.utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -50,6 +51,7 @@ async def run_whitelist_crawler_patrol() -> int:
 
     logger.info("🕷️ Clockwork: Checking scheduled whitelist crawler targets...")
     supabase = get_supabase_client()
+    log_patrol_event("whitelist_crawler_patrol", "start", "Whitelist crawler patrol started.", supabase=supabase)
     repo = BaseRepository(supabase)
 
     success, res = repo.execute_query(
@@ -60,11 +62,19 @@ async def run_whitelist_crawler_patrol() -> int:
     )
     if not success or not isinstance(res, dict):
         logger.error("Failed to fetch archon_crawler_targets for scheduled patrol.")
+        log_patrol_event(
+            "whitelist_crawler_patrol",
+            "error",
+            "Failed to fetch archon_crawler_targets.",
+            level="ERROR",
+            supabase=supabase,
+        )
         return 0
 
     targets = res.get("data") or []
     now = datetime.now(UTC)
     crawled_count = 0
+    failed_urls: list[str] = []
     crawler = CrawlingService(supabase_client=supabase)
 
     for target in targets:
@@ -94,6 +104,15 @@ async def run_whitelist_crawler_patrol() -> int:
             crawled_count += 1
         except Exception as e:
             logger.error(f"💥 Whitelist Patrol failed for '{target_url}': {e}", exc_info=True)
+            failed_urls.append(str(target_url))
 
+    log_patrol_event(
+        "whitelist_crawler_patrol",
+        "completed",
+        f"Whitelist crawler patrol finished ({crawled_count} targets crawled).",
+        details={"crawled_count": crawled_count, "failed_urls": failed_urls, "total_active": len(targets)},
+        level="WARNING" if failed_urls else "INFO",
+        supabase=supabase,
+    )
     logger.info(f"✅ Clockwork: Whitelist crawler patrol finished ({crawled_count} targets crawled).")
     return crawled_count

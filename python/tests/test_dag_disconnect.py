@@ -15,7 +15,7 @@ def test_alice_is_interval_trigger():
     source = inspect.getsource(service._schedule_jobs)
 
     # Simple substring check is enough to ensure it's not a CronTrigger anymore
-    assert "IntervalTrigger(hours=12)" in source, "alice_auto_fetch should use IntervalTrigger(hours=12)"
+    assert "IntervalTrigger(hours=config.alice_auto_fetch_interval_hours)" in source, "alice_auto_fetch should use SSOT IntervalTrigger(hours=config.alice_auto_fetch_interval_hours)"
     assert "alice_auto_fetch" in source
     assert "self._should_run_scheduled_job" in source
     assert "_should_run_opportunistic_weekly" not in source

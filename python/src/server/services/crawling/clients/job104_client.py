@@ -71,9 +71,9 @@ class Job104Crawler:
         }
         try:
             response = client.get(self.base_url, params=params)
-            if response.status_code == 429 or response.status_code == 503:
-                logger.warning(f"Temporary block detected: {response.status_code}")
-                return []
+            if response.status_code in (429, 503):
+                logger.warning(f"104 WAF/Rate-Limit detected on search API: HTTP {response.status_code}")
+                raise CrawlerBlockedException(f"104 WAF/Rate-Limit detected (HTTP {response.status_code}).")
 
             if response.status_code != 200 or "application/json" not in response.headers.get("content-type", ""):
                 return []
@@ -96,6 +96,8 @@ class Job104Crawler:
                     )
                 )
             return parsed_jobs
+        except CrawlerBlockedException:
+            raise
         except Exception as e:
             logger.exception(f"Error fetching jobs: {e}")
             return []

@@ -75,3 +75,30 @@ def normalize_agent_identity(agent_id_or_name: str | None) -> tuple[str, str]:
             return role_uuid, role_name
 
     return raw, raw
+
+
+def log_patrol_event(
+    job_name: str,
+    phase: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+    level: str = "INFO",
+    supabase: Any = None,
+) -> None:
+    """Shared G3 structured scheduler lifecycle logging (start / completed / error) into archon_logs."""
+    try:
+        client = supabase or get_supabase_client()
+        payload_details = {"job_name": job_name, "phase": phase, **(details or {})}
+        BaseRepository(client).execute_query(
+            client.table("archon_logs").insert(  # 合法
+                {
+                    "source": "clockwork-scheduler",
+                    "level": level,
+                    "message": message,
+                    "details": payload_details,
+                }
+            ),
+            f"Failed to log patrol {phase} for {job_name}",
+        )
+    except Exception as log_err:
+        logger.warning(f"Failed to write G3 patrol log ({job_name}:{phase}): {log_err}")
