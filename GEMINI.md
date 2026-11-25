@@ -167,98 +167,22 @@
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
 > `2026年1月 ～ 10月` 歷史已轉化為 5 篇公開技術部落格（見 `migration/20261125_seed_ch4_engineering_blogs.sql` 與 `public.blog_posts`），原始紀錄可於 Git 歷史追溯。
 
-## 2026年11月（自第三章封存整併）
-
-### 2026-11-19：#670 升級驗證、金鑰輪替前置風險與 HyDE 重新評估（自 `pr669` 整併）
-記錄 2026-11-19 的驗證結果與待決事項（均未部署、未在雲端執行任何變更）。
+### 2026年11月：資安防護加固、規則通用遷移、HF 部署門禁與四大角色排程收斂
+十一月份完成了前端 `service_role` 外洩鑑識與 `supabase` 套件升級驗證、`.jules/` 規則全量平移至 `.agents/rules/`、HF 部署漏檔門禁（Step 5.5）與 3 天停機復原，並透過雲端探針根除四大角色週期作業 7 大斷層與校準週預算閾值。
 
 **核心主題歸類**:
-1.  **#670 升級驗證**: 在本機把 PR #670（https://github.com/info-vin/Archon/pull/670）合進 `dev/twins`（`1f07df07`），沒有衝突。server、mcp、agents 與全部排程 job 都實際啟動過，Supabase 指向關閉的連接埠，沒有 mock `create_client`。升級前後行為一致，沒有出現 `TypeError` 或 `Invalid API key`。測試結果是 8 失敗、781 通過，失敗的 8 個與基準相同。
-2.  **金鑰輪替前置風險（2026-11-24 已全數解除）**:
-    *   **MCP 認證 / `auth/utils.py` 不驗簽 fallback**：已於 PR #671 修復並合入 `dev/twins`。
-    *   **設定加密 (`crypto_utils.py`)**：已於 2026-11-24 Phase 5.13 引入獨立 `CREDENTIAL_ENCRYPTION_KEY` 並完成重加密與 `sb_secret_` 輪替。
-    *   **`Dockerfile.twin`**：已於 `5f7d4b36` pin `supabase==2.18.0`。
-3.  **HyDE 重新評估（DevBot 實驗，數字待人工標記校準，不對外引用）**: 現行 HyDE 基準與亂猜無法區分：合併 46 筆樣本 AUC 0.50（置換檢定 p≈0.98）。改用 ICP 文字當基準、再扣掉負向錨點，方向成立。λ 暫定 0.5（範圍 0.5–1.0）。B 類錨點不用於第一層。這批樣本與 ICP 文字高度重疊，不是獨立驗證。下一輪校準改用人工標記樣本，不再擴增 104 的爬取樣本。
-
-### 2026-11-18：service_role 外洩鑑識、JWT 輪替回滾、ICP 60:40 配額與第二層 LLM 分類（自 `pr669` 整併）
-記錄 2026-11-18 的決策：前端 `service_role` 外洩的根因與修復（PR #668，已合併）、Supabase Migrate JWT secret 後 Hugging Face 換用 `sb_secret` 啟動失敗並回滾、套件升級拆成 PR #670、人工標記與後續 PR 的閘門、ICP 排除規則與 A:B 配額、資料來源取捨，以及第二層評分改走 LLM 結構化分類。
-
-**核心主題歸類**:
-1.  **安全：前端 service_role 外洩、JWT 輪替回滾與 PR 拆分**:
-    *   **外洩事件**: `service_role` 金鑰曾出現在 `archon-enduser.vercel.app` 的前端 JS。**原因**: `docker-compose.yml:256` 的 fallback 在 `SUPABASE_ANON_KEY` 未設定時，把 `service_role` 當成 `VITE_SUPABASE_ANON_KEY` 注入前端建置。**修復**: PR #668 已於 2026-11-18 squash 合併進 `dev/twins`（`1f07df07`）。
-    *   **提醒**: `docker-compose.yml:256` 現在強制要求 `SUPABASE_ANON_KEY`，未設定時 compose 會失敗。`migration/20261118_revoke_truncate_and_test_rpcs.sql` 已於後續由 Vincent 在雲端 Supabase 執行完成。
-    *   **JWT 輪替與 PR 拆分**: #668 只做安全修正，套件升級拆成 PR #670（`supabase` 2.15.1 → 2.18.0，並補上不 mock 的 smoke test）。後續輪替已於 2026-11-24 全數完成。
-2.  **流程與紀錄：人工標記過渡、報告路由與後續 PR 閘門**:
-    *   **人工標記先用試算表**: 人工標記先用試算表過渡兩週，不在 `leads` 加 `discarded` 狀態（避免與既有刪除路徑及至少 7 處未過濾 status 的查詢語意分叉）。
-    *   **每日 leads 報告路由**: 每日 leads 報告送到 Vincent 與幕僚長（Charlie）的聊天。
-    *   **G1 / G3 / G4 合成一個 PR**: G1（被刷掉的職缺結構化寫入）、G3（排程的開始與例外寫 log）、G4（judge 回傳拒絕理由）在 #668 合併後合成一個 PR，合併前問 Vincent。
-3.  **市場與 ICP：排除邊界、配額、客單價與公司規模（待 Phase 5.14 實作）**:
-    *   **C 類排除與 A/C 邊界**: C 類排除同業、SI、派遣、獵頭；自動化設備商算 C；研究機構與醫院算 A。
-    *   **A:B 配額**: A:B = 60:40，採配額制，不直接乘進評分權重。
-    *   **客單價與成交週期假設**: A 類 30–150 萬，B 類 10–50 萬（B 類先用轉介收費），成交週期 6 個月以上。
-    *   **公司規模**: A 類 30–300 人，不設資本額上限；B 類規模待定（Alice 提案約 30 人以下）。
-4.  **資料來源：開放資料替代、保留 104，以及指紋與 proxy 的事實修正**:
-    *   **不申請商工登記 API 白名單**: 改用免費的政府開放資料 API。
-    *   **保留 104 爬取**: 已知風險為 `robots.txt` 不允許 `/*keyword=*` 且 HF IP 被擋（近 30 天只成功 3 次）。
-    *   **指紋偽裝與 proxy 事實修正**: 程式有 `curl_cffi` impersonate 指紋偽裝（每 session 隨機選一次），無輪替 proxy，僅有 `archon_settings` 可選之 `CRAWLER_PROXY_URL`。
-5.  **評分：第二層改用 LLM 結構化分類**:
-    *   **第二層分類與驗證門檻**: 第二層改用 LLM 結構化分類 A/B/C/X（附信心與理由），先用 ≥30 筆人工標記驗證（現行 HyDE 相似度區分力不足，AUC ≈ 0.50；LLM 呼叫次數推估約為現行 4 倍，待實測校準）。
-
-### 2026-11-04：Telegram 失聯深度鑑識、HF 部署同步門禁硬化 (Step 5.5) 與 CI/CD 自動發佈復原
-深度鑑識 11/04 Telegram 失聯事故，穿透實體日誌揭露 Hugging Face 因 `Dockerfile.server` 與 `deploy_to_hf.sh` 缺少 `GEMINI.md` 構建死鎖 3 天；實作 `scripts/phase_audit.py` Step 5.5 部署同步自動校驗門禁，釐清 GitHub Actions CI/CD 發佈鏈路，全線恢復雲端健康運作。
-
-**核心主題歸類**:
-1.  **Telegram 失聯穿透鑑識與根因破案 (Evidence First & Log Truth)**:
-    *   **排程中斷真相**: 實體探針查詢 Supabase，`archon_tasks` 最後執行停在 `2026-11-01T08:18:05Z`，`archon_logs` 停在 `2026-11-02T03:55:05Z`，排程器已停擺整整 3 天。
-    *   **Telegram 通路驗證**: 直接調用 `TelegramService` 直連發送測試訊息，回傳 `Result: True` 且使用者實體驗收，證明 Token、Vercel Proxy 與 Chat ID 完全正常無損。
-    *   **HF 構建死鎖破案**: 鑑識 11/02 提交 `402ff3f9` 新增 `COPY GEMINI.md /app/GEMINI.md`，然而 `deploy_to_hf.sh` 漏掉了 `GEMINI.md` 的 checkout 與 `git add`，導致 HF 於 `2026-11-02T07:53:02Z` 構建失敗（`ERROR: "/GEMINI.md": not found`），Space 陷入 `BUILD_ERROR` 503 停機。
-2.  **架構級雙向同步門禁硬化 (Step 5.5 & Pre-flight)**:
-    *   **Step 5.5 自動化同步稽核**: 於 `scripts/phase_audit.py` 新增 `docker_deploy_sync_audit`，以正則動態解析 `Dockerfile.server` 所有 `COPY` 指令，強制比對 `scripts/deploy_to_hf.sh` 之 checkout 與 `git add` 清單；一旦有漏帶直接 `❌ VIOLATION` 並 Exit 1 阻斷。
-    *   **Step 5 雲端故障紅燈阻斷**: 修正過去 `phase_audit.py` 遇 `BUILD_ERROR` 仍印出綠勾 `✅` 之假性通過漏洞，強制對非 RUNNING 狀態亮紅燈 `❌` 並穿透打印容器錯誤日誌。
-    *   **部署 Pre-flight 物理斷言**: 於 `scripts/deploy_to_hf.sh` 構建提交前加入檔案存在迴圈校驗，未齊全前嚴禁推送。
-3.  **CI/CD 發佈管線對帳與全鏈路復原**:
-    *   **發佈權限對帳**: 鑑識本機環境與 Keychain 之 `HF_TOKEN` 僅為唯讀角色（`HF_RAG_API`, `role: read`），而具備 Write 權限之 `deploy-key` 實體存放於 GitHub Actions `secrets.HF_TOKEN`。
-    *   **正規管線自動發佈**: 執行 `make merge-twins` 將修復合入 `dev/twins`，觸發 `.github/workflows/deploy-hf.yml`，成功上傳包含 `GEMINI.md` 與 `.agents/rules` 之完整上下文至 Hugging Face。
-    *   **容器啟動公證**: HF Space 重新構建耗時約 3 分鐘成功轉為 `RUNNING`，實體穿透 `/health` 端點回傳 `200 Healthy`。
-4.  **全門禁公證通過**:
-    *   通過 `make lint-be`（395 檔 MyPy 100% 綠燈，0 錯誤）、`make test-be-fast`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁（Step 5.5 同步通過）。
-
-### 2026-11-03：Jules 規則平移至 .agents/rules、agent_rules_compaction 重構與全門禁公證
-因應 Google 官方宣布關閉 Jules 獨立服務，全量平移 `.jules/` 規則指南至通用 `.agents/rules/`，重構排程為 `agent_rules_compaction`，自癒 PR #666 遺留之規則超額與幻覺日期，並修復 `patrol_infra.py` 之 `NetworkConfig.huggingface_endpoint` SSOT 回退機制。
-
-**核心主題歸類**:
-1.  **規則庫通用平移與基礎設施拓樸對齊 (`.agents/rules/`)**:
-    *   **規則檔案遷移**: 建立 `.agents/rules/` 並完整遷移 6 份規則指南（`bolt.md`, `contractor.md`, `palette.md`, `qa.md`, `reaper.md`, `type_guardian.md`），安全移除 legacy `.jules/`。
-    *   **容器與建置拓樸同步**: 同步更新 `docker-compose.yml`（掛載 `./.agents/rules:/app/.agents/rules`）、`Dockerfile.server`（`COPY .agents/rules/ /app/.agents/rules/`）與 `scripts/deploy_to_hf.sh`（`git checkout -- .agents/rules/`）。
-2.  **月度排程重構與向後相容墊片 (`agent_rules_compaction.py`)**:
-    *   **排程服務重構**: 建立 `python/src/server/services/scheduler/jobs/agent_rules_compaction.py`，實作 `run_monthly_agent_rules_compaction`，支援自適應路徑解析（優先尋訪 `.agents/rules` 並相容 `.jules` 備援），在 `jules_compaction.py` 保留向後相容墊片（Shim）。
-    *   **SSOT 設定與 API 路由對齊**: 於 `SchedulerConfig` 擴充 `monthly_agent_rules_compaction_*` 與 `agent_rules_max_entries_per_file`，透過 `model_validator` 雙向同步舊鍵名；同步於 `scheduler_service.py`、`admin_api.py` 與 `internal_api.py` 雙向註冊觸發端點。
-3.  **PR #666 規則超限自癒與測試斷層修復 (Rule 1 & Rule 13)**:
-    *   **`type_guardian.md` 規則壓縮自癒**: 識別遠端合入之 PR #666 引入幻覺日期前綴（`## 2026-04-16`）及規則數超限（6 條），外科手術式將學習要點融合至 Rule 1 與 Rule 5，降回 5 條核心規則。
-    *   **`patrol_infra.py` SSOT 回退防禦**: 鑑識 PR #666 強化 `SettingsService` 型別防禦後，使得 `HUGGINGFACE_ENDPOINT` 在 DB 空值時回傳 `None` 觸發測試斷層；於 `NetworkConfig` 擴充 `huggingface_endpoint`（支援 `load_from_env`），在 `patrol_infra.py` 加入 SSOT 回退並提前導入 `SettingsService` 消除 BaseRepository 測試 Mock 碰撞。
-4.  **全門禁公證通過**:
-    *   通過 `make lint-fe`、`make lint-be`（395 檔 0 錯誤）、`make test-be-fast`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁（Step 11 驗證通過）。
-
-### 2026-11-02：遠端分支三向衝突鑑識、四大角色週期作業 7 大斷層根除與 Token 預算閾值校準
-針對遠端待審分支執行三向衝突鑑識與廢棄分支清理，並以實體探針直連雲端 Supabase 對 Alice、Bob、Charlie、David 四大角色之週期排程與工單產出物進行端到端穿透稽核，一舉根除 7 大潛伏斷層與虛假完成狀態，同時完成週預算閾值之真實數據校準。
-
-**核心主題歸類**:
-1.  **遠端 PR 驗收、5 大待審分支三向衝突鑑識與清理 (Ref: 11-02)**:
-    *   **已合入 PR 驗收 (#658, #659, #661, #663)**: 驗證 `TaskAssignmentTab` `useMemo` 緩存、`auth_service` `UserProfileDictDTO` 陣列邊界防禦、`ProjectModal` WAI-ARIA 無障礙強化及 `CodeExamplesResponse` 搜尋合約對齊。
-    *   **三向衝突鑑識與外科提取 (`git merge-tree`)**: 拒絕與 PR #663 發生 4 檔雙向衝突之重複分支 `7403...` 及 0 變更空提交分支 `1278...`；確認 `1124...` 已合入歷史；針對 `admin_service` (`a2b93b41`) 與 `ethics_service` (`ad800815`) 執行物理 Schema 對帳（確認 `archon_crawler_targets.target_url`）與無衝突代碼提取，並刪除遠端 5 條已廢棄分支。
-    *   **Jules 規則門禁壓縮**: 壓縮 `.jules/*.md` 四大規則檔，移除日期標題並維持各檔 `<= 5` 條核心規則。
-
-2.  **四大角色 (Alice, Bob, Charlie, David) 週期作業 7 大斷層清剿與 SSOT/DRY 治理 (Ref: 11-02)**:
-    *   **排程共用工具收斂 (DRY)**: 新建 `python/src/server/services/scheduler/utils.py`，統一收斂 `resolve_project_root()`、`get_default_project_id()` 與 `normalize_agent_identity()`，拔除散落於 `architecture_patrol.py`、`tech_debt_patrol.py`、`leads_patrol.py`、`sentinel_patrol.py` 的重複私有函式。
-    *   **Agent 身份雙模對齊與工單揀選修復**: 解決排程器寫入 UUID (`00000000-...`) 而 `WorkerService` / `AgentDispatcher` / `agent_registry` 僅匹配顯示名稱 (`Archon MarketBot` 等) 的斷層；在 `WorkerService` 展開雙向別名池查詢並廢除 `assignee="User"` 失敗轉嫁，改設 `status="failed"` 配合指數退避重試。
-    *   **根除 `{"content": null}` 假完成報告**: 鑑識出 Gemini 回傳 `tool_calls` 時 `message.content` 為 `None`，舊 `DefaultLLMStrategy` 僅跑 1 輪 Tool 即把 `None` 寫入 `attachments.summary` 並標記 `done`。重構為最多 3 輪 Tool 呼叫迴圈，並在耗盡時注入 `tool_choice="none"` 強制最終文字收斂回合，同時攔截空字串標記為 `failed`。
-    *   **Bob 市場戰報路由、狀態鎖與水位線防禦**: 擴充 `DailyMarketReportStrategy` 標題識別以攔截 `[Auto-Task] Daily Market Report` 進入真實 `MarketService` 管線；修復 `_trigger_stateful_daily_event` 未解構 `(bool, dict)` Tuple 及失敗時誤寫 `LAST_RUN_*` 水位線之漏洞；於 `update_logic.py` 將 `LAST_RUN_BOB_MARKET_REPORT` 移至 `status == "done"` 分支，確保失敗工單可於下次巡檢自動補跑。
-    *   **David 工程回顧容器掛載與 SSOT 稽核對齊**: 於 `docker-compose.yml` 與 `Dockerfile.server` 補齊 `./GEMINI.md:/app/GEMINI.md:ro` 掛載，並在 `tech_debt_patrol.py` 新增雲端 `archon_tasks` 7 日紀錄 Fallback；同步更新 `run_ssot_audit` 支援 `# 合法` 豁免標記並將掃描範圍擴展至整個 `src/`。
-    *   **Charlie 星環報告非同步競態修復**: 刪除 `report_service.py` 頂層幽靈 `asyncio.Lock()`，全面委派予 `SummaryTaskHelper` 之 Lazy Loop-Safe Lock。
-
-3.  **Cost Sentinel 雲端 Token 遙測對帳與週預算閾值調升 (Ref: 11-02)**:
-    *   **實體數據對帳**: 探針直連雲端 `token_usage` 統計近 7 日消耗為 `238,807 tokens / $0.1332 USD`（近 30 日 `789,163 tokens / $0.2325 USD`，日均約 `$0.019 USD`），證明舊設定 `WEEKLY_BUDGET_THRESHOLD = $0.05 USD` 嚴重偏低，導致每日巡檢皆觸發超標告警並額外消耗 7 次緊急語音 TTS 配額。
-    *   **SSOT 與雲端同步調升**: 將 `settings.py` 之 `BudgetConfig.weekly_budget_threshold` 與雲端 Supabase `archon_settings.WEEKLY_BUDGET_THRESHOLD` 同步調升至 `$0.25 USD`（約正常週消耗之 1.8 倍安全水位），解除假性超標警報。
-
-4.  **全系統品質門禁公證 (Ref: 11-02)**:
-    *   **靜態、單元測試與階段稽核全綠**: 通過 `make lint`（前端雙專案、後端 394 檔 MyPy/Ruff 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁。
+1.  **資安外洩鑑識、#670 升級驗證與金鑰輪替前置準備 (Ref: 11-18, 11-19)**:
+    *   **`service_role` 外洩修復**: 鑑識 `docker-compose.yml:256` fallback 在未設 `SUPABASE_ANON_KEY` 時將 `service_role` 注入前端建置；PR #668 合併修復並強制要求 `SUPABASE_ANON_KEY`，同時於雲端執行 `migration/20261118_revoke_truncate_and_test_rpcs.sql`。
+    *   **#670 升級與前置風險解除**: 合入 PR #670（`supabase` `2.15.1 → 2.18.0`），781 passed / 8 failed 與基準一致；MCP 認證 / `auth/utils.py` 不驗簽 fallback 於 PR #671 修復，設定加密與 `Dockerfile.twin` pin 於後續 Phase 5.13 全數解除。
+2.  **104 商業漏斗、ICP 配額與 HyDE / LLM 分類校準 (Ref: 11-18, 11-19)**:
+    *   **ICP 與配額決策**: 確立 C 類排除同業/SI/派遣/獵頭/自動化設備商（研究機構與醫院算 A）、A:B = 60:40 配額制、開放資料替代商工登記 API、保留 `curl_cffi` 指紋偽裝並註記 104 風險。
+    *   **評分校準**: 實測現行 HyDE 基準 46 筆樣本 AUC 0.50（p≈0.98），改用第二層 LLM 結構化 A/B/C/X 分類並待 ≥30 筆人工標記驗證；G1/G3/G4 合成 PR 推進至 Phase 5.14。
+3.  **Telegram 失聯鑑識、HF 部署同步門禁 (Step 5.5) 與 CI/CD 復原 (Ref: 11-04)**:
+    *   **構建死鎖破案**: 穿透日誌確認 `11/02` 提交新增 `COPY GEMINI.md` 卻漏改 `deploy_to_hf.sh`，導致 HF 陷入 `BUILD_ERROR` 停擺 3 天。
+    *   **Step 5.5 同步稽核與復原**: 於 `scripts/phase_audit.py` 新增 `docker_deploy_sync_audit` 正則比對 `Dockerfile.server` 與打包清單、Step 5 非 RUNNING 強制亮紅燈，並經 GitHub Actions `deploy-hf.yml` 復原 `/health` `200 Healthy`。
+4.  **規則庫通用遷移與 `agent_rules_compaction` 重構 (Ref: 11-03)**:
+    *   **`.agents/rules/` 平移**: 因應 Jules 服務關閉，將 6 份規則遷移至 `.agents/rules/` 並同步 `docker-compose.yml`、`Dockerfile.server`、`deploy_to_hf.sh`，壓縮 PR #666 超限規則回 `<= 5` 條；補齊 `NetworkConfig.huggingface_endpoint` 回退。
+5.  **四大角色週期作業 7 大斷層根除與 Token 週預算校準 (Ref: 11-02)**:
+    *   **PR 驗收與分支清理**: 驗收 #658/#659/#661/#663，外科提取 `admin_service` / `ethics_service` 並刪除 5 條廢棄分支。
+    *   **DRY 與 7 大斷層修復**: 收斂 `scheduler/utils.py`、修復 UUID/名稱雙模對齊與 `{"content": null}` 假完成（3 輪 Tool + `tool_choice="none"`）、修正 `LAST_RUN_BOB_MARKET_REPORT` 水位線與 `report_service.py` Lock 競態。
+    *   **週預算校準**: 實測雲端 `token_usage` 7 日消耗 `238,807 tokens / $0.1332 USD`（30 日 `$0.2325 USD`），將 `WEEKLY_BUDGET_THRESHOLD` 自 `$0.05` 調升至 `$0.25 USD`，全門禁 839 passed 通過。
