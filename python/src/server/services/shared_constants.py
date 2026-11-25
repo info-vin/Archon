@@ -44,6 +44,13 @@ class TaskFeatureEnum(StrEnum):
     INFORMATION_REQUEST = "information_request"
 
 
+class WorkflowStatusEnum(StrEnum):
+    RUNNING = "RUNNING"
+    WAITING_APPROVAL = "WAITING_APPROVAL"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class PromptNameEnum(StrEnum):
     MAP_REDUCE_ALICE_PROMPT = "MAP_REDUCE_ALICE_PROMPT"
     MAP_REDUCE_BOB_PROMPT = "MAP_REDUCE_BOB_PROMPT"

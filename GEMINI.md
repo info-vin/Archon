@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-25 完成 P0 雲端唯讀物理探針與 Phase 5.15 Stage 1（P1）Bot SSOT/DRY 收斂與死碼清理（接續 11-24 Phase 5.14 `4b59ffa6` A/B/C/X 評分與 G1/G3/G4 上線）：確認雲端 `ALICE_LEAD_JUDGE` 已更新為 A/B/C/X 嚴格 JSON、104 抓取維持只在本機執行；依雲端真實工單分布（Supervisor `f0f00000` 106 筆）統一所有 Bot UUID（Supervisor=`f0f00000`、POBot 修正非法 `p0b00000` 為 `c0a00000`、補齊 Clockwork 至 `archon_agents`），產出冪等雲端遷移檔 `migration/20261125_align_bot_ssot_uuids.sql`；移除零使用死碼（`SummaryAgent`、`jules_compaction.py`、`workflow_engine.py`）並依營運成本考量整組退場 0 工單之 `PresentationBot`；修正 `engine_beta_graph.py` 硬編碼模型改走 `model_ssot.py`；補齊 `GEMINI.md` 漏記之 Phase 5.14 紀錄並對齊過時分支。
-*   **今日目標 (Today's Goal)**: 由使用者於 Supabase SQL Editor 執行 `migration/20261125_align_bot_ssot_uuids.sql` 後重跑 P0 探針驗證雙表 100% 一致；接著進入 Stage 2（P2：類 Grok Bot 的 A2A 直接 Handoff、既有 `agent_checkpoints` 接線與 Telegram 雙向指令/審批）。
+*   **當前狀態 (Current Context)**: 2026-11-25 完成 Phase 5.15 Stage 1（P1）Bot SSOT/DRY 收斂（`d98e43a3`，雲端雙表 100% 對齊）與 Stage 2（P2）類 Grok Bot A2A 協作與 Telegram 雙向指令/審批：實作統一 `AgentCard` 與 A2A 直接 Handoff（`a2a_handoff.py` + `nodes.py`，支援允許清單、防自迴圈與 `max_steps` 熔斷，直通交棒省下 `gemini-3.6-flash` 配額）；接線既有 `AgentCheckpointManager` 至 `WorkflowEngine` 支援 `resume_from_checkpoint` 斷點續跑；新增 `TelegramBotGateway`（`telegram_bot_gateway.py`）與 `POST /api/telegram/webhook`（`telegram_webhook_api.py`），具備 Fail-Closed `X-Telegram-Bot-Api-Secret-Token` 驗證、`chat_id` 白名單、`update_id` 冪等去重、`/task` / `@agent` / `/status` 指令、Inline 審批按鈕喚醒續跑與 HF Space 休眠補拉 `poll_missed_updates()`。
+*   **今日目標 (Today's Goal)**: 驗收並提交推送 Phase 5.15 Stage 2（P2）至 `dev/twins`；於雲端設定 `TELEGRAM_WEBHOOK_SECRET` 並設定 Telegram Webhook URL 後進行實體手機端對端測試。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -123,14 +123,18 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026-11-25：Phase 5.15 Stage 1 (P1) Bot SSOT/DRY 收斂、死碼與 PresentationBot 退場及 Phase 5.14 補錄
+### 2026-11-25：Phase 5.15 Stage 1 (P1) Bot SSOT 收斂與 Stage 2 (P2) A2A 直接 Handoff + Telegram 雙向審批
 1.  **P0 雲端唯讀探針與 Phase 5.14 補錄（`4b59ffa6`）**:
     *   補錄 2026-11-24 `4b59ffa6` 已完成 [Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md)（A/B/C/X 評分、G1/G3/G4 結構化日誌、A:B=60:40 配額），且 `migration/20261118_revoke_truncate_and_test_rpcs.sql` 與 `migration/20261124_update_alice_lead_judge_abcx.sql` 皆已於雲端執行。
     *   確認 104 職缺抓取（`alice_auto_fetch`）維持只在本機執行，HF Space 跳過屬預期行為。
-2.  **Bot SSOT/DRY 收斂與死碼退場 (Stage 1 / P1)**:
-    *   **UUID 對齊**：依雲端歷史工單真實分布（Supervisor `f0f00000` 106 筆），統一 Supervisor 為 `f0f00000-...`、將非法非十六進位 UUID `p0b00000-...` 全面修正為合法 `c0a00000-...`（POBot 歷史工單 0 筆）、補齊 Clockwork 至 `archon_agents`，並新增冪等雲端遷移檔 `migration/20261125_align_bot_ssot_uuids.sql`。
+2.  **Bot SSOT/DRY 收斂與死碼退場 (Stage 1 / P1, `d98e43a3`)**:
+    *   **UUID 對齊**：依雲端歷史工單真實分布（Supervisor `f0f00000` 106 筆），統一 Supervisor 為 `f0f00000-...`、將非法非十六進位 UUID `p0b00000-...` 全面修正為合法 `c0a00000-...`（POBot 歷史工單 0 筆）、補齊 Clockwork 至 `archon_agents`，已於雲端執行 `migration/20261125_align_bot_ssot_uuids.sql` 並經 P0 探針確認雙表 100% 一致。
     *   **死碼清理與營運成本精簡**：移除零使用死碼（`summary_agent.py`、`jules_compaction.py`、`workflow_engine.py` 與對應舊路由別名），並依營運成本考量整組退場 0 筆歷史工單之 `PresentationBot / PresentationAgent`。
     *   **Model SSOT & DRY**：`engine_beta_graph.py` 移除硬編碼模型名改讀 `model_ssot.py`；`agent_registry.py` 消除重複 `fallback_name_map`。
+3.  **類 Grok Bot A2A 協作與 Telegram 雙向指令/審批 (Stage 2 / P2)**:
+    *   **統一 Agent Card & A2A 直接 Handoff**：新增 `python/src/agents/workflow/a2a_handoff.py` 並接入 `nodes.py`，Worker 支援 `[HANDOFF: <target> | <reason>]` 白名單直接交棒（防自迴圈 + `max_steps` 熔斷），略過多餘的 `SupervisorNode` 轉發以節省 `gemini-3.6-flash` Free Tier RPD。
+    *   **Checkpoint 斷點續跑**：將既有 `AgentCheckpointManager` 接入 `WorkflowEngine`（新增 `resume_from_checkpoint`），支援從 Supabase `agent_checkpoints` 還原 `SharedState` 並從斷點續跑。
+    *   **Telegram 雙向指令與審批**：新增 `TelegramBotGateway`（`telegram_bot_gateway.py`）與 `POST /api/telegram/webhook`（`telegram_webhook_api.py`），實作 Fail-Closed `X-Telegram-Bot-Api-Secret-Token` 驗證、`chat_id` 白名單、`update_id` 冪等去重、`/task` / `@agent` / `/status`、Inline 審批按鈕喚醒 Checkpoint 續跑與 HF Space 休眠補拉 `poll_missed_updates()`。
 
 ### 2026-11-24：Phase 5.13 資安防提權、金鑰零中斷輪換、白名單排程與 Vercel 舊部署清理
 完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。

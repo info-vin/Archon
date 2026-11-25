@@ -2,7 +2,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from src.server.services.shared_constants import TaskFeatureEnum
+from src.server.services.shared_constants import TaskFeatureEnum, WorkflowStatusEnum
 
 
 # --- 1. Shared State ---
@@ -17,6 +17,10 @@ class SharedState(BaseModel):
     output_tokens: int = 0
     model_used: str | None = None
     task_type: str = TaskFeatureEnum.GENERAL.value  # Phase 5.0.2: Dynamic Prompt Governance
+    conversation_id: str | None = None
+    handoff_history: list[dict[str, str]] = Field(default_factory=list)
+    status: str = WorkflowStatusEnum.RUNNING.value
+    pending_approval_id: str | None = None
 
 
 class SupervisorDecision(BaseModel):

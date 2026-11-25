@@ -99,12 +99,33 @@ class NetworkConfig(BaseModel):
         return data
 
 class NotificationConfig(BaseModel):
+    telegram_api_base_url: str = Field(default="https://api.telegram.org", alias="TELEGRAM_API_BASE_URL")
     telegram_token: str | None = Field(default=None, alias="TELEGRAM_TOKEN")
     telegram_proxy_url: str | None = Field(default=None, alias="TELEGRAM_PROXY_URL")
     telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_TO")
+    telegram_webhook_secret: str | None = Field(default=None, alias="TELEGRAM_WEBHOOK_SECRET")
+    telegram_allowed_chat_ids: str | None = Field(default=None, alias="TELEGRAM_ALLOWED_CHAT_IDS")
     telegram_timeout: float = Field(default=30.0, alias="TELEGRAM_TIMEOUT")
     telegram_retries: int = Field(default=3, alias="TELEGRAM_RETRIES")
     telegram_snippet_length: int = Field(default=150, alias="TELEGRAM_SNIPPET_LENGTH")
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_from_env(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for key in (
+            "TELEGRAM_API_BASE_URL",
+            "TELEGRAM_TOKEN",
+            "TELEGRAM_PROXY_URL",
+            "TELEGRAM_TO",
+            "TELEGRAM_WEBHOOK_SECRET",
+            "TELEGRAM_ALLOWED_CHAT_IDS",
+        ):
+            val = os.getenv(key)
+            if val is not None and not data.get(key):
+                data[key] = val
+        return data
 
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.25, alias="WEEKLY_BUDGET_THRESHOLD")
