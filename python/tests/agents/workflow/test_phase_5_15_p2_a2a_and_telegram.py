@@ -258,6 +258,25 @@ async def test_telegram_inline_approval_resumes_checkpoint() -> None:
     fake_engine.resume_from_checkpoint.assert_awaited_once_with("conv-hitl-777")
     assert mock_api.await_count == 2  # answerCallbackQuery + sendMessage
 
+    # Adversarial reverse check: expired/non-existent approval must NOT crash with 500
+    fake_approval_mgr.review_approval = AsyncMock(side_effect=ValueError("Approval request ghost not found"))
+    with patch.object(gateway, "_post_telegram_api", new=AsyncMock(return_value={"ok": True})) as mock_api_ghost:
+        res_ghost = await gateway.handle_update(
+            {
+                "update_id": 43,
+                "callback_query": {
+                    "id": "cbq-ghost",
+                    "data": "approve:00000000-0000-0000-0000-000000000000",
+                    "message": {"chat": {"id": 10001}},
+                },
+            },
+            config=cfg,
+            approval_mgr=fake_approval_mgr,
+            workflow_engine=fake_engine,
+        )
+    assert res_ghost["status"] == "not_found"
+    assert mock_api_ghost.await_count == 1
+
 
 @pytest.mark.asyncio
 async def test_telegram_gateway_proxy_routing_and_completion_notify() -> None:

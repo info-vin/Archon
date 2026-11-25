@@ -53,5 +53,6 @@
 
 ### 雲端真實物理探針（部署至 Vercel + HF Space 後執行）
 - [x] **探針 1（Inline 審批按鈕實測）**：透過升級後的 `archon-enduser.vercel.app/api/telegram` 送出帶 `inline_keyboard` 之測試卡，Telegram API 回傳 `ok=True` 且 `has_reply_markup_in_result=True`。
-- [x] **探針 3a（`@librarian` Webhook 建單與回覆）**：透過 HF Space Webhook 送出 `@librarian` 指令，5.11s 回傳 HTTP 200、`reply_sent=True`，雲端 `archon_tasks` 真實寫入 `f4cb77fe-77bb-4e32-b63a-01d4cfbd02ad`（`assignee_id=b0b00000-...`），待 `task_dispatcher` 執行完工自動回推。
-- [ ] **探針 2（Checkpoint 實體寫入）**：待透過 `/task`（指派 Supervisor 進 `WorkflowEngine`）觸發一次線上多代理執行後，查雲端 `agent_checkpoints` 表確認新增紀錄（目前 `count=0`）。
+- [x] **探針 2（Checkpoint 實體寫入）**：線上 `/task` 觸發 `WorkflowEngine` 後，雲端 Supabase `agent_checkpoints` 真實寫入 `e7d1d7ab-d6d7-47fd-8598-ef9486523746`（`conversation_id=8cf29389-0b52-4928-91d9-82873bd37cfa`、`status='COMPLETED'`、`count=1`）。
+- [x] **探針 3（Telegram 雙向派工 → 執行完工 → 自動回推）**：HF Space Webhook 建單並即時 `dispatched=True`、`reply_sent=True`；雲端 `archon_tasks`（`8cf29389-...`）實測完成推進至 `status='done'` 並自動推播完工摘要回手機。
+- [x] **反向驗證（Adversarial Probe）**：實測錯誤 secret → 403、空文字 → 200 `ignored`、不存在審批 ID callback 抓出線上有未捕獲 `ValueError` 炸 HTTP 500 並已修復為 `not_found`。

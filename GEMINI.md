@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-25 完成 Phase 5.15 Stage 1（P1）Bot SSOT/DRY 收斂（`d98e43a3`，雲端雙表 100% 對齊）與 Stage 2（P2）類 Grok Bot A2A 協作與 Telegram 雙向指令/審批：實作統一 `AgentCard` 與 A2A 直接 Handoff（`a2a_handoff.py` + `nodes.py`，支援允許清單、防自迴圈與 `max_steps` 熔斷，直通交棒省下 `gemini-3.6-flash` 配額）；接線既有 `AgentCheckpointManager` 至 `WorkflowEngine` 支援 `resume_from_checkpoint` 斷點續跑；新增 `TelegramBotGateway`（`telegram_bot_gateway.py`）與 `POST /api/telegram/webhook`（`telegram_webhook_api.py`），具備 Fail-Closed `X-Telegram-Bot-Api-Secret-Token` 驗證、`chat_id` 白名單、`update_id` 冪等去重、`/task` / `@agent` / `/status` 指令、Inline 審批按鈕喚醒續跑與 HF Space 休眠補拉 `poll_missed_updates()`。
-*   **今日目標 (Today's Goal)**: 驗收並提交推送 Phase 5.15 Stage 2（P2）至 `dev/twins`；於雲端設定 `TELEGRAM_WEBHOOK_SECRET` 並設定 Telegram Webhook URL 後進行實體手機端對端測試。
+*   **當前狀態 (Current Context)**: 2026-11-25 完成 Phase 5.15 全階段（P0 探針 + Stage 1/P1 `d98e43a3` + Stage 2/P2 `e2398444` + Stage 2.5 閉環 `4f8fa9dc`/`ce66b78f`/`441f0bcf` 與反向驗證修復）：完成雲端 6 隻 Bot UUID 雙表 100% 對齊與死碼/`PresentationBot` 退場；落地統一 `AgentCard`、A2A `[HANDOFF:]` 協議（已同步雲端 4 筆 Worker Prompt）、生產 `agent_checkpoints` 實體落盤（雲端實測 `e7d1d7ab`, `COMPLETED`）、升級 Vercel Proxy (`enduser-ui-fe/api/telegram.js`) 支援 `reply_markup` Inline 審批按鈕與 `answerCallbackQuery`/`getUpdates`（實測 `has_reply_markup_in_result=True`）、Telegram Webhook `/status` 與 `/task` 即時派發執行並自動完工回推（實測 `8cf29389` 轉 `done`、`reply_sent=True`）；透過反向驗證揪出並修復過期/不存在審批按鈕導致 Webhook HTTP 500 缺陷，清理 2 筆探針殘留工單，並同步推送 `origin/dev/twins` 與 `origin/feat/twins`。
+*   **今日目標 (Today's Goal)**: 觀察線上 Telegram 雙向指令與 A2A 協作實際運作；待本機執行一次 104 職缺抓取後完成 Phase 5.14 ≥30 筆人工標記校準；後續擴充 `telegram_bot_gateway.py`（現 398 行近 400 行上限）前須先拆分子模組。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -135,6 +135,13 @@
     *   **統一 Agent Card & A2A 直接 Handoff**：新增 `python/src/agents/workflow/a2a_handoff.py` 並接入 `nodes.py`，Worker 支援 `[HANDOFF: <target> | <reason>]` 白名單直接交棒（防自迴圈 + `max_steps` 熔斷），略過多餘的 `SupervisorNode` 轉發以節省 `gemini-3.6-flash` Free Tier RPD。
     *   **Checkpoint 斷點續跑**：將既有 `AgentCheckpointManager` 接入 `WorkflowEngine`（新增 `resume_from_checkpoint`），支援從 Supabase `agent_checkpoints` 還原 `SharedState` 並從斷點續跑。
     *   **Telegram 雙向指令與審批**：新增 `TelegramBotGateway`（`telegram_bot_gateway.py`）與 `POST /api/telegram/webhook`（`telegram_webhook_api.py`），實作 Fail-Closed `X-Telegram-Bot-Api-Secret-Token` 驗證、`chat_id` 白名單、`update_id` 冪等去重、`/task` / `@agent` / `/status`、Inline 審批按鈕喚醒 Checkpoint 續跑與 HF Space 休眠補拉 `poll_missed_updates()`。
+4.  **Stage 2.5 閉環與反向驗證抓漏（`4f8fa9dc`, `ce66b78f`, `441f0bcf`）**:
+    *   **線上真實探針揪出並修復 4 個關鍵樂觀路徑缺陷**：
+        1. HF Space 防火牆擋直連 `api.telegram.org`（卡 32.35s）→ 全面改走 `TELEGRAM_PROXY_URL` 並回傳 `reply_sent`（降至 4.20s）。
+        2. 實查 `enduser-ui-fe/api/telegram.js` 發現會剝離 `reply_markup` 且不支援 `answerCallbackQuery`/`getUpdates` → 升級 Vercel Proxy 白名單轉發並實測 `has_reply_markup_in_result=True`。
+        3. 實查 `task_dispatcher.py` 只派發 `is_recurring=True` 工單 → 於 `TelegramBotGateway` 建單後立即非同步呼叫 `agent_service.run_agent_task`，並接通 `routes/workflow.py` 傳入 `AgentCheckpointManager()`、雲端執行 `migration/20261125_enable_a2a_handoff_prompts.sql`，實測 `/task` 轉 `done` 且 `agent_checkpoints` 寫入 `e7d1d7ab`（`COMPLETED`）。
+        4. **反向驗證**送出不存在審批 ID callback 抓出線上有未捕獲 `ValueError` 炸 HTTP 500 → 改為優雅回應 `not_found`（防 Telegram 無限重試）；並清理 2 筆探針殘留 `todo` 工單，同步推送 `origin/dev/twins` 與 `origin/feat/twins`。
+    *   **已知邊界（誠實註記）**：`telegram_bot_gateway.py` 接近 400 行上限，後續擴充須拆子模組；完整真機「高風險工具暫停 → 手機點按鈕 → Checkpoint 續跑」待真實寫入型 HITL 場景再做一次端對端確認。
 
 ### 2026-11-24：Phase 5.13 資安防提權、金鑰零中斷輪換、白名單排程與 Vercel 舊部署清理
 完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。

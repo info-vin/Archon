@@ -215,12 +215,18 @@ class TelegramBotGateway:
 
         mgr = approval_mgr or AgentApprovalManager()
         approved = action == TelegramApprovalAction.APPROVE
-        dto = await mgr.review_approval(
-            approval_id=approval_id,
-            approved=approved,
-            reviewer_id=f"telegram:{chat_id}",
-            reason="Approved via Telegram" if approved else "Rejected via Telegram",
-        )
+        try:
+            dto = await mgr.review_approval(
+                approval_id=approval_id,
+                approved=approved,
+                reviewer_id=f"telegram:{chat_id}",
+                reason="Approved via Telegram" if approved else "Rejected via Telegram",
+            )
+        except ValueError:
+            msg = f"⚠️ 審批單 ({approval_id[:8]}) 不存在或已失效。"
+            if callback_id:
+                await self._post_telegram_api("answerCallbackQuery", {"callback_query_id": callback_id, "text": msg}, config)
+            return {"status": "not_found", "approval_id": approval_id}
 
         resumed = False
         if approved and dto.conversation_id:
