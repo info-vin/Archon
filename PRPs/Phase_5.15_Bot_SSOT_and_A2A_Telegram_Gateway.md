@@ -52,6 +52,6 @@
 - [x] `python/.venv/bin/python scripts/phase_audit.py`（Exit 0，Step 5.5/6/7/8/9/10/11 全數通過，0 違規）
 
 ### 雲端真實物理探針（部署至 Vercel + HF Space 後執行）
-- [ ] **探針 1（Inline 審批按鈕實測）**：透過升級後的 `TELEGRAM_PROXY_URL` 送出帶 `inline_keyboard` 之測試卡，驗證 Telegram 回傳 JSON 內 `result.reply_markup` 真實存在。
-- [ ] **探針 2（Checkpoint 實體寫入）**：觸發一次線上 Workflow 後，查雲端 Supabase `agent_checkpoints` 表確認實際新增紀錄。
-- [ ] **探針 3（`[Telegram]` 工單完工回推）**：透過 Webhook 送出 `@librarian` 指令，驗證建立工單並於執行完成後實際回推結果至手機 Telegram。
+- [x] **探針 1（Inline 審批按鈕實測）**：透過升級後的 `archon-enduser.vercel.app/api/telegram` 送出帶 `inline_keyboard` 之測試卡，Telegram API 回傳 `ok=True` 且 `has_reply_markup_in_result=True`。
+- [x] **探針 3a（`@librarian` Webhook 建單與回覆）**：透過 HF Space Webhook 送出 `@librarian` 指令，5.11s 回傳 HTTP 200、`reply_sent=True`，雲端 `archon_tasks` 真實寫入 `f4cb77fe-77bb-4e32-b63a-01d4cfbd02ad`（`assignee_id=b0b00000-...`），待 `task_dispatcher` 執行完工自動回推。
+- [ ] **探針 2（Checkpoint 實體寫入）**：待透過 `/task`（指派 Supervisor 進 `WorkflowEngine`）觸發一次線上多代理執行後，查雲端 `agent_checkpoints` 表確認新增紀錄（目前 `count=0`）。

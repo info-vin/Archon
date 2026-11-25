@@ -161,6 +161,7 @@ def test_telegram_webhook_security_and_commands() -> None:
         patch.object(gateway, "get_config", new=AsyncMock(return_value=cfg)),
         patch.object(gateway, "_post_telegram_api", new=AsyncMock(return_value={"ok": True})),
         patch.object(gateway, "_create_inbound_task", new=AsyncMock(return_value="task-abc-123")) as mock_create,
+        patch.object(gateway, "_dispatch_inbound_task") as mock_dispatch,
     ):
         # 1. Missing secret -> 403
         resp_no_secret = client.post("/api/telegram/webhook", json={"update_id": 1})
@@ -194,7 +195,9 @@ def test_telegram_webhook_security_and_commands() -> None:
         body = resp_ok.json()
         assert body["status"] == "processed"
         assert body["detail"]["assignee_id"] == AgentUUIDs.LIBRARIAN
+        assert body["detail"]["dispatched"] is True
         assert mock_create.await_count == 1
+        mock_dispatch.assert_called_once_with("task-abc-123", AgentUUIDs.LIBRARIAN)
 
         # 5. Duplicate update_id -> idempotent ignore
         resp_dup = client.post(

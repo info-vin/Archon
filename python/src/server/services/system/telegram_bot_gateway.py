@@ -103,12 +103,20 @@ class TelegramBotGateway:
             try:
                 async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
                     resp = await client.post(config.telegram_proxy_url, json=proxy_payload)
-                    resp.raise_for_status()
-                    data = resp.json()
+                    try:
+                        data = resp.json()
+                    except ValueError:
+                        data = {}
+                    status_code = getattr(resp, "status_code", 200)
+                    if isinstance(status_code, int) and status_code >= 400:
+                        logger.warning(
+                            f"TelegramBotGateway: Telegram returned HTTP {status_code} via proxy for '{method}': {data}"
+                        )
+                        return data if isinstance(data, dict) else {"ok": False, "status_code": status_code}
                     return data if isinstance(data, dict) else {"ok": True}
-            except Exception as proxy_err:
+            except httpx.RequestError as proxy_err:
                 logger.warning(
-                    f"TelegramBotGateway: Proxy '{method}' failed ({proxy_err}), falling back to direct API..."
+                    f"TelegramBotGateway: Proxy '{method}' unreachable ({proxy_err}), falling back to direct API..."
                 )
 
         base_url = config.telegram_api_base_url.rstrip("/")
@@ -264,15 +272,30 @@ class TelegramBotGateway:
             return {"status": "ignored", "reason": "not_a_command"}
 
         task_id = await self._create_inbound_task(task_body, assignee_id, assignee_name)
-        reply = f"📥 已建立工單 `{task_id[:8]}` 指派給 {assignee_name}：\n{task_body[:200]}"
+        self._dispatch_inbound_task(task_id, assignee_id)
+        reply = f"📥 已建立並啟動工單 `{task_id[:8]}` 指派給 {assignee_name}：\n{task_body[:200]}"
         send_res = await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
         return {
             "status": "processed",
             "command": "task",
             "task_id": task_id,
             "assignee_id": assignee_id,
+            "dispatched": True,
             "reply_sent": bool(send_res.get("ok")),
         }
+
+    @staticmethod
+    def _dispatch_inbound_task(task_id: str, assignee_id: str) -> None:
+        """Triggers background execution via AgentService immediately (task_dispatcher only runs recurring tasks)."""
+        from src.server.services.agent_service import agent_service
+
+        async def _run() -> None:
+            try:
+                await agent_service.run_agent_task(task_id=task_id, agent_id=assignee_id)
+            except Exception as e:
+                logger.error(f"TelegramBotGateway: Background execution failed for task {task_id}: {e}", exc_info=True)
+
+        asyncio.create_task(_run())
 
     @staticmethod
     def _parse_task_command(text: str) -> tuple[str, str, str]:
