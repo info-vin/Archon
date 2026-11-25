@@ -89,6 +89,21 @@ class TelegramBotGateway:
     ) -> dict[str, Any]:
         if not config.telegram_token:
             return {"ok": False, "error": "Missing TELEGRAM_TOKEN"}
+
+        # Route sendMessage via TELEGRAM_PROXY_URL when configured (HF Space blocks direct api.telegram.org)
+        if method == "sendMessage" and config.telegram_proxy_url:
+            proxy_payload = {"bot_token": config.telegram_token, **payload}
+            try:
+                async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
+                    resp = await client.post(config.telegram_proxy_url, json=proxy_payload)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    return data if isinstance(data, dict) else {"ok": True}
+            except Exception as proxy_err:
+                logger.warning(
+                    f"TelegramBotGateway: Proxy '{method}' failed ({proxy_err}), falling back to direct API..."
+                )
+
         base_url = config.telegram_api_base_url.rstrip("/")
         url = f"{base_url}/bot{config.telegram_token}/{method}"
         try:
@@ -229,8 +244,13 @@ class TelegramBotGateway:
             mgr = approval_mgr or AgentApprovalManager()
             pending = await mgr.list_pending_approvals()
             reply = f"📊 Archon 狀態正常\n待審批項目：{len(pending)} 筆"
-            await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
-            return {"status": "processed", "command": "status", "pending_count": len(pending)}
+            send_res = await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
+            return {
+                "status": "processed",
+                "command": "status",
+                "pending_count": len(pending),
+                "reply_sent": bool(send_res.get("ok")),
+            }
 
         assignee_id, assignee_name, task_body = self._parse_task_command(text)
         if not task_body:
@@ -238,8 +258,14 @@ class TelegramBotGateway:
 
         task_id = await self._create_inbound_task(task_body, assignee_id, assignee_name)
         reply = f"📥 已建立工單 `{task_id[:8]}` 指派給 {assignee_name}：\n{task_body[:200]}"
-        await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
-        return {"status": "processed", "command": "task", "task_id": task_id, "assignee_id": assignee_id}
+        send_res = await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
+        return {
+            "status": "processed",
+            "command": "task",
+            "task_id": task_id,
+            "assignee_id": assignee_id,
+            "reply_sent": bool(send_res.get("ok")),
+        }
 
     @staticmethod
     def _parse_task_command(text: str) -> tuple[str, str, str]:
