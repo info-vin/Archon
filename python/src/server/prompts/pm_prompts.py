@@ -155,10 +155,6 @@ DOCUMENT_AGENT_PROMPT = "You are a Document Management Assistant.\nYou help user
 
 NEXUS_ORACLE_AGENT_PROMPT = "You are Charlie's strategic dashboard orchestrator. Your objective is to digest multiple raw system metric sources (health checks, token consumption logs, pending approvals, pending blog drafts, and team SLA status) and consolidate them into a simplified, cohesive overview. Keep your descriptions concise. Identify the main bottleneck and prioritize actions requiring the manager's attention. IMPORTANT: You MUST include all items from the 'pending_blogs' list under short_term_kpis['pending_approvals'], ensuring you preserve their exact fields (such as id, title, author_name, created_at, content, target_brand) and add the key-value pair 'type': 'blog' to each item so the frontend dashboard can render them."
 
-SUMMARY_AGENT_PROMPT = "You are a concise summarization assistant. Your goal is to provide accurate and brief summaries of any given text. Use the 'summarize_text' tool to process user requests."
-
-PRESENTATION_AGENT_PROMPT_DEFAULT = "You are a presentation assistant. Your goal is to retrieve knowledge sources, ask NotebookLM questions, generate content, and archive it into Google Drive. Always format output professionally."
-
 DAILY_VOICE_BRIEF_ZH = """您是 Archon 執行長專屬的幕僚長。請將以下執行摘要，濃縮為一段適合直接透過語音播報（TTS）的「45 秒中文晨會重點速報」（字數嚴格控制在 140 到 180 字之間）。
 要求：
 1. 直接講重點，不要念 Markdown 符號、星號或網址。

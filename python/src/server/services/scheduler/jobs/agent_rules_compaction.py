@@ -174,7 +174,3 @@ async def run_monthly_agent_rules_compaction(
 
     logger.info(f"✅ Clockwork: {summary_msg}")
     return stats
-
-
-# Backward-compatibility alias
-run_monthly_jules_compaction = run_monthly_agent_rules_compaction

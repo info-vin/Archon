@@ -15,6 +15,7 @@ from pydantic_graph.beta import GraphBuilder
 
 from src.agents.workflow.state import SharedState
 from src.agents.workflow.utils import _accumulate_usage, _build_pruned_history, _run_agent_with_retry
+from src.server.config.model_ssot import SYSTEM_MODELS
 from src.server.services.prompt_service import prompt_service
 from src.server.services.shared_constants import PromptNameEnum
 
@@ -40,8 +41,8 @@ builder = GraphBuilder(state_type=BetaState, deps_type=Any, output_type=str)
 sem = asyncio.Semaphore(2)
 
 # --- Define Specialized Agents ---
-# Fetch model from environment or fallback, instead of hardcoding
-MODEL = os.getenv("WORKER_AGENT_MODEL", "gemini-3.1-flash-lite")
+# Fetch model from environment or model_ssot (SSOT)
+MODEL = os.getenv("WORKER_AGENT_MODEL") or SYSTEM_MODELS["DEFAULT_TEXT"].replace("models/", "")
 
 @builder.step
 async def supervisor_step(ctx: Any) -> list[str]:

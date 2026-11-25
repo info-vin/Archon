@@ -232,7 +232,6 @@ async def trigger_cron_jobs(
             "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
             "meta_twin_audit": scheduler_service._run_meta_twin_audit,
             "monthly_agent_rules_compaction": scheduler_service._run_monthly_agent_rules_compaction,
-            "monthly_jules_compaction": scheduler_service._run_monthly_jules_compaction,
         }
 
         if job_id:

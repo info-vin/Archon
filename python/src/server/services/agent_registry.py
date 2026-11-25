@@ -99,6 +99,12 @@ FALLBACK_AGENT_CONFIG: dict[str, FallbackAgentConfig] = {
         "system_prompt": "You are Archon DevBot, an expert software engineer. Solve tasks using tools.",
         "tools": ["rag_search_code_examples", "generate_logo", "apply_modification", "execute_shell_command"], # 合法
     },
+    "clockwork": {
+        "name": "Clockwork (Ops)",
+        "model_tier": "lite",
+        "system_prompt": "You are Clockwork, the automated operations and patrol scheduler for Archon.",
+        "tools": [],
+    },
 }
 
 PROMPT_NAME_MAP: dict[str, str] = {
@@ -131,14 +137,8 @@ def get_agent_uuid(agent_key: str) -> str | None:
 
     try:
         supabase = get_supabase_client()
-        fallback_name_map = {
-            "supervisor": "Archon Supervisor",
-            "market-bot": "Archon MarketBot",
-            "librarian": "Archon Librarian",
-            "po-bot": "Archon POBot",
-            "dev-bot": "Archon DevBot"
-        }
-        agent_name = fallback_name_map.get(agent_key, agent_key)
+        fallback_entry = FALLBACK_AGENT_CONFIG.get(agent_key)
+        agent_name = fallback_entry["name"] if fallback_entry else agent_key
         from src.server.repositories.base_repository import BaseRepository
         repo = BaseRepository(supabase)
         success, res = repo.execute_query(

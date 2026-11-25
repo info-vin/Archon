@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from src.server.services.shared_constants import TaskFeatureEnum
 
 from ..models import AgentResponse, WorkflowRequest
-from ..workflow_engine import WorkflowEngine
+from ..workflow import WorkflowEngine
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/agents/workflow", tags=["workflow"])

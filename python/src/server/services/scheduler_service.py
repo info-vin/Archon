@@ -271,7 +271,6 @@ class SchedulerService:
     async def _run_tech_debt_audit(self) -> None: await tech_debt_patrol.run_tech_debt_audit()
     async def _run_ssot_audit(self) -> None: await tech_debt_patrol.run_ssot_audit()
     async def _run_monthly_agent_rules_compaction(self) -> None: await agent_rules_compaction.run_monthly_agent_rules_compaction()
-    async def _run_monthly_jules_compaction(self) -> None: await self._run_monthly_agent_rules_compaction()
     async def _run_model_verification(self) -> None: await patrol.run_model_verification()
     async def _run_infrastructure_audit(self) -> None: await patrol_infra.run_infrastructure_audit()
     async def _run_prune_stale_leads(self) -> None: await leads_patrol.run_prune_stale_leads()

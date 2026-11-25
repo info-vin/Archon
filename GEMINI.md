@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-24 完成 Phase 5.13 資安權限加固、金鑰零中斷輪換與白名單排程上線（提交 `ffb257ce` 至 `dev/twins`）：移除 `dependencies.py` 與 `budget_guard.py` 信任 `user_metadata["role"]` 之假冒管理員漏洞並清理 `enduser-ui-fe` 註冊死碼；引入獨立 `CREDENTIAL_ENCRYPTION_KEY` 與雙金鑰解密 fallback，完成資料庫 4 把加密金鑰重加密後將 `SUPABASE_SERVICE_KEY` 升級為 `sb_secret_`、前端 `archon-enduser` 切換為 `sb_publishable_`，並於 Supabase 停用舊版 JWT API Keys 及關閉開放註冊；新增 `crawler_patrol.py` 每日檢查並僅定期抓取 `archon_crawler_targets` 非 `manual` 目標（Google Gemini 2 頁）；清空 Supabase `leads` 207 筆舊資料重抓；並透過 Vercel CLI 清理 160 筆歷史舊部署（`archon-enduser` 刪 78 筆、`archon` 刪 82 筆，各保留最新 1 筆 Production）。HF Space `/health` 200 Healthy，全門禁驗證通過。
-*   **今日目標 (Today's Goal)**: 觀察新版週期作業（104 `leads` 重抓與白名單 Google 2 頁定期抓取）運作狀態；待外部人員補查或決策後，視需求推進 `leads` 規模評分欄位（Track D）與選擇性輪換 Telegram / 4 把 AI 金鑰。
+*   **當前狀態 (Current Context)**: 2026-11-25 完成 P0 雲端唯讀物理探針與 Phase 5.15 Stage 1（P1）Bot SSOT/DRY 收斂與死碼清理（接續 11-24 Phase 5.14 `4b59ffa6` A/B/C/X 評分與 G1/G3/G4 上線）：確認雲端 `ALICE_LEAD_JUDGE` 已更新為 A/B/C/X 嚴格 JSON、104 抓取維持只在本機執行；依雲端真實工單分布（Supervisor `f0f00000` 106 筆）統一所有 Bot UUID（Supervisor=`f0f00000`、POBot 修正非法 `p0b00000` 為 `c0a00000`、補齊 Clockwork 至 `archon_agents`），產出冪等雲端遷移檔 `migration/20261125_align_bot_ssot_uuids.sql`；移除零使用死碼（`SummaryAgent`、`jules_compaction.py`、`workflow_engine.py`）並依營運成本考量整組退場 0 工單之 `PresentationBot`；修正 `engine_beta_graph.py` 硬編碼模型改走 `model_ssot.py`；補齊 `GEMINI.md` 漏記之 Phase 5.14 紀錄並對齊過時分支。
+*   **今日目標 (Today's Goal)**: 由使用者於 Supabase SQL Editor 執行 `migration/20261125_align_bot_ssot_uuids.sql` 後重跑 P0 探針驗證雙表 100% 一致；接著進入 Stage 2（P2：類 Grok Bot 的 A2A 直接 Handoff、既有 `agent_checkpoints` 接線與 Telegram 雙向指令/審批）。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -123,6 +123,15 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-11-25：Phase 5.15 Stage 1 (P1) Bot SSOT/DRY 收斂、死碼與 PresentationBot 退場及 Phase 5.14 補錄
+1.  **P0 雲端唯讀探針與 Phase 5.14 補錄（`4b59ffa6`）**:
+    *   補錄 2026-11-24 `4b59ffa6` 已完成 [Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md)（A/B/C/X 評分、G1/G3/G4 結構化日誌、A:B=60:40 配額），且 `migration/20261118_revoke_truncate_and_test_rpcs.sql` 與 `migration/20261124_update_alice_lead_judge_abcx.sql` 皆已於雲端執行。
+    *   確認 104 職缺抓取（`alice_auto_fetch`）維持只在本機執行，HF Space 跳過屬預期行為。
+2.  **Bot SSOT/DRY 收斂與死碼退場 (Stage 1 / P1)**:
+    *   **UUID 對齊**：依雲端歷史工單真實分布（Supervisor `f0f00000` 106 筆），統一 Supervisor 為 `f0f00000-...`、將非法非十六進位 UUID `p0b00000-...` 全面修正為合法 `c0a00000-...`（POBot 歷史工單 0 筆）、補齊 Clockwork 至 `archon_agents`，並新增冪等雲端遷移檔 `migration/20261125_align_bot_ssot_uuids.sql`。
+    *   **死碼清理與營運成本精簡**：移除零使用死碼（`summary_agent.py`、`jules_compaction.py`、`workflow_engine.py` 與對應舊路由別名），並依營運成本考量整組退場 0 筆歷史工單之 `PresentationBot / PresentationAgent`。
+    *   **Model SSOT & DRY**：`engine_beta_graph.py` 移除硬編碼模型名改讀 `model_ssot.py`；`agent_registry.py` 消除重複 `fallback_name_map`。
+
 ### 2026-11-24：Phase 5.13 資安防提權、金鑰零中斷輪換、白名單排程與 Vercel 舊部署清理
 完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。
 
@@ -156,7 +165,7 @@
 **核心主題歸類**:
 1.  **安全：前端 service_role 外洩、JWT 輪替回滾與 PR 拆分**:
     *   **外洩事件**: `service_role` 金鑰曾出現在 `archon-enduser.vercel.app` 的前端 JS。**原因**: `docker-compose.yml:256` 的 fallback 在 `SUPABASE_ANON_KEY` 未設定時，把 `service_role` 當成 `VITE_SUPABASE_ANON_KEY` 注入前端建置。**修復**: PR #668 已於 2026-11-18 squash 合併進 `dev/twins`（`1f07df07`）。
-    *   **提醒**: `docker-compose.yml:256` 現在強制要求 `SUPABASE_ANON_KEY`，未設定時 compose 會失敗。`migration/20261118_revoke_truncate_and_test_rpcs.sql` 尚未在雲端執行，要等 Vincent 核准；執行前，`authenticated` 角色對 `leads`、`archon_tasks`、`archon_settings` 仍有 TRUNCATE 權限，`reset_test_database`／`seed_test_database` 仍開放給 PUBLIC 執行。
+    *   **提醒**: `docker-compose.yml:256` 現在強制要求 `SUPABASE_ANON_KEY`，未設定時 compose 會失敗。`migration/20261118_revoke_truncate_and_test_rpcs.sql` 已於後續由 Vincent 在雲端 Supabase 執行完成。
     *   **JWT 輪替與 PR 拆分**: #668 只做安全修正，套件升級拆成 PR #670（`supabase` 2.15.1 → 2.18.0，並補上不 mock 的 smoke test）。後續輪替已於 2026-11-24 全數完成。
 2.  **流程與紀錄：人工標記過渡、報告路由與後續 PR 閘門**:
     *   **人工標記先用試算表**: 人工標記先用試算表過渡兩週，不在 `leads` 加 `discarded` 狀態（避免與既有刪除路徑及至少 7 處未過濾 status 的查詢語意分叉）。

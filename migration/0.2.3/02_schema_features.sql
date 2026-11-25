@@ -662,7 +662,8 @@ VALUES
   ('a11ce000-0000-0000-0000-000000000000', 'market-bot', 'Archon MarketBot', 'lite', 'search_job_market', 'Marketing Copywriter agent.'),
   ('b0b00000-0000-0000-0000-000000000000', 'librarian', 'Archon Librarian', 'lite', NULL, 'Organizational knowledge and RAG search agent.'),
   ('c0a00000-0000-0000-0000-000000000000', 'po-bot', 'Archon POBot', 'pro', NULL, 'Product Owner and task refiner agent.'),
-  ('d0e00000-0000-0000-0000-000000000000', 'supervisor', 'Archon Supervisor', 'pro', NULL, 'Workflow Routing supervisor.')
+  ('f0f00000-0000-0000-0000-000000000000', 'supervisor', 'Archon Supervisor', 'pro', NULL, 'Workflow Routing supervisor.'),
+  ('e1bf7a99-44bf-44ce-a460-cb4e31e798f4', 'clockwork', 'Clockwork (Ops)', 'lite', NULL, 'Automated system patrol and lifecycle scheduler.')
 ON CONFLICT (agent_key) DO UPDATE 
 SET name = EXCLUDED.name,
     model_tier = EXCLUDED.model_tier,
