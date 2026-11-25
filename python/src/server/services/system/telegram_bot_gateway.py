@@ -29,6 +29,13 @@ from src.server.utils import get_supabase_client
 logger = get_logger(__name__)
 
 _LAST_UPDATE_SETTING_KEY = "TELEGRAM_LAST_UPDATE_ID"
+_TELEGRAM_TASK_PREFIX = "[Telegram]"
+
+
+class TelegramProxyMethod(StrEnum):
+    SEND_MESSAGE = "sendMessage"
+    ANSWER_CALLBACK_QUERY = "answerCallbackQuery"
+    GET_UPDATES = "getUpdates"
 
 
 class TelegramApprovalAction(StrEnum):
@@ -90,9 +97,9 @@ class TelegramBotGateway:
         if not config.telegram_token:
             return {"ok": False, "error": "Missing TELEGRAM_TOKEN"}
 
-        # Route sendMessage via TELEGRAM_PROXY_URL when configured (HF Space blocks direct api.telegram.org)
-        if method == "sendMessage" and config.telegram_proxy_url:
-            proxy_payload = {"bot_token": config.telegram_token, **payload}
+        # Route supported methods via TELEGRAM_PROXY_URL when configured (HF Space blocks direct api.telegram.org)
+        if method in TelegramProxyMethod._value2member_map_ and config.telegram_proxy_url:
+            proxy_payload = {"bot_token": config.telegram_token, "method": method, **payload}
             try:
                 async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
                     resp = await client.post(config.telegram_proxy_url, json=proxy_payload)
@@ -337,6 +344,27 @@ class TelegramBotGateway:
         if max_seen > 0:
             await asyncio.to_thread(_save_last_update_id, max_seen)
         return processed
+
+    async def notify_task_completion(
+        self,
+        task_id: str,
+        task_title: str,
+        content: str,
+        success: bool = True,
+        config: NotificationConfig | None = None,
+    ) -> bool:
+        """Pushes completion/failure summary back to Telegram for tasks created via Telegram."""
+        if not task_title.startswith(_TELEGRAM_TASK_PREFIX):
+            return False
+        cfg = config or await self.get_config()
+        if not cfg.telegram_chat_id:
+            return False
+        icon = "✅" if success else "❌"
+        status_label = "已完成" if success else "執行失敗"
+        clean_title = task_title.replace(_TELEGRAM_TASK_PREFIX, "", 1).strip()
+        text = f"{icon} 工單 `{task_id[:8]}` {status_label}\n主題：{clean_title[:100]}\n\n{content[:1200]}"
+        res = await self._post_telegram_api("sendMessage", {"chat_id": str(cfg.telegram_chat_id), "text": text}, cfg)
+        return bool(res.get("ok"))
 
 
 telegram_bot_gateway = TelegramBotGateway()

@@ -192,6 +192,12 @@ class DefaultLLMStrategy(BaseAgentStrategy):
 
                 await agent_service._award_agent_xp(agent_id, task_data, final_output)
 
+                from src.server.services.system.telegram_bot_gateway import telegram_bot_gateway
+
+                await telegram_bot_gateway.notify_task_completion(
+                    task_id=task_id, task_title=str(task_data.get("title", "")), content=str(final_output), success=True
+                )
+
         except Exception as e:
             logger.error(f"Error executing DefaultLLMStrategy: {e}", exc_info=True)
             await task_service.update_task(task_id, {"status": "failed"})

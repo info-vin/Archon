@@ -35,7 +35,7 @@ describe('TaskAgentGroupChat Component', () => {
         expect(screen.getByText('Supervisor (Brain)')).toBeInTheDocument();
         expect(screen.getByText('I am assigning this to DevBot.')).toBeInTheDocument();
 
-        expect(screen.getByText('DevBot (Data Scientist)')).toBeInTheDocument();
+        expect(screen.getByText('DevBot (Engineering)')).toBeInTheDocument();
         expect(screen.getByText('Here is the math: CVR is 5%.')).toBeInTheDocument();
 
         expect(screen.getByText('David (DB Admin)')).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('TaskAgentGroupChat Component', () => {
         expect(screen.getAllByText('Supervisor (Brain)').length).toBe(2);
         expect(screen.getByText('Librarian (Knowledge)')).toBeInTheDocument();
         expect(screen.getByText('Here is the info.')).toBeInTheDocument();
-        expect(screen.getByText('MarketBot (Writer)')).toBeInTheDocument();
+        expect(screen.getByText('MarketBot (Sales)')).toBeInTheDocument();
         expect(screen.getByText('Here is the draft.')).toBeInTheDocument();
     });
 

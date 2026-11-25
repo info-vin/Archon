@@ -254,3 +254,79 @@ async def test_telegram_inline_approval_resumes_checkpoint() -> None:
     fake_approval_mgr.review_approval.assert_awaited_once()
     fake_engine.resume_from_checkpoint.assert_awaited_once_with("conv-hitl-777")
     assert mock_api.await_count == 2  # answerCallbackQuery + sendMessage
+
+
+@pytest.mark.asyncio
+async def test_telegram_gateway_proxy_routing_and_completion_notify() -> None:
+    """Verifies proxy routing for sendMessage/answerCallbackQuery/getUpdates and [Telegram] task callback."""
+    cfg = NotificationConfig.model_validate(
+        {
+            "TELEGRAM_TOKEN": "12345:fake-token",
+            "TELEGRAM_TO": "10001",
+            "TELEGRAM_PROXY_URL": "https://proxy.example.com/api/telegram",
+        }
+    )
+    gateway = TelegramBotGateway()
+    captured: list[tuple[str, dict]] = []
+
+    class _FakeResp:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"ok": True, "result": {"reply_markup": {"inline_keyboard": []}}}
+
+    class _FakeAsyncClient:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def post(self, url: str, json: dict):
+            captured.append((url, json))
+            return _FakeResp()
+
+    with patch("src.server.services.system.telegram_bot_gateway.httpx.AsyncClient", _FakeAsyncClient):
+        ok_card = await gateway.send_approval_card("appr-1", "發佈草稿", "摘要", config=cfg)
+        assert ok_card is True
+        await gateway._post_telegram_api("answerCallbackQuery", {"callback_query_id": "cb1"}, cfg)
+        await gateway._post_telegram_api("getUpdates", {"offset": 10}, cfg)
+        assert await gateway.notify_task_completion("tid-12345678", "Normal Task", "done", config=cfg) is False
+        assert (
+            await gateway.notify_task_completion("tid-12345678", "[Telegram] 查資料", "完成結果", config=cfg) is True
+        )
+
+    assert len(captured) == 4
+    assert all(url == "https://proxy.example.com/api/telegram" for url, _ in captured)
+    assert captured[0][1]["method"] == "sendMessage"
+    assert "reply_markup" in captured[0][1]
+    assert captured[1][1]["method"] == "answerCallbackQuery"
+    assert captured[2][1]["method"] == "getUpdates"
+    assert captured[3][1]["method"] == "sendMessage"
+
+
+@pytest.mark.asyncio
+async def test_workflow_route_wires_production_checkpoint_manager() -> None:
+    """Verifies /agents/workflow/run passes AgentCheckpointManager and task_id as conversation_id."""
+    from src.agents.models import WorkflowRequest
+    from src.agents.routes.workflow import run_workflow
+
+    fake_mgr = MagicMock()
+    with (
+        patch("src.agents.routes.workflow.AgentCheckpointManager", return_value=fake_mgr),
+        patch("src.agents.routes.workflow.WorkflowEngine.run_workflow", new_callable=AsyncMock) as mock_run,
+    ):
+        mock_run.return_value = {"success": True, "final_result": "OK", "step_count": 1, "messages": []}
+        resp = await run_workflow(WorkflowRequest(prompt="test", context={"task_type": "general", "task_id": "task-42"}))
+
+    assert resp.success is True
+    mock_run.assert_awaited_once_with(
+        "test",
+        task_type="general",
+        conversation_id="task-42",
+        checkpoint_mgr=fake_mgr,
+    )
