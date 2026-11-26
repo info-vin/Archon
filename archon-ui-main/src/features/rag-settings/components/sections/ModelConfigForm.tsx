@@ -2,6 +2,7 @@ import { Cog } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { SELECTION_THEME_STYLES } from "../../constants";
 import type { ProviderKey, RagSettingsType } from "../../types";
 
 interface ModelConfigFormProps {
@@ -18,17 +19,6 @@ interface ModelConfigFormProps {
   getModelPlaceholder: (p: any) => string;
   getEmbeddingPlaceholder: (p: any) => string;
 }
-
-const OLLAMA_STATUS_CARD_STYLES = {
-  chat: {
-    container: "p-3 border rounded-lg bg-green-500/5 border-green-500/30",
-    caption: "text-xs text-green-400 mt-1",
-  },
-  embedding: {
-    container: "p-3 border rounded-lg bg-purple-500/5 border-purple-500/30",
-    caption: "text-xs text-purple-400 mt-1",
-  },
-} as const;
 
 export const ModelConfigForm: React.FC<ModelConfigFormProps> = ({
   activeSelection,
@@ -81,12 +71,12 @@ export const ModelConfigForm: React.FC<ModelConfigFormProps> = ({
                 activeSelection === "chat"
                   ? getDisplayedChatModel(ragSettings) || "Not selected"
                   : getDisplayedEmbeddingModel(ragSettings) || "Not selected";
-              const statusStyle = OLLAMA_STATUS_CARD_STYLES[activeSelection];
+              const statusStyle = SELECTION_THEME_STYLES[activeSelection];
               return (
-                <div key={field.key} className={statusStyle.container}>
+                <div key={field.key} className={statusStyle.statusCardContainer}>
                   <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{field.label}</span>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Configured via Ollama instance</div>
-                  <div className={statusStyle.caption}>Current: {currentModel}</div>
+                  <div className={statusStyle.statusCardCaption}>Current: {currentModel}</div>
                 </div>
               );
             }

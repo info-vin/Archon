@@ -1,16 +1,7 @@
 import { Loader } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-
-interface InstanceConfig {
-  name: string;
-  url: string;
-}
-
-interface InstanceStatus {
-  online: boolean;
-  checking: boolean;
-  responseTime?: number | null;
-}
+import { SELECTION_THEME_STYLES } from "../../constants";
+import type { InstanceConfig, InstanceStatus } from "../../types";
 
 interface OllamaConfigPanelProps {
   activeSelection: "chat" | "embedding";
@@ -32,16 +23,6 @@ interface OllamaConfigPanelProps {
   onSelectLLMModel: () => void;
   onSelectEmbeddingModel: () => void;
 }
-
-const BUTTON_STYLES = {
-  chat: "text-white border-emerald-400 hover:bg-emerald-500/10",
-  embedding: "text-purple-300 border-purple-400 hover:bg-purple-500/10",
-} as const;
-
-const EMPTY_BUTTON_STYLES = {
-  chat: "text-green-400 border-green-400 hover:bg-green-400/10",
-  embedding: "text-purple-300 border-purple-400 hover:bg-purple-500/10",
-} as const;
 
 export const OllamaConfigPanel = ({
   activeSelection,
@@ -69,8 +50,9 @@ export const OllamaConfigPanel = ({
   const onEdit = isChat ? onEditLLM : onEditEmbedding;
   const onTest = isChat ? onTestLLM : onTestEmbedding;
   const onSelectModel = isChat ? onSelectLLMModel : onSelectEmbeddingModel;
-  const btnStyle = BUTTON_STYLES[activeSelection];
-  const emptyBtnStyle = EMPTY_BUTTON_STYLES[activeSelection];
+  const theme = SELECTION_THEME_STYLES[activeSelection];
+  const btnStyle = theme.ollamaButton;
+  const emptyBtnStyle = theme.ollamaEmptyButton;
 
   return (
     <div className="mt-4 p-4 bg-gradient-to-r from-green-500/5 to-green-600/5 border border-green-500/20 rounded-lg shadow-[0_2px_8px_rgba(34,197,94,0.1)]">

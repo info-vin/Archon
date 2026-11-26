@@ -1,19 +1,9 @@
 import { ChevronDown, ChevronUp, Database, ShieldAlert, Zap } from "lucide-react";
 import type React from "react";
 import { useId } from "react";
-import { ConfigDrivenInput } from "@/features/admin/components/ConfigDrivenInput";
+import { ConfigDrivenInput, type FieldConfig } from "@/features/admin/components/ConfigDrivenInput";
 import type { RagSettingsType } from "../../hooks/useRagSettingsData";
 import { RagCheckboxField } from "./RagCheckboxes";
-
-interface SettingField {
-  key: string;
-  type: string;
-  label?: string;
-  placeholder?: string;
-  options?: { value: string; label: string }[];
-  min?: number;
-  max?: number;
-}
 
 interface AccordionSectionProps {
   title: string;
@@ -44,9 +34,9 @@ const AccordionSection = ({ title, icon, isOpen, onToggle, children }: Accordion
 interface AdvancedSettingsAccordionProps {
   ragSettings: RagSettingsType;
   setRagSettings: (settings: RagSettingsType | ((prev: RagSettingsType) => RagSettingsType)) => void;
-  crawlingSettingsFields: SettingField[];
-  storageSettingsFields: SettingField[];
-  fallbackSettingsFields: SettingField[];
+  crawlingSettingsFields: FieldConfig[];
+  storageSettingsFields: FieldConfig[];
+  fallbackSettingsFields: FieldConfig[];
   showCrawlingSettings: boolean;
   setShowCrawlingSettings: (v: boolean) => void;
   showStorageSettings: boolean;
@@ -69,7 +59,7 @@ export const AdvancedSettingsAccordion = ({
   setShowFallbackSettings,
 }: AdvancedSettingsAccordionProps) => {
   const parallelBatchesId = useId();
-  const renderFieldGrid = (fields: SettingField[], colsClass: "grid-cols-2" | "grid-cols-3") => (
+  const renderFieldGrid = (fields: FieldConfig[], colsClass: "grid-cols-2" | "grid-cols-3") => (
     <div className={`grid ${colsClass} gap-x-6 gap-y-4`}>
       {fields.map((field) => (
         <div key={field.key} className="space-y-1">

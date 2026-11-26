@@ -1,13 +1,9 @@
 import { useId } from "react";
 import { Button } from "@/components/ui/Button";
 import { normalizeBaseUrl, type RagSettingsType } from "../../hooks/useRagSettingsData";
+import type { InstanceConfig } from "../../types";
 import OllamaModelDiscoveryModal from "../OllamaModelDiscoveryModal";
 import OllamaModelSelectionModal from "../OllamaModelSelectionModal";
-
-interface InstanceConfig {
-  name: string;
-  url: string;
-}
 
 interface EditInstanceModalProps {
   title: string;

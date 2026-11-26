@@ -1,4 +1,4 @@
-export type ProviderKey = 'openai' | 'google' | 'ollama' | 'anthropic' | 'grok' | 'openrouter';
+export type ProviderKey = "openai" | "google" | "ollama" | "anthropic" | "grok" | "openrouter";
 
 export interface ProviderModels {
   chatModel: string;
@@ -8,15 +8,15 @@ export interface ProviderModels {
 export type ProviderModelMap = Record<ProviderKey, ProviderModels>;
 
 export const PROVIDER_CREDENTIAL_KEYS = [
-  'OPENAI_API_KEY',
-  'GOOGLE_API_KEY',
-  'GEMINI_API_KEY',
-  'ANTHROPIC_API_KEY',
-  'OPENROUTER_API_KEY',
-  'GROK_API_KEY',
+  "OPENAI_API_KEY",
+  "GOOGLE_API_KEY",
+  "GEMINI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "OPENROUTER_API_KEY",
+  "GROK_API_KEY",
 ] as const;
 
-export type ProviderCredentialKey = typeof PROVIDER_CREDENTIAL_KEYS[number];
+export type ProviderCredentialKey = (typeof PROVIDER_CREDENTIAL_KEYS)[number];
 
 export type RagSettingsType = {
   MODEL_CHOICE: string;
@@ -60,4 +60,15 @@ export interface CustomCredential {
   showValue?: boolean; // Track per-credential visibility
   isNew?: boolean; // Track if this is a new unsaved credential
   isFromBackend?: boolean; // Track if credential came from backend (write-only once encrypted)
+}
+
+export interface InstanceConfig {
+  name: string;
+  url: string;
+}
+
+export interface InstanceStatus {
+  online: boolean;
+  checking: boolean;
+  responseTime?: number | null;
 }
