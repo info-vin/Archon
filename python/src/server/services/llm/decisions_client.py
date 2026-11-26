@@ -3,6 +3,7 @@
 import uuid
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -44,7 +45,9 @@ class DecisionsClient:
                 base_url = net_cfg.google_base_url
         except Exception:
             pass
-        return f"{base_url.rstrip('/')}/v1beta/decisions"
+        parsed = urlsplit(base_url)
+        origin = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme and parsed.netloc else base_url.rstrip("/")
+        return f"{origin}/v1beta/decisions"
 
     @staticmethod
     async def _get_api_keys() -> list[str]:
