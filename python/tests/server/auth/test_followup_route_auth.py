@@ -84,11 +84,11 @@ def _accepted_user(mock_supabase_client, role: str = "system_admin"):
     return patch("server.auth.utils.get_supabase_client", return_value=mock_supabase_client)
 
 
-def _without_profile():
-    """Force the metadata role through. A stored profile would hide the case under test."""
+def _with_profile(role: str):
+    """Role comes from the profile row. user_metadata.role is not a privilege source."""
     return patch(
         "server.auth.dependencies.ProfileService.get_profile",
-        return_value=(False, "Profile not found"),
+        return_value=(True, {"id": "user-1", "email": "user@example.com", "role": role}),
     )
 
 
@@ -153,7 +153,7 @@ def test_valid_user_can_report_agent_output(raw_app, mock_supabase_client):
 def _read_mcp_logs(raw_app, mock_supabase_client, monkeypatch, tmp_path, role: str):
     missing = tmp_path / "missing-mcp.log"
     monkeypatch.setenv("ARCHON_MCP_LOG_PATH", str(missing))
-    with _accepted_user(mock_supabase_client, role=role), _without_profile():
+    with _accepted_user(mock_supabase_client), _with_profile(role):
         return _client(raw_app).get(LOGS_URL, headers={"Authorization": "Bearer session-token"})
 
 
