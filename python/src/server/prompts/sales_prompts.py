@@ -22,15 +22,19 @@ ALICE_HYDE_BASELINE_DEFAULT = (
     "核心服務：\n{core_text}"
 )
 
+ALICE_LEAD_ICP_CRITERIA: dict[str, str] = {
+    "A": "30–300 人之傳統／非軟體企業、研究機構或醫院，缺乏內部 AI 團隊，有流程自動化或系統整合外包痛點。",
+    "B": "小型潛客（約 30 人以下），有明確 AI 導入或自動化需求（可轉介）。",
+    "C": "明確排除對象，包含同業 AI/LLM 軟體公司、SI 系統整合商、人力派遣、獵頭顧問、自動化設備商。",
+    "X": "與 AI／自動化／系統整合無關之職缺，或資訊不足無法判斷。",
+}
+
 ALICE_LEAD_JUDGE_DEFAULT = (
     "我們是一家 AI 自動化與 Agent 軟體顧問公司。核心能力：\n{core_text}\n\n"
     "請分析以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
     "請依下列 ICP 規則將該公司分類為 A、B、C、X 之一：\n"
-    "- A：30–300 人之傳統／非軟體企業、研究機構或醫院，缺乏內部 AI 團隊，有流程自動化或系統整合外包痛點。\n"
-    "- B：小型潛客（約 30 人以下），有明確 AI 導入或自動化需求（可轉介）。\n"
-    "- C：明確排除對象，包含同業 AI/LLM 軟體公司、SI 系統整合商、人力派遣、獵頭顧問、自動化設備商。\n"
-    "- X：與 AI／自動化／系統整合無關之職缺，或資訊不足無法判斷。\n\n"
-    "請僅輸出嚴格 JSON（不要加額外說明或 Markdown），格式如下：\n"
+    + "\n".join(f"- {k}：{v}" for k, v in ALICE_LEAD_ICP_CRITERIA.items())
+    + "\n\n請僅輸出嚴格 JSON（不要加額外說明或 Markdown），格式如下：\n"
     '{{"category": "A|B|C|X", "confidence": 0.0到1.0之間的數值, "reason": "繁體中文簡短判斷理由"}}'
 )
 

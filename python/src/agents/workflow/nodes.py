@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
 
 from pydantic_ai import Agent
 from pydantic_graph import BaseNode, End, GraphRunContext
@@ -10,9 +9,10 @@ from pydantic_graph import BaseNode, End, GraphRunContext
 from src.server.services.shared_constants import PromptNameEnum, TaskFeatureEnum, WorkflowStatusEnum
 
 from .a2a_handoff import parse_handoff_directive, resolve_direct_handoff
-from .state import SharedState, SupervisorDecision
+from .state import SharedState
+from .supervisor_router import route_supervisor_step
 from .tools import propose_code_fix, read_code_file
-from .utils import PAI_V1, _accumulate_usage, _build_pruned_history, _get_output, _run_agent_with_retry
+from .utils import _accumulate_usage, _build_pruned_history, _get_output, _run_agent_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -81,23 +81,19 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
         system_prompt = prompt_service.get_prompt(prompt_key, default_supervisor_prompt)
 
-        # Build agent config dynamically to avoid version mismatch errors
-        agent_args: dict[str, Any] = {"model": model_name, "system_prompt": system_prompt}
-        if PAI_V1:
-            agent_args["output_type"] = SupervisorDecision
-        else:
-            agent_args["result_type"] = SupervisorDecision
-
-        router_agent = Agent(**agent_args)
-
         history_text = _build_pruned_history(ctx.state.messages)
         try:
-            result = await _run_agent_with_retry(
-                router_agent, f"History:\n{history_text}\n\nDecide next step.", ctx.state, model_name
+            decision = await route_supervisor_step(
+                ctx_state=ctx.state,
+                model_name=model_name,
+                system_prompt=system_prompt,
+                history_text=history_text,
+                node_routing=node_routing,
+                agent_cls=Agent,
+                run_agent_fn=_run_agent_with_retry,
+                get_output_fn=_get_output,
+                accumulate_usage_fn=_accumulate_usage,
             )
-            _accumulate_usage(ctx.state, result, model_name)
-
-            decision = _get_output(result)
             logger.info(f"🧠 [Supervisor] Decision: {decision.next_node} (Reason: {decision.reasoning})")
 
             next_step = decision.next_node

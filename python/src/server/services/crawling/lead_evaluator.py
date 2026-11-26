@@ -189,12 +189,30 @@ class LeadEvaluator:
             return None
 
     async def evaluate_lead_structured(self, job: JobData) -> LeadJudgeResult:
-        """Layer 2: Structured LLM classification (A/B/C/X) with confidence and rejection reason (G4)."""
+        """Layer 2: Structured classification (A/B/C/X) via Decisions API with fallback to generative LLM."""
         core_text = await self.get_core_text()
         if not core_text:
             return LeadJudgeResult(category="X", confidence=0.0, reason="Missing AGENTS.md core text")
 
-        from ...prompts.sales_prompts import ALICE_LEAD_JUDGE_DEFAULT
+        from ...prompts.sales_prompts import ALICE_LEAD_ICP_CRITERIA, ALICE_LEAD_JUDGE_DEFAULT
+        from ..llm.decisions_client import DecisionsUnavailableError, decisions_client
+
+        desc_snippet = (job.description_full or job.description or "")[:1000]
+        try:
+            decision = await decisions_client.classify_choice(
+                input_text=f"Company Core Capabilities:\n{core_text}\n\nJob Title: {job.title}\nCompany: {job.company}\nJob Description:\n{desc_snippet}",
+                question_key="icp_category",
+                instructions="Classify this hiring company into A, B, C, or X based on the ICP criteria.",
+                criteria=ALICE_LEAD_ICP_CRITERIA,
+                context_type="lead_evaluator_ALICE_LEAD_DECISION",
+            )
+            return LeadJudgeResult(
+                category=decision.choice,  # type: ignore[arg-type]
+                confidence=decision.confidence,
+                reason=f"Decisions API ({decision.choice}類, 信心 {decision.confidence:.0%})",
+            )
+        except DecisionsUnavailableError as err:
+            logger.warning(f"LeadEvaluator: Decisions API unavailable, falling back to ALICE_LEAD_JUDGE: {err}")
 
         content = await self.generate_llm_response(
             prompt_name="ALICE_LEAD_JUDGE",
@@ -202,7 +220,7 @@ class LeadEvaluator:
             format_kwargs={
                 "core_text": core_text,
                 "title": job.title,
-                "desc": (job.description_full or job.description or "")[:1000],
+                "desc": desc_snippet,
             },
             estimated_tokens=500,
             max_retries=3,
