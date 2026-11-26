@@ -112,3 +112,16 @@ class TestPhase514QuotaAndG1G3G4:
 
         with pytest.raises(CrawlerBlockedException, match=str(status_code)):
             crawler._fetch_from_104_sync(mock_client, "AI", limit=5, page=1)
+
+    def test_job104_search_api_percent_encodes_non_ascii_referer(self):
+        from src.server.services.crawling.clients.job104_client import Job104Crawler
+
+        crawler = Job104Crawler()
+        mock_client = MagicMock()
+        mock_response = MagicMock(status_code=200, headers={"content-type": "application/json"}, json=lambda: {"data": []})
+        mock_client.get.return_value = mock_response
+
+        crawler._fetch_from_104_sync(mock_client, "AI系統整合", limit=5, page=1)
+        sent_headers = mock_client.get.call_args.kwargs["headers"]
+        sent_headers["Referer"].encode("latin-1")
+        assert "AI%E7%B3%BB%E7%B5%B1%E6%95%B4%E5%90%88" in sent_headers["Referer"]

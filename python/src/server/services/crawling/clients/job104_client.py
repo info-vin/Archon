@@ -1,5 +1,6 @@
 import asyncio
 import random
+from urllib.parse import quote
 
 from curl_cffi import requests as curl_requests
 from pydantic import BaseModel
@@ -67,7 +68,7 @@ class Job104Crawler:
             "jobsource": "2018indexpoc",
         }
         try:
-            search_headers = self.get_headers(referer=f"https://www.104.com.tw/jobs/search/?keyword={keyword}")  # 合法
+            search_headers = self.get_headers(referer=f"https://www.104.com.tw/jobs/search/?keyword={quote(keyword)}")  # 合法
             response = client.get(self.base_url, params=params, headers=search_headers)
             if response.status_code in (403, 429, 503):
                 logger.warning(f"104 WAF/Rate-Limit detected on search API: HTTP {response.status_code}")
