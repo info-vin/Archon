@@ -100,8 +100,8 @@ class TestPhase514QuotaAndG1G3G4:
         assert ("alice_auto_fetch", "start", "INFO") in logged_events
         assert ("alice_auto_fetch", "error", "ERROR") in logged_events
 
-    @pytest.mark.parametrize("status_code", [429, 503])
-    def test_job104_search_api_raises_blocked_on_429_and_503(self, status_code: int):
+    @pytest.mark.parametrize("status_code", [403, 429, 503])
+    def test_job104_search_api_raises_blocked_on_403_429_and_503(self, status_code: int):
         from src.server.services.crawling.clients.job104_client import CrawlerBlockedException, Job104Crawler
 
         crawler = Job104Crawler()
