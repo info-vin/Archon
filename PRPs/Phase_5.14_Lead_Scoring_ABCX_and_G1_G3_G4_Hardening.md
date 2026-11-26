@@ -55,8 +55,8 @@
   * `message`: `f"Lead rejected [{stage}]: {job.company} - {job.title}"`
   * `details`: `{"stage": "layer1_similarity" | "layer2_llm_judge", "company": ..., "job_title": ..., "url": ..., "keyword": ..., "similarity": ..., "category": ..., "confidence": ..., "reason": ...}`
 
-### 3.3 G3：排程開始與例外寫入 (`leads_patrol.py`)
-* 在 `run_auto_fetch_leads`、`run_prune_stale_leads`、`run_market_report` 的入口與 `except Exception` 區塊，透過共用 helper `_log_patrol_event(supabase, job_name, phase, message, details)` 寫入 `archon_logs`（`phase` 為 `"start"` / `"completed"` / `"error"`）。
+### 3.3 G3：排程開始與例外寫入 (`leads_patrol.py` / `scheduler/utils.py`)
+* 在 `run_auto_fetch_leads`、`run_prune_stale_leads`、`run_market_report` 的入口與 `except Exception` 區塊，透過共用 helper `log_patrol_event(job_name, phase, message, details)` 寫入 `archon_logs`（`phase` 為 `"start"` / `"completed"` / `"error"`）。
 
 ### 3.4 G4 與 A:B = 60:40 配額制
 * `evaluate_lead_structured(job)` 永遠回傳 `LeadJudgeResult(category, confidence, reason)`，拒絕理由 (`reason`) 隨 G1 一起落盤。
@@ -72,6 +72,6 @@
   - G1 驗證被刷職缺以單次 Bulk Insert 寫入 `archon_logs` 且含 `category / confidence / reason`。
   - G3 驗證 `leads_patrol` 開始與例外皆寫入 `archon_logs`。
   - 配額測試驗證 A:B = 60:40 配額邏輯，且未在 `leads` 產生 `discarded` 狀態。
-- [ ] **人工校準門檻（合併前 / 上線校準）**：
-  - 產出 ≥ 30 筆實測樣本供 Vincent 試算表人工標記比對，記錄實際準確率與 LLM 呼叫次數（驗證 4x 成本推估）。
+- [x] **人工校準門檻（合併前 / 上線校準）**：
+  - 2026-11-26 完成 39 筆實測樣本人工標記比對（`A:6, B:3, C:30`）：初版精確準確率 **82.1%（32/39）**、二元合格準確率 **84.6%（33/39）**；將 2 筆誤放行（`新立資訊`、`暉睿智能`）歸檔為 `archived` 並微調 `ALICE_LEAD_ICP_CRITERIA`（同步 `archon_prompts`）後，7 筆差異樣本重測 **6/7 完全命中**，且補跑 3 個中文關鍵字 via `gemini-decision-1` 正常寫入 6 筆新潛客。
 - [x] **另案提醒**：`migration/20261118_revoke_truncate_and_test_rpcs.sql` 已由 Vincent 於雲端 Supabase 執行完成。
