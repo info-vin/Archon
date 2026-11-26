@@ -1,9 +1,8 @@
 """
-Phase 5.15 Stage 2 (P2): Bidirectional Telegram Bot Gateway.
+Phase 5.15 Stage 2 (P2): Bidirectional Telegram Bot Gateway (Facade).
 
-Handles inbound Telegram commands (/task, /status, @agent), inline approval
-callbacks (approve:<id>, reject:<id>), idempotent update_id deduplication,
-strict chat_id allowlisting, and optional getUpdates wake-up catch-up for HF Space.
+Delegates HTTP/Proxy transport to telegram_proxy_client and command/HITL
+handling to telegram_command_handlers while preserving public signatures.
 """
 
 from __future__ import annotations
@@ -11,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import hmac
 from collections import deque
-from enum import StrEnum
 from typing import Any
 
 import httpx
@@ -19,36 +17,16 @@ import httpx
 from src.agents.approval_manager import AgentApprovalManager
 from src.agents.workflow import WorkflowEngine
 from src.server.config.logfire_config import get_logger
-from src.server.repositories.base_repository import BaseRepository
 from src.server.schemas.settings import NotificationConfig
-from src.server.services.scheduler.utils import get_default_project_id
 from src.server.services.settings_service import SettingsService
-from src.server.services.shared_constants import AgentNames, AgentUUIDs
 from src.server.utils import get_supabase_client
+
+from .telegram_command_handlers import handle_callback_query, handle_message, parse_task_command
+from .telegram_proxy_client import poll_missed_updates_with_offset, post_telegram_api
 
 logger = get_logger(__name__)
 
-_LAST_UPDATE_SETTING_KEY = "TELEGRAM_LAST_UPDATE_ID"
 _TELEGRAM_TASK_PREFIX = "[Telegram]"
-
-
-class TelegramProxyMethod(StrEnum):
-    SEND_MESSAGE = "sendMessage"
-    ANSWER_CALLBACK_QUERY = "answerCallbackQuery"
-    GET_UPDATES = "getUpdates"
-
-
-class TelegramApprovalAction(StrEnum):
-    APPROVE = "approve"
-    REJECT = "reject"
-
-_MENTION_AGENT_MAP: dict[str, tuple[str, str]] = {
-    "@supervisor": (AgentUUIDs.SUPERVISOR, AgentNames.SUPERVISOR),
-    "@librarian": (AgentUUIDs.LIBRARIAN, AgentNames.LIBRARIAN),
-    "@marketbot": (AgentUUIDs.MARKET_BOT, AgentNames.MARKET_BOT),
-    "@devbot": (AgentUUIDs.DEV_BOT, AgentNames.DEV_BOT),
-    "@pobot": (AgentUUIDs.PO_BOT, AgentNames.PO_BOT),
-}
 
 
 class TelegramBotGateway:
@@ -94,42 +72,8 @@ class TelegramBotGateway:
     async def _post_telegram_api(
         self, method: str, payload: dict[str, Any], config: NotificationConfig
     ) -> dict[str, Any]:
-        if not config.telegram_token:
-            return {"ok": False, "error": "Missing TELEGRAM_TOKEN"}
-
-        # Route supported methods via TELEGRAM_PROXY_URL when configured (HF Space blocks direct api.telegram.org)
-        if method in TelegramProxyMethod._value2member_map_ and config.telegram_proxy_url:
-            proxy_payload = {"bot_token": config.telegram_token, "method": method, **payload}
-            try:
-                async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
-                    resp = await client.post(config.telegram_proxy_url, json=proxy_payload)
-                    try:
-                        data = resp.json()
-                    except ValueError:
-                        data = {}
-                    status_code = getattr(resp, "status_code", 200)
-                    if isinstance(status_code, int) and status_code >= 400:
-                        logger.warning(
-                            f"TelegramBotGateway: Telegram returned HTTP {status_code} via proxy for '{method}': {data}"
-                        )
-                        return data if isinstance(data, dict) else {"ok": False, "status_code": status_code}
-                    return data if isinstance(data, dict) else {"ok": True}
-            except httpx.RequestError as proxy_err:
-                logger.warning(
-                    f"TelegramBotGateway: Proxy '{method}' unreachable ({proxy_err}), falling back to direct API..."
-                )
-
-        base_url = config.telegram_api_base_url.rstrip("/")
-        url = f"{base_url}/bot{config.telegram_token}/{method}"
-        try:
-            async with httpx.AsyncClient(timeout=config.telegram_timeout) as client:
-                resp = await client.post(url, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                return data if isinstance(data, dict) else {"ok": True}
-        except Exception as e:
-            logger.error(f"TelegramBotGateway: API call '{method}' failed: {e}")
-            return {"ok": False, "error": str(e)}
+        # Pass module-level httpx.AsyncClient so unit tests patching telegram_bot_gateway.httpx.AsyncClient work cleanly.
+        return await post_telegram_api(method, payload, config, http_client_cls=httpx.AsyncClient)
 
     async def send_approval_card(
         self,
@@ -179,200 +123,51 @@ class TelegramBotGateway:
         cfg = config or await self.get_config()
 
         if "callback_query" in update and isinstance(update["callback_query"], dict):
-            return await self._handle_callback_query(
-                update["callback_query"], cfg, approval_mgr=approval_mgr, workflow_engine=workflow_engine
+            return await handle_callback_query(
+                update["callback_query"],
+                cfg,
+                is_chat_allowed_fn=self.is_chat_allowed,
+                post_api_fn=self._post_telegram_api,
+                approval_mgr=approval_mgr,
+                workflow_engine=workflow_engine,
             )
 
         if "message" in update and isinstance(update["message"], dict):
-            return await self._handle_message(update["message"], cfg, approval_mgr=approval_mgr)
+            return await handle_message(
+                update["message"],
+                cfg,
+                is_chat_allowed_fn=self.is_chat_allowed,
+                post_api_fn=self._post_telegram_api,
+                approval_mgr=approval_mgr,
+                create_task_fn=self._create_inbound_task,
+                dispatch_task_fn=self._dispatch_inbound_task,
+            )
 
         return {"status": "ignored", "reason": "unsupported_update_type"}
 
-    async def _handle_callback_query(
-        self,
-        callback: dict[str, Any],
-        config: NotificationConfig,
-        approval_mgr: AgentApprovalManager | None = None,
-        workflow_engine: WorkflowEngine | None = None,
-    ) -> dict[str, Any]:
-        chat_id = callback.get("message", {}).get("chat", {}).get("id")
-        if not self.is_chat_allowed(chat_id, config):
-            logger.warning(f"TelegramBotGateway: Blocked unauthorized callback from chat_id={chat_id}")
-            return {"status": "unauthorized"}
+    async def _create_inbound_task(self, task_body: str, assignee_id: str, assignee_name: str) -> str:
+        from .telegram_command_handlers import create_inbound_task
 
-        data = str(callback.get("data") or "").strip()
-        callback_id = str(callback.get("id") or "")
-        if ":" not in data:
-            return {"status": "ignored", "reason": "invalid_callback_data"}
-
-        action_raw, approval_id = data.split(":", 1)
-        try:
-            action = TelegramApprovalAction(action_raw)
-        except ValueError:
-            return {"status": "ignored", "reason": "unknown_action"}
-        if not approval_id:
-            return {"status": "ignored", "reason": "missing_approval_id"}
-
-        mgr = approval_mgr or AgentApprovalManager()
-        approved = action == TelegramApprovalAction.APPROVE
-        try:
-            dto = await mgr.review_approval(
-                approval_id=approval_id,
-                approved=approved,
-                reviewer_id=f"telegram:{chat_id}",
-                reason="Approved via Telegram" if approved else "Rejected via Telegram",
-            )
-        except ValueError:
-            msg = f"⚠️ 審批單 ({approval_id[:8]}) 不存在或已失效。"
-            if callback_id:
-                await self._post_telegram_api("answerCallbackQuery", {"callback_query_id": callback_id, "text": msg}, config)
-            return {"status": "not_found", "approval_id": approval_id}
-
-        resumed = False
-        if approved and dto.conversation_id:
-            engine = workflow_engine or WorkflowEngine()
-            resume_res = await engine.resume_from_checkpoint(dto.conversation_id)
-            resumed = bool(resume_res.get("success"))
-
-        reply_text = (
-            f"✅ 已核准 ({approval_id[:8]})" + ("，流程已續跑完成。" if resumed else "，狀態已更新。")
-            if approved
-            else f"❌ 已退回 ({approval_id[:8]})。"
-        )
-        if callback_id:
-            await self._post_telegram_api(
-                "answerCallbackQuery", {"callback_query_id": callback_id, "text": reply_text}, config
-            )
-        await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply_text}, config)
-        return {"status": "processed", "action": action.value, "approval_id": approval_id, "resumed": resumed}
-
-    async def _handle_message(
-        self,
-        message: dict[str, Any],
-        config: NotificationConfig,
-        approval_mgr: AgentApprovalManager | None = None,
-    ) -> dict[str, Any]:
-        chat_id = message.get("chat", {}).get("id")
-        if not self.is_chat_allowed(chat_id, config):
-            logger.warning(f"TelegramBotGateway: Blocked unauthorized message from chat_id={chat_id}")
-            return {"status": "unauthorized"}
-
-        text = str(message.get("text") or "").strip()
-        if not text:
-            return {"status": "ignored", "reason": "empty_text"}
-
-        if text.startswith("/status"):
-            mgr = approval_mgr or AgentApprovalManager()
-            pending = await mgr.list_pending_approvals()
-            reply = f"📊 Archon 狀態正常\n待審批項目：{len(pending)} 筆"
-            send_res = await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
-            return {
-                "status": "processed",
-                "command": "status",
-                "pending_count": len(pending),
-                "reply_sent": bool(send_res.get("ok")),
-            }
-
-        assignee_id, assignee_name, task_body = self._parse_task_command(text)
-        if not task_body:
-            return {"status": "ignored", "reason": "not_a_command"}
-
-        task_id = await self._create_inbound_task(task_body, assignee_id, assignee_name)
-        self._dispatch_inbound_task(task_id, assignee_id)
-        reply = f"📥 已建立並啟動工單 `{task_id[:8]}` 指派給 {assignee_name}：\n{task_body[:200]}"
-        send_res = await self._post_telegram_api("sendMessage", {"chat_id": str(chat_id), "text": reply}, config)
-        return {
-            "status": "processed",
-            "command": "task",
-            "task_id": task_id,
-            "assignee_id": assignee_id,
-            "dispatched": True,
-            "reply_sent": bool(send_res.get("ok")),
-        }
+        return await create_inbound_task(task_body, assignee_id, assignee_name)
 
     @staticmethod
     def _dispatch_inbound_task(task_id: str, assignee_id: str) -> None:
-        """Triggers background execution via AgentService immediately (task_dispatcher only runs recurring tasks)."""
-        from src.server.services.agent_service import agent_service
+        from .telegram_command_handlers import dispatch_inbound_task
 
-        async def _run() -> None:
-            try:
-                await agent_service.run_agent_task(task_id=task_id, agent_id=assignee_id)
-            except Exception as e:
-                logger.error(f"TelegramBotGateway: Background execution failed for task {task_id}: {e}", exc_info=True)
-
-        asyncio.create_task(_run())
+        dispatch_inbound_task(task_id, assignee_id)
 
     @staticmethod
     def _parse_task_command(text: str) -> tuple[str, str, str]:
-        lowered = text.lower()
-        for mention, (aid, aname) in _MENTION_AGENT_MAP.items():
-            if lowered.startswith(mention):
-                return aid, aname, text[len(mention) :].strip()
-        if lowered.startswith("/task"):
-            return AgentUUIDs.SUPERVISOR, AgentNames.SUPERVISOR, text[5:].strip()
-        return AgentUUIDs.SUPERVISOR, AgentNames.SUPERVISOR, ""
-
-    async def _create_inbound_task(self, instruction: str, assignee_id: str, assignee_name: str) -> str:
-        def _insert() -> str:
-            sb = get_supabase_client()
-            repo = BaseRepository(sb)
-            project_id = get_default_project_id(sb)
-            payload = {
-                "project_id": project_id,
-                "title": f"[Telegram] {instruction[:80]}",
-                "description": instruction,
-                "assignee": assignee_name,
-                "assignee_id": assignee_id,
-                "status": "todo",
-            }
-            success, res = repo.execute_query(sb.table("archon_tasks").insert(payload), "Create Telegram inbound task")
-            if success and res.get("data"):
-                return str(res["data"][0]["id"])
-            raise RuntimeError("Failed to create inbound Telegram task")
-
-        return await asyncio.to_thread(_insert)
+        return parse_task_command(text)
 
     async def poll_missed_updates(self, config: NotificationConfig | None = None) -> int:
         """HF Space wake-up recovery: polls missed updates with persisted offset to prevent replays."""
         cfg = config or await self.get_config()
-        if not cfg.telegram_token:
-            return 0
-
-        def _get_last_offset() -> int:
-            try:
-                raw = SettingsService(get_supabase_client()).get_setting(_LAST_UPDATE_SETTING_KEY)
-                return int(raw) + 1 if raw else 0
-            except Exception:
-                return 0
-
-        def _save_last_update_id(max_id: int) -> None:
-            try:
-                SettingsService(get_supabase_client()).set_setting(_LAST_UPDATE_SETTING_KEY, str(max_id))
-            except Exception as e:
-                logger.warning(f"TelegramBotGateway: Failed to persist {_LAST_UPDATE_SETTING_KEY}: {e}")
-
-        offset = await asyncio.to_thread(_get_last_offset)
-        payload: dict[str, Any] = {"timeout": 1, "limit": 20}
-        if offset > 0:
-            payload["offset"] = offset
-
-        res = await self._post_telegram_api("getUpdates", payload, cfg)
-        updates = res.get("result")
-        if not isinstance(updates, list):
-            return 0
-        processed = 0
-        max_seen = 0
-        for upd in updates:
-            if isinstance(upd, dict):
-                uid = upd.get("update_id")
-                if isinstance(uid, int) and uid > max_seen:
-                    max_seen = uid
-                await self.handle_update(upd, config=cfg)
-                processed += 1
-        if max_seen > 0:
-            await asyncio.to_thread(_save_last_update_id, max_seen)
-        return processed
+        return await poll_missed_updates_with_offset(
+            cfg,
+            post_api_fn=self._post_telegram_api,
+            handle_update_fn=lambda upd, c: self.handle_update(upd, config=c),
+        )
 
     async def notify_task_completion(
         self,

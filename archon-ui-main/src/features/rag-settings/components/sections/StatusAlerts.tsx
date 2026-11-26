@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from "react";
 
 interface StatusAlertsProps {
   shouldShowProviderAlert: boolean;
@@ -9,7 +9,7 @@ interface StatusAlertsProps {
 export const StatusAlerts: React.FC<StatusAlertsProps> = ({
   shouldShowProviderAlert,
   providerAlertClassName,
-  providerAlertMessage
+  providerAlertMessage,
 }) => {
   if (!shouldShowProviderAlert) return null;
   return (
