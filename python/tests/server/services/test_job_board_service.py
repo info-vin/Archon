@@ -1,10 +1,11 @@
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from src.server.services.crawling.clients.job104_client import JobData
 from src.server.services.job_board_service import JobBoardService
+from src.server.services.llm.decisions_client import DecisionChoiceResult, DecisionsUnavailableError
 
 
 @pytest.fixture
@@ -86,7 +87,11 @@ async def test_identify_leads_and_save(mock_supabase):
         return ""
 
     with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response), \
-         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]):
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
+         patch(
+             'src.server.services.llm.decisions_client.decisions_client.classify_choice',
+             new=AsyncMock(side_effect=DecisionsUnavailableError("unit test fallback")),
+         ):
 
         # Make the similarity calculation return 1.0 (pass the threshold 0.67)
         with patch.object(service.evaluator, 'cosine_similarity', return_value=1.0):
@@ -174,7 +179,11 @@ async def test_hybrid_funnel_fail_llm_judge():
         return "FAIL"
 
     with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
-         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]):
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
+         patch(
+             'src.server.services.llm.decisions_client.decisions_client.classify_choice',
+             new=AsyncMock(side_effect=DecisionsUnavailableError("unit test fallback")),
+         ):
 
         # Sim = 1.0 >= 0.67
         with patch.object(service.evaluator, 'cosine_similarity', return_value=1.0):
@@ -188,6 +197,42 @@ async def test_hybrid_funnel_fail_llm_judge():
     assert "ALICE_HYDE_BASELINE" in prompt_names
     assert "ALICE_LEAD_JUDGE" in prompt_names
     assert "ALICE_INFER_NEED" not in prompt_names
+
+
+@pytest.mark.asyncio
+async def test_hybrid_funnel_fail_decisions_api():
+    """
+    Test Assertion 2b: When Decisions API returns category C directly,
+    ALICE_LEAD_JUDGE and ALICE_INFER_NEED are not called.
+    """
+    service = JobBoardService()
+    job = JobData(title="AI Engineer", company="Competitor Corp", url="http://c", description="Build AI")
+
+    mock_supabase = Mock()
+    mock_supabase.table().select().in_().execute().data = []
+    service.supabase = mock_supabase
+
+    async def mock_generate_llm_response(prompt_name, **kwargs):
+        if prompt_name == "ALICE_HYDE_BASELINE":
+            return "HyDE Baseline Content"
+        return "FAIL"
+
+    decision_c = DecisionChoiceResult(choice="C", confidence=0.92, probabilities={"C": 0.92}, input_tokens=10)
+    with patch.object(service.evaluator, 'generate_llm_response', side_effect=mock_generate_llm_response) as mock_llm, \
+         patch('src.server.services.embeddings.embedding_service.create_embedding', return_value=[1.0, 0.0]), \
+         patch(
+             'src.server.services.llm.decisions_client.decisions_client.classify_choice',
+             new=AsyncMock(return_value=decision_c),
+         ) as mock_decide:
+
+        with patch.object(service.evaluator, 'cosine_similarity', return_value=1.0):
+            count = await service.identify_leads_and_save([job])
+
+    assert count == 0
+    mock_decide.assert_awaited_once()
+    calls = mock_llm.call_args_list
+    assert len(calls) == 1
+    assert calls[0][1]["prompt_name"] == "ALICE_HYDE_BASELINE"
 
 
 @pytest.mark.asyncio
