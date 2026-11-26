@@ -72,7 +72,6 @@ class ReportEnrichmentService:
 
         from google import genai
 
-        from src.server.config.model_ssot import SYSTEM_MODELS
         from src.server.services.credential_service import credential_service
         from src.server.services.prompt_service import prompt_service
         from src.server.services.token_usage_service import TokenUsageService
@@ -85,14 +84,15 @@ class ReportEnrichmentService:
         keys_to_try = [k for k in [primary_key, backup_key] if k]
         # Deduplicate while preserving order
         unique_keys = list(dict.fromkeys(keys_to_try))
-        supervisor_model = SYSTEM_MODELS.get("SUPERVISOR_MODEL", "models/gemini-3.6-flash").split("/")[-1]
-        pro_model = SYSTEM_MODELS.get("DEFAULT_PRO", "models/gemini-3.5-flash-lite").split("/")[-1]
-        lite_model = SYSTEM_MODELS.get("DEFAULT_TEXT", "models/gemini-3.1-flash-lite").split("/")[-1]
+        from ..config.model_ssot import get_model_path
+
+        supervisor_model = get_model_path("SUPERVISOR_MODEL").split("/")[-1]
+        pro_model = get_model_path("DEFAULT_PRO").split("/")[-1]
+        lite_model = get_model_path("DEFAULT_TEXT").split("/")[-1]
         models_to_try = list(
             dict.fromkeys(
                 [
                     supervisor_model,
-                    "gemini-3.5-flash-lite",
                     pro_model,
                     lite_model,
                 ]

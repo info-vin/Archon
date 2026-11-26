@@ -42,11 +42,11 @@
 4. **新增 `scripts/reencrypt_credentials.py`**：
    - 掃描 `archon_settings` 中 `is_encrypted = True` 的資料列，使用舊金鑰解密後，以 `CREDENTIAL_ENCRYPTION_KEY` 重新加密並寫回（支援 `--dry-run` 預覽）。
 5. **人工操作檢查點 (Checklist)**：
-   - [ ] 產生一組獨立的 `CREDENTIAL_ENCRYPTION_KEY` 並寫入本機 `.env`、GitHub Secrets、HF Space Secrets。
-   - [ ] 部署 Track A 程式碼，執行 `uv run python scripts/reencrypt_credentials.py` 完成資料庫密文轉換。
-   - [ ] 至 Supabase Dashboard 輪換 `SUPABASE_SERVICE_KEY`（與 anon key 視需求），更新 `.env` / Secrets。
-   - [ ] 至 Telegram `@BotFather` 與 4 家 AI 服務商輪換金鑰，更新 `.env` / Secrets / `archon_settings`。
-   - [ ] 確認線上 `/health` 與 AI 服務正常後，**刪除 13 個舊網站部署**。
+   - [x] 產生一組獨立的 `CREDENTIAL_ENCRYPTION_KEY` 並寫入本機 `.env`、GitHub Secrets、HF Space Secrets。
+   - [x] 部署 Track A 程式碼，執行 `uv run python scripts/reencrypt_credentials.py` 完成資料庫密文轉換。
+   - [x] 至 Supabase Dashboard 輪換 `SUPABASE_SERVICE_KEY`（與 anon key 視需求），更新 `.env` / Secrets。
+   - [ ] 至 Telegram `@BotFather` 與 4 家 AI 服務商輪換金鑰，更新 `.env` / Secrets / `archon_settings`。（註：`archon_settings` 4 把密文已完成換鎖重加密，待確認外部平台是否已全部重發新金鑰）
+   - [x] 確認線上 `/health` 與 AI 服務正常後，**刪除 13 個舊網站部署**。（已透過 Vercel CLI 清理 160 筆歷史部署）
 
 ---
 
@@ -58,7 +58,7 @@
    - [AuthPage.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/AuthPage.tsx)：移除 `isLogin` 切換與「Create a new account / Sign up」表單（遵循 `UI_STANDARDS.md` 與移除 dead code 原則）。
    - [useAuth.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/hooks/useAuth.tsx) / [auth.ts](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/services/api/auth.ts) / [AuthPage.test.tsx](file:///Users/vincenta/GoogleKwok022/Archon/enduser-ui-fe/src/pages/AuthPage.test.tsx)：同步清理無效的 `register` 呼叫並更新單元測試。
 3. **人工操作檢查點 (Checklist)**：
-   - [ ] 至 Supabase Dashboard → Authentication → Sign In / Providers 關閉 **Allow new users to sign up**。
+   - [x] 至 Supabase Dashboard → Authentication → Sign In / Providers 關閉 **Allow new users to sign up**。
 
 ---
 

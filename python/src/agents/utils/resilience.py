@@ -51,7 +51,9 @@ async def run_agent_with_global_resilience(agent: Agent[Any, Any], prompt: str, 
 
             model_name = getattr(agent.model, "model_name", None)
             if not model_name:
-                model_name = agent.model if isinstance(agent.model, str) else "gemini-3.1-flash-lite"
+                from src.server.config.model_ssot import get_model_path
+
+                model_name = agent.model if isinstance(agent.model, str) else get_model_path("DEFAULT_TEXT").replace("models/", "")
 
             backup_model: Any = ModelClass(model_name, provider=provider)
             return await agent.run(prompt, model=backup_model, **run_kwargs)

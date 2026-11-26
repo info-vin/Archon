@@ -103,8 +103,10 @@ class MetaTwinService(BaseRepository):
                     "reason": f"Detected {rate_limit_hits} rate limit errors in the last hour."
                 })
 
-                # Apply Actuator: Switch to fallback model
-                fallback_success = await self.switch_model_to_fallback(agent_name, "models/gemini-3.1-flash-lite")
+                # Apply Actuator: Switch to fallback model from SSOT
+                from src.server.config.model_ssot import SYSTEM_MODELS
+
+                fallback_success = await self.switch_model_to_fallback(agent_name, SYSTEM_MODELS["DEFAULT_TEXT"])
                 if fallback_success:
                     corrections.append({
                         "agent": agent_name,
