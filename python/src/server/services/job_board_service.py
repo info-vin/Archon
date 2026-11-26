@@ -235,8 +235,8 @@ class JobBoardService(BaseRepository):
                 identified_need = f"[{judge_result.category}類 | 信心 {judge_result.confidence:.0%}] {judge_result.reason}\n{base_need}"
 
                 score = int(round(judge_result.confidence * 100)) if judge_result.confidence > 0 else int(round(sim * 100))
-                # Qualified status for high-intent matches (>= 72), else archived
-                lead_status = "qualified" if score >= 72 else "archived"
+                # Qualified status for high-intent matches (>= SSOT lead_qualify_min_score), else archived
+                lead_status = "qualified" if score >= config.lead_qualify_min_score else "archived"
 
                 lead_dto: LeadDataDTO = {
                     "company_name": job.company,
