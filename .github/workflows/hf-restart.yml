@@ -31,3 +31,27 @@ jobs:
             echo "Failed to $ACTION. HTTP Status: $RESPONSE"
             exit 1
           fi
+
+      - name: Catch Up Missed Telegram Updates After Wakeup
+        continue-on-error: true
+        env:
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$TELEGRAM_WEBHOOK_SECRET" ]; then
+            echo "TELEGRAM_WEBHOOK_SECRET not set; skipping Telegram catch-up."
+            exit 0
+          fi
+          SPACE_URL="https://chiawei6-myrmidon.hf.space"
+          echo "Waiting for Space /health readiness before polling missed Telegram updates..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$SPACE_URL/health")
+            if [ "$STATUS" == "200" ]; then
+              echo "Space healthy (attempt $i). Triggering /api/telegram/poll-missed..."
+              curl -s -w "\nHTTP Status: %{http_code}\n" -X POST \
+                "$SPACE_URL/api/telegram/poll-missed" \
+                -H "X-Telegram-Bot-Api-Secret-Token: $TELEGRAM_WEBHOOK_SECRET"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Space not yet ready within 60s; skipping Telegram catch-up."

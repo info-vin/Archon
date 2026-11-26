@@ -29,6 +29,8 @@ class EnvironmentConfig:
     gemini_api_key: str | None = None
     google_api_key: str | None = None
     supabase_db_url: str | None = None
+    credential_encryption_key: str | None = None
+    previous_supabase_service_key: str | None = None
     offline_mode: bool = False
     archon_env: str = ""
     space_id: str | None = None
@@ -264,6 +266,7 @@ def load_environment_config() -> EnvironmentConfig:
         "gemini-3.5-flash": {"input": 1.50, "output": 9.00},
         "gemini-3.5-flash-lite": {"input": 0.30, "output": 2.50},
         "gemini-3.6-flash": {"input": 0.30, "output": 2.50},
+        "gemini-decision-1": {"input": 0.10, "output": 0.00},
         "gemini-3.1-flash-tts-preview": {"input": 0.10, "output": 0.40},
         "text-embedding-004": {"input": 0.02, "output": 0.00},
         "ollama": {"input": 0.00, "output": 0.00},
@@ -286,6 +289,8 @@ def load_environment_config() -> EnvironmentConfig:
         supabase_url=supabase_url,
         supabase_service_key=supabase_service_key,
         supabase_db_url=supabase_db_url,
+        credential_encryption_key=os.getenv("CREDENTIAL_ENCRYPTION_KEY"),
+        previous_supabase_service_key=os.getenv("PREVIOUS_SUPABASE_SERVICE_KEY"),
         offline_mode=offline_mode,
         archon_env=archon_env,
         space_id=space_id,

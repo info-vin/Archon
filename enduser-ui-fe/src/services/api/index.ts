@@ -12,7 +12,6 @@ import { opsApi } from './ops';
 export const api = {
   // Auth
   login: authApi.login.bind(authApi),
-  register: authApi.register.bind(authApi),
   logout: authApi.logout.bind(authApi),
   getCurrentUser: authApi.getCurrentUser.bind(authApi),
   getSystemPermissions: authApi.getSystemPermissions.bind(authApi),

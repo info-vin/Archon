@@ -118,14 +118,32 @@ class JobBoardService(BaseRepository):
 
         return total_new_leads
 
+    @staticmethod
+    def _apply_ab_quota(candidates: list[tuple[JobData, LeadDataDTO, str]]) -> list[tuple[JobData, LeadDataDTO, str]]:
+        """Apply A:B = 60:40 quota to qualified leads without multiplying score weights."""
+        qualified_a = [c for c in candidates if c[1]["status"] == "qualified" and c[2] == "A"]
+        qualified_b = [c for c in candidates if c[1]["status"] == "qualified" and c[2] == "B"]
+        if not qualified_a or not qualified_b:
+            return candidates
+
+        # 60:40 quota => max B qualified = floor(len(A) * 40 / 60)
+        max_b = max(1, (len(qualified_a) * 40) // 60)
+        qualified_b_sorted = sorted(qualified_b, key=lambda c: c[1].get("enrichment_score") or 0, reverse=True)
+        demote_urls = {c[0].url for c in qualified_b_sorted[max_b:]}
+        for job, lead_data, category in candidates:
+            if category == "B" and lead_data["status"] == "qualified" and job.url in demote_urls:
+                lead_data["status"] = "archived"
+        return candidates
+
     async def identify_leads_and_save(self, jobs: list[JobData]) -> int:
         new_leads_count = 0
         from .stats import StatsService
 
         stats_service = StatsService()
 
-        leads_to_insert = []
-        jobs_to_insert = []
+        leads_to_insert: list[LeadDataDTO] = []
+        jobs_to_insert: list[JobData] = []
+        rejected_logs: list[dict[str, Any]] = []
 
         # FIX N+1 SELECT: Bulk query existing URLs
         job_urls = [job.url for job in jobs if job.url]
@@ -138,11 +156,24 @@ class JobBoardService(BaseRepository):
 
         baseline_embedding = await self.evaluator.get_hyde_baseline_embedding()
 
-        async def _process_single_job(job: JobData) -> LeadDataDTO | None:
+        async def _process_single_job(job: JobData) -> tuple[LeadDataDTO, str] | None:
             try:
                 # RAG Vector Matching against HyDE Baseline
                 if not baseline_embedding:
                     logger.error(f"Lead discarded. HyDE Baseline missing, failing fast. Company: {job.company}")
+                    rejected_logs.append({
+                        "source": "job_board_service_triage",
+                        "level": "INFO",
+                        "message": f"Lead rejected [layer1_baseline_missing]: {job.company} - {job.title}",
+                        "details": {
+                            "stage": "layer1_baseline_missing",
+                            "company": job.company,
+                            "job_title": job.title,
+                            "url": job.url,
+                            "keyword": job.keyword,
+                            "reason": "HyDE Baseline missing",
+                        },
+                    })
                     return None
 
                 from ..services.embeddings.embedding_service import create_embedding
@@ -157,34 +188,57 @@ class JobBoardService(BaseRepository):
                 config = self._get_crawler_config()
                 threshold = config.lead_gen_similarity_threshold
 
-                # Layer 1: Fast Fail on Vector Similarity
+                # Layer 1: Fast Fail on Vector Similarity (G1 structured rejection log)
                 if sim < threshold:
-                    # Log discarded
-                    self._log_archon(
-                        source="job_board_service_rag",
-                        level="DEBUG",
-                        message=f"Lead discarded. Similarity: {sim:.3f} < {threshold}. Keyword: {job.keyword}. Company: {job.company}"
-                    )
+                    rejected_logs.append({
+                        "source": "job_board_service_triage",
+                        "level": "INFO",
+                        "message": f"Lead rejected [layer1_similarity]: {job.company} - {job.title}",
+                        "details": {
+                            "stage": "layer1_similarity",
+                            "company": job.company,
+                            "job_title": job.title,
+                            "url": job.url,
+                            "keyword": job.keyword,
+                            "similarity": round(sim, 4),
+                            "threshold": threshold,
+                            "category": "X",
+                            "confidence": 0.0,
+                            "reason": f"Similarity {sim:.3f} < {threshold}",
+                        },
+                    })
                     return None
 
-                # Layer 2: LLM Judge (Reject competitors)
-                is_lead = await self.evaluator.llm_judge(job)
-                if not is_lead:
-                    self._log_archon(
-                        source="job_board_service_judge",
-                        level="DEBUG",
-                        message=f"Lead discarded by LLM Judge. Similarity: {sim:.3f}. Keyword: {job.keyword}. Company: {job.company}"
-                    )
+                # Layer 2: Structured LLM Classification A/B/C/X + G4 rejection reason
+                judge_result = await self.evaluator.evaluate_lead_structured(job)
+                if not judge_result.is_qualified:
+                    rejected_logs.append({
+                        "source": "job_board_service_triage",
+                        "level": "INFO",
+                        "message": f"Lead rejected [layer2_llm_judge:{judge_result.category}]: {job.company} - {job.title}",
+                        "details": {
+                            "stage": "layer2_llm_judge",
+                            "company": job.company,
+                            "job_title": job.title,
+                            "url": job.url,
+                            "keyword": job.keyword,
+                            "similarity": round(sim, 4),
+                            "category": judge_result.category,
+                            "confidence": judge_result.confidence,
+                            "reason": judge_result.reason,
+                        },
+                    })
                     return None
 
                 # Generate the identified need only if it passes both layers
-                identified_need = job.identified_need or await self.evaluator.infer_need(job)
+                base_need = job.identified_need or await self.evaluator.infer_need(job)
+                identified_need = f"[{judge_result.category}類 | 信心 {judge_result.confidence:.0%}] {judge_result.reason}\n{base_need}"
 
-                score = int(round(sim * 100))
-                # Qualified status for high-intent matches (>= 72), else archived
-                lead_status = "qualified" if score >= 72 else "archived"
+                score = int(round(judge_result.confidence * 100)) if judge_result.confidence > 0 else int(round(sim * 100))
+                # Qualified status for high-intent matches (>= SSOT lead_qualify_min_score), else archived
+                lead_status = "qualified" if score >= config.lead_qualify_min_score else "archived"
 
-                return {
+                lead_dto: LeadDataDTO = {
                     "company_name": job.company,
                     "job_title": job.title,
                     "description_snippet": job.description[:500] if job.description else None,
@@ -194,6 +248,7 @@ class JobBoardService(BaseRepository):
                     "enrichment_score": score,
                     "identified_need": identified_need,
                 }
+                return lead_dto, judge_result.category
             except Exception as e:
                 logger.error(f"Failed to process lead data: {e}")
                 return None
@@ -201,12 +256,25 @@ class JobBoardService(BaseRepository):
         # PERFORMANCE: Replaced sequential await self._infer_need(job) with asyncio.gather
         import asyncio
         new_jobs = [job for job in jobs if job.url not in existing_urls]
+        candidates: list[tuple[JobData, LeadDataDTO, str]] = []
         if new_jobs:
             results = await asyncio.gather(*[_process_single_job(job) for job in new_jobs])
-            for job, lead_data in zip(new_jobs, results, strict=False):
-                if lead_data:
-                    leads_to_insert.append(lead_data)
-                    jobs_to_insert.append(job)
+            for job, res_item in zip(new_jobs, results, strict=False):
+                if res_item:
+                    lead_data, category = res_item
+                    candidates.append((job, lead_data, category))
+
+        # G1: Bulk insert structured rejection logs (no per-item insert in loop)
+        if rejected_logs:
+            self.execute_query(
+                self.supabase.table("archon_logs").insert(rejected_logs),  # 合法
+                "Bulk insert rejected lead triage logs",
+            )
+
+        # Apply A:B = 60:40 quota before persisting
+        for job, lead_data, _ in self._apply_ab_quota(candidates):
+            leads_to_insert.append(lead_data)
+            jobs_to_insert.append(job)
 
         if leads_to_insert:
             query = self.supabase.table("leads").insert(leads_to_insert) # 合法

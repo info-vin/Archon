@@ -39,7 +39,7 @@ VALUES (
 -- POBot
 INSERT INTO profiles (id, "employeeId", name, email, department, position, status, role, avatar)
 VALUES (
-    'p0b00000-0000-0000-0000-000000000000', 'BOT-004', 'Archon POBot', 'pobot@archon.ai', 'Product', 'AI Product Owner', 'active', 'agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=POBot'
+    'c0a00000-0000-0000-0000-000000000000', 'BOT-004', 'Archon POBot', 'pobot@archon.ai', 'Product', 'AI Product Owner', 'active', 'agent', 'https://api.dicebear.com/7.x/bottts/svg?seed=POBot'
 ) ON CONFLICT (id) DO UPDATE SET role = 'agent', status = 'active';
 
 -- 4. Base Project
@@ -190,7 +190,7 @@ VALUES (
     'Adaptive Oversight & Scheduling Analysis',
     'POBot reviews Clockwork logs and HF Space status to dynamically suggest cron trigger optimizations and prevent API rate-limiting or scheduling overlap. Suggestion reports should be dynamically named: "Clockwork 排程微調建議 (基於 {date})".',
     'Archon POBot',
-    'p0b00000-0000-0000-0000-000000000000',
+    'c0a00000-0000-0000-0000-000000000000',
     'todo'
 ) ON CONFLICT DO NOTHING;
 

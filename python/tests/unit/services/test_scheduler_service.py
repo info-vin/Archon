@@ -134,7 +134,7 @@ async def test_run_monthly_agent_rules_compaction_physical(tmp_path, mock_supaba
     without mocking LogService.create_log_entry.
     """
     from src.server.services.log_service import LogService
-    from src.server.services.scheduler.jobs import agent_rules_compaction, jules_compaction
+    from src.server.services.scheduler.jobs import agent_rules_compaction
     from src.server.services.scheduler.jobs.agent_rules_compaction import (
         run_monthly_agent_rules_compaction,
     )
@@ -190,8 +190,8 @@ async def test_run_monthly_agent_rules_compaction_physical(tmp_path, mock_supaba
     assert "## 5. Rule Zeta" in compacted
     assert "Rule Eta" not in compacted
 
-    # Running a second time via legacy alias should also work idempotently (0 modified)
-    stats_second = await jules_compaction.run_monthly_jules_compaction(jules_dir=tmp_path)
+    # Running a second time should work idempotently (0 modified)
+    stats_second = await run_monthly_agent_rules_compaction(rules_dir=tmp_path)
     assert stats_second["files_modified"] == 0
     assert len(mock_supabase_db.table("archon_logs").select("*").execute().data) == 2
 

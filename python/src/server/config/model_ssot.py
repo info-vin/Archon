@@ -12,6 +12,8 @@ SYSTEM_MODELS = {
     "DEFAULT_PRO": "models/gemini-3.5-flash-lite",
     # Gemini 3.6 Flash: Executive Supervisor Decision Brain (5 RPM / 20 RPD)
     "SUPERVISOR_MODEL": "models/gemini-3.6-flash",
+    # Gemini Decision 1: Closed-set classification & routing (200 RPM / 10K RPD, 0 output tokens)
+    "DECISION_MODEL": "models/gemini-decision-1",
     # Image Models (Requires Billing for API, MarketingService uses internal fallback)
     "IMAGE_GEN": "models/gemini-3.1-flash-image-preview",
     # TTS Model

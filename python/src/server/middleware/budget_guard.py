@@ -69,19 +69,20 @@ class BudgetGuardMiddleware(BaseHTTPMiddleware):
         if not user:
             return cast(Response, await call_next(request))
 
-        # Bypass checks for system administrators or service role keys
-        user_metadata = getattr(user, "user_metadata", {}) or {}
-        role = user_metadata.get("role", "")
-        if role == "system_admin" or getattr(user, "id", "") == "system-agent":
+        # Bypass checks only for trusted internal system-agent or verified DB profile system_admin
+        if getattr(user, "id", "") == "system-agent":
             return cast(Response, await call_next(request))
 
-        # 4. Fetch tenant ID and query total budget consumed
+        # 4. Fetch tenant ID and role from profiles, then query total budget consumed
         try:
             supabase = get_supabase_client()
 
-            # Query tenant ID from user profile
-            profile_res = supabase.table("profiles").select("tenant_id").eq("id", user.id).execute()
+            # Query tenant ID and role from user profile (never trust user_metadata)
+            profile_res = supabase.table("profiles").select("tenant_id, role").eq("id", user.id).execute()
             if not profile_res.data:
+                return cast(Response, await call_next(request))
+
+            if profile_res.data[0].get("role") == "system_admin":
                 return cast(Response, await call_next(request))
 
             tenant_id = profile_res.data[0]["tenant_id"]

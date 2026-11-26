@@ -22,14 +22,20 @@ ALICE_HYDE_BASELINE_DEFAULT = (
     "核心服務：\n{core_text}"
 )
 
+ALICE_LEAD_ICP_CRITERIA: dict[str, str] = {
+    "A": "30–300 人之傳統／非軟體企業（含傳統機械製造、工業電腦／硬體廠、研究機構或醫院），缺乏內部 AI 團隊，有流程自動化或系統整合外包痛點。",
+    "B": "小型潛客（約 30 人以下）或單一部門／媒體／IC 設計等非軟體同業之獨立專案，有明確 AI 導入、自動化或內部培訓需求（可轉介或小案切入）。",
+    "C": "明確排除對象：同業 AI/LLM 軟體顧問公司、接案型 SI／ERP 系統導入商（如資訊／智能科技幫客戶導入 ERP 者）、人力派遣、獵頭顧問、純自動化產線設備商。",
+    "X": "與 AI／自動化／系統整合無關之職缺，或資訊不足無法判斷。",
+}
+
 ALICE_LEAD_JUDGE_DEFAULT = (
-    "我們是一家 AI 自動化與 Agent 軟體公司。我們的核心能力是：\n{core_text}\n\n"
-    "請看以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
-    "請問這家公司是：\n"
-    "1. 我們的「潛在客戶」(他們缺乏 AI 能力，需要買我們的服務來自動化或導入 AI)。如果是，請回答 YES。\n"
-    "2. 我們的「同業競爭者」(他們正在招募 AI 工程師，要自己開發 LLM 或 Agent)。如果是，請回答 NO。\n"
-    "3. 完全無關。請回答 NO。\n\n"
-    "只回答 YES 或 NO。"
+    "我們是一家 AI 自動化與 Agent 軟體顧問公司。核心能力：\n{core_text}\n\n"
+    "請分析以下職缺：\nTitle: {title}\nDesc: {desc}\n\n"
+    "請依下列 ICP 規則將該公司分類為 A、B、C、X 之一：\n"
+    + "\n".join(f"- {k}：{v}" for k, v in ALICE_LEAD_ICP_CRITERIA.items())
+    + "\n\n請僅輸出嚴格 JSON（不要加額外說明或 Markdown），格式如下：\n"
+    '{{"category": "A|B|C|X", "confidence": 0.0到1.0之間的數值, "reason": "繁體中文簡短判斷理由"}}'
 )
 
 ALICE_INFER_NEED_DEFAULT = (

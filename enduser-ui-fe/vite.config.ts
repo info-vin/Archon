@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react';
 import { existsSync } from 'fs';
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd(), '');
+    const rootEnvDir = existsSync(path.resolve(__dirname, '../.env')) ? path.resolve(__dirname, '..') : process.cwd();
+    const env = loadEnv(mode, rootEnvDir, '');
 
     // Logic ported from archon-ui-main to handle Docker environment
     const isDocker = process.env.DOCKER_ENV === 'true' || existsSync('/.dockerenv');
@@ -15,6 +16,7 @@ export default defineConfig(({ mode }) => {
     const port = process.env.ARCHON_SERVER_PORT || env.ARCHON_SERVER_PORT || '8181';
 
     return {
+      envDir: rootEnvDir,
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),

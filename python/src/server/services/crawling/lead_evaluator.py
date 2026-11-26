@@ -1,7 +1,11 @@
+import json
 import math
 import os
+import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field
 
 from ...config.logfire_config import get_logger
 from ...config.model_ssot import SYSTEM_MODELS
@@ -9,6 +13,46 @@ from ...utils.retry_utils import retry_with_backoff
 from .clients.job104_client import JobData
 
 logger = get_logger(__name__)
+
+
+class LeadJudgeResult(BaseModel):
+    """Structured Layer-2 LLM classification result (Phase 5.14: A/B/C/X + G4 reason)."""
+
+    category: Literal["A", "B", "C", "X"] = "X"  # 合法
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    reason: str = ""
+
+    @property
+    def is_qualified(self) -> bool:
+        return self.category in ("A", "B")
+
+
+def parse_judge_response(raw: str | None) -> LeadJudgeResult:
+    """Parse structured JSON output from ALICE_LEAD_JUDGE. Fail-safe to category='X' on invalid output."""
+    if not raw or not raw.strip():
+        return LeadJudgeResult(category="X", confidence=0.0, reason="Empty judge response")
+
+    text = raw.strip()
+    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    candidate = fence_match.group(1) if fence_match else text
+    if not candidate.startswith("{"):
+        brace_match = re.search(r"\{.*\}", candidate, re.DOTALL)
+        if brace_match:
+            candidate = brace_match.group(0)
+
+    try:
+        data = json.loads(candidate)
+        if not isinstance(data, dict):
+            return LeadJudgeResult(category="X", confidence=0.0, reason=f"Non-object JSON: {text[:120]}")
+        cat = str(data.get("category", "X")).strip().upper()
+        if cat not in ("A", "B", "C", "X"):
+            cat = "X"
+        raw_conf = float(data.get("confidence", 0.0))
+        conf = max(0.0, min(1.0, raw_conf))
+        reason = str(data.get("reason") or "").strip() or "No reason provided"
+        return LeadJudgeResult(category=cat, confidence=conf, reason=reason)  # type: ignore[arg-type]
+    except Exception:
+        return LeadJudgeResult(category="X", confidence=0.0, reason=f"Unparseable judge output: {text[:120]}")
 
 class LeadEvaluator:
     """
@@ -144,12 +188,31 @@ class LeadEvaluator:
             logger.error(f"Failed to generate HyDE baseline: {e}")
             return None
 
-    async def llm_judge(self, job: JobData) -> bool:
+    async def evaluate_lead_structured(self, job: JobData) -> LeadJudgeResult:
+        """Layer 2: Structured classification (A/B/C/X) via Decisions API with fallback to generative LLM."""
         core_text = await self.get_core_text()
         if not core_text:
-            return False
+            return LeadJudgeResult(category="X", confidence=0.0, reason="Missing AGENTS.md core text")
 
-        from ...prompts.sales_prompts import ALICE_LEAD_JUDGE_DEFAULT
+        from ...prompts.sales_prompts import ALICE_LEAD_ICP_CRITERIA, ALICE_LEAD_JUDGE_DEFAULT
+        from ..llm.decisions_client import DecisionsUnavailableError, decisions_client
+
+        desc_snippet = (job.description_full or job.description or "")[:1000]
+        try:
+            decision = await decisions_client.classify_choice(
+                input_text=f"Company Core Capabilities:\n{core_text}\n\nJob Title: {job.title}\nCompany: {job.company}\nJob Description:\n{desc_snippet}",
+                question_key="icp_category",
+                instructions="Classify this hiring company into A, B, C, or X based on the ICP criteria.",
+                criteria=ALICE_LEAD_ICP_CRITERIA,
+                context_type="lead_evaluator_ALICE_LEAD_DECISION",
+            )
+            return LeadJudgeResult(
+                category=decision.choice,  # type: ignore[arg-type]
+                confidence=decision.confidence,
+                reason=f"Decisions API ({decision.choice}類, 信心 {decision.confidence:.0%})",
+            )
+        except DecisionsUnavailableError as err:
+            logger.warning(f"LeadEvaluator: Decisions API unavailable, falling back to ALICE_LEAD_JUDGE: {err}")
 
         content = await self.generate_llm_response(
             prompt_name="ALICE_LEAD_JUDGE",
@@ -157,14 +220,16 @@ class LeadEvaluator:
             format_kwargs={
                 "core_text": core_text,
                 "title": job.title,
-                "desc": (job.description_full or job.description or "")[:1000]
+                "desc": desc_snippet,
             },
             estimated_tokens=500,
-            max_retries=3
+            max_retries=3,
         )
+        return parse_judge_response(content)
 
-        answer = str(content).strip().upper() if content else "NO"
-        return "YES" in answer
+    async def llm_judge(self, job: JobData) -> bool:
+        result = await self.evaluate_lead_structured(job)
+        return result.is_qualified
 
     async def infer_need(self, job: JobData) -> str:
         from ...prompts.sales_prompts import ALICE_INFER_NEED_DEFAULT

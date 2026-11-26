@@ -29,6 +29,7 @@ from src.server.services.settings_service import SettingsService
 
 from ..auth.dependencies import get_current_user, get_current_user_optional, requires_permission
 from ..auth.permissions import USER_MANAGE
+from ..config.model_ssot import SYSTEM_MODELS
 
 # Use no prefix here, managed by main.py
 router = APIRouter(tags=["settings"])
@@ -39,7 +40,7 @@ OPTIONAL_SETTINGS_WITH_DEFAULTS = {
     "PROJECTS_ENABLED": "true",
     "LOGFIRE_ENABLED": "false",
     "STYLE_GUIDE_ENABLED": "false",
-    "MODEL_CHOICE": "models/gemini-3.1-flash-lite",
+    "MODEL_CHOICE": SYSTEM_MODELS["DEFAULT_TEXT"],
 }
 
 

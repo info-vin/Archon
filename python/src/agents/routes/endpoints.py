@@ -74,15 +74,6 @@ async def stream_agent(agent_type: str, request: AgentRequest, req: Request) -> 
                     project_id=cast(str, (request.context.get("project_id") if request.context else "") or ""),
                     user_id=cast(str, request.context.get("user_id")) if request.context else None,
                 )
-            elif agent_type == "presentation":
-                from ..presentation.presentation_agent import PresentationDependencies
-                ctx = request.context or {}
-                deps = PresentationDependencies(
-                    topic=cast(str, ctx.get("topic", "")),
-                    notebook_id=cast(str, ctx.get("notebook_id", "")),
-                    task_id=cast(str, ctx.get("task_id", "")),
-                    project_id=cast(str, ctx.get("project_id", "")),
-                )
             else:
                 deps = ArchonDependencies()
 

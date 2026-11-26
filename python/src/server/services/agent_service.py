@@ -199,7 +199,7 @@ class AgentService:
             async with httpx.AsyncClient(timeout=300.0) as client:
                 response = await client.post(
                     f"{agents_url}/agents/workflow/run",
-                    json={"prompt": prompt, "context": {"task_type": task_type}},
+                    json={"prompt": prompt, "context": {"task_type": task_type, "task_id": task_id}},
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -230,6 +230,12 @@ class AgentService:
                             content=str(final_result),
                             task_id=task_id,
                         )
+                    else:
+                        from .system.telegram_bot_gateway import telegram_bot_gateway
+
+                        await telegram_bot_gateway.notify_task_completion(
+                            task_id=task_id, task_title=task_title, content=str(final_result), success=True
+                        )
                 else:
                     err_msg = data.get("error", "Unknown workflow error")
                     logger.error(f"WorkflowEngine failed: {err_msg}")
@@ -258,10 +264,13 @@ class AgentService:
                 f"Activating In-Process WorkflowEngine Fallback..."
             )
             try:
+                from src.agents.checkpoint_manager import AgentCheckpointManager
                 from src.agents.workflow.engine import WorkflowEngine
 
                 engine = WorkflowEngine()
-                wf_result = await engine.run_workflow(prompt, task_type)
+                wf_result = await engine.run_workflow(
+                    prompt, task_type=task_type, conversation_id=task_id, checkpoint_mgr=AgentCheckpointManager()
+                )
 
                 if wf_result.get("success"):
                     await task_service.update_task(task_id, {"status": "done"})
@@ -287,6 +296,12 @@ class AgentService:
                             title_prefix="Daily",
                             content=str(final_result),
                             task_id=task_id,
+                        )
+                    else:
+                        from .system.telegram_bot_gateway import telegram_bot_gateway
+
+                        await telegram_bot_gateway.notify_task_completion(
+                            task_id=task_id, task_title=task_title, content=str(final_result), success=True
                         )
                     return
                 else:

@@ -69,7 +69,6 @@ class AgentCredentialsResponse(BaseModel):
     WORKER_AGENT_MODEL: str = Field(description="Worker agent model")
     DOCUMENT_AGENT_MODEL: str = Field(description="Document agent model")
     RAG_AGENT_MODEL: str = Field(description="RAG agent model")
-    PRESENTATION_AGENT_MODEL: str = Field(description="Presentation agent model")
 
 class MCPCredentialsResponse(BaseModel):
     LOG_LEVEL: str | None = Field(None, description="Log level setting")
@@ -150,7 +149,6 @@ async def get_agent_credentials(request: Request) -> AgentCredentialsResponse:
             "WORKER_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
             "DOCUMENT_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
             "RAG_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_TEXT"].split("/")[-1],
-            "PRESENTATION_AGENT_MODEL": SYSTEM_MODELS["DEFAULT_PRO"].split("/")[-1],
         }
 
         logger.info(
@@ -232,7 +230,6 @@ async def trigger_cron_jobs(
             "api_deprecation_scan": scheduler_service._run_api_deprecation_scan,
             "meta_twin_audit": scheduler_service._run_meta_twin_audit,
             "monthly_agent_rules_compaction": scheduler_service._run_monthly_agent_rules_compaction,
-            "monthly_jules_compaction": scheduler_service._run_monthly_jules_compaction,
         }
 
         if job_id:

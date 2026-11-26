@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-04 鑑識並修復 Telegram 失聯事故：物理查明 11/02 提交 `402ff3f9` 新增 `COPY GEMINI.md` 但部署腳本漏打包，致 Hugging Face 構建失敗停擺 3 天；在 `scripts/deploy_to_hf.sh` 補齊 `GEMINI.md` 與 `.agents/rules`；於 `scripts/phase_audit.py` 新增 Step 5.5 `docker_deploy_sync_audit` 門禁（自動比對 Dockerfile.server COPY 與 deploy_to_hf.sh，防範改 A 壞 B）並硬化 Step 5 雲端故障紅燈阻斷；釐清發佈管線（透過 `make merge-twins` 觸發 GitHub Actions 使用 `secrets.HF_TOKEN` 自動發佈）；全線通過 `make merge-twins` 部署，Space 構建成功恢復 `RUNNING`（`/health` 回傳 200 Healthy），全門禁（395 檔 MyPy 0 錯誤、839 passed、phase-audit 11 大門禁）100% 通過。
-*   **今日目標 (Today's Goal)**: 維護代碼庫物理真實性、監控雲端容器與資料庫健康度，並嚴格把關通用 Agent 規則與排程品質。
+*   **當前狀態 (Current Context)**: 2026-11-25 完成 Phase 5.15 全階段（P0 探針 + Stage 1/P1 `d98e43a3` + Stage 2/P2 `e2398444` + Stage 2.5 閉環 `4f8fa9dc`/`ce66b78f`/`441f0bcf` 與反向驗證修復）：完成雲端 6 隻 Bot UUID 雙表 100% 對齊與死碼/`PresentationBot` 退場；落地統一 `AgentCard`、A2A `[HANDOFF:]` 協議（已同步雲端 4 筆 Worker Prompt）、生產 `agent_checkpoints` 實體落盤（雲端實測 `e7d1d7ab`, `COMPLETED`）、升級 Vercel Proxy (`enduser-ui-fe/api/telegram.js`) 支援 `reply_markup` Inline 審批按鈕與 `answerCallbackQuery`/`getUpdates`（實測 `has_reply_markup_in_result=True`）、Telegram Webhook `/status` 與 `/task` 即時派發執行並自動完工回推（實測 `8cf29389` 轉 `done`、`reply_sent=True`）；透過反向驗證揪出並修復過期/不存在審批按鈕導致 Webhook HTTP 500 缺陷，清理 2 筆探針殘留工單，並同步推送 `origin/dev/twins` 與 `origin/feat/twins`。
+*   **今日目標 (Today's Goal)**: 觀察線上 Telegram 雙向指令與 A2A 協作實際運作；待本機執行一次 104 職缺抓取後完成 Phase 5.14 ≥30 筆人工標記校準；後續擴充 `telegram_bot_gateway.py`（現 398 行近 400 行上限）前須先拆分子模組。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -123,64 +123,41 @@
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
-### 2026-11-04：Telegram 失聯深度鑑識、HF 部署同步門禁硬化 (Step 5.5) 與 CI/CD 自動發佈復原
-深度鑑識 11/04 Telegram 失聯事故，穿透實體日誌揭露 Hugging Face 因 `Dockerfile.server` 與 `deploy_to_hf.sh` 缺少 `GEMINI.md` 構建死鎖 3 天；實作 `scripts/phase_audit.py` Step 5.5 部署同步自動校驗門禁，釐清 GitHub Actions CI/CD 發佈鏈路，全線恢復雲端健康運作。
+### 2026-11-25：Phase 5.15 Stage 1 (P1) Bot SSOT 收斂與 Stage 2 (P2) A2A 直接 Handoff + Telegram 雙向審批
+1.  **P0 雲端唯讀探針與 Phase 5.14 補錄（`4b59ffa6`）**:
+    *   補錄 2026-11-24 `4b59ffa6` 已完成 [Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md)（A/B/C/X 評分、G1/G3/G4 結構化日誌、A:B=60:40 配額），且 `migration/20261118_revoke_truncate_and_test_rpcs.sql` 與 `migration/20261124_update_alice_lead_judge_abcx.sql` 皆已於雲端執行。
+    *   確認 104 職缺抓取（`alice_auto_fetch`）維持只在本機執行，HF Space 跳過屬預期行為。
+2.  **Bot SSOT/DRY 收斂與死碼退場 (Stage 1 / P1, `d98e43a3`)**:
+    *   **UUID 對齊**：依雲端歷史工單真實分布（Supervisor `f0f00000` 106 筆），統一 Supervisor 為 `f0f00000-...`、將非法非十六進位 UUID `p0b00000-...` 全面修正為合法 `c0a00000-...`（POBot 歷史工單 0 筆）、補齊 Clockwork 至 `archon_agents`，已於雲端執行 `migration/20261125_align_bot_ssot_uuids.sql` 並經 P0 探針確認雙表 100% 一致。
+    *   **死碼清理與營運成本精簡**：移除零使用死碼（`summary_agent.py`、`jules_compaction.py`、`workflow_engine.py` 與對應舊路由別名），並依營運成本考量整組退場 0 筆歷史工單之 `PresentationBot / PresentationAgent`。
+    *   **Model SSOT & DRY**：`engine_beta_graph.py` 移除硬編碼模型名改讀 `model_ssot.py`；`agent_registry.py` 消除重複 `fallback_name_map`。
+3.  **類 Grok Bot A2A 協作與 Telegram 雙向指令/審批 (Stage 2 / P2)**:
+    *   **統一 Agent Card & A2A 直接 Handoff**：新增 `python/src/agents/workflow/a2a_handoff.py` 並接入 `nodes.py`，Worker 支援 `[HANDOFF: <target> | <reason>]` 白名單直接交棒（防自迴圈 + `max_steps` 熔斷），略過多餘的 `SupervisorNode` 轉發以節省 `gemini-3.6-flash` Free Tier RPD。
+    *   **Checkpoint 斷點續跑**：將既有 `AgentCheckpointManager` 接入 `WorkflowEngine`（新增 `resume_from_checkpoint`），支援從 Supabase `agent_checkpoints` 還原 `SharedState` 並從斷點續跑。
+    *   **Telegram 雙向指令與審批**：新增 `TelegramBotGateway`（`telegram_bot_gateway.py`）與 `POST /api/telegram/webhook`（`telegram_webhook_api.py`），實作 Fail-Closed `X-Telegram-Bot-Api-Secret-Token` 驗證、`chat_id` 白名單、`update_id` 冪等去重、`/task` / `@agent` / `/status`、Inline 審批按鈕喚醒 Checkpoint 續跑與 HF Space 休眠補拉 `poll_missed_updates()`。
+4.  **Stage 2.5 閉環與反向驗證抓漏（`4f8fa9dc`, `ce66b78f`, `441f0bcf`）**:
+    *   **線上真實探針揪出並修復 4 個關鍵樂觀路徑缺陷**：
+        1. HF Space 防火牆擋直連 `api.telegram.org`（卡 32.35s）→ 全面改走 `TELEGRAM_PROXY_URL` 並回傳 `reply_sent`（降至 4.20s）。
+        2. 實查 `enduser-ui-fe/api/telegram.js` 發現會剝離 `reply_markup` 且不支援 `answerCallbackQuery`/`getUpdates` → 升級 Vercel Proxy 白名單轉發並實測 `has_reply_markup_in_result=True`。
+        3. 實查 `task_dispatcher.py` 只派發 `is_recurring=True` 工單 → 於 `TelegramBotGateway` 建單後立即非同步呼叫 `agent_service.run_agent_task`，並接通 `routes/workflow.py` 傳入 `AgentCheckpointManager()`、雲端執行 `migration/20261125_enable_a2a_handoff_prompts.sql`，實測 `/task` 轉 `done` 且 `agent_checkpoints` 寫入 `e7d1d7ab`（`COMPLETED`）。
+        4. **反向驗證**送出不存在審批 ID callback 抓出線上有未捕獲 `ValueError` 炸 HTTP 500 → 改為優雅回應 `not_found`（防 Telegram 無限重試）；並清理 2 筆探針殘留 `todo` 工單，同步推送 `origin/dev/twins` 與 `origin/feat/twins`。
+    *   **已知邊界（誠實註記）**：`telegram_bot_gateway.py` 接近 400 行上限，後續擴充須拆子模組；完整真機「高風險工具暫停 → 手機點按鈕 → Checkpoint 續跑」待真實寫入型 HITL 場景再做一次端對端確認。
+
+### 2026-11-24：Phase 5.13 資安防提權、金鑰零中斷輪換、白名單排程與 Vercel 舊部署清理
+完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。
 
 **核心主題歸類**:
-1.  **Telegram 失聯穿透鑑識與根因破案 (Evidence First & Log Truth)**:
-    *   **排程中斷真相**: 實體探針查詢 Supabase，`archon_tasks` 最後執行停在 `2026-11-01T08:18:05Z`，`archon_logs` 停在 `2026-11-02T03:55:05Z`，排程器已停擺整整 3 天。
-    *   **Telegram 通路驗證**: 直接調用 `TelegramService` 直連發送測試訊息，回傳 `Result: True` 且使用者實體驗收，證明 Token、Vercel Proxy 與 Chat ID 完全正常無損。
-    *   **HF 構建死鎖破案**: 鑑識 11/02 提交 `402ff3f9` 新增 `COPY GEMINI.md /app/GEMINI.md`，然而 `deploy_to_hf.sh` 漏掉了 `GEMINI.md` 的 checkout 與 `git add`，導致 HF 於 `2026-11-02T07:53:02Z` 構建失敗（`ERROR: "/GEMINI.md": not found`），Space 陷入 `BUILD_ERROR` 503 停機。
-2.  **架構級雙向同步門禁硬化 (Step 5.5 & Pre-flight)**:
-    *   **Step 5.5 自動化同步稽核**: 於 `scripts/phase_audit.py` 新增 `docker_deploy_sync_audit`，以正則動態解析 `Dockerfile.server` 所有 `COPY` 指令，強制比對 `scripts/deploy_to_hf.sh` 之 checkout 與 `git add` 清單；一旦有漏帶直接 `❌ VIOLATION` 並 Exit 1 阻斷。
-    *   **Step 5 雲端故障紅燈阻斷**: 修正過去 `phase_audit.py` 遇 `BUILD_ERROR` 仍印出綠勾 `✅` 之假性通過漏洞，強制對非 RUNNING 狀態亮紅燈 `❌` 並穿透打印容器錯誤日誌。
-    *   **部署 Pre-flight 物理斷言**: 於 `scripts/deploy_to_hf.sh` 構建提交前加入檔案存在迴圈校驗，未齊全前嚴禁推送。
-3.  **CI/CD 發佈管線對帳與全鏈路復原**:
-    *   **發佈權限對帳**: 鑑識本機環境與 Keychain 之 `HF_TOKEN` 僅為唯讀角色（`HF_RAG_API`, `role: read`），而具備 Write 權限之 `deploy-key` 實體存放於 GitHub Actions `secrets.HF_TOKEN`。
-    *   **正規管線自動發佈**: 執行 `make merge-twins` 將修復合入 `dev/twins`，觸發 `.github/workflows/deploy-hf.yml`，成功上傳包含 `GEMINI.md` 與 `.agents/rules` 之完整上下文至 Hugging Face。
-    *   **容器啟動公證**: HF Space 重新構建耗時約 3 分鐘成功轉為 `RUNNING`，實體穿透 `/health` 端點回傳 `200 Healthy`。
-4.  **全門禁公證通過**:
-    *   通過 `make lint-be`（395 檔 MyPy 100% 綠燈，0 錯誤）、`make test-be-fast`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁（Step 5.5 同步通過）。
-
-### 2026-11-03：Jules 規則平移至 .agents/rules、agent_rules_compaction 重構與全門禁公證
-因應 Google 官方宣布關閉 Jules 獨立服務，全量平移 `.jules/` 規則指南至通用 `.agents/rules/`，重構排程為 `agent_rules_compaction`，自癒 PR #666 遺留之規則超額與幻覺日期，並修復 `patrol_infra.py` 之 `NetworkConfig.huggingface_endpoint` SSOT 回退機制。
-
-**核心主題歸類**:
-1.  **規則庫通用平移與基礎設施拓樸對齊 (`.agents/rules/`)**:
-    *   **規則檔案遷移**: 建立 `.agents/rules/` 並完整遷移 6 份規則指南（`bolt.md`, `contractor.md`, `palette.md`, `qa.md`, `reaper.md`, `type_guardian.md`），安全移除 legacy `.jules/`。
-    *   **容器與建置拓樸同步**: 同步更新 `docker-compose.yml`（掛載 `./.agents/rules:/app/.agents/rules`）、`Dockerfile.server`（`COPY .agents/rules/ /app/.agents/rules/`）與 `scripts/deploy_to_hf.sh`（`git checkout -- .agents/rules/`）。
-2.  **月度排程重構與向後相容墊片 (`agent_rules_compaction.py`)**:
-    *   **排程服務重構**: 建立 `python/src/server/services/scheduler/jobs/agent_rules_compaction.py`，實作 `run_monthly_agent_rules_compaction`，支援自適應路徑解析（優先尋訪 `.agents/rules` 並相容 `.jules` 備援），在 `jules_compaction.py` 保留向後相容墊片（Shim）。
-    *   **SSOT 設定與 API 路由對齊**: 於 `SchedulerConfig` 擴充 `monthly_agent_rules_compaction_*` 與 `agent_rules_max_entries_per_file`，透過 `model_validator` 雙向同步舊鍵名；同步於 `scheduler_service.py`、`admin_api.py` 與 `internal_api.py` 雙向註冊觸發端點。
-3.  **PR #666 規則超限自癒與測試斷層修復 (Rule 1 & Rule 13)**:
-    *   **`type_guardian.md` 規則壓縮自癒**: 識別遠端合入之 PR #666 引入幻覺日期前綴（`## 2026-04-16`）及規則數超限（6 條），外科手術式將學習要點融合至 Rule 1 與 Rule 5，降回 5 條核心規則。
-    *   **`patrol_infra.py` SSOT 回退防禦**: 鑑識 PR #666 強化 `SettingsService` 型別防禦後，使得 `HUGGINGFACE_ENDPOINT` 在 DB 空值時回傳 `None` 觸發測試斷層；於 `NetworkConfig` 擴充 `huggingface_endpoint`（支援 `load_from_env`），在 `patrol_infra.py` 加入 SSOT 回退並提前導入 `SettingsService` 消除 BaseRepository 測試 Mock 碰撞。
-4.  **全門禁公證通過**:
-    *   通過 `make lint-fe`、`make lint-be`（395 檔 0 錯誤）、`make test-be-fast`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁（Step 11 驗證通過）。
-
-### 2026-11-02：遠端分支三向衝突鑑識、四大角色週期作業 7 大斷層根除與 Token 預算閾值校準
-針對遠端待審分支執行三向衝突鑑識與廢棄分支清理，並以實體探針直連雲端 Supabase 對 Alice、Bob、Charlie、David 四大角色之週期排程與工單產出物進行端到端穿透稽核，一舉根除 7 大潛伏斷層與虛假完成狀態，同時完成週預算閾值之真實數據校準。
-
-**核心主題歸類**:
-1.  **遠端 PR 驗收、5 大待審分支三向衝突鑑識與清理 (Ref: 11-02)**:
-    *   **已合入 PR 驗收 (#658, #659, #661, #663)**: 驗證 `TaskAssignmentTab` `useMemo` 緩存、`auth_service` `UserProfileDictDTO` 陣列邊界防禦、`ProjectModal` WAI-ARIA 無障礙強化及 `CodeExamplesResponse` 搜尋合約對齊。
-    *   **三向衝突鑑識與外科提取 (`git merge-tree`)**: 拒絕與 PR #663 發生 4 檔雙向衝突之重複分支 `7403...` 及 0 變更空提交分支 `1278...`；確認 `1124...` 已合入歷史；針對 `admin_service` (`a2b93b41`) 與 `ethics_service` (`ad800815`) 執行物理 Schema 對帳（確認 `archon_crawler_targets.target_url`）與無衝突代碼提取，並刪除遠端 5 條已廢棄分支。
-    *   **Jules 規則門禁壓縮**: 壓縮 `.jules/*.md` 四大規則檔，移除日期標題並維持各檔 `<= 5` 條核心規則。
-
-2.  **四大角色 (Alice, Bob, Charlie, David) 週期作業 7 大斷層清剿與 SSOT/DRY 治理 (Ref: 11-02)**:
-    *   **排程共用工具收斂 (DRY)**: 新建 `python/src/server/services/scheduler/utils.py`，統一收斂 `resolve_project_root()`、`get_default_project_id()` 與 `normalize_agent_identity()`，拔除散落於 `architecture_patrol.py`、`tech_debt_patrol.py`、`leads_patrol.py`、`sentinel_patrol.py` 的重複私有函式。
-    *   **Agent 身份雙模對齊與工單揀選修復**: 解決排程器寫入 UUID (`00000000-...`) 而 `WorkerService` / `AgentDispatcher` / `agent_registry` 僅匹配顯示名稱 (`Archon MarketBot` 等) 的斷層；在 `WorkerService` 展開雙向別名池查詢並廢除 `assignee="User"` 失敗轉嫁，改設 `status="failed"` 配合指數退避重試。
-    *   **根除 `{"content": null}` 假完成報告**: 鑑識出 Gemini 回傳 `tool_calls` 時 `message.content` 為 `None`，舊 `DefaultLLMStrategy` 僅跑 1 輪 Tool 即把 `None` 寫入 `attachments.summary` 並標記 `done`。重構為最多 3 輪 Tool 呼叫迴圈，並在耗盡時注入 `tool_choice="none"` 強制最終文字收斂回合，同時攔截空字串標記為 `failed`。
-    *   **Bob 市場戰報路由、狀態鎖與水位線防禦**: 擴充 `DailyMarketReportStrategy` 標題識別以攔截 `[Auto-Task] Daily Market Report` 進入真實 `MarketService` 管線；修復 `_trigger_stateful_daily_event` 未解構 `(bool, dict)` Tuple 及失敗時誤寫 `LAST_RUN_*` 水位線之漏洞；於 `update_logic.py` 將 `LAST_RUN_BOB_MARKET_REPORT` 移至 `status == "done"` 分支，確保失敗工單可於下次巡檢自動補跑。
-    *   **David 工程回顧容器掛載與 SSOT 稽核對齊**: 於 `docker-compose.yml` 與 `Dockerfile.server` 補齊 `./GEMINI.md:/app/GEMINI.md:ro` 掛載，並在 `tech_debt_patrol.py` 新增雲端 `archon_tasks` 7 日紀錄 Fallback；同步更新 `run_ssot_audit` 支援 `# 合法` 豁免標記並將掃描範圍擴展至整個 `src/`。
-    *   **Charlie 星環報告非同步競態修復**: 刪除 `report_service.py` 頂層幽靈 `asyncio.Lock()`，全面委派予 `SummaryTaskHelper` 之 Lazy Loop-Safe Lock。
-
-3.  **Cost Sentinel 雲端 Token 遙測對帳與週預算閾值調升 (Ref: 11-02)**:
-    *   **實體數據對帳**: 探針直連雲端 `token_usage` 統計近 7 日消耗為 `238,807 tokens / $0.1332 USD`（近 30 日 `789,163 tokens / $0.2325 USD`，日均約 `$0.019 USD`），證明舊設定 `WEEKLY_BUDGET_THRESHOLD = $0.05 USD` 嚴重偏低，導致每日巡檢皆觸發超標告警並額外消耗 7 次緊急語音 TTS 配額。
-    *   **SSOT 與雲端同步調升**: 將 `settings.py` 之 `BudgetConfig.weekly_budget_threshold` 與雲端 Supabase `archon_settings.WEEKLY_BUDGET_THRESHOLD` 同步調升至 `$0.25 USD`（約正常週消耗之 1.8 倍安全水位），解除假性超標警報。
-
-4.  **全系統品質門禁公證 (Ref: 11-02)**:
-    *   **靜態、單元測試與階段稽核全綠**: 通過 `make lint`（前端雙專案、後端 394 檔 MyPy/Ruff 0 錯誤、Lean 4 18 jobs 通過）、`make test-be`（**839 passed**, 11 skipped, 4 xfailed, 0 failed）與 `make phase-audit` 11 大門禁。
+1.  **資安防提權與關閉開放註冊 (Track B)**:
+    *   **後端修補**: 移除 `python/src/server/auth/dependencies.py`（`get_current_user`）與 `python/src/server/middleware/budget_guard.py` 對用戶可控 `user_metadata.role` 的信任；查無 `profiles` 時一律降級為 `"employee"`，並於 `test_x3_no_unverified_jwt_fallback.py` 新增 `test_user_metadata_role_cannot_escalate_to_admin` 回歸測試。
+    *   **前端清理與後台關閉**: 移除 `enduser-ui-fe`（`AuthPage.tsx`、`useAuth.tsx`、`auth.ts`、`index.ts`、`AuthPage.test.tsx`）已失效的註冊切換 UI 與死端點呼叫，並於 Supabase Dashboard 關閉 Allow new users to sign up。
+2.  **金鑰解耦與零中斷輪換 (Track A)**:
+    *   **雙金鑰架構**: 於 `config.py`、`crypto_utils.py`、`manager.py` 引入獨立 `CREDENTIAL_ENCRYPTION_KEY` 與 `PREVIOUS_SUPABASE_SERVICE_KEY` 雙金鑰解密 fallback，且解密失敗時正確退回環境變數。
+    *   **資料庫換鎖與升級**: 新增 `scripts/reencrypt_credentials.py` 將 `archon_settings` 內 4 把加密金鑰（`HF_TOKEN`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`）重加密至獨立金鑰；同步升級本機 `.venv` 至 `supabase==2.18.0`；將後端換為 `sb_secret_...`、Vercel `archon-enduser` 切換為 `sb_publishable_...`，並於 Supabase 停用舊版 JWT-based API keys 與舊 `default` secret key。HF Space `/health` 維持 200 Healthy（`ready: true`, `credentials_loaded: true`）。
+3.  **白名單定期爬蟲排程與資料清理 (Track C & Ops)**:
+    *   **白名單排程**: 新增 `python/src/server/services/scheduler/jobs/crawler_patrol.py` 並掛載至 `scheduler_service.py` 與 `SchedulerConfig`（`whitelist_crawler_patrol_hour=10`, `minute=15`），依 `is_active=True` 與 `update_frequency != 'manual'` 條件自動略過農民曆，僅定期抓取到期之 Google Gemini 2 頁官方文件。
+    *   **資料與舊部署清理**: 清空雲端 Supabase `leads` 207 筆舊資料（`Remaining leads: 0`）待排程重抓；透過 Vercel CLI 批次刪除 160 筆歷史舊部署（`archon-enduser` 刪 78/78、`archon` 刪 82/82），各僅保留最新 1 筆線上 Production。
+4.  **全門禁與測試公證**:
+    *   `ruff check` 通過、`mypy src/` 397 檔 0 錯誤、`scripts/phase_audit.py` Step 5.5/7/8/9/10/11 全數通過、`enduser-ui-fe` `tsc --noEmit` 與 `AuthPage.test.tsx`（3/3）通過、`test_supabase_client_construction.py`（2/2）與後端單元測試（807 passed）通過，並完成提交推送 `ffb257ce` 至 `dev/twins`。
 
 ---
 
@@ -188,493 +165,24 @@
 
 > **【封存說明】**
 > 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
+> `2026年1月 ～ 10月` 歷史已轉化為 5 篇公開技術部落格（見 `migration/20261125_seed_ch4_engineering_blogs.sql` 與 `public.blog_posts`），原始紀錄可於 Git 歷史追溯。
 
-### 2026年10月：星環商業閉環、Gemini 3.6 語音速報、物理 Schema 對帳與強型別契約治理
-十月份完成了星環 (Star Topology) 討論體系與商業漏斗的全鏈路閉環，將決策大腦升級為 `Gemini 3.6 Flash` 並實裝 Telegram 雙語音泡泡速報；同時透過實體雲端探針揭露並清剿了多項物理資料庫 Schema 幻覺欄位、Jules 自動化 PR 型別斷層與排程冷卻死鎖，將後端測試推升至 828+ 項全綠通過。
-
-**核心主題歸類**:
-1.  **物理資料庫 Schema 穿透對帳與自動 PR 斷層清剿 (Ref: 10-24, 10-26, 10-29, 10-30)**:
-    *   **`archon_crawled_pages` 幻覺欄位修復**: 實體探針揭露 PR #656 查詢不存在的 `section_title, word_count, char_count` 觸發 PostgREST `42703` 導致頁面列表靜默回傳 0 筆；重構 `PagesService` 僅查詢實體欄位並由 `metadata`/`content` 動態推導，補齊 `_map_to_page_dto` 與 `PageResponse` 安全預設值。
-    *   **`archon_document_versions` 審計寫入修復**: 揭露 PR #654 傳入頂層 `old_value`/`new_value` 觸發 `PGRST204` 靜默死鎖；重構 `DocumentVersionDTO` 將變更歷史正規化封裝於 `content: dict[str, Any]`。
-    *   **MCP 與 API 合約雙向橋接**: 擴充 `RagQueryRequest` 相容 `rag_tools.py` 傳遞之 `source` 與 `match_count`；於 `create_progress_response` 補齊 `"type": "crawl" | "upload"` 判別式；修復 `TaskDetails` 動態 JSONB 附件、`DocumentItemResponse` (`extra="allow"`) 與 `Marketing` 回應模型幻覺。
-    *   **Docker 內部路徑雙向自適應**: 修復 `scripts/backend_type_health.py` 硬編碼 `python/src/...` 導致容器內 `/app` 掃描呈現 0 檔之盲區，實現宿主機與容器 100% 物理對齊（健康度 99.0%）。
-
-2.  **決策大腦 `Gemini 3.6 Flash` 升級、Telegram 雙語音泡泡與真實配額映射 (Ref: 10-26)**:
-    *   **決策大腦升級與降階防禦**: 將 `SUPERVISOR_MODEL` 升級為 `models/gemini-3.6-flash`，並將 `NexusOracleAgent` 解耦至 `DEFAULT_PRO` (`gemini-3.5-flash-lite`)；於 `_run_agent_with_retry` 實裝 429 自動降階回退。
-    *   **原生語音泡泡雙模發送 (`sendVoice`)**: 實證 Telegram Bot API 可直接將 24kHz Mono WAV 轉為原生 OGG 語音泡泡；於 `telegram_service.py` 實裝 Proxy 優先 + `HTTPStatusError` 自動切換直連，實作每日中英雙語音速報 (`Puck` / `Fenrir`) 與緊急語音告警 (`Kore`)。
-    *   **AI Studio 28 日真實配額對帳與 Reaper 停用**: 完成雲端 Console 用量與 `SYSTEM_MODELS` 調用鏈路 100% 映射；鑑於 Reaper 代理人曾誤刪 FastAPI 參數且與 Ruff/Biome 職責重疊，正式決策停用 Reaper。
-
-3.  **星環日報全鏈路硬化、In-Process 自癒與 Telegram 推播治理 (Ref: 10-18, 10-19, 10-20, 10-21, 10-24)**:
-    *   **推播解耦與長文分段自癒**: 移除舊有 150 字元截斷，實作 `split_message_chunks()`（3,800 字元分段與頁碼注入）及 Markdown 400 解析失敗自動降級純文字重發；將推播點後移至 `WorkflowEngine` 產出 `final_result` 後，根除「考卷題目偷跑」與 `_get_logs_context` 遞迴日誌污染。
-    *   **路由正規化與防遞迴死鎖**: 於 `nodes.py` 實作 `workflow_type` 大小寫正規化匹配；更新 `WORKFLOW_SUPERVISOR_DAILY` 強制 4 步依序推進（`marketbot -> devbot -> summary -> end`）與 Anti-recursion 防護，根除 Charlie 重複指派死循環。
-    *   **In-Process Fallback 與殭屍任務回收**: 當跨容器呼叫 `archon-agents:8052` 網路中斷時，自動回退至同進程 `WorkflowEngine` 執行；擴展 `task_dispatcher` 回收 `["processing", "doing"]` 逾時任務，並將 `NexusOracleAgent` 協同矩陣 Payload 自 6.7MB 壓縮至 2.5 萬字元。
-    *   **Storage 音檔 TTL 修剪與管理者焦點注入**: 實作 `prune_expired_podcast_audio(ttl_days=14)` 釋放超過 105MB 過期 `.wav` 空間；新增 `MANAGEMENT_STEERING_FOCUS` 動態注入週報/月報/日報上下文，並將本地 `ALL_PROMPTS` 100% 同步 Upsert 至雲端 `archon_prompts`。
-
-4.  **104 商業漏斗通管、痛點破冰信閉環與 12 小時冷卻排程治理 (Ref: 10-18, 10-20, 10-22, 10-23, 10-24, 10-30)**:
-    *   **排程時間平移 Bug 根除**: 廢除將週日誤推至下週一導致整週靜默略過的 `_should_run_opportunistic_weekly`，改由原生 12 小時冷卻門禁 `_should_run_scheduled_job("alice_auto_fetch")` 接管。
-    *   **潛客評分校準與破冰信閉環**: 依據 `gemini-embedding-001` 真實餘弦相似度分布將合格門檻校準為 `enrichment_score >= 72`，復原 4 家高潛力企業名單；實作 Top 1~2 合格潛客「1-on-1 痛點破冰信草稿」自動生成並建立 `[Sales Follow-up]` 工單，同時於 `sentinel_patrol` 實作 `ai_score >= 80` 待審文章逾 24 小時自動發布。
-
-5.  **強型別 DTO 契約閉環、非同步解鎖與 `.jules/*.md` 記憶壓縮 (Ref: 10-04 ~ 10-18, 10-21, 10-26)**:
-    *   **強型別與非同步全面升級**: 補齊 `Projects`、`Crawling`、`Settings`、`Credentials`、`Ollama Discovery` 強型別 DTO 契約；將 `pages_service.py` 全面升級為 `await execute_query_async`；由指揮官於雲端啟用 `public.schema_migrations` RLS 消除資安紅燈。
-    *   **代理記憶指南極簡化與 Step 11 門禁**: 清除 `.jules/*.md` 6 份檔案之幻覺日期與重複區塊（由 558 行壓縮至 86 行），建立 `jules_compaction.py` 月度排程與 `scripts/phase_audit.py` Step 11 自動攔截門禁。
-
-### 2026年9月：SSOT 治理、排程防禦與零虛假公證
-
-九月份是深入解決非同步阻塞、週期排程 (DAG) 解耦、以及徹底落實 SSOT/DRY 治理的關鍵月份。我們消滅了大量隱藏的靜眠區塊 (Silent Fallback)、幽靈日誌，並建立起了嚴格的自動化品質門禁公證體系。
+### 2026年11月：資安防護加固、規則通用遷移、HF 部署門禁與四大角色排程收斂
+十一月份完成了前端 `service_role` 外洩鑑識與 `supabase` 套件升級驗證、`.jules/` 規則全量平移至 `.agents/rules/`、HF 部署漏檔門禁（Step 5.5）與 3 天停機復原，並透過雲端探針根除四大角色週期作業 7 大斷層與校準週預算閾值。
 
 **核心主題歸類**:
-1.  **非同步阻塞與排程器死鎖修復 (Ref: 09-10, 09-13, 09-14, 09-26)**:
-    *   **事件迴圈解鎖**: 鑑識出 SDK 的同步介面呼叫 (`generate_content`) 與 `Oracle Agent` 在 `gather_nexus_data` 時阻塞主執行緒高達 4.8 秒。將 `HealthService.check_db_health`、`StatsService` 與 `LogService` 內部隱藏的同步 `execute_query` 全面替換為 `await execute_query_async`，解鎖 Event Loop。
-    *   **DAG 解耦與防偷跑**: 將 `_should_run_weekly` 從 Alice 與週報的共用中解綁，導入精準數學時間斷言 `trigger.get_next_fire_time`，防範伺服器重啟時的排程偷跑與提早觸發。
-    *   **解鎖排程停滯**: 修正 `Alice Auto Fetch` 誤用本地專屬排程器，解放雲端 opportunistic 執行能力。
-
-2.  **Telegram 網路防禦、快覽優化與狀態持久化 (Ref: 09-03, 09-06, 09-20, 09-26, 09-30)**:
-    *   **報告快覽 (Snippet) 防禦**: 實裝 `TelegramService.sanitize_markdown_snippet()` 靜態方法，安全剝除網址與所有 Markdown 符號 (`*`, `_`, `[`, `]`, `\``, `#`)，將長度上限收斂至 `settings.py` (`NotificationConfig.telegram_snippet_length`) 控管，防止 400 Bad Request 崩潰。
-    *   **關機盲區防禦與狀態持久化**: 修正 Vercel 5xx 重試迴圈，於 `_queue_failed_message` 內將 `parse_mode` 狀態與訊息文本透過 `json.dumps` 序列化存入 `archon_tasks.description`，防止伺服器重啟造成解析錯誤與訊息遺失。
-    *   **HF 防火牆繞道**: 偵測確認 HF 防火牆封鎖 `api.telegram.org`。改為從 SSOT 讀取代理網址，透過部署的 Vercel 前端進行 Serverless 轉發，本地則無縫降級直連。
-    *   **打通日誌盲區**: 將 Telegram 網路阻擋錯誤全面引入資料庫 `_log_to_db`，根除 UI 查無錯誤的幽靈降級現象。針對非同步網路操作建立 3 次重試機制與安全執行緒封裝。
-
-3.  **環境潔癖與 SSOT 徹底落實 (Ref: 09-07, 09-13, 09-14, 09-17, 09-30)**:
-    *   **零虛假開發與魔術數字拔除**: 將 `ai_operations.py` 中的硬編碼時區、退避時間及 Telegram 摘要長度上限徹底抽離至 `settings.py`，並消除前端為解決 504 所遺留的 `60000` 魔術數字。
-    *   **消除靜默降級**: 修復 `agent_registry.py` 與 `leads_patrol.py` 中被 `except Exception: pass` 吞噬的異常漏洞，全面補上明確的日誌記錄與報錯機制。
-    *   **環境污染消毒**: 嚴格執行「零一次性腳本」，清理合入分支的臨時腳本，並修復了 `routing.py` 等原生型別引發的 MyPy 報錯。
-
-4.  **自動化品質門禁與全域公證 (Ref: 09-04, 09-14, 09-17, 09-20, 09-26, 09-30)**:
-    *   **Lean 4 原生架構公證**: 解決 `make audit-qa` 漏看的 `Bad CPU type in executable` 錯誤。強制安裝 `aarch64-apple-darwin` 原生版並清空 `~/.elan/toolchains`，確保 18 項 Lean 4 證明子專案編譯成功。
-    *   **物理公證取代肉眼**: 拒絕人工查閱 Docker 驗證。實作 `scratch/test_telegram_queue.py` 與 `verify_catchup_log.py` 探針，推動 100% 透過 `make test-be` (724+ 項測試全過) 與 `make phase-audit` 公證。
-    *   **504 Gateway Timeout 根除**: 由人類配合在 Supabase 執行 `06_add_missing_indexes.sql` 物理建立索引，解決 Task Dispatcher 全表掃描崩潰問題。
-    *   **全域高併發公證**: 透過 708+ 項全數通過的單元測試，物理證實高併發檢索 `test_concurrent_rag_queries` 的非同步優化穩健運行。
-
-5.  **Oracle Payload Optimization (Ref: 09-20, Phase 5.11.21)**:
-    *   **架構升級 (SSOT/DRY)**: 解決 `NexusOracleAgent` 因懶惰查詢 (`select *`) 撈取萬字文章導致 429 Token 爆表。拔除 Agent 裸寫 SQL，將欄位投影 (`id, title, status`) 嚴格封裝至 `BlogService` 與 `LogService`。
-    *   **環境變數抽離**: 將時間窗與字元上限收斂至 `settings.py` (`OracleConfig`)，消除魔術數字。
-    *   **防禦性截斷**: 實裝 JSON 遞迴攔截，超過 `1000` 字元強制 `...(truncated)`。物理探針公證 Payload 體積縮減 97%。
-
-6.  **零虛假公證與雙生環境防禦 (Ref: 09-26)**:
-    *   **零猜測鐵律 (拒絕推論)**: 在判定 HF 伺服器狀態時，嚴禁因觀察到本機 Docker 共用 DB 活躍而盲目推論 HF 停擺。必須 100% 依賴實體探測 (`make phase-audit` Step 5) 進行物理查核，落實證據至上。
-    *   **雙開排程鎖 (Race Condition 防禦)**: 驗證了 Phase 5.9.26 導入的「SSOT 時間閘門 (`trigger.fields`)」。在 HF 與 Local Docker 雙雙存活且同時觸發 Catchup 時，基於 Supabase `LAST_RUN` 的狀態鎖完美生效，精準阻擋重複執行與提早偷跑。
-    *   **時區雙重換算錯誤校正**: 確立 `DEFAULT_TIMEZONE` (`Asia/Taipei`) 的唯一性。資料庫中的 `hour=16` 就是實體台灣時間下午 4 點，嚴禁對 CronTrigger 進行畫蛇添足的二次 UTC 換算。
-
-### 2026年8月：SSOT 治理、排程防禦、MCP 安全鎖定與週期任務硬化
-八月份是提示詞與配置 SSOT 治理落地、排程防禦與 Docker 依賴硬化的月份。我們對 RAG 與報告模組進行了深度的 DRY 重構，解決了 Docker 環境下的 MCP 依賴缺失與 WAF 限流極限問題，並實作了防禦性的提示詞 Upsert 與測試門禁以確保系統零降級。
-
-**核心主題歸類**:
-1.  **SSOT 治理與硬編碼清理 (Ref: 08-01, 08-12, 08-13)**:
-    *   **Deep DRY 重構**: 於 `report_service.py` 提取 `_create_summary_task_and_log` 消除 Daily/Weekly/Monthly 重複派發邏輯。改寫 `telegram_service.py` 從 `SettingsService` 動態讀取通知 Token，將 Vercel/前端網址統一綁定至 `NetworkConfig().frontend_url`。
-    *   **提示詞解耦**: 移除 `blog_generator.py` 等 31+ 處 hardcoded defaults，將提示詞集中至 `pm_prompts.py` 管理。
-    *   **實體代碼對帳**: 執行 `phase-audit` 校驗，確保 `crawler_max_pages` 確實寫入 SSOT 且所有功能元件 100% 落地，無幽靈文件與代碼。
-
-2.  **週期排程、WAF 防禦與 DAG 斷層防禦 (Ref: 08-08, 08-13)**:
-    *   **DAG 事件鏈與排程鎖自癒**: 將下游報告改為 Alice 爬蟲成功事件驱动以避免競態條件。實作 `check_and_resume_dag` 確保伺服器重啟時能無縫接力執行未完成的排程。
-    *   **WAF 與 Rate Limit 限制**: 針對 104 WAF 隨機延遲 (6.5s) 與 Gemini 限流 (4.5s/次) 進行數學建模，下調 `CRAWLER_JOB_LIMIT` 至 `32` 筆，達成低成本的高效轉換。
-    *   **系統死鎖修復**: 修正 `archon-server` 因 Supabase 連線失敗引發的 `__del__` 無限遞迴，以及 `execute_query` 在 Builder 物件缺少 `.execute()` 造成的 `SyncQueryRequestBuilder` 崩潰。
-
-3.  **MCP 依賴鎖定與 Docker 容器架儲防禦 (Ref: 08-10, 08-12)**:
-    *   **MCP SDK 鎖定與 Dockerfile 盤點**: 解決 `archon-mcp` 因 `uv` 動態抓取最新 MCP 套件（移除 fastmcp）導致的 `ModuleNotFoundError`。改用 `uv export` 生成 `requirements.txt` 並於 `Dockerfile.mcp` 及 `Dockerfile.server` 盤點同步鎖定安裝，防範依賴庫斷層。
-    *   **Docker Build Context 與快取空間最佳化**: 將 3.5GB 巨型 `ollama_data` 排除於 `.dockerignore` 之外以避免 context 重建超載，執行系統清理釋放 36.8GB 磁碟快取，防範 ENOSPC 空間危機。
-    *   **殭屍程序清理**: 使用 `lsof -i :3737 -t | xargs kill -9` 強制回收 Vite 殘留程序，確保本機埠口淨空。
-
-4.  **雲端部署修復、網路自癒與超時配置 (Ref: 08-10)**:
-    *   **HF 部署路徑修復**: 修正 `Dockerfile.server` 中歸檔腳本 `cache_offline_packages.py` 移動至 `scripts/archive/` 導致的 COPY 建置失敗。
-    *   **DNS 解析自癒**: 修正 `agent_service.py` 因 HF 雲端環境尋找本地 `archon-agents` 導致的 `Name or service not known` 錯誤，強制透過 `AGENTS_SERVICE_URL` 動態讀取 127.0.0.1。
-    *   **任務超時容錯**: 將 `NexusOracleAgent` 週報/月報 Map-Reduce 任務超時時間放寬至 600 秒以防超時中斷。
-
-5.  **音效渲染與前端/後端安全自癒 (Ref: 08-10)**:
-    *   **簽名 URL 與容錯防護**: Podcast 音檔改用 7 天時效的 `create_signed_url`。在日誌回報與 Telegram 推播中加入 Exception 攔截，防範網路逾時造成 apscheduler 重試風暴。
-    *   **前端高度釋放與 Audio Markdown 攔截**: 拔除 `ManagerNexus.tsx` 鎖死高度的 `min-h-screen`，並獨立出 `AudioMarkdownRenderer.tsx` 自動將文字 Markdown 連結攔截並渲染為原生 HTML5 `<audio>` 播放組件。
-
-6.  **SSOT 防禦性硬化與測試品質門禁 (Ref: 08-12, 08-13)**:
-    *   **靜默降級防禦**: 於 `prompt_service.py` 注入 `logger.warning` 以攔截 missing key 錯誤，杜絕幽靈降級。
-    *   **強韌斷言與測試 Set 聯集**: 重構 `test_prompts_loading.py` 的 brittle 長度斷言，改採 Set 聯集邏輯，防範 Mock 資料重疊；在 `test_prompt_ssot.py` 補足 warning log 驗證，後端 652 項測試全綠通過。
-    *   **Auto-Upsert 重試機制**: 利用 `BaseRepository.execute_query` 將 upsert 包裝在具有指數退避的重試 (`max_retries=3`) 呼叫中，硬化分散式寫入時的網路抗性。
-
-
-7.  **無頭環境與自動化公證防禦 (Ref: 08-26, 08-27, 08-30)**:
-    *   **實體公證取代人工檢驗**: 導入自動化公證腳本，防範虛假開發與文件偽證 (08-30)。
-    *   **Mock 環境隔離與防護**: 針對降級 Mock 模式補齊屬性缺失防護 (08-27)；隔離 MSW 污染與解決排程啟動死結 (08-26)。
-
-8.  **非同步網路與爬蟲引擎硬化 (Ref: 08-28, 08-29)**:
-    *   **Telegram 突波自癒**: 延長超時至 30 秒，導入 3 次重試與異步取值，並將異常捕捉精細化 (08-30)。
-    *   **爬蟲深度與記憶體防禦**: 解除 Crawl4AI 600 秒超時炸彈；動態放行 Admin 爬取深度，同步抗彈窗腳本消除 Cookie 雜訊與自我連結過濾修復 (08-29)。
-
-### 2026年7月：全域美術遷移、週期排程硬化與雲端單一容器部署
-七月份是專案視覺工藝大躍進，以及後端排程系統與雲端部署高度硬化的月份。我們將高品質的 SDXL/Flux 美術素材整合進 Godot 雙生專案，並在 Python 端完成了成本守門員、TTS 廣播與三級資料瘦身的排程自動化。最終，我們排除了阻礙 Hugging Face 部署的深層技術債，實現了雲端單一容器 (Monolith) 的無縫運行。
-
-**核心主題歸類**:
-1.  **Godot 雙生專案與高保真視覺工藝 (Ref: 07-03, 07-17)**:
-    *   **全域背景替換**: 成功套用 `bg_vector_grid.png` 至 `GameBoard.tscn`，與 `bg_synthesizer.png` 至 `CardWorkshop.tscn`。
-    *   **透明底板架構**: 將 `CardChip.tscn` 升級為使用 `card_frame_blank.png` 透明框，並根據卡牌類型動態掛載對應的高品質內部圖示 (`chip_green_target`, `action_keyword` 等)。
-    *   **`CharacterDashboard.tscn` 實裝**: 全新 UI 介面，依據 `SaveManager` 的 Sector 進度動態上色預設灰階頭像，並掛載階級徽章。
-    *   **動態發光節點**: 建立天賦網，並以 Bezier Shader 結合按鈕點擊實現 HDR 閃耀發光 (Pulse) 回饋效果。
-    *   **`HandLayout.gd` (扇形手牌排列)**: 自動計算弧度展開，懸停時平滑放大並置頂。
-    *   **`TargetingArrow.gd` 與 Bezier 著色器**: 實作動態雷射拉弓箭頭與科技流體發光感。
-    *   **物理斷層修復**: 直接於 `TransitionVideo.tscn` 綁定 `next_scene`，徹底根除影片播放完畢後的黑畫面死結。
-    *   **卡牌輪播整合**: 捨棄靜態垂直按鈕，導入 `CarouselContainer` 打造具備景深的實體卡牌水平輪播系統，並將語言/音量設定移至畫面右下角作為半透明背板。
-    *   **觸覺與聽覺 (Juice)**: 新增 `BGMPlayer` 播放授權神曲《Ganxta》；透過 `Tween` 實作選中卡牌時的快速物理抖動 (Elastic Shake)，並同步播放清脆的翻牌音效。
-    *   **無頭截圖公證**: 強化 `MainMenu_Screenshotter.gd`，支援動畫延遲等待，成功於無頭環境中截取包含全新 `gem_*.png` 美術圖的正確 UI 狀態。
-
-2.  **Godot 實體公證與全域架構硬化 (Ref: 07-03, 07-15)**:
-    *   **嚴格型別修復**: 回顧並嚴格遵守 `godot-4-audit` 規範，對 `HandLayout.gd` 與 `TargetingArrow.gd` 進行 100% 靜態型別宣告 (Static Typing)。
-    *   **縮排與變數作用域修復**: 物理根除了 `GameBoard.gd` (Tabs vs Spaces) 與 `GameState.gd` (SaveManager 作用域丟失) 導致的 Parse Error。
-    *   **Headless 零報錯驗證**: 成功通過 `godot --headless --build-solutions` 編譯測試，達成 100% 物理公證！
-    *   **根除硬編碼幽靈**: 執行全面審計，消滅 `SaveManager.gd` 與 UI 控制器中的幽靈卡牌資料 (`filter_by_date` 等)，將全域代碼的 ID 與最新的 `action_*` SSOT 同步。
-    *   **修復技術債**: 透過日誌法醫追溯，揪出並修復了先前 UI 重構意外刪除 `ext_resource` 導致的 `GameBoard.tscn` 解析崩潰。
-    *   **100% 物理公證**: 成功通過 `godot --headless -s tests/HeadlessRunner.gd`，確保 15 項 E2E 與單元測試全數亮綠燈。
-
-3.  **週期作業與排程系統架構進化 (Ref: 07-14, 07-20, 07-21, 07-22, 07-23, 07-24, 07-25)**:
-    *   **L2 模組化與解耦**: 將 `business.py`、`scheduler_service.py` 拆分為精簡模組（如 `leads_patrol.py`），並透過 `SettingsService` 動態讀取設定，徹底消滅硬編碼。
-    *   **SSOT 集中化與死結消除**: 將提示詞與任務頻率抽離至資料庫 (`archon_settings`)，並排除 `tech_debt_patrol` 無限自我舉發的死結。
-    *   **時區處理與排程鎖死修復**: 統一改用 `Asia/Taipei` 與 ISO 曆週計算，修復因 HF 伺服器重啟及 UTC 漂移導致的日期幻覺與殭屍任務 Bug。
-    *   **事件驅動 DAG 排程**: 下游報告改為依賴爬蟲成功後的事件觸發，取代僵化 Cron，解決 WAF 阻擋造成的 Race Condition。
-    *   **雲地物理隔離與容錯**: 確立「本機抓取、雲端運算」分離，以 `SPACE_ID` 封鎖 HF 爬蟲權限。實作 500/502/504 指數退避重試以提升吞吐量。
-
-4.  **爬蟲 WAF 防禦與雲端網路韌性 (Ref: 07-14, 07-17, 07-25)**:
-    *   **WAF 繞過與速率節流**: 成功修復 104 爬蟲，並為 `JobBoardService` 掛載 `RateLimiter`，解決爬蟲瞬間湧入大量資料導致 Gemini API 觸發 429 TooManyRequests 錯誤。
-    *   **NoneType 崩潰自癒**: 修正 `Job104Crawler` 因內部非同步委派未被執行而返回 `None` 的嚴重 Bug。導入 `asyncio.to_thread` 安全橋接外部迴圈。
-    *   **Schema Mapping 容錯**: 透過防禦性的 `item.get("description", "")` 與 Pydantic 雙重綁定，防止未來因 API 欄位變更而引發 `KeyError` 崩潰。
-    *   **WAF 防禦升級**: 將 104 爬蟲的延遲寫死代碼 (Hardcoded Delays) 移除，徹底抽離至 `SettingsService` 的 `CRAWLER_WAF_DELAY_MIN/MAX`，動態隨機延遲 60~90 秒以迴避資料中心 (Datacenter IP) 存取限流。同時在 `curl_cffi` 實作瀏覽器指紋動態輪替，降低 403 Forbidden 機率。
-    *   **HF 基礎設施修復**: 修復了 `scripts/deploy_to_hf.sh` 在單一容器打包時遺漏 `AGENTS.md` 的嚴重缺失。同時透過環境變數注入 `AGENTS_SERVICE_URL=http://127.0.0.1:8052`，解決了 Hugging Face 環境中 `WorkflowEngine` 尋找本機 `archon-agents` 網域導致的 DNS 斷線問題。
-    *   **零副作用公證**: 變更通過全部 612 項後端測試公證，確保與本機 Docker Compose 環境的兼容性，並成功推送至 `dev/twins` 自動觸發 HF 遠端部署。
-
-5.  **模型生命週期、備援硬化與 Agent 架構 (Ref: 07-22, 07-25)**:
-    *   **模型生命週期與備援機制**: 實作 API 動態探勘與模型交集過濾。透過 `model_ssot.py` 實現 Free Tier 自動備援，解決 HTTP 異常與模型下架引發的崩潰。
-    *   **API 逃逸封堵與 Mock 隔離**: 移除 `batch_processor.py` 的 REST API 直連，全面回歸官方 SDK，並在 `conftest.py` 擴充攔截網防止測試沙盒穿透。
-    *   **Agent 斷點持久化 (Checkpointing)**: 實裝 `AgentCheckpointManager`，在 Action/Observation 循環後保存狀態快照，防止網路超時導致的重複呼叫。
-    *   **HITL 人工審核防線**: 攔截高風險工具調用並懸置狀態 (`SUSPENDED_WAITING_FOR_APPROVAL`)，暴露審核與恢復端點。
-
-6.  **Hugging Face Monolith 部署與啟動自癒 (Ref: 07-20)**:
-    *   **指令換行修復**: 修復 `deploy_to_hf.sh` 在動態修改 `Dockerfile` 時缺少換行符號 (`\n`) 的 Bug，防止 `CMD` 與 `ENV` 參數粘連導致語法錯誤 (ENV: not found)。
-    *   **破除 DNS 迷思**: 發現 `mcp_client.py` 誤判 Docker 環境而強制使用 `archon-mcp` 作為主機名稱，導致在 HF Monolith 環境中解析失敗。引入 `ARCHON_SERVER_HOST` 作為覆蓋變數 (127.0.0.1)，成功將網路請求重新導向至 localhost。
-    *   **消滅啟動競態條件 (Race Condition)**: 解決了 FastAPI 啟動過快，導致 `lifespan.py` 搶在 MCP Server 完全準備好前發起請求並誤判斷線的世紀 Bug。透過在 `start_all.sh` 引入 5 秒緩衝 (`sleep 5`)，並在 Python 端加入 5 次指數退避重試 (Retry Loop)，徹底硬化了系統的啟動韌性。
-    *   **遠端日誌探針**: 建立 `/api/mcp-logs` 後門，將背景程序的標準輸出管線化，成功在無除錯介面的 Hugging Face 雲端環境中取得決定性的實體證據，證實 MCP Server 200 OK 且 29 項工具成功掛載。
-    *   **Model SSOT 落地**: 建立 `30_alter_archon_prompts_schema.sql`，將散落於 Markdown 的 34 個提示詞全數遷移至 DB。重構 `PromptService` 並以 Pydantic 嚴格校驗，消滅幽靈文件。
-
-7.  **後端系統健康度、資料庫重構與資源最佳化 (Ref: 07-23, 07-24, 07-25)**:
-    *   **健康度掃描與型別重構**: 建立 `backend_type_health.py` 實作全覆蓋健康度掃描。針對分區 `3.3` 進行強型別補齊，將型別覆蓋率由 39.3% 提升至 92.1%。
-    *   **資料庫架構收斂**: 透過自動化腳本將 36 個碎片化 SQL 檔案收斂至 11 個語義化檔案，並實作 `rescue/` 資料夾提供無痛資料救援機制。
-    *   **向量維度截斷防護**: 實作物理截斷防護，將外部模型強制回傳的 3072 維度裁切至 768 維度，避免資料庫崩潰。
-    *   **記憶體資源減肥 (Memory Diet)**: 於 `docker-compose.yml` 注入 `NODE_OPTIONS=--max-old-space-size=512` 強制提早 GC，將 Vite 開發伺服器記憶體用量從 2GB 壓制至 350MB。
-
-
-8.  **全域 SSOT 終極淨化與硬編碼根除 (Ref: 07-28, 07-29, 07-31)**:
-    *   **狀態與角色重構**: 徹底移除散落各服務的字串角色與狀態硬編碼，統一替換為 `RoleEnum` 與 `TaskStatusEnum`，並將強領域邏輯靜態陣列標記為白名單。
-    *   **NetworkConfig 收攏**: 將所有寫死的 HTTP 網址 (Agent/MCP/LLM) 抽離至 `NetworkConfig`，並將排程時間變數化，徹底實現 SSOT 管理。
-    *   **零硬編碼與脆性修復**: 將繁體中文提示詞等脆性邏輯拔除並正確歸位至專屬配置 (如 `sales_prompts.py`)；升級 `scripts/phase_audit.py` 擴充 `set_literal_pattern` 精準攔截隱藏的字串陣列。
-    *   **全域大掃除**: 清除遺留的 `temp_refactor/` 與重複舊版資料夾，將 `scratch/` 加入 `.gitignore` 徹底解除草稿污染隱患。
-
-9.  **核心業務層 (Services) 絞殺榕解耦與型別硬化 (Ref: 07-27, 07-30)**:
-    *   **Manager 純化與測試遷移**: 拔除 `CredentialManager` 內的向下相容代理 (Proxy Wrappers)，完成絞殺榕最後一哩路，並將測試依賴徹底遷移至真實 `provider_configs.py` 介面。
-    *   **Auth 與 RBAC DRY**: 將認證與細粒度權限模組的資料庫操作收斂至 `BaseRepository.execute_query`，移除所有 `.execute()` 舊寫法，並將型別覆蓋率推升至 100%。
-    *   **Legacy Closure 清除**: 成功移除了全域 83 支檔案中的 `_query()` 舊式閉包寫法，達成 L2 架構的 DRY 原則。
-
-10. **RAG 防禦、爬蟲進化與雲地路徑自癒 (Ref: 07-27, 07-29, 07-30)**:
-    *   **排程防禦與 RAG 測謊機**: 實作 RAG 強攔截防禦，當找不到 Baseline 時直接捨棄 Lead 確保資料庫零污染；精煉 4.6% 純淨特徵切片大幅提升訊噪比。
-    *   **Golden Seven 關鍵字與爬蟲優化**: 擴充 104 爬蟲高價值詞彙，將排程縮減為每週四天並提高單次抓取量，放寬 WAF 隨機延遲以提升單次吞吐量。
-    *   **雲地路徑自癒**: 修補文件讀取路徑動態兼容本地開發與 Docker 容器，修正 `catch-up` 任務在伺服器重啟時的排程日邏輯盲點。
-
-### 2026年6月：Godot 雙生專案、L2 架構重構、輕量重排與雲端部署除錯
-六月是專案全面推進 Godot 數位雙生遊戲開發，並在架構面上嚴格落實 L2 模組化與行數門禁的月份。我們成功突破了 Hugging Face 的部署限制，完成了語意重排引擎的輕量化，並建立起 100% 物理對齊的測試防護網。
-
-**核心主題歸類**:
-1.  **Godot TDD 與 MVC 架構確立 (Ref: 06-11, 06-18, 06-30)**:
-    *   **Lean 原則**: 捨棄臃腫的 GUT 框架，以原生 Headless 模式自製微型測試框架 (`HeadlessRunner.gd`)。
-    *   **卡牌 MVC 轉向**: 從塔防轉向卡牌構築戰，徹底解耦 Model (`GameState`) 與 View (`MainUI`)，實現無 UI 邏輯單元測試。
-    *   **雙劍合璧**: 確立 Godot 作為引擎、VS Code 作為 LSP 的雙開工作流，並解決了 Language Server Port 的配置陷阱。
-    *   **底層防呆**: 解決 `Object.get()` 預設參數造成的靜默崩潰，並補強了匿名函數與 `call_deferred` 結合時的空指標防護。
-
-2.  **L2 模組化與巨型檔案減重 (Ref: 06-08, 06-18, 06-21, 06-22, 06-23, 06-25)**:
-    *   **行數門禁**: 將超過 400 行的 `manager.py`, `CharacterCreator.gd`, `ModularAgent.gd`, `MainUI.gd` 強制拆分。
-    *   **死碼物理清除**: 徹底移除幽靈元件（如 `DiffViewer.tsx`）與分離 `APIKeysSection.tsx`，成功將巨型檔案瘦身並通過公證。
-    *   **UI 與邏輯剝離**: 建立 `AIPromptManager.gd`、`AgentLayoutHelper.gd` 等專職工具類別。
-    *   **解耦動態翻譯**: 建立 `GitTranslator.gd` 動態載入 `git_dict.json`，消除硬編碼的翻譯字串與魔法數字。
-
-3.  **無頭環境 (Headless) 與自動化公證突破 (Ref: 06-01, 06-18, 06-21, 06-22, 06-23)**:
-    *   **開發流水線重塑**: 建立 `Golden Pipeline` 對抗盲目樂觀，嚴格執行探針 (Probe) 與自動化公證。
-    *   **測試存檔淨化**: 透過腳本在測試前主動清除 `user://savegame.save`，消滅「幽靈測試失敗」等污染。
-    *   **突破截圖限制**: 針對 `--headless` 無法擷取 Viewport 影像的問題，撰寫 Python 腳本自動啟動 GUI 完成實體公證。
-    *   **雲端對帳公證**: 將自動化公證推進至 Hugging Face 雲端探針，確保 Clockwork 任務在 Serverless 環境成功運作。
-    *   **ClassDB Registry 自癒**: 使用 `preload` 取代直寫 `class_name`，解決 Godot Headless 模式下的快取解析錯誤。
-
-4.  **雲端部署除錯、CI/CD 與網路連線自癒 (Ref: 06-18, 06-19, 06-22, 06-25, 06-26, 06-29)**:
-    *   **HF 部署防呆與字元陷阱**: 撰寫部署腳本繞過 Git LFS 阻礙。並解決了 HF Secrets 混入注音「ㄒ」導致的 UnicodeEncodeError，加入環境變數遮蔽機制。
-    *   **CI/CD 依賴對齊**: 強制 CI 安裝 `--group all` 依賴並修正 `PYTHONPATH`，修復了 Web Health Check 的部署觸發問題。
-    *   **排程與並發極速**: 精準調配 HF 每日休眠喚醒排程 (10:38 暫停 / 06:32 啟動)；糾正 RAG 高併發死循環迷思，引入 `asyncio.sleep` 序列化排隊。
-    *   **全域連線自癒 (Monkey Patch)**: 徹底根除高併發下的 HTTP/2 `ConnectionTerminated` 斷線危機，由底層 `execute_query` 實作指數退避重試，無需盲目修改上層業務。
-
-5.  **3-Tier 容災降階與品質升級 (Ref: 06-05, 06-07)**:
-    *   **多層 Fallback 架構**: 實作 Gemini -> Hugging Face -> Ollama 級聯降階備援系統，並於雙端 UI 建立指示燈。
-    *   **GFM / Mermaid 霓虹化**: 擴充 Markdown 渲染引擎，完美解析高難度表格與循序圖。
-    *   **Phase 5.6 歷史歸檔**: 徹底清查任務，將無幽靈的史詩級文件封裝並提煉至 Docusaurus 知識庫。
-
-6.  **語意重排 (Reranker) 引擎輕量化與效能收斂 (Ref: 06-22, 06-24, 06-30)**:
-    *   **ONNX 零成本重排**: 放棄笨重的 PyTorch (`sentence-transformers`)，改採 `onnxruntime` 與 22MB 微縮權重，解決 Docker 空間危機與依賴死鎖。
-    *   **型別安全與動態降級**: 棄用僵化的 `isinstance` 檢查，改採 `try-except` 模式 (EAFP) 兼容 Mock 測試，確保模型載入失敗時能 Fall-Fast。
-    *   **雙前端架構物理隔離**: 釐清 `archon-ui-main` (3737) 與 `enduser-ui-fe` (5173) 的設計哲學差異。將 `Intl.DateTimeFormat` 效能瓶頸轉移至後端，並透過 `eslint.config.js` 實施編譯期防禦。
-
-### 2026年5月：多 Agent 星環拓樸、QA 全自動化與極端環境救援
-五月是專案從單一 Agent 升級至多 Agent 協作架構，並將品質門禁與測試自動化推向極致的月份。我們完成了 Phase 5.1.x 到 Phase 5.5.0 的史詩級任務群。
-
-**核心主題歸類**:
-1.  **Phase 4.6.60 穩定性硬化與 E2E 物理公證 (Ref: 05-11)**:
-    *   **前端圖表防禦**: 關閉 Recharts 動畫以防止 Headless 環境下 Playwright 崩潰 (`NaN TickItem Error`)。
-    *   **後端空資料防禦**: 嚴禁使用 `.single()`，改用安全陣列查詢 (`execute()`) 防禦 HTTP 500。
-    *   **測試狀態防護**: E2E 嚴禁依賴開發者資料庫，必須包含空資料斷言，並使用具狀態變數 (Stateful Mock) 還原 React 重新渲染。
-
-2.  **基礎設施與環境自癒加固 (Ref: Phase 5.1.13, 5.1.17)**:
-    *   **Model SSOT**: 根除模型硬編碼，統一交由 DB / 環境變數控制，落實 Fail-Fast。
-    *   **模組解耦**: 進行大於 400 行的檔案瘦身，強化 L2 架構清晰度，消滅「God Objects」。
-    *   **數位雙生防禦**: 建立 CLI 雙軌機制，加載 `BrowserConfig` 無密碼環境對抗 Docker 加密憑證讀取障礙。
-
-3.  **體驗升級與 RAG 優化 (Ref: Phase 5.1.13)**:
-    *   **極簡 RAG 入口**: 實作 Karpathy 式極簡知識庫介面，支援原始網址直丟與切片向量化。
-    *   **視覺優化**: 實作科技霓虹濾鏡與幾何 SVG 的「零 Token 視覺 Fallback」，大幅降低雲端成本。
-
-4.  **星環群聊架構與排程器整合 (Ref: Phase 5.1.7 ~ 5.1.16)**:
-    *   **拓樸升級**: 確立「星型群聊 (Star-Topology)」機制，由 Supervisor 動態路由並綁定 Gemini 3.1 系列，防範無限迴圈與成本失控。
-    *   **週期報告自動化**: 實作日、週、月報執行摘要的 Map-Reduce 星環化，並成功與 Clockwork 排程系統深度整合。
-
-5.  **QA 全自動化與 MBT 硬化 (Ref: Phase 5.2.0, 5.1.2)**:
-    *   **視覺裁判**: 實作 Gemini 3.1 Vision 作為 UI 視覺裁判 (Judge)，並建立 Structured LLM-Judge 確保內容語義品質。
-    *   **測試隔離與網關**: 消除 E2E 測試依賴污染，加裝 `RUN_INTEGRATION_TESTS` 門檻，並完成 `make audit-qa` 整合網關。
-
-6.  **Phase 5.3~5.5 離線硬化與極端環境救援 (Ref: 05-27, 05-29, 05-30)**:
-    *   **離線雙軌架構**: 實作 `OFFLINE_MODE` 雙軌機制，無網狀態自動將向量降階至 384 維度並轉接本地 SentenceTransformer 與 Ollama。
-    *   **ENOSPC 空間危機**: 剖析 31.5GB 巨獸級 Docker 映像檔，剃除 PyTorch 的 CUDA 依賴與封裝快取，成功瘦身至 5.02GB。
-    *   **歷史歸檔與實體對帳**: 將過期 Phase 文件徹底壓縮歸檔 (`Phase_5_Archive.tar.gz`)，並提煉 Docusaurus 知識庫，確保工作區極簡。
-    *   **混沌與品質門禁**: 確認模擬器 Deterministic 特性，並將 500 Error 優雅納入 `pytest.skip` 防禦，確保 CI/CD 穩定性。
-
-### 2026年4月：全系統硬化、效能收斂與 Phase 4.6 收尾
-四月是專案從局部功能完善邁向全系統架構硬化與效能收斂的關鍵月份。我們不僅完成了 Phase 4.6 整個史詩級任務群的收尾，還進行了深度的效能優化與架構重構。
-
-**核心主題歸類**:
-1.  **Phase 4.6 結案與架構硬化 (Ref: 04-25, 04-28)**:
-    *   **地基物理加固**: 完成 SQL ID 對齊，物理重設非 UUID 身分。強制實施部門級 SQL 物理隔離。
-    *   **架構級減重**: 完成 L2 模組化拆分，例如將 `seed_knowledge` 拆分至 `SeedingService`。
-    *   **品質公證**: 達成 100% 後端測試通過率，並透過 `make persona-audit` 進行全角色工作流公證。
-
-2.  **效能突破與 503 防禦 (Ref: 04-02, 04-15, 04-20)**:
-    *   **503 結構性根除**: 遷移至官方 `google-genai` SDK，實作原子化巡檢與指數退避重試邏輯。
-    *   **系統級 429 抗性**: 全局並發限制，頻率適配 Gemini Free Tier，並實作「原地等待重試」自癒機制。
-    *   **冷啟動優化**: 解決 x86_64 環境下的 Torch 依賴與 NumPy 載入崩潰，熱機搜尋延遲大幅降至 2.3s。
-
-3.  **商業情報與 UI 韌性 (Ref: 04-20, 04-25)**:
-    *   **行銷情報 2.0**: 實作 `ConversionFunnel` 組件與 `_calculate_lead_score` 動態評分，實現轉換漏斗視覺化。
-    *   **防禦性 UI**: 注入防禦性載入與去重邏輯，防止單點 API 錯誤卡死全頁。
-
-4.  **測試隔離與物理對帳 (Ref: 04-22, 04-45)**:
-    *   **狀態污染根除**: 實作深拷貝隔離 `MOCK_ADMIN_USER`，解決 E2E 測試中的級聯污染問題。
-    *   **真理復原**: 透過 5 輪物理審計，清算殭屍檔案與冗餘邏輯，達成代碼與文件的 100% 對齊。
-
-5.  **RBAC 與路由標準化 (Ref: 04-06, 04-13)**:
-    *   **動態身分**: 權限定義 100% 物理遷移至資料庫，並在 UI 實作 Identity Matrix 管理介面。
-    *   **路由合約**: 解決 `/api/api` 嵌套問題，實施分類掛載，強化動態與靜態 Role Scopes 的合併。
-
-### 2026年3月：結構化重構、治理硬化與效能收斂
-三月是 Archon 從巨型架構邁向模組化治理的關鍵月份。我們消滅了所有超過 1000 行的檔案，並建立了基於 XP 的 Agent 治理體系。
-
-**核心主題歸類**:
-1.  **Phase 4.6.24 結案 (Ref: 03-30)**:
-    - **巨型檔案清零**: 完成 `CredentialService`, `UrlHandler`, `StatsService`, `ProviderDiscovery` 四大中樞的 L2 模組化拆分。
-    - **ROI 視覺化**: 前端實體化 `ROIAnalyticsBadge` 與 `TokenUsageTable`，達成 AI 經濟透明化。
-    - **物理隔離**: 徹底隔離 `.env.test` 物理位址，實作並驗證了部門隔離 (SEC-001) 的負面測試。
-1.  **模組化革命 (Ref: 03-06 ~ 03-31)**:
-    *   **巨型檔案清零**: 拆分 `ollama_api.py`, `knowledge_api.py`, `task_service.py` 與四大核心 Service。
-    *   **L2 標竿建立**: 確立了以 `llm/` 包為範本的目錄化重構標準，確保 Facade 模式的 100% 向後兼容。
-
-2.  **Agent 治理與 XP 門禁 (Ref: 03-24 ~ 03-26)**:
-    *   **身分落地**: 實作 `agent_xp` 經驗值系統與 Poisson Gate 物理攔截。
-    *   **門禁硬化**: 實作解釋性攔截訊息，並實體對齊 Slug-based 身分識別。
-
-3.  **效能與基礎設施硬化 (Ref: 03-30)**:
-    *   **調度統一**: 完成 `AgentService` 原生工具動態分發 (Unified Tool Dispatch)。
-    *   **O(1) 優化**: 將 `RateLimiter` 複雜度從 O(N) 降至 O(1)，提升高併發穩定性。
-    *   **全端對齊**: 找回並恢復了二月重構中遺失的 Token 詳細明細表。
-
-4.  **安全與 ROI 實體化 (Ref: 03-31)**:
-    *   **部門隔離**: 實作 JSONB 穿透式隔離，並通過 403 負面測試驗證。
-    *   **ROI 落地**: 實作前端 ROI 狀態欄，補齊 AI 經濟治理最後的功能斷層。
-
-### 2026年2月：全角色流程與行動端落地
-二月標誌著 Archon 從單點功能邁向全角色協作的里程碑。我們完成了 Alice (Sales), Bob (Marketing), Charlie (Manager) 的核心工作流閉環，並在下旬進行了大規模的架構硬化。
-
-**核心主題歸類**:
-1.  **Phase 4.6.3 Charlie (Manager) (Ref: 02-03)**:
-    *   **指揮官系統**: 實作 Sentinel 哨兵自動監控 Stale Leads，並結合 RAG/LLM 智慧生成繁體中文追蹤任務。
-    *   **權限閉環**: 實作了從 Alert -> Task Dispatch -> Alert Resolved 的完整狀態流轉與 RBAC 控制。
-
-2.  **Phase 4.6.2 Bob (Marketing) (Ref: 02-03)**:
-    *   **測試隔離**: 解決了 E2E 測試中的 Promise Hanging 問題，確立了 MSW 必須攔截所有 Auth 請求的測試鐵律。
-
-3.  **Phase 4.6.1 Alice (Sales) (Ref: 02-02)**:
-    *   **行動優先**: 實作 "Fire & Forget" 的語音轉工單功能。
-    *   **效能優化**: 將 GPS 抓取改為 On-Demand，並引入 SQL Batch Update 優化歸檔效能。
-    *   **E2E 穩定化**: 修復了 Dashboard 因非同步載入導致的 Race Condition。
-
-4.  **Nexus 戰情室與 UI 空間革命 (Ref: 02-05, 02-09, 02-10)**:
-    *   **並排編輯 (Split View)**: 實作了雙重收合側邊欄與 Markdown 即時預覽，解決 Context 切換的斷腦流問題。
-    *   **行動端韌性**: 透過移除 `min-h-screen` 徹底解決了手機版捲動死鎖問題，並實作了 AI 任務的動態進度反饋。
-    *   **Dashboard 加固**: 修正了同步 API 的 `maybeSingle()` 調用陷阱，確保資料加載穩定性。
-
-5.  **細粒度 RBAC 與型別安全革命 (Ref: 02-06, 02-07)**:
-    *   **Zero-Mypy**: 達成後端 100% 型別通過，重構 `BaseAgent` 泛型解決 `pydantic-ai` 接口匹配問題。
-    *   **權限階層化**: 實作了 Manager 與 Admin 的權限邊界，並導入 `is_system_protected` 旗標保護核心系統 Prompt。
-
-6.  **身分同步與流程自動化 (Ref: 02-03, 02-05)**:
-    *   **Auth 穩定化**: 修正了 `AuthService` 在建立使用者時同步 metadata 的邏輯，確保角色資訊的一致性。
-    *   **Librarian 實體化**: 打通了檔案版本控制與審計路徑的寫入。
-
-7.  **架構硬化與基礎設施對齊 (Ref: 02-15 ~ 02-21)**:
-    *   **前端模組化**: 成功將 RAG 設定抽離為獨立特徵模組，並落地位準路徑別名 (`@/`)，消滅相對路徑地獄。
-    *   **引擎與 SDK 對齊**: 營運端全面遷移至官方 Google `genai.Client`，解決 SDK 斷層導致的 503 錯誤與死迴圈。
-    *   **基礎設施同步**: 修正了 `MigrationService` 的實體表名衝突，並實作了跨環境的金鑰自動檢索 (os.getenv/os.environ)。
-
-### 2026年1月：權限重構、自癒機制與商業功能落地
-一月是專案從「技術驗證」邁向「商業運作」的關鍵轉折點。我們在前半月集中解決了深層的架構債（特別是 Auth 與 Docker 環境），後半月則全力衝刺商業功能的實作。
-
-**核心主題歸類**：
-
-1.  **RBAC 權限架構的完備與標準化 (Ref: 01-09, 01-12)**:
-    *   **挑戰**: 舊有 `X-User-Role` Header 存在安全漏洞，且 `auth.users` 與 `public.profiles` ID 不一致導致 406 錯誤。
-    *   **解決**: 建立 `src/server/auth` 模組，強制後端驗證 JWT。實作 `init_db.py` 中的「雙重同步策略 (Dual Sync)」，自動修復 ID 不一致。
-    *   **DX 優化**: 為解決 Admin UI 無登入頁痛點，實作了 `Dev Auto-Login` 機制。
-
-2.  **環境自癒與主動防禦 (Ref: 01-03, 01-04, 01-08)**:
-    *   **主動防禦**: 針對 Docker 內部網路 (DNS) 與瀏覽器外部網路的差異，在前端 `api.ts` 實作了「主動防禦」邏輯，偵測到無法連線時自動切換 Mock，解決無限 Loading。
-    *   **誠實架構**: 移除了 `SmartAPI` 的隱式 Mock Fallback，強迫開發者正視網路配置問題。
-
-3.  **商業功能與 RAG 進化 (Ref: 01-15, 01-16)**:
-    *   **銷售情資**: 實作 Phase 4.2，包含 Leads 管理與市場洞察。
-    *   **真實 RAG**: 將 Mock RAG 升級為接軌 Gemini API 的真實系統，打通了「爬蟲 -> 向量 -> 生成」的數據管道。
-    *   **行銷官網**: 導入 Config-Driven UI 模式，降低非技術人員維護門檻。
-
-4.  **SOP 與除錯紀律的再強化 (Ref: 01-06, 01-07)**:
-    *   **教訓**: 在修復 UI/通訊問題時，因違背 SOP 導致測試崩潰。重新確立了「修改代碼必須同步更新 Mock」與「Patch 必須針對 Class」的鐵律。
-
-5.  **系統穩定化與人機協作 (Ref: 01-20, 01-22, 01-23, 01-24)**:
-    *   **任務系統修復 (Ghost Task Mystery)**: 透過精確過濾 (`assignee_id`)、修復非同步 context 錯誤 (`llm_provider` import) 以及前端 `include_closed` 參數，解決了 Alice/Bob 任務消失的問題。
-    *   **全角色戰情室 (War Rooms)**: 為 Sales, Marketing, Manager 分別打造了專屬 Dashboard (Sales Nexus, Brand Hub, Team Management)。打通了爬蟲 -> CRM -> Blog -> Approval 的完整商業流程。
-    *   **RBAC 深度加固**: 放棄「開副本」做新頁面的想法，直接在後端實作「部門隔離 (Department Isolation)」與前端權限拆分 (`leads:view:sales` vs `marketing`)，確保 Manager 只能管理同部門成員。
-
-6.  **開發體驗 (DX) 與爬蟲進化 (Ref: 01-18, 01-19, 01-25)**:
-    *   **爬蟲 AJAX 逆向**: 放棄易被擋的進階爬蟲，改用 104 AJAX API，大幅提升資料品質與穩定性，解決 RAG GIGO 問題。
-    *   **Admin UI 完善**: 修復了檔案上傳 Unicode 錯誤、Task ID 顯示，並實作了 `Dev Auto-Login` 與 API Key 自動注入 (`db-init`)，大幅降低本地開發摩擦。
-    *   **探針制度化**: 將 `probe_librarian.py` 升級為標準化 `make probe` 指令，並加入維度完整性檢查 (768 vs 1536)，成為 CI/CD 的可靠 Smoke Test。
-
-7.  **系統體制化與行動端擴展 (Ref: 01-26 ~ 01-30)**:
-    *   **品質與安全**: 實作了 Row Level Security (RLS) 防止資料外洩，並進行了大規模的 Type Safety/Lint 清掃，消優了數百個潛在的運行時錯誤。
-    *   **行動優先**: 為 Alice 打造了 "Hunter Mode" 與語音日誌功能，確立了行動端 "Fire & Forget" 的設計哲學。
-    *   **測試韌性**: 面對 Dashboard 複雜的非同步載入，學會了使用 `waitFor` 配合 DOM 狀態檢查來消除 Flaky Tests，並將探針 (Probe) 升級為 CI 標準檢查。
-
-### 2025年12月：Async 重構、前端規範與 AI 開發者奠基
-
-十二月是技術債償還與新功能開發並行的月份。我們完成了全系統的 Async 化，並實作了 AI 開發者流程的核心基礎。
-
-**核心主題歸類**:
-1.  **AI 開發者審核流程 (Ref: 12-31, 12-16)**:
-    *   **願景對齊**: 在假資料中挖掘出「AI as a Teammate」的真實願景。
-    *   **功能實作**: 完成了 `DiffViewer` 與提案審核後端。在 `file_operation_tools.py` 加入 `original_content` 以支援差異比對。
-    *   **專案清理**: 歸檔了 Phase 4.1 文件並清理了過期分支。
-
-2.  **非同步重構與測試災難 (Ref: 12-20, 12-12)**:
-    *   **挑戰**: 將後端全面重構為 `async` 後，引發了大量 `make test-be` 失敗。
-    *   **解決**:
-        *   **黃金模式**: 確立了測試 FastAPI 單例服務的模式：在 `import app` 前 `patch`，並使用 `setup_module` 管理生命週期。
-        *   **Mock 類型**: 修正了混淆 `Mock` 與 `AsyncMock` 導致的測試錯誤。
-        *   **務實決策**: 對於頑固的 ETag 測試使用 `@pytest.mark.xfail`，優先保證主流程。
-
-3.  **前端品質與規範 (Ref: 12-25, 12-15)**:
-    *   **Lint 清零**: 系統性解決了 160 個 ESLint 警告。透過研究 `eslint.config.js`，發現 `no-unused-vars` 等誤報是配置問題，而非代碼問題。
-    *   **部署驗證**: 解決了部署後 CSS 載入失敗（路徑錯誤）與資料不一致（缺少 `localStorage` 金鑰）的問題，再次印證「部署後驗證」的重要性。
-
-4.  **E2E 測試穩定化 (Ref: 12-27, 12-29)**:
-    *   **複雜 Bug**: 解決了 `make test` 失敗的雙重原因：`optimistic.ts` 的邏輯錯誤與 `Makefile` 對前端測試指令的誤用。
-    *   **合併紀律**: 合併 E2E 修復分支後，立即執行 `make test` 與 `make lint`，成功攔截了因依賴更新而產生的連鎖錯誤。
-
-### 2025年11月：深層偵錯、Git 考古與 E2E 驗收
-
-十一月是偵錯月。我們深入解決了多個層層疊加的複雜 Bug，並確立了以 Git 歷史為最終真相的偵錯文化。
-
-**核心主題歸類**:
-1.  **前端異常的深層根源 (Ref: 11-27, 11-28, 11-13)**:
-    *   **`about:blank` 之謎**: 文件上傳後跳轉空白頁。追蹤發現是後端 `knowledge_item_service.py` 錯誤回傳了無效的 `source://` URL。
-    *   **UI 報錯**: Admin UI 顯示 "Failed to Load Knowledge Base"。使用者提供的 `invalid input syntax for type uuid` 成為關鍵線索，定位到 DB 函式參數型別不匹配。
-    *   **部署路由**: Render 部署後前端無法連線，瀏覽器報 `SyntaxError: ... < is not valid JSON`。證實是 Render 路由規則未重寫 `/api` 請求。
-
-2.  **檔案上傳的多層錯誤 (Ref: 11-15, 11-24)**:
-    *   **剝洋蔥式偵錯**: 檔案上傳失敗背後隱藏了三層錯誤：`Bucket not found` (Supabase 設定) -> `InvalidKey` (中文檔名) -> `TypeError` (對同步函式使用 `await`)。
-    *   **Git 歷史裁決**: 在解決「靜默失敗」時，`git log` 與 `docker logs` 出現矛盾。最終透過 `git show HEAD:<file>` 證實了 Docker 內的程式碼確實是舊版本，結束了對環境的無謂猜疑。
-
-3.  **非同步測試的挑戰 (Ref: 11-26, 11-11)**:
-    *   **歷史債**: `git log` 顯示 `test_file_upload_integration.py` 的 Mock 是為舊同步函式寫的，導致重構後 `TypeError`。確立了「修改測試前先查歷史」的原則。
-    *   **無限循環**: React 元件 `Maximum update depth exceeded`。追溯歷史發現是為修復 Lint 而錯誤地將 `state` 加入了 `useEffect` 依賴。
-
-4.  **系統性驗收 (Ref: 11-10, 11-19)**:
-    *   **眼見為實**: 在前端注入 `console.log` 發現 API 路由衝突（兩個 `/health` 端點）。
-    *   **全面探測**: 執行 E2E 手動驗收，產出 Bug 清單，鎖定「後端背景任務靜默失敗」為多個功能異常的共同病灶。
-
-### 2025年10月：系統嫁接、雲端部署與SOP重塑
-
-十月份是專案架構轉型的關鍵期。我們將實驗性的 `feature` 分支嫁接到主幹，並首次打通了雲端部署流程。
-
-**核心主題歸類**:
-1.  **系統嫁接與架構確立 (Ref: 10-17, 10-05)**:
-    *   **挑戰**: 在將 `feature` 分支應用移植到 `main` 架構時，遭遇了依賴管理 (`pip` vs `uv`) 與工具鏈 (`npm` vs `pnpm`) 的「精神分裂」。
-    *   **解決**: 透過 `git diff --name-status` 全面盤點差異。確立了 `Makefile` 為單一事實來源，並統一使用 `pnpm` 與 `uv`。
-    *   **教訓**: 「嫁接」非單純合併，必須先建立統一的基底架構。
-
-2.  **Render 雲端部署戰役 (Ref: 10-09, 10-13)**:
-    *   **API 404/500 迷霧**: 部署後前端無法連線。經查證，瀏覽器報錯 `SyntaxError: ... < is not valid JSON` 是因為 Render 缺少 SPA 重寫規則，導致 API 請求被導向 `index.html`。
-    *   **設定延遲**: 即使修正了設定，API 仍失敗。最終證實是雲端平台的「傳播延遲 (Propagation Delay)」，學會了「等待與硬刷新」的除錯技法。
-    *   **產品思維**: 部署後驗證中，我們學會了不應套用通用模板，而應以「問卷」代替「方案」，並優先使用手上資源。
-
-3.  **SOP 與測試紀律的建立 (Ref: 10-14, 10-18, 10-23)**:
-    *   **資料庫遷移**: 發現舊流程高風險，建立了基於 `schema_migrations` 表的冪等性遷移 SOP。
-    *   **測試基準線**: 面對 38 個後端測試失敗，我們建立了「單點修復 -> 驗證」的循環。清理了測試快取導致的幽靈失敗。
-    *   **嚴格計畫**: 在經歷多次「來回修改」的指責後，確立了「先調查歷史，再提出包含 `old_string` 的完整計畫」的鐵律。
-
-4.  **精準偵錯與殭屍代碼 (Ref: 10-27, 10-29)**:
-    *   **移除病灶**: `archon-ui-main` 啟動失敗指向 `useThemeAware.ts`，調查發現這是無用的 Dead Code，直接刪除即修復。
-    *   **釐親矛盾**: 透過釐清「UI 載入成功但 API 404」的精確場景，區分了「啟動問題」與「資料問題」。
-
-### 2025年9月：SOP, 歷史追溯與偵錯紀律的建立
-
-九月份是專案從混亂的「救火隊模式」轉向「紀律化開發」的關鍵月份。這個月的歷程充滿了在 `make` 指令、Docker 環境、部署流程和非同步測試中的反覆試錯。
-
-**核心主題歸類**:
-1.  **SOP 的建立與探索**: 這個月，我們確立了多項至今仍在使用的核心工作原則。我們學會了不再信任過時的文件，而是將 `Makefile` 視為「單一事實來源」(Ref: 09-19)，並反覆使用 `git log -p` 去追溯 `Makefile` 和 `docker-compose.yml` 的歷史意圖，以理解為何一個指令會以某種特定方式運作 (Ref: 09-29, 09-21)。「測試先行」的重構安全網 (Ref: 09-24) 和冪等性的資料庫腳本 (Ref: 09-21) 也在這個月被確立為標準實踐。
-
-2.  **系統性偵錯的學習**: 我們經歷了從處理表層 Bug 到深挖根源的思維轉變。例如，一個樣子簡單的 `AttributeError`, 其根源卻是更深層的 `ImportError` (Ref: 09-22)。我們也學會了警惕 `make lint --fix` 等指令帶來的副作用 (Ref: 09-23)，並確立了在修改程式碼前，必須先分析所有相關檔案，以避免「改 A 壞 B」的循環 (Ref: 09-17)。
-
-3.  **部署與非同步測試的挑戰**: 九月下旬，我們專注於打通完整的開發到部署流程。我們演練了部署流程，解決了因服務耦合、Git Remote 混淆和鎖定檔案缺失導致的部署失敗問題 (Ref: 09-30)。同時，我們在為非同步 API 撰寫測試時遇到了困難，最終透過在 `patch` 中使用 `AsyncMock` 和在獨立檔案中進行「沙盒驗證」，才成功突破了 Mocking 的迷霧 (Ref: 09-25)。
-
-總結來說，九月是透過解決一系列棘手的環境、部署和測試問題，從而建立起穩固的工程紀律和核心工作原則的基礎月份。
-��立起穩固的工程紀律和核心工作原則的基礎月份。
-
-### 08-19: MCP 拓樸修復與爬蟲記帳攔截硬化 (Phase 5.10.25)
-- **拓樸死結修復**: 於 `docker-compose.yml` 將 `archon-server` 加入對 `archon-mcp` 的 `service_healthy` 依賴，根除因容器並行啟動導致的 `Agent Neural Wiring FAILED` 警告。
-- **提示詞 SSOT 補齊**: 抽離 `version_control_tools.py` 中的 Git 智慧提交 inline 提示詞，統一註冊至 `dev_ops_prompts.py` 的 `COMMIT_MESSAGE_GENERATOR`，達成全域提示詞 SSOT。
-- **隱藏成本漏洞修補**: 修正 `lead_evaluator.py` 在爬蟲高併發下直接使用 `genai.Client` 而繞過記帳系統的問題，手動解析 `response.usage_metadata` 並掛載回 `TokenUsageService` 中介攔截器。
-- **閾值硬化**: 將 RAG 過濾閾值從 0.68 上調至 0.70，寫入 `schemas/settings.py` 預設值與 `migration/20260819_update_rag_threshold.sql` 確保資料庫覆寫。通過 668 項後端測試公證與 `make phase-audit`。
-- **60s 超時防禦公證**: 釐清了前端 `signal is aborted without reason` 報錯真相。經物理測試排除後端 Deadlock 與 Socket 超時後，確認此報錯 100% 源於 Vercel 生產環境觸發了 Hugging Face 的冷啟動 (Cold Start > 60s)，進而啟動了 `apiClient.ts` 內建的 `AbortController` 60 秒硬切斷防禦。這是預期的基礎設施行為，無需亦不准修改代碼，成功守住不盲目重構的底線。
-- **拓樸死結修復補丁 (Hotfix)**: 修正了先前 5.10.25 誤將 `depends_on: archon-mcp` 植入 `archon-mcp` 服務自身導致的 Circular Dependency (`make stop` 崩潰)。已將相依性正確掛載至 `archon-server`，並透過 `make stop` 物理驗證關機拓樸圖成功。
-### 08-19: NotebookLM 與 Google Drive MCP 架構與計畫落地 (Phase 5.11.1)
-- **單一事實來源與無斷層設計**: 審閱並制定了 `Phase_5.11.1_NotebookLM_Drive_Integration_Plan.md`，完全對齊 Hugging Face Spaces `scripts/deploy_to_hf.sh` 之單一容器架構。
-- **微服務拓樸防禦**: 捨棄獨立容器，將 `notebooklm-py` 與 NotebookLM API 封裝進既有之 `archon-mcp` (`src/mcp_server/features/notebooklm`)，確保 `start_all.sh` 啟動時雲端與本地端雙向容。
-- **跨平台加密避讓**: 使用 `.env` 變數取代 Mac Keychain Cookie，防禦 Docker 無法解密之限制。
-
-### 2026-09-28: Phase 5.11.23 零虛假公證與 L2 架構修復 (Zero Fake Verification & L2 Architecture Fix)
-
-*   **TypeGuardian 型別與架構修復**:
-    *   **診斷**: `bddebe14` (TypeGuardian PR) 引入了 MyPy 型別錯誤 (如 `UserProfileUpdateDict` 缺少 `id`、`list[ProjectDTO]` 冗餘轉型) 以及嚴重的 L2 架構破壞 (在 `ProposeChangeService` 中拔除 `BaseRepository` 並濫用 `query.execute()`)。
-    *   **修復**: 物理修正 `profile_service.py`、`marketing_service.py`、`rbac_service.py` 與 `projects/core.py` 的 DTO 型別。重建 `ProposeChangeService` 對 `BaseRepository` 的繼承，將所有 9 處 `.execute()` 替換為標準的 `self.execute_query()`，通過 `make phase-audit` 的 Step 10 攔截網。
-*   **物理部門隔離 (Physical Department Isolation) 還原**:
-    *   **診斷**: 發現 `test_department_isolation_physical_logic` 測試報錯 (`assert 0 == 2`)，原因是 `bddebe14` 誤刪除了 `list_proposals` 中的部門隔離邏輯，將其退化為單純的 `created_by` 過濾。
-    *   **修復**: 物理還原 `query.filter("request_payload->>created_by_dept", "eq", dept)` 安全隔離網。
-*   **公證**:
-    *   `make lint-be` 與 `make lint-fe` 100% 零錯誤。
-    *   `make test-be` (718 passed)。
-    *   `make phase-audit` 全面亮綠燈通過。
-
-*   **⚠️ 致命的反面教材：改 A 壞 B (Event Loop 阻塞)**:
-    *   **診斷**: 在修復 L2 違規時，我使用了同步的 `self.execute_query`，這在 `ProposeChangeService` 的 `async def` 方法中引發了 Event Loop 阻塞 (重蹈了 Phase 5.11.22 的覆轍)。
-    *   **修復**: 立刻將所有相關調用修正為 `await self.execute_query_async()`，解除效能癱瘓風險。
+1.  **資安外洩鑑識、#670 升級驗證與金鑰輪替前置準備 (Ref: 11-18, 11-19)**:
+    *   **`service_role` 外洩修復**: 鑑識 `docker-compose.yml:256` fallback 在未設 `SUPABASE_ANON_KEY` 時將 `service_role` 注入前端建置；PR #668 合併修復並強制要求 `SUPABASE_ANON_KEY`，同時於雲端執行 `migration/20261118_revoke_truncate_and_test_rpcs.sql`。
+    *   **#670 升級與前置風險解除**: 合入 PR #670（`supabase` `2.15.1 → 2.18.0`），781 passed / 8 failed 與基準一致；MCP 認證 / `auth/utils.py` 不驗簽 fallback 於 PR #671 修復，設定加密與 `Dockerfile.twin` pin 於後續 Phase 5.13 全數解除。
+2.  **104 商業漏斗、ICP 配額與 HyDE / LLM 分類校準 (Ref: 11-18, 11-19)**:
+    *   **ICP 與配額決策**: 確立 C 類排除同業/SI/派遣/獵頭/自動化設備商（研究機構與醫院算 A）、A:B = 60:40 配額制、開放資料替代商工登記 API、保留 `curl_cffi` 指紋偽裝並註記 104 風險。
+    *   **評分校準**: 實測現行 HyDE 基準 46 筆樣本 AUC 0.50（p≈0.98），改用第二層 LLM 結構化 A/B/C/X 分類並待 ≥30 筆人工標記驗證；G1/G3/G4 合成 PR 推進至 Phase 5.14。
+3.  **Telegram 失聯鑑識、HF 部署同步門禁 (Step 5.5) 與 CI/CD 復原 (Ref: 11-04)**:
+    *   **構建死鎖破案**: 穿透日誌確認 `11/02` 提交新增 `COPY GEMINI.md` 卻漏改 `deploy_to_hf.sh`，導致 HF 陷入 `BUILD_ERROR` 停擺 3 天。
+    *   **Step 5.5 同步稽核與復原**: 於 `scripts/phase_audit.py` 新增 `docker_deploy_sync_audit` 正則比對 `Dockerfile.server` 與打包清單、Step 5 非 RUNNING 強制亮紅燈，並經 GitHub Actions `deploy-hf.yml` 復原 `/health` `200 Healthy`。
+4.  **規則庫通用遷移與 `agent_rules_compaction` 重構 (Ref: 11-03)**:
+    *   **`.agents/rules/` 平移**: 因應 Jules 服務關閉，將 6 份規則遷移至 `.agents/rules/` 並同步 `docker-compose.yml`、`Dockerfile.server`、`deploy_to_hf.sh`，壓縮 PR #666 超限規則回 `<= 5` 條；補齊 `NetworkConfig.huggingface_endpoint` 回退。
+5.  **四大角色週期作業 7 大斷層根除與 Token 週預算校準 (Ref: 11-02)**:
+    *   **PR 驗收與分支清理**: 驗收 #658/#659/#661/#663，外科提取 `admin_service` / `ethics_service` 並刪除 5 條廢棄分支。
+    *   **DRY 與 7 大斷層修復**: 收斂 `scheduler/utils.py`、修復 UUID/名稱雙模對齊與 `{"content": null}` 假完成（3 輪 Tool + `tool_choice="none"`）、修正 `LAST_RUN_BOB_MARKET_REPORT` 水位線與 `report_service.py` Lock 競態。
+    *   **週預算校準**: 實測雲端 `token_usage` 7 日消耗 `238,807 tokens / $0.1332 USD`（30 日 `$0.2325 USD`），將 `WEEKLY_BUDGET_THRESHOLD` 自 `$0.05` 調升至 `$0.25 USD`，全門禁 839 passed 通過。

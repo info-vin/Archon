@@ -19,7 +19,6 @@ describe('AuthPage', () => {
   it('renders login form by default', () => {
     (useAuth as any).mockReturnValue({
       login: vi.fn(),
-      register: vi.fn(),
     });
 
     render(<AuthPage />);
@@ -33,7 +32,6 @@ describe('AuthPage', () => {
     const mockLogin = vi.fn().mockRejectedValue(new Error('Invalid credentials'));
     (useAuth as any).mockReturnValue({
       login: mockLogin,
-      register: vi.fn(),
     });
 
     // Mock alert to prevent jsdom error
@@ -59,7 +57,6 @@ describe('AuthPage', () => {
     const mockLogin = vi.fn().mockRejectedValue(new Error('Invalid credentials'));
     (useAuth as any).mockReturnValue({
       login: mockLogin,
-      register: vi.fn(),
     });
 
     const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});

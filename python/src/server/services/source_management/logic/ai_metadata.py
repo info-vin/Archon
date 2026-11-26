@@ -79,10 +79,11 @@ async def generate_source_title_and_metadata(
     if content and len(content.strip()) > 100:
         try:
             async with get_llm_client(provider=provider) as client:
+                from src.server.config.model_ssot import SYSTEM_MODELS
                 from src.server.services.credential_service import credential_service
 
                 rag_settings = await credential_service.get_credentials_by_category("rag_strategy")
-                model_choice = rag_settings.get("MODEL_CHOICE", "gpt-4.1-nano")
+                model_choice = rag_settings.get("MODEL_CHOICE", SYSTEM_MODELS["DEFAULT_TEXT"])
                 sample_content = content[:3000]
                 source_context = source_display_name or source_id
 

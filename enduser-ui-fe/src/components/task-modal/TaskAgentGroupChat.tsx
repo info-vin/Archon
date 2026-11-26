@@ -21,9 +21,9 @@ const ROLE_CONFIG: Record<string, { name: string; avatar: string; color: string;
   // AI Agents
   supervisor: { name: 'Supervisor (Brain)', avatar: '🧠', color: 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100', align: 'left' },
   librarian: { name: 'Librarian (Knowledge)', avatar: '📚', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-900 dark:text-emerald-100', align: 'left' },
-  marketbot: { name: 'MarketBot (Writer)', avatar: '✍️', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100', align: 'left' },
+  marketbot: { name: 'MarketBot (Sales)', avatar: '✍️', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100', align: 'left' },
   summary: { name: 'SummaryBot (Notes)', avatar: '📝', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-100', align: 'left' },
-  devbot: { name: 'DevBot (Data Scientist)', avatar: '💻', color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-900 dark:text-cyan-100', align: 'left' },
+  devbot: { name: 'DevBot (Engineering)', avatar: '💻', color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-900 dark:text-cyan-100', align: 'left' },
   david: { name: 'David (DB Admin)', avatar: '🗄️', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-900 dark:text-rose-100', align: 'left' },
 };
 

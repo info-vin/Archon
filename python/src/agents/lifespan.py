@@ -9,7 +9,6 @@ import httpx
 from fastapi import FastAPI
 
 from .document_agent import DocumentAgent
-from .presentation.presentation_agent import PresentationAgent
 from .rag_agent import RagAgent
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,6 @@ logger = logging.getLogger(__name__)
 AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
-    "presentation": PresentationAgent,
 }
 
 AGENT_CREDENTIALS: dict[str, str] = {}

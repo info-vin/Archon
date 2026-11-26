@@ -99,12 +99,33 @@ class NetworkConfig(BaseModel):
         return data
 
 class NotificationConfig(BaseModel):
+    telegram_api_base_url: str = Field(default="https://api.telegram.org", alias="TELEGRAM_API_BASE_URL")
     telegram_token: str | None = Field(default=None, alias="TELEGRAM_TOKEN")
     telegram_proxy_url: str | None = Field(default=None, alias="TELEGRAM_PROXY_URL")
     telegram_chat_id: str | None = Field(default=None, alias="TELEGRAM_TO")
+    telegram_webhook_secret: str | None = Field(default=None, alias="TELEGRAM_WEBHOOK_SECRET")
+    telegram_allowed_chat_ids: str | None = Field(default=None, alias="TELEGRAM_ALLOWED_CHAT_IDS")
     telegram_timeout: float = Field(default=30.0, alias="TELEGRAM_TIMEOUT")
     telegram_retries: int = Field(default=3, alias="TELEGRAM_RETRIES")
     telegram_snippet_length: int = Field(default=150, alias="TELEGRAM_SNIPPET_LENGTH")
+
+    @model_validator(mode="before")
+    @classmethod
+    def load_from_env(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for key in (
+            "TELEGRAM_API_BASE_URL",
+            "TELEGRAM_TOKEN",
+            "TELEGRAM_PROXY_URL",
+            "TELEGRAM_TO",
+            "TELEGRAM_WEBHOOK_SECRET",
+            "TELEGRAM_ALLOWED_CHAT_IDS",
+        ):
+            val = os.getenv(key)
+            if val is not None and not data.get(key):
+                data[key] = val
+        return data
 
 class BudgetConfig(BaseModel):
     weekly_budget_threshold: float = Field(default=0.25, alias="WEEKLY_BUDGET_THRESHOLD")
@@ -165,11 +186,11 @@ class SchedulerConfig(BaseModel):
     system_probe_cleanup_minute: int = Field(default=45, alias="SYSTEM_PROBE_CLEANUP_MINUTE")
     prune_stale_leads_hour: int = Field(default=11, alias="PRUNE_STALE_LEADS_HOUR")
     prune_stale_leads_minute: int = Field(default=55, alias="PRUNE_STALE_LEADS_MINUTE")
-    alice_auto_fetch_hour: int = Field(default=10, alias="ALICE_AUTO_FETCH_HOUR")
-    alice_auto_fetch_minute: int = Field(default=25, alias="ALICE_AUTO_FETCH_MINUTE")
-    alice_auto_fetch_days: str = Field(default="tue,wed,fri", alias="ALICE_AUTO_FETCH_DAYS")
+    alice_auto_fetch_interval_hours: int = Field(default=12, alias="ALICE_AUTO_FETCH_INTERVAL_HOURS")
     business_sentinel_hour: int = Field(default=8, alias="BUSINESS_SENTINEL_HOUR")
     business_sentinel_minute: int = Field(default=40, alias="BUSINESS_SENTINEL_MINUTE")
+    whitelist_crawler_patrol_hour: int = Field(default=10, alias="WHITELIST_CRAWLER_PATROL_HOUR")
+    whitelist_crawler_patrol_minute: int = Field(default=15, alias="WHITELIST_CRAWLER_PATROL_MINUTE")
 
     # Category 3: Stateful Weekly / Monthly Jobs
     weekly_executive_summary_days: str = Field(default="sun", alias="WEEKLY_EXECUTIVE_SUMMARY_DAYS")
@@ -218,6 +239,7 @@ class CrawlerJobConfig(BaseModel):
     crawler_job_limit: int = Field(default=32, alias="CRAWLER_JOB_LIMIT")
     crawler_max_pages: int = Field(default=3, alias="CRAWLER_MAX_PAGES")
     lead_gen_similarity_threshold: float = Field(default=0.70, alias="LEAD_GEN_SIMILARITY_THRESHOLD")
+    lead_qualify_min_score: int = Field(default=50, alias="LEAD_QUALIFY_MIN_SCORE")
     crawler_waf_delay_min: float = Field(default=6.0, alias="CRAWLER_WAF_DELAY_MIN")
     crawler_waf_delay_max: float = Field(default=17.0, alias="CRAWLER_WAF_DELAY_MAX")
 

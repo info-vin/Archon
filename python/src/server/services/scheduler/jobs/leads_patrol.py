@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from src.server.config.logfire_config import get_logger
+from src.server.services.scheduler.utils import log_patrol_event
 from src.server.services.shared_constants import AgentUUIDs
 from src.server.utils import get_supabase_client
 
@@ -16,55 +17,57 @@ logger = get_logger(__name__)
 async def run_auto_fetch_leads() -> None:
     """Clockwork task to trigger Alice's daily lead auto-fetch."""
     logger.info("📡 Clockwork: Triggering daily Alice job search...")
+    log_patrol_event("alice_auto_fetch", "start", "Daily auto-fetch started.")
     try:
         from src.server.services.job_board_service import JobBoardService
 
         service = JobBoardService()
         new_leads = await service.auto_fetch_daily_leads()
 
-        from src.server.repositories.base_repository import BaseRepository
-        base_repo = BaseRepository(get_supabase_client())
-        base_repo.execute_query(
-            get_supabase_client().table("archon_logs").insert( # 合法
-                {
-                    "source": "clockwork-scheduler",
-                    "level": "INFO",
-                    "message": f"Daily auto-fetch completed. {new_leads} new leads saved.",
-                    "details": {"new_leads_count": new_leads},
-                }
-            ),
-            "Failed to log auto-fetch completion"
+        log_patrol_event(
+            "alice_auto_fetch",
+            "completed",
+            f"Daily auto-fetch completed. {new_leads} new leads saved.",
+            details={"new_leads_count": new_leads},
         )
         logger.info(f"✅ Clockwork: Alice daily auto-fetch finished ({new_leads} leads).")
     except Exception as e:
-        logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}")
+        logger.error(f"💥 Clockwork: Alice auto-fetch failed: {e}", exc_info=True)
+        log_patrol_event(
+            "alice_auto_fetch",
+            "error",
+            f"Daily auto-fetch failed: {e}",
+            details={"error_type": type(e).__name__, "error": str(e)},
+            level="ERROR",
+        )
 
 
 async def run_prune_stale_leads() -> None:
     """Clockwork task to prune stale leads (Scenario D Pruning Loop)."""
     logger.info("🧹 Clockwork: Triggering hourly prune stale leads...")
+    log_patrol_event("prune_stale_leads", "start", "Stale leads pruning started.")
     try:
         from src.server.services.enrichment_service import EnrichmentService
 
         pruned_count = await EnrichmentService.prune_stale_leads()
 
         if pruned_count > 0:
-            from src.server.repositories.base_repository import BaseRepository
-            base_repo = BaseRepository(get_supabase_client())
-            base_repo.execute_query(
-                get_supabase_client().table("archon_logs").insert( # 合法
-                    {
-                        "source": "clockwork-scheduler",
-                        "level": "INFO",
-                        "message": f"Stale leads pruning completed. {pruned_count} leads archived.",
-                        "details": {"pruned_count": pruned_count},
-                    }
-                ),
-                "Failed to log stale leads pruning"
+            log_patrol_event(
+                "prune_stale_leads",
+                "completed",
+                f"Stale leads pruning completed. {pruned_count} leads archived.",
+                details={"pruned_count": pruned_count},
             )
         logger.info(f"✅ Clockwork: Stale leads pruning finished ({pruned_count} leads archived).")
     except Exception as e:
-        logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}")
+        logger.error(f"💥 Clockwork: Pruning stale leads failed: {e}", exc_info=True)
+        log_patrol_event(
+            "prune_stale_leads",
+            "error",
+            f"Pruning stale leads failed: {e}",
+            details={"error_type": type(e).__name__, "error": str(e)},
+            level="ERROR",
+        )
 
 
 def generate_lead_outreach_draft(lead: dict) -> str:
@@ -89,6 +92,7 @@ def generate_lead_outreach_draft(lead: dict) -> str:
 async def run_market_report() -> bool:
     """Triggering Bob (MarketingBot) to summarize recent leads."""
     logger.info("✍️ Clockwork: Triggering Bob's Market Report...")
+    log_patrol_event("bob_market_report", "start", "Bob market report started.")
     try:
         from src.server.schemas.settings import SchedulerConfig
         from src.server.services.agent_service import agent_service
@@ -214,6 +218,13 @@ async def run_market_report() -> bool:
             return False
     except Exception as e:
         logger.error(f"💥 Clockwork: Bob market report generation failed: {e}", exc_info=True)
+        log_patrol_event(
+            "bob_market_report",
+            "error",
+            f"Bob market report failed: {e}",
+            details={"error_type": type(e).__name__, "error": str(e)},
+            level="ERROR",
+        )
         return False
 
 

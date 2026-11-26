@@ -44,6 +44,13 @@ class TaskFeatureEnum(StrEnum):
     INFORMATION_REQUEST = "information_request"
 
 
+class WorkflowStatusEnum(StrEnum):
+    RUNNING = "RUNNING"
+    WAITING_APPROVAL = "WAITING_APPROVAL"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class PromptNameEnum(StrEnum):
     MAP_REDUCE_ALICE_PROMPT = "MAP_REDUCE_ALICE_PROMPT"
     MAP_REDUCE_BOB_PROMPT = "MAP_REDUCE_BOB_PROMPT"
@@ -61,9 +68,7 @@ class PromptNameEnum(StrEnum):
     WORKFLOW_DATA_DAVID = "WORKFLOW_DATA_DAVID"
     DOCUMENT_AGENT_PROMPT = "document_agent_prompt"
     NEXUS_ORACLE_AGENT_PROMPT = "nexus_oracle_agent_prompt"
-    SUMMARY_AGENT_PROMPT = "summary_agent_prompt"
     RAG_AGENT_PROMPT = "rag_agent_prompt"
-    PRESENTATION_AGENT_PROMPT = "presentation_agent_prompt"
     DAILY_VOICE_BRIEF_ZH = "DAILY_VOICE_BRIEF_ZH"
     DAILY_VOICE_BRIEF_EN = "DAILY_VOICE_BRIEF_EN"
     EMERGENCY_VOICE_ALERT = "EMERGENCY_VOICE_ALERT"
@@ -90,9 +95,8 @@ class AgentUUIDs:
     MARKET_BOT = "a11ce000-0000-0000-0000-000000000000"
     LIBRARIAN = "b0b00000-0000-0000-0000-000000000000"
     DEV_BOT = "e1682371-0000-0000-0000-000000000000"
-    PO_BOT = "p0b00000-0000-0000-0000-000000000000"
+    PO_BOT = "c0a00000-0000-0000-0000-000000000000"
     CLOCKWORK = "e1bf7a99-44bf-44ce-a460-cb4e31e798f4"
-    PRESENTATION_BOT = "d0d00000-0000-0000-0000-000000000000"
 
 
 class ProcessingMode(StrEnum):
@@ -109,11 +113,10 @@ class ProcessingMode(StrEnum):
 DEFAULT_ASSIGNEE = "Charlie"
 
 AI_AGENT_ROLES = {
-    "Supervisor (Group Chat)": AgentUUIDs.SUPERVISOR,
-    "MarketBot (Sales)": AgentUUIDs.MARKET_BOT,
-    "Librarian (Knowledge)": AgentUUIDs.LIBRARIAN,
-    "DevBot (Engineering)": AgentUUIDs.DEV_BOT,
-    "POBot (Product)": AgentUUIDs.PO_BOT,
-    "Clockwork (Ops)": AgentUUIDs.CLOCKWORK,
-    "PresentationBot (Slides)": AgentUUIDs.PRESENTATION_BOT,
+    AgentNames.SUPERVISOR: AgentUUIDs.SUPERVISOR,
+    AgentNames.MARKET_BOT: AgentUUIDs.MARKET_BOT,
+    AgentNames.LIBRARIAN: AgentUUIDs.LIBRARIAN,
+    AgentNames.DEV_BOT: AgentUUIDs.DEV_BOT,
+    AgentNames.PO_BOT: AgentUUIDs.PO_BOT,
+    AgentNames.CLOCKWORK: AgentUUIDs.CLOCKWORK,
 }

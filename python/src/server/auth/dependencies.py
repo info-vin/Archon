@@ -99,17 +99,15 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
 
         logging.getLogger(__name__).warning(f"⚠️ Profile fetch failed for {user_id}: {e}. Falling back to metadata.")
 
-    # Fallback: If profile doesn't exist yet (rare race condition or seed mismatch),
-    # return basic auth info with default role.
-    # Try to get role from user_metadata first.
-    fallback_role = "employee"
-    if hasattr(auth_user, "user_metadata") and auth_user.user_metadata:
-        metadata_role = auth_user.user_metadata.get("role")
-        if metadata_role:
-            fallback_role = metadata_role
+    # Fallback: If profile doesn't exist yet, never trust user-controlled user_metadata.role.
+    # Fail-safe to the lowest privilege role ("employee") to prevent privilege escalation.
+    import logging
 
+    logging.getLogger(__name__).warning(
+        f"⚠️ Security: No profile found for user {user_id}; assigning lowest privilege role 'employee'."
+    )
     return UserProfileDTO(
-        id=user_id, email=getattr(auth_user, "email", "system@archon.com") or "system@archon.com", role=fallback_role
+        id=user_id, email=getattr(auth_user, "email", "system@archon.com") or "system@archon.com", role="employee"
     )
 
 

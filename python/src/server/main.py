@@ -94,6 +94,7 @@ from .api_routes.settings_api import router as settings_router
 from .api_routes.sse_api import router as sse_router  # NEW IMPORT
 from .api_routes.stats_api import router as stats_router
 from .api_routes.system_api import router as system_router  # NEW IMPORT
+from .api_routes.telegram_webhook_api import router as telegram_webhook_router
 from .api_routes.test_api import router as test_api_router  # NEW IMPORT
 from .api_routes.version_api import router as version_router
 from .api_routes.visit_log_api import router as visit_log_router  # NEW IMPORT
@@ -180,6 +181,7 @@ app.include_router(knowledge_router)
 app.include_router(agents_router)
 app.include_router(prompts_router)
 app.include_router(ollama_router)
+app.include_router(telegram_webhook_router)
 
 # Group 2: Routers that NEED an "/api" prefix (defined without prefix internally)
 app.include_router(auth_router, prefix="/api")

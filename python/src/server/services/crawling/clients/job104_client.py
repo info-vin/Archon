@@ -1,5 +1,6 @@
 import asyncio
 import random
+from urllib.parse import quote
 
 from curl_cffi import requests as curl_requests
 from pydantic import BaseModel
@@ -40,18 +41,15 @@ class Job104Crawler:
     DEFAULT_BASE_URL = "https://www.104.com.tw/jobs/search/api/jobs" # 合法
     DEFAULT_DETAIL_BASE_URL = "https://www.104.com.tw/job/ajax/content/" # 合法
 
-    USER_AGENTS = [
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-    ]
-
-    def get_headers(self) -> dict:
+    def get_headers(self, referer: str = "https://www.104.com.tw/jobs/search/") -> dict[str, str]:  # 合法
         return {
-            "User-Agent": random.choice(self.USER_AGENTS),
-            "Referer": "https://www.104.com.tw/jobs/search/", # 合法
+            "Referer": referer,
+            "Origin": "https://www.104.com.tw",  # 合法
             "Accept": "application/json, text/plain, */*",
             "X-Requested-With": "XMLHttpRequest",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Dest": "empty",
         }
 
     def __init__(self, base_url: str = DEFAULT_BASE_URL, detail_base_url: str = DEFAULT_DETAIL_BASE_URL) -> None:
@@ -70,10 +68,11 @@ class Job104Crawler:
             "jobsource": "2018indexpoc",
         }
         try:
-            response = client.get(self.base_url, params=params)
-            if response.status_code == 429 or response.status_code == 503:
-                logger.warning(f"Temporary block detected: {response.status_code}")
-                return []
+            search_headers = self.get_headers(referer=f"https://www.104.com.tw/jobs/search/?keyword={quote(keyword)}")  # 合法
+            response = client.get(self.base_url, params=params, headers=search_headers)
+            if response.status_code in (403, 429, 503):
+                logger.warning(f"104 WAF/Rate-Limit detected on search API: HTTP {response.status_code}")
+                raise CrawlerBlockedException(f"104 WAF/Rate-Limit detected (HTTP {response.status_code}).")
 
             if response.status_code != 200 or "application/json" not in response.headers.get("content-type", ""):
                 return []
@@ -96,6 +95,8 @@ class Job104Crawler:
                     )
                 )
             return parsed_jobs
+        except CrawlerBlockedException:
+            raise
         except Exception as e:
             logger.exception(f"Error fetching jobs: {e}")
             return []

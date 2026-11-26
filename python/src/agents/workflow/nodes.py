@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
 
 from pydantic_ai import Agent
 from pydantic_graph import BaseNode, End, GraphRunContext
 
-from src.server.services.shared_constants import PromptNameEnum, TaskFeatureEnum
+from src.server.services.shared_constants import PromptNameEnum, TaskFeatureEnum, WorkflowStatusEnum
 
-from .state import SharedState, SupervisorDecision
+from .a2a_handoff import parse_handoff_directive, resolve_direct_handoff
+from .state import SharedState
+from .supervisor_router import route_supervisor_step
 from .tools import propose_code_fix, read_code_file
-from .utils import PAI_V1, _accumulate_usage, _build_pruned_history, _get_output, _run_agent_with_retry
+from .utils import _accumulate_usage, _build_pruned_history, _get_output, _run_agent_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -80,23 +81,19 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
         system_prompt = prompt_service.get_prompt(prompt_key, default_supervisor_prompt)
 
-        # Build agent config dynamically to avoid version mismatch errors
-        agent_args: dict[str, Any] = {"model": model_name, "system_prompt": system_prompt}
-        if PAI_V1:
-            agent_args["output_type"] = SupervisorDecision
-        else:
-            agent_args["result_type"] = SupervisorDecision
-
-        router_agent = Agent(**agent_args)
-
         history_text = _build_pruned_history(ctx.state.messages)
         try:
-            result = await _run_agent_with_retry(
-                router_agent, f"History:\n{history_text}\n\nDecide next step.", ctx.state, model_name
+            decision = await route_supervisor_step(
+                ctx_state=ctx.state,
+                model_name=model_name,
+                system_prompt=system_prompt,
+                history_text=history_text,
+                node_routing=node_routing,
+                agent_cls=Agent,
+                run_agent_fn=_run_agent_with_retry,
+                get_output_fn=_get_output,
+                accumulate_usage_fn=_accumulate_usage,
             )
-            _accumulate_usage(ctx.state, result, model_name)
-
-            decision = _get_output(result)
             logger.info(f"🧠 [Supervisor] Decision: {decision.next_node} (Reason: {decision.reasoning})")
 
             next_step = decision.next_node
@@ -162,13 +159,28 @@ class SupervisorNode(BaseNode[SharedState, None, str]):
 
 
 # --- 3. Worker Nodes (The Muscle) ---
+type WorkerNextNode = SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]
+
+
+def _instantiate_next_node(next_key: str, state: SharedState) -> WorkerNextNode:
+    if next_key == "end":
+        state.final_result = "Workflow completed successfully."
+        state.status = WorkflowStatusEnum.COMPLETED.value
+        return End(state.final_result)
+    factories: dict[str, type[SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode]] = {
+        "marketbot": MarketBotNode, "librarian": LibrarianNode, "summary": SummaryNode,
+        "devbot": DevBotNode, "david": DavidNode,
+    }
+    return factories.get(next_key, SupervisorNode)()
+
+
 async def _run_generic_worker(
     ctx: GraphRunContext[SharedState],
     role_name: str,
     prompt_key: str,
     default_prompt: str,
     task_instruction: str,
-) -> SupervisorNode:
+) -> WorkerNextNode:
     logger.info(f"🛠️ [{role_name}] Executing task...")
     model_name = os.getenv("WORKER_AGENT_MODEL")
     if not model_name:
@@ -182,19 +194,25 @@ async def _run_generic_worker(
     agent = Agent(model=model_name, system_prompt=system_prompt)
     history_text = _build_pruned_history(ctx.state.messages)
 
+    handoff_target: str | None = None
+    handoff_reason: str | None = None
     try:
         res = await _run_agent_with_retry(agent, f"{task_instruction}\n{history_text}", ctx.state, model_name)
         _accumulate_usage(ctx.state, res, model_name)
-        ctx.state.messages.append({"role": role_name.lower(), "content": str(_get_output(res))})
+        cleaned, handoff_target, handoff_reason = parse_handoff_directive(str(_get_output(res)))
+        ctx.state.messages.append({"role": role_name.lower(), "content": cleaned})
     except Exception as e:
         logger.error(f"{role_name} error: {e}")
         ctx.state.messages.append({"role": role_name.lower(), "content": f"Error: {e}"})
 
-    return SupervisorNode()
+    next_key = resolve_direct_handoff(role_name.lower(), handoff_target, handoff_reason, ctx.state)
+    return _instantiate_next_node(next_key, ctx.state)
 
 
 class MarketBotNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+    async def run(
+        self, ctx: GraphRunContext[SharedState]
+    ) -> SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         task_type = ctx.state.task_type
         prompt_key = (
             PromptNameEnum.WORKFLOW_STRATEGIST_BOB if task_type == TaskFeatureEnum.MARKETING_DATA_DEEP_DIVE else PromptNameEnum.WORKFLOW_WORKER_MARKETBOT
@@ -215,7 +233,9 @@ class MarketBotNode(BaseNode[SharedState, None, str]):
 
 
 class LibrarianNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+    async def run(
+        self, ctx: GraphRunContext[SharedState]
+    ) -> SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         logger.info("🛠️ [Librarian] Executing task...")
         model_name = os.getenv("WORKER_AGENT_MODEL")
         if not model_name:
@@ -235,6 +255,8 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
 
         history_text = _build_pruned_history(ctx.state.messages)
 
+        handoff_target: str | None = None
+        handoff_reason: str | None = None
         try:
             # Phase 5.1.4: Hunter Mode - Librarian can now crawl external sites if internal search is insufficient
             instruction = (
@@ -244,20 +266,24 @@ class LibrarianNode(BaseNode[SharedState, None, str]):
             )
             res = await _run_agent_with_retry(agent, f"{instruction}\n{history_text}", ctx.state, model_name, deps=deps)
             _accumulate_usage(ctx.state, res, model_name)
+            cleaned, handoff_target, handoff_reason = parse_handoff_directive(str(_get_output(res)))
 
             # Phase 5.1.4: Citation Transparency - Pass collected citations to state
             ctx.state.messages.append(
-                {"role": "librarian", "content": str(_get_output(res)), "citations": deps.collected_citations}
+                {"role": "librarian", "content": cleaned, "citations": deps.collected_citations}
             )
         except Exception as e:
             logger.error(f"Librarian error: {e}")
             ctx.state.messages.append({"role": "librarian", "content": f"Error: {e}"})
 
-        return SupervisorNode()
+        next_key = resolve_direct_handoff("librarian", handoff_target, handoff_reason, ctx.state)
+        return _instantiate_next_node(next_key, ctx.state)
 
 
 class SummaryNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+    async def run(
+        self, ctx: GraphRunContext[SharedState]
+    ) -> SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         task_type = ctx.state.task_type
         is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
         task_instruction = (
@@ -275,7 +301,9 @@ class SummaryNode(BaseNode[SharedState, None, str]):
 
 
 class DevBotNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+    async def run(
+        self, ctx: GraphRunContext[SharedState]
+    ) -> SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         task_type = ctx.state.task_type
         is_daily = (task_type or "").lower().replace(" ", "").replace("_", "") == "dailyexecutivesummary"
         task_instruction = (
@@ -283,14 +311,15 @@ class DevBotNode(BaseNode[SharedState, None, str]):
             if is_daily
             else "Task from Supervisor:"
         )
-        await _run_generic_worker(
+        return await _run_generic_worker(
             ctx, "DevBot", PromptNameEnum.WORKFLOW_SCIENTIST_DEVBOT, "You are DevBot, a data scientist.", task_instruction
         )
-        return SupervisorNode()
 
 
 class DavidNode(BaseNode[SharedState, None, str]):
-    async def run(self, ctx: GraphRunContext[SharedState]) -> SupervisorNode:
+    async def run(
+        self, ctx: GraphRunContext[SharedState]
+    ) -> SupervisorNode | MarketBotNode | LibrarianNode | SummaryNode | DevBotNode | DavidNode | End[str]:
         logger.info("🛠️ [David] Thinking about code changes...")
         model_name = os.getenv("WORKER_AGENT_MODEL")
         if not model_name:
@@ -309,6 +338,8 @@ class DavidNode(BaseNode[SharedState, None, str]):
 
         history_text = _build_pruned_history(ctx.state.messages)
 
+        handoff_target: str | None = None
+        handoff_reason: str | None = None
         try:
             res = await _run_agent_with_retry(
                 agent,
@@ -317,9 +348,11 @@ class DavidNode(BaseNode[SharedState, None, str]):
                 model_name,
             )
             _accumulate_usage(ctx.state, res, model_name)
-            ctx.state.messages.append({"role": "david", "content": str(_get_output(res))})
+            cleaned, handoff_target, handoff_reason = parse_handoff_directive(str(_get_output(res)))
+            ctx.state.messages.append({"role": "david", "content": cleaned})
         except Exception as e:
             logger.error(f"David error: {e}")
             ctx.state.messages.append({"role": "david", "content": f"Error: {e}"})
 
-        return SupervisorNode()
+        next_key = resolve_direct_handoff("david", handoff_target, handoff_reason, ctx.state)
+        return _instantiate_next_node(next_key, ctx.state)

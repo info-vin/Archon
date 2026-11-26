@@ -26,6 +26,7 @@ from src.server.services.scheduler.jobs import (
     agent_rules_compaction,
     architecture_patrol,
     cleanup_patrol,
+    crawler_patrol,
     leads_patrol,
     patrol,
     patrol_infra,
@@ -238,12 +239,13 @@ class SchedulerService:
         await self._schedule_stateful_job(self._run_prune_stale_leads, "prune_stale_leads", 15, self._should_run_daily, CronTrigger(hour=config.prune_stale_leads_hour, minute=config.prune_stale_leads_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._analyze_token_usage, "token_analysis", 20, self._should_run_daily, CronTrigger(hour=config.dynamic_token_analysis_hour, minute=config.dynamic_token_analysis_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._run_business_sentinel, "business_sentinel", 25, self._should_run_daily, CronTrigger(hour=config.business_sentinel_hour, minute=config.business_sentinel_minute, timezone=DEFAULT_TIMEZONE))
+        await self._schedule_stateful_job(self._run_whitelist_crawler_patrol, "whitelist_crawler_patrol", 28, self._should_run_daily, CronTrigger(hour=config.whitelist_crawler_patrol_hour, minute=config.whitelist_crawler_patrol_minute, timezone=DEFAULT_TIMEZONE))
         await self._schedule_stateful_job(self._run_daily_executive_summary, "daily_executive_summary", 30, self._should_run_daily, CronTrigger(hour=config.dynamic_daily_summary_hour, minute=config.dynamic_daily_summary_minute, timezone=DEFAULT_TIMEZONE))
 
 
         # Category 3: Stateful Weekly / Monthly Jobs
         weekly_h, weekly_m = self._parse_dynamic_hf_time(config, offset_hours=2)
-        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_scheduled_job, IntervalTrigger(hours=12))
+        await self._schedule_stateful_job(self._run_auto_fetch_leads, "alice_auto_fetch", 5, self._should_run_scheduled_job, IntervalTrigger(hours=config.alice_auto_fetch_interval_hours))
 
         await self._schedule_stateful_job(self._run_weekly_executive_summary, "weekly_executive_summary", 38, self._should_run_scheduled_job, CronTrigger(day_of_week=config.weekly_executive_summary_days, hour=weekly_h, minute=weekly_m, timezone=DEFAULT_TIMEZONE))
 
@@ -269,10 +271,10 @@ class SchedulerService:
     async def _run_tech_debt_audit(self) -> None: await tech_debt_patrol.run_tech_debt_audit()
     async def _run_ssot_audit(self) -> None: await tech_debt_patrol.run_ssot_audit()
     async def _run_monthly_agent_rules_compaction(self) -> None: await agent_rules_compaction.run_monthly_agent_rules_compaction()
-    async def _run_monthly_jules_compaction(self) -> None: await self._run_monthly_agent_rules_compaction()
     async def _run_model_verification(self) -> None: await patrol.run_model_verification()
     async def _run_infrastructure_audit(self) -> None: await patrol_infra.run_infrastructure_audit()
     async def _run_prune_stale_leads(self) -> None: await leads_patrol.run_prune_stale_leads()
+    async def _run_whitelist_crawler_patrol(self) -> None: await crawler_patrol.run_whitelist_crawler_patrol()
     async def _analyze_token_usage(self) -> None: await sentinel_patrol.analyze_token_usage()
     async def _run_business_sentinel(self) -> None: await sentinel_patrol.run_business_sentinel()
     async def run_business_sentinel(self) -> None: await sentinel_patrol.run_business_sentinel()

@@ -37,7 +37,7 @@ envContent.split('\n').forEach(line => {
 });
 
 // Only check ESSENTIAL variables
-const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+const required = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_ANON_KEY'];
 const errors = [];
 
 required.forEach(varName => {
