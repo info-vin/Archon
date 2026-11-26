@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-25 完成 Phase 5.15 全階段（P0 探針 + Stage 1/P1 `d98e43a3` + Stage 2/P2 `e2398444` + Stage 2.5 閉環 `4f8fa9dc`/`ce66b78f`/`441f0bcf` 與反向驗證修復）：完成雲端 6 隻 Bot UUID 雙表 100% 對齊與死碼/`PresentationBot` 退場；落地統一 `AgentCard`、A2A `[HANDOFF:]` 協議（已同步雲端 4 筆 Worker Prompt）、生產 `agent_checkpoints` 實體落盤（雲端實測 `e7d1d7ab`, `COMPLETED`）、升級 Vercel Proxy (`enduser-ui-fe/api/telegram.js`) 支援 `reply_markup` Inline 審批按鈕與 `answerCallbackQuery`/`getUpdates`（實測 `has_reply_markup_in_result=True`）、Telegram Webhook `/status` 與 `/task` 即時派發執行並自動完工回推（實測 `8cf29389` 轉 `done`、`reply_sent=True`）；透過反向驗證揪出並修復過期/不存在審批按鈕導致 Webhook HTTP 500 缺陷，清理 2 筆探針殘留工單，並同步推送 `origin/dev/twins` 與 `origin/feat/twins`。
-*   **今日目標 (Today's Goal)**: 觀察線上 Telegram 雙向指令與 A2A 協作實際運作；待本機執行一次 104 職缺抓取後完成 Phase 5.14 ≥30 筆人工標記校準；後續擴充 `telegram_bot_gateway.py`（現 398 行近 400 行上限）前須先拆分子模組。
+*   **當前狀態 (Current Context)**: 2026-11-26 完成 `gemini-decision-1`（Decisions API）整合與 Phase 5.14 39 筆樣本 ICP 校準收斂（`a4d72e1c`～`9ebf8ccf`），修復 104 爬蟲 Cloudflare/Referer/403 與 `hf-restart.yml` 語法，並完成 Monolith 大型檔案拆解（`5b03df10`：`rag-settings/index.tsx` 427→324 行、`telegram_bot_gateway.py` 399→194 行拆出 `telegram_proxy_client.py` + `telegram_command_handlers.py`，`phase_audit.py` 紅燈歸 0）；同步完成 PR #672（`fix/671-followups-auth-hardening`）審查（`MERGEABLE`）。
+*   **今日目標 (Today's Goal)**: 由使用者拍板合併 PR #672 至 `dev/twins`（合併即觸發 HF 部署）；視需要補齊 `ModelConfigForm.tsx` 既有動態 Tailwind 類別靜態化；觀察線上 Decisions API 評分與 Telegram 雙向指令運作。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -122,6 +122,18 @@
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
+
+### 2026-11-26：Decisions API 整合、Phase 5.14 校準收尾、Monolith 拆解與 PR #672 審查
+1.  **Decisions API 整合與 104 爬蟲修復（`a4d72e1c`～`9ebf8ccf`）**:
+    *   整合 `gemini-decision-1` 並以 SSOT/DRY Fallback 接通潛在客戶篩選（`CrawlerJobConfig.qualify_score_threshold` 預設 50）與 Supervisor 路由；修正 `NetworkConfig.google_base_url` OpenAI 後綴截斷與 `hf-restart.yml` 無效 `secrets` 條件。
+    *   修正 104 爬蟲 Cloudflare CORS/`Sec-Fetch` 標頭、Referer 非 ASCII 編碼與 HTTP 403 阻斷偵測，並依 39 筆樣本人工校準收斂 `ALICE_LEAD_ICP_CRITERIA` 完成 Phase 5.14。
+2.  **Monolith 大型檔案拆解與門禁歸零（`5b03df10`）**:
+    *   **前端 P0**：`archon-ui-main/src/features/rag-settings/index.tsx`（427 → 324 行）拆出 `RagCheckboxes.tsx`、`OllamaConfigPanel.tsx`、`AdvancedSettingsAccordion.tsx`、`RagModalsContainer.tsx`；通過 `biome check`、`tsc --noEmit`、`vite build` 與 `vitest`（17 檔 / 144 passed）。
+    *   **後端 P1**：`python/src/server/services/system/telegram_bot_gateway.py`（399 → 194 行）拆出 `telegram_proxy_client.py`（116 行）與 `telegram_command_handlers.py`（189 行），拔除硬編碼 `_MENTION_AGENT_MAP` 改由 `AI_AGENT_ROLES` SSOT 動態推導，並保留 Facade 委派與 `http_client_cls` 注入；通過 `ruff`、`mypy`、`pytest`（7/7）與 `phase_audit.py`（`Found 0 monoliths (>400 lines)`）。
+    *   **Code Review 備註**：`ModelConfigForm.tsx` 第 76、80 行保留了既有動態 Tailwind 字串插值（`bg-${...}`），後續觸及該檔時應改為靜態類別查表。
+3.  **PR #672（`fix/671-followups-auth-hardening`）審查**:
+    *   確認補齊 `useAuth.tsx` `TOKEN_REFRESHED` / `SIGNED_OUT` 清快取、`POST /api/tasks/{id}/agent-status` 與 `agent-output` 驗證（納入 internal token 放行清單）、`GET /api/mcp-logs` 限 `get_current_admin`、以及錯誤訊息隱藏 `assignee`。
+    *   狀態為 `OPEN` / `MERGEABLE`（`CLEAN`），3 項 Vercel checks 通過；因該分支基於較舊的 `3ead4318`，其 PR 描述提及的 `user_metadata.role` 提權已於 `dev/twins`（Phase 5.13）先修完，且 `useAuth.test.tsx` 多 mock 了已移除的 `register`（不影響執行）。
 
 ### 2026-11-25：Phase 5.15 Stage 1 (P1) Bot SSOT 收斂與 Stage 2 (P2) A2A 直接 Handoff + Telegram 雙向審批
 1.  **P0 雲端唯讀探針與 Phase 5.14 補錄（`4b59ffa6`）**:
