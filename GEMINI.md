@@ -45,7 +45,7 @@
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
 *   **當前狀態 (Current Context)**: 2026-11-26 完成 `gemini-decision-1`（Decisions API）整合與 Phase 5.14 39 筆樣本 ICP 校準收斂（`a4d72e1c`～`9ebf8ccf`），修復 104 爬蟲 Cloudflare/Referer/403 與 `hf-restart.yml` 語法，並完成 Monolith 大型檔案拆解（`5b03df10`：`rag-settings/index.tsx` 427→324 行、`telegram_bot_gateway.py` 399→194 行拆出 `telegram_proxy_client.py` + `telegram_command_handlers.py`，`phase_audit.py` 紅燈歸 0）；同步完成 PR #672（`fix/671-followups-auth-hardening`）審查（`MERGEABLE`）。
-*   **今日目標 (Today's Goal)**: 由使用者拍板合併 PR #672 至 `dev/twins`（合併即觸發 HF 部署）；視需要補齊 `ModelConfigForm.tsx` 既有動態 Tailwind 類別靜態化；觀察線上 Decisions API 評分與 Telegram 雙向指令運作。
+*   **今日目標 (Today's Goal)**: 由使用者拍板合併 PR #672 至 `dev/twins`（合併即觸發 HF 部署）；觀察線上 Decisions API 評分與 Telegram 雙向指令運作。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -130,7 +130,7 @@
 2.  **Monolith 大型檔案拆解與門禁歸零（`5b03df10`）**:
     *   **前端 P0**：`archon-ui-main/src/features/rag-settings/index.tsx`（427 → 324 行）拆出 `RagCheckboxes.tsx`、`OllamaConfigPanel.tsx`、`AdvancedSettingsAccordion.tsx`、`RagModalsContainer.tsx`；通過 `biome check`、`tsc --noEmit`、`vite build` 與 `vitest`（17 檔 / 144 passed）。
     *   **後端 P1**：`python/src/server/services/system/telegram_bot_gateway.py`（399 → 194 行）拆出 `telegram_proxy_client.py`（116 行）與 `telegram_command_handlers.py`（189 行），拔除硬編碼 `_MENTION_AGENT_MAP` 改由 `AI_AGENT_ROLES` SSOT 動態推導，並保留 Facade 委派與 `http_client_cls` 注入；通過 `ruff`、`mypy`、`pytest`（7/7）與 `phase_audit.py`（`Found 0 monoliths (>400 lines)`）。
-    *   **Code Review 備註**：`ModelConfigForm.tsx` 第 76、80 行保留了既有動態 Tailwind 字串插值（`bg-${...}`），後續觸及該檔時應改為靜態類別查表。
+    *   **Code Review 修正**：將 `ModelConfigForm.tsx` 既有動態 Tailwind 字串插值（`bg-${...}`）改為靜態類別查表 `OLLAMA_STATUS_CARD_STYLES`，完全對齊 `UI_STANDARDS.md`。
 3.  **PR #672（`fix/671-followups-auth-hardening`）審查**:
     *   確認補齊 `useAuth.tsx` `TOKEN_REFRESHED` / `SIGNED_OUT` 清快取、`POST /api/tasks/{id}/agent-status` 與 `agent-output` 驗證（納入 internal token 放行清單）、`GET /api/mcp-logs` 限 `get_current_admin`、以及錯誤訊息隱藏 `assignee`。
     *   狀態為 `OPEN` / `MERGEABLE`（`CLEAN`），3 項 Vercel checks 通過；因該分支基於較舊的 `3ead4318`，其 PR 描述提及的 `user_metadata.role` 提權已於 `dev/twins`（Phase 5.13）先修完，且 `useAuth.test.tsx` 多 mock 了已移除的 `register`（不影響執行）。

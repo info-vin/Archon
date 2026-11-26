@@ -19,6 +19,17 @@ interface ModelConfigFormProps {
   getEmbeddingPlaceholder: (p: any) => string;
 }
 
+const OLLAMA_STATUS_CARD_STYLES = {
+  chat: {
+    container: "p-3 border rounded-lg bg-green-500/5 border-green-500/30",
+    caption: "text-xs text-green-400 mt-1",
+  },
+  embedding: {
+    container: "p-3 border rounded-lg bg-purple-500/5 border-purple-500/30",
+    caption: "text-xs text-purple-400 mt-1",
+  },
+} as const;
+
 export const ModelConfigForm: React.FC<ModelConfigFormProps> = ({
   activeSelection,
   chatProvider,
@@ -70,16 +81,12 @@ export const ModelConfigForm: React.FC<ModelConfigFormProps> = ({
                 activeSelection === "chat"
                   ? getDisplayedChatModel(ragSettings) || "Not selected"
                   : getDisplayedEmbeddingModel(ragSettings) || "Not selected";
+              const statusStyle = OLLAMA_STATUS_CARD_STYLES[activeSelection];
               return (
-                <div
-                  key={field.key}
-                  className={`p-3 border rounded-lg bg-${activeSelection === "chat" ? "green" : "purple"}-500/5 border-${activeSelection === "chat" ? "green" : "purple"}-500/30`}
-                >
+                <div key={field.key} className={statusStyle.container}>
                   <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{field.label}</span>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Configured via Ollama instance</div>
-                  <div className={`text-xs text-${activeSelection === "chat" ? "green" : "purple"}-400 mt-1`}>
-                    Current: {currentModel}
-                  </div>
+                  <div className={statusStyle.caption}>Current: {currentModel}</div>
                 </div>
               );
             }
