@@ -15,19 +15,31 @@ describe('NexusHUD Component Hardening', () => {
     activeMetric: 'integrity' as any,
     setActiveMetric: mockSetActiveMetric,
     loading: false,
-    overview: { integrity_score: 95, status: 'healthy', cost_24h: 1.23, knowledge_stats: { total_nodes: 150 } },
-    approvals: { blogs: [1, 2], leads: [3] },
+    overview: { integrity_score: 95, status: 'healthy', cost_24h: 1.2345, rag: { status: 'healthy' }, knowledge_stats: { total_nodes: 21 } },
     alerts: [1, 2, 3, 4],
-    team: [{ status: 'active' }, { status: 'active' }, { status: 'offline' }],
     ethicsAudit: { total_pending: 2, violations: [1], pending_versions: [1] },
     collabSynergy: { snapshot: { momentum_pct: 15, total_7d: 120, hot_bridge: 'Sales-IT' } },
     knowledgeRoi: { overall_conversion: 85 },
     slaReliability: { current_sla: 98 }
   };
 
-  it('renders all HUD metrics', () => {
+  it('renders 6 deduplicated HUD metrics without redundant sidebar/static cards', () => {
     render(<NexusHUD {...mockProps} />);
-    expect(screen.getByText((content) => content.includes('95%'))).toBeInTheDocument();
-    expect(screen.getByText((content) => content.includes('.23'))).toBeInTheDocument();
+    expect(screen.getByText('Integrity')).toBeInTheDocument();
+    expect(screen.getByText('95%')).toBeInTheDocument();
+    expect(screen.getByText('21 Nodes Indexed')).toBeInTheDocument();
+    expect(screen.getByText('Resources')).toBeInTheDocument();
+    expect(screen.getByText('$1.2345')).toBeInTheDocument();
+    expect(screen.getByText('24H Token Cost')).toBeInTheDocument();
+    expect(screen.getByText('Risk & Ethics')).toBeInTheDocument();
+    expect(screen.getByText('6 Alerts')).toBeInTheDocument();
+    expect(screen.getByText('4 Risks | 2 Audit')).toBeInTheDocument();
+    expect(screen.getByText('Collab')).toBeInTheDocument();
+    expect(screen.getByText('Graph')).toBeInTheDocument();
+    expect(screen.getByText('Reliability')).toBeInTheDocument();
+
+    expect(screen.queryByText('Op Load')).not.toBeInTheDocument();
+    expect(screen.queryByText('Act Force')).not.toBeInTheDocument();
+    expect(screen.queryByText('Prompts')).not.toBeInTheDocument();
   });
 });

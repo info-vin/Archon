@@ -7,10 +7,7 @@ export interface NexusHUDProps {
     setActiveMetric: (metric: MetricCategory) => void;
     loading: boolean;
     overview: any;
-    approvals: any;
-    codeProposals?: any[];
     alerts: any;
-    team: any;
     ethicsAudit: any;
     collabSynergy: any;
     knowledgeRoi: any;
@@ -22,76 +19,46 @@ export const NexusHUD: React.FC<NexusHUDProps> = ({
     setActiveMetric,
     loading,
     overview,
-    approvals,
-    codeProposals = [],
     alerts,
-    team,
     ethicsAudit,
     collabSynergy,
     knowledgeRoi,
     slaReliability
 }) => {
+    const alertCount = alerts?.length || 0;
+    const ethicsPending = ethicsAudit?.total_pending || 0;
+    const totalRiskAndEthics = alertCount + ethicsPending;
+
     return (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <HUDCard
                 id="integrity" label="Integrity"
                 value={overview?.integrity_score !== undefined ? `${overview.integrity_score}%` : "..."}
-                sub="System Health"
+                sub={`${overview?.knowledge_stats?.total_nodes ?? 0} Nodes Indexed`}
                 active={activeMetric === 'integrity'}
                 status={overview?.rag?.status === 'healthy' ? 'good' : 'bad'}
                 onClick={setActiveMetric}
-                tooltip="RAG Vector DB Health"
+                tooltip="RAG Vector DB Health & Indexed Nodes"
                 loading={loading}
             />
             <HUDCard
                 id="resources" label="Resources"
-                value={`$${(overview?.cost_24h || 0).toFixed(2)}`}
-                sub="Monthly Cap"
+                value={`$${(overview?.cost_24h || 0).toFixed(4)}`}
+                sub="24H Token Cost"
                 active={activeMetric === 'resources'}
                 status="neutral"
                 onClick={setActiveMetric}
-                tooltip="Token Usage & Cost vs Budget"
+                tooltip="24H Token Usage & Monthly Budget Burn-up"
                 loading={loading}
             />
             <HUDCard
-                id="op_load" label="Op Load"
-                value={`${(approvals?.blogs?.length || 0) + (codeProposals?.length || 0)} Items`}
-                sub="Decision Queue"
-                active={activeMetric === 'op_load'}
-                status={((approvals?.blogs?.length || 0) + (codeProposals?.length || 0)) > 0 ? "warning" : "good"}
+                id="risk_ethics" label="Risk & Ethics"
+                value={totalRiskAndEthics > 0 ? `${totalRiskAndEthics} Alerts` : "Secure"}
+                sub={`${alertCount} Risks | ${ethicsPending} Audit`}
+                active={activeMetric === 'risk_ethics'}
+                status={totalRiskAndEthics > 0 ? "bad" : "good"}
                 onClick={setActiveMetric}
-                tooltip="Pending Approvals & Reviews"
-                loading={loading}
-            />
-            <HUDCard
-                id="sent_risks" label="Sent Risks"
-                value={`${alerts.length} Alerts`}
-                sub="Exception Radar"
-                active={activeMetric === 'sent_risks'}
-                status={alerts.length > 0 ? "bad" : "good"}
-                onClick={setActiveMetric}
-                tooltip="Sentinel Generated Alerts"
-                loading={loading}
-            />
-            <HUDCard
-                id="active_force" label="Act Force"
-                value={`${team.filter((m: any) => m.status === 'active').length} Online`}
-                sub="Roster Status"
-                active={activeMetric === 'active_force'}
-                status="good"
-                onClick={setActiveMetric}
-                tooltip="Team & Agent Availability"
-                loading={loading}
-            />
-            {/* Secondary Metrics Row */}
-            <HUDCard
-                id="ethics" label="Ethics"
-                value={ethicsAudit?.total_pending > 0 ? `${ethicsAudit.total_pending} Actions` : "Secure"}
-                sub={ethicsAudit?.total_pending > 0 ? `${ethicsAudit.violations.length} Risks | ${ethicsAudit.pending_versions.length} Changes` : "System Nominal"}
-                active={activeMetric === 'ethics'}
-                status={ethicsAudit?.total_pending > 0 ? 'bad' : 'good'}
-                onClick={setActiveMetric}
-                tooltip="Safety violations & Prompt audit queue"
+                tooltip="Sentinel Alerts, Safety Violations & Prompt Audits"
                 loading={loading}
             />
             <HUDCard
@@ -107,7 +74,7 @@ export const NexusHUD: React.FC<NexusHUDProps> = ({
             <HUDCard
                 id="graph" label="Graph"
                 value={knowledgeRoi?.overall_conversion !== undefined ? `${knowledgeRoi.overall_conversion}%` : "..."}
-                sub={`${overview?.knowledge_stats?.total_nodes || 0} Total Nodes`}
+                sub="Knowledge ROI"
                 active={activeMetric === 'graph'}
                 status={knowledgeRoi?.overall_conversion > 70 ? 'good' : knowledgeRoi?.overall_conversion > 30 ? 'warning' : 'bad'}
                 onClick={setActiveMetric}
@@ -122,16 +89,6 @@ export const NexusHUD: React.FC<NexusHUDProps> = ({
                 status={slaReliability?.current_sla >= 95 ? "good" : "warning"}
                 onClick={setActiveMetric}
                 tooltip="6-Month Strategic Discipline Trend"
-                loading={loading}
-            />
-            <HUDCard
-                id="prompts" label="Prompts"
-                value="System"
-                sub="Management"
-                active={activeMetric === 'prompts'}
-                status="neutral"
-                onClick={setActiveMetric}
-                tooltip="System Prompts Management"
                 loading={loading}
             />
         </div>

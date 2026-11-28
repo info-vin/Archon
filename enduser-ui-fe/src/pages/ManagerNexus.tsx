@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Employee } from '../types';
 import { 
-    AlertTriangleIcon, ActivityIcon,
-    ShieldCheckIcon, DatabaseIcon, UsersIcon, 
-    GitCommitIcon, FileTextIcon,
+    AlertTriangleIcon,
+    ShieldCheckIcon, DatabaseIcon,
+    GitCommitIcon,
     DollarSignIcon, ClockIcon,
     RefreshCwIcon
 } from '../components/Icons';
 import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 
-import { PromptManagement } from '../features/admin/components/PromptManagement.tsx';
 import { IntegrityAnalysis } from '../features/manager/components/IntegrityAnalysis.tsx';
 
 import { useManagerNexusStats, MetricCategory } from '../features/manager/hooks/useManagerNexusStats';
 import { Skeleton } from '../components/Skeleton';
 import { DetailSection } from '../features/manager/components/DetailSection';
 import { ResourceAudit } from '../features/manager/components/ResourceAudit';
-import { OpLoadPanel } from '../features/manager/components/OpLoadPanel';
 import { CollabMatrix } from '../features/manager/components/CollabMatrix';
 import { SentinelRadar } from '../features/manager/components/SentinelRadar';
-import { ActiveForce } from '../features/manager/components/ActiveForce';
 import { KnowledgeROI } from '../features/manager/components/KnowledgeROI';
 import { SlaReliability } from '../features/manager/components/SlaReliability';
 
@@ -44,13 +41,13 @@ export const ManagerNexus: React.FC = () => {
 
     const {
         loading,
-        processingId, setProcessingId,
-        overview, healthTrend, team, approvals, alerts, aiStats,
-        commanderTrends, forceReadiness, businessRisks, collabSynergy,
-        slaReliability, ethicsAudit, knowledgeRoi, codeProposals,
+        processingId,
+        overview, healthTrend, approvals, alerts, aiStats,
+        businessRisks, collabSynergy,
+        slaReliability, ethicsAudit, knowledgeRoi,
         rules, rulesMeta, isSavingRules, totalRuleWeight,
         fetchData, handleDispatch, handleApprovePrompt, handleRebuildIndex,
-        handleApproveContent, handleCodeAction, handleRuleChange, handleSaveRules
+        handleRuleChange, handleSaveRules
     } = useManagerNexusStats();
 
     useEffect(() => {
@@ -90,48 +87,28 @@ export const ManagerNexus: React.FC = () => {
                     </DetailSection>
                 );
 
-            case 'op_load':
+            case 'risk_ethics':
                 return (
-                    <DetailSection title="Operational Load" subtitle="Approval & Review Queue" icon={<ActivityIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <OpLoadPanel 
-                            commanderTrends={commanderTrends}
-                            approvals={approvals}
-                            codeProposals={codeProposals}
-                            processingId={processingId}
-                            setProcessingId={setProcessingId}
-                            handleApproveContent={handleApproveContent}
-                            handleCodeAction={handleCodeAction}
-                            fetchData={fetchData}
-                        />
-                    </DetailSection>
-                );
-
-            case 'sent_risks':
-                return (
-                    <DetailSection title="Sentinel Risk Radar" subtitle="Business Logic Defense" icon={<AlertTriangleIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <SentinelRadar 
-                            businessRisks={businessRisks}
-                            processingId={processingId}
-                            handleDispatch={handleDispatch}
-                            rules={rules}
-                            rulesMeta={rulesMeta}
-                            isSavingRules={isSavingRules}
-                            totalRuleWeight={totalRuleWeight}
-                            handleRuleChange={handleRuleChange}
-                            handleSaveRules={handleSaveRules}
-                        />
-                    </DetailSection>
-                );
-
-            case 'active_force':
-                return (
-                    <DetailSection title="Active Force" subtitle="Team Roster & Agent Status" icon={<UsersIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <ActiveForce 
-                            forceReadiness={forceReadiness}
-                            team={team}
-                            overview={overview}
-                            setSelectedMember={setSelectedMember}
-                        />
+                    <DetailSection title="Risk & Ethics Radar" subtitle="Business Logic Defense & Compliance Center" icon={<AlertTriangleIcon className="w-5 h-5 text-indigo-600"/>}>
+                        <div className="space-y-8">
+                            <SentinelRadar 
+                                businessRisks={businessRisks}
+                                processingId={processingId}
+                                handleDispatch={handleDispatch}
+                                rules={rules}
+                                rulesMeta={rulesMeta}
+                                isSavingRules={isSavingRules}
+                                totalRuleWeight={totalRuleWeight}
+                                handleRuleChange={handleRuleChange}
+                                handleSaveRules={handleSaveRules}
+                            />
+                            <EthicsAuditPanel
+                                ethicsAudit={ethicsAudit}
+                                handleDispatch={handleDispatch}
+                                handleApprovePrompt={handleApprovePrompt}
+                                processingId={processingId}
+                            />
+                        </div>
                     </DetailSection>
                 );
 
@@ -156,31 +133,6 @@ export const ManagerNexus: React.FC = () => {
                     </DetailSection>
                 );
 
-            case 'ethics':
-                return (
-                    <DetailSection title="Ethics & Prompt Audit" subtitle="Compliance Resolution Center" icon={<ShieldCheckIcon className="w-5 h-5 text-indigo-600"/>}>
-                        <EthicsAuditPanel
-                            ethicsAudit={ethicsAudit}
-                            handleDispatch={handleDispatch}
-                            handleApprovePrompt={handleApprovePrompt}
-                            processingId={processingId}
-                        />
-                    </DetailSection>
-                );
-
-            case 'prompts':
-                return (
-                    <DetailSection 
-                        title="System Prompts" 
-                        subtitle="Core Agent Instructions & Behavior Modeling" 
-                        icon={<FileTextIcon className="w-5 h-5 text-indigo-600"/>}
-                    >
-                        <div className="bg-white/80 backdrop-blur border border-gray-100 rounded-3xl p-6 shadow-sm overflow-hidden h-full">
-                            <PromptManagement isManagerMode={true} />
-                        </div>
-                    </DetailSection>
-                );
-
             default:
                 return <NexusEmptyState />;
         }
@@ -202,10 +154,7 @@ export const ManagerNexus: React.FC = () => {
                 setActiveMetric={setActiveMetric}
                 loading={loading}
                 overview={overview}
-                approvals={approvals}
-                codeProposals={codeProposals}
                 alerts={alerts}
-                team={team}
                 ethicsAudit={ethicsAudit}
                 collabSynergy={collabSynergy}
                 knowledgeRoi={knowledgeRoi}

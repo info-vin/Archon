@@ -327,20 +327,20 @@ class PerformanceManager(BaseRepository):
             logger.error(f"PerformanceManager: Risks failed: {e}")
             return []
 
+    _AGENT_LEVEL_THRESHOLDS: tuple[tuple[int, str], ...] = (
+        (880, "Level 6"),
+        (870, "Level 5"),
+        (850, "Level 4"),
+        (800, "Level 3"),
+        (700, "Level 2"),
+        (500, "Level 1"),
+    )
+
     def _get_agent_level(self, success_count: int, overrides: dict | None = None) -> str:
         """Determines Agent Level based on success count and admin overrides (Poisson Gate)."""
         if overrides and overrides.get("is_trusted_level_7"):
             return "Level 7"
-        if success_count >= 880:
-            return "Level 6"
-        if success_count >= 870:
-            return "Level 5"
-        if success_count >= 850:
-            return "Level 4"
-        if success_count >= 800:
-            return "Level 3"
-        if success_count >= 700:
-            return "Level 2"
-        if success_count >= 500:
-            return "Level 1"
+        for threshold, level_name in self._AGENT_LEVEL_THRESHOLDS:
+            if success_count >= threshold:
+                return level_name
         return "Intern"

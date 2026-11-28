@@ -43,7 +43,7 @@ class SystemMetrics(BaseRepository):
                 w_start, w_end = now - timedelta(days=i), now - timedelta(days=i - 14)
                 window_tasks = [(t, comp_dt) for t, comp_dt in parsed_tasks if w_start <= comp_dt < w_end]
                 if not window_tasks:
-                    trend.append({"date": w_start.strftime("%m-%d"), "rate": 100.0, "count": 0})
+                    trend.append({"date": w_start.strftime("%m-%d"), "rate": 100.0, "count": 0, "has_tasks": False})
                     continue
                 met = 0
                 for t, comp_dt in window_tasks:
@@ -73,26 +73,38 @@ class SystemMetrics(BaseRepository):
             return {"current_sla": 0.0, "trend": []}
 
     async def get_detailed_ai_usage(self, days: int = 30) -> dict[str, Any]:
-        """Provides AI usage stats with daily breakdown and real data flag."""
+        """Provides AI usage stats with daily breakdown and SSOT budget limit."""
+        from ....schemas.settings import BudgetConfig
+        from ...settings_service import SettingsService
         from ...token_usage_service import TokenUsageService
 
         daily_costs = await TokenUsageService.get_daily_cost(days=days)
-        # PERFORMANCE: Replaced sum(x for ...) generators with a single standard for-loop pass
+        try:
+            raw_settings = SettingsService(self.supabase).get_all_settings()
+            budget_cfg = BudgetConfig.model_validate(raw_settings)
+        except Exception:
+            budget_cfg = BudgetConfig()
+
+        budget_limit = round(budget_cfg.weekly_budget_threshold * (days / 7.0), 2)
+
         total_monthly_usd = 0.0
         total_monthly_tokens = 0
         for d in daily_costs:
             total_monthly_usd += d["cost"]
-            total_monthly_tokens += d.get("request_count", 0) * 1000
+            raw_tokens = d.get("tokens")
+            total_monthly_tokens += int(raw_tokens) if raw_tokens is not None else d.get("request_count", 0) * 1000
+
+        usage_percentage = min(100.0, round((total_monthly_usd / budget_limit) * 100, 1)) if budget_limit > 0 else 0.0
         return {
             "total_monthly_usd": round(total_monthly_usd, 4),
             "total_monthly_tokens": int(total_monthly_tokens),
             "total_cost_usd": round(total_monthly_usd, 4),
             "total_used": int(total_monthly_tokens),
-            "usage_percentage": min(100, round((total_monthly_tokens / 100000) * 100, 1)),
+            "usage_percentage": usage_percentage,
             "daily_costs": daily_costs,
             "burn_trend": [{"date": d["date"], "cost": d["cost"]} for d in daily_costs],
             "is_real_data": True,
-            "budget_limit": 100.0,
+            "budget_limit": budget_limit,
             "team": [],
         }
 

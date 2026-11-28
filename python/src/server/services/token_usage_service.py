@@ -23,6 +23,8 @@ class TokenUsagePayloadDTO(TypedDict):
 
 class TokenUsageRowDTO(TypedDict):
     cost_usd: NotRequired[float]
+    input_tokens: NotRequired[int]
+    output_tokens: NotRequired[int]
     created_at: str
     model: str
     provider: str
@@ -32,6 +34,7 @@ class TokenUsageRowDTO(TypedDict):
 class DailyCostAggregationDTO(TypedDict):
     date: str
     cost: float
+    tokens: int
     request_count: int
     models: set[str]
     agent_costs: NotRequired[dict[str, float]]
@@ -40,6 +43,7 @@ class DailyCostAggregationDTO(TypedDict):
 class DailyCostDTO(TypedDict):
     date: str
     cost: float
+    tokens: int
     request_count: int
     models: list[str]
     agent_costs: NotRequired[dict[str, float]]
@@ -158,7 +162,7 @@ class TokenUsageService:
             def _fetch_data() -> list[TokenUsageRowDTO]:
                 success, res_dict = base_repo.execute_query(
                     supabase.table("token_usage")
-                    .select("cost_usd, created_at, model, provider, user_id")
+                    .select("cost_usd, input_tokens, output_tokens, created_at, model, provider, user_id")
                     .gt("created_at", since.isoformat())
                     .order("created_at", desc=True)
                     .limit(5000),
@@ -176,12 +180,14 @@ class TokenUsageService:
                     daily_stats[date_str] = {
                         "date": date_str,
                         "cost": 0.0,
+                        "tokens": 0,
                         "request_count": 0,
                         "models": set(),
                         "agent_costs": {},
                     }
 
                 daily_stats[date_str]["cost"] += row.get("cost_usd", 0.0)
+                daily_stats[date_str]["tokens"] += int(row.get("input_tokens") or 0) + int(row.get("output_tokens") or 0)
                 daily_stats[date_str]["request_count"] += 1
                 daily_stats[date_str]["models"].add(row["model"])
 
@@ -213,6 +219,7 @@ class TokenUsageService:
                 dto_item: DailyCostDTO = {
                     "date": item["date"],
                     "cost": item["cost"],
+                    "tokens": item["tokens"],
                     "request_count": item["request_count"],
                     "models": list(item["models"]),
                 }

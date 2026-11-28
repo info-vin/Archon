@@ -3,7 +3,7 @@ import { api } from '../../../services/api.ts';
 import { SystemOverview, Employee, AlertItem } from '../../../types.ts';
 import { useAuth } from '@/hooks/useAuth';
 
-export type MetricCategory = 'integrity' | 'resources' | 'op_load' | 'sent_risks' | 'active_force' | 'ethics' | 'collab' | 'graph' | 'velocity' | 'prompts';
+export type MetricCategory = 'integrity' | 'resources' | 'risk_ethics' | 'collab' | 'graph' | 'velocity';
 
 export interface ScoringRule {
     key: string;
@@ -73,7 +73,7 @@ export const useManagerNexusStats = () => {
             const systemTelemetry = data.short_term_kpis?.system_telemetry || {};
             setOverview({
                 status: (data.system_status || 'healthy').toLowerCase() as any,
-                integrity_score: data.health_score || 90,
+                integrity_score: data.health_score ?? systemTelemetry.integrity_score ?? 0,
                 errors_24h: systemTelemetry.errors_24h || 0,
                 cost_24h: systemTelemetry.cost_24h || 0,
                 active_agents: systemTelemetry.active_agents || [],

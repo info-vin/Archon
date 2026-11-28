@@ -12,6 +12,9 @@ logger = get_logger(__name__)
 
 _CACHE_TTL_SECONDS = 120.0
 _AGENT_TIMEOUT_SECONDS = 12.0
+_ORACLE_REFRESH_YIELD_SECONDS = 3.0
+_PENDING_BLOG_STATUSES: list[str] = ["draft", "changes_requested", "pending"]  # 合法
+_ALERT_LOG_LEVELS: list[str] = ["ERROR", "WARNING"]  # 合法
 _cache: tuple[float, dict[str, Any]] | None = None
 _refresh_task: asyncio.Task[None] | None = None
 
@@ -36,7 +39,7 @@ async def _refresh_oracle_cache() -> None:
     global _cache
     try:
         # Yield first so the foreground DB fallback response completes without event-loop contention.
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(_ORACLE_REFRESH_YIELD_SECONDS)
         data_dict = await _run_oracle_agent()
         if data_dict:
             _cache = (time.monotonic(), data_dict)
@@ -46,8 +49,23 @@ async def _refresh_oracle_cache() -> None:
 
 async def _build_db_fallback_state() -> dict[str, Any]:
     """Assemble real-time Nexus KPIs directly from StatsService when the LLM oracle times out."""
+    from datetime import UTC, datetime, timedelta
+
     svc = StatsService()
-    overview, readiness, ai_usage, knowledge_roi, collab, sla, trends, risks = await asyncio.gather(
+    one_day_ago = (datetime.now(UTC) - timedelta(hours=24)).isoformat()
+
+    (
+        overview,
+        readiness,
+        ai_usage,
+        knowledge_roi,
+        collab,
+        sla,
+        trends,
+        risks,
+        pending_blogs_res,
+        recent_alerts_res,
+    ) = await asyncio.gather(
         svc.get_system_health_overview(),
         svc.get_force_readiness(),
         svc.get_detailed_ai_usage(days=30),
@@ -56,6 +74,23 @@ async def _build_db_fallback_state() -> dict[str, Any]:
         svc.get_sla_reliability(),
         svc.get_commander_trends(),
         svc.get_business_risks(),
+        svc.execute_query_async(
+            svc.supabase.table("blog_posts")  # 合法
+            .select("id, title, status, created_at")
+            .in_("status", _PENDING_BLOG_STATUSES)
+            .order("created_at", desc=True)
+            .limit(20),
+            "Get pending blog approvals for Nexus fallback",
+        ),
+        svc.execute_query_async(
+            svc.supabase.table("archon_logs")  # 合法
+            .select("id, level, source, message, created_at")
+            .in_("level", _ALERT_LOG_LEVELS)
+            .gt("created_at", one_day_ago)
+            .order("created_at", desc=True)
+            .limit(20),
+            "Get recent alerts for Nexus fallback",
+        ),
         return_exceptions=True,
     )
 
@@ -67,16 +102,48 @@ async def _build_db_fallback_state() -> dict[str, Any]:
     rd_dict = rd.model_dump() if hasattr(rd, "model_dump") else (rd if isinstance(rd, dict) else {})
     tr_list = [t.model_dump() if hasattr(t, "model_dump") else t for t in _ok(trends, [])]
 
+    blogs_ok, blogs_payload = _ok(pending_blogs_res, (False, {}))
+    pending_approvals = [
+        {
+            "id": row["id"],
+            "title": row.get("title", "Untitled"),
+            "status": row.get("status", "pending"),
+            "type": "blog",
+            "created_at": row.get("created_at"),
+        }
+        for row in (blogs_payload.get("data", []) if blogs_ok else [])
+    ]
+
+    alerts_ok, alerts_payload = _ok(recent_alerts_res, (False, {}))
+    active_alerts = [
+        {
+            "id": row["id"],
+            "level": row.get("level", "WARNING"),
+            "source": row.get("source", "System"),
+            "message": row.get("message", ""),
+            "created_at": row.get("created_at"),
+        }
+        for row in (alerts_payload.get("data", []) if alerts_ok else [])
+    ]
+
+    errors_count = int(ov.get("errors_24h", ov.get("error_count", 0)) or 0)
+    raw_integrity = ov.get("integrity_score")
+    health_score = (
+        int(round(float(raw_integrity)))
+        if raw_integrity is not None
+        else (100 if errors_count == 0 else 65)
+    )
+
     return {
-        "system_status": "GREEN" if ov.get("error_count", 0) == 0 else "YELLOW",
-        "health_score": 85 if ov.get("error_count", 0) == 0 else 65,
+        "system_status": "GREEN" if errors_count == 0 else "YELLOW",
+        "health_score": health_score,
         "short_term_kpis": {
-            "daily_token_cost": ov.get("total_cost_24h", 0.0),
-            "active_error_counts": ov.get("error_count", 0),
+            "daily_token_cost": ov.get("cost_24h", ov.get("total_cost_24h", 0.0)),
+            "active_error_counts": errors_count,
             "system_telemetry": ov,
             "team_readiness": rd_dict,
-            "pending_approvals": [],
-            "active_alerts": [],
+            "pending_approvals": pending_approvals,
+            "active_alerts": active_alerts,
         },
         "long_term_trends": {
             "monthly_budget_forecast": "Stable",
