@@ -28,6 +28,7 @@ export const api = {
 
   // Tasks
   getTasks: tasksApi.getTasks.bind(tasksApi),
+  getTask: tasksApi.getTask.bind(tasksApi),
   deleteTask: tasksApi.deleteTask.bind(tasksApi),
   getProjects: tasksApi.getProjects.bind(tasksApi),
   createProject: tasksApi.createProject.bind(tasksApi),

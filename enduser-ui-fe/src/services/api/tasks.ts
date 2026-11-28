@@ -3,18 +3,31 @@ import { NewTaskData, NewProjectData, UpdateTaskData } from './types';
 import { callAPI } from './apiClient';
 
 export const tasksApi = {
-  async getTasks(includeClosed: boolean = false, includeUnassigned: boolean = false, assigneeId?: string, perPage: number = 50): Promise<Task[]> {
+  async getTasks(
+    includeClosed: boolean = false,
+    includeUnassigned: boolean = false,
+    assigneeId?: string,
+    perPage: number = 50,
+    excludeLargeFields: boolean = false,
+  ): Promise<Task[]> {
     const queryParams = new URLSearchParams({
         include_closed: includeClosed.toString(),
         include_unassigned: includeUnassigned.toString(),
         per_page: perPage.toString()
     });
     if (assigneeId) queryParams.append('assignee_id', assigneeId);
+    if (excludeLargeFields) queryParams.append('exclude_large_fields', 'true');
 
     const data = await callAPI<any>(`/api/tasks?${queryParams.toString()}`);
     if (Array.isArray(data)) return data;
     if (data && typeof data === 'object' && Array.isArray(data.tasks)) return data.tasks;
     return [];
+  },
+
+  async getTask(taskId: string): Promise<Task | null> {
+    const data = await callAPI<any>(`/api/tasks/${taskId}`);
+    if (data && typeof data === 'object' && data.task) return data.task;
+    return data || null;
   },
 
   async deleteTask(taskId: string): Promise<void> {

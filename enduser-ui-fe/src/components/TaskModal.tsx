@@ -21,6 +21,20 @@ type TabType = 'general' | 'assignment' | 'knowledge' | 'report';
 
 export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreated, onTaskUpdated, initialProjectId }) => {
   const isEditMode = !!(task && task.id);
+  const [detailedTask, setDetailedTask] = useState<Task | null>(task || null);
+  const effectiveTask = detailedTask || task || null;
+
+  useEffect(() => {
+    setDetailedTask(task || null);
+    if (!task?.id || task.agent_output) return;
+    let cancelled = false;
+    api.getTask?.(task.id).then((full) => {
+      if (!cancelled && full) setDetailedTask(full);
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [task]);
 
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [title, setTitle] = useState(task?.title || '');
@@ -231,16 +245,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
     { id: 'assignment', label: 'Assignment & Automation' },
     { id: 'knowledge', label: 'Knowledge' }
   ];
-  if (isEditMode && task?.agent_output) {
+  if (isEditMode && effectiveTask?.agent_output) {
     tabs.push({ id: 'report', label: 'AI Report' });
   }
 
   // Ensure active tab is valid if task changes
   useEffect(() => {
-    if (activeTab === 'report' && (!isEditMode || !task?.agent_output)) {
+    if (activeTab === 'report' && (!isEditMode || !effectiveTask?.agent_output)) {
       setActiveTab('general');
     }
-  }, [isEditMode, task, activeTab]);
+  }, [isEditMode, effectiveTask, activeTab]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 md:items-center overflow-y-auto" aria-modal="true" role="dialog">
@@ -313,7 +327,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onTaskCreat
 
             {/* AI Report Tab */}
             <div id="panel-report" role="tabpanel" aria-labelledby="tab-report" hidden={activeTab !== 'report'} className={activeTab === 'report' ? 'space-y-4' : 'hidden'}>
-               {task && <TaskAgentGroupChat task={task} />}
+               {effectiveTask && <TaskAgentGroupChat task={effectiveTask} />}
             </div>
           </div>
 
