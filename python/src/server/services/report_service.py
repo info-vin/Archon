@@ -255,7 +255,9 @@ class ReportService(BaseRepository):
             f"🚨 **[Archon 系統通知] 星環 {title_prefix} 已產出**\n{date_str}{content.strip()}\n\n"
             f"👉 完整數據與儀表板請至 Admin UI 查看：[點擊前往]({frontend_url}/#/dashboard?taskId={task_id})"
         )
-        is_sent = await telegram_service.send_message(telegram_msg)
+        is_sent = await telegram_service.send_message(
+            telegram_msg, record_delivery=title_prefix.startswith("Daily")
+        )
         if title_prefix == "Daily":
             await report_enrichment_service.dispatch_dual_voice_briefings(content)
         elif "Fallback" in title_prefix:
