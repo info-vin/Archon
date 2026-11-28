@@ -3,8 +3,6 @@ Stats API endpoints for Archon (Refactored - Lean Controller)
 Hardened for Phase 4.6.59 - Ensures no 404s for Admin HUD.
 """
 
-import asyncio
-import time
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -327,45 +325,11 @@ class ConsolidatedStatsResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-_CONSOLIDATED_CACHE_TTL_SECONDS = 120.0
-_CONSOLIDATED_TIMEOUT_SECONDS = 12.0
-_consolidated_cache: tuple[float, ConsolidatedStatsResponse] | None = None
-
-
 @router.get("/consolidated", response_model=ConsolidatedStatsResponse, dependencies=[Depends(requires_permission(TASK_READ_TEAM))])
 async def get_consolidated_stats() -> ConsolidatedStatsResponse:
     """Consolidated Strategic Nexus dashboard state (Phase 5.5.7)."""
-    global _consolidated_cache
-    now = time.monotonic()
-    if _consolidated_cache and (now - _consolidated_cache[0]) < _CONSOLIDATED_CACHE_TTL_SECONDS:
-        return _consolidated_cache[1]
+    from ..services.stats.consolidated_service import get_consolidated_nexus_state
 
-    try:
-        from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
-        agent = NexusOracleAgent()
-        deps = NexusDependencies(request_id="nexus-consolidated-request")
-        result = await asyncio.wait_for(
-            agent.run(
-                user_prompt="Analyze the gathered telemetry and operational details. Synthesize them into the ConsolidatedNexusState schema.",
-                deps=deps,
-            ),
-            timeout=_CONSOLIDATED_TIMEOUT_SECONDS,
-        )
-        data = result.data if hasattr(result, "data") else result
-        data_dict = data if isinstance(data, dict) else data.model_dump() if hasattr(data, "model_dump") else {}
-        parsed = ConsolidatedStatsResponse(**data_dict)
-        _consolidated_cache = (time.monotonic(), parsed)
-        return parsed
-    except Exception as e:
-        logger.warning(f"Failed to compile consolidated stats within {_CONSOLIDATED_TIMEOUT_SECONDS}s: {e}")
-        if _consolidated_cache:
-            return _consolidated_cache[1]
-        return ConsolidatedStatsResponse(
-            system_status="YELLOW",
-            health_score=50,
-            short_term_kpis={"error": str(e)},
-            long_term_trends={},
-            main_bottleneck="NexusOracleAgent run execution failed or timed out.",
-            recommended_actions=[]
-        )
+    data_dict = await get_consolidated_nexus_state()
+    return ConsolidatedStatsResponse(**data_dict)
 

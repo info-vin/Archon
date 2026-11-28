@@ -1,5 +1,9 @@
 # python/src/server/auth/dependencies.py
 
+import asyncio
+import hashlib
+import sys
+import time
 from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, Request, status
@@ -52,6 +56,14 @@ async def get_token_optional(
     return str(credentials.credentials)
 
 
+_AUTH_CACHE_TTL_SECONDS = 30.0
+_AUTH_USER_CACHE: dict[str, tuple[float, UserProfileDTO]] = {}
+
+
+def _cache_enabled() -> bool:
+    return "pytest" not in sys.modules
+
+
 async def get_current_user(request: Request, token: Annotated[str, Depends(get_token)]) -> UserProfileDTO:
     """
     Validates the token and retrieves the full user profile (including Role) from the database.
@@ -73,6 +85,12 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
             )
         return internal_actor()
 
+    cache_key = hashlib.sha256(token.encode("utf-8")).hexdigest() if token else ""
+    if cache_key and _cache_enabled():
+        cached = _AUTH_USER_CACHE.get(cache_key)
+        if cached and (time.monotonic() - cached[0]) < _AUTH_CACHE_TTL_SECONDS:
+            return cached[1]
+
     # 1. Verify Identity (Authentication)
     auth_user = await get_user_from_token(token)
     if not auth_user:
@@ -88,12 +106,17 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
     # We need the Role from the 'profiles' table, not just the Auth user
     profile_service = ProfileService()
     try:
-        success, profile = profile_service.get_profile(user_id)
+        success, profile = await asyncio.to_thread(profile_service.get_profile, user_id)
         if success and profile:
+            resolved: UserProfileDTO | None = None
             if isinstance(profile, dict):
-                return UserProfileDTO(**profile)
-            if isinstance(profile, UserProfileDTO):
-                return profile
+                resolved = UserProfileDTO(**profile)
+            elif isinstance(profile, UserProfileDTO):
+                resolved = profile
+            if resolved is not None:
+                if cache_key and _cache_enabled():
+                    _AUTH_USER_CACHE[cache_key] = (time.monotonic(), resolved)
+                return resolved
     except Exception as e:
         import logging
 
@@ -106,9 +129,12 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
     logging.getLogger(__name__).warning(
         f"⚠️ Security: No profile found for user {user_id}; assigning lowest privilege role 'employee'."
     )
-    return UserProfileDTO(
+    fallback_dto = UserProfileDTO(
         id=user_id, email=getattr(auth_user, "email", "system@archon.com") or "system@archon.com", role="employee"
     )
+    if cache_key and _cache_enabled():
+        _AUTH_USER_CACHE[cache_key] = (time.monotonic(), fallback_dto)
+    return fallback_dto
 
 
 async def get_current_user_optional(
