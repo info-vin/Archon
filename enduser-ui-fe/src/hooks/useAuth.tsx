@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { Employee, EmployeeRole } from '../types';
 import { api } from '../services/api';
 import { supabase } from '../services/api';
+import { userState } from '../services/api/base';
 
 interface AuthContextType {
   user: Employee | null;
@@ -61,13 +62,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (supabase) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session?.access_token) {
-                if (typeof localStorage !== 'undefined') localStorage.setItem('archon_token', session.access_token);
-                syncIdentity();
-            } else if (event === 'SIGNED_OUT') {
+            // apiClient reads archon_token from localStorage. Supabase rotates that
+            // access token (TOKEN_REFRESHED, and any other event that carries a session)
+            // about once an hour; leaving the stored value stale makes later requests 401.
+            if (event === 'SIGNED_OUT') {
                 if (typeof localStorage !== 'undefined') localStorage.removeItem('archon_token');
                 if (typeof localStorage !== 'undefined') localStorage.removeItem('user_role');
+                // Another tab's sign-out does not run authApi.logout, which is the
+                // only other place that drops the cached profile.
+                userState.cache = null;
                 setUser(null);
+                return;
+            }
+            if (session?.access_token && typeof localStorage !== 'undefined') {
+                localStorage.setItem('archon_token', session.access_token);
+            }
+            if (event === 'SIGNED_IN') {
+                syncIdentity();
             }
         });
         return () => subscription.unsubscribe();
