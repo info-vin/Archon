@@ -21,7 +21,7 @@
 | [lead_evaluator.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/crawling/lead_evaluator.py) | 新增 `LeadJudgeResult` DTO 與 `evaluate_lead_structured(job)`，保留 `llm_judge(job) -> bool` 相容包裝 | LLM 若偶發回傳非純 JSON（含 markdown code fence），需先做 JSON 提取與 Pydantic 驗證；解析失敗一律 fail-safe 為 `X` 並記錄原文於 `reason`。 |
 | [job_board_service.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/job_board_service.py) | 接入 `evaluate_lead_structured`、實作 G1 結構化寫入 `archon_logs`、G4 記錄拒絕理由、實作 A:B 60:40 配額 | 遵守 `CONTRIBUTING_tw.md` 原則 18：G1 淘汰紀錄在迴圈外一次性 Bulk Insert 至 `archon_logs`，禁止迴圈內逐筆寫入。 |
 | [leads_patrol.py](file:///Users/vincenta/GoogleKwok022/Archon/python/src/server/services/scheduler/jobs/leads_patrol.py) | 實作 G3：排程開始 (`start`) 與例外 (`error`) 結構化寫入 `archon_logs` | 記錄 `job_name`, `phase` (`start`/`completed`/`error`), `error_type`, `error_message`，不改變原本排程回傳值與冷卻機制。 |
-| 測試檔案 | 補齊單元測試並檢查所有依賴 `llm_judge` / `JobBoardService` 的既有測試 Mock | 嚴守 `GEMINI.md` Rule 13（防範虛假測試與回傳型別斷層），先 `git grep llm_judge` 盤查所有呼叫點與測試。 |
+| 測試檔案 | 補齊單元測試並檢查所有依賴 `llm_judge` / `JobBoardService` 的既有測試 Mock | 嚴守 `GEMINI.md` 第 12 條第 3 點（防範虛假測試與回傳型別斷層），先 `git grep llm_judge` 盤查所有呼叫點與測試。 |
 
 ### 2.2 明確不做（Out of Scope，避免改 A 壞 B）
 * **不修改 `leads` 資料表新增 `discarded` 狀態**（維持 2026-11-18 決議，人工標記過渡兩週走試算表）。

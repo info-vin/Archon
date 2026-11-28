@@ -10,7 +10,7 @@
 **Learning:** PRs that only add `TypedDict` definitions and `cast()` calls without improving runtime safety create structural rigidity without business value, and forcing dynamic JSONB dicts (`docs`, `metadata`, `content`) into rigid DTOs breaks flexibility.
 **Action:** Pair static `TypedDict` DTOs with genuine runtime boundary guards (e.g., distinguishing encrypted metadata dicts `EncryptedCredentialDict` from plaintext `str` values in credential caches, or validating list/dict structures before indexing), and leave free-form JSONB payloads as `dict[str, Any]`.
 
-## 3. Full-Chain Signature & Caller Alignment (Rule 13)
+## 3. Full-Chain Signature & Caller Alignment (Rule 12)
 **Learning:** Narrowing a service return signature or changing dict keys without checking both the deep handler/repository producer and all callers/test mocks breaks downstream unpacking or leaves DTOs out of sync with reality.
 **Action:** Before defining or changing any DTO or return signature, inspect the deepest handler implementation and `grep` all callers across `src/` and `tests/` to verify 100% key and type alignment.
 
