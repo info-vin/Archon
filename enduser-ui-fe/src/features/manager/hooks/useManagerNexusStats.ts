@@ -124,7 +124,7 @@ export const useManagerNexusStats = () => {
                 created_at: alert.created_at || new Date().toISOString()
             })));
 
-            setEthicsAudit(data.short_term_kpis?.ethics_audit || { violations: [], status: 'clear' });
+            setEthicsAudit(data.short_term_kpis?.ethics_audit || { violations: [], pending_versions: [], total_pending: 0, status: 'clear' });
 
             if (settingsRes && (settingsRes as any[]).length > 0) {
                  try {

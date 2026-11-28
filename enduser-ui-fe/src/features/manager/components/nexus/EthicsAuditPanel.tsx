@@ -55,7 +55,7 @@ export const EthicsAuditPanel: React.FC<EthicsAuditPanelProps> = ({
 
                 <div className="space-y-4">
                     {/* 1. Ethics Violations (Sentinel) */}
-                    {ethicsAudit?.violations.map((v: any) => (
+                    {(ethicsAudit?.violations ?? []).map((v: any) => (
                         <div key={v.id} className="bg-white border border-red-100 p-4 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4">
                                 <div className="bg-red-50 p-3 rounded-xl text-red-600">
@@ -87,7 +87,7 @@ export const EthicsAuditPanel: React.FC<EthicsAuditPanelProps> = ({
                     ))}
 
                     {/* 2. Prompt Changes (Librarian) */}
-                    {ethicsAudit?.pending_versions.map((p: any) => (
+                    {(ethicsAudit?.pending_versions ?? []).map((p: any) => (
                         <div key={p.id} className="bg-white border border-amber-100 p-4 rounded-2xl flex items-center justify-between shadow-sm hover:shadow-md transition-all">
                             <div className="flex items-center gap-4">
                                 <div className="bg-amber-50 p-3 rounded-xl text-amber-600">
