@@ -1,0 +1,95 @@
+# Pull request gate for dev/twins.
+# Backend checks run from python/ (Python 3.12, uv.lock). Frontend checks run
+# from enduser-ui-fe/ (pnpm 10, pnpm-lock.yaml). Credentials below are obvious
+# placeholders; this workflow does not read repository secrets.
+
+name: dev/twins PR checks
+
+on:
+  pull_request:
+    branches: [dev/twins]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-twins-pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (pytest, ruff, mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: python
+    env:
+      SUPABASE_URL: http://localhost:54321
+      SUPABASE_SERVICE_KEY: test-service-key
+      # Obvious placeholders. pydantic-ai refuses to construct a Google model
+      # without one of these, and conftest skips every test under
+      # tests/integration/ when both are unset. fake-api-key is the sentinel
+      # the live audio test already treats as "not a real key".
+      GOOGLE_API_KEY: test-google-api-key
+      GEMINI_API_KEY: fake-api-key
+      ARCHON_SERVER_PORT: "8181"
+      ARCHON_MCP_PORT: "8051"
+      ARCHON_AGENTS_PORT: "8052"
+      TEST_MODE: "true"
+      TESTING: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python 3.12
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: python/uv.lock
+
+      - name: Sync dependencies
+        run: uv sync --frozen --group dev --group mcp --group agents --group server
+
+      - name: Ruff
+        run: uv run ruff check
+
+      - name: Mypy
+        run: uv run mypy src
+
+      - name: Pytest
+        run: uv run pytest
+
+  frontend:
+    name: Frontend (tsc, vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: enduser-ui-fe
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: enduser-ui-fe/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Vitest
+        run: pnpm exec vitest run
