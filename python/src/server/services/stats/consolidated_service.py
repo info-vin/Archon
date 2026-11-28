@@ -35,6 +35,8 @@ async def _run_oracle_agent() -> dict[str, Any]:
 async def _refresh_oracle_cache() -> None:
     global _cache
     try:
+        # Yield first so the foreground DB fallback response completes without event-loop contention.
+        await asyncio.sleep(3.0)
         data_dict = await _run_oracle_agent()
         if data_dict:
             _cache = (time.monotonic(), data_dict)
