@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
+import { DEFAULT_BLOG_COVER_IMAGE, handleBlogCoverError } from '../utils/blogFallback';
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
@@ -55,10 +56,11 @@ const BlogPage: React.FC = () => {
                             {posts.filter(p => p.status === 'published').map(post => (
                                 <div key={post.id} className="bg-card border border-border rounded-lg overflow-hidden flex flex-col hover:shadow-lg transition-all group">
                                     <Link to={`/blog/${post.id}`} className="block h-full flex flex-col">
-                                        <div className="overflow-hidden h-48">
+                                        <div className="overflow-hidden h-48 bg-slate-900">
                                             <img 
-                                                src={post.imageUrl} 
+                                                src={post.imageUrl || DEFAULT_BLOG_COVER_IMAGE} 
                                                 alt={post.title} 
+                                                onError={handleBlogCoverError}
                                                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300" 
                                             />
                                         </div>

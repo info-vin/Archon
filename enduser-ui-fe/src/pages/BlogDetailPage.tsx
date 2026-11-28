@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { BlogPost } from '../types.ts';
 import { RAGCitation } from '../features/marketing/components/RAGCitation';
 import { MermaidRenderer } from '../components/MermaidRenderer';
+import { DEFAULT_BLOG_COVER_IMAGE, handleBlogCoverError } from '../utils/blogFallback';
 
 // PERFORMANCE: Hoist Intl.DateTimeFormat instance outside the component to avoid expensive repeated instantiations (implicitly called by toLocaleDateString) inside the render loop.
 const dateFormatter = new Intl.DateTimeFormat(undefined);
@@ -103,7 +104,7 @@ const BlogDetailPage: React.FC = () => {
             <Link to="/blog" className="text-primary hover:underline mb-8 inline-block">&larr; Back to Blog</Link>
             
             <article className="prose prose-lg dark:prose-invert max-w-none">
-                <img src={post.imageUrl} alt={post.title} className="w-full h-64 md:h-96 object-cover rounded-xl mb-8" />
+                <img src={post.imageUrl || DEFAULT_BLOG_COVER_IMAGE} alt={post.title} onError={handleBlogCoverError} className="w-full h-64 md:h-96 object-cover rounded-xl mb-8" />
                 
                 <h1 className="text-4xl md:text-5xl font-bold mb-4">{post.title}</h1>
                 

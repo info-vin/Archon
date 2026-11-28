@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useSSE } from '@/hooks/useSSE';
 import { EmployeeRole } from './types';
@@ -182,9 +182,23 @@ export const AppRoutes: React.FC = () => {
         }
       />
       
-      {/* Redirects */}
+      {/* Redirects & 404 */}
       <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/landing"} />} />
-      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/landing"} />} />
+      <Route
+        path="*"
+        element={
+          <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-background text-foreground">
+            <h1 className="text-4xl font-bold mb-2">404</h1>
+            <p className="text-muted-foreground mb-6">Page not found.</p>
+            <Link
+              to={isAuthenticated ? "/dashboard" : "/landing"}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
+            >
+              Back to Home
+            </Link>
+          </div>
+        }
+      />
     </Routes>
   );
 };
