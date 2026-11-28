@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Employee } from '../types';
 import { 
     AlertTriangleIcon,
     ShieldCheckIcon, DatabaseIcon,
@@ -7,7 +6,6 @@ import {
     DollarSignIcon, ClockIcon,
     RefreshCwIcon
 } from '../components/Icons';
-import { ManageMemberModal } from '../features/team/components/ManageMemberModal';
 
 import { IntegrityAnalysis } from '../features/manager/components/IntegrityAnalysis.tsx';
 
@@ -35,9 +33,6 @@ export const ManagerNexus: React.FC = () => {
     const [isMaximized, setIsMaximized] = useState(false);
     const [isSpecOpen, setIsSpecOpen] = useState(false);
     const [specContent, setSpecContent] = useState('');
-    
-    // Interaction States
-    const [selectedMember, setSelectedMember] = useState<Employee | null>(null);
 
     const {
         loading,
@@ -46,7 +41,7 @@ export const ManagerNexus: React.FC = () => {
         businessRisks, collabSynergy,
         slaReliability, ethicsAudit, knowledgeRoi,
         rules, rulesMeta, isSavingRules, totalRuleWeight,
-        fetchData, handleDispatch, handleApprovePrompt, handleRebuildIndex,
+        handleDispatch, handleApprovePrompt, handleRebuildIndex,
         handleRuleChange, handleSaveRules
     } = useManagerNexusStats();
 
@@ -179,18 +174,6 @@ export const ManagerNexus: React.FC = () => {
             </div>
 
             <NexusFooter />
-
-            {/* Member Management Modal */}
-            {selectedMember && (
-                <ManageMemberModal 
-                    member={selectedMember} 
-                    onClose={() => setSelectedMember(null)} 
-                    onSuccess={() => {
-                        setSelectedMember(null);
-                        fetchData();
-                    }} 
-                />
-            )}
 
             {/* Nexus Spec Slide-over Panel */}
             <NexusSpecPanel
