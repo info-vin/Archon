@@ -1,7 +1,7 @@
 # Phase 5.16: Manager Nexus HUD 去重與真實數據對齊
 
 **日期**: 2026-11-28  
-**狀態**: 🟡 Implemented (Pending Live Deploy & Playwright Audit)  
+**狀態**: 🟢 Completed（`bd59d3d7`, `5383535d` 已部署並完成線上 Playwright 實測）  
 **關聯文件**: `GEMINI.md`, `PRPs/ai_docs/UI_STANDARDS.md`, `PRPs/Phase_5.5.7_Nexus_Consolidation_Self_Healing.md`
 
 ---
@@ -49,4 +49,4 @@
 - [x] `make lint` 全數通過（`enduser-ui-fe`、`archon-ui-main`、`ruff`、`mypy`、`.single()`、`lean_proofs`）。
 - [x] `python3 scripts/phase_audit.py` 顯示 `Found 0 monoliths (>400 lines)` 且 Step 7–11 全過。
 - [x] `pytest tests/server/test_nexus_oracle.py -v` 與 `stats/` 相關單元測試全過，且 `enduser-ui-fe` `npx tsc --noEmit`、`npm run build`、`vitest run` 全過。
-- [ ] 部署後以無頭 Playwright 登入 `charlie@archon.com` 實測 `/#/nexus` 截圖，確認僅顯示 6 張去重卡片、`Integrity` 與 `Resources` 為真實 DB 數值、0 個 `4xx/5xx`。
+- [x] 部署後以無頭 Playwright 登入 `charlie@archon.com` 實測 `/#/nexus` 截圖，確認僅顯示 6 張去重卡片、`Integrity` 與 `Resources` 為真實 DB 數值、0 個 `4xx/5xx`。
