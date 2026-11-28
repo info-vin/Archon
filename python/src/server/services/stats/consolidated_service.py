@@ -13,6 +13,33 @@ logger = get_logger(__name__)
 _CACHE_TTL_SECONDS = 120.0
 _AGENT_TIMEOUT_SECONDS = 12.0
 _cache: tuple[float, dict[str, Any]] | None = None
+_refresh_task: asyncio.Task[None] | None = None
+
+
+async def _run_oracle_agent() -> dict[str, Any]:
+    from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
+
+    agent = NexusOracleAgent()
+    deps = NexusDependencies(request_id="nexus-consolidated-request")
+    result = await asyncio.wait_for(
+        agent.run(
+            user_prompt="Analyze the gathered telemetry and operational details. Synthesize them into the ConsolidatedNexusState schema.",
+            deps=deps,
+        ),
+        timeout=_AGENT_TIMEOUT_SECONDS,
+    )
+    data = result.data if hasattr(result, "data") else result
+    return data if isinstance(data, dict) else data.model_dump() if hasattr(data, "model_dump") else {}
+
+
+async def _refresh_oracle_cache() -> None:
+    global _cache
+    try:
+        data_dict = await _run_oracle_agent()
+        if data_dict:
+            _cache = (time.monotonic(), data_dict)
+    except Exception as e:
+        logger.warning(f"Background consolidated Nexus oracle refresh failed: {e}")
 
 
 async def _build_db_fallback_state() -> dict[str, Any]:
@@ -66,46 +93,35 @@ async def _build_db_fallback_state() -> dict[str, Any]:
 
 
 async def get_consolidated_nexus_state() -> dict[str, Any]:
-    """Return cached or freshly computed Nexus state, falling back to direct DB telemetry on timeout."""
-    global _cache
+    """Return cached or freshly computed Nexus state without blocking UI on slow LLM oracle cold starts."""
+    global _cache, _refresh_task
     use_cache = "pytest" not in sys.modules
     now = time.monotonic()
     if use_cache and _cache and (now - _cache[0]) < _CACHE_TTL_SECONDS:
         return _cache[1]
 
-    try:
-        from src.agents.nexus_oracle_agent import NexusDependencies, NexusOracleAgent
-
-        agent = NexusOracleAgent()
-        deps = NexusDependencies(request_id="nexus-consolidated-request")
-        result = await asyncio.wait_for(
-            agent.run(
-                user_prompt="Analyze the gathered telemetry and operational details. Synthesize them into the ConsolidatedNexusState schema.",
-                deps=deps,
-            ),
-            timeout=_AGENT_TIMEOUT_SECONDS,
-        )
-        data = result.data if hasattr(result, "data") else result
-        data_dict = data if isinstance(data, dict) else data.model_dump() if hasattr(data, "model_dump") else {}
-        if use_cache:
-            _cache = (time.monotonic(), data_dict)
-        return data_dict
-    except Exception as e:
-        logger.warning(f"Consolidated Nexus agent run failed/timed out ({_AGENT_TIMEOUT_SECONDS}s): {e}")
-        if use_cache and _cache:
+    if use_cache:
+        if _refresh_task is None or _refresh_task.done():
+            _refresh_task = asyncio.create_task(_refresh_oracle_cache())
+        if _cache:
             return _cache[1]
         try:
             fallback = await _build_db_fallback_state()
-            if use_cache:
-                _cache = (time.monotonic(), fallback)
+            _cache = (time.monotonic(), fallback)
             return fallback
         except Exception as db_err:
             logger.error(f"Consolidated Nexus DB fallback failed: {db_err}")
             return {
                 "system_status": "YELLOW",
                 "health_score": 50,
-                "short_term_kpis": {"error": str(e)},
+                "short_term_kpis": {"error": str(db_err)},
                 "long_term_trends": {},
-                "main_bottleneck": "NexusOracleAgent run execution failed.",
+                "main_bottleneck": "Consolidated DB fallback failed.",
                 "recommended_actions": [],
             }
+
+    try:
+        return await _run_oracle_agent()
+    except Exception as e:
+        logger.warning(f"Consolidated Nexus agent run failed/timed out ({_AGENT_TIMEOUT_SECONDS}s): {e}")
+        return await _build_db_fallback_state()
