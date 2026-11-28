@@ -250,11 +250,27 @@ async def test_send_summary_telegram_direct(mock_send_telegram, mock_dispatch_vo
     )
     assert success is True
     mock_send_telegram.assert_awaited_once()
+    assert mock_send_telegram.await_args.kwargs["record_delivery"] is True
     mock_dispatch_voice.assert_awaited_once_with("Charlie's summarized insights")
     msg = mock_send_telegram.call_args[0][0]
     assert "星環 Daily 已產出" in msg
     assert "Charlie's summarized insights" in msg
     assert "taskId=test-task-123" in msg
+
+
+@pytest.mark.asyncio
+@patch("src.server.services.report_enrichment_service.report_enrichment_service.dispatch_dual_voice_briefings", new_callable=AsyncMock)
+@patch("src.server.services.system.telegram_service.telegram_service.send_message", new_callable=AsyncMock)
+async def test_send_summary_telegram_weekly_does_not_record_delivery(mock_send_telegram, mock_dispatch_voice):
+    mock_send_telegram.return_value = True
+    success = await report_service.send_summary_telegram(
+        title_prefix="Weekly",
+        content="Weekly rollup",
+        task_id="weekly-1",
+    )
+    assert success is True
+    assert mock_send_telegram.await_args.kwargs["record_delivery"] is False
+    mock_dispatch_voice.assert_not_awaited()
 
 
 def test_get_logs_context_aggregation_and_sanitization():
@@ -521,6 +537,7 @@ async def test_send_summary_telegram_fallback_triggers_emergency_voice(mock_send
     )
     assert success is True
     mock_send_telegram.assert_awaited_once()
+    assert mock_send_telegram.await_args.kwargs["record_delivery"] is True
     mock_trigger_emergency.assert_awaited_once_with("⚠️ 多 Agent 協同討論未能在時限內收斂")
 
 

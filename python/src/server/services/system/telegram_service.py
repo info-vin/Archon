@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 import httpx
 
@@ -25,24 +26,53 @@ class TelegramService:
             return text[:max_length].strip() + "..."
         return text
 
-    async def _log_to_db(self, level: str, message: str) -> None:
-        """Writes directly to archon_logs to ensure errors are visible in Admin UI."""
+    async def _log_to_db(self, level: str, message: str, details: dict[str, Any] | None = None) -> None:
+        """Inserts one archon_logs row. A failed insert is logged and does not propagate."""
         import asyncio
+
         def _insert_log() -> None:
             try:
                 from src.server.repositories.base_repository import BaseRepository
                 sb = get_supabase_client()
-                repo = BaseRepository(sb)
-                query = sb.table("archon_logs").insert({
+                row: dict[str, Any] = {
                     "source": "system-telegram",
                     "level": level,
-                    "message": message[:500]
-                })
-                repo.execute_query(query, "Failed to write to archon_logs")
+                    "message": message[:500],
+                }
+                if details is not None:
+                    row["details"] = details
+                BaseRepository(sb).execute_query(
+                    sb.table("archon_logs").insert(row), "Failed to write to archon_logs"
+                )
             except Exception as ex:
                 logger.error(f"TelegramService: Failed to write to archon_logs: {repr(ex)}")
 
         await asyncio.to_thread(_insert_log)
+
+    @staticmethod
+    def _message_id_from_response(response: httpx.Response) -> int | str | None:
+        """Returns Telegram result.message_id, or None when the body cannot be read."""
+        try:
+            body = response.json()
+        except Exception:
+            return None
+        result = body.get("result") if isinstance(body, dict) else None
+        if not isinstance(result, dict):
+            return None
+        message_id = result.get("message_id")
+        if isinstance(message_id, bool) or not isinstance(message_id, int | str):
+            return None
+        return message_id
+
+    async def _log_delivery_success(self, response: httpx.Response, record_delivery: bool) -> None:
+        """Records a successful daily-summary delivery. Logging never fails the send."""
+        if not record_delivery:
+            return
+        await self._log_to_db(
+            "INFO",
+            "TelegramService: daily summary delivered",
+            {"message_id": self._message_id_from_response(response)},
+        )
 
     async def _get_config_async(self) -> NotificationConfig:
         import asyncio
@@ -149,6 +179,7 @@ class TelegramService:
         config: NotificationConfig,
         original_chunk: str,
         is_retry: bool = False,
+        record_delivery: bool = False,
     ) -> bool:
         """Sends a single chunk payload with retries and failure persistence."""
         import asyncio
@@ -160,6 +191,7 @@ class TelegramService:
                     response = await client.post(api_url, json=payload)
                     response.raise_for_status()
                     logger.info("✅ TelegramService: Message chunk sent successfully.")
+                    await self._log_delivery_success(response, record_delivery)
                     return True
             except httpx.RequestError as e:
                 err_msg = (
@@ -184,6 +216,7 @@ class TelegramService:
                             resp_fallback.raise_for_status()
                             logger.info("✅ TelegramService: Fallback plain text chunk sent successfully.")
                             await self._log_to_db("WARNING", f"TelegramService: 400 markdown parse error recovered via plain text fallback. ({e.response.text[:100]})")
+                            await self._log_delivery_success(resp_fallback, record_delivery)
                             return True
                     except Exception as fb_err:
                         fb_err_msg = f"TelegramService: Fallback plain text failed: {fb_err}"
@@ -208,7 +241,14 @@ class TelegramService:
 
         return False
 
-    async def send_message(self, text: str, parse_mode: str = "Markdown", is_retry: bool = False) -> bool:
+    async def send_message(
+        self,
+        text: str,
+        parse_mode: str = "Markdown",
+        is_retry: bool = False,
+        *,
+        record_delivery: bool = False,
+    ) -> bool:
         """Sends a message via Telegram Bot API with safe chunking and rate spacing."""
         import asyncio
 
@@ -251,6 +291,7 @@ class TelegramService:
                 config=config,
                 original_chunk=chunk,
                 is_retry=is_retry,
+                record_delivery=record_delivery,
             )
             if not chunk_success:
                 overall_success = False
