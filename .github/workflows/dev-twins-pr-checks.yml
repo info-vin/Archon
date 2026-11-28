@@ -27,6 +27,12 @@ jobs:
     env:
       SUPABASE_URL: http://localhost:54321
       SUPABASE_SERVICE_KEY: test-service-key
+      # Obvious placeholders. pydantic-ai refuses to construct a Google model
+      # without one of these, and conftest skips every test under
+      # tests/integration/ when both are unset. fake-api-key is the sentinel
+      # the live audio test already treats as "not a real key".
+      GOOGLE_API_KEY: test-google-api-key
+      GEMINI_API_KEY: fake-api-key
       ARCHON_SERVER_PORT: "8181"
       ARCHON_MCP_PORT: "8051"
       ARCHON_AGENTS_PORT: "8052"
