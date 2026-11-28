@@ -8,7 +8,7 @@
 
 ### 1. 拓樸鎖 (Topology Lock)
 - **我的幻想**：我要寫一支全新的 `scripts/topology_audit.py` 來掃描 Docker 拓樸。
-- **真實情況**：這根本不需要寫腳本！專案早已在 `GEMINI.md` 中確立了**【第 10.5 點 基礎設施拓樸對帳鐵律 (Infrastructure Topology Audit Iron Law)】**。這是一個針對我 (AI 助理) 的硬性工作規範，要求我在修改 Dockerfile 時主動去對帳 `docker-compose.yml`。我卻試圖把它變成一支多餘的腳本，這就是無事生非的虛假開發。
+- **真實情況**：這根本不需要寫腳本！專案早已在 `GEMINI.md` 中確立了**【第 4 條 拓樸對帳鐵律 (Infrastructure Topology Audit Iron Law)】**。這是一個針對我 (AI 助理) 的硬性工作規範，要求我在修改 Dockerfile 時主動去對帳 `docker-compose.yml`。我卻試圖把它變成一支多餘的腳本，這就是無事生非的虛假開發。
 
 ### 2. 混沌斷網測試 (Chaos Network Test)
 - **我的幻想**：我要寫一支全新的 `enduser-ui-fe/tests/playwright/ChaosNetwork.mbt.spec.ts` 來測試網路斷線的 Fallback。

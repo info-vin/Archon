@@ -9,7 +9,7 @@
 > *   **第一章：核心工作習慣**: 定義了 Gemini 不可動搖的、必須在所有行動前遵守的思維框架與SOP。
 > *   **第二章：關鍵學習與偵錯模式**: 提煉了從大量歷史日誌中反覆出現的、最有價值的經驗教訓，並將其歸納為可複用的偵錯模式。
 > *   **第三章：近期工作日誌**: 保留最近的、最相關的一週日誌，以供快速回溯上下文。
-> *   **第四章：歷史檔案**: 完整存檔所有過去的日誌，作為深入研究特定問題時的「考古資料」。
+> *   **第四章：歷史檔案**: 封存範圍與 1–10 月去向見該章【封存說明】。
 
 ---
 
@@ -44,8 +44,8 @@
 >     - **Schema 對帳**: 在執行任何 API 或資料庫欄位修改前，必須讀取 `migration/` 資料夾下的 SQL 實體。**嚴禁幻想欄位名稱**。
 >     - **雙生對帳**: 執行 `make twin-scout` 巡檢前，必須讀取 `scripts/twin_scout.py`，確保 Reality Snapshot 的 SQL 指標與 UI 頁面路徑 100% 物理對齊，防止 false mismatch。
 > 3.  **第三步：口頭確認 (Verbal Confirmation)**: 讀取後，我會向您用一兩句話總結我所理解的「**上次會話的最終狀態**」和「**今天的第一個目標**」。
-*   **當前狀態 (Current Context)**: 2026-11-26 完成 `gemini-decision-1`（Decisions API）整合與 Phase 5.14 39 筆樣本 ICP 校準收斂（`a4d72e1c`～`9ebf8ccf`），修復 104 爬蟲 Cloudflare/Referer/403 與 `hf-restart.yml` 語法，並完成 Monolith 大型檔案拆解（`5b03df10`：`rag-settings/index.tsx` 427→324 行、`telegram_bot_gateway.py` 399→194 行拆出 `telegram_proxy_client.py` + `telegram_command_handlers.py`，`phase_audit.py` 紅燈歸 0）；同步完成 PR #672（`fix/671-followups-auth-hardening`）審查（`MERGEABLE`）。
-*   **今日目標 (Today's Goal)**: 由使用者拍板合併 PR #672 至 `dev/twins`（合併即觸發 HF 部署）；觀察線上 Decisions API 評分與 Telegram 雙向指令運作。
+*   **當前狀態 (Current Context)**: 2026-11-28，PR #672 已合併為 `3cac7612` 並完成 HF 部署（見第三章「2026-11-28」第 1 點）。
+*   **今日目標 (Today's Goal)**: 觀察部署與 Decisions API。
 
 > 4.  **第四步：取得您的確認**: 在您確認我對起點的理解無誤後，我才能開始執行第一個指令。
 
@@ -67,19 +67,24 @@
     * **核心**: 拒絕主觀盲猜，日誌揭示當下事實，`git log` 交代歷史意圖。當行為不符預期時，立即在第一線注入實體日誌 (`console.log`, `print`)。當 Bug 反覆出現時，用歷史脈絡解讀代碼設計初衷，絕不在資訊真空下盲目修補。
 
 * **2. 流程與直覺的雙重對帳 (Trust but Verify Everything)**
-    * **核心**: 將 SOP (`Makefile`, `CONTRIBUTING.md`) 與使用者的直覺視為核心訊號，但兩者皆須經過雙重驗證。優先查閱既有規範以防重複犯錯；當使用者提出質疑時，立即暫停「快樂路徑」，用硬數據或程式碼實體去證實或排除疑慮。
+    * **核心**: 將 SOP (`Makefile`, `CONTRIBUTING_tw.md`) 與使用者的直覺視為核心訊號，但兩者皆須經過雙重驗證。優先查閱既有規範以防重複犯錯；當使用者提出質疑時，立即暫停「快樂路徑」，用硬數據或程式碼實體去證實或排除疑慮。
 
 * **3. 戰場隔離與變因控制 (Isolate the Battlefield)**
     * **核心**: 複雜的 Bug 往往是多層環境污染的疊加。必須系統性隔離變因：區分是宿主機環境、Docker 容器、還是前端元件問題。`make test` 失敗時，應釐清是根目錄工具鏈衝突還是子專案配置污染。在進行極端環境測試（如 Phase 5.5 無網/離線模式）時，必須實體切斷外部網路，驗證 Fallback 機制（如本地模型降階）是否真實生效。
 
-* **4. 配置驅動與工具手冊意識 (Master Your Tool Configuration)**
+* **4. 配置驅動、工具手冊與基礎設施拓樸對帳 (Configuration, Tooling & Infrastructure Topology)**
     * **核心**: 工具的怪異行為 90% 源於配置，而非底層 Bug。Linter 規範在 `.eslintrc`，測試 Hoisting 需 `vi.hoisted`。此外，基礎設施崩潰常源於隱藏預設配置（如 Docker ENOSPC 危機源於預設下載巨型 CUDA 依賴與快取堆疊），必須精準掌握建置指令（如指定 CPU wheels）並定期壓縮瘦身。
+    * **【拓樸對帳鐵律】**: 修改任何與 Docker（Dockerfile）、環境變數（`.env`）或建置依賴相關的檔案之前，**必須先查閱 `docker-compose.yml`**，以根除視野狹隘造成的修改遺漏：
+        1. 掃描 `docker-compose.yml` 中所有 `build.dockerfile` 屬性。
+        2. 列出所有正在服役的 Dockerfile（如 `Dockerfile.server`, `Dockerfile.mcp`, `Dockerfile.agents`）。
+        3. 一項修復若適用於某一容器，必須同等評估並應用於拓樸中所有受影響的容器，嚴禁只改最顯眼的主檔而漏改附屬檔。
 
 * **5. 網路與環境隔離防護 (Internal/External Network Isolation)**
     * **核心**: 嚴防 Docker 內部 DNS（如 `supabase_kong`）洩漏至外部瀏覽器。前端代碼必須具備「主動防禦」特徵檢測，在請求發出前攔截無效的內部 URL 並切換至狀態化模擬 (Stateful Mock) 模式，杜絕瀏覽器因解析失敗陷入無限靜默 Loading。
 
-* **6. 物理穿透驗證與三向連動 (Physical Penetration Verification)**
-    * **核心**: 徹底終結「幽靈開發」，警惕日誌與文件的偽證。修改功能時，必須落實三向連動檢查：入口掛載 (main.py)、依賴映射 (index.html) 與實體測試斷言 (pytest/vitest)。更進一步，必須將 `make audit-qa` 視為最終品質公證網關，只有當代碼、測試與自動化腳本全部亮綠燈，方可標記為🟢已修復。
+* **6. 物理穿透、探針先行與零虛假開發 (Physical Penetration & Probe-First)**
+    * **核心**: 徹底終結「幽靈開發」與虛假開發，警惕日誌與文件的偽證。撰寫實作計畫前，**必須**先在 `scratch/` 寫探針腳本，真實觸碰外部 API 或環境變數；嚴禁在 Agent 或業務邏輯中寫死 `os.urandom` 假資料來欺騙測試或使用者。外部憑證（如 Google Drive Token）缺失時，必須立刻 Fail-Fast、拋出錯誤並拒絕服務，絕不能以優雅降級寫成假資料。
+    * **三向連動**: 修改功能時必須落實入口掛載 (`main.py`)、依賴映射 (`index.html`) 與實體測試斷言 (`pytest`/`vitest`)。`make audit-qa` 為最終品質公證網關，只有當代碼、測試與自動化腳本全部亮綠燈，方可標記為🟢已修復。
 
 * **7. 雲原生意識與邊界防禦 (Absolute Cloud-Native Awareness)**
     * **核心**: 認清基礎設施事實，專案連接的是雲端 Supabase。遇資料庫權限錯誤，絕對禁止用 `docker exec` 強修，必須產出 `migration/` SQL 檔由人類於雲端執行。此外，徹底落實 Model SSOT (單一事實來源)，嚴禁在代碼中硬編碼 LLM 模型名稱，必須交由 DB 或環境變數統一控管，以實現架構級的 Fail-Fast 與優雅降級。
@@ -94,50 +99,42 @@
     * **核心**: 透過 `is_system_protected` 欄位與 API 物理過濾，在 UI 隱藏系統級工具參數。FastAPI 模組化掛載時，子路由若已定義 `prefix`，主入口絕對禁止重複添加前綴（嚴防 `/api/api` 嵌套 404）。
     * **【絕對鐵律 (Absolute Iron Law)】**: **Admin UI 的 Port 永遠是 5173 (enduser-ui-fe)，絕對不是 3737！** 若 Gemini 在任何對話或文件中將其錯說成 3737，必須立即主動中斷任務，向使用者承認「我犯了不可繞恕的上下文遺忘罪」，並罰寫此鐵律 3 次後方可繼續工作。
 
-* **10.5 基礎設施拓樸對帳鐵律 (Infrastructure Topology Audit Iron Law)**
-    * **核心**: 徹底根除「視野狹隘 (Tunnel Vision)」導致的修改遺漏。
-    * **【絕對鐵律】**: 在修改任何與 Docker (Dockerfile)、環境變數 (.env) 或建置依賴相關的檔案之前，**必須第一時間查閱 `docker-compose.yml`**。強制作業流程：
-        1. 掃描 `docker-compose.yml` 中所有 `build.dockerfile` 屬性。
-        2. 列出專案中**所有**正在服役的 Dockerfile (如 `Dockerfile.server`, `Dockerfile.mcp`, `Dockerfile.agents`)。
-        3. 一項修復若適用於某一容器，必須同等評估並應用於拓樸中所有受影響的容器，嚴禁只改最顯眼的主檔而漏改附屬檔 (改東漏西)。
-
 * **11. 權限遮蔽陷阱與佈局死鎖防禦 (Permission Masking & Scroll Lockup Defense)**
     * **核心**: 
         1. **權限自癒**：後端 Service 絕對禁止手寫 `profile["permissions"] = []`，避免前端跳過 Role Fallback 導致 Bob 的側邊欄靜默消失，應由 `RBACService` 動態注入。
         2. **佈局解鎖**：在巢狀 Flex 佈局中，子層若使用 `min-h-screen` 會鎖死父層捲動，必須「釋放子層高度」，並輔以底部物理緩衝 (`div.h-32`) 避開手機導覽列。
 
-* **12. E2E 品質門禁與 React 崩潰阻斷 (E2E Quality Gate & React Crash Hardening)**
+* **12. E2E 品質門禁、React 崩潰阻斷與型別斷層防禦 (E2E Quality Gate, React Crash Hardening & Signature Sync)**
     * **核心**: 
         1. **智慧型公證**：將傳統斷言升級，導入「視覺裁判 (Vision Judge)」與「結構化語義檢測 (LLM-Judge)」，建構更具韌性的品質門禁。
         2. **全域 Mock 隔離**：Dashboard 的所有非同步 API 必須 100% Mock 覆蓋，關閉 Recharts 圖表動畫防範 Headless 環境 TickItem 報錯。
-        3. **資料模型對齊**：Mock 數據結構必須與前端介面 100% 物理對齊，缺少必填欄位將引發 React `TypeError`。
+        3. **資料模型與回傳型別對齊**：Mock 數據結構必須與前端介面 100% 物理對齊，缺少必填欄位將引發 React `TypeError`。單元測試通過不代表代碼安全；修改任何核心服務 (Service/Repository) 的**回傳型別**（例如將字串改為 Tuple）時，**必須**使用全域搜尋 (`grep`) 同步更新所有依賴該服務的測試 Mock，確保 `mock_service.return_value` 與物理現實 100% 一致，否則單元測試會掩護 `too many values to unpack` 或寫入亂碼。
         4. **空值與日誌穿透**：後端嚴禁使用 `.single()` 獲取資料，改用安全陣列查詢防禦 HTTP 500。Playwright 必須穿透捕捉瀏覽器 `error`，杜絕盲人摸象。
-
-* **13. 防範虛假測試與型別斷層 (False Mock & Signature Sync)**
-    * **核心**: 單元測試通過不代表代碼安全。修改任何核心服務 (Service/Repository) 的**回傳型別 (Return Type)**（例如將字串改為 Tuple）時，**必須**使用全域搜尋 (`grep`) 同步更新所有依賴該服務的測試 Mock，確保 `mock_service.return_value` 與物理現實 100% 一致。否則單元測試會淪為掩護 `too many values to unpack` 或寫入亂碼的遮羞布。
-
-* **14. 探針先行與零虛假開發 (Probe-First & Zero Fake Development)**
-    * **核心**: 在撰寫實作計畫前，**必須**先在 `scratch/` 寫「探針腳本 (Probe Script)」去真實觸碰外部 API 或環境變數。嚴禁在 Agent 或業務邏輯中寫死 `os.urandom` 假資料來欺騙測試或使用者 (虛假開發)。當外部憑證 (如 Google Drive Token) 缺失時，必須立刻 `Fail-Fast` 拋出錯誤並拒絕服務，絕不能「優雅降級」成假資料。
 
 ---
 
 # 第三章：近期工作日誌 (Recent Activity Logs)
 
+### 2026-11-28：PR #672 合併與 HF 部署
+1.  **合併 `3cac7612`**: 2026-11-28 09:12（+0800）將 `fix/671-followups-auth-hardening` 併入 `dev/twins`。GitHub Actions `deploy-to-hf`（run `46091902391`）結論為 success。審查範圍見 2026-11-26 第 3 點；`77e4533a`、`31500615`、`f0a73e0d` 不另立條目。
+
 ### 2026-11-26：Decisions API 整合、Phase 5.14 校準收尾、Monolith 拆解與 PR #672 審查
 1.  **Decisions API 整合與 104 爬蟲修復（`a4d72e1c`～`9ebf8ccf`）**:
     *   整合 `gemini-decision-1` 並以 SSOT/DRY Fallback 接通潛在客戶篩選（`CrawlerJobConfig.qualify_score_threshold` 預設 50）與 Supervisor 路由；修正 `NetworkConfig.google_base_url` OpenAI 後綴截斷與 `hf-restart.yml` 無效 `secrets` 條件。
     *   修正 104 爬蟲 Cloudflare CORS/`Sec-Fetch` 標頭、Referer 非 ASCII 編碼與 HTTP 403 阻斷偵測，並依 39 筆樣本人工校準收斂 `ALICE_LEAD_ICP_CRITERIA` 完成 Phase 5.14。
+    *   **測試隔離（`74791588`）**：`test_job_board_service` 以 `DecisionsUnavailableError` 隔離 Decisions API，並覆蓋直接判 C 的拒絕路徑。
 2.  **Monolith 大型檔案拆解與門禁歸零（`5b03df10`）**:
     *   **前端 P0**：`archon-ui-main/src/features/rag-settings/index.tsx`（427 → 324 行）拆出 `RagCheckboxes.tsx`、`OllamaConfigPanel.tsx`、`AdvancedSettingsAccordion.tsx`、`RagModalsContainer.tsx`；通過 `biome check`、`tsc --noEmit`、`vite build` 與 `vitest`（17 檔 / 144 passed）。
     *   **後端 P1**：`python/src/server/services/system/telegram_bot_gateway.py`（399 → 194 行）拆出 `telegram_proxy_client.py`（116 行）與 `telegram_command_handlers.py`（189 行），拔除硬編碼 `_MENTION_AGENT_MAP` 改由 `AI_AGENT_ROLES` SSOT 動態推導，並保留 Facade 委派與 `http_client_cls` 注入；通過 `ruff`、`mypy`、`pytest`（7/7）與 `phase_audit.py`（`Found 0 monoliths (>400 lines)`）。
     *   **Code Review 修正**：將 `ModelConfigForm.tsx` 既有動態 Tailwind 字串插值（`bg-${...}`）改為靜態類別查表 `OLLAMA_STATUS_CARD_STYLES`，完全對齊 `UI_STANDARDS.md`。
+    *   **型別與主題 SSOT（`059f26b2`）**：將 rag-settings 型別與選取主題樣式收斂至 `types.ts`、`constants/index.ts` 與各 section。
 3.  **PR #672（`fix/671-followups-auth-hardening`）審查**:
     *   確認補齊 `useAuth.tsx` `TOKEN_REFRESHED` / `SIGNED_OUT` 清快取、`POST /api/tasks/{id}/agent-status` 與 `agent-output` 驗證（納入 internal token 放行清單）、`GET /api/mcp-logs` 限 `get_current_admin`、以及錯誤訊息隱藏 `assignee`。
-    *   狀態為 `OPEN` / `MERGEABLE`（`CLEAN`），3 項 Vercel checks 通過；因該分支基於較舊的 `3ead4318`，其 PR 描述提及的 `user_metadata.role` 提權已於 `dev/twins`（Phase 5.13）先修完，且 `useAuth.test.tsx` 多 mock 了已移除的 `register`（不影響執行）。
+    *   合併與 HF 部署見 2026-11-28 第 1 點。該分支基於較舊的 `3ead4318`，PR 描述提及的 `user_metadata.role` 提權已於 `dev/twins`（Phase 5.13）先修完，且 `useAuth.test.tsx` 多 mock 了已移除的 `register`（不影響執行）。
 
 ### 2026-11-25：Phase 5.15 Stage 1 (P1) Bot SSOT 收斂與 Stage 2 (P2) A2A 直接 Handoff + Telegram 雙向審批
 1.  **P0 雲端唯讀探針與 Phase 5.14 補錄（`4b59ffa6`）**:
-    *   補錄 2026-11-24 `4b59ffa6` 已完成 [Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md)（A/B/C/X 評分、G1/G3/G4 結構化日誌、A:B=60:40 配額），且 `migration/20261118_revoke_truncate_and_test_rpcs.sql` 與 `migration/20261124_update_alice_lead_judge_abcx.sql` 皆已於雲端執行。
+    *   補錄 2026-11-24 `4b59ffa6` 已完成 [Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md](PRPs/Phase_5.14_Lead_Scoring_ABCX_and_G1_G3_G4_Hardening.md)（A/B/C/X 評分、G1/G3/G4 結構化日誌、A:B=60:40 配額），且 `migration/20261118_revoke_truncate_and_test_rpcs.sql` 與 `migration/20261124_update_alice_lead_judge_abcx.sql` 皆已於雲端執行。
     *   確認 104 職缺抓取（`alice_auto_fetch`）維持只在本機執行，HF Space 跳過屬預期行為。
 2.  **Bot SSOT/DRY 收斂與死碼退場 (Stage 1 / P1, `d98e43a3`)**:
     *   **UUID 對齊**：依雲端歷史工單真實分布（Supervisor `f0f00000` 106 筆），統一 Supervisor 為 `f0f00000-...`、將非法非十六進位 UUID `p0b00000-...` 全面修正為合法 `c0a00000-...`（POBot 歷史工單 0 筆）、補齊 Clockwork 至 `archon_agents`，已於雲端執行 `migration/20261125_align_bot_ssot_uuids.sql` 並經 P0 探針確認雙表 100% 一致。
@@ -151,12 +148,12 @@
     *   **線上真實探針揪出並修復 4 個關鍵樂觀路徑缺陷**：
         1. HF Space 防火牆擋直連 `api.telegram.org`（卡 32.35s）→ 全面改走 `TELEGRAM_PROXY_URL` 並回傳 `reply_sent`（降至 4.20s）。
         2. 實查 `enduser-ui-fe/api/telegram.js` 發現會剝離 `reply_markup` 且不支援 `answerCallbackQuery`/`getUpdates` → 升級 Vercel Proxy 白名單轉發並實測 `has_reply_markup_in_result=True`。
-        3. 實查 `task_dispatcher.py` 只派發 `is_recurring=True` 工單 → 於 `TelegramBotGateway` 建單後立即非同步呼叫 `agent_service.run_agent_task`，並接通 `routes/workflow.py` 傳入 `AgentCheckpointManager()`、雲端執行 `migration/20261125_enable_a2a_handoff_prompts.sql`，實測 `/task` 轉 `done` 且 `agent_checkpoints` 寫入 `e7d1d7ab`（`COMPLETED`）。
+        3. 實查 `task_dispatcher.py` 只派發 `is_recurring=True` 工單 → 於 `TelegramBotGateway` 建單後立即非同步呼叫 `agent_service.run_agent_task`，並接通 `routes/workflow.py` 傳入 `AgentCheckpointManager()`、雲端執行 `migration/20261125_enable_a2a_handoff_prompts.sql`，實測 `/task` 轉 `done` 且 `agent_checkpoints` 寫入 checkpoint ID `e7d1d7ab`（`COMPLETED`）。
         4. **反向驗證**送出不存在審批 ID callback 抓出線上有未捕獲 `ValueError` 炸 HTTP 500 → 改為優雅回應 `not_found`（防 Telegram 無限重試）；並清理 2 筆探針殘留 `todo` 工單，同步推送 `origin/dev/twins` 與 `origin/feat/twins`。
-    *   **已知邊界（誠實註記）**：`telegram_bot_gateway.py` 接近 400 行上限，後續擴充須拆子模組；完整真機「高風險工具暫停 → 手機點按鈕 → Checkpoint 續跑」待真實寫入型 HITL 場景再做一次端對端確認。
+    *   **已知邊界（誠實註記）**：`telegram_bot_gateway.py` 接近 400 行上限，後續擴充須拆子模組（11/26 已由 `5b03df10` 拆分解消）；完整真機「高風險工具暫停 → 手機點按鈕 → Checkpoint 續跑」待真實寫入型 HITL 場景再做一次端對端確認。
 
 ### 2026-11-24：Phase 5.13 資安防提權、金鑰零中斷輪換、白名單排程與 Vercel 舊部署清理
-完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](file:///Users/vincenta/GoogleKwok022/Archon/PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。
+完成 [Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md](PRPs/Phase_5.13_Security_Key_Rotation_and_Crawler_Hardening.md)（Track A/B/C），並完成雲端 Supabase、Hugging Face Space 與 Vercel 基礎設施的零中斷金鑰輪換與舊部署清理。
 
 **核心主題歸類**:
 1.  **資安防提權與關閉開放註冊 (Track B)**:
@@ -176,8 +173,7 @@
 # 第四章：歷史檔案：原則的考古學 (Historical Archive: The Archaeology of Principles)
 
 > **【封存說明】**
-> 本章節存放了所有歷史日誌。當你需要深入了解某個特定問題的完整偵錯背景時，可以在此查閱最原始的紀錄。
-> `2026年1月 ～ 10月` 歷史已轉化為 5 篇公開技術部落格（見 `migration/20261125_seed_ch4_engineering_blogs.sql` 與 `public.blog_posts`），原始紀錄可於 Git 歷史追溯。
+> `2026年1月～10月` 已轉為 5 篇公開技術部落格（`55ff0517` 自本檔刪除 497 行，種子見 `migration/20261125_seed_ch4_engineering_blogs.sql` 與 `public.blog_posts`），原始紀錄由 Git 歷史追溯。本章保留 2026年11月濃縮主題。
 
 ### 2026年11月：資安防護加固、規則通用遷移、HF 部署門禁與四大角色排程收斂
 十一月份完成了前端 `service_role` 外洩鑑識與 `supabase` 套件升級驗證、`.jules/` 規則全量平移至 `.agents/rules/`、HF 部署漏檔門禁（Step 5.5）與 3 天停機復原，並透過雲端探針根除四大角色週期作業 7 大斷層與校準週預算閾值。

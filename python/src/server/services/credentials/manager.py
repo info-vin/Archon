@@ -365,7 +365,7 @@ class CredentialManager:
             return []
 
     # --- Backward Compatibility / Proxy Wrappers ---
-    # To satisfy tests and existing mocks without breaking physical mock integrity (Rule 13).
+    # To satisfy tests and existing mocks without breaking physical mock integrity (Rule 12).
 
     async def check_credentials_exist(self, keys: list[str]) -> dict[str, CredentialStatusDict]:
         from .helpers import check_credentials_exist
